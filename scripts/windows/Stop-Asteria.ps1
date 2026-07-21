@@ -37,32 +37,54 @@ else {
 }
 $processRoot = [System.IO.Path]::Combine($resolvedTempRoot, "launcher")
 $resolvedStatePath = if ($StatePath) { [System.IO.Path]::GetFullPath($StatePath) } else { [System.IO.Path]::Combine($processRoot, "launcher-state.json") }
+$comfyPidPath = [System.IO.Path]::Combine($processRoot, "comfyui.pid")
+
+function Remove-AsteriaLauncherRecords {
+    foreach ($path in @($resolvedStatePath, $comfyPidPath)) {
+        if (Test-Path -LiteralPath $path -PathType Leaf) { Remove-Item -LiteralPath $path -Force }
+    }
+}
 
 try { $state = Read-AsteriaLauncherState -Path $resolvedStatePath }
 catch { Complete-Stop "error" "launcher_state_invalid" 74 "The launcher ownership record is invalid and was left unchanged." }
-if ($null -eq $state) { Complete-Stop "stopped" "launcher_already_stopped" 0 "Asteria has no launcher-owned processes to stop." }
+if ($null -eq $state) {
+    Remove-AsteriaLauncherRecords
+    Complete-Stop "stopped" "launcher_already_stopped" 0 "Asteria has no launcher-owned processes to stop."
+}
 
 $stateBelongsToRoot = ([System.IO.Path]::GetFullPath([string]$state.app_root)).Equals($resolvedAppRoot, [System.StringComparison]::OrdinalIgnoreCase)
 if (-not $stateBelongsToRoot) {
-    $runningOrMismatched = @($state.processes | Where-Object { (Get-AsteriaOwnedProcessState -Record $_) -ne "not-running" })
-    if ($runningOrMismatched.Count -gt 0) {
+    $owned = @($state.processes | Where-Object { (Get-AsteriaOwnedProcessState -Record $_) -eq "owned" })
+    if ($owned.Count -gt 0) {
         Complete-Stop "blocked" "launcher_ownership_mismatch" 75 "The launcher record belongs to another application folder. No process was stopped."
     }
-    Remove-Item -LiteralPath $resolvedStatePath -Force
+    Remove-AsteriaLauncherRecords
     Complete-Stop "stopped" "launcher_stale_state_removed" 0 "A stopped launcher record from the previous folder was removed."
 }
 
 $mismatches = @()
+$staleRecordFound = $false
 $records = @($state.processes)
 [array]::Reverse($records)
 foreach ($record in $records) {
     $ownership = Get-AsteriaOwnedProcessState -Record $record
-    if ($ownership -eq "not-running") { continue }
-    if ($ownership -ne "owned") { $mismatches += [string]$record.name; continue }
-    if (-not (Stop-AsteriaOwnedProcess -Record $record -TimeoutSeconds 10)) { $mismatches += [string]$record.name }
+    if ($ownership -ne "owned") {
+        # A reused PID is not the recorded Asteria process. Leave that process alone,
+        # but do not retain a launcher record that can no longer identify its owner.
+        $staleRecordFound = $true
+        continue
+    }
+    if (-not (Stop-AsteriaOwnedProcess -Record $record -TimeoutSeconds 10)) {
+        $finalOwnership = Get-AsteriaOwnedProcessState -Record $record
+        if ($finalOwnership -eq "owned") { $mismatches += [string]$record.name }
+        else { $staleRecordFound = $true }
+    }
 }
 if ($mismatches.Count -gt 0) {
     Complete-Stop "blocked" "launcher_ownership_mismatch" 75 "One or more process records no longer match. Unmatched processes were not stopped."
 }
-Remove-Item -LiteralPath $resolvedStatePath -Force
+Remove-AsteriaLauncherRecords
+if ($staleRecordFound) {
+    Complete-Stop "stopped" "launcher_stale_state_removed" 0 "Stopped launcher records were removed."
+}
 Complete-Stop "stopped" "launcher_stopped" 0 "Asteria launcher-owned processes were stopped."

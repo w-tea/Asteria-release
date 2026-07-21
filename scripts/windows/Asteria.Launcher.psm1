@@ -112,6 +112,21 @@ function Get-AsteriaOwnedProcessState {
     return "mismatch"
 }
 
+function Wait-AsteriaOwnedProcessExit {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]$Record,
+        [int]$TimeoutSeconds
+    )
+
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    do {
+        if ((Get-AsteriaOwnedProcessState -Record $Record) -ne "owned") { return $true }
+        Start-Sleep -Milliseconds 50
+    } while ($watch.Elapsed.TotalSeconds -lt $TimeoutSeconds)
+    return (Get-AsteriaOwnedProcessState -Record $Record) -ne "owned"
+}
+
 function Stop-AsteriaOwnedProcess {
     [CmdletBinding()]
     param(
@@ -120,16 +135,18 @@ function Stop-AsteriaOwnedProcess {
     )
 
     if ((Get-AsteriaOwnedProcessState -Record $Record) -ne "owned") { return $false }
-    Stop-Process -Id ([int]$Record.pid) -ErrorAction Stop
     try {
-        Wait-Process -Id ([int]$Record.pid) -Timeout $TimeoutSeconds -ErrorAction Stop
+        Stop-Process -Id ([int]$Record.pid) -ErrorAction Stop
     }
     catch {
-        if ((Get-AsteriaOwnedProcessState -Record $Record) -eq "owned") {
-            Stop-Process -Id ([int]$Record.pid) -Force -ErrorAction Stop
-        }
+        if ((Get-AsteriaOwnedProcessState -Record $Record) -ne "owned") { return $true }
+        throw
     }
-    return (Get-AsteriaOwnedProcessState -Record $Record) -eq "not-running"
+    if (Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds $TimeoutSeconds) { return $true }
+    if ((Get-AsteriaOwnedProcessState -Record $Record) -eq "owned") {
+        Stop-Process -Id ([int]$Record.pid) -Force -ErrorAction Stop
+    }
+    return Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds $TimeoutSeconds
 }
 
 function Test-AsteriaTcpPortInUse {
