@@ -1,0 +1,14 @@
+version: 2
+package:
+  backend_root: app/backend
+  backend_app: app/backend/app
+  frontend_entry: app/frontend/server/index.mjs
+  python: runtime/python/python.exe
+  node: runtime/node/node.exe
+  comfy_root: runtime/ComfyUI
+writable_roots:
+  data: data
+  models: models
+  outputs: outputs
+  logs: logs
+  temp: temp

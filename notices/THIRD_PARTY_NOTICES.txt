@@ -1,0 +1,11 @@
+Asteria V1.0.0 Third-Party Notices
+
+Asteria downloads and uses third-party runtimes, packages, custom nodes, and
+model assets. The authoritative pinned identities, provider URLs, provenance
+links, and license URLs are recorded in release-manifest.yaml,
+runtime-dependencies.yaml, and model-dependencies.yaml.
+
+Optional model downloads remain subject to their provider terms. The Anima
+starter pack requires explicit acceptance of its non-commercial license before
+download. Asteria does not grant additional rights to third-party components or
+model files.

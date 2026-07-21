@@ -1,0 +1,190 @@
+dependencies:
+  - id: comfyui-impact-pack
+    label: ComfyUI Impact Pack
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - detailer
+      - segmentation
+    source:
+      provider: archive
+      url: https://codeload.github.com/ltdrdata/ComfyUI-Impact-Pack/zip/429d0159ad429e64d2b3916e6e7be9c22d025c3c
+      ref: 429d0159ad429e64d2b3916e6e7be9c22d025c3c
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/ltdrdata/ComfyUI-Impact-Pack/commit/429d0159ad429e64d2b3916e6e7be9c22d025c3c
+    target:
+      relative_path: custom_nodes/ComfyUI-Impact-Pack
+    post_install:
+      requirements_file: requirements.txt
+      install_script: install.py
+    size_bytes: 2672533
+    checksum_sha256: 017bd1ddb7d17c923a1309ff1251379eaf65b71a9ac8fa91d384bb275bf000ce
+    license:
+      id: gpl-3.0
+      url: https://github.com/ltdrdata/ComfyUI-Impact-Pack/blob/429d0159ad429e64d2b3916e6e7be9c22d025c3c/LICENSE.txt
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: comfyui-impact-subpack
+    label: ComfyUI Impact Subpack
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - detailer
+      - detector_models
+    source:
+      provider: archive
+      url: https://codeload.github.com/ltdrdata/ComfyUI-Impact-Subpack/zip/50c7b71a6a224734cc9b21963c6d1926816a97f1
+      ref: 50c7b71a6a224734cc9b21963c6d1926816a97f1
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/ltdrdata/ComfyUI-Impact-Subpack/commit/50c7b71a6a224734cc9b21963c6d1926816a97f1
+    target:
+      relative_path: custom_nodes/ComfyUI-Impact-Subpack
+    post_install:
+      requirements_file: requirements.txt
+      install_script: install.py
+    size_bytes: 27328
+    checksum_sha256: 08e73cfe3304f25ee0a8c9e35c281b14d9cf1838682d92a071d8a18692674cde
+    license:
+      id: agpl-3.0
+      url: https://github.com/ltdrdata/ComfyUI-Impact-Subpack/blob/50c7b71a6a224734cc9b21963c6d1926816a97f1/LICENSE.txt
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: comfyui-controlnet-aux
+    label: ComfyUI ControlNet Auxiliary Preprocessors
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - controlnet
+      - controlnet_preprocessor
+      - openpose
+    source:
+      provider: archive
+      url: https://codeload.github.com/Fannovel16/comfyui_controlnet_aux/zip/e8b689a513c3e6b63edc44066560ca5919c0576e
+      ref: e8b689a513c3e6b63edc44066560ca5919c0576e
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/Fannovel16/comfyui_controlnet_aux/commit/e8b689a513c3e6b63edc44066560ca5919c0576e
+    target:
+      relative_path: custom_nodes/comfyui_controlnet_aux
+    post_install:
+      requirements_file: requirements.txt
+      install_script:
+      pip_packages:
+        - timm==1.0.27
+    size_bytes: 39934804
+    checksum_sha256: 20a064db4a175aabc66a4736e6c90aa13413279c465f62d819bd64de19a0c1fd
+    license:
+      id: apache-2.0
+      url: https://github.com/Fannovel16/comfyui_controlnet_aux/blob/e8b689a513c3e6b63edc44066560ca5919c0576e/LICENSE.txt
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: comfyui-inspire-pack
+    label: ComfyUI Inspire Pack
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - lora
+      - lora_block_weight
+      - hires_fix
+      - seed_variation
+      - seed_resize
+    source:
+      provider: archive
+      url: https://codeload.github.com/ltdrdata/ComfyUI-Inspire-Pack/zip/d23db9aa544de9a6d4c609cb7005fa9e0d42031d
+      ref: d23db9aa544de9a6d4c609cb7005fa9e0d42031d
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/ltdrdata/ComfyUI-Inspire-Pack/commit/d23db9aa544de9a6d4c609cb7005fa9e0d42031d
+    target:
+      relative_path: custom_nodes/ComfyUI-Inspire-Pack
+    post_install:
+      requirements_file: requirements.txt
+      install_script:
+    size_bytes: 107295
+    checksum_sha256: f435c04ed218341d887b77def3ca3e8bcb2d7b7a9de475b7f971fdf6673962d4
+    license:
+      id: gpl-3.0
+      url: https://github.com/ltdrdata/ComfyUI-Inspire-Pack/blob/d23db9aa544de9a6d4c609cb7005fa9e0d42031d/LICENSE
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: comfyui-advanced-controlnet
+    label: ComfyUI Advanced ControlNet
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - controlnet
+      - controlnet_advanced
+    source:
+      provider: archive
+      url: https://codeload.github.com/Kosinkadink/ComfyUI-Advanced-ControlNet/zip/9e60d8a9c8016c5315063aa7af66b321a0444df7
+      ref: 9e60d8a9c8016c5315063aa7af66b321a0444df7
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/Kosinkadink/ComfyUI-Advanced-ControlNet/commit/9e60d8a9c8016c5315063aa7af66b321a0444df7
+    target:
+      relative_path: custom_nodes/ComfyUI-Advanced-ControlNet
+    post_install:
+      requirements_file:
+      install_script:
+    size_bytes: 141227
+    checksum_sha256: 15dc8e098d6e2b31b9f83417ba04f66429d1fe388048c3507db37ccb46d6bc88
+    license:
+      id: gpl-3.0
+      url: https://github.com/Kosinkadink/ComfyUI-Advanced-ControlNet/blob/9e60d8a9c8016c5315063aa7af66b321a0444df7/LICENSE
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: comfyui-anima-lllite
+    label: ComfyUI Anima LLLite
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - anima
+      - anima_lllite
+      - controlnet
+    source:
+      provider: archive
+      url: https://codeload.github.com/kohya-ss/ComfyUI-Anima-LLLite/zip/6701c8d6fc3bf1b2ed966b87c95ce609c52cebea
+      ref: 6701c8d6fc3bf1b2ed966b87c95ce609c52cebea
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/kohya-ss/ComfyUI-Anima-LLLite/commit/6701c8d6fc3bf1b2ed966b87c95ce609c52cebea
+    target:
+      relative_path: custom_nodes/ComfyUI-Anima-LLLite
+    post_install:
+      requirements_file:
+      install_script:
+    size_bytes: 19560
+    checksum_sha256: 0874ff38e948b86392d9f5b8e0beecf6441d551702a085d7d0a192a73c1bfba3
+    license:
+      id: apache-2.0
+      url: https://github.com/kohya-ss/ComfyUI-Anima-LLLite/blob/6701c8d6fc3bf1b2ed966b87c95ce609c52cebea/LICENSE
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: comfyui-ppm
+    label: ComfyUI PPM
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - anima
+      - anima_regional_prompting
+      - attention_couple
+    source:
+      provider: archive
+      url: https://codeload.github.com/pamparamm/ComfyUI-ppm/zip/cb4a46ba9b0ebdb1f9a228a901bb958bfc8ed3ba
+      ref: cb4a46ba9b0ebdb1f9a228a901bb958bfc8ed3ba
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/pamparamm/ComfyUI-ppm/commit/cb4a46ba9b0ebdb1f9a228a901bb958bfc8ed3ba
+    target:
+      relative_path: custom_nodes/ComfyUI-ppm
+    post_install:
+      requirements_file:
+      install_script:
+    size_bytes: 552673
+    checksum_sha256: bb3e9d3692d6d875d5dcdf4c0a26a08b3f43163636dbe1c6140b330b8078ba1a
+    license:
+      id: agpl-3.0
+      url: https://github.com/pamparamm/ComfyUI-ppm/blob/cb4a46ba9b0ebdb1f9a228a901bb958bfc8ed3ba/LICENSE
+    repair_policy: replace-managed-component
+    auto_install: true

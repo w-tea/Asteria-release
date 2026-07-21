@@ -1,0 +1,42 @@
+id: flux_txt2img_workflow
+profile: flux1
+schema: schemas/flux_txt2img.yaml
+builder: ComfyTxt2ImgWorkflowBuilder._build_flux
+mode: txt2img
+nodes:
+  unet_loader: "1"
+  dual_clip_loader: "2"
+  vae_loader: "3"
+  model_sampling: "4"
+  conditioning: "5"
+  latent: "6"
+  sampler_tail_start: "7"
+class_types:
+  unet_loader: UNETLoader
+  dual_clip_loader: DualCLIPLoader
+  vae_loader: VAELoader
+  model_sampling: ModelSamplingFlux
+  conditioning: CLIPTextEncodeFlux
+  latent: EmptySD3LatentImage
+  lora_loader: LoraLoader
+  load_image: LoadImage
+  random_noise: RandomNoise
+  basic_guider: BasicGuider
+  sampler_select: KSamplerSelect
+  basic_scheduler: BasicScheduler
+  sampler_custom: SamplerCustomAdvanced
+  vae_decode: VAEDecode
+  save_image: SaveImage
+  latent_upscale: LatentUpscale
+  latent_upscale_by: LatentUpscaleBy
+  image_scale: ImageScale
+  image_scale_by: ImageScaleBy
+  upscale_model_loader: UpscaleModelLoader
+  image_upscale_with_model: ImageUpscaleWithModel
+  vae_encode: VAEEncode
+  set_latent_noise_mask: SetLatentNoiseMask
+dynamic_sections:
+  - img2img
+  - inpaint
+  - hires_fix
+  - remaster

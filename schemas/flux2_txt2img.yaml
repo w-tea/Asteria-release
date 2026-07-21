@@ -1,0 +1,39 @@
+id: flux2_txt2img
+profile: flux2
+name: Flux.2 txt2img
+mode: txt2img
+model_family: flux2
+fields:
+  prompt: {type: string, required: true, backend_key: prompt}
+  negative_prompt: {type: string, required: false, backend_key: negative_prompt, default: ""}
+  seed: {type: integer, required: true, backend_key: seed, default: -1}
+  steps: {type: integer, required: true, backend_key: steps, min: 1, max: 150, default: 28}
+  cfg_scale: {type: number, required: true, backend_key: cfg_scale, min: 1, max: 30, default: 3.5}
+  sampler: {type: string, required: true, backend_key: sampler, default: "Euler"}
+  scheduler: {type: string, required: true, backend_key: scheduler, default: "Flux2", options: ["Flux2"]}
+  width: {type: integer, required: true, backend_key: width, min: 256, max: 4096, default: 832}
+  height: {type: integer, required: true, backend_key: height, min: 256, max: 4096, default: 1216}
+  batch_size: {type: integer, required: true, backend_key: batch_size, min: 1, max: 16, default: 1}
+  batch_count: {type: integer, required: true, backend_key: batch_count, min: 1, max: 100, default: 1}
+  diffusion_model: {type: model, model_type: checkpoint, required: false, backend_key: diffusion_model}
+  text_encoder: {type: model, model_type: text_encoder, required: false, backend_key: text_encoder}
+  vae: {type: model, model_type: vae, required: false, backend_key: vae}
+  clip_skip: {type: integer, required: false, backend_key: clip_skip, min: 1, max: 12, default: 1}
+  refiner_enabled: {type: boolean, required: false, backend_key: refiner_enabled, default: false}
+  refiner_checkpoint: {type: string, required: false, backend_key: refiner_checkpoint, default: ""}
+  refiner_switch_at: {type: number, required: false, backend_key: refiner_switch_at, min: 0, max: 1, default: 0.8}
+  hires_enabled: {type: boolean, required: false, backend_key: hires_enabled, default: false}
+  hires_upscaler: {type: string, required: false, backend_key: hires_upscaler, default: "Latent", options: ["Latent", "Latent (antialiased)", "Latent (bicubic)", "Latent (bicubic antialiased)", "Latent (nearest)", "Latent (nearest-exact)", "Lanczos", "Bicubic", "Bilinear", "Nearest", "Area", "ESRGAN 4x", "R-ESGAN4x", "R-ESGAN4x Anime6B"]}
+  hires_steps: {type: integer, required: false, backend_key: hires_steps, min: 0, max: 150, default: 18}
+  hires_denoising_strength: {type: number, required: false, backend_key: hires_denoising_strength, min: 0, max: 1, default: 0.38}
+  hires_scale: {type: number, required: false, backend_key: hires_scale, min: 1, max: 8, default: 2}
+  hires_resize_width: {type: integer, required: false, backend_key: hires_resize_width, min: 0, max: 8192, default: 0}
+  hires_resize_height: {type: integer, required: false, backend_key: hires_resize_height, min: 0, max: 8192, default: 0}
+  hires_sampler: {type: string, required: false, backend_key: hires_sampler, default: "Use same sampler"}
+  hires_scheduler: {type: string, required: false, backend_key: hires_scheduler, default: "Use same scheduler", options: ["Use same scheduler"]}
+  hires_checkpoint: {type: string, required: false, backend_key: hires_checkpoint, default: "Use same checkpoint"}
+  hires_prompt: {type: string, required: false, backend_key: hires_prompt, default: ""}
+  hires_negative_prompt: {type: string, required: false, backend_key: hires_negative_prompt, default: ""}
+  hires_cfg_scale: {type: number, required: false, backend_key: hires_cfg_scale, min: 0, max: 30, default: 0}
+  hires_distilled_cfg_scale: {type: number, required: false, backend_key: hires_distilled_cfg_scale, min: 0, max: 30, default: 0}
+  hires_keep_first_pass: {type: boolean, required: false, backend_key: hires_keep_first_pass, default: false}

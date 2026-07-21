@@ -1,0 +1,111 @@
+profiles:
+  - id: sdxl
+    label: SDXL / Illustrious
+    dependency_ids:
+      - sdxl-checkpoint
+      - sdxl-vae
+      - sdxl-controlnet-canny-xinsir
+      - sdxl-controlnet-depth-xinsir
+      - sdxl-controlnet-tile-xinsir
+      - sdxl-controlnet-openpose-xinsir
+    model_slots:
+      - id: checkpoint
+        label: Checkpoint
+        type: checkpoint
+        required: true
+      - id: vae
+        label: VAE
+        type: vae
+        required: true
+    setting_groups:
+      - base_generation
+      - sdxl_model
+      - lora
+      - controlnet
+      - detailer
+      - hires_fix
+      - topaz
+
+  - id: anima
+    label: Anima
+    dependency_ids:
+      - anima-base-v1
+      - anima-text-encoder
+      - anima-vae
+      - anima-lllite-regional-controlnet
+    model_slots:
+      - id: diffusion_model
+        label: Anima Transformer
+        type: checkpoint
+        required: true
+      - id: text_encoder
+        label: Text Encoder
+        type: text_encoder
+        required: true
+      - id: vae
+        label: VAE
+        type: vae
+        required: true
+    setting_groups:
+      - base_generation
+      - anima_runtime
+      - lora
+      - controlnet
+      - detailer
+      - hires_fix
+      - topaz
+
+  - id: flux1
+    label: Flux.1
+    dependency_ids:
+      - flux-model
+      - flux-clip-l
+      - flux-t5xxl
+      - flux-vae
+    model_slots:
+      - id: diffusion_model
+        label: Flux.1 Transformer
+        type: checkpoint
+        required: true
+      - id: clip_l
+        label: CLIP-L
+        type: text_encoder
+        required: true
+      - id: t5xxl
+        label: T5-XXL
+        type: text_encoder
+        required: true
+      - id: vae
+        label: VAE
+        type: vae
+        required: true
+    setting_groups:
+      - base_generation
+      - flux_runtime
+      - controlnet
+      - detailer
+      - hires_fix
+      - topaz
+
+  - id: flux2
+    label: Flux.2
+    dependency_ids:
+      - flux2-qwen3-8b
+      - flux2-vae
+    model_slots:
+      - id: diffusion_model
+        label: Flux.2 Transformer
+        type: checkpoint
+        required: true
+      - id: text_encoder
+        label: Flux.2 Text Encoder
+        type: text_encoder
+        required: true
+      - id: vae
+        label: Flux.2 VAE
+        type: vae
+        required: true
+    setting_groups:
+      - base_generation
+      - flux_runtime
+      - hires_fix

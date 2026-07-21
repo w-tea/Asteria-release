@@ -1,0 +1,49 @@
+id: anima_txt2img_workflow
+profile: anima
+schema: schemas/anima_txt2img.yaml
+builder: ComfyTxt2ImgWorkflowBuilder._build_anima
+mode: txt2img
+nodes:
+  diffusion_loader: "1"
+  text_encoder_loader: "2"
+  vae_loader: "3"
+  conditioning: "4"
+  latent: "5"
+  negative_conditioning: "6"
+  sampler_tail_start: "7"
+class_types:
+  unet_loader: UNETLoader
+  text_encoder_loader: CLIPLoader
+  vae_loader: VAELoader
+  conditioning: TextEncodeQwenImageEdit
+  latent: EmptyQwenImageLayeredLatentImage
+  lora_loader: LoraLoader
+  random_noise: RandomNoise
+  basic_guider: BasicGuider
+  cfg_guider: CFGGuider
+  sampler_select: KSamplerSelect
+  basic_scheduler: BasicScheduler
+  sampler_custom: SamplerCustomAdvanced
+  vae_decode: VAEDecode
+  save_image: SaveImage
+  latent_upscale: LatentUpscale
+  latent_upscale_by: LatentUpscaleBy
+  image_scale: ImageScale
+  image_scale_by: ImageScaleBy
+  upscale_model_loader: UpscaleModelLoader
+  image_upscale_with_model: ImageUpscaleWithModel
+  vae_encode: VAEEncode
+  vae_encode_inpaint: VAEEncodeForInpaint
+  load_image: LoadImage
+  image_color_to_mask: ImageColorToMask
+  solid_mask: SolidMask
+  attention_couple: AttentionCouplePPM
+  detailer_detector: UltralyticsDetectorProvider
+  face_detailer: FaceDetailer
+dynamic_sections:
+  - hires_fix
+  - img2img
+  - inpaint
+  - regional_prompting
+  - detailer_units
+  - remaster

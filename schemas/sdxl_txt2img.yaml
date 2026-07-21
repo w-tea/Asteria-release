@@ -1,0 +1,47 @@
+id: sdxl_txt2img
+name: SDXL txt2img
+mode: txt2img
+model_family: sdxl
+fields:
+  prompt: {type: string, required: true, backend_key: prompt}
+  negative_prompt: {type: string, required: false, backend_key: negative_prompt, default: ""}
+  seed: {type: integer, required: true, backend_key: seed, default: -1}
+  subseed: {type: integer, required: false, backend_key: subseed, default: -1}
+  subseed_strength: {type: number, required: false, backend_key: subseed_strength, min: 0, max: 1, default: 0}
+  seed_resize_from_w: {type: integer, required: false, backend_key: seed_resize_from_w, min: 0, max: 4096, default: 0}
+  seed_resize_from_h: {type: integer, required: false, backend_key: seed_resize_from_h, min: 0, max: 4096, default: 0}
+  steps: {type: integer, required: true, backend_key: steps, min: 1, max: 150, default: 30}
+  cfg_scale: {type: number, required: true, backend_key: cfg_scale, min: 1, max: 30, default: 6.5}
+  distilled_cfg_scale: {type: number, required: false, backend_key: distilled_cfg_scale, min: 0, max: 30, default: 3.5}
+  sampler: {type: string, required: true, backend_key: sampler, default: "Euler a"}
+  scheduler: {type: string, required: true, backend_key: scheduler, default: "Automatic"}
+  restore_faces: {type: boolean, required: false, backend_key: restore_faces, default: false}
+  tiling: {type: boolean, required: false, backend_key: tiling, default: false}
+  width: {type: integer, required: true, backend_key: width, min: 256, max: 4096, default: 832}
+  height: {type: integer, required: true, backend_key: height, min: 256, max: 4096, default: 1216}
+  batch_size: {type: integer, required: true, backend_key: batch_size, min: 1, max: 16, default: 1}
+  batch_count: {type: integer, required: true, backend_key: batch_count, min: 1, max: 100, default: 1}
+  checkpoint: {type: model, model_type: checkpoint, required: false, backend_key: checkpoint}
+  vae: {type: string, required: false, backend_key: vae, default: "Automatic"}
+  clip_skip: {type: integer, required: false, backend_key: clip_skip, min: 1, max: 12, default: 2}
+  refiner_enabled: {type: boolean, required: false, backend_key: refiner_enabled, default: true}
+  refiner_checkpoint: {type: string, required: false, backend_key: refiner_checkpoint, default: ""}
+  refiner_switch_at: {type: number, required: false, backend_key: refiner_switch_at, min: 0, max: 1, default: 0.8}
+  hires_enabled: {type: boolean, required: false, backend_key: hires_enabled, default: true}
+  hires_upscaler: {type: string, required: false, backend_key: hires_upscaler, default: "R-ESGAN4x", options: ["Latent", "Latent (antialiased)", "Latent (bicubic)", "Latent (bicubic antialiased)", "Latent (nearest)", "Latent (nearest-exact)", "Lanczos", "Bicubic", "Bilinear", "Nearest", "Area", "ESRGAN 4x", "R-ESGAN4x", "R-ESGAN4x Anime6B", "Topaz Photo AI"]}
+  hires_steps: {type: integer, required: false, backend_key: hires_steps, min: 0, max: 150, default: 18}
+  hires_denoising_strength: {type: number, required: false, backend_key: hires_denoising_strength, min: 0, max: 1, default: 0.38}
+  hires_scale: {type: number, required: false, backend_key: hires_scale, min: 1, max: 8, default: 2}
+  hires_resize_width: {type: integer, required: false, backend_key: hires_resize_width, min: 0, max: 8192, default: 0}
+  hires_resize_height: {type: integer, required: false, backend_key: hires_resize_height, min: 0, max: 8192, default: 0}
+  hires_checkpoint: {type: string, required: false, backend_key: hires_checkpoint, default: "Use same checkpoint"}
+  hires_sampler: {type: string, required: false, backend_key: hires_sampler, default: "Use same sampler"}
+  hires_scheduler: {type: string, required: false, backend_key: hires_scheduler, default: "Use same scheduler"}
+  hires_prompt: {type: string, required: false, backend_key: hires_prompt, default: ""}
+  hires_negative_prompt: {type: string, required: false, backend_key: hires_negative_prompt, default: ""}
+  hires_cfg_scale: {type: number, required: false, backend_key: hires_cfg_scale, min: 0, max: 30, default: 0}
+  hires_distilled_cfg_scale: {type: number, required: false, backend_key: hires_distilled_cfg_scale, min: 0, max: 30, default: 0}
+  hires_keep_first_pass: {type: boolean, required: false, backend_key: hires_keep_first_pass, default: false}
+  hires_noise_mode: {type: string, required: false, backend_key: hires_noise_mode, default: ""}
+  topaz_upscale_model: {type: string, required: false, backend_key: topaz_upscale_model, default: "Graphics"}
+  topaz_upscale_scale: {type: integer, required: false, backend_key: topaz_upscale_scale, min: 1, max: 8, default: 2}

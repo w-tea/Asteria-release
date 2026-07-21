@@ -1,0 +1,128 @@
+id: sdxl_txt2img_workflow
+profile: sdxl
+schema: schemas/sdxl_txt2img.yaml
+builder: ComfyTxt2ImgWorkflowBuilder._build_sdxl
+mode: txt2img
+nodes:
+  checkpoint_loader: "1"
+  clip_positive: "2"
+  clip_negative: "3"
+  latent: "4"
+  sampler: "5"
+  vae_loader: "6"
+  vae_decode: "7"
+  save_image: "9"
+class_types:
+  checkpoint_loader: CheckpointLoaderSimple
+  lora_loader: LoraLoader
+  lora_block_weight_loader: LoraLoaderBlockWeight //Inspire
+  clip_skip: CLIPSetLastLayer
+  vae_loader: VAELoader
+  load_image: LoadImage
+  vae_encode: VAEEncode
+  vae_encode_inpaint: VAEEncodeForInpaint
+  latent: EmptyLatentImage
+  clip_text_encode: CLIPTextEncode
+  clip_text_encode_sdxl: CLIPTextEncodeSDXL
+  controlnet_loader: ControlNetLoader
+  controlnet_apply: ControlNetApplyAdvanced
+  controlnet_soft_weights: ACN_ScaledSoftControlNetWeights
+  controlnet_advanced_apply: ACN_AdvancedControlNetApply_v2
+  ksampler: KSampler
+  ksampler_inspire: KSampler //Inspire
+  ksampler_advanced_inspire: KSamplerAdvanced //Inspire
+  seed_explorer: SeedExplorer //Inspire
+  composite_noise: CompositeNoise //Inspire
+  vae_decode: VAEDecode
+  save_image: SaveImage
+  latent_upscale: LatentUpscale
+  latent_upscale_by: LatentUpscaleBy
+  image_scale: ImageScale
+  image_scale_by: ImageScaleBy
+  upscale_model_loader: UpscaleModelLoader
+  image_upscale_with_model: ImageUpscaleWithModel
+  detailer_detector: UltralyticsDetectorProvider
+  face_detailer: FaceDetailer
+node_contracts:
+  controlnet_soft_weights:
+    required_inputs:
+      - base_multiplier
+    accepted_inputs:
+      - uncond_multiplier
+    outputs_by_index:
+      0: CONTROL_NET_WEIGHTS
+  controlnet_advanced_apply:
+    required_inputs:
+      - positive
+      - negative
+      - control_net
+      - image
+      - strength
+      - start_percent
+      - end_percent
+    accepted_inputs:
+      - weights_override
+      - vae_optional
+  seed_explorer:
+    required_inputs:
+      - latent
+      - seed_prompt
+      - enable_additional
+      - additional_seed
+      - additional_strength
+      - noise_mode
+      - initial_batch_seed_mode
+    required_input_values:
+      noise_mode:
+        - GPU(=A1111)
+      initial_batch_seed_mode:
+        - incremental
+    outputs_by_index:
+      0: NOISE_IMAGE
+  composite_noise:
+    required_inputs:
+      - destination
+      - source
+      - mode
+      - x
+      - y
+    required_input_values:
+      mode:
+        - center
+    outputs_by_index:
+      0: NOISE_IMAGE
+  ksampler_advanced_inspire:
+    required_inputs:
+      - model
+      - add_noise
+      - noise_seed
+      - steps
+      - cfg
+      - sampler_name
+      - scheduler
+      - positive
+      - negative
+      - latent_image
+      - start_at_step
+      - end_at_step
+      - noise_mode
+      - return_with_leftover_noise
+      - batch_seed_mode
+      - variation_seed
+      - variation_strength
+    accepted_inputs:
+      - noise_opt
+    required_input_values:
+      noise_mode:
+        - GPU(=A1111)
+      batch_seed_mode:
+        - incremental
+    outputs_by_index:
+      0: LATENT
+dynamic_sections:
+  - lora_stack
+  - controlnet_units
+  - hires_fix
+  - detailer_units
+  - remaster
+  - seed_resize

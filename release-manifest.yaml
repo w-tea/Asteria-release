@@ -1,0 +1,99 @@
+version: 1
+product:
+  id: asteria
+  version: 1.0.0
+platform:
+  os: windows
+  arch: x86_64
+  gpu: nvidia-cuda
+  minimum_nvidia_driver: "570.65"
+artifacts:
+  - id: bootstrap-uv
+    label: uv bootstrap
+    kind: archive
+    ownership: mandatory-runtime
+    version: 0.11.16
+    source:
+      provider: https
+      url: https://github.com/astral-sh/uv/releases/download/0.11.16/uv-x86_64-pc-windows-msvc.zip
+      revision: 0.11.16
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/astral-sh/uv/releases/tag/0.11.16
+    target:
+      relative_path: bootstrap/uv
+    size_bytes: 23236992
+    checksum_sha256: dd9d6d6554bfab265bfa98aa8e8a406c5c3a7b97582f93de1f4d48d9154a0395
+    license:
+      id: apache-2.0-or-mit
+      url: https://github.com/astral-sh/uv/blob/0.11.16/LICENSE-APACHE
+    repair_policy: replace-managed-component
+
+  - id: python-runtime
+    label: CPython runtime
+    kind: archive
+    ownership: mandatory-runtime
+    version: 3.12.13+20260310
+    source:
+      provider: https
+      url: https://github.com/astral-sh/python-build-standalone/releases/download/20260310/cpython-3.12.13%2B20260310-x86_64-pc-windows-msvc-install_only_stripped.tar.gz
+      revision: "20260310"
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/astral-sh/python-build-standalone/releases/tag/20260310
+    target:
+      relative_path: runtime/python
+    size_bytes: 21842756
+    checksum_sha256: a814e8406b698ad491e1073717d644479e86abf34a3d5897b4d581381b4b8164
+    license:
+      id: mpl-2.0-and-python-2.0
+      url: https://github.com/astral-sh/python-build-standalone/blob/20260310/LICENSE
+    repair_policy: replace-managed-component
+
+  - id: node-runtime
+    label: Node.js runtime
+    kind: archive
+    ownership: mandatory-runtime
+    version: 24.18.0
+    source:
+      provider: https
+      url: https://nodejs.org/dist/v24.18.0/node-v24.18.0-win-x64.zip
+      revision: v24.18.0
+      verified_at: "2026-07-20"
+      provenance_url: https://nodejs.org/dist/v24.18.0/SHASUMS256.txt
+    target:
+      relative_path: runtime/node
+    size_bytes: 37176245
+    checksum_sha256: 0ae68406b42d7725661da979b1403ec9926da205c6770827f33aac9d8f26e821
+    license:
+      id: nodejs-license
+      url: https://github.com/nodejs/node/blob/v24.18.0/LICENSE
+    repair_policy: replace-managed-component
+
+  - id: comfyui-core
+    label: ComfyUI core
+    kind: archive
+    ownership: mandatory-runtime
+    version: 0.28.0
+    source:
+      provider: https
+      url: https://github.com/Comfy-Org/ComfyUI/archive/refs/tags/v0.28.0.zip
+      revision: 700821e
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/Comfy-Org/ComfyUI/releases/tag/v0.28.0
+    target:
+      relative_path: runtime/ComfyUI
+    size_bytes: 12087850
+    checksum_sha256: fd133a3f17194f0cd8067b994e720739a4508e0dee2e57532da3729237d60268
+    license:
+      id: gpl-3.0
+      url: https://github.com/Comfy-Org/ComfyUI/blob/v0.28.0/LICENSE
+    repair_policy: replace-managed-component
+
+python_package_sets:
+  - id: pytorch-cu128
+    ownership: mandatory-runtime
+    version: 2.11.0+cu128
+    index_url: https://download.pytorch.org/whl/cu128
+    requirements:
+      - torch==2.11.0+cu128
+      - torchvision==0.26.0+cu128
+      - torchaudio==2.11.0+cu128

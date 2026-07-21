@@ -1,0 +1,527 @@
+dependencies:
+  - id: sdxl-checkpoint
+    label: SDXL / Illustrious Checkpoint
+    profile: sdxl
+    type: checkpoint
+    release_class: optional-starter
+    starter_pack: sdxl
+    selected_by_default: false
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: teasan/endlustria-LUMICA
+      filename: endlustria-lumica_v04.safetensors
+      revision: "83fb14928036a6df259ff91bf12fb0e9a6116abd"
+      url: https://huggingface.co/teasan/endlustria-LUMICA/resolve/83fb14928036a6df259ff91bf12fb0e9a6116abd/endlustria-lumica_v04.safetensors?download=true
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/teasan/endlustria-LUMICA/tree/83fb14928036a6df259ff91bf12fb0e9a6116abd
+    target:
+      relative_path: checkpoints/sdxl/endlustria-lumica_v04.safetensors
+      slot_id: checkpoint
+    size_bytes: 6938042316
+    checksum_sha256: 7beb0f8fab3d00c15d370142cb5ab9663cc4bffaf119dca74c519fafe53e25f4
+    repair_policy: replace-managed-component
+    license:
+      id: creativeml-openrail-m
+      url: https://huggingface.co/spaces/CompVis/stable-diffusion-license
+      requires_confirmation: false
+
+  - id: sdxl-vae
+    label: SDXL VAE
+    profile: sdxl
+    type: vae
+    release_class: optional-starter
+    starter_pack: sdxl
+    selected_by_default: false
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: stabilityai/sdxl-vae
+      filename: sdxl_vae.safetensors
+      revision: 6f5909a7e596173e25d4e97b07fd19cdf9611c76
+      url: https://huggingface.co/stabilityai/sdxl-vae/resolve/6f5909a7e596173e25d4e97b07fd19cdf9611c76/sdxl_vae.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/stabilityai/sdxl-vae/revision/6f5909a7e596173e25d4e97b07fd19cdf9611c76
+    target:
+      relative_path: vae/sdxl/sdxl_vae.safetensors
+      slot_id: vae
+    size_bytes: 334641164
+    checksum_sha256: 63aeecb90ff7bc1c115395962d3e803571385b61938377bc7089b36e81e92e2e
+    repair_policy: replace-managed-component
+    license:
+      id: openrail-plus
+      url: https://huggingface.co/stabilityai/sdxl-vae/blob/6f5909a7e596173e25d4e97b07fd19cdf9611c76/LICENSE.md
+      requires_confirmation: false
+
+  - id: realesrgan-x4plus
+    label: RealESRGAN x4 Plus Upscaler
+    profile: shared
+    type: upscaler
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: huggingface
+      repo: Comfy-Org/Real-ESRGAN_repackaged
+      filename: RealESRGAN_x4plus.safetensors
+      revision: 612512cf5dfee6e3fda729e422318ebb373e04a1
+      url: https://huggingface.co/Comfy-Org/Real-ESRGAN_repackaged/resolve/612512cf5dfee6e3fda729e422318ebb373e04a1/RealESRGAN_x4plus.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/Comfy-Org/Real-ESRGAN_repackaged/revision/612512cf5dfee6e3fda729e422318ebb373e04a1
+    target:
+      relative_path: upscalers/RealESRGAN_x4plus.safetensors
+      slot_id:
+    size_bytes: 66857836
+    checksum_sha256: 37f9a931c215f040aa6d50f711f2cb115f713c46df1d0d6469a8bd7bfe9a60bb
+    repair_policy: replace-managed-component
+    license:
+      id: bsd-3-clause
+      url: https://github.com/xinntao/Real-ESRGAN/blob/v0.2.5.0/LICENSE
+      requires_confirmation: false
+
+  - id: esrgan-4x
+    label: ESRGAN 4x Upscaler
+    profile: shared
+    type: upscaler
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: direct
+      repo: cszn/KAIR
+      filename: ESRGAN.pth
+      revision: v1.0
+      url: https://github.com/cszn/KAIR/releases/download/v1.0/ESRGAN.pth
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/cszn/KAIR/releases/tag/v1.0
+    target:
+      relative_path: upscalers/ESRGAN.pth
+      slot_id:
+    size_bytes: 66929193
+    checksum_sha256: 65fece06e1ccb48853242aa972bdf00ad07a7dd8938d2dcbdf4221b59f6372ce
+    repair_policy: replace-managed-component
+    license:
+      id: mit
+      url: https://github.com/cszn/KAIR/blob/v1.0/LICENSE
+      requires_confirmation: false
+
+  - id: realesrgan-x4plus-anime6b
+    label: RealESRGAN x4 Plus Anime6B Upscaler
+    profile: shared
+    type: upscaler
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: direct
+      repo: xinntao/Real-ESRGAN
+      filename: RealESRGAN_x4plus_anime_6B.pth
+      revision: v0.2.2.4
+      url: https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth
+      verified_at: "2026-07-20"
+      provenance_url: https://github.com/xinntao/Real-ESRGAN/releases/tag/v0.2.2.4
+    target:
+      relative_path: upscalers/RealESRGAN_x4plus_anime_6B.pth
+      slot_id:
+    size_bytes: 17938799
+    checksum_sha256: f872d837d3c90ed2e05227bed711af5671a6fd1c9f7d7e91c911a61f155e99da
+    repair_policy: replace-managed-component
+    license:
+      id: bsd-3-clause
+      url: https://github.com/xinntao/Real-ESRGAN/blob/v0.2.2.4/LICENSE
+      requires_confirmation: false
+
+  - id: sdxl-controlnet-canny-xinsir
+    label: SDXL ControlNet Canny
+    profile: sdxl
+    type: controlnet
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: huggingface
+      repo: xinsir/controlnet-canny-sdxl-1.0
+      filename: diffusion_pytorch_model.safetensors
+      revision: 1271357eda52d54b857c650cacb5b51144643ccb
+      url: https://huggingface.co/xinsir/controlnet-canny-sdxl-1.0/resolve/1271357eda52d54b857c650cacb5b51144643ccb/diffusion_pytorch_model.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/xinsir/controlnet-canny-sdxl-1.0/revision/1271357eda52d54b857c650cacb5b51144643ccb
+    target:
+      relative_path: controlnet/sdxl/xinsir-controlnet-canny-sdxl-1.0.safetensors
+      slot_id:
+    size_bytes: 2502139104
+    checksum_sha256: bf47cd757ceaf2572c53321329ef819ea38c09a6e3783588387913cd94dff47c
+    repair_policy: replace-managed-component
+    license:
+      id: apache-2.0
+      url: https://huggingface.co/xinsir/controlnet-canny-sdxl-1.0/blob/1271357eda52d54b857c650cacb5b51144643ccb/README.md
+      requires_confirmation: false
+
+  - id: sdxl-controlnet-depth-xinsir
+    label: SDXL ControlNet Depth
+    profile: sdxl
+    type: controlnet
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: huggingface
+      repo: xinsir/controlnet-depth-sdxl-1.0
+      filename: diffusion_pytorch_model.safetensors
+      revision: 961552fa2913e3aa82cdfb32cb51bf182d95207c
+      url: https://huggingface.co/xinsir/controlnet-depth-sdxl-1.0/resolve/961552fa2913e3aa82cdfb32cb51bf182d95207c/diffusion_pytorch_model.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/xinsir/controlnet-depth-sdxl-1.0/revision/961552fa2913e3aa82cdfb32cb51bf182d95207c
+    target:
+      relative_path: controlnet/sdxl/xinsir-controlnet-depth-sdxl-1.0.safetensors
+      slot_id:
+    size_bytes: 2502139104
+    checksum_sha256: ea3770af4c33ea8ba8dccc0106ec5d5c5c6e504eb382119a3ccac3c9d973d344
+    repair_policy: replace-managed-component
+    license:
+      id: apache-2.0
+      url: https://huggingface.co/xinsir/controlnet-depth-sdxl-1.0/blob/961552fa2913e3aa82cdfb32cb51bf182d95207c/README.md
+      requires_confirmation: false
+
+  - id: sdxl-controlnet-tile-xinsir
+    label: SDXL ControlNet Tile
+    profile: sdxl
+    type: controlnet
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: huggingface
+      repo: xinsir/controlnet-tile-sdxl-1.0
+      filename: diffusion_pytorch_model.safetensors
+      revision: 1ae8d9529efe58f7362a987363ff86a7904dc84f
+      url: https://huggingface.co/xinsir/controlnet-tile-sdxl-1.0/resolve/1ae8d9529efe58f7362a987363ff86a7904dc84f/diffusion_pytorch_model.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/xinsir/controlnet-tile-sdxl-1.0/revision/1ae8d9529efe58f7362a987363ff86a7904dc84f
+    target:
+      relative_path: controlnet/sdxl/xinsir-controlnet-tile-sdxl-1.0.safetensors
+      slot_id:
+    size_bytes: 2502139104
+    checksum_sha256: 9f23ba7be22bf8796c12565e00ea4b287acac982cdf384d368a8b18b6990e011
+    repair_policy: replace-managed-component
+    license:
+      id: apache-2.0
+      url: https://huggingface.co/xinsir/controlnet-tile-sdxl-1.0/blob/1ae8d9529efe58f7362a987363ff86a7904dc84f/README.md
+      requires_confirmation: false
+
+  - id: sdxl-controlnet-openpose-xinsir
+    label: SDXL ControlNet OpenPose
+    profile: sdxl
+    type: controlnet
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: huggingface
+      repo: xinsir/controlnet-openpose-sdxl-1.0
+      filename: diffusion_pytorch_model.safetensors
+      revision: 23f966cd5cfdd3f7729c903e243d87152162d2b7
+      url: https://huggingface.co/xinsir/controlnet-openpose-sdxl-1.0/resolve/23f966cd5cfdd3f7729c903e243d87152162d2b7/diffusion_pytorch_model.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/xinsir/controlnet-openpose-sdxl-1.0/revision/23f966cd5cfdd3f7729c903e243d87152162d2b7
+    target:
+      relative_path: controlnet/sdxl/xinsir-controlnet-openpose-sdxl-1.0.safetensors
+      slot_id:
+    size_bytes: 2502139104
+    checksum_sha256: b8524e557a7df60d081f5d4a0eb109967d107df217943bf88c2d99b9ebcc06c5
+    repair_policy: replace-managed-component
+    license:
+      id: apache-2.0
+      url: https://huggingface.co/xinsir/controlnet-openpose-sdxl-1.0/blob/23f966cd5cfdd3f7729c903e243d87152162d2b7/README.md
+      requires_confirmation: false
+
+  - id: sdxl-controlnet-union-xinsir
+    label: SDXL ControlNet Union
+    profile: sdxl
+    type: controlnet
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: huggingface
+      repo: xinsir/controlnet-union-sdxl-1.0
+      filename: diffusion_pytorch_model.safetensors
+      revision: 801a4a3fa3d4c936f4feea95b98607bc6726f80c
+      url: https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/801a4a3fa3d4c936f4feea95b98607bc6726f80c/diffusion_pytorch_model.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/xinsir/controlnet-union-sdxl-1.0/revision/801a4a3fa3d4c936f4feea95b98607bc6726f80c
+    target:
+      relative_path: controlnet/sdxl/xinsir-controlnet-union-sdxl-1.0.safetensors
+      slot_id:
+    size_bytes: 2512030408
+    checksum_sha256: a9e13fd61f3193887791c8a0dd07a07202174dc47d5ddaea94ea1344f07c7467
+    repair_policy: replace-managed-component
+    license:
+      id: apache-2.0
+      url: https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/blob/801a4a3fa3d4c936f4feea95b98607bc6726f80c/README.md
+      requires_confirmation: false
+
+  - id: anima-base-v1
+    label: Anima Base v1.0
+    profile: anima
+    type: checkpoint
+    release_class: optional-starter
+    starter_pack: anima
+    selected_by_default: false
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: circlestone-labs/Anima
+      filename: anima-base-v1.0.safetensors
+      revision: fa1c61a99d95dbede6beda996c69c739512df290
+      url: https://huggingface.co/circlestone-labs/Anima/resolve/fa1c61a99d95dbede6beda996c69c739512df290/split_files/diffusion_models/anima-base-v1.0.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/circlestone-labs/Anima/revision/fa1c61a99d95dbede6beda996c69c739512df290
+    target:
+      relative_path: checkpoints/anima/anima-base-v1.0.safetensors
+      slot_id: diffusion_model
+    size_bytes: 4182218328
+    checksum_sha256: bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e
+    repair_policy: replace-managed-component
+    license:
+      id: circlestone-labs-non-commercial-license
+      url: https://huggingface.co/circlestone-labs/Anima/blob/fa1c61a99d95dbede6beda996c69c739512df290/LICENSE.md
+      requires_confirmation: true
+
+  - id: anima-text-encoder
+    label: Anima Text Encoder
+    profile: anima
+    type: text_encoder
+    release_class: optional-starter
+    starter_pack: anima
+    selected_by_default: false
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: circlestone-labs/Anima
+      filename: qwen_3_06b_base.safetensors
+      revision: fa1c61a99d95dbede6beda996c69c739512df290
+      url: https://huggingface.co/circlestone-labs/Anima/resolve/fa1c61a99d95dbede6beda996c69c739512df290/split_files/text_encoders/qwen_3_06b_base.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/circlestone-labs/Anima/revision/fa1c61a99d95dbede6beda996c69c739512df290
+    target:
+      relative_path: text_encoders/anima/qwen_3_06b_base.safetensors
+      slot_id: text_encoder
+    size_bytes: 1192135096
+    checksum_sha256: cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba
+    repair_policy: replace-managed-component
+    license:
+      id: circlestone-labs-non-commercial-license
+      url: https://huggingface.co/circlestone-labs/Anima/blob/fa1c61a99d95dbede6beda996c69c739512df290/LICENSE.md
+      requires_confirmation: true
+
+  - id: anima-vae
+    label: Anima VAE
+    profile: anima
+    type: vae
+    release_class: optional-starter
+    starter_pack: anima
+    selected_by_default: false
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: circlestone-labs/Anima
+      filename: qwen_image_vae.safetensors
+      revision: fa1c61a99d95dbede6beda996c69c739512df290
+      url: https://huggingface.co/circlestone-labs/Anima/resolve/fa1c61a99d95dbede6beda996c69c739512df290/split_files/vae/qwen_image_vae.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/circlestone-labs/Anima/revision/fa1c61a99d95dbede6beda996c69c739512df290
+    target:
+      relative_path: vae/anima/qwen_image_vae.safetensors
+      slot_id: vae
+    size_bytes: 253806246
+    checksum_sha256: a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f
+    repair_policy: replace-managed-component
+    license:
+      id: circlestone-labs-non-commercial-license
+      url: https://huggingface.co/circlestone-labs/Anima/blob/fa1c61a99d95dbede6beda996c69c739512df290/LICENSE.md
+      requires_confirmation: true
+
+  - id: anima-lllite-regional-controlnet
+    label: Anima LLLite Regional ControlNet
+    profile: anima
+    type: controlnet
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: huggingface
+      repo: Sen-sou/Anima-LLLite-Regional-Controlnet
+      filename: anima-lllite-regional-exp-v3.safetensors
+      revision: f1b7beeddb4175d2d20b14e10538db62bbb441a6
+      url: https://huggingface.co/Sen-sou/Anima-LLLite-Regional-Controlnet/resolve/f1b7beeddb4175d2d20b14e10538db62bbb441a6/anima-lllite-regional-exp-v3.safetensors
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/Sen-sou/Anima-LLLite-Regional-Controlnet/revision/f1b7beeddb4175d2d20b14e10538db62bbb441a6
+    target:
+      relative_path: controlnet/anima/anima-lllite-regional-exp-v3.safetensors
+      slot_id:
+    size_bytes: 51133504
+    checksum_sha256: f8cdc9897a4eaa50b0f9bc18dda098fb096eeb64df001589492b9774d0cf5cc5
+    repair_policy: replace-managed-component
+    license:
+      id: apache-2.0
+      url: https://huggingface.co/Sen-sou/Anima-LLLite-Regional-Controlnet/blob/f1b7beeddb4175d2d20b14e10538db62bbb441a6/README.md
+      requires_confirmation: false
+
+  - id: flux-model
+    label: Flux.1 Dev FP8 Model
+    profile: flux1
+    type: checkpoint
+    release_class: user-owned
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: Comfy-Org/flux1-dev
+      filename: flux1-dev-fp8.safetensors
+      url: https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors
+    target:
+      relative_path: checkpoints/flux1/flux1-dev-fp8.safetensors
+      slot_id: diffusion_model
+    size_bytes:
+    license:
+      id: flux-1-dev-non-commercial-license
+      url: https://huggingface.co/Comfy-Org/flux1-dev
+      requires_confirmation: false
+
+  - id: flux-clip-l
+    label: Flux.1 CLIP-L
+    profile: flux1
+    type: text_encoder
+    release_class: user-owned
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: comfyanonymous/flux_text_encoders
+      filename: clip_l.safetensors
+      url: https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors
+    target:
+      relative_path: text_encoders/flux1/clip_l.safetensors
+      slot_id: clip_l
+    size_bytes:
+    license:
+      id: apache-2.0
+      requires_confirmation: false
+
+  - id: flux-t5xxl
+    label: Flux.1 T5-XXL FP8
+    profile: flux1
+    type: text_encoder
+    release_class: user-owned
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: comfyanonymous/flux_text_encoders
+      filename: t5xxl_fp8_e4m3fn_scaled.safetensors
+      url: https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn_scaled.safetensors
+    target:
+      relative_path: text_encoders/flux1/t5xxl_fp8_e4m3fn_scaled.safetensors
+      slot_id: t5xxl
+    size_bytes:
+    license:
+      id: apache-2.0
+      requires_confirmation: false
+
+  - id: flux-vae
+    label: Flux.1 AE VAE
+    profile: flux1
+    type: vae
+    release_class: user-owned
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: aimi-models/flux-schnell
+      filename: ae.safetensors
+      url: https://huggingface.co/aimi-models/flux-schnell/resolve/main/ae.safetensors
+    target:
+      relative_path: vae/flux1/ae.safetensors
+      slot_id: vae
+    size_bytes:
+    license:
+      id: apache-2.0
+      requires_confirmation: false
+
+  - id: flux2-qwen3-8b
+    label: Flux.2 Qwen3 8B Text Encoder
+    profile: flux2
+    type: text_encoder
+    release_class: user-owned
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: Comfy-Org/vae-text-encorder-for-flux-klein-9b
+      filename: qwen_3_8b_fp8mixed.safetensors
+      url: https://huggingface.co/Comfy-Org/vae-text-encorder-for-flux-klein-9b/resolve/main/split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors
+    target:
+      relative_path: text_encoders/flux2/qwen_3_8b_fp8mixed.safetensors
+      slot_id: text_encoder
+    size_bytes:
+    license:
+      id:
+      url: https://huggingface.co/Comfy-Org/flux2-klein
+      requires_confirmation: false
+
+  - id: flux2-vae
+    label: Flux.2 VAE
+    profile: flux2
+    type: vae
+    release_class: user-owned
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: Comfy-Org/flux2-dev
+      filename: flux2-vae.safetensors
+      url: https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/vae/flux2-vae.safetensors
+    target:
+      relative_path: vae/flux2/flux2-vae.safetensors
+      slot_id: vae
+    size_bytes:
+    license:
+      id:
+      url: https://huggingface.co/Comfy-Org/flux2-dev
+      requires_confirmation: false
+
+  - id: controlnet-openpose-yolox
+    label: OpenPose / DWPose Detector
+    profile: sdxl
+    type: preprocessor
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: huggingface
+      repo: yzd-v/DWPose
+      filename: yolox_l.onnx
+      revision: 1a7144101628d69ee7a3768d1ee3a094070dc388
+      url: https://huggingface.co/yzd-v/DWPose/resolve/1a7144101628d69ee7a3768d1ee3a094070dc388/yolox_l.onnx
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/yzd-v/DWPose/revision/1a7144101628d69ee7a3768d1ee3a094070dc388
+    target:
+      relative_path: preprocessors/openpose/yolox_l.onnx
+      slot_id:
+    size_bytes: 216746733
+    checksum_sha256: 7860ae79de6c89a3c1eb72ae9a2756c0ccfbe04b7791bb5880afabd97855a411
+    repair_policy: replace-managed-component
+    license:
+      id: apache-2.0
+      url: https://github.com/IDEA-Research/DWPose/blob/main/LICENSE
+      requires_confirmation: false
+
+  - id: controlnet-openpose-dwpose
+    label: OpenPose / DWPose Pose Model
+    profile: sdxl
+    type: preprocessor
+    release_class: mandatory-feature
+    auto_install: true
+    source:
+      provider: huggingface
+      repo: yzd-v/DWPose
+      filename: dw-ll_ucoco_384.onnx
+      revision: 1a7144101628d69ee7a3768d1ee3a094070dc388
+      url: https://huggingface.co/yzd-v/DWPose/resolve/1a7144101628d69ee7a3768d1ee3a094070dc388/dw-ll_ucoco_384.onnx
+      verified_at: "2026-07-20"
+      provenance_url: https://huggingface.co/api/models/yzd-v/DWPose/revision/1a7144101628d69ee7a3768d1ee3a094070dc388
+    target:
+      relative_path: preprocessors/openpose/dw-ll_ucoco_384.onnx
+      slot_id:
+    size_bytes: 134399116
+    checksum_sha256: 724f4ff2439ed61afb86fb8a1951ec39c6220682803b4a8bd4f598cd913b1843
+    repair_policy: replace-managed-component
+    license:
+      id: apache-2.0
+      url: https://github.com/IDEA-Research/DWPose/blob/main/LICENSE
+      requires_confirmation: false
