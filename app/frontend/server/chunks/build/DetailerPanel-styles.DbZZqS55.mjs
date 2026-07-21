@@ -1,8 +1,0 @@
-const DetailerPanel_vue_vue_type_style_index_0_scoped_8768cb70_lang = ".detailer-unit[data-v-8768cb70]{gap:9px}.detailer-unit__header[data-v-8768cb70]{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}.detailer-unit__header>div[data-v-8768cb70]{display:grid;gap:2px;min-width:0}.detailer-unit__header strong[data-v-8768cb70]{color:#f1f6fa;font-size:12px;font-weight:700}.detailer-unit__header small[data-v-8768cb70]{overflow:hidden;color:var(--asteria-muted);font-size:11px;text-overflow:ellipsis;white-space:nowrap}.detailer-unit__toggle[data-v-8768cb70]{flex:0 0 auto;margin:0;width:auto;white-space:nowrap}.tool-preset-item__main[data-v-8768cb70],.tool-preset-list[data-v-8768cb70],.tool-preset-panel[data-v-8768cb70]{display:grid;min-width:0;gap:8px}.tool-preset-panel[data-v-8768cb70]{padding:10px;border:1px solid var(--asteria-border-soft);border-radius:var(--asteria-radius);background:#0a0f1452}.tool-preset-item[data-v-8768cb70],.tool-preset-panel__header[data-v-8768cb70]{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.tool-preset-item__main[data-v-8768cb70]{text-align:left}.tool-preset-item__main small[data-v-8768cb70],.tool-preset-item__main span[data-v-8768cb70]{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tool-preset-item__main small[data-v-8768cb70]{color:var(--asteria-muted);font-size:11px}";
-
-const DetailerPanelStyles_DbZZqS55 = [
-  DetailerPanel_vue_vue_type_style_index_0_scoped_8768cb70_lang
-];
-
-export { DetailerPanelStyles_DbZZqS55 as default };
-//# sourceMappingURL=DetailerPanel-styles.DbZZqS55.mjs.map

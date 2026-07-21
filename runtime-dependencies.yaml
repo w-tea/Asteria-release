@@ -10,12 +10,12 @@ dependencies:
       provider: bundled
       url: runtime-components/comfyui/Asteria-Merge-Runtime
       ref: asteria.merge.runtime.v1
-      verified_at: "2026-07-21"
+      verified_at: "2026-07-22"
       provenance_url: bundled://asteria/merge-runtime/v1
     target:
       relative_path: custom_nodes/Asteria-Merge-Runtime
-    size_bytes: 29259
-    checksum_sha256: d43eedc869d5799f35d817eca1d715bb29e47d9b2ba9cc487b36873b4fbe6ad1
+    size_bytes: 29950
+    checksum_sha256: 52426a5aa6ccf881ca845a736ac2c080188ca3f7da2f866da43f32aecf1748a4
     license:
       id: proprietary
       url: bundled://asteria/license

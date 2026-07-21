@@ -11,6 +11,15 @@ function New-AsteriaBootstrapError {
     return $exception
 }
 
+if (-not ("System.Net.Http.HttpClient" -as [type])) {
+    try {
+        Add-Type -AssemblyName System.Net.Http -ErrorAction Stop
+    }
+    catch {
+        throw (New-AsteriaBootstrapError -Code "bootstrap_http_runtime_unavailable" -Message "Windows HTTP support could not be loaded.")
+    }
+}
+
 function Resolve-AsteriaBootstrapRoot {
     param([Parameter(Mandatory = $true)][string]$AppRoot)
     $isDrivePath = $AppRoot -match '^[A-Za-z]:[\\/]'
