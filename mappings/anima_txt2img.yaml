@@ -11,6 +11,9 @@ nodes:
   latent: "5"
   negative_conditioning: "6"
   sampler_tail_start: "7"
+  merge_source_b: "900"
+  merge_source_c: "901"
+  merge_runtime: "902"
 class_types:
   unet_loader: UNETLoader
   text_encoder_loader: CLIPLoader
@@ -40,6 +43,7 @@ class_types:
   attention_couple: AttentionCouplePPM
   detailer_detector: UltralyticsDetectorProvider
   face_detailer: FaceDetailer
+  merge_runtime: AsteriaAnimaMergeRuntime
 dynamic_sections:
   - hires_fix
   - img2img

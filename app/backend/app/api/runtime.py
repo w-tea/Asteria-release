@@ -11,6 +11,7 @@ from app.services.api_errors import (
     RUNTIME_CORE_UPDATE_FAILED,
     RUNTIME_DEPENDENCY_INSTALL_FAILED,
     RUNTIME_DEPENDENCY_NOT_FOUND,
+    RUNTIME_DEPENDENCY_REPAIR_FAILED,
     RUNTIME_INTERRUPT_FAILED,
     RUNTIME_START_FAILED,
 )
@@ -114,6 +115,11 @@ class RuntimeMaintenanceResponse(BaseModel):
     errors: dict[str, str] = {}
 
 
+class RuntimeDependencyRepairResponse(BaseModel):
+    dependency: RuntimeDependencyStatusResponse
+    runtime_restarted: bool
+
+
 class ComfyRuntimeCoreStatusResponse(BaseModel):
     status: str
     path: str
@@ -156,6 +162,12 @@ HIRES_FIX_REQUIRED_NODES = {
 }
 CLIP_SKIP_REQUIRED_NODES = {"CLIPSetLastLayer"}
 CONTROLNET_PREPROCESSOR_NODES = COMFY_CONTROLNET_PREPROCESSOR_NODES
+MERGE_RUNTIME_CONTRACT_VERSION = "asteria.merge.runtime.v1"
+MERGE_RUNTIME_NODE_CONTRACTS: dict[str, tuple[list[str], bool]] = {
+    "AsteriaSDXLMergeRuntime": (["MODEL", "CLIP", "VAE"], False),
+    "AsteriaAnimaMergeRuntime": (["MODEL"], False),
+    "AsteriaCleanupFence": (["STRING"], True),
+}
 
 
 def _manager() -> RuntimeProcessManager:
@@ -448,6 +460,29 @@ def _clip_skip_capability(nodes: set[str], unavailable_message: str | None = Non
     }
 
 
+def _merge_runtime_capability(object_info: dict[str, Any]) -> dict[str, Any]:
+    missing_nodes: list[str] = []
+    for node_name, (expected_outputs, expected_output_node) in MERGE_RUNTIME_NODE_CONTRACTS.items():
+        node = object_info.get(node_name)
+        contract_versions = _node_input_value_list(object_info, node_name, "contract_version")
+        if (
+            not isinstance(node, dict)
+            or node.get("output") != expected_outputs
+            or bool(node.get("output_node", False)) is not expected_output_node
+            or contract_versions != [MERGE_RUNTIME_CONTRACT_VERSION]
+        ):
+            missing_nodes.append(node_name)
+    return {
+        "available": not missing_nodes,
+        "runtime": "comfy_workflow",
+        "missing_nodes": missing_nodes,
+        "contract_version": MERGE_RUNTIME_CONTRACT_VERSION,
+        "message": "Asteria merge runtime ready"
+        if not missing_nodes
+        else "Asteria merge runtime is missing or incompatible",
+    }
+
+
 def _unreachable_capabilities(base_url: str, message: str) -> RuntimeCapabilitiesResponse:
     return RuntimeCapabilitiesResponse(
         base_url=base_url,
@@ -499,6 +534,10 @@ def _unreachable_capabilities(base_url: str, message: str) -> RuntimeCapabilitie
             "seed_variation": _seed_variation_capability(set(), message),
             "seed_resize": _seed_resize_capability(AppConfig(), {}, message),
             "clip_skip": _clip_skip_capability(set(), message),
+            "merge_xyz_in_memory": {
+                **_merge_runtime_capability({}),
+                "message": message,
+            },
             "unmapped_generation_settings": _unmapped_generation_settings_capability(),
         },
     )
@@ -550,6 +589,7 @@ def capabilities() -> RuntimeCapabilitiesResponse:
             "seed_variation": _seed_variation_capability(nodes),
             "seed_resize": _seed_resize_capability(app_config, object_info),
             "clip_skip": _clip_skip_capability(nodes),
+            "merge_xyz_in_memory": _merge_runtime_capability(object_info),
             "unmapped_generation_settings": _unmapped_generation_settings_capability(object_info, nodes),
         },
     )
@@ -669,6 +709,36 @@ def install_dependency(dependency_id: str) -> RuntimeDependencyStatusResponse:
     except RuntimeDependencyError as exc:
         raise HTTPException(status_code=409, detail={"code": RUNTIME_DEPENDENCY_INSTALL_FAILED}) from exc
     return _dependency_to_response(status)
+
+
+@router.post("/dependencies/{dependency_id}/repair", response_model=RuntimeDependencyRepairResponse)
+def repair_dependency(dependency_id: str) -> RuntimeDependencyRepairResponse:
+    app_config = AppConfig()
+    manager = _manager()
+    was_running = manager.status().running
+    try:
+        status = RuntimeDependencyInstaller(
+            _dependency_repository(),
+            runner=_runtime_dependency_runner(),
+            python_path=app_config.comfy_python_path,
+        ).repair(dependency_id)
+    except RuntimeDependencyNotFound as exc:
+        raise HTTPException(status_code=404, detail={"code": RUNTIME_DEPENDENCY_NOT_FOUND}) from exc
+    except RuntimeDependencyError as exc:
+        raise HTTPException(status_code=409, detail={"code": RUNTIME_DEPENDENCY_REPAIR_FAILED}) from exc
+
+    runtime_restarted = False
+    if was_running:
+        manager.stop()
+        try:
+            manager.start()
+        except RuntimeProcessError as exc:
+            raise HTTPException(status_code=409, detail={"code": RUNTIME_START_FAILED}) from exc
+        runtime_restarted = True
+    return RuntimeDependencyRepairResponse(
+        dependency=_dependency_to_response(status),
+        runtime_restarted=runtime_restarted,
+    )
 
 
 def _install_dependencies(only_missing: bool, update: bool = False, repair: bool = False) -> RuntimeMaintenanceResponse:

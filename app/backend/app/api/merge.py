@@ -1,9 +1,9 @@
-from itertools import product
+from contextlib import contextmanager
 from datetime import UTC, datetime
+from hashlib import sha256
 import csv
 from io import StringIO
 import json
-import math
 import re
 import shutil
 import sqlite3
@@ -18,9 +18,16 @@ from PIL.PngImagePlugin import PngInfo
 from safetensors import safe_open
 
 from app.core.config import AppConfig
-from app.api.generation import _data_dir, _generate, _output_dir_for, _record_xyz_history, _xyz_contact_sheet
+from app.api.generation import _data_dir, _generate, _output_dir_for, _record_xyz_history
 from app.services.artifact_lifecycle import artifact_write_operation
 from app.services.history import HistoryRepository
+from app.services.comfy_admission import (
+    ComfyAdmissionError,
+    ComfyAdmissionTimeoutError,
+    ComfyCleanupPendingError,
+    acknowledge_comfy_cleanup,
+    comfy_admission,
+)
 from app.services.merge_recipes import (
     BLOCK_SCHEMAS,
     CALCULATION_MODES,
@@ -38,6 +45,20 @@ from app.services.merge_recipes import (
     execute_merge_recipe,
     expand_dice_recipe,
 )
+from app.services.merge_runtime_contract import (
+    MERGE_RUNTIME_CONTRACT_VERSION,
+    MergeRuntimeContractError,
+    normalize_merge_runtime_recipe,
+)
+from app.services.merge_xyz import (
+    MergeXYZPlan,
+    MergeXYZSourceIdentity,
+    MergeXYZValidationError,
+    estimate_merge_xyz_resources,
+    iter_merge_xyz_candidates,
+    normalize_merge_xyz_axes,
+    resolve_merge_xyz_sources,
+)
 from app.services.merge_presets import (
     MergeBlockPreset,
     MergePresetRepository,
@@ -48,8 +69,11 @@ from app.services.merge_presets import (
 )
 from app.services.model_dependencies import ModelDependencyRepository, ModelDependencyStatus
 from app.services.model_storage import resolve_model_root
+from app.services.metadata import MetadataWriter
+from app.services.xyz_grid import XYZContactSheetStager, XYZGridAxis, XYZGridCell
 from app.services.user_settings import UserSettingsRepository, resolve_merge_preset_dir
 from app.schemas.generation import Txt2ImgRequest, XYZAxis, XYZCellResult, XYZPlotResponse
+from app.services.runtime import ComfyClient, RuntimeErrorResponse
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/api/merge", tags=["merge"])
@@ -92,6 +116,25 @@ class MergeXYZPrecheckRequest(BaseModel):
     base: Txt2ImgRequest
     axes: list[MergeXYZAxis]
     contact_sheet: bool = True
+    confirmation_fingerprint: str = ""
+
+
+class MergeXYZEstimateResponse(BaseModel):
+    candidate_count: int
+    axis_counts: list[int]
+    order: str
+    final_width: int
+    final_height: int
+    raw_rgb_staging_bytes: int
+    temporary_bytes_lower_bound: int
+    temporary_bytes_upper_bound: int
+    source_size_lower_bound_bytes: int
+    duration_seconds: float | None
+    duration_label: str
+    png_representable: bool
+    warning_severity: str
+    requires_confirmation: bool
+    confirmation_fingerprint: str
 
 
 class MergeBlockPresetRequest(BaseModel):
@@ -1160,48 +1203,86 @@ def _apply_precheck_generation_axis(request: Txt2ImgRequest, target: str, value:
 
 
 def _validate_merge_xyz_precheck_axes(request: MergeXYZPrecheckRequest) -> None:
-    if not 1 <= len(request.axes) <= 3:
-        raise HTTPException(status_code=400, detail="xyz_precheck_requires_1_to_3_axes")
-
     uses_beta = bool(MERGE_MODES.get(request.recipe.normalized_merge_mode(), {}).get("uses_beta", False))
-    cell_count = 1
-    for axis in request.axes:
-        target = axis.target.strip().lower()
-        if target not in MERGE_XYZ_CANONICAL_TARGETS:
-            raise HTTPException(status_code=400, detail="xyz_precheck_unknown_axis_target")
-        if target in {"beta", "mbw_beta"} and not uses_beta:
-            raise HTTPException(status_code=400, detail="xyz_precheck_noop_axis_target")
+    try:
+        plan = normalize_merge_xyz_axes(
+            request.axes,
+            allowed_targets=MERGE_XYZ_CANONICAL_TARGETS,
+            uses_beta=uses_beta,
+            merge_type=request.recipe.merge_type,
+            model_family=request.recipe.model_family,
+        )
+    except MergeXYZValidationError as exc:
+        raise HTTPException(status_code=400, detail=exc.detail) from exc
+    for axis, normalized in zip(request.axes, plan.axes, strict=True):
+        axis.target = normalized.target
+        axis.label = normalized.label
+        axis.values = list(normalized.values)
 
-        values = [value.strip() for value in axis.values if value.strip()]
-        if not values:
-            raise HTTPException(status_code=400, detail="xyz_precheck_axis_values_required")
-        if len(values) > 16:
-            raise HTTPException(status_code=400, detail="xyz_precheck_axis_values_limit")
-        axis.values = values
-        cell_count *= len(values)
 
-        if target in {"alpha", "beta"}:
-            try:
-                numeric_values = [float(value) for value in values]
-            except ValueError as exc:
-                raise HTTPException(status_code=400, detail="xyz_precheck_invalid_numeric_value") from exc
-            if not all(math.isfinite(value) for value in numeric_values):
-                raise HTTPException(status_code=400, detail="xyz_precheck_invalid_numeric_value")
-        elif target == "seed":
-            if any(re.fullmatch(r"[+-]?\d+", value) is None for value in values):
-                raise HTTPException(status_code=400, detail="xyz_precheck_invalid_numeric_value")
-        elif target == "alpha_beta":
-            for value in values:
-                parts = [part for part in re.split(r"[,/:\s]+", value) if part]
-                try:
-                    pair = [float(part) for part in parts]
-                except ValueError as exc:
-                    raise HTTPException(status_code=400, detail="xyz_precheck_alpha_beta_pair_required") from exc
-                if len(pair) != 2 or not all(math.isfinite(part) for part in pair):
-                    raise HTTPException(status_code=400, detail="xyz_precheck_alpha_beta_pair_required")
 
-    if cell_count > 64:
-        raise HTTPException(status_code=400, detail="xyz_precheck_cells_limit")
+def _merge_xyz_effective_dimensions(request: MergeXYZPrecheckRequest) -> tuple[int, int]:
+    width = request.base.width
+    height = request.base.height
+    if not request.base.hires_enabled:
+        return width, height
+    scale = max(1.0, float(request.base.hires_scale))
+    return (
+        request.base.hires_resize_width or max(1, round(width * scale)),
+        request.base.hires_resize_height or max(1, round(height * scale)),
+    )
+
+
+def _merge_xyz_confirmation_fingerprint(
+    request: MergeXYZPrecheckRequest,
+    source_identities: tuple[MergeXYZSourceIdentity, ...],
+) -> str:
+    payload = request.model_dump(mode="json", exclude={"confirmation_fingerprint"})
+    payload["source_identities"] = [source.metadata() for source in source_identities]
+    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _merge_xyz_estimate_response(
+    request: MergeXYZPrecheckRequest,
+    plan: MergeXYZPlan,
+    source_identities: tuple[MergeXYZSourceIdentity, ...],
+) -> MergeXYZEstimateResponse:
+    width, height = _merge_xyz_effective_dimensions(request)
+    estimate = estimate_merge_xyz_resources(
+        plan,
+        tile_width=width,
+        tile_height=height,
+        source_sizes=[source.size_bytes for source in source_identities],
+    )
+    raw_staging = estimate.raw_rgb_staging_bytes if request.contact_sheet else 0
+    temporary_lower = estimate.temporary_bytes_lower_bound if request.contact_sheet else 0
+    temporary_upper = estimate.temporary_bytes_upper_bound if request.contact_sheet else 0
+    png_representable = estimate.png_representable or not request.contact_sheet
+    requires_confirmation = (
+        plan.total_count > 64
+        or temporary_upper >= 4 * 1024 * 1024 * 1024
+        or estimate.final_width > 32768
+        or estimate.final_height > 32768
+    )
+    warning_severity = "blocked" if not png_representable else ("warning" if requires_confirmation else "info")
+    return MergeXYZEstimateResponse(
+        candidate_count=estimate.candidate_count,
+        axis_counts=[len(axis.values) for axis in plan.axes],
+        order="x-fastest",
+        final_width=estimate.final_width,
+        final_height=estimate.final_height,
+        raw_rgb_staging_bytes=raw_staging,
+        temporary_bytes_lower_bound=temporary_lower,
+        temporary_bytes_upper_bound=temporary_upper,
+        source_size_lower_bound_bytes=estimate.source_size_lower_bound_bytes,
+        duration_seconds=estimate.duration_seconds,
+        duration_label=estimate.duration_label,
+        png_representable=png_representable,
+        warning_severity=warning_severity,
+        requires_confirmation=requires_confirmation,
+        confirmation_fingerprint=_merge_xyz_confirmation_fingerprint(request, source_identities),
+    )
 
 
 def _candidate_axis(axis: XYZAxis | None, value: str | None, order: str) -> dict[str, str]:
@@ -1241,19 +1322,6 @@ def _candidate_recipe_patch(recipe: MergeRecipe) -> dict[str, Any]:
     }
 
 
-def _executed_recipe_for_candidate(recipe: MergeRecipe, run: MergeRun) -> MergeRecipe:
-    if not run.metadata_path:
-        return recipe
-    try:
-        payload = json.loads(Path(run.metadata_path).read_text(encoding="utf-8"))
-        executed_recipe = payload.get("recipe")
-        if isinstance(executed_recipe, dict):
-            return MergeRecipe(**executed_recipe)
-    except (OSError, json.JSONDecodeError, TypeError, ValueError):
-        return recipe
-    return recipe
-
-
 def _candidate_source_models(recipe: MergeRecipe) -> dict[str, str]:
     return {source.role.upper(): source.path for source in recipe.sources if source.path}
 
@@ -1262,10 +1330,13 @@ def _candidate_overlay_label(candidate_id: str, axes: dict[str, dict[str, str]])
     lines = [candidate_id]
     x_axis = axes.get("x") or {}
     y_axis = axes.get("y") or {}
+    z_axis = axes.get("z") or {}
     if x_axis.get("target"):
         lines.append(f"X {x_axis.get('display') or x_axis.get('value')}")
     if y_axis.get("target"):
         lines.append(f"Y {y_axis.get('display') or y_axis.get('value')}")
+    if z_axis.get("target"):
+        lines.append(f"Z {z_axis.get('display') or z_axis.get('value')}")
     return "\n".join(lines)
 
 
@@ -1441,25 +1512,57 @@ def _update_output_paths_safely(repository: HistoryRepository, generation_id: in
         return
 
 
+def _update_settings_safely(repository: HistoryRepository, generation_id: int, settings: dict[str, Any]) -> None:
+    try:
+        repository.update_settings(generation_id, settings)
+    except (OSError, sqlite3.Error, ValueError):
+        return
+
+
+def _rewrite_merge_xyz_generation_metadata(cell: XYZCellResult) -> None:
+    generation = cell.generation
+    sidecars = MetadataWriter().write_generation_sidecars(
+        {
+            "generation_id": generation.id,
+            "status": generation.status,
+            "profile": generation.profile,
+            "prompt": generation.prompt,
+            "expanded_prompt": generation.expanded_prompt,
+            "negative_prompt": generation.negative_prompt,
+            "settings": generation.settings,
+            "model_slots": generation.model_slots,
+            "loras": [lora.model_dump() for lora in generation.loras],
+            "embeddings": generation.embeddings,
+        },
+        [str(path) for path in _candidate_image_paths(generation.output_paths)],
+    )
+    known = set(generation.output_paths)
+    generation.output_paths.extend(path for path in sidecars if path not in known)
+
+
 def _build_candidate_metadata(
     *,
+    operation_id: str,
     index: int,
     axes: list[XYZAxis],
     values: tuple[str, ...],
     labels: dict[str, str],
     candidate_recipe: MergeRecipe,
-    run: MergeRun,
+    normalized_recipe: dict[str, Any],
+    source_identities: tuple[MergeXYZSourceIdentity, ...],
+    generation_snapshot: dict[str, Any],
     generation: XYZCellResult,
 ) -> dict[str, Any]:
     candidate_id = f"C-{index + 1:03d}"
     x_axis = _candidate_axis(axes[0] if len(axes) > 0 else None, str(values[0]) if len(values) > 0 else None, "x")
     y_axis = _candidate_axis(axes[1] if len(axes) > 1 else None, str(values[1]) if len(values) > 1 else None, "y")
-    axes_payload = {"x": x_axis, "y": y_axis}
+    z_axis = _candidate_axis(axes[2] if len(axes) > 2 else None, str(values[2]) if len(values) > 2 else None, "z")
+    axes_payload = {"x": x_axis, "y": y_axis, "z": z_axis}
     overlay_label = _candidate_overlay_label(candidate_id, axes_payload)
     image_paths = [str(path) for path in _candidate_image_paths(generation.generation.output_paths)]
-    executed_recipe = _executed_recipe_for_candidate(candidate_recipe, run)
     return {
         "artifact_type": "merge_xyz_candidate",
+        "operation_id": operation_id,
         "candidate_id": candidate_id,
         "candidate_index": index + 1,
         "labels": labels,
@@ -1474,10 +1577,27 @@ def _build_candidate_metadata(
             }
             for axis, value in zip(axes, values, strict=True)
         ],
-        "merge_recipe_patch": _candidate_recipe_patch(executed_recipe),
-        "source_models": _candidate_source_models(executed_recipe),
-        "candidate_checkpoint_path": run.output_path,
-        "candidate_checkpoint_metadata_path": run.metadata_path,
+        "merge_recipe_patch": _candidate_recipe_patch(candidate_recipe),
+        "normalized_recipe": normalized_recipe,
+        "resolved_mbw": {
+            "block_schema": normalized_recipe.get("block_schema"),
+            "block_weights": normalized_recipe.get("block_weights"),
+            "block_weights_alpha": normalized_recipe.get("block_weights_alpha"),
+            "block_weights_beta": normalized_recipe.get("block_weights_beta"),
+        },
+        "calculation": {
+            "mode": normalized_recipe.get("calculation_mode"),
+            "option": normalized_recipe.get("calculation_option"),
+            "merge_mode": normalized_recipe.get("merge_mode"),
+        },
+        "source_models": _candidate_source_models(candidate_recipe),
+        "source_identities": [source.metadata() for source in source_identities],
+        "generation_snapshot": generation_snapshot,
+        "seed": generation.generation.settings.get("seed", generation_snapshot.get("seed")),
+        "runtime_adapter": generation.generation.settings.get("runtime_adapter", "comfy_workflow"),
+        "workflow_mapping_id": f"{generation.generation.profile}_txt2img",
+        "candidate_state": "completed",
+        "operation_state": "partial",
         "generation_id": generation.generation.id,
         "image_paths": image_paths,
         "rating": 0,
@@ -1485,81 +1605,280 @@ def _build_candidate_metadata(
     }
 
 
+def _merge_runtime_source_payload(
+    model_family: str,
+    sources: tuple[MergeXYZSourceIdentity, ...],
+) -> tuple[str, dict[str, str], dict[str, str] | None]:
+    by_role = {source.role: source for source in sources}
+    slot = "checkpoint" if model_family == "sdxl" else "diffusion_model"
+    source_b = {slot: by_role["B"].path}
+    source_c = {slot: by_role["C"].path} if "C" in by_role else None
+    return by_role["A"].path, source_b, source_c
+
+
+@contextmanager
+def _merge_xyz_runtime_session(config: AppConfig):
+    try:
+        lease = comfy_admission.acquire("xyz", timeout_seconds=30.0)
+    except ComfyCleanupPendingError as exc:
+        raise HTTPException(status_code=409, detail="comfy_cleanup_pending") from exc
+    except (ComfyAdmissionTimeoutError, ComfyAdmissionError) as exc:
+        raise HTTPException(status_code=409, detail="comfy_admission_busy") from exc
+    client = ComfyClient(config.comfy_base_url)
+    try:
+        yield lease.token
+    finally:
+        try:
+            acknowledge_comfy_cleanup(
+                service=comfy_admission,
+                lease=lease,
+                client=client,
+                fence_workflow={
+                    "1": {
+                        "class_type": "AsteriaCleanupFence",
+                        "inputs": {"contract_version": MERGE_RUNTIME_CONTRACT_VERSION},
+                    }
+                },
+                timeout_seconds=60.0,
+            )
+        except (RuntimeErrorResponse, TimeoutError, OSError) as exc:
+            raise HTTPException(status_code=503, detail="comfy_cleanup_pending") from exc
+        finally:
+            lease.release(defer_cleanup=comfy_admission.cleanup_pending_for(lease.token))
+
+
 @router.post("/xyz-precheck", response_model=XYZPlotResponse)
 @artifact_write_operation
 def run_merge_xyz_precheck(request: MergeXYZPrecheckRequest) -> XYZPlotResponse:
     _validate_merge_xyz_precheck_axes(request)
-    combinations = list(product(*[axis.values for axis in request.axes]))
     config = AppConfig()
     data_dir = config.data_dir
-    cells: list[XYZCellResult] = []
-    for index, values in enumerate(combinations):
-        candidate_recipe = request.recipe.model_copy(deep=True)
-        candidate_recipe.id = f"precheck-{uuid4().hex}"
-        candidate_recipe.name = f"{request.recipe.name} precheck {index + 1}"
-        candidate_recipe.output_name = f"{candidate_recipe.id}.safetensors"
-        candidate_recipe.save_model = False
-        labels: dict[str, str] = {}
-        for axis, value in zip(request.axes, values, strict=True):
-            value_text = str(value)
-            labels[axis.label.strip() or axis.target] = value_text
-            _apply_precheck_axis(candidate_recipe, axis.target, value_text, data_dir)
-        _apply_pinpoint_axes(candidate_recipe, request.recipe, request.axes)
-        transient_root = config.model_dir / "checkpoints"
-        try:
-            run = execute_merge_recipe(candidate_recipe, transient_root, transient=True)
-        except MergeExecutionError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        _run_repository().save(run)
-        cell_request = request.base.model_copy(deep=True)
-        for axis, value in zip(request.axes, values, strict=True):
-            _apply_precheck_generation_axis(cell_request, axis.target, str(value))
-        model_slot = "diffusion_model" if candidate_recipe.model_family in {"anima", "flux", "flux1", "flux2"} else "checkpoint"
-        cell_request.model_slot_overrides[model_slot] = run.output_path
-        cell_request.model_slot_overrides["merge.precheck"] = "true"
-        cell_request.model_slot_overrides["merge.precheck_recipe_id"] = candidate_recipe.id
-        cell_request.model_slot_overrides["merge.precheck_metadata"] = run.metadata_path
-        generation = _generate(cell_request, "txt2img")
-        cell = XYZCellResult(index=index, labels=labels, generation=generation)
-        candidate = _build_candidate_metadata(
-            index=index,
-            axes=request.axes,
-            values=values,
-            labels=labels,
-            candidate_recipe=candidate_recipe,
-            run=run,
-            generation=cell,
+    if request.base.profile != request.recipe.model_family:
+        raise HTTPException(status_code=400, detail="xyz_precheck_profile_family_mismatch")
+    try:
+        initial_contract = normalize_merge_runtime_recipe(request.recipe)
+        plan = normalize_merge_xyz_axes(
+            request.axes,
+            allowed_targets=MERGE_XYZ_CANONICAL_TARGETS,
+            uses_beta=bool(MERGE_MODES.get(request.recipe.normalized_merge_mode(), {}).get("uses_beta", False)),
+            merge_type=request.recipe.merge_type,
+            model_family=request.recipe.model_family,
         )
-        cell.generation.settings.setdefault("model_slot_overrides", {})["merge.precheck_candidate_id"] = candidate["candidate_id"]
-        cell.generation.settings["merge_candidate"] = candidate
-        cell.candidate = candidate
-        cells.append(cell)
+        source_identities = resolve_merge_xyz_sources(
+            request.recipe,
+            requires_source_c=initial_contract.requires_source_c,
+        )
+    except (MergeRuntimeContractError, MergeXYZValidationError) as exc:
+        detail = exc.detail if isinstance(exc, MergeXYZValidationError) else str(exc)
+        raise HTTPException(status_code=400, detail=detail) from exc
+
+    estimate = _merge_xyz_estimate_response(request, plan, source_identities)
+    if not estimate.png_representable:
+        raise HTTPException(status_code=400, detail="xyz_precheck_contact_sheet_too_large")
+    provided_fingerprint = request.confirmation_fingerprint.strip()
+    if provided_fingerprint and provided_fingerprint != estimate.confirmation_fingerprint:
+        raise HTTPException(status_code=409, detail="xyz_precheck_confirmation_stale")
+    if estimate.requires_confirmation and not provided_fingerprint:
+        raise HTTPException(status_code=409, detail="xyz_precheck_confirmation_required")
+
+    operation_id = f"merge-xyz-{uuid4().hex}"
+    base_snapshot = request.base.model_copy(deep=True)
+    source_a_path, source_b, source_c = _merge_runtime_source_payload(request.recipe.model_family, source_identities)
+    model_slot = "checkpoint" if request.recipe.model_family == "sdxl" else "diffusion_model"
+    cells: list[XYZCellResult] = []
+    contact_sheet_warning = ""
+    contact_sheet_stager: XYZContactSheetStager | None = None
+    if request.contact_sheet:
+        try:
+            contact_sheet_stager = XYZContactSheetStager(
+                axes=[
+                    XYZGridAxis(
+                        key=axis.label.strip() or axis.target.strip() or f"axis_{index + 1}",
+                        label=axis.label.strip() or axis.target.strip() or f"axis_{index + 1}",
+                        values=tuple(str(value) for value in axis.values),
+                    )
+                    for index, axis in enumerate(request.axes)
+                ],
+                output_dir=_output_dir_for(_data_dir(), request.base.profile),
+                operation_id=operation_id,
+            )
+        except (OSError, ValueError, MemoryError):
+            contact_sheet_warning = "contact_sheet_creation_failed"
+    try:
+        with _merge_xyz_runtime_session(config) as lease_token:
+            for planned_candidate in iter_merge_xyz_candidates(plan):
+                index = planned_candidate.index
+                values = planned_candidate.values
+                candidate_recipe = request.recipe.model_copy(deep=True)
+                candidate_recipe.id = f"{operation_id}-{index + 1:04d}"
+                candidate_recipe.name = f"{request.recipe.name} precheck {index + 1}"
+                candidate_recipe.output_name = ""
+                candidate_recipe.save_model = False
+                labels: dict[str, str] = {}
+                for axis, value in zip(request.axes, values, strict=True):
+                    value_text = str(value)
+                    labels[axis.label.strip() or axis.target] = value_text
+                    _apply_precheck_axis(candidate_recipe, axis.target, value_text, data_dir)
+                _apply_pinpoint_axes(candidate_recipe, request.recipe, request.axes)
+                try:
+                    normalized_contract = normalize_merge_runtime_recipe(candidate_recipe)
+                except MergeRuntimeContractError as exc:
+                    raise HTTPException(status_code=400, detail=str(exc)) from exc
+                normalized_recipe = normalized_contract.model_dump(mode="json")
+
+                cell_request = base_snapshot.model_copy(deep=True)
+                for axis, value in zip(request.axes, values, strict=True):
+                    _apply_precheck_generation_axis(cell_request, axis.target, str(value))
+                cell_request.runtime = "comfy_workflow"
+                cell_request.model_slot_overrides[model_slot] = source_a_path
+                generation_snapshot = cell_request.model_dump(mode="json")
+                merge_runtime_context: dict[str, Any] = {
+                    "contract_version": MERGE_RUNTIME_CONTRACT_VERSION,
+                    "recipe_payload": normalized_contract.model_dump_json(),
+                    "source_b": dict(source_b),
+                }
+                if source_c is not None:
+                    merge_runtime_context["source_c"] = dict(source_c)
+                merge_xyz_metadata = {
+                    "operation_id": operation_id,
+                    "candidate_id": f"C-{index + 1:03d}",
+                    "candidate_index": index + 1,
+                    "candidate_count": plan.total_count,
+                    "axes": [
+                        {
+                            "target": axis.target,
+                            "label": axis.label,
+                            "value": str(value),
+                            "display": _preset_label(str(value)) if axis.target == "mbw_preset" else str(value),
+                        }
+                        for axis, value in zip(request.axes, values, strict=True)
+                    ],
+                    "source_identities": [source.metadata() for source in source_identities],
+                    "normalized_recipe": normalized_recipe,
+                    "resolved_mbw": {
+                        "block_schema": normalized_recipe.get("block_schema"),
+                        "block_weights": normalized_recipe.get("block_weights"),
+                        "block_weights_alpha": normalized_recipe.get("block_weights_alpha"),
+                        "block_weights_beta": normalized_recipe.get("block_weights_beta"),
+                    },
+                    "calculation": {
+                        "mode": normalized_recipe.get("calculation_mode"),
+                        "option": normalized_recipe.get("calculation_option"),
+                        "merge_mode": normalized_recipe.get("merge_mode"),
+                    },
+                    "generation_snapshot": generation_snapshot,
+                    "seed": cell_request.seed,
+                    "runtime_adapter": "comfy_workflow",
+                    "workflow_mapping_id": f"{cell_request.profile}_txt2img",
+                    "candidate_state": "partial",
+                    "operation_state": "partial",
+                }
+                generation = _generate(
+                    cell_request,
+                    "txt2img",
+                    merge_runtime_context=merge_runtime_context,
+                    comfy_admission_lease_token=lease_token,
+                    merge_xyz_metadata=merge_xyz_metadata,
+                )
+                cell = XYZCellResult(index=index, labels=labels, generation=generation)
+                expanded_recipe = expand_dice_recipe(candidate_recipe)
+                candidate = _build_candidate_metadata(
+                    operation_id=operation_id,
+                    index=index,
+                    axes=request.axes,
+                    values=values,
+                    labels=labels,
+                    candidate_recipe=expanded_recipe,
+                    normalized_recipe=normalized_recipe,
+                    source_identities=source_identities,
+                    generation_snapshot=generation_snapshot,
+                    generation=cell,
+                )
+                cell.generation.settings["merge_xyz"] = candidate
+                cell.generation.settings["merge_candidate"] = candidate
+                cell.candidate = candidate
+                cells.append(cell)
+                if contact_sheet_stager is not None:
+                    image_paths = _candidate_image_paths(cell.generation.output_paths)
+                    contact_sheet_stager.add_cell(
+                        XYZGridCell(
+                            labels=labels,
+                            image_path=image_paths[0] if image_paths else None,
+                        )
+                    )
+    except BaseException:
+        if contact_sheet_stager is not None:
+            contact_sheet_stager.close()
+        raise
+    contact_sheet_path = ""
+    if contact_sheet_stager is not None:
+        try:
+            contact_sheet = contact_sheet_stager.finalize()
+            contact_sheet_path = str(contact_sheet) if contact_sheet is not None else ""
+            contact_sheet_warning = contact_sheet_stager.warning_code
+        finally:
+            contact_sheet_stager.close()
     if _uses_effective_axis(request.axes):
         _attach_effective_checks(cells)
     history = HistoryRepository(AppConfig().data_dir / "asteria.db")
     for cell in cells:
         candidate = cell.candidate
+        candidate["operation_state"] = "completed"
+        cell.generation.settings["merge_xyz"] = candidate
         for image_path in _candidate_image_paths(cell.generation.output_paths):
             _draw_candidate_overlay(image_path, candidate["overlay_label"])
         candidate["output_paths"] = cell.generation.output_paths
         _write_candidate_sidecars(cell, candidate)
         candidate["output_paths"] = cell.generation.output_paths
         cell.generation.settings["merge_candidate"] = candidate
+        _rewrite_merge_xyz_generation_metadata(cell)
+        _update_settings_safely(history, cell.generation.id, cell.generation.settings)
         _update_output_paths_safely(history, cell.generation.id, cell.generation.output_paths)
-    contact_sheet_path = ""
-    if request.contact_sheet and cells:
-        contact_sheet_path = _xyz_contact_sheet(cells, _output_dir_for(_data_dir(), request.base.profile), request.axes)
+    operation_status = "completed-with-warnings" if contact_sheet_warning else "completed"
     generation_id, output_paths = _record_xyz_history(
-        request=type("_MergeXYZRecord", (), {"base": request.base, "axes": request.axes})(),
+        request=type(
+            "_MergeXYZRecord",
+            (),
+            {
+                "base": request.base,
+                "axes": request.axes,
+                "status": operation_status,
+                "warning_code": contact_sheet_warning,
+            },
+        )(),
         cells=cells,
         contact_sheet_path=contact_sheet_path,
     )
     return XYZPlotResponse(
         id=generation_id,
-        status="completed",
+        status=operation_status,
         profile=request.base.profile,
         axes=request.axes,
         cells=cells,
         contact_sheet_path=contact_sheet_path,
         output_paths=output_paths,
     )
+
+
+@router.post("/xyz-precheck/estimate", response_model=MergeXYZEstimateResponse)
+def estimate_merge_xyz_precheck(request: MergeXYZPrecheckRequest) -> MergeXYZEstimateResponse:
+    _validate_merge_xyz_precheck_axes(request)
+    if request.base.profile != request.recipe.model_family:
+        raise HTTPException(status_code=400, detail="xyz_precheck_profile_family_mismatch")
+    try:
+        initial_contract = normalize_merge_runtime_recipe(request.recipe)
+        plan = normalize_merge_xyz_axes(
+            request.axes,
+            allowed_targets=MERGE_XYZ_CANONICAL_TARGETS,
+            uses_beta=bool(MERGE_MODES.get(request.recipe.normalized_merge_mode(), {}).get("uses_beta", False)),
+            merge_type=request.recipe.merge_type,
+            model_family=request.recipe.model_family,
+        )
+        source_identities = resolve_merge_xyz_sources(
+            request.recipe,
+            requires_source_c=initial_contract.requires_source_c,
+        )
+    except (MergeRuntimeContractError, MergeXYZValidationError) as exc:
+        detail = exc.detail if isinstance(exc, MergeXYZValidationError) else str(exc)
+        raise HTTPException(status_code=400, detail=detail) from exc
+    return _merge_xyz_estimate_response(request, plan, source_identities)

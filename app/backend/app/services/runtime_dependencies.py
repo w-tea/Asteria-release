@@ -4,6 +4,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 import subprocess
+import shutil
+import hashlib
+from uuid import uuid4
 
 import yaml
 
@@ -256,6 +259,21 @@ class RuntimeDependencyRepository:
         return path
 
 
+def bundled_tree_sha256(root: Path) -> str:
+    digest = hashlib.sha256()
+    files = sorted(
+        (item for item in root.rglob("*") if item.is_file()),
+        key=lambda item: item.relative_to(root).as_posix(),
+    )
+    for path in files:
+        relative = path.relative_to(root).as_posix().encode("utf-8")
+        digest.update(relative)
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 class RuntimeDependencyInstaller:
     def __init__(
         self,
@@ -273,6 +291,8 @@ class RuntimeDependencyInstaller:
 
     def install(self, dependency_id: str) -> RuntimeDependencyStatus:
         dependency = self.repository.get(dependency_id)
+        if dependency.provider == "bundled":
+            return self._install_bundled(dependency)
         if dependency.provider == "archive":
             return self._install_managed(dependency)
         current = self.repository._status_for(dependency)
@@ -296,6 +316,8 @@ class RuntimeDependencyInstaller:
 
     def update(self, dependency_id: str) -> RuntimeDependencyStatus:
         dependency = self.repository.get(dependency_id)
+        if dependency.provider == "bundled":
+            return self._install_bundled(dependency)
         if dependency.provider == "archive":
             return self._install_managed(dependency)
         if dependency.provider != "git":
@@ -312,6 +334,8 @@ class RuntimeDependencyInstaller:
 
     def repair(self, dependency_id: str) -> RuntimeDependencyStatus:
         dependency = self.repository.get(dependency_id)
+        if dependency.provider == "bundled":
+            return self._install_bundled(dependency)
         if dependency.provider == "archive":
             return self._install_managed(dependency, force_post_install=True)
         target = self.repository.path_for(dependency)
@@ -320,6 +344,39 @@ class RuntimeDependencyInstaller:
         self._run_post_install(dependency, target)
         return self.repository._status_for(dependency)
 
+    def _install_bundled(self, dependency: RuntimeDependency) -> RuntimeDependencyStatus:
+        project_root = self.repository.manifest_path.parent.resolve()
+        source = (project_root / dependency.url).resolve()
+        try:
+            source.relative_to(project_root)
+        except ValueError as exc:
+            raise RuntimeDependencyError(f"Bundled runtime source is outside the package: {dependency.id}") from exc
+        if not source.is_dir():
+            raise RuntimeDependencyError(f"Bundled runtime source is missing: {dependency.id}")
+        if not dependency.checksum_sha256 or bundled_tree_sha256(source) != dependency.checksum_sha256:
+            raise RuntimeDependencyError(f"Bundled runtime checksum mismatch: {dependency.id}")
+
+        target = self.repository.path_for(dependency)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        staging = target.parent / f".{target.name}.staging-{uuid4().hex}"
+        backup = target.parent / f".{target.name}.backup-{uuid4().hex}"
+        try:
+            shutil.copytree(source, staging)
+            if target.exists():
+                target.replace(backup)
+            staging.replace(target)
+            if backup.exists():
+                shutil.rmtree(backup)
+        except OSError as exc:
+            if not target.exists() and backup.exists():
+                backup.replace(target)
+            raise RuntimeDependencyError(f"Failed to install bundled runtime dependency: {dependency.id}") from exc
+        finally:
+            if staging.exists():
+                shutil.rmtree(staging, ignore_errors=True)
+            if backup.exists() and target.exists():
+                shutil.rmtree(backup, ignore_errors=True)
+        return self.repository._status_for(dependency)
     def _install_managed(
         self,
         dependency: RuntimeDependency,

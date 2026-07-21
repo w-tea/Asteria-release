@@ -52,11 +52,13 @@ from app.services.controlnet_mode import (
 )
 from app.services.detailer_catalog import detailer_detector_model
 from app.services.generation_metadata import (
+    finalize_merge_xyz_metadata,
     metadata_tags,
     record_anima_lllite_artifacts,
     record_controlnet_artifacts,
     record_detailer_metadata,
     record_hires_metadata,
+    record_merge_xyz_metadata,
 )
 from app.services.generation_artifacts import (
     OutputFinalizationError,
@@ -94,7 +96,7 @@ from app.services.sampling_catalog import sampler_runtime_name, scheduler_runtim
 from app.services.topaz import TopazError, TopazSettings, process_topaz_image
 from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
 from app.services.user_settings import UserSettingsRepository, resolve_output_root, safe_segment
-from app.services.xyz_grid import XYZGridAxis, XYZGridCell, build_xyz_contact_sheet
+from app.services.xyz_grid import XYZGridAxis, XYZGridCell, create_xyz_contact_sheet_streaming
 from app.services.workflow_mapping import WorkflowMappingRepository
 
 logger = logging.getLogger(__name__)
@@ -2111,7 +2113,15 @@ def _history_output_file_set(items: list[dict]) -> set[Path]:
 
 
 @_artifact_write_operation
-def _generate(request: Txt2ImgRequest, mode: str, job_id: str | None = None) -> GenerationResponse:
+def _generate(
+    request: Txt2ImgRequest,
+    mode: str,
+    job_id: str | None = None,
+    *,
+    merge_runtime_context: dict[str, Any] | None = None,
+    comfy_admission_lease_token: str | None = None,
+    merge_xyz_metadata: dict[str, Any] | None = None,
+) -> GenerationResponse:
     _preflight_profile_prompt_request(request)
     data_dir = _data_dir()
     config = AppConfig()
@@ -2128,6 +2138,7 @@ def _generate(request: Txt2ImgRequest, mode: str, job_id: str | None = None) -> 
         wildcard_dir=config.wildcard_dir,
     )
     settings, negative_prompt = _settings_from_request(request, config, mode)
+    record_merge_xyz_metadata(settings, merge_xyz_metadata)
     negative_prompt = styled_negative_prompt
     if request.advanced_styles:
         settings["raw_prompt"] = request.prompt
@@ -2164,6 +2175,10 @@ def _generate(request: Txt2ImgRequest, mode: str, job_id: str | None = None) -> 
         "embeddings": embeddings,
         "topaz_settings": _topaz_settings_from_request(request).model_dump(),
     }
+    if merge_runtime_context is not None:
+        runtime_request["_merge_runtime_context"] = dict(merge_runtime_context)
+    if comfy_admission_lease_token:
+        runtime_request["_comfy_admission_lease_token"] = comfy_admission_lease_token
     if job_id is not None:
         def update_job_progress(
             current: int,
@@ -2295,6 +2310,12 @@ def _generate(request: Txt2ImgRequest, mode: str, job_id: str | None = None) -> 
     primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
     if not manifest_mapped:
         settings["primary_output_manifest_warning"] = "filename_path_mapping_failed"
+    finalize_merge_xyz_metadata(
+        settings,
+        output_paths=output_paths,
+        runtime_adapter=str(result.get("runtime_adapter") or selected_runtime),
+        mapping_id=f"{request.profile}_txt2img",
+    )
     settings["primary_outputs"] = primary_outputs
     history.update_settings(generation_id, settings)
     _update_output_paths_safely(history, generation_id, output_paths)
@@ -2595,24 +2616,27 @@ def _xyz_grid_axes(axes: list[XYZAxis]) -> list[XYZGridAxis]:
     ]
 
 
+def _xyz_contact_sheet_result(
+    cells: list[XYZCellResult],
+    output_dir: Path,
+    axes: list[XYZAxis],
+) -> tuple[str, str]:
+    return create_xyz_contact_sheet_streaming(
+        [
+            XYZGridCell(
+                labels=cell.labels,
+                image_path=_first_image_output(cell.generation.output_paths),
+            )
+            for cell in cells
+        ],
+        _xyz_grid_axes(axes),
+        output_dir,
+        operation_id=uuid4().hex,
+    )
+
+
 def _xyz_contact_sheet(cells: list[XYZCellResult], output_dir: Path, axes: list[XYZAxis]) -> str:
-    try:
-        output_dir.mkdir(parents=True, exist_ok=True)
-        sheet = build_xyz_contact_sheet(
-            [
-                XYZGridCell(
-                    labels=cell.labels,
-                    image_path=_first_image_output(cell.generation.output_paths),
-                )
-                for cell in cells
-            ],
-            _xyz_grid_axes(axes),
-        )
-        path = _unique_output_path(output_dir / f"xyz_{uuid4().hex[:10]}.png")
-        sheet.save(path)
-    except OSError:
-        return ""
-    return str(path)
+    return _xyz_contact_sheet_result(cells, output_dir, axes)[0]
 
 
 def _record_xyz_history(
@@ -2649,6 +2673,10 @@ def _record_xyz_history(
             for cell in cells
         ],
     }
+    status = str(getattr(request, "status", "completed") or "completed")
+    warning_code = str(getattr(request, "warning_code", "") or "")
+    if warning_code:
+        settings["warning_code"] = warning_code
     source_mode = getattr(request, "mode", None)
     if source_mode:
         settings["source_mode"] = source_mode
@@ -2679,7 +2707,7 @@ def _record_xyz_history(
     )
     history = HistoryRepository(data_dir / "asteria.db")
     generation_id = history.add(
-        status="completed",
+        status=status,
         profile=request.base.profile,
         prompt=request.base.prompt,
         expanded_prompt=request.base.prompt,
@@ -2694,7 +2722,7 @@ def _record_xyz_history(
     sidecar_paths = MetadataWriter().write_generation_sidecars(
         {
             "generation_id": generation_id,
-            "status": "completed",
+            "status": status,
             "profile": request.base.profile,
             "prompt": request.base.prompt,
             "expanded_prompt": request.base.prompt,
@@ -2748,12 +2776,29 @@ def _generate_xyz_plot(request: XYZPlotRequest) -> XYZPlotResponse:
         generation = _generate(cell_request, request.mode)
         cells.append(XYZCellResult(index=index, labels=labels, generation=generation))
     contact_sheet_path = ""
+    contact_sheet_warning = ""
     if request.contact_sheet and cells:
-        contact_sheet_path = _xyz_contact_sheet(cells, _output_dir_for(_data_dir(), request.base.profile), request.axes)
-    generation_id, output_paths = _record_xyz_history(request, cells, contact_sheet_path)
+        contact_sheet_path, contact_sheet_warning = _xyz_contact_sheet_result(
+            cells,
+            _output_dir_for(_data_dir(), request.base.profile),
+            request.axes,
+        )
+    operation_status = "completed-with-warnings" if contact_sheet_warning else "completed"
+    record_request = type(
+        "_XYZRecord",
+        (),
+        {
+            "base": request.base,
+            "axes": request.axes,
+            "mode": request.mode,
+            "status": operation_status,
+            "warning_code": contact_sheet_warning,
+        },
+    )()
+    generation_id, output_paths = _record_xyz_history(record_request, cells, contact_sheet_path)
     return XYZPlotResponse(
         id=generation_id,
-        status="completed",
+        status=operation_status,
         profile=request.base.profile,
         axes=request.axes,
         cells=cells,

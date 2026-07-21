@@ -21,6 +21,7 @@ _EXACT_REQUIREMENT_RE = re.compile(r"^[A-Za-z0-9_.-]+==[^<>=!*~\s]+$")
 _REVISION_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 _VERIFIED_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _MANDATORY_RUNTIME_IDS = {
+    "asteria-merge-runtime",
     "comfyui-impact-pack",
     "comfyui-impact-subpack",
     "comfyui-controlnet-aux",
@@ -309,7 +310,18 @@ def validate_release_catalogs(
 def _validate_runtime_catalog_item(item: object) -> None:
     if getattr(item, "release_class", None) != "mandatory-feature":
         raise ValueError("release catalog runtime ownership is invalid")
-    if getattr(item, "provider", None) != "archive":
+    provider = getattr(item, "provider", None)
+    if provider == "bundled":
+        if getattr(item, "id", None) != "asteria-merge-runtime":
+            raise ValueError("release catalog bundled runtime ownership is invalid")
+        if getattr(item, "url", None) != "runtime-components/comfyui/Asteria-Merge-Runtime":
+            raise ValueError("release catalog bundled runtime source is invalid")
+        if getattr(item, "ref", None) != "asteria.merge.runtime.v1":
+            raise ValueError("release catalog bundled runtime contract is invalid")
+        if getattr(item, "auto_install", None) is not True:
+            raise ValueError("release catalog mandatory runtime must auto install")
+        return
+    if provider != "archive":
         raise ValueError("release catalog runtime provider must use an archive")
     _validate_managed_source(item, require_commit_revision=True)
     if getattr(item, "auto_install", None) is not True:

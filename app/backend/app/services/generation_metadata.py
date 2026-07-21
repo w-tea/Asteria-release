@@ -1,6 +1,32 @@
 from hashlib import sha256
+from copy import deepcopy
 from pathlib import Path
 import re
+
+
+def record_merge_xyz_metadata(settings: dict, metadata: dict | None) -> None:
+    if metadata is None:
+        return
+    payload = deepcopy(metadata)
+    payload.setdefault("candidate_state", "partial")
+    payload.setdefault("operation_state", "partial")
+    settings["merge_xyz"] = payload
+
+
+def finalize_merge_xyz_metadata(
+    settings: dict,
+    *,
+    output_paths: list[str],
+    runtime_adapter: str,
+    mapping_id: str,
+) -> None:
+    payload = settings.get("merge_xyz")
+    if not isinstance(payload, dict):
+        return
+    payload["candidate_state"] = "completed"
+    payload["output_paths"] = list(output_paths)
+    payload["runtime_adapter"] = runtime_adapter
+    payload["workflow_mapping_id"] = mapping_id
 
 
 def record_hires_metadata(settings: dict) -> None:

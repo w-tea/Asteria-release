@@ -1,4 +1,4 @@
-# Asteria V1.0.0 Windows Portable
+# Asteria V1.0.1 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -26,7 +26,7 @@ Windows側へ事前に必要なのは対応するNVIDIAドライバーです。C
 - x64 CPU、インターネット接続、展開先への書き込み権限
 - 初回取得、選択したモデル、生成物を保存できる空き容量（取得計画の正確な必要量はセットアップ画面に表示されます。機能用データだけでも数十GBになる場合があります）
 
-macOSとLinuxはV1.0.0では未対応です。必要なGPUメモリとシステムメモリは、使用するモデル、解像度、LoRA学習などの処理によって変わります。高解像度生成や学習には、より多くのGPUメモリとシステムメモリが必要です。
+macOSとLinuxはV1.0.1では未対応です。必要なGPUメモリとシステムメモリは、使用するモデル、解像度、LoRA学習などの処理によって変わります。高解像度生成や学習には、より多くのGPUメモリとシステムメモリが必要です。
 
 ### 起動方法
 
@@ -99,7 +99,7 @@ Only a compatible NVIDIA driver must be installed on Windows beforehand. You do 
 - An x64 CPU, internet access, and write access to the extracted folder
 - Enough free space for first-run acquisitions, selected models, and outputs; setup displays the exact planned download size, and functional assets alone may require tens of GB
 
-macOS and Linux are unsupported in V1.0.0. GPU-memory and system-memory needs depend on the selected model, resolution, and workload such as LoRA training. High-resolution generation and training require more memory.
+macOS and Linux are unsupported in V1.0.1. GPU-memory and system-memory needs depend on the selected model, resolution, and workload such as LoRA training. High-resolution generation and training require more memory.
 
 ### Starting Asteria
 

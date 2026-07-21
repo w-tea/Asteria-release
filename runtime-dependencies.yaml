@@ -1,4 +1,27 @@
 dependencies:
+  - id: asteria-merge-runtime
+    label: Asteria Merge Runtime
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - merge_xyz
+      - merge_cleanup_fence
+    source:
+      provider: bundled
+      url: runtime-components/comfyui/Asteria-Merge-Runtime
+      ref: asteria.merge.runtime.v1
+      verified_at: "2026-07-21"
+      provenance_url: bundled://asteria/merge-runtime/v1
+    target:
+      relative_path: custom_nodes/Asteria-Merge-Runtime
+    size_bytes: 29259
+    checksum_sha256: d43eedc869d5799f35d817eca1d715bb29e47d9b2ba9cc487b36873b4fbe6ad1
+    license:
+      id: proprietary
+      url: bundled://asteria/license
+    repair_policy: replace-managed-component
+    auto_install: true
+
   - id: comfyui-impact-pack
     label: ComfyUI Impact Pack
     type: comfy_custom_node

@@ -1,0 +1,6 @@
+{
+  "id": "asteria-merge-runtime",
+  "version": "1.0.1",
+  "contract_version": "asteria.merge.runtime.v1",
+  "files": ["__init__.py", "merge_math.py", "nodes.py"]
+}

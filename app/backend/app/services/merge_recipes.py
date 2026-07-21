@@ -9,6 +9,7 @@ import numpy as np
 import random
 import re
 import shutil
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, ValidationError, model_validator
@@ -18,6 +19,9 @@ import scipy.ndimage
 import torch
 
 from app.services.merge_presets import BLOCK_SCHEMAS, is_flux_schema, migrate_legacy_flux2_weight_text
+
+if TYPE_CHECKING:
+    from app.services.merge_runtime_contract import MergeRuntimeRecipeContract
 
 MERGE_MODES = {
     "weight_sum": {
@@ -163,6 +167,11 @@ class MergeRecipe(BaseModel):
         if self.calc_mode in {"weighted_sum", "add_difference", "block_weight"}:
             return "normal"
         return self.calc_mode
+
+    def normalized_runtime_contract(self) -> MergeRuntimeRecipeContract:
+        from app.services.merge_runtime_contract import normalize_merge_runtime_recipe
+
+        return normalize_merge_runtime_recipe(self)
 
 
 class MergeRun(BaseModel):

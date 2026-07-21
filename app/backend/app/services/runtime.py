@@ -25,6 +25,13 @@ except ImportError:  # pragma: no cover - optional runtime enhancement.
 
 from app.core.config import AppConfig
 from app.services import api_errors
+from app.services.comfy_admission import (
+    ComfyAdmissionError,
+    ComfyAdmissionService,
+    ComfyAdmissionTimeoutError,
+    ComfyCleanupPendingError,
+    comfy_admission,
+)
 from app.services.comfy_model_paths import comfy_model_name
 from app.services.controlnet_preprocessor import (
     COMFY_CONTROLNET_PREPROCESSOR_NODES,
@@ -191,6 +198,14 @@ class ComfyClient:
     def interrupt(self) -> dict:
         return self._request_json("POST", "interrupt", {})
 
+    def free_memory(self) -> dict:
+        return self._request_json(
+            "POST",
+            "free",
+            {"unload_models": True, "free_memory": True},
+            allow_empty=True,
+        )
+
     def queue_state(self) -> dict[str, list[str]]:
         payload = self._request_json("GET", "queue")
         return {
@@ -265,7 +280,14 @@ class ComfyClient:
         subfolder = payload.get("subfolder")
         return f"{subfolder}/{name}" if subfolder else name
 
-    def _request_json(self, method: str, path: str, payload: dict | None = None) -> dict:
+    def _request_json(
+        self,
+        method: str,
+        path: str,
+        payload: dict | None = None,
+        *,
+        allow_empty: bool = False,
+    ) -> dict:
         data = None if payload is None else json.dumps(payload).encode("utf-8")
         request = Request(
             urljoin(self.base_url, path),
@@ -275,7 +297,10 @@ class ComfyClient:
         )
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
-                return json.loads(response.read().decode("utf-8"))
+                body = response.read()
+                if allow_empty and not body.strip():
+                    return {}
+                return json.loads(body.decode("utf-8"))
         except (OSError, URLError, json.JSONDecodeError) as exc:
             raise RuntimeErrorResponse(f"ComfyUI request failed: {method} /{path}: {exc}") from exc
 
@@ -444,6 +469,49 @@ class ComfyTxt2ImgWorkflowBuilder:
         model_ref: list[str | int] = [checkpoint_node, 0]
         clip_ref: list[str | int] = [checkpoint_node, 1]
         vae_ref: list[str | int] = [checkpoint_node, 2]
+
+        merge_context = request.get("_merge_runtime_context")
+        if merge_context is not None:
+            if not isinstance(merge_context, dict):
+                raise RuntimeErrorResponse("Invalid internal merge runtime context.")
+            source_b = merge_context.get("source_b")
+            source_c = merge_context.get("source_c")
+            if not isinstance(source_b, dict) or not source_b.get("checkpoint"):
+                raise RuntimeErrorResponse("Internal merge runtime source B checkpoint is required.")
+            source_b_node = mapping.node("merge_source_b", "900")
+            source_c_node = mapping.node("merge_source_c", "901")
+            merge_node = mapping.node("merge_runtime", "902")
+            workflow[source_b_node] = {
+                "class_type": mapping.class_type("checkpoint_loader", "CheckpointLoaderSimple"),
+                "inputs": {"ckpt_name": self._model_name(source_b["checkpoint"], "checkpoints")},
+            }
+            merge_inputs: dict[str, object] = {
+                "model_a": [checkpoint_node, 0],
+                "model_b": [source_b_node, 0],
+                "clip_a": [checkpoint_node, 1],
+                "clip_b": [source_b_node, 1],
+                "vae_a": [checkpoint_node, 2],
+                "vae_b": [source_b_node, 2],
+                "recipe_payload": str(merge_context.get("recipe_payload") or ""),
+                "contract_version": str(merge_context.get("contract_version") or ""),
+            }
+            if isinstance(source_c, dict) and source_c.get("checkpoint"):
+                workflow[source_c_node] = {
+                    "class_type": mapping.class_type("checkpoint_loader", "CheckpointLoaderSimple"),
+                    "inputs": {"ckpt_name": self._model_name(source_c["checkpoint"], "checkpoints")},
+                }
+                merge_inputs.update(
+                    model_c=[source_c_node, 0],
+                    clip_c=[source_c_node, 1],
+                    vae_c=[source_c_node, 2],
+                )
+            workflow[merge_node] = {
+                "class_type": mapping.class_type("merge_runtime", "AsteriaSDXLMergeRuntime"),
+                "inputs": merge_inputs,
+            }
+            model_ref = [merge_node, 0]
+            clip_ref = [merge_node, 1]
+            vae_ref = [merge_node, 2]
 
         next_id = 8
         for lora in request.get("loras", []):
@@ -1402,6 +1470,44 @@ class ComfyTxt2ImgWorkflowBuilder:
                 },
             },
         }
+        merge_context = request.get("_merge_runtime_context")
+        if merge_context is not None:
+            if not isinstance(merge_context, dict):
+                raise RuntimeErrorResponse("Invalid internal merge runtime context.")
+            source_b = merge_context.get("source_b")
+            source_c = merge_context.get("source_c")
+            if not isinstance(source_b, dict) or not source_b.get("diffusion_model"):
+                raise RuntimeErrorResponse("Internal merge runtime source B diffusion model is required.")
+            source_b_node = mapping.node("merge_source_b", "900")
+            source_c_node = mapping.node("merge_source_c", "901")
+            merge_node = mapping.node("merge_runtime", "902")
+            workflow[source_b_node] = {
+                "class_type": mapping.class_type("unet_loader", "UNETLoader"),
+                "inputs": {
+                    "unet_name": self._model_name(source_b["diffusion_model"], "diffusion_models"),
+                    "weight_dtype": "default",
+                },
+            }
+            merge_inputs: dict[str, object] = {
+                "model_a": [diffusion_node, 0],
+                "model_b": [source_b_node, 0],
+                "recipe_payload": str(merge_context.get("recipe_payload") or ""),
+                "contract_version": str(merge_context.get("contract_version") or ""),
+            }
+            if isinstance(source_c, dict) and source_c.get("diffusion_model"):
+                workflow[source_c_node] = {
+                    "class_type": mapping.class_type("unet_loader", "UNETLoader"),
+                    "inputs": {
+                        "unet_name": self._model_name(source_c["diffusion_model"], "diffusion_models"),
+                        "weight_dtype": "default",
+                    },
+                }
+                merge_inputs["model_c"] = [source_c_node, 0]
+            workflow[merge_node] = {
+                "class_type": mapping.class_type("merge_runtime", "AsteriaAnimaMergeRuntime"),
+                "inputs": merge_inputs,
+            }
+            model_ref = [merge_node, 0]
         next_id = 7
         hires_model_ref: list[str | int] | None = None
         hires_checkpoint = _hires_checkpoint_setting(settings) if self._uses_comfy_hires(settings) else None
@@ -2545,13 +2651,21 @@ class ComfyGenerationRuntime:
         workflow_builder: ComfyTxt2ImgWorkflowBuilder | None = None,
         topaz_executable: Path | None = None,
         topaz_processor: Callable[..., dict[str, str | list[str]]] = process_topaz_image,
+        admission_service: ComfyAdmissionService = comfy_admission,
+        admission_timeout_seconds: float | None = 30.0,
     ) -> None:
         self.client = client
         self.workflow_builder = workflow_builder or ComfyTxt2ImgWorkflowBuilder()
         self.topaz_executable = topaz_executable
         self.topaz_processor = topaz_processor
+        self.admission_service = admission_service
+        self.admission_timeout_seconds = admission_timeout_seconds
 
     def generate_txt2img(self, request: dict, output_dir: Path) -> dict:
+        with self._admission_scope(request):
+            return self._generate_txt2img_admitted(request, output_dir)
+
+    def _generate_txt2img_admitted(self, request: dict, output_dir: Path) -> dict:
         request.setdefault("settings", {})["mode"] = "txt2img"
         self._ensure_controlnet_mode_runtime(request)
         self._apply_runtime_node_fallbacks(request)
@@ -2560,6 +2674,10 @@ class ComfyGenerationRuntime:
         return self._generate(request, output_dir)
 
     def generate_img2img(self, request: dict, output_dir: Path) -> dict:
+        with self._admission_scope(request):
+            return self._generate_img2img_admitted(request, output_dir)
+
+    def _generate_img2img_admitted(self, request: dict, output_dir: Path) -> dict:
         request.setdefault("settings", {})["mode"] = "img2img"
         self._ensure_controlnet_mode_runtime(request)
         self._apply_runtime_node_fallbacks(request)
@@ -2569,6 +2687,10 @@ class ComfyGenerationRuntime:
         return self._generate(request, output_dir)
 
     def generate_inpaint(self, request: dict, output_dir: Path) -> dict:
+        with self._admission_scope(request):
+            return self._generate_inpaint_admitted(request, output_dir)
+
+    def _generate_inpaint_admitted(self, request: dict, output_dir: Path) -> dict:
         settings = request.setdefault("settings", {})
         settings["mode"] = "inpaint"
         self._ensure_controlnet_mode_runtime(request)
@@ -2632,6 +2754,10 @@ class ComfyGenerationRuntime:
         settings["inpaint_composited"] = False
 
     def generate_remaster(self, request: dict, output_dir: Path) -> dict:
+        with self._admission_scope(request):
+            return self._generate_remaster_admitted(request, output_dir)
+
+    def _generate_remaster_admitted(self, request: dict, output_dir: Path) -> dict:
         settings = request.setdefault("settings", {})
         settings["mode"] = "remaster"
         self._ensure_controlnet_mode_runtime(request)
@@ -2654,6 +2780,24 @@ class ComfyGenerationRuntime:
         settings["remaster_source_width"] = int(source_size.get("width") or settings.get("width") or 0)
         settings["remaster_source_height"] = int(source_size.get("height") or settings.get("height") or 0)
         return self._generate(request, output_dir)
+
+    @contextmanager
+    def _admission_scope(self, request: dict):
+        lease_token = request.get("_comfy_admission_lease_token")
+        try:
+            if isinstance(lease_token, str) and lease_token:
+                with self.admission_service.borrow(lease_token, required_kind="xyz"):
+                    yield
+                return
+            with self.admission_service.acquire(
+                "operation",
+                timeout_seconds=self.admission_timeout_seconds,
+            ):
+                yield
+        except ComfyCleanupPendingError as exc:
+            raise RuntimeErrorResponse(api_errors.COMFY_CLEANUP_PENDING) from exc
+        except (ComfyAdmissionTimeoutError, ComfyAdmissionError) as exc:
+            raise RuntimeErrorResponse(api_errors.COMFY_ADMISSION_BUSY) from exc
 
     def _apply_runtime_node_fallbacks(self, request: dict) -> None:
         if request.get("profile") != "sdxl":

@@ -61,6 +61,7 @@ _startup_setup_execution_lock = threading.Lock()
 
 
 RUNTIME_FEATURE_POLICY = (
+    RuntimeFeatureRequirement("merge_xyz", ("asteria-merge-runtime",), "all"),
     RuntimeFeatureRequirement("detailer", ("comfyui-impact-pack", "comfyui-impact-subpack"), "all"),
     RuntimeFeatureRequirement("controlnet_preprocessor", ("comfyui-controlnet-aux",), "all"),
     RuntimeFeatureRequirement("openpose", ("comfyui-controlnet-aux",), "all"),

@@ -12,6 +12,9 @@ nodes:
   vae_loader: "6"
   vae_decode: "7"
   save_image: "9"
+  merge_source_b: "900"
+  merge_source_c: "901"
+  merge_runtime: "902"
 class_types:
   checkpoint_loader: CheckpointLoaderSimple
   lora_loader: LoraLoader
@@ -43,6 +46,7 @@ class_types:
   image_upscale_with_model: ImageUpscaleWithModel
   detailer_detector: UltralyticsDetectorProvider
   face_detailer: FaceDetailer
+  merge_runtime: AsteriaSDXLMergeRuntime
 node_contracts:
   controlnet_soft_weights:
     required_inputs:
