@@ -63,6 +63,8 @@ macOSとLinuxはV1.0.1では未対応です。必要なGPUメモリとシステ�
 
 `models/`配下へ配置するか、SettingsのModel Assetsで外部モデルフォルダーを登録します。SDXL／Animaスターターパックを取得しなくても、自分の対応モデルを登録して利用できます。
 
+`models/checkpoints/`、`models/diffusion_models/`、`models/vae/`、`models/text_encoders/`、`models/loras/`、`models/embeddings/`、`models/controlnet/`、`models/bbox/`、`models/upscalers/`は初回起動時に自動作成されます。モデルの種類に合うフォルダーへ配置してください。`sdxl`や`anima`など、さらに下のサブフォルダー分けは任意です。
+
 #### Q. 展開したフォルダーを移動できますか。
 
 Asteriaを`Stop-Asteria.cmd`で完全に終了してから、フォルダー全体を移動してください。起動中には移動しないでください。
@@ -135,6 +137,8 @@ Only a missing, corrupt, or manifest-changed component is reacquired. If the sam
 #### Q. Where should I put my own models?
 
 Place them under `models/`, or register an external model folder from Model Assets in Settings. You can skip the SDXL and Anima starter packs and use your own compatible models.
+
+`models/checkpoints/`, `models/diffusion_models/`, `models/vae/`, `models/text_encoders/`, `models/loras/`, `models/embeddings/`, `models/controlnet/`, `models/bbox/`, and `models/upscalers/` are created automatically on first launch. Place each model in the folder for its type. Additional subfolders such as `sdxl` or `anima` are optional.
 
 #### Q. Can I move the extracted folder?
 

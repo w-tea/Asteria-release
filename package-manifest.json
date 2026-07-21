@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.0.1",
   "platform": "windows-x64",
-  "source_commit": "27a7354fdffe9503738cc32756099468b6a872fd",
-  "build_timestamp_utc": "2026-07-21T15:37:12Z",
+  "source_commit": "6e0df98f2863435dbc7cfb6324cf12880267f73f",
+  "build_timestamp_utc": "2026-07-21T16:27:15Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 9349,
-      "sha256": "456cef7128c0afbb1a2faba882934ad3e9eb7405f481a2618cd9dd02150e86bf"
+      "size_bytes": 10098,
+      "sha256": "36b485fc36665fe1911371029eb6d9a5e6d645e8de4cb46358a9cbd3d642d451"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -517,39 +517,39 @@
       "sha256": "405f6943ec7951e4d20b8e74730dcd1ac8754bc4c9198b5175861dff5d9caaa9"
     },
     {
-      "path": "app/frontend/public/_nuxt/BGAQ5Mt3.js",
-      "size_bytes": 326,
-      "sha256": "6404575844814712c2c3e538ef2aabd7e2181f0092aea3cbef85214a0de553de"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/DJPDAW-r.js",
-      "size_bytes": 1339730,
-      "sha256": "368e214dc0c3eaedfe0343f2c6d949482d34480dd6f8b5334c7b7dedc3294665"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/DRlFQ1eU.js",
+      "path": "app/frontend/public/_nuxt/B-vaufwi.js",
       "size_bytes": 9536,
-      "sha256": "d4031f9a739e99f58841e29e357e4800bea36d30d637b334e9f1cff48092f681"
+      "sha256": "c40f3b02ba79434bcb21b1db27523695f9cddfc6161fbc06db512c0e9d873656"
     },
     {
-      "path": "app/frontend/public/_nuxt/Dxw72oJs.js",
+      "path": "app/frontend/public/_nuxt/Bxxve4mH.js",
       "size_bytes": 3478,
-      "sha256": "6ff9a3dbcaeecb6c44cd06a161d6c65e77387b7a388ab9fad3b57ea7e6778793"
+      "sha256": "5e58e702e2e353b27dbde6290939cfe6b704518e8755b546a5abbfae2b2d508c"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/C7UZHmLo.js",
+      "size_bytes": 1350438,
+      "sha256": "3844b6bc1e49fdc5b3ae80fbf88fbe159fc2110d583db442493c1f7f6a5a10a5"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/CoACgGYn.js",
+      "size_bytes": 326,
+      "sha256": "61a474ef5817b9a30e17d5f0184a4e5cf8c3e11e4841067fe6b898dfa02180bd"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "a33f9846ee48e5de926c9f196cfeccb67b71ee875a942b44a521a0cb855f50b4"
+      "sha256": "cb868e29b2196d48aef7ee8d0fa22e51021ec5801cd2e4867de9c748baec77a0"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/50c02d79-fd5d-4f52-86aa-d0b27db22ad5.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/a1a19933-1d1c-4cc7-b7bc-fcafa17b08e9.json",
       "size_bytes": 88,
-      "sha256": "dff809e6c658e3a5d049c5c71f4fe91da18886193d3ed4579f47c0911ccde672"
+      "sha256": "e6d87ec55ebb3f1052acef876286c44181a471dac8cb1b67261c5318f87843bf"
     },
     {
-      "path": "app/frontend/public/_nuxt/entry.COWOZ3NX.css",
-      "size_bytes": 283090,
-      "sha256": "043bd254718529fda724136d3b711eb14d9c5b3413dca1b3d85578854bcee876"
+      "path": "app/frontend/public/_nuxt/entry.DNtdkp33.css",
+      "size_bytes": 283900,
+      "sha256": "68d416856999efa72a97d9ed97db9a729108499d0b1bf0c3d44ebdcae714e3be"
     },
     {
       "path": "app/frontend/public/_nuxt/error-404.BBhU_iaz.css",
@@ -569,7 +569,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162006,
-      "sha256": "b79d7cc134293d3d2b0087ac6ceed30eba1cd4a5b5802423beba2a68ad014444"
+      "sha256": "84082d2644f0eedcfd503c67ff40a7d0336acf3ee7e25ff1372e3908a650f66f"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.BbVxmbPC.mjs",
@@ -837,9 +837,9 @@
       "sha256": "18df87595c822d7d7c6c3ac2d7c34912b7c7a08e17228cacf870db8ce5af942c"
     },
     {
-      "path": "app/frontend/server/chunks/build/MergeCandidateStudio-styles.DRnhAbzP.mjs",
-      "size_bytes": 4286,
-      "sha256": "c839b80060cfcaaf416d91c64973d24f8aea44b0d9a187135031f14803d950d1"
+      "path": "app/frontend/server/chunks/build/MergeCandidateStudio-styles.CTmCnp5_.mjs",
+      "size_bytes": 5041,
+      "sha256": "a4e9734074d71fbbbc6517df1fedb296329cae4894120d09541c0b2e8a8f5766"
     },
     {
       "path": "app/frontend/server/chunks/build/MergeOperationSetup-styles.52W8irup.mjs",
@@ -857,9 +857,9 @@
       "sha256": "d3e8915f39acc1b8c2ee45226f94ce752d6f92168b9123c9bf49d785c37b8e69"
     },
     {
-      "path": "app/frontend/server/chunks/build/MergeStudioView-styles.DPX-t-Ta.mjs",
-      "size_bytes": 28402,
-      "sha256": "312f678f8096bb61326c79509ec8c4b3aad30ce3853794e2013ce95b45695838"
+      "path": "app/frontend/server/chunks/build/MergeStudioView-styles.DYqqrl1R.mjs",
+      "size_bytes": 28406,
+      "sha256": "b81d925e6ad626ca23d110765a373cdf7b4f02f812e9f08ba4d0f1006d9221b8"
     },
     {
       "path": "app/frontend/server/chunks/build/MergeWorkspaceBody-styles.CsEIH9qW.mjs",
@@ -937,9 +937,9 @@
       "sha256": "8065a7c7a257426a493036ba8ecc2b2a5117dce3e0e9c7566d27f300374da85b"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsRuntimeTool-styles.kiGIII9C.mjs",
-      "size_bytes": 3901,
-      "sha256": "b47a67140aaeacd9858894c9a939a1aef7123b4e794ff43de7feaeda67b5cfa4"
+      "path": "app/frontend/server/chunks/build/SettingsRuntimeTool-styles.Bv2LMbkO.mjs",
+      "size_bytes": 3956,
+      "sha256": "76a2e2fdae40e3cc116345320c4ed747740ab15fd2bc202c9a43e393293731cb"
     },
     {
       "path": "app/frontend/server/chunks/build/SettingsStartupOverview-styles.CmwSSOMi.mjs",
@@ -952,9 +952,9 @@
       "sha256": "6433cfc6f20cba8f2a77d3191ae84095e9e5ff04bf735f29d0d935fb5701a08f"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsView-styles.rLYFW4cV.mjs",
-      "size_bytes": 9371,
-      "sha256": "0161c61625036b0dda20ebfcec4ecaa25c72ea3a6ecd3ea3db61b872594e688b"
+      "path": "app/frontend/server/chunks/build/SettingsView-styles.OHK-tM8-.mjs",
+      "size_bytes": 9369,
+      "sha256": "e34da50580483918729d8f2bffb46feebd2c7bbe7032e082d0b481cf1496c82d"
     },
     {
       "path": "app/frontend/server/chunks/build/SettingsWorkspaceBody-styles.MCE7MdFj.mjs",
@@ -979,7 +979,7 @@
     {
       "path": "app/frontend/server/chunks/build/client.precomputed.mjs",
       "size_bytes": 3401,
-      "sha256": "623e57e9dd0f848cec36bbbbc98c777f6533c7fc5efe1fd279e0348a06057d7f"
+      "sha256": "fe1f106240f48f73c69719e93a14fe7c3800d683b55e767575c0e1ff8cff5e17"
     },
     {
       "path": "app/frontend/server/chunks/build/composables-CtXy92-o.mjs",
@@ -1008,13 +1008,13 @@
     },
     {
       "path": "app/frontend/server/chunks/build/server.mjs",
-      "size_bytes": 2217175,
-      "sha256": "c00efa7861f49e81f96219c64bfa4c500c7f7a65567ed464be24fe822d430d51"
+      "size_bytes": 2235620,
+      "sha256": "95c6e225a7b9a63c46c714c147467a0b15393c472fc523696b58f3b3ec1599bf"
     },
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 11269,
-      "sha256": "651156178d1b836303c638e8d6556ab2e6e6e767eeb83acc395eda2286b810e2"
+      "sha256": "6d2c1304d565225b64d1d49c091cc46fa603e97b3e05ccde75e5fa10865a13c6"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -1643,8 +1643,8 @@
     },
     {
       "path": "runtime-dependencies.yaml",
-      "size_bytes": 8203,
-      "sha256": "61c737b67f89ee62e68cd6f069a3807bab364f66e206240076c8c30488a02d9f"
+      "size_bytes": 8206,
+      "sha256": "bdd28e3775801c6e681bc47de10c86f160d22ae571d6abcee1470e2ff9d6bcfa"
     },
     {
       "path": "schemas/anima_txt2img.yaml",
@@ -1668,13 +1668,13 @@
     },
     {
       "path": "scripts/windows/Asteria.Bootstrap.psm1",
-      "size_bytes": 29838,
-      "sha256": "b3a054e21dea292b97e7503288c0fb3f3990f21e36507cae8f8bfc47a25809f2"
+      "size_bytes": 29852,
+      "sha256": "eb1d2009ddfecdc41bdf94c6ac320ee90cc7d677e9a317ea17dd03e4395493e0"
     },
     {
       "path": "scripts/windows/Asteria.Launcher.psm1",
-      "size_bytes": 7964,
-      "sha256": "013c296e610ed73482e3f93259ce04166bfbbb23d0af078808399eb34c54c48d"
+      "size_bytes": 8560,
+      "sha256": "9572f285a6652427c315b5d3204e9ba0c8630a0e64f6b977d974a796dfaf658a"
     },
     {
       "path": "scripts/windows/Install-Asteria.ps1",
@@ -1688,8 +1688,8 @@
     },
     {
       "path": "scripts/windows/Start-Asteria.ps1",
-      "size_bytes": 14648,
-      "sha256": "3952ad52edaae035f65cba2fdfc8d9c86f978ee637cef081a3df7a890ffb1224"
+      "size_bytes": 14799,
+      "sha256": "1511a0184b83347c3aad9692898a2a7a5b752188999beea0ffd423a207fbbaad"
     },
     {
       "path": "scripts/windows/Stop-Asteria.ps1",

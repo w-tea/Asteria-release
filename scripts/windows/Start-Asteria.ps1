@@ -85,10 +85,14 @@ if ($TargetMode -eq "packaged") {
         }
     }
 
+    Initialize-AsteriaModelDirectories -ModelRoot $resolvedModelRoot
     $installPath = Join-Path $PSScriptRoot "Install-Asteria.ps1"
     & $installPath -AppRoot $resolvedAppRoot -ConfirmDownload -Json:$Json
     $installExit = $LASTEXITCODE
     if ($installExit -ne 0) { Complete-Start "blocked" "launcher_install_failed" $installExit "Required setup is incomplete. Run Repair-Asteria.cmd and retry." }
+}
+else {
+    Initialize-AsteriaModelDirectories -ModelRoot $resolvedModelRoot
 }
 
 if (-not (Test-Path -LiteralPath $resolvedPython -PathType Leaf) -or
