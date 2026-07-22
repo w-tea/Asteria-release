@@ -12,9 +12,9 @@ Asteriaは、ローカル環境で画像生成、編集、比較、整理、LoRA
 
 1. 配布ZIPを、十分な空き容量があり書き込み可能なフォルダーへ完全に展開します。
 2. 展開したフォルダー内の`Start-Asteria.cmd`をダブルクリックします。
-3. 初回セットアップの案内を確認し、必要なダウンロードへ同意します。
-4. 任意のSDXL／Animaスターターパックを選択します。片方だけ、両方、または両方をスキップできます。
-5. 取得と検証が完了すると、Asteriaがブラウザーで開きます。
+3. 初回はCMDのセットアップ画面で、起動に必要なPython、Node.js、ComfyUI、パッケージ、カスタムノード、機能用データを自動取得します。CMD上でスターターパックは選択しません。取得と検証が完了するまでウィンドウを閉じずに待ちます。
+4. 必須セットアップが完了すると、Asteriaがブラウザーで開きます。
+5. SDXL／Animaスターターパックが必要な場合は、AsteriaのSettingsにある「起動準備」から選択して取得します。片方だけ、両方、または両方をスキップできます。
 
 Windows側へ事前に必要なのは対応するNVIDIAドライバーです。CUDA Toolkit、Python、Node.js、ComfyUIを個別にインストールする必要はありません。セットアップ中にウィンドウを閉じても、検証済みの取得物は次回の続きで再利用されます。
 
@@ -34,7 +34,7 @@ macOSとLinuxはV1.0.1では未対応です。必要なGPUメモリとシステ�
 - 終了: `Stop-Asteria.cmd`
 - 取得失敗や破損の修復: Asteriaを終了してから`Repair-Asteria.cmd`
 
-2回目以降は取得済みコンポーネントを検証し、変更がなければダウンロードをスキップします。SDXLとAnimaのスターターパックは初期状態で未選択です。Animaの取得には画面に表示される非商用ライセンスへの同意が必要です。
+2回目以降は取得済みコンポーネントを検証し、変更がなければダウンロードをスキップします。SDXLとAnimaのスターターパックは初期状態で未選択で、CMDではなくAsteria起動後のSettings「起動準備」から取得します。Animaの取得には画面に表示される非商用ライセンスへの同意が必要です。
 
 自分のモデルは`models/`配下へ配置できます。Portable版V1.0.1ではSettingsの外部モデルルート設定は使用せず、別の場所にある既存モデルを共有するときはWindowsのジャンクションまたはシンボリックリンクを使用します。複数の外部モデルルートをSettingsから登録する正式対応はV1.1で検討します。
 
@@ -99,9 +99,9 @@ Asteria is a Windows AI image production studio for local image generation, edit
 
 1. Fully extract the distribution ZIP to a writable folder with ample free space.
 2. Double-click `Start-Asteria.cmd` in the extracted folder.
-3. Review first-run setup and consent to the required downloads.
-4. Optionally select the SDXL starter pack, the Anima starter pack, both, or skip both.
-5. Asteria opens in the browser after acquisition and verification finish.
+3. On the first run, the CMD setup window automatically downloads the Python, Node.js, ComfyUI, packages, custom nodes, and functional assets required to start Asteria. Starter packs are not selected in CMD. Keep the window open until acquisition and verification finish.
+4. Asteria opens in the browser after the required setup completes.
+5. If you want an SDXL or Anima starter pack, select it from **Settings > Ready to start** after Asteria opens. You can install either pack, both packs, or skip both.
 
 Only a compatible NVIDIA driver must be installed on Windows beforehand. You do not need to install the CUDA Toolkit, Python, Node.js, or ComfyUI separately. If setup is interrupted, verified completed downloads are reused on the next run.
 
@@ -121,7 +121,7 @@ macOS and Linux are unsupported in V1.0.1. GPU-memory and system-memory needs de
 - Stop: `Stop-Asteria.cmd`
 - Retry or repair an incomplete or corrupt managed component: stop Asteria, then run `Repair-Asteria.cmd`
 
-Later starts verify acquired components and skip downloads when nothing changed. The SDXL and Anima starter packs are optional and initially unchecked. Downloading Anima requires acceptance of the displayed non-commercial license.
+Later starts verify acquired components and skip downloads when nothing changed. The SDXL and Anima starter packs are optional, initially unchecked, and installed from **Settings > Ready to start** after Asteria opens rather than from CMD. Downloading Anima requires acceptance of the displayed non-commercial license.
 
 Place your own models under `models/`. Portable V1.0.1 does not use the external model-root setting in Settings. To share an existing library elsewhere, use a Windows junction or symbolic link. Formal Settings support for multiple external model roots is being considered for V1.1.
 

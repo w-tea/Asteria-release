@@ -21,4 +21,4 @@ function useHead(input, options = {}) {
 }
 
 export { useHead as u };
-//# sourceMappingURL=composables-DZwICiP5.mjs.map
+//# sourceMappingURL=composables-BU_E7f7y.mjs.map

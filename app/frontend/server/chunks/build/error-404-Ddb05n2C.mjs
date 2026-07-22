@@ -2,7 +2,7 @@ import { mergeProps, withCtx, createTextVNode, toDisplayString, defineComponent,
 import { r as parseQuery, l as hasProtocol, q as joinURL, C as withTrailingSlash, D as withoutTrailingSlash } from '../_/nitro.mjs';
 import { _ as _export_sfc, b as useRouter, e as encodeRoutePath, r as resolveRouteObject, n as navigateTo, u as useNuxtApp, c as useRuntimeConfig, a as nuxtLinkDefaults } from './server.mjs';
 import { ssrRenderAttrs, ssrInterpolate, ssrRenderComponent } from 'vue/server-renderer';
-import { u as useHead } from './composables-DZwICiP5.mjs';
+import { u as useHead } from './composables-BU_E7f7y.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -376,4 +376,4 @@ _sfc_main.setup = (props, ctx) => {
 const error404 = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-4d196fb5"]]);
 
 export { error404 as default };
-//# sourceMappingURL=error-404-KsJkQFd5.mjs.map
+//# sourceMappingURL=error-404-Ddb05n2C.mjs.map
