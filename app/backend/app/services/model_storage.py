@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
@@ -44,4 +45,10 @@ class ModelStorageSettingsRepository:
 
 
 def resolve_model_root(*, data_dir: Path, fallback: Path) -> Path:
+    if not external_model_root_enabled():
+        return fallback
     return ModelStorageSettingsRepository(data_dir / "model-storage-settings.json").resolve_root(fallback)
+
+
+def external_model_root_enabled() -> bool:
+    return os.environ.get("ASTERIA_TARGET_MODE", "").strip().lower() != "packaged"

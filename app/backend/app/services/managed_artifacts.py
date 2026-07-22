@@ -71,14 +71,15 @@ class ManagedArtifactService:
         clock: Callable[[], float] | None = None,
         progress_callback: Callable[[str, int, int], None] | None = None,
     ) -> None:
-        self.temp_root = temp_root.resolve()
+        self.temp_root = self._absolute_without_resolving(temp_root)
         self.timeout_seconds = timeout_seconds
         self.opener = opener or urlopen
         self.clock = clock or time.time
         self.progress_callback = progress_callback
 
     def acquire(self, spec: ManagedArtifactSpec) -> ManagedArtifactResult:
-        destination = spec.destination.resolve()
+        destination = self._absolute_without_resolving(spec.destination)
+        self._validate_managed_write_path(destination)
         self._validate_destination_type(spec, destination)
         receipt_path = self.receipt_path_for(spec)
         if self._installed_receipt_matches(spec, destination, receipt_path):
@@ -95,11 +96,13 @@ class ManagedArtifactService:
         try:
             downloaded_bytes = self._download(spec, part_path, resume_path)
             self._validate_download(spec, part_path)
+            self._validate_managed_write_path(destination)
             receipt = self._receipt(spec)
             if spec.kind == "zip":
                 self._publish_zip(spec, part_path, destination, receipt)
             else:
                 self._publish_file(part_path, destination)
+                self._validate_managed_write_path(receipt_path)
                 self._write_json_atomic(receipt_path, receipt)
         except ManagedArtifactError:
             raise
@@ -124,13 +127,14 @@ class ManagedArtifactService:
         return self.temp_root / "managed-artifacts" / f"{spec.component_id}.resume.json"
 
     def receipt_path_for(self, spec: ManagedArtifactSpec) -> Path:
-        destination = spec.destination.resolve()
+        destination = self._absolute_without_resolving(spec.destination)
         if spec.kind == "zip":
             return destination / ".asteria-managed.json"
         return destination.with_name(f"{destination.name}.asteria-managed.json")
 
     def is_installed(self, spec: ManagedArtifactSpec, *, require_post_install: bool = False) -> bool:
-        destination = spec.destination.resolve()
+        destination = self._absolute_without_resolving(spec.destination)
+        self._validate_managed_write_path(destination)
         receipt_path = self.receipt_path_for(spec)
         if not self._installed_receipt_matches(spec, destination, receipt_path):
             return False
@@ -139,6 +143,7 @@ class ManagedArtifactService:
         return self._read_json(receipt_path) == self._completed_receipt(spec)
 
     def mark_post_install_complete(self, spec: ManagedArtifactSpec) -> None:
+        self._validate_managed_write_path(self._absolute_without_resolving(spec.destination))
         receipt_path = self.receipt_path_for(spec)
         receipt = self._read_json(receipt_path)
         if receipt != self._receipt(spec):
@@ -149,9 +154,12 @@ class ManagedArtifactService:
                 raise ManagedArtifactError("managed artifact receipt identity is invalid")
         completed = self._receipt(spec)
         completed["post_install_state"] = "complete"
+        self._validate_managed_write_path(receipt_path)
         self._write_json_atomic(receipt_path, completed)
 
     def _download(self, spec: ManagedArtifactSpec, part_path: Path, resume_path: Path) -> int:
+        self._validate_managed_write_path(part_path)
+        self._validate_managed_write_path(resume_path)
         try:
             part_path.parent.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
@@ -230,6 +238,33 @@ class ManagedArtifactService:
         except OSError as exc:
             raise ManagedArtifactError(f"managed artifact destination check failed: {exc}") from exc
 
+    @staticmethod
+    def _absolute_without_resolving(path: Path) -> Path:
+        return Path(os.path.abspath(os.fspath(path)))
+
+    def _validate_managed_write_path(self, path: Path) -> None:
+        candidate = self._absolute_without_resolving(path)
+        for component in reversed((candidate, *candidate.parents)):
+            try:
+                details = os.lstat(component)
+            except FileNotFoundError:
+                continue
+            except OSError as exc:
+                raise ManagedArtifactError("managed artifact destination could not be inspected safely") from exc
+            attributes = getattr(details, "st_file_attributes", 0)
+            is_reparse = bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
+            is_junction = False
+            junction_check = getattr(os.path, "isjunction", None)
+            if junction_check is not None:
+                try:
+                    is_junction = bool(junction_check(component))
+                except OSError as exc:
+                    raise ManagedArtifactError("managed artifact destination could not be inspected safely") from exc
+            if stat.S_ISLNK(details.st_mode) or is_junction or is_reparse:
+                raise ManagedArtifactError(
+                    "managed artifact destination uses a filesystem link or reparse point"
+                )
+
     def _validate_download(self, spec: ManagedArtifactSpec, part_path: Path) -> None:
         if self._file_size(part_path) != spec.expected_size:
             self._remove_file_safely(part_path)
@@ -245,9 +280,11 @@ class ManagedArtifactService:
             raise ManagedArtifactError("managed artifact checksum mismatch")
 
     def _publish_file(self, part_path: Path, destination: Path) -> None:
+        self._validate_managed_write_path(destination)
         self._require_same_volume(part_path, destination)
         try:
             destination.parent.mkdir(parents=True, exist_ok=True)
+            self._validate_managed_write_path(destination)
             os.replace(part_path, destination)
         except OSError as exc:
             raise ManagedArtifactError(f"managed artifact atomic publish failed: {exc}") from exc
@@ -259,6 +296,7 @@ class ManagedArtifactService:
         destination: Path,
         receipt: dict[str, object],
     ) -> None:
+        self._validate_managed_write_path(destination)
         try:
             destination.parent.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
@@ -267,15 +305,25 @@ class ManagedArtifactService:
         backup = destination.parent / f".{destination.name}.asteria-backup-{uuid4().hex}"
         self._require_same_volume(part_path, stage)
         try:
+            self._validate_managed_write_path(destination)
+            self._validate_managed_write_path(stage)
+            self._validate_managed_write_path(backup)
             self._extract_zip(part_path, stage, strip_single_root=spec.strip_single_root)
             self._write_json_atomic(stage / ".asteria-managed.json", receipt)
+            self._validate_managed_write_path(destination)
             had_destination = self._path_exists(destination)
             if had_destination:
+                self._validate_managed_write_path(destination)
+                self._validate_managed_write_path(backup)
                 os.replace(destination, backup)
             try:
+                self._validate_managed_write_path(destination)
+                self._validate_managed_write_path(stage)
                 os.replace(stage, destination)
             except OSError:
                 if had_destination and self._path_exists(backup) and not self._path_exists(destination):
+                    self._validate_managed_write_path(backup)
+                    self._validate_managed_write_path(destination)
                     os.replace(backup, destination)
                 raise
             self._remove_path_safely(backup)
@@ -289,8 +337,10 @@ class ManagedArtifactService:
             self._remove_path_safely(stage)
             if self._path_exists(backup) and not self._path_exists(destination):
                 try:
+                    self._validate_managed_write_path(backup)
+                    self._validate_managed_write_path(destination)
                     os.replace(backup, destination)
-                except OSError:
+                except (ManagedArtifactError, OSError):
                     pass
             self._remove_path_safely(backup)
             raise ManagedArtifactError(f"managed artifact archive publish failed: {exc}") from exc
@@ -428,18 +478,23 @@ class ManagedArtifactService:
         except (OSError, json.JSONDecodeError):
             return None
 
-    @staticmethod
-    def _write_json_atomic(path: Path, payload: dict[str, object]) -> None:
+    def _write_json_atomic(self, path: Path, payload: dict[str, object]) -> None:
         temporary = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
         try:
+            self._validate_managed_write_path(path)
+            self._validate_managed_write_path(temporary)
             path.parent.mkdir(parents=True, exist_ok=True)
+            self._validate_managed_write_path(path)
+            self._validate_managed_write_path(temporary)
             temporary.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+            self._validate_managed_write_path(path)
+            self._validate_managed_write_path(temporary)
             os.replace(temporary, path)
+        except ManagedArtifactError:
+            self._remove_file_safely(temporary)
+            raise
         except OSError as exc:
-            try:
-                temporary.unlink(missing_ok=True)
-            except OSError:
-                pass
+            self._remove_file_safely(temporary)
             raise ManagedArtifactError(f"managed artifact receipt write failed: {exc}") from exc
 
     @staticmethod
@@ -477,20 +532,23 @@ class ManagedArtifactService:
         except OSError:
             return -1
 
-    @staticmethod
-    def _remove_file_safely(path: Path) -> None:
+    def _remove_file_safely(self, path: Path) -> None:
         try:
+            self._validate_managed_write_path(path)
             if path.is_file() or path.is_symlink():
+                self._validate_managed_write_path(path)
                 path.unlink()
-        except OSError:
+        except (ManagedArtifactError, OSError):
             pass
 
-    @classmethod
-    def _remove_path_safely(cls, path: Path) -> None:
+    def _remove_path_safely(self, path: Path) -> None:
         try:
+            self._validate_managed_write_path(path)
             if path.is_symlink() or path.is_file():
+                self._validate_managed_write_path(path)
                 path.unlink()
             elif path.is_dir():
+                self._validate_managed_write_path(path)
                 shutil.rmtree(path)
-        except OSError:
+        except (ManagedArtifactError, OSError):
             pass

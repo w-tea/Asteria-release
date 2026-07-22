@@ -49,9 +49,11 @@ class ModelSelectionRepository:
         profile: str,
         dependencies: list[ModelDependencyStatus],
         allowed_slot_ids: set[str] | None = None,
+        *,
+        replace_missing: bool = False,
     ) -> ModelSelection:
         with _selection_lock(self.selections_path):
-            return self._autofill_locked(profile, dependencies, allowed_slot_ids)
+            return self._autofill_locked(profile, dependencies, allowed_slot_ids, replace_missing)
 
     def autofill_complete_starter_packs(
         self,
@@ -83,7 +85,7 @@ class ModelSelectionRepository:
                 and not self._selection_needs_portable_rebase(profile, pack_dependencies)
             ):
                 continue
-            selections.append(self.autofill(profile, pack_dependencies))
+            selections.append(self.autofill(profile, pack_dependencies, replace_missing=True))
         return tuple(selections)
 
     def _selection_needs_portable_rebase(
@@ -111,6 +113,7 @@ class ModelSelectionRepository:
         profile: str,
         dependencies: list[ModelDependencyStatus],
         allowed_slot_ids: set[str] | None,
+        replace_missing: bool,
     ) -> ModelSelection:
         selection = self.get(profile)
         slots = dict(selection.slots)
@@ -121,7 +124,10 @@ class ModelSelectionRepository:
                 slots.pop(slot_id, None)
                 changed = True
                 continue
-            if value and not _path_is_file_safely(Path(value)):
+            if value and _path_exists_safely(Path(value)) and not _path_is_file_safely(Path(value)):
+                slots[slot_id] = ""
+                changed = True
+            elif value and replace_missing and not _path_is_file_safely(Path(value)):
                 slots[slot_id] = ""
                 changed = True
 
@@ -129,7 +135,7 @@ class ModelSelectionRepository:
             if dependency.profile != profile or dependency.status != "installed" or not dependency.slot_id:
                 continue
             current = slots.get(dependency.slot_id, "")
-            if current and _path_is_file_safely(Path(current)):
+            if current:
                 continue
             slots[dependency.slot_id] = str(dependency.path)
             changed = True
@@ -172,6 +178,13 @@ class ModelSelectionRepository:
 def _path_is_file_safely(path: Path) -> bool:
     try:
         return path.is_file()
+    except OSError:
+        return False
+
+
+def _path_exists_safely(path: Path) -> bool:
+    try:
+        return path.exists()
     except OSError:
         return False
 

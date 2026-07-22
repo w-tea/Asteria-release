@@ -28,10 +28,15 @@ from app.services.model_dependencies import (
     ModelDependencyRepository,
     ModelDependencyStatus,
 )
-from app.services.model_library import ModelLibraryItem, ModelLibraryScanner
+from app.services.model_library import ModelLibraryItem, ModelLibraryScanner, ModelLinkHealth
 from app.services.model_profiles import ModelProfile, ModelProfileRepository, ModelSlot
 from app.services.model_selections import ModelSelection, ModelSelectionRepository
-from app.services.model_storage import ModelStorageSettings, ModelStorageSettingsRepository, resolve_model_root
+from app.services.model_storage import (
+    ModelStorageSettings,
+    ModelStorageSettingsRepository,
+    external_model_root_enabled,
+    resolve_model_root,
+)
 
 router = APIRouter(prefix="/api/models", tags=["models"])
 _bootstrap_lock = threading.Lock()
@@ -121,10 +126,21 @@ class ModelLibraryItemResponse(BaseModel):
     relative_path: Path
     size_bytes: int
     metadata: dict[str, str]
+    source: str
+
+
+class ModelLinkHealthResponse(BaseModel):
+    linked_model_count: int
+    broken_link_count: int
+    unreadable_link_count: int
+    loop_link_count: int
+    duplicate_target_count: int
+    skipped_file_count: int
 
 
 class ModelLibraryResponse(BaseModel):
     items: list[ModelLibraryItemResponse]
+    link_health: ModelLinkHealthResponse
 
 
 class ModelLibraryRefreshResponse(ModelLibraryResponse):
@@ -264,6 +280,10 @@ def library_item_to_response(item: ModelLibraryItem) -> ModelLibraryItemResponse
     return ModelLibraryItemResponse(**item.__dict__)
 
 
+def link_health_to_response(health: ModelLinkHealth) -> ModelLinkHealthResponse:
+    return ModelLinkHealthResponse(**health.__dict__)
+
+
 def library_counts(items: list[ModelLibraryItem]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for item in items:
@@ -301,6 +321,8 @@ def get_storage_settings() -> ModelStorageSettingsResponse:
 @router.put("/storage", response_model=ModelStorageSettingsResponse)
 def update_storage_settings(request: ModelStorageSettingsRequest) -> ModelStorageSettingsResponse:
     config = AppConfig()
+    if not external_model_root_enabled():
+        return ModelStorageSettingsResponse(root=config.model_dir, exists=path_is_dir(config.model_dir))
     root = Path(request.root.strip()) if request.root.strip() else config.model_dir
     try:
         ModelStorageSettingsRepository(config.data_dir / "model-storage-settings.json").save(
@@ -332,7 +354,10 @@ def list_profiles() -> ModelProfileListResponse:
 def list_library(type: str | None = None) -> ModelLibraryResponse:
     library = get_library_scanner().scan()
     items = library.by_type(type) if type else library.items
-    return ModelLibraryResponse(items=[library_item_to_response(item) for item in items])
+    return ModelLibraryResponse(
+        items=[library_item_to_response(item) for item in items],
+        link_health=link_health_to_response(library.link_health),
+    )
 
 
 @router.post("/library/refresh", response_model=ModelLibraryRefreshResponse)
@@ -341,6 +366,7 @@ def refresh_library(type: str | None = None) -> ModelLibraryRefreshResponse:
     items = library.by_type(type) if type else library.items
     return ModelLibraryRefreshResponse(
         items=[library_item_to_response(item) for item in items],
+        link_health=link_health_to_response(library.link_health),
         counts=library_counts(library.items),
     )
 

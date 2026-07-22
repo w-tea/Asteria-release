@@ -85,10 +85,14 @@ if ($TargetMode -eq "packaged") {
         }
     }
 
+    Initialize-AsteriaModelDirectories -ModelRoot $resolvedModelRoot
     $installPath = Join-Path $PSScriptRoot "Install-Asteria.ps1"
     & $installPath -AppRoot $resolvedAppRoot -ConfirmDownload -Json:$Json
     $installExit = $LASTEXITCODE
     if ($installExit -ne 0) { Complete-Start "blocked" "launcher_install_failed" $installExit "Required setup is incomplete. Run Repair-Asteria.cmd and retry." }
+}
+else {
+    Initialize-AsteriaModelDirectories -ModelRoot $resolvedModelRoot
 }
 
 if (-not (Test-Path -LiteralPath $resolvedPython -PathType Leaf) -or
@@ -180,6 +184,7 @@ $env:ASTERIA_COMFY_DIR = $resolvedComfyRoot
 $env:ASTERIA_COMFY_PYTHON = $resolvedPython
 $env:ASTERIA_COMFY_PID_PATH = [System.IO.Path]::Combine($processRoot, "comfyui.pid")
 $env:ASTERIA_AUTO_BOOTSTRAP_MODELS = "0"
+$env:ASTERIA_TARGET_MODE = $TargetMode
 $env:NITRO_HOST = "127.0.0.1"
 $env:NITRO_PORT = "3000"
 $env:NUXT_PUBLIC_API_BASE = "http://127.0.0.1:8000"

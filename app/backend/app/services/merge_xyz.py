@@ -158,6 +158,7 @@ def resolve_merge_xyz_sources(recipe: Any, *, requires_source_c: bool) -> tuple[
             raise MergeXYZValidationError(f"xyz_precheck_source_{role.lower()}_required")
         path = Path(raw_path)
         try:
+            logical = path.absolute()
             resolved = path.resolve(strict=True)
             if not resolved.is_file():
                 raise OSError("source is not a file")
@@ -172,8 +173,8 @@ def resolve_merge_xyz_sources(recipe: Any, *, requires_source_c: bool) -> tuple[
         identities.append(
             MergeXYZSourceIdentity(
                 role=role,
-                path=str(resolved),
-                name=resolved.name,
+                path=str(logical),
+                name=logical.name,
                 size_bytes=size_bytes,
                 sha256=digest,
             )

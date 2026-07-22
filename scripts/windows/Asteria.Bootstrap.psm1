@@ -202,6 +202,34 @@ function Resolve-AsteriaContainedTarget {
     return $target
 }
 
+function Assert-AsteriaManagedWritePath {
+    param([Parameter(Mandatory = $true)][string]$Path)
+    try {
+        $candidate = [System.IO.Path]::GetFullPath($Path)
+    }
+    catch {
+        throw (New-AsteriaBootstrapError -Code "bootstrap_managed_path_unsafe" -Message "Managed setup path could not be inspected safely.")
+    }
+    while (-not [string]::IsNullOrWhiteSpace($candidate)) {
+        try {
+            $item = Get-Item -LiteralPath $candidate -Force -ErrorAction Stop
+            if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                throw (New-AsteriaBootstrapError -Code "bootstrap_managed_path_unsafe" -Message "Managed setup refuses filesystem links and reparse points.")
+            }
+        }
+        catch [System.Management.Automation.ItemNotFoundException] {
+            # Nonexistent lexical components are allowed; an existing ancestor is still inspected.
+        }
+        catch {
+            if ($_.Exception.Data["AsteriaCode"]) { throw }
+            throw (New-AsteriaBootstrapError -Code "bootstrap_managed_path_unsafe" -Message "Managed setup path could not be inspected safely.")
+        }
+        $parent = [System.IO.Path]::GetDirectoryName($candidate)
+        if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $candidate) { break }
+        $candidate = $parent
+    }
+}
+
 function Get-AsteriaBootstrapReceiptPath {
     param(
         [Parameter(Mandatory = $true)][string]$AppRoot,
@@ -271,16 +299,22 @@ function Write-AsteriaBootstrapComponentReceipt {
         [Parameter(Mandatory = $true)][string]$EntryPointPath
     )
     $receiptPath = Get-AsteriaBootstrapReceiptPath -AppRoot $AppRoot -Artifact $Artifact
+    Assert-AsteriaManagedWritePath -Path $receiptPath
     $receipt = Get-AsteriaBootstrapComponentIdentity -AppRoot $AppRoot -Artifact $Artifact -EntryPointPath $EntryPointPath
     $parent = [System.IO.Path]::GetDirectoryName($receiptPath)
     [System.IO.Directory]::CreateDirectory($parent) | Out-Null
     $temporary = "$receiptPath.$([Guid]::NewGuid().ToString('N')).tmp"
     try {
+        Assert-AsteriaManagedWritePath -Path $temporary
         $receipt | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $temporary -Encoding utf8
+        Assert-AsteriaManagedWritePath -Path $receiptPath
         Move-Item -LiteralPath $temporary -Destination $receiptPath -Force
     }
     finally {
-        if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
+        if (Test-Path -LiteralPath $temporary) {
+            Assert-AsteriaManagedWritePath -Path $temporary
+            Remove-Item -LiteralPath $temporary -Force
+        }
     }
 }
 
@@ -288,6 +322,7 @@ function Clear-AsteriaPythonPackageReceipts {
     param([Parameter(Mandatory = $true)][string]$AppRoot)
     $receiptRoot = Resolve-AsteriaContainedTarget -AppRoot $AppRoot -RelativePath "runtime/.asteria-packages"
     if (Test-Path -LiteralPath $receiptRoot) {
+        Assert-AsteriaManagedWritePath -Path $receiptRoot
         Remove-Item -LiteralPath $receiptRoot -Recurse -Force
     }
 }
@@ -313,16 +348,20 @@ function Invoke-AsteriaVerifiedDownload {
         [Parameter(Mandatory = $true)][string]$DownloadPath
     )
     $parent = Split-Path -Parent $DownloadPath
+    Assert-AsteriaManagedWritePath -Path $DownloadPath
     [System.IO.Directory]::CreateDirectory($parent) | Out-Null
     $partPath = "$DownloadPath.part"
+    Assert-AsteriaManagedWritePath -Path $partPath
     if (Test-AsteriaVerifiedDownload -Artifact $Artifact -DownloadPath $DownloadPath) { return }
     if (Test-Path -LiteralPath $DownloadPath) {
+        Assert-AsteriaManagedWritePath -Path $DownloadPath
         Remove-Item -LiteralPath $DownloadPath -Force
     }
     $offset = 0L
     if (Test-Path -LiteralPath $partPath -PathType Leaf) {
         $offset = (Get-Item -LiteralPath $partPath).Length
         if ($offset -gt [int64]$Artifact.size_bytes) {
+            Assert-AsteriaManagedWritePath -Path $partPath
             Remove-Item -LiteralPath $partPath -Force
             $offset = 0L
         }
@@ -343,6 +382,7 @@ function Invoke-AsteriaVerifiedDownload {
             $mode = if ($append) { [System.IO.FileMode]::Append } else { [System.IO.FileMode]::Create }
             $sourceStream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
             try {
+                Assert-AsteriaManagedWritePath -Path $partPath
                 $targetStream = [System.IO.File]::Open($partPath, $mode, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
                 try {
                     $sourceStream.CopyToAsync($targetStream).GetAwaiter().GetResult()
@@ -375,6 +415,7 @@ function Invoke-AsteriaVerifiedDownload {
     if ($hash -ne $Artifact.checksum_sha256) {
         throw (New-AsteriaBootstrapError -Code "bootstrap_download_checksum_mismatch" -Message "Downloaded artifact checksum is invalid.")
     }
+    Assert-AsteriaManagedWritePath -Path $DownloadPath
     Move-Item -LiteralPath $partPath -Destination $DownloadPath -Force
 }
 
@@ -442,11 +483,16 @@ function Expand-AsteriaBootstrapArtifact {
         [Parameter(Mandatory = $true)][ValidateSet("Zip", "TarGz")][string]$Format
     )
     $parent = Split-Path -Parent $Destination
+    Assert-AsteriaManagedWritePath -Path $Destination
     [System.IO.Directory]::CreateDirectory($parent) | Out-Null
+    Assert-AsteriaManagedWritePath -Path $Destination
     $staging = "$Destination.staging-$([Guid]::NewGuid().ToString('N'))"
+    Assert-AsteriaManagedWritePath -Path $staging
     [System.IO.Directory]::CreateDirectory($staging) | Out-Null
     $backup = "$Destination.backup-$([Guid]::NewGuid().ToString('N'))"
     try {
+        Assert-AsteriaManagedWritePath -Path $staging
+        Assert-AsteriaManagedWritePath -Path $backup
         Test-AsteriaBootstrapArchive -ArchivePath $ArchivePath -Format $Format | Out-Null
         if ($Format -eq "Zip") {
             Expand-Archive -LiteralPath $ArchivePath -DestinationPath $staging -Force
@@ -462,23 +508,29 @@ function Expand-AsteriaBootstrapArtifact {
             }
         }
         if (Test-Path -LiteralPath $Destination) {
+            Assert-AsteriaManagedWritePath -Path $Destination
             Move-Item -LiteralPath $Destination -Destination $backup
         }
         try {
+            Assert-AsteriaManagedWritePath -Path $Destination
             Move-Item -LiteralPath $staging -Destination $Destination
         }
         catch {
             if ((Test-Path -LiteralPath $backup) -and -not (Test-Path -LiteralPath $Destination)) {
+                Assert-AsteriaManagedWritePath -Path $backup
+                Assert-AsteriaManagedWritePath -Path $Destination
                 Move-Item -LiteralPath $backup -Destination $Destination
             }
             throw
         }
         if (Test-Path -LiteralPath $backup) {
+            Assert-AsteriaManagedWritePath -Path $backup
             Remove-Item -LiteralPath $backup -Recurse -Force
         }
     }
     finally {
         if (Test-Path -LiteralPath $staging) {
+            Assert-AsteriaManagedWritePath -Path $staging
             Remove-Item -LiteralPath $staging -Recurse -Force
         }
     }

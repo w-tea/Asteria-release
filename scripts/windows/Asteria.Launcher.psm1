@@ -51,6 +51,26 @@ function Resolve-AsteriaPackagePath {
     return $resolved
 }
 
+function Initialize-AsteriaModelDirectories {
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][string]$ModelRoot)
+
+    [System.IO.Directory]::CreateDirectory($ModelRoot) | Out-Null
+    foreach ($directory in @(
+        "checkpoints",
+        "diffusion_models",
+        "vae",
+        "text_encoders",
+        "loras",
+        "embeddings",
+        "controlnet",
+        "bbox",
+        "upscalers"
+    )) {
+        [System.IO.Directory]::CreateDirectory([System.IO.Path]::Combine($ModelRoot, $directory)) | Out-Null
+    }
+}
+
 function Start-AsteriaOwnedProcess {
     [CmdletBinding()]
     param(
@@ -208,4 +228,4 @@ function Read-AsteriaLauncherState {
     catch { throw "The launcher ownership state is invalid." }
 }
 
-Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Start-AsteriaOwnedProcess, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState
+Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Start-AsteriaOwnedProcess, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState
