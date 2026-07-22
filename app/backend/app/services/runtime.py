@@ -425,8 +425,9 @@ class ComfyClient:
 
 
 class ComfyTxt2ImgWorkflowBuilder:
-    def __init__(self, mapping_dir: Path | None = None) -> None:
+    def __init__(self, mapping_dir: Path | None = None, model_root: Path | None = None) -> None:
         self.mapping_repository = WorkflowMappingRepository(mapping_dir or AppConfig().mapping_dir)
+        self.model_root = model_root
 
     def build(self, request: dict) -> dict:
         profile = request.get("profile")
@@ -2437,7 +2438,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         return int(float(value) / step + 0.5) * step
 
     def _model_name(self, value: str, model_dir_name: str) -> str:
-        return comfy_model_name(value, model_dir_name)
+        return comfy_model_name(value, model_dir_name, model_root=self.model_root)
 
     def _comfy_prompt_text(self, text: str, embeddings: list[str]) -> str:
         result = text
@@ -2649,13 +2650,14 @@ class ComfyGenerationRuntime:
         self,
         client: ComfyClient,
         workflow_builder: ComfyTxt2ImgWorkflowBuilder | None = None,
+        model_root: Path | None = None,
         topaz_executable: Path | None = None,
         topaz_processor: Callable[..., dict[str, str | list[str]]] = process_topaz_image,
         admission_service: ComfyAdmissionService = comfy_admission,
         admission_timeout_seconds: float | None = 30.0,
     ) -> None:
         self.client = client
-        self.workflow_builder = workflow_builder or ComfyTxt2ImgWorkflowBuilder()
+        self.workflow_builder = workflow_builder or ComfyTxt2ImgWorkflowBuilder(model_root=model_root)
         self.topaz_executable = topaz_executable
         self.topaz_processor = topaz_processor
         self.admission_service = admission_service

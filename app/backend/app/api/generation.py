@@ -293,7 +293,11 @@ def _runtime(config: AppConfig, runtime_id: str | None = None):
     if selected_runtime == "external_process":
         return AsteriaGenerationRuntime(adapter=ExternalProcessRuntimeAdapter(config.engine_command))
     if selected_runtime == "comfy_workflow":
-        return ComfyGenerationRuntime(ComfyClient(config.comfy_base_url), topaz_executable=_topaz_executable(config))
+        return ComfyGenerationRuntime(
+            ComfyClient(config.comfy_base_url),
+            model_root=config.model_dir,
+            topaz_executable=_topaz_executable(config),
+        )
     raise HTTPException(
         status_code=500,
         detail={"code": api_errors.GENERATION_RUNTIME_UNSUPPORTED, "runtime": selected_runtime},
@@ -410,7 +414,11 @@ def _validate_runtime_feature_requirements(
             detail={"code": api_errors.MISSING_ANIMA_LLLITE_IMAGE, "missing": missing_anima_lllite_images},
         )
     if profile != "sdxl":
-        unsupported_profile_settings = _unsupported_profile_runtime_settings(profile, settings)
+        unsupported_profile_settings = _unsupported_profile_runtime_settings(
+            profile,
+            settings,
+            model_root=config.model_dir,
+        )
         if unsupported_profile_settings:
             raise HTTPException(
                 status_code=409,
@@ -432,13 +440,23 @@ def _validate_runtime_feature_requirements(
             object_info = ComfyClient(config.comfy_base_url).object_info()
         except RuntimeErrorResponse as exc:
             raise HTTPException(status_code=502, detail={"code": api_errors.GENERATION_RUNTIME_UNREACHABLE}) from exc
-        missing_runtime_models = _missing_runtime_model_slots(profile, object_info, model_slots or {})
+        missing_runtime_models = _missing_runtime_model_slots(
+            profile,
+            object_info,
+            model_slots or {},
+            model_root=config.model_dir,
+        )
         if missing_runtime_models:
             raise HTTPException(
                 status_code=409,
                 detail={"code": api_errors.MISSING_RUNTIME_MODEL, "missing": missing_runtime_models},
             )
-        missing_hires_checkpoint = _missing_hires_checkpoint_model(object_info, settings, profile)
+        missing_hires_checkpoint = _missing_hires_checkpoint_model(
+            object_info,
+            settings,
+            profile,
+            model_root=config.model_dir,
+        )
         if missing_hires_checkpoint:
             raise HTTPException(
                 status_code=409,
@@ -504,13 +522,21 @@ def _validate_runtime_feature_requirements(
                         status_code=409,
                         detail={"code": api_errors.MISSING_ANIMA_REGIONAL_RUNTIME_NODES, "missing_nodes": missing},
                     )
-            missing_lllite_models = _missing_anima_lllite_models(object_info, settings)
+            missing_lllite_models = _missing_anima_lllite_models(
+                object_info,
+                settings,
+                model_root=config.model_dir,
+            )
             if missing_lllite_models:
                 raise HTTPException(
                     status_code=409,
                     detail={"code": api_errors.MISSING_ANIMA_LLLITE_MODEL, "missing": missing_lllite_models},
                 )
-        missing_lora_models = _missing_lora_models(object_info, loras or [])
+        missing_lora_models = _missing_lora_models(
+            object_info,
+            loras or [],
+            model_root=config.model_dir,
+        )
         if missing_lora_models:
             raise HTTPException(
                 status_code=409,
@@ -564,19 +590,33 @@ def _validate_runtime_feature_requirements(
                 "unsupported": unsupported_seed_variation,
             },
         )
-    missing_runtime_models = _missing_runtime_model_slots(profile, object_info, model_slots or {})
+    missing_runtime_models = _missing_runtime_model_slots(
+        profile,
+        object_info,
+        model_slots or {},
+        model_root=config.model_dir,
+    )
     if missing_runtime_models:
         raise HTTPException(
             status_code=409,
             detail={"code": api_errors.MISSING_RUNTIME_MODEL, "missing": missing_runtime_models},
         )
-    missing_hires_checkpoint = _missing_hires_checkpoint_model(object_info, settings, profile)
+    missing_hires_checkpoint = _missing_hires_checkpoint_model(
+        object_info,
+        settings,
+        profile,
+        model_root=config.model_dir,
+    )
     if missing_hires_checkpoint:
         raise HTTPException(
             status_code=409,
             detail={"code": api_errors.MISSING_RUNTIME_MODEL, "missing": [missing_hires_checkpoint]},
         )
-    missing_refiner_checkpoint = _missing_refiner_checkpoint_model(object_info, settings)
+    missing_refiner_checkpoint = _missing_refiner_checkpoint_model(
+        object_info,
+        settings,
+        model_root=config.model_dir,
+    )
     if missing_refiner_checkpoint:
         raise HTTPException(
             status_code=409,
@@ -596,7 +636,11 @@ def _validate_runtime_feature_requirements(
                 detail={"code": api_errors.MISSING_CONTROLNET_RUNTIME_NODES, "missing_nodes": missing},
             )
         _validate_controlnet_mode_object_info(config, object_info, settings)
-        missing_controlnet_models = _missing_controlnet_models(object_info, settings)
+        missing_controlnet_models = _missing_controlnet_models(
+            object_info,
+            settings,
+            model_root=config.model_dir,
+        )
         if missing_controlnet_models:
             raise HTTPException(
                 status_code=409,
@@ -623,7 +667,11 @@ def _validate_runtime_feature_requirements(
                 detail={"code": api_errors.MISSING_LORA_BLOCK_WEIGHT_RUNTIME_NODES, "missing_nodes": missing},
             )
     if requires_lora:
-        missing_lora_models = _missing_lora_models(object_info, loras or [])
+        missing_lora_models = _missing_lora_models(
+            object_info,
+            loras or [],
+            model_root=config.model_dir,
+        )
         if missing_lora_models:
             raise HTTPException(
                 status_code=409,
@@ -747,7 +795,12 @@ def _unsupported_seed_variation_runtime_settings(
     return [{"field": "seed_variation", "reason": reason}]
 
 
-def _unsupported_profile_runtime_settings(profile: str, settings: dict) -> list[dict[str, str]]:
+def _unsupported_profile_runtime_settings(
+    profile: str,
+    settings: dict,
+    *,
+    model_root: Path | None = None,
+) -> list[dict[str, str]]:
     if profile == "sdxl":
         return []
     unsupported = _unsupported_comfy_runtime_settings(settings, profile)
@@ -792,7 +845,11 @@ def _unsupported_profile_runtime_settings(profile: str, settings: dict) -> list[
     if settings.get("hires_enabled"):
         hires_checkpoint = str(settings.get("hires_checkpoint") or "").strip()
         if hires_checkpoint and hires_checkpoint != "Use same checkpoint":
-            normalized_checkpoint = comfy_model_name(hires_checkpoint, "diffusion_models")
+            normalized_checkpoint = comfy_model_name(
+                hires_checkpoint,
+                "diffusion_models",
+                model_root=model_root,
+            )
             if profile == "anima":
                 if not normalized_checkpoint.lower().startswith("anima\\"):
                     unsupported.append(
@@ -971,7 +1028,12 @@ def _missing_generation_image_inputs(settings: dict) -> list[dict[str, str]]:
     return missing
 
 
-def _missing_controlnet_models(object_info: dict, settings: dict) -> list[dict[str, Any]]:
+def _missing_controlnet_models(
+    object_info: dict,
+    settings: dict,
+    *,
+    model_root: Path | None = None,
+) -> list[dict[str, Any]]:
     units = settings.get("controlnet_units")
     if not isinstance(units, list) or "ControlNetLoader" not in object_info:
         return []
@@ -983,13 +1045,18 @@ def _missing_controlnet_models(object_info: dict, settings: dict) -> list[dict[s
         model = str(unit.get("model") or "").strip()
         if not model:
             continue
-        model_name = comfy_model_name(model, "controlnet")
+        model_name = comfy_model_name(model, "controlnet", model_root=model_root)
         if model_name not in model_values:
             missing.append({"index": index, "model": model, "model_name": model_name})
     return missing
 
 
-def _missing_anima_lllite_models(object_info: dict, settings: dict) -> list[dict[str, Any]]:
+def _missing_anima_lllite_models(
+    object_info: dict,
+    settings: dict,
+    *,
+    model_root: Path | None = None,
+) -> list[dict[str, Any]]:
     units = settings.get("anima_lllite_units")
     if not isinstance(units, list) or "AnimaLLLiteApply" not in object_info:
         return []
@@ -1002,7 +1069,7 @@ def _missing_anima_lllite_models(object_info: dict, settings: dict) -> list[dict
         if not model:
             missing.append({"index": index, "model": model, "reason": "model_required"})
             continue
-        model_name = comfy_model_name(model, "controlnet")
+        model_name = comfy_model_name(model, "controlnet", model_root=model_root)
         if model_name not in model_values:
             missing.append({"index": index, "model": model, "model_name": model_name})
     return missing
@@ -1038,7 +1105,12 @@ def _missing_detailer_detector_models(object_info: dict, settings: dict) -> list
     return missing
 
 
-def _missing_lora_models(object_info: dict, loras: list[dict]) -> list[dict[str, Any]]:
+def _missing_lora_models(
+    object_info: dict,
+    loras: list[dict],
+    *,
+    model_root: Path | None = None,
+) -> list[dict[str, Any]]:
     missing: list[dict[str, Any]] = []
     lora_loader_present = "LoraLoader" in object_info
     block_loader_present = LORA_BLOCK_WEIGHT_CLASS in object_info
@@ -1050,7 +1122,7 @@ def _missing_lora_models(object_info: dict, loras: list[dict]) -> list[dict[str,
         name = str(lora.get("name") or "").strip()
         if not name:
             continue
-        model_name = comfy_model_name(name, "loras")
+        model_name = comfy_model_name(name, "loras", model_root=model_root)
         block_vector = str(lora.get("block_weight") or lora.get("block_weight_preset") or "").strip()
         uses_block_loader = bool(block_vector and lora.get("hierarchy_mode") != "disabled")
         loader_present = block_loader_present if uses_block_loader else lora_loader_present
@@ -1060,14 +1132,20 @@ def _missing_lora_models(object_info: dict, loras: list[dict]) -> list[dict[str,
     return missing
 
 
-def _missing_runtime_model_slots(profile: str, object_info: dict, model_slots: dict[str, str]) -> list[dict[str, str]]:
+def _missing_runtime_model_slots(
+    profile: str,
+    object_info: dict,
+    model_slots: dict[str, str],
+    *,
+    model_root: Path | None = None,
+) -> list[dict[str, str]]:
     checks = _runtime_model_slot_checks(profile)
     missing: list[dict[str, str]] = []
     for slot, model_dir_name, node_name, input_name in checks:
         value = str(model_slots.get(slot) or "").strip()
         if not value or node_name not in object_info:
             continue
-        model_name = comfy_model_name(value, model_dir_name)
+        model_name = comfy_model_name(value, model_dir_name, model_root=model_root)
         available = _node_model_input_values(object_info, node_name, input_name)
         if model_name not in available:
             missing.append({"slot": slot, "model_name": model_name})
@@ -1078,6 +1156,8 @@ def _missing_hires_checkpoint_model(
     object_info: dict,
     settings: dict,
     profile: str = "sdxl",
+    *,
+    model_root: Path | None = None,
 ) -> dict[str, str] | None:
     if not settings.get("hires_enabled"):
         return None
@@ -1092,7 +1172,7 @@ def _missing_hires_checkpoint_model(
         return None
     if node_name not in object_info:
         return None
-    model_name = comfy_model_name(checkpoint, model_dir_name)
+    model_name = comfy_model_name(checkpoint, model_dir_name, model_root=model_root)
     available = _node_model_input_values(object_info, node_name, input_name)
     if model_name not in available:
         return {"slot": "hires_checkpoint", "model_name": model_name}
@@ -1103,11 +1183,16 @@ def _uses_refiner(settings: dict) -> bool:
     return bool(settings.get("refiner_enabled") and str(settings.get("refiner_checkpoint") or "").strip())
 
 
-def _missing_refiner_checkpoint_model(object_info: dict, settings: dict) -> dict[str, str] | None:
+def _missing_refiner_checkpoint_model(
+    object_info: dict,
+    settings: dict,
+    *,
+    model_root: Path | None = None,
+) -> dict[str, str] | None:
     checkpoint = str(settings.get("refiner_checkpoint") or "").strip()
     if not _uses_refiner(settings) or "CheckpointLoaderSimple" not in object_info:
         return None
-    model_name = comfy_model_name(checkpoint, "checkpoints")
+    model_name = comfy_model_name(checkpoint, "checkpoints", model_root=model_root)
     available = _node_model_input_values(object_info, "CheckpointLoaderSimple", "ckpt_name")
     if model_name not in available:
         return {"slot": "refiner_checkpoint", "model_name": model_name}

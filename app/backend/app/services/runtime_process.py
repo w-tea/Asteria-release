@@ -10,6 +10,7 @@ import psutil
 from pydantic import BaseModel
 
 from app.core.config import AppConfig
+from app.services.comfy_model_paths import render_comfy_extra_model_paths
 from app.services.runtime import ComfyClient
 
 
@@ -182,36 +183,7 @@ class RuntimeProcessManager:
     def _write_extra_model_paths_config(self) -> None:
         path = self.config.comfy_dir / "extra_model_paths.yaml"
         path.parent.mkdir(parents=True, exist_ok=True)
-        model_root = self.config.model_dir.as_posix()
-        path.write_text(
-            "\n".join(
-                [
-                    "asteria:",
-                    f"  base_path: {model_root}",
-                    "  checkpoints: |",
-                    "    checkpoints",
-                    "    merged/checkpoints",
-                    "  diffusion_models: |",
-                    "    checkpoints",
-                    "    diffusion_models",
-                    "    merged/checkpoints",
-                    "  unet: |",
-                    "    checkpoints",
-                    "    diffusion_models",
-                    "    merged/checkpoints",
-                    "  vae: vae",
-                    "  clip: text_encoders",
-                    "  embeddings: embeddings",
-                    "  loras: |",
-                    "    loras",
-                    "    merged/lora",
-                    "  controlnet: controlnet",
-                    "  upscale_models: upscalers",
-                    "",
-                ]
-            ),
-            encoding="utf-8",
-        )
+        path.write_text(render_comfy_extra_model_paths(self.config.model_dir), encoding="utf-8")
 
     def _creation_flags(self) -> int:
         if sys.platform != "win32":

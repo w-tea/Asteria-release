@@ -148,29 +148,7 @@ $comfyDatabaseUrl = "sqlite:///$($comfyDatabase.Replace('\', '/'))"
 $comfyOutput = [System.IO.Path]::Combine($resolvedOutputRoot, "comfy")
 foreach ($path in @($comfyInput, $comfyUser, $comfyDefaultUser, $comfyOutput)) { [System.IO.Directory]::CreateDirectory($path) | Out-Null }
 $extraModels = [System.IO.Path]::Combine($processRoot, "extra_model_paths.yaml")
-@(
-    "asteria:"
-    "  base_path: $($resolvedModelRoot.Replace('\', '/'))"
-    "  checkpoints: |"
-    "    checkpoints"
-    "    merged/checkpoints"
-    "  diffusion_models: |"
-    "    checkpoints"
-    "    diffusion_models"
-    "    merged/checkpoints"
-    "  unet: |"
-    "    checkpoints"
-    "    diffusion_models"
-    "    merged/checkpoints"
-    "  vae: vae"
-    "  clip: text_encoders"
-    "  embeddings: embeddings"
-    "  loras: |"
-    "    loras"
-    "    merged/lora"
-    "  controlnet: controlnet"
-    "  upscale_models: upscalers"
-) | Set-Content -LiteralPath $extraModels -Encoding utf8
+Write-AsteriaExtraModelPaths -Path $extraModels -ModelRoot $resolvedModelRoot
 
 $env:PYTHONPATH = $backendRoot
 $env:ASTERIA_ROOT_DIR = $resolvedAppRoot

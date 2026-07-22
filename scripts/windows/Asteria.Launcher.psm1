@@ -71,6 +71,71 @@ function Initialize-AsteriaModelDirectories {
     }
 }
 
+function Write-AsteriaExtraModelPaths {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$ModelRoot
+    )
+
+    $parent = [System.IO.Path]::GetDirectoryName($Path)
+    [System.IO.Directory]::CreateDirectory($parent) | Out-Null
+    $basePath = $ModelRoot.Replace('\', '/').Replace('"', '\"')
+    @(
+        "asteria:"
+        "  base_path: `"$basePath`""
+        "  checkpoints: |-"
+        "    checkpoints"
+        "    diffusion_models"
+        "    unet"
+        "    merged/checkpoints"
+        "  diffusion_models: |-"
+        "    checkpoints"
+        "    diffusion_models"
+        "    unet"
+        "    merged/checkpoints"
+        "  unet: |-"
+        "    checkpoints"
+        "    diffusion_models"
+        "    unet"
+        "    merged/checkpoints"
+        "  vae: |-"
+        "    vae"
+        "    vae_approx"
+        "  vae_approx: |-"
+        "    vae_approx"
+        "  text_encoders: |-"
+        "    text_encoders"
+        "    clip"
+        "  clip: |-"
+        "    text_encoders"
+        "    clip"
+        "  tokenizers: |-"
+        "    tokenizers"
+        "    tokenizer"
+        "  tokenizer: |-"
+        "    tokenizers"
+        "    tokenizer"
+        "  loras: |-"
+        "    loras"
+        "    lora"
+        "    merged/lora"
+        "  embeddings: |-"
+        "    embeddings"
+        "    textual_inversion"
+        "  controlnet: |-"
+        "    controlnet"
+        "    controlnets"
+        "  ultralytics_bbox: |-"
+        "    bbox"
+        "    ultralytics/bbox"
+        "  upscale_models: |-"
+        "    upscalers"
+        "    esrgan"
+        "    realesrgan"
+    ) | Set-Content -LiteralPath $Path -Encoding utf8
+}
+
 function Start-AsteriaOwnedProcess {
     [CmdletBinding()]
     param(
@@ -228,4 +293,4 @@ function Read-AsteriaLauncherState {
     catch { throw "The launcher ownership state is invalid." }
 }
 
-Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Start-AsteriaOwnedProcess, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState
+Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Write-AsteriaExtraModelPaths, Start-AsteriaOwnedProcess, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState
