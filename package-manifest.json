@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.0.1",
   "platform": "windows-x64",
-  "source_commit": "e0b210319305e907277f5bbd54cd8a4962980efb",
-  "build_timestamp_utc": "2026-07-22T14:44:24Z",
+  "source_commit": "7a09d5afe34418bccf0b66ab3cfa14cffcf0889e",
+  "build_timestamp_utc": "2026-07-22T15:05:56Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -368,8 +368,8 @@
     },
     {
       "path": "app/backend/app/services/model_library.py",
-      "size_bytes": 14814,
-      "sha256": "5e02fe397fed22accd09b5f36ca0a452593cab62d0c96f03f10efd7588fe13f7"
+      "size_bytes": 14695,
+      "sha256": "d7dfeb93cc867787b2b6a50c730e67c6808087a7eb863588c537f6f3be6911bc"
     },
     {
       "path": "app/backend/app/services/model_profiles.py",

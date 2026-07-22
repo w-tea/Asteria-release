@@ -107,29 +107,28 @@ class ModelLibraryScanner:
                         health=health,
                         items=items,
                     )
-        items = self._dedupe_checkpoint_aliases(items)
+        items = self._dedupe_model_aliases(items)
         items.sort(key=lambda item: (item.type, item.name.casefold(), str(item.relative_path).casefold()))
         return ModelLibrary(items=items, link_health=health.freeze())
 
-    def _dedupe_checkpoint_aliases(self, items: list[ModelLibraryItem]) -> list[ModelLibraryItem]:
-        preferred: dict[tuple[str, ...], ModelLibraryItem] = {}
-        others: list[ModelLibraryItem] = []
-        aliases = {"checkpoints", "diffusion_models", "unet"}
+    def _dedupe_model_aliases(self, items: list[ModelLibraryItem]) -> list[ModelLibraryItem]:
+        preferred: dict[tuple[str, str], ModelLibraryItem] = {}
         for item in items:
-            parts = item.relative_path.parts
-            if item.type != "checkpoint" or not parts or parts[0].casefold() not in aliases:
-                others.append(item)
-                continue
-            key = tuple(part.casefold() for part in parts[1:])
-            current = preferred.get(key)
-            if current is None:
-                preferred[key] = item
-                continue
-            current_is_canonical = current.relative_path.parts[0].casefold() == "checkpoints"
-            item_is_canonical = parts[0].casefold() == "checkpoints"
-            if item_is_canonical and not current_is_canonical:
-                preferred[key] = item
-        return [*others, *preferred.values()]
+            aliases = MODEL_TYPE_DIRECTORIES.get(item.type, ())
+            logical_path = self._logical_alias_path(item.relative_path, aliases)
+            preferred.setdefault((item.type, logical_path.casefold()), item)
+        return list(preferred.values())
+
+    @staticmethod
+    def _logical_alias_path(relative_path: Path, aliases: tuple[str, ...]) -> str:
+        normalized = relative_path.as_posix().lstrip("/")
+        folded = normalized.casefold()
+        for directory in sorted(aliases, key=len, reverse=True):
+            alias = directory.strip("/")
+            prefix = f"{alias}/"
+            if folded.startswith(prefix.casefold()):
+                return normalized[len(prefix) :]
+        return normalized
 
     def _scan_directory(
         self,
