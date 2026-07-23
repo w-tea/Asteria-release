@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import ipaddress
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode, urlsplit
 
 import httpx
+from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, Field
 
 
@@ -44,6 +46,140 @@ class EagleError(RuntimeError):
     def __init__(self, message: str, *, folder_applied: bool = False) -> None:
         super().__init__(message)
         self.folder_applied = folder_applied
+
+
+def eagle_source_artifact(path: Path) -> dict[str, Any]:
+    content = path.read_bytes()
+    image_size = None
+    try:
+        with Image.open(path) as image:
+            image_size = {"width": int(image.width), "height": int(image.height)}
+    except (OSError, ValueError, RuntimeError, UnidentifiedImageError):
+        image_size = None
+    try:
+        resolved_path = str(path.resolve())
+    except (OSError, ValueError, RuntimeError):
+        resolved_path = str(path)
+    return {
+        "path": resolved_path,
+        "filename": path.name,
+        "size_bytes": len(content),
+        "sha256": hashlib.sha256(content).hexdigest(),
+        "image_size": image_size,
+    }
+
+
+def register_eagle_image(
+    path: Path,
+    *,
+    base_url: str,
+    options: EagleImportOptions,
+    skip_duplicates: bool = True,
+    adapter: "EagleAdapter | None" = None,
+) -> dict[str, Any]:
+    source_artifact = eagle_source_artifact(path)
+    active_adapter = adapter or EagleAdapter(base_url)
+    transport = active_adapter.import_transport
+    duplicate_check_error = ""
+    try:
+        duplicate = None
+        if skip_duplicates:
+            try:
+                duplicate = active_adapter.find_duplicate_by_name(
+                    name=options.name or path.stem,
+                    ext=path.suffix,
+                )
+            except EagleError as exc:
+                duplicate_check_error = str(exc)
+        if duplicate:
+            duplicate_id = str(duplicate.get("id") or "")
+            update_result = None
+            if duplicate_id:
+                update_result = active_adapter.update_item(
+                    duplicate_id,
+                    rating=options.rating,
+                    tags=options.tags,
+                    annotation=options.annotation,
+                )
+            response: dict[str, Any] = {"status": "duplicate", "data": duplicate}
+            if update_result is not None:
+                response["update"] = update_result
+            event = {
+                "adapter": "eagle",
+                "status": "duplicate_skipped",
+                "filename": path.name,
+                "source_artifact": source_artifact,
+                "duplicate": duplicate,
+                "tags": options.tags,
+                "rating": options.rating,
+                "folder_id": options.folder_id,
+                "transport": transport,
+                "folder_applied": False,
+                "update": update_result,
+            }
+            return {
+                "status": "duplicate_skipped",
+                "filename": path.name,
+                "eagle_response": response,
+                "source_artifact": source_artifact,
+                "duplicate": duplicate,
+                "folder_id": options.folder_id,
+                "transport": transport,
+                "folder_applied": False,
+                "event": event,
+            }
+        response = active_adapter.add_image(path, options)
+        if duplicate_check_error:
+            response = {**response, "duplicate_check_error": duplicate_check_error}
+    except EagleError as exc:
+        event = {
+            "adapter": "eagle",
+            "status": "failed",
+            "filename": path.name,
+            "source_artifact": source_artifact,
+            "folder_id": options.folder_id,
+            "transport": transport,
+            "folder_applied": exc.folder_applied,
+            "error": str(exc),
+        }
+        if duplicate_check_error:
+            event["duplicate_check_error"] = duplicate_check_error
+        return {
+            "status": "failed",
+            "filename": path.name,
+            "eagle_response": {},
+            "source_artifact": source_artifact,
+            "duplicate": None,
+            "folder_id": options.folder_id,
+            "transport": transport,
+            "folder_applied": exc.folder_applied,
+            "event": event,
+        }
+    event = {
+        "adapter": "eagle",
+        "status": "success",
+        "filename": path.name,
+        "source_artifact": source_artifact,
+        "tags": options.tags,
+        "rating": options.rating,
+        "folder_id": options.folder_id,
+        "transport": transport,
+        "folder_applied": True,
+        "response": response,
+    }
+    if duplicate_check_error:
+        event["duplicate_check_error"] = duplicate_check_error
+    return {
+        "status": "success",
+        "filename": path.name,
+        "eagle_response": response,
+        "source_artifact": source_artifact,
+        "duplicate": None,
+        "folder_id": options.folder_id,
+        "transport": transport,
+        "folder_applied": True,
+        "event": event,
+    }
 
 
 class EagleAdapter:

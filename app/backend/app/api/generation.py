@@ -51,6 +51,7 @@ from app.services.controlnet_mode import (
     resolve_controlnet_mode_contract,
 )
 from app.services.detailer_catalog import detailer_detector_model
+from app.services.eagle import EagleImportOptions, register_eagle_image
 from app.services.generation_metadata import (
     finalize_merge_xyz_metadata,
     metadata_tags,
@@ -1770,8 +1771,6 @@ def _topaz_settings_from_request(request: Txt2ImgRequest) -> TopazSettings:
         override=request.topaz_override or force_hires_override,
         show_settings=request.topaz_show_settings,
         png_compression=request.topaz_png_compression,
-        upscale_model=request.topaz_upscale_model,
-        upscale_scale=request.topaz_upscale_scale,
     )
 
 
@@ -2197,6 +2196,71 @@ def _history_output_file_set(items: list[dict]) -> set[Path]:
     return paths
 
 
+def _auto_send_primary_outputs_to_eagle(
+    *,
+    data_dir: Path,
+    config: AppConfig,
+    primary_outputs: list[dict],
+    generated_tags: list[str],
+    prompt: str,
+    negative_prompt: str,
+    settings: dict[str, Any],
+) -> None:
+    repository = ExternalIntegrationSettingsRepository(data_dir / "external-integrations.json")
+    eagle_settings = repository.load().eagle
+    if not eagle_settings.auto_send:
+        return
+    base_url = repository.resolve_eagle_base_url(config.eagle_base_url)
+    events = list(settings.get("external_events") or [])
+    failure_count = 0
+    attempted = 0
+    annotation_parts = [prompt.strip()]
+    if negative_prompt.strip():
+        annotation_parts.append(f"Negative: {negative_prompt.strip()}")
+    annotation = "\n\n".join(part for part in annotation_parts if part)
+    tags = list(dict.fromkeys(["asteria", *generated_tags]))
+    for primary in primary_outputs:
+        path_value = str(primary.get("path") or "").strip()
+        if not path_value:
+            continue
+        path = Path(path_value)
+        attempted += 1
+        try:
+            registration = register_eagle_image(
+                path,
+                base_url=base_url,
+                options=EagleImportOptions(
+                    name=path.stem,
+                    annotation=annotation,
+                    tags=tags,
+                    folder_id=eagle_settings.default_folder_id,
+                ),
+                skip_duplicates=True,
+            )
+            event = {**registration["event"], "automatic": True}
+        except (OSError, ValueError, RuntimeError):
+            event = {
+                "adapter": "eagle",
+                "status": "failed",
+                "filename": path.name,
+                "automatic": True,
+                "error": "auto_send_internal_error",
+            }
+        if event["status"] == "failed":
+            failure_count += 1
+        events.append(event)
+    settings["external_events"] = events
+    settings["eagle_auto_send_attempted"] = attempted
+    if attempted == 0:
+        settings["eagle_auto_send_warning"] = "no_primary_outputs"
+    elif failure_count == attempted:
+        settings["eagle_auto_send_warning"] = "failed"
+    elif failure_count:
+        settings["eagle_auto_send_warning"] = "partial_failure"
+    else:
+        settings["eagle_auto_send_status"] = "completed"
+
+
 @_artifact_write_operation
 def _generate(
     request: Txt2ImgRequest,
@@ -2402,6 +2466,15 @@ def _generate(
         mapping_id=f"{request.profile}_txt2img",
     )
     settings["primary_outputs"] = primary_outputs
+    _auto_send_primary_outputs_to_eagle(
+        data_dir=data_dir,
+        config=config,
+        primary_outputs=primary_outputs,
+        generated_tags=generated_tags,
+        prompt=prompt_expansion.expanded or request.prompt,
+        negative_prompt=negative_prompt,
+        settings=settings,
+    )
     history.update_settings(generation_id, settings)
     _update_output_paths_safely(history, generation_id, output_paths)
     sidecar_paths = MetadataWriter().write_generation_sidecars(

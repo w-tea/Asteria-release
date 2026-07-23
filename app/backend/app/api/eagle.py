@@ -1,15 +1,17 @@
 from pathlib import Path
 from typing import Any
-import hashlib
 import sqlite3
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from PIL import Image, UnidentifiedImageError
-
 from app.core.config import AppConfig
 from app.services.history import HistoryRepository
-from app.services.eagle import EagleAdapter, EagleError, EagleImportOptions
+from app.services.eagle import (
+    EagleAdapter,
+    EagleError,
+    EagleImportOptions,
+    register_eagle_image,
+)
 from app.services.external_settings import (
     EagleIntegrationSettings,
     ExternalIntegrationSettingsRepository,
@@ -29,9 +31,6 @@ from app.services.user_settings import UserSettingsRepository, resolve_output_ro
 router = APIRouter(prefix="/api/eagle", tags=["eagle"])
 
 _PATH_ACCESS_ERRORS = (TypeError, OSError, ValueError, RuntimeError)
-_IMAGE_OPEN_ERRORS = (*_PATH_ACCESS_ERRORS, UnidentifiedImageError)
-
-
 class EagleStatusResponse(BaseModel):
     base_url: str
     connected: bool
@@ -42,11 +41,13 @@ class EagleStatusResponse(BaseModel):
 class EagleSettingsResponse(BaseModel):
     base_url: str
     default_folder_id: str = ""
+    auto_send: bool = False
 
 
 class EagleSettingsRequest(BaseModel):
     base_url: str
     default_folder_id: str = Field(default="", max_length=256)
+    auto_send: bool = False
 
 
 class EagleFolderItem(BaseModel):
@@ -80,13 +81,6 @@ class EagleImportResponse(BaseModel):
     folder_id: str = ""
     transport: str
     folder_applied: bool
-
-
-def _artifact_path(path: Path) -> str:
-    try:
-        return str(path.resolve())
-    except _PATH_ACCESS_ERRORS:
-        return str(path)
 
 
 def _settings_repository() -> ExternalIntegrationSettingsRepository:
@@ -159,26 +153,6 @@ def _status_for_base_url(base_url: str) -> EagleStatusResponse:
     except EagleError as exc:
         return EagleStatusResponse(base_url=base_url, connected=False, error=str(exc))
     return EagleStatusResponse(base_url=base_url, connected=True, info=_public_eagle_info(info))
-
-
-def _source_artifact(path: Path) -> dict[str, Any]:
-    try:
-        content = path.read_bytes()
-    except _PATH_ACCESS_ERRORS as exc:
-        raise HTTPException(status_code=409, detail={"code": OUTPUT_IMAGE_UNREADABLE}) from exc
-    image_size = None
-    try:
-        with Image.open(path) as image:
-            image_size = {"width": int(image.width), "height": int(image.height)}
-    except _IMAGE_OPEN_ERRORS:
-        image_size = None
-    return {
-        "path": _artifact_path(path),
-        "filename": path.name,
-        "size_bytes": len(content),
-        "sha256": hashlib.sha256(content).hexdigest(),
-        "image_size": image_size,
-    }
 
 
 def _path_exists_safely(path: Path) -> bool:
@@ -262,7 +236,11 @@ def status() -> EagleStatusResponse:
 @router.get("/settings", response_model=EagleSettingsResponse)
 def get_settings() -> EagleSettingsResponse:
     settings = _settings_repository().load().eagle
-    return EagleSettingsResponse(base_url=_eagle_base_url(), default_folder_id=settings.default_folder_id)
+    return EagleSettingsResponse(
+        base_url=_eagle_base_url(),
+        default_folder_id=settings.default_folder_id,
+        auto_send=settings.auto_send,
+    )
 
 
 @router.put("/settings", response_model=EagleSettingsResponse)
@@ -273,12 +251,17 @@ def update_settings(request: EagleSettingsRequest) -> EagleSettingsResponse:
     settings.eagle = EagleIntegrationSettings(
         base_url=base_url,
         default_folder_id=request.default_folder_id,
+        auto_send=request.auto_send,
     )
     try:
         repository.save(settings)
     except (OSError, ValueError, RuntimeError) as exc:
         raise HTTPException(status_code=409, detail={"code": EXTERNAL_SETTINGS_SAVE_FAILED}) from exc
-    return EagleSettingsResponse(base_url=base_url, default_folder_id=settings.eagle.default_folder_id)
+    return EagleSettingsResponse(
+        base_url=base_url,
+        default_folder_id=settings.eagle.default_folder_id,
+        auto_send=settings.eagle.auto_send,
+    )
 
 
 @router.post("/test", response_model=EagleStatusResponse)
@@ -301,7 +284,6 @@ def import_output(request: EagleImportRequest) -> EagleImportResponse:
     eagle_settings = _settings_repository().load().eagle
     folder_id = request.folder_id if request.folder_id is not None else eagle_settings.default_folder_id
     path = _output_path(request.filename, request.generation_id)
-    artifact = _source_artifact(path)
     options = EagleImportOptions(
         name=request.name or path.stem,
         annotation=request.annotation,
@@ -309,102 +291,26 @@ def import_output(request: EagleImportRequest) -> EagleImportResponse:
         rating=request.rating,
         folder_id=folder_id,
     )
-    adapter = EagleAdapter(_eagle_base_url())
-    transport = adapter.import_transport
-    duplicate_check_error = ""
     try:
-        duplicate = None
-        if request.skip_duplicates:
-            try:
-                duplicate = adapter.find_duplicate_by_name(name=options.name or path.stem, ext=path.suffix)
-            except EagleError as exc:
-                duplicate_check_error = str(exc)
-        if duplicate:
-            duplicate_id = str(duplicate.get("id") or "")
-            update_result = None
-            if duplicate_id:
-                update_result = adapter.update_item(
-                    duplicate_id,
-                    rating=request.rating,
-                    tags=request.tags,
-                    annotation=request.annotation,
-                )
-            result = {"status": "duplicate", "data": duplicate}
-            if update_result is not None:
-                result["update"] = update_result
-            if request.generation_id:
-                _append_history_event_safely(
-                    config.data_dir,
-                    request.generation_id,
-                    {
-                        "adapter": "eagle",
-                        "status": "duplicate_skipped",
-                        "filename": path.name,
-                        "source_artifact": artifact,
-                        "duplicate": duplicate,
-                        "tags": request.tags,
-                        "rating": request.rating,
-                        "folder_id": folder_id,
-                        "transport": transport,
-                        "folder_applied": False,
-                        "update": update_result,
-                    },
-                )
-            return EagleImportResponse(
-                status="duplicate_skipped",
-                filename=path.name,
-                eagle_response=result,
-                source_artifact=artifact,
-                duplicate=duplicate,
-                folder_id=folder_id,
-                transport=transport,
-                folder_applied=False,
-            )
-        result = adapter.add_image(path, options)
-        if duplicate_check_error:
-            result = {**result, "duplicate_check_error": duplicate_check_error}
-    except EagleError as exc:
-        failure_event: dict[str, Any] = {
-            "adapter": "eagle",
-            "status": "failed",
-            "filename": path.name,
-            "source_artifact": artifact,
-            "folder_id": folder_id,
-            "transport": transport,
-            "folder_applied": exc.folder_applied,
-            "error": str(exc),
-        }
-        if duplicate_check_error:
-            failure_event["duplicate_check_error"] = duplicate_check_error
-        if request.generation_id:
-            _append_history_event_safely(
-                config.data_dir,
-                request.generation_id,
-                failure_event,
-            )
-        raise HTTPException(status_code=400, detail={"code": EAGLE_IMPORT_FAILED}) from exc
+        registration = register_eagle_image(
+            path,
+            base_url=_eagle_base_url(),
+            options=options,
+            skip_duplicates=request.skip_duplicates,
+        )
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=409, detail={"code": OUTPUT_IMAGE_UNREADABLE}) from exc
     if request.generation_id:
-        success_event: dict[str, Any] = {
-            "adapter": "eagle",
-            "status": "success",
-            "filename": path.name,
-            "source_artifact": artifact,
-            "tags": request.tags,
-            "rating": request.rating,
-            "folder_id": folder_id,
-            "transport": transport,
-            "folder_applied": True,
-            "response": result,
-        }
-        if duplicate_check_error:
-            success_event["duplicate_check_error"] = duplicate_check_error
-        _append_history_event_safely(config.data_dir, request.generation_id, success_event)
+        _append_history_event_safely(config.data_dir, request.generation_id, registration["event"])
+    if registration["status"] == "failed":
+        raise HTTPException(status_code=400, detail={"code": EAGLE_IMPORT_FAILED})
     return EagleImportResponse(
-        status="success",
-        filename=path.name,
-        eagle_response=result,
-        source_artifact=artifact,
-        folder_id=folder_id,
-        transport=transport,
-        folder_applied=True,
+        status=registration["status"],
+        filename=registration["filename"],
+        eagle_response=registration["eagle_response"],
+        source_artifact=registration["source_artifact"],
+        duplicate=registration["duplicate"],
+        folder_id=registration["folder_id"],
+        transport=registration["transport"],
+        folder_applied=registration["folder_applied"],
     )

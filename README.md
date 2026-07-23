@@ -1,4 +1,4 @@
-# Asteria V1.0.2 Windows Portable
+# Asteria V1.0.3 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -26,7 +26,7 @@ Windows側へ事前に必要なのは対応するNVIDIAドライバーです。C
 - x64 CPU、インターネット接続、展開先への書き込み権限
 - 初回取得、選択したモデル、生成物を保存できる空き容量（取得計画の正確な必要量はセットアップ画面に表示されます。機能用データだけでも数十GBになる場合があります）
 
-macOSとLinuxはV1.0.2では未対応です。必要なGPUメモリとシステムメモリは、使用するモデル、解像度、LoRA学習などの処理によって変わります。高解像度生成や学習には、より多くのGPUメモリとシステムメモリが必要です。
+macOSとLinuxはV1.0.3では未対応です。必要なGPUメモリとシステムメモリは、使用するモデル、解像度、LoRA学習などの処理によって変わります。高解像度生成や学習には、より多くのGPUメモリとシステムメモリが必要です。
 
 ### 起動方法
 
@@ -36,7 +36,7 @@ macOSとLinuxはV1.0.2では未対応です。必要なGPUメモリとシステ�
 
 2回目以降は取得済みコンポーネントを検証し、変更がなければダウンロードをスキップします。SDXLとAnimaのスターターパックは初期状態で未選択で、CMDではなくAsteria起動後のSettings「起動準備」から取得します。Animaの取得には画面に表示される非商用ライセンスへの同意が必要です。
 
-自分のモデルは`models/`配下へ配置できます。Portable版V1.0.2ではSettingsの外部モデルルート設定は使用せず、別の場所にある既存モデルを共有するときはWindowsのジャンクションまたはシンボリックリンクを使用します。複数の外部モデルルートをSettingsから登録する正式対応はV1.1で検討します。
+自分のモデルは`models/`配下へ配置できます。Portable版V1.0.3ではSettingsの外部モデルルート設定は使用せず、別の場所にある既存モデルを共有するときはWindowsのジャンクションまたはシンボリックリンクを使用します。複数の外部モデルルートをSettingsから登録する正式対応はV1.1で検討します。
 
 主な保存場所:
 
@@ -64,6 +64,10 @@ macOSとLinuxはV1.0.2では未対応です。必要なGPUメモリとシステ�
 `models/`配下へ配置します。SDXL／Animaスターターパックを取得しなくても、自分の対応モデルを利用できます。
 
 `models/checkpoints/`、`models/diffusion_models/`、`models/vae/`、`models/text_encoders/`、`models/loras/`、`models/embeddings/`、`models/controlnet/`、`models/bbox/`、`models/upscalers/`は初回起動時に自動作成されます。モデルの種類に合うフォルダーへ配置してください。`sdxl`や`anima`など、さらに下のサブフォルダー分けは任意です。
+
+#### Q. 生成完了時に画像をEagleへ自動送信できますか。
+
+できます。Eagleを起動し、SettingsのExternal ToolsでEagleのURL、送信先フォルダー、「生成完了時にEagleへ自動送信」を設定して保存してください。自動送信するのは最終生成画像だけで、Hires.fixの中間画像などは送信しません。Eagleへの送信に失敗しても画像生成自体は完了し、履歴から手動で再送できます。
 
 #### Q. 別ドライブの既存モデルをコピーせずに共有できますか。
 
@@ -113,7 +117,7 @@ Only a compatible NVIDIA driver must be installed on Windows beforehand. You do 
 - An x64 CPU, internet access, and write access to the extracted folder
 - Enough free space for first-run acquisitions, selected models, and outputs; setup displays the exact planned download size, and functional assets alone may require tens of GB
 
-macOS and Linux are unsupported in V1.0.2. GPU-memory and system-memory needs depend on the selected model, resolution, and workload such as LoRA training. High-resolution generation and training require more memory.
+macOS and Linux are unsupported in V1.0.3. GPU-memory and system-memory needs depend on the selected model, resolution, and workload such as LoRA training. High-resolution generation and training require more memory.
 
 ### Starting Asteria
 
@@ -123,7 +127,7 @@ macOS and Linux are unsupported in V1.0.2. GPU-memory and system-memory needs de
 
 Later starts verify acquired components and skip downloads when nothing changed. The SDXL and Anima starter packs are optional, initially unchecked, and installed from **Settings > Ready to start** after Asteria opens rather than from CMD. Downloading Anima requires acceptance of the displayed non-commercial license.
 
-Place your own models under `models/`. Portable V1.0.2 does not use the external model-root setting in Settings. To share an existing library elsewhere, use a Windows junction or symbolic link. Formal Settings support for multiple external model roots is being considered for V1.1.
+Place your own models under `models/`. Portable V1.0.3 does not use the external model-root setting in Settings. To share an existing library elsewhere, use a Windows junction or symbolic link. Formal Settings support for multiple external model roots is being considered for V1.1.
 
 Main storage locations:
 
@@ -151,6 +155,10 @@ Only a missing, corrupt, or manifest-changed component is reacquired. If the sam
 Place them under `models/`. You can skip the SDXL and Anima starter packs and use your own compatible models.
 
 `models/checkpoints/`, `models/diffusion_models/`, `models/vae/`, `models/text_encoders/`, `models/loras/`, `models/embeddings/`, `models/controlnet/`, `models/bbox/`, and `models/upscalers/` are created automatically on first launch. Place each model in the folder for its type. Additional subfolders such as `sdxl` or `anima` are optional.
+
+#### Q. Can Asteria send completed images to Eagle automatically?
+
+Yes. Start Eagle, then configure its URL, destination folder, and **Automatically send completed generations to Eagle** under **Settings > External Tools**. Only final generation outputs are sent; intermediate Hires.fix images are excluded. If Eagle delivery fails, generation still completes and you can retry manually from history.
 
 #### Q. Can I share an existing model library on another drive without copying it?
 

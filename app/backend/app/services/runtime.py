@@ -122,6 +122,10 @@ def _hires_checkpoint_setting(settings: dict) -> str:
     return checkpoint
 
 
+def _hires_noise_mode(settings: dict) -> str:
+    return str(settings.get("hires_noise_mode") or "CPU")
+
+
 def _refiner_checkpoint_setting(settings: dict) -> str:
     if not settings.get("refiner_enabled"):
         return ""
@@ -866,7 +870,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "sampler": self._hires_sampler(settings),
                 "scheduler": self._hires_scheduler(settings),
                 "denoise": settings.get("hires_denoising_strength", 0.7),
-                "noise_mode": settings.get("hires_noise_mode") or "CPU",
+                "noise_mode": _hires_noise_mode(settings),
             }
             if refiner_checkpoint:
                 workflow[sample_node] = self._ksampler_advanced_node(
@@ -3209,6 +3213,7 @@ class ComfyGenerationRuntime:
             second_settings["sampler"] = self._hires_sampler(settings)
             second_settings["scheduler"] = self._hires_scheduler(settings)
             second_settings["denoise"] = settings.get("hires_denoising_strength", 0.7)
+            second_settings["noise_mode"] = _hires_noise_mode(settings)
             second_settings["use_inspire_ksampler"] = bool(settings.get("use_inspire_ksampler", True))
             second_settings["batch_size"] = 1
             second_settings["batch_count"] = 1

@@ -18,8 +18,6 @@ class TopazSettings(BaseModel):
     override: bool = False
     show_settings: bool = False
     png_compression: int = Field(default=2, ge=0, le=10)
-    upscale_model: str = "Graphics"
-    upscale_scale: int = Field(default=4, ge=1, le=8)
 
 
 def build_topaz_command(

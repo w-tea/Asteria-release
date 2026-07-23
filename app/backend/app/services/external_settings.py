@@ -43,6 +43,7 @@ class TopazIntegrationSettings(BaseModel):
 class EagleIntegrationSettings(BaseModel):
     base_url: str = Field(default="", max_length=2048)
     default_folder_id: str = Field(default="", max_length=256)
+    auto_send: bool = False
 
     @field_validator("base_url")
     @classmethod
