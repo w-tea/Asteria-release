@@ -3,9 +3,8 @@ import { u as useNuxtApp } from './server.mjs';
 import { u as useHead$1, h as headSymbol } from '../routes/renderer.mjs';
 
 function injectHead(nuxtApp) {
-  var _a;
   const nuxt = nuxtApp || useNuxtApp();
-  return ((_a = nuxt.ssrContext) == null ? void 0 : _a.head) || nuxt.runWithContext(() => {
+  return nuxt.ssrContext?.head || nuxt.runWithContext(() => {
     if (hasInjectionContext()) {
       const head = inject(headSymbol);
       if (!head) {
@@ -21,4 +20,4 @@ function useHead(input, options = {}) {
 }
 
 export { useHead as u };
-//# sourceMappingURL=composables-BU_E7f7y.mjs.map
+//# sourceMappingURL=composables-CtXy92-o.mjs.map

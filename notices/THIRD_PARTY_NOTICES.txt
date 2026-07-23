@@ -1,4 +1,4 @@
-Asteria V1.0.1 Third-Party Notices
+Asteria V1.0.2 Third-Party Notices
 
 Asteria downloads and uses third-party runtimes, packages, custom nodes, and
 model assets. The authoritative pinned identities, provider URLs, provenance

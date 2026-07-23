@@ -1,4 +1,4 @@
-# Asteria V1.0.1 Windows Portable
+# Asteria V1.0.2 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -26,7 +26,7 @@ Windows側へ事前に必要なのは対応するNVIDIAドライバーです。C
 - x64 CPU、インターネット接続、展開先への書き込み権限
 - 初回取得、選択したモデル、生成物を保存できる空き容量（取得計画の正確な必要量はセットアップ画面に表示されます。機能用データだけでも数十GBになる場合があります）
 
-macOSとLinuxはV1.0.1では未対応です。必要なGPUメモリとシステムメモリは、使用するモデル、解像度、LoRA学習などの処理によって変わります。高解像度生成や学習には、より多くのGPUメモリとシステムメモリが必要です。
+macOSとLinuxはV1.0.2では未対応です。必要なGPUメモリとシステムメモリは、使用するモデル、解像度、LoRA学習などの処理によって変わります。高解像度生成や学習には、より多くのGPUメモリとシステムメモリが必要です。
 
 ### 起動方法
 
@@ -36,7 +36,7 @@ macOSとLinuxはV1.0.1では未対応です。必要なGPUメモリとシステ�
 
 2回目以降は取得済みコンポーネントを検証し、変更がなければダウンロードをスキップします。SDXLとAnimaのスターターパックは初期状態で未選択で、CMDではなくAsteria起動後のSettings「起動準備」から取得します。Animaの取得には画面に表示される非商用ライセンスへの同意が必要です。
 
-自分のモデルは`models/`配下へ配置できます。Portable版V1.0.1ではSettingsの外部モデルルート設定は使用せず、別の場所にある既存モデルを共有するときはWindowsのジャンクションまたはシンボリックリンクを使用します。複数の外部モデルルートをSettingsから登録する正式対応はV1.1で検討します。
+自分のモデルは`models/`配下へ配置できます。Portable版V1.0.2ではSettingsの外部モデルルート設定は使用せず、別の場所にある既存モデルを共有するときはWindowsのジャンクションまたはシンボリックリンクを使用します。複数の外部モデルルートをSettingsから登録する正式対応はV1.1で検討します。
 
 主な保存場所:
 
@@ -113,7 +113,7 @@ Only a compatible NVIDIA driver must be installed on Windows beforehand. You do 
 - An x64 CPU, internet access, and write access to the extracted folder
 - Enough free space for first-run acquisitions, selected models, and outputs; setup displays the exact planned download size, and functional assets alone may require tens of GB
 
-macOS and Linux are unsupported in V1.0.1. GPU-memory and system-memory needs depend on the selected model, resolution, and workload such as LoRA training. High-resolution generation and training require more memory.
+macOS and Linux are unsupported in V1.0.2. GPU-memory and system-memory needs depend on the selected model, resolution, and workload such as LoRA training. High-resolution generation and training require more memory.
 
 ### Starting Asteria
 
@@ -123,7 +123,7 @@ macOS and Linux are unsupported in V1.0.1. GPU-memory and system-memory needs de
 
 Later starts verify acquired components and skip downloads when nothing changed. The SDXL and Anima starter packs are optional, initially unchecked, and installed from **Settings > Ready to start** after Asteria opens rather than from CMD. Downloading Anima requires acceptance of the displayed non-commercial license.
 
-Place your own models under `models/`. Portable V1.0.1 does not use the external model-root setting in Settings. To share an existing library elsewhere, use a Windows junction or symbolic link. Formal Settings support for multiple external model roots is being considered for V1.1.
+Place your own models under `models/`. Portable V1.0.2 does not use the external model-root setting in Settings. To share an existing library elsewhere, use a Windows junction or symbolic link. Formal Settings support for multiple external model roots is being considered for V1.1.
 
 Main storage locations:
 

@@ -1,4 +1,4 @@
-# Asteria V1.0.1 direct backend runtime set.
+# Asteria V1.0.2 direct backend runtime set.
 fastapi==0.136.3
 httpx==0.28.1
 numpy==2.4.4
