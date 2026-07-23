@@ -5838,6 +5838,9 @@ const useModelDependenciesStore = defineStore("modelDependencies", {
   },
   actions: {
     async refresh(profile, forceLibraryRefresh = false) {
+      if (!forceLibraryRefresh && profile && this.libraryLoaded && this.selectionProfile === profile) {
+        return;
+      }
       const requestId = this.refreshRequestId + 1;
       this.refreshRequestId = requestId;
       this.loading = true;
@@ -5937,7 +5940,7 @@ const useModelDependenciesStore = defineStore("modelDependencies", {
           failed: Object.keys(response.failed).length,
           failedIds: Object.keys(response.failed)
         };
-        await this.refresh(operationProfile || void 0);
+        await this.refresh(operationProfile || void 0, true);
       } catch (error) {
         this.error = userFacingErrorMessage(error, "common.error.modelDependencies");
       } finally {
@@ -7533,6 +7536,7 @@ const _sfc_main$1l = /* @__PURE__ */ defineComponent({
     const runtime = useRuntimeStore();
     const { t } = useAsteriaI18n();
     const modelAssetError = ref("");
+    const refreshingModelAssets = ref(false);
     const activeProfile = computed(() => modelDependencies.selectedProfile(generation.profile));
     const modelSelectionReady = computed(() => modelDependencies.selectionReady(generation.profile));
     const activeProfileDependencyIds = computed(() => new Set(activeProfile.value?.dependency_ids ?? []));
@@ -7575,56 +7579,56 @@ const _sfc_main$1l = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "model-bar",
         "aria-label": unref(t)("modelSettings.aria")
-      }, _attrs))} data-v-5523bc63><div class="model-bar__primary" data-v-5523bc63><label class="field slot-field model-bar__field model-bar__profile" data-v-5523bc63><span data-v-5523bc63>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-5523bc63><!--[-->`);
+      }, _attrs))} data-v-661ba9fc><div class="model-bar__primary" data-v-661ba9fc><label class="field slot-field model-bar__field model-bar__profile" data-v-661ba9fc><span data-v-661ba9fc>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-661ba9fc><!--[-->`);
       ssrRenderList(unref(modelDependencies).profiles, (profile) => {
-        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-5523bc63${ssrIncludeBooleanAttr(Array.isArray(unref(generation).profile) ? ssrLooseContain(unref(generation).profile, profile.id) : ssrLooseEqual(unref(generation).profile, profile.id)) ? " selected" : ""}>${ssrInterpolate(profile.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-661ba9fc${ssrIncludeBooleanAttr(Array.isArray(unref(generation).profile) ? ssrLooseContain(unref(generation).profile, profile.id) : ssrLooseEqual(unref(generation).profile, profile.id)) ? " selected" : ""}>${ssrInterpolate(profile.label)}</option>`);
       });
       _push(`<!--]--></select></label><!--[-->`);
       ssrRenderList(unref(primaryModelSlots), (slot) => {
-        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-5523bc63><span data-v-5523bc63>${ssrInterpolate(slot.label)}</span>`);
+        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-661ba9fc><span data-v-661ba9fc>${ssrInterpolate(slot.label)}</span>`);
         if (slotOptions(slot).length > 0) {
-          _push(`<select${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-5523bc63><option value="" data-v-5523bc63${ssrIncludeBooleanAttr(Array.isArray(unref(modelDependencies).selections[slot.id]) ? ssrLooseContain(unref(modelDependencies).selections[slot.id], "") : ssrLooseEqual(unref(modelDependencies).selections[slot.id], "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+          _push(`<select${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-661ba9fc><option value="" data-v-661ba9fc${ssrIncludeBooleanAttr(Array.isArray(unref(modelDependencies).selections[slot.id]) ? ssrLooseContain(unref(modelDependencies).selections[slot.id], "") : ssrLooseEqual(unref(modelDependencies).selections[slot.id], "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
           ssrRenderList(slotOptions(slot), (item) => {
-            _push(`<option${ssrRenderAttr("value", item.path)} data-v-5523bc63${ssrIncludeBooleanAttr(Array.isArray(unref(modelDependencies).selections[slot.id]) ? ssrLooseContain(unref(modelDependencies).selections[slot.id], item.path) : ssrLooseEqual(unref(modelDependencies).selections[slot.id], item.path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
+            _push(`<option${ssrRenderAttr("value", item.path)} data-v-661ba9fc${ssrIncludeBooleanAttr(Array.isArray(unref(modelDependencies).selections[slot.id]) ? ssrLooseContain(unref(modelDependencies).selections[slot.id], item.path) : ssrLooseEqual(unref(modelDependencies).selections[slot.id], item.path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
           });
           _push(`<!--]--></select>`);
         } else {
-          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-5523bc63>`);
+          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-661ba9fc>`);
         }
         _push(`</label>`);
       });
-      _push(`<!--]--><div class="model-bar__slot-status" data-v-5523bc63><span data-v-5523bc63>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-5523bc63>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div><div class="model-bar__actions" data-v-5523bc63><button class="icon-button" type="button"${ssrRenderAttr("title", unref(t)("modelSettings.refreshHelp"))}${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(runtime).loading) ? " disabled" : ""} data-v-5523bc63>${ssrInterpolate(unref(modelDependencies).loading || unref(runtime).loading ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-5523bc63>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
+      _push(`<!--]--><div class="model-bar__slot-status" data-v-661ba9fc><span data-v-661ba9fc>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-661ba9fc>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div><div class="model-bar__actions" data-v-661ba9fc><button class="icon-button" type="button"${ssrRenderAttr("title", unref(t)("modelSettings.refreshHelp"))}${ssrIncludeBooleanAttr(unref(refreshingModelAssets) || unref(modelDependencies).loading || unref(runtime).loading) ? " disabled" : ""} data-v-661ba9fc>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-661ba9fc>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
       if (!unref(activeProfile)) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-5523bc63><strong data-v-5523bc63>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-5523bc63>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
+        _push(`<div class="model-bar__recovery" role="status" data-v-661ba9fc><strong data-v-661ba9fc>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-661ba9fc>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(modelAssetError)) {
-        _push(`<div class="model-bar__message-row" data-v-5523bc63><p class="error" aria-live="assertive" data-v-5523bc63>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
+        _push(`<div class="model-bar__message-row" data-v-661ba9fc><p class="error" aria-live="assertive" data-v-661ba9fc>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(missingProfileDependencies).length) {
-        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-5523bc63><div data-v-5523bc63><strong data-v-5523bc63>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-5523bc63>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-5523bc63><!--[-->`);
+        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-661ba9fc><div data-v-661ba9fc><strong data-v-661ba9fc>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-661ba9fc>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-661ba9fc><!--[-->`);
         ssrRenderList(unref(missingProfileDependencies), (dependency) => {
-          _push(`<li data-v-5523bc63><span data-v-5523bc63><strong data-v-5523bc63>${ssrInterpolate(dependency.label)}</strong></span></li>`);
+          _push(`<li data-v-661ba9fc><span data-v-661ba9fc><strong data-v-661ba9fc>${ssrInterpolate(dependency.label)}</strong></span></li>`);
         });
         _push(`<!--]--></ul></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(secondaryModelSlots).length) {
-        _push(`<details class="model-bar__extra" data-v-5523bc63><summary data-v-5523bc63><span data-v-5523bc63>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-5523bc63>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-5523bc63><!--[-->`);
+        _push(`<details class="model-bar__extra" data-v-661ba9fc><summary data-v-661ba9fc><span data-v-661ba9fc>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-661ba9fc>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-661ba9fc><!--[-->`);
         ssrRenderList(unref(secondaryModelSlots), (slot) => {
-          _push(`<label class="field slot-field model-bar__field" data-v-5523bc63><span data-v-5523bc63>${ssrInterpolate(slot.label)}</span>`);
+          _push(`<label class="field slot-field model-bar__field" data-v-661ba9fc><span data-v-661ba9fc>${ssrInterpolate(slot.label)}</span>`);
           if (slotOptions(slot).length > 0) {
-            _push(`<select${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-5523bc63><option value="" data-v-5523bc63${ssrIncludeBooleanAttr(Array.isArray(unref(modelDependencies).selections[slot.id]) ? ssrLooseContain(unref(modelDependencies).selections[slot.id], "") : ssrLooseEqual(unref(modelDependencies).selections[slot.id], "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+            _push(`<select${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-661ba9fc><option value="" data-v-661ba9fc${ssrIncludeBooleanAttr(Array.isArray(unref(modelDependencies).selections[slot.id]) ? ssrLooseContain(unref(modelDependencies).selections[slot.id], "") : ssrLooseEqual(unref(modelDependencies).selections[slot.id], "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
             ssrRenderList(slotOptions(slot), (item) => {
-              _push(`<option${ssrRenderAttr("value", item.path)} data-v-5523bc63${ssrIncludeBooleanAttr(Array.isArray(unref(modelDependencies).selections[slot.id]) ? ssrLooseContain(unref(modelDependencies).selections[slot.id], item.path) : ssrLooseEqual(unref(modelDependencies).selections[slot.id], item.path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
+              _push(`<option${ssrRenderAttr("value", item.path)} data-v-661ba9fc${ssrIncludeBooleanAttr(Array.isArray(unref(modelDependencies).selections[slot.id]) ? ssrLooseContain(unref(modelDependencies).selections[slot.id], item.path) : ssrLooseEqual(unref(modelDependencies).selections[slot.id], item.path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
             });
             _push(`<!--]--></select>`);
           } else {
-            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-5523bc63>`);
+            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-661ba9fc>`);
           }
           _push(`</label>`);
         });
@@ -7643,7 +7647,7 @@ _sfc_main$1l.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ModelSettingsPanel.vue");
   return _sfc_setup$1l ? _sfc_setup$1l(props, ctx) : void 0;
 };
-const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1l, [["__scopeId", "data-v-5523bc63"]]), { __name: "StudioModelSettingsPanel" });
+const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1l, [["__scopeId", "data-v-661ba9fc"]]), { __name: "StudioModelSettingsPanel" });
 const promptAssistRequestSignature = (snapshot2) => {
   return JSON.stringify({
     prompt: snapshot2.prompt,
@@ -26763,6 +26767,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
     const generation = useGenerationStore();
     const modelDependencies = useModelDependenciesStore();
     const { t } = useAsteriaI18n();
+    const refreshingModels = ref(false);
     const mergeXyzAxisLabelDefaults = {
       mbwPreset: { key: "merge.xyzAxisLabel.mbwPreset", en: "MBW preset", ja: "MBWプリセット" },
       calculationMode: { key: "merge.xyzAxisLabel.calculationMode", en: "Calculation mode", ja: "計算モード" },
@@ -27556,9 +27561,14 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
       fillBlockWeights("beta", draft.value.beta);
     };
     const refreshModels = async () => {
-      await modelDependencies.refresh(generation.profile, true);
-      if (modelDependencies.error) {
-        error.value = modelDependencies.error;
+      refreshingModels.value = true;
+      try {
+        await modelDependencies.refresh(generation.profile, true);
+        if (modelDependencies.error) {
+          error.value = modelDependencies.error;
+        }
+      } finally {
+        refreshingModels.value = false;
       }
     };
     const focusCandidateOverlay = async () => {
@@ -28360,15 +28370,15 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
       }, _attrs), {
         headerTask: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="merge-hero" data-v-bfbcab35${_scopeId}><div data-v-bfbcab35${_scopeId}><span class="eyebrow" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.eyebrow"))}</span><h1 data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.title"))}</h1><p data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.description"))}</p></div><div class="hero-actions" data-v-bfbcab35${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).loading) ? " disabled" : ""} data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(modelDependencies).loading ? unref(t)("merge.refreshing") : unref(t)("merge.refreshModels"))}</button><button id="merge-clear-candidate-cache" class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(clearingCandidateCache)) ? " disabled" : ""} data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(runDisabled)) ? " disabled" : ""} data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(loading) ? unref(t)("merge.working") : unref(t)("merge.runMerge"))}</button></div></div>`);
+            _push2(`<div class="merge-hero" data-v-186fdedd${_scopeId}><div data-v-186fdedd${_scopeId}><span class="eyebrow" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.eyebrow"))}</span><h1 data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.title"))}</h1><p data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.description"))}</p></div><div class="hero-actions" data-v-186fdedd${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(refreshingModels) || unref(modelDependencies).loading) ? " disabled" : ""} data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(refreshingModels) ? unref(t)("merge.refreshing") : unref(t)("merge.refreshModels"))}</button><button id="merge-clear-candidate-cache" class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(clearingCandidateCache)) ? " disabled" : ""} data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(runDisabled)) ? " disabled" : ""} data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(loading) ? unref(t)("merge.working") : unref(t)("merge.runMerge"))}</button></div></div>`);
             if (unref(candidateCacheError)) {
-              _push2(`<p class="error merge-workspace-action-error" aria-live="assertive" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(candidateCacheError))}</p>`);
+              _push2(`<p class="error merge-workspace-action-error" aria-live="assertive" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(candidateCacheError))}</p>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<nav class="merge-tabs"${ssrRenderAttr("aria-label", unref(t)("merge.mergeTypeAria"))} data-v-bfbcab35${_scopeId}><!--[-->`);
+            _push2(`<nav class="merge-tabs"${ssrRenderAttr("aria-label", unref(t)("merge.mergeTypeAria"))} data-v-186fdedd${_scopeId}><!--[-->`);
             ssrRenderList(unref(catalog)?.merge_types ?? [], (type) => {
-              _push2(`<button type="button" class="${ssrRenderClass({ active: unref(activeTab) === type.id })}" data-v-bfbcab35${_scopeId}>${ssrInterpolate(type.label)}</button>`);
+              _push2(`<button type="button" class="${ssrRenderClass({ active: unref(activeTab) === type.id })}" data-v-186fdedd${_scopeId}>${ssrInterpolate(type.label)}</button>`);
             });
             _push2(`<!--]--></nav>`);
           } else {
@@ -28383,9 +28393,9 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
                   createVNode("button", {
                     class: "icon-button",
                     type: "button",
-                    disabled: unref(modelDependencies).loading,
+                    disabled: unref(refreshingModels) || unref(modelDependencies).loading,
                     onClick: refreshModels
-                  }, toDisplayString(unref(modelDependencies).loading ? unref(t)("merge.refreshing") : unref(t)("merge.refreshModels")), 9, ["disabled"]),
+                  }, toDisplayString(unref(refreshingModels) ? unref(t)("merge.refreshing") : unref(t)("merge.refreshModels")), 9, ["disabled"]),
                   createVNode("button", {
                     id: "merge-clear-candidate-cache",
                     class: "icon-button",
@@ -28824,82 +28834,82 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
         overlays: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
             if (unref(pendingMergeXyzConfirmation)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-bfbcab35${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-xyz-confirmation-title" data-v-bfbcab35${_scopeId}><span class="eyebrow" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunEyebrow"))}</span><h2 id="merge-xyz-confirmation-title" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunTitle", { count: unref(pendingMergeXyzConfirmation).estimate.candidate_count }))}</h2><p data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunHelp"))}</p><ul data-v-bfbcab35${_scopeId}><li data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateOrder"))}</li><li data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDimensions", { width: unref(pendingMergeXyzConfirmation).estimate.final_width, height: unref(pendingMergeXyzConfirmation).estimate.final_height }))}</li><li data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateTemporary", { lower: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_lower_bound), upper: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_upper_bound) }))}</li><li data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDurationUnknown"))}</li></ul><div class="asset-actions" data-v-bfbcab35${_scopeId}><button class="icon-button" type="button" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.continueLargeRun"))}</button></div></section></div>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-186fdedd${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-xyz-confirmation-title" data-v-186fdedd${_scopeId}><span class="eyebrow" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunEyebrow"))}</span><h2 id="merge-xyz-confirmation-title" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunTitle", { count: unref(pendingMergeXyzConfirmation).estimate.candidate_count }))}</h2><p data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunHelp"))}</p><ul data-v-186fdedd${_scopeId}><li data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateOrder"))}</li><li data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDimensions", { width: unref(pendingMergeXyzConfirmation).estimate.final_width, height: unref(pendingMergeXyzConfirmation).estimate.final_height }))}</li><li data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateTemporary", { lower: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_lower_bound), upper: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_upper_bound) }))}</li><li data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDurationUnknown"))}</li></ul><div class="asset-actions" data-v-186fdedd${_scopeId}><button class="icon-button" type="button" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.continueLargeRun"))}</button></div></section></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(pendingRecipeConfirmation)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-bfbcab35${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "merge-confirmation-title")} data-v-bfbcab35${_scopeId}><span class="eyebrow" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.confirmationEyebrow"))}</span><h2 id="merge-confirmation-title" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.confirmDeleteRecipe") : unref(t)("merge.confirmDiscardDraft"))}</h2>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-186fdedd${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "merge-confirmation-title")} data-v-186fdedd${_scopeId}><span class="eyebrow" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.confirmationEyebrow"))}</span><h2 id="merge-confirmation-title" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.confirmDeleteRecipe") : unref(t)("merge.confirmDiscardDraft"))}</h2>`);
               if (unref(pendingRecipeConfirmation).kind === "delete-recipe") {
-                _push2(`<p data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.deleteRecipeOnlyHelp", { name: unref(pendingRecipeConfirmation).recipeName }))}</p>`);
+                _push2(`<p data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.deleteRecipeOnlyHelp", { name: unref(pendingRecipeConfirmation).recipeName }))}</p>`);
               } else {
-                _push2(`<p data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.discardDraftHelp"))}</p>`);
+                _push2(`<p data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.discardDraftHelp"))}</p>`);
               }
-              _push2(`<div class="asset-actions" data-v-bfbcab35${_scopeId}><button class="icon-button" type="button" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(loading)) ? " disabled" : ""} data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.deleteRecipeOnly") : unref(t)("merge.discardAndSwitch"))}</button></div></section></div>`);
+              _push2(`<div class="asset-actions" data-v-186fdedd${_scopeId}><button class="icon-button" type="button" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(loading)) ? " disabled" : ""} data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.deleteRecipeOnly") : unref(t)("merge.discardAndSwitch"))}</button></div></section></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(lightboxCandidate)) {
-              _push2(`<div class="candidate-lightbox" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("merge.candidateLightbox"))} data-v-bfbcab35${_scopeId}><button class="candidate-lightbox__nav candidate-lightbox__nav--left" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.previousCandidate"))} data-v-bfbcab35${_scopeId}>‹</button><div class="candidate-lightbox__stage" data-v-bfbcab35${_scopeId}>`);
+              _push2(`<div class="candidate-lightbox" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("merge.candidateLightbox"))} data-v-186fdedd${_scopeId}><button class="candidate-lightbox__nav candidate-lightbox__nav--left" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.previousCandidate"))} data-v-186fdedd${_scopeId}>‹</button><div class="candidate-lightbox__stage" data-v-186fdedd${_scopeId}>`);
               if (candidateImageUrl(unref(lightboxCandidate))) {
-                _push2(`<img${ssrRenderAttr("src", candidateImageUrl(unref(lightboxCandidate)))}${ssrRenderAttr("alt", candidateDisplayId(unref(lightboxCandidate)))} data-v-bfbcab35${_scopeId}>`);
+                _push2(`<img${ssrRenderAttr("src", candidateImageUrl(unref(lightboxCandidate)))}${ssrRenderAttr("alt", candidateDisplayId(unref(lightboxCandidate)))} data-v-186fdedd${_scopeId}>`);
               } else {
-                _push2(`<div class="candidate-lightbox__empty" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.noImageOutput"))}</div>`);
+                _push2(`<div class="candidate-lightbox__empty" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.noImageOutput"))}</div>`);
               }
-              _push2(`</div><button class="candidate-lightbox__nav candidate-lightbox__nav--right" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.nextCandidate"))} data-v-bfbcab35${_scopeId}>›</button><div class="candidate-lightbox__bar" data-v-bfbcab35${_scopeId}><div data-v-bfbcab35${_scopeId}><strong data-v-bfbcab35${_scopeId}>${ssrInterpolate(candidateDisplayId(unref(lightboxCandidate)))}</strong><small data-v-bfbcab35${_scopeId}>${ssrInterpolate(candidateAxisSummary(unref(lightboxCandidate)))}</small></div><div class="candidate-rating" data-v-bfbcab35${_scopeId}><!--[-->`);
+              _push2(`</div><button class="candidate-lightbox__nav candidate-lightbox__nav--right" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.nextCandidate"))} data-v-186fdedd${_scopeId}>›</button><div class="candidate-lightbox__bar" data-v-186fdedd${_scopeId}><div data-v-186fdedd${_scopeId}><strong data-v-186fdedd${_scopeId}>${ssrInterpolate(candidateDisplayId(unref(lightboxCandidate)))}</strong><small data-v-186fdedd${_scopeId}>${ssrInterpolate(candidateAxisSummary(unref(lightboxCandidate)))}</small></div><div class="candidate-rating" data-v-186fdedd${_scopeId}><!--[-->`);
               ssrRenderList([1, 2, 3, 4, 5], (rating) => {
-                _push2(`<button type="button" class="${ssrRenderClass({ active: candidateRating(unref(lightboxCandidate)) >= rating })}"${ssrIncludeBooleanAttr(unref(candidateRatingSaving) === unref(lightboxCandidate).index) ? " disabled" : ""} data-v-bfbcab35${_scopeId}> ★ </button>`);
+                _push2(`<button type="button" class="${ssrRenderClass({ active: candidateRating(unref(lightboxCandidate)) >= rating })}"${ssrIncludeBooleanAttr(unref(candidateRatingSaving) === unref(lightboxCandidate).index) ? " disabled" : ""} data-v-186fdedd${_scopeId}> ★ </button>`);
               });
-              _push2(`<!--]--></div><button class="primary-button" type="button" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.setToRecipe"))}</button><button class="icon-button" type="button" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.close"))}</button></div></div>`);
+              _push2(`<!--]--></div><button class="primary-button" type="button" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.setToRecipe"))}</button><button class="icon-button" type="button" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.close"))}</button></div></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(candidatePromotionIntent)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-bfbcab35${_scopeId}><section class="candidate-promotion-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-candidate-promotion-title" data-v-bfbcab35${_scopeId}><span class="eyebrow" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionEyebrow"))}</span><h2 id="merge-candidate-promotion-title" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionTitle"))}</h2><p data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionHelp", { name: unref(candidatePromotionIntent).outputName }))}</p>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-186fdedd${_scopeId}><section class="candidate-promotion-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-candidate-promotion-title" data-v-186fdedd${_scopeId}><span class="eyebrow" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionEyebrow"))}</span><h2 id="merge-candidate-promotion-title" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionTitle"))}</h2><p data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionHelp", { name: unref(candidatePromotionIntent).outputName }))}</p>`);
               if (unref(candidateActionError)) {
-                _push2(`<p class="error" aria-live="assertive" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(candidateActionError))}</p>`);
+                _push2(`<p class="error" aria-live="assertive" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(candidateActionError))}</p>`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`<div class="asset-actions" data-v-bfbcab35${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(promotingCandidateIndex) !== null ? unref(t)("merge.saving") : unref(t)("merge.promote"))}</button></div></section></div>`);
+              _push2(`<div class="asset-actions" data-v-186fdedd${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(promotingCandidateIndex) !== null ? unref(t)("merge.saving") : unref(t)("merge.promote"))}</button></div></section></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(candidateCacheOverlay)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-bfbcab35${_scopeId}><section class="merge-confirmation-dialog cache-cleanup-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-cache-cleanup-title" data-v-bfbcab35${_scopeId}><span class="eyebrow" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupEyebrow"))}</span><h2 id="merge-cache-cleanup-title" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupTitle"))}</h2>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-186fdedd${_scopeId}><section class="merge-confirmation-dialog cache-cleanup-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-cache-cleanup-title" data-v-186fdedd${_scopeId}><span class="eyebrow" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupEyebrow"))}</span><h2 id="merge-cache-cleanup-title" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupTitle"))}</h2>`);
               if (unref(candidateCacheState).status === "confirming") {
-                _push2(`<!--[--><p data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupHelp"))}</p>`);
+                _push2(`<!--[--><p data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupHelp"))}</p>`);
                 if (unref(candidateCacheState).warningCurrentBoard) {
-                  _push2(`<p class="warning" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupBoardWarning"))}</p>`);
+                  _push2(`<p class="warning" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupBoardWarning"))}</p>`);
                 } else {
                   _push2(`<!---->`);
                 }
                 if (unref(candidateCacheState).warningUnpromoted) {
-                  _push2(`<p class="warning" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupPromotionWarning"))}</p>`);
+                  _push2(`<p class="warning" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupPromotionWarning"))}</p>`);
                 } else {
                   _push2(`<!---->`);
                 }
                 _push2(`<!--]-->`);
               } else if (unref(candidateCacheState).status === "working") {
-                _push2(`<p data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupWorking"))}</p>`);
+                _push2(`<p data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupWorking"))}</p>`);
               } else if (unref(candidateCacheState).status === "succeeded") {
-                _push2(`<p data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupSucceeded", { count: unref(candidateCacheState).deletedFiles }))}</p>`);
+                _push2(`<p data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupSucceeded", { count: unref(candidateCacheState).deletedFiles }))}</p>`);
               } else if (unref(candidateCacheState).status === "failed") {
-                _push2(`<!--[--><p class="error" aria-live="assertive" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(candidateCacheState).error)}</p><p data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupUnresolved", { count: unref(candidateCacheState).unresolvedCount }))}</p><p data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetryHelp"))}</p><!--]-->`);
+                _push2(`<!--[--><p class="error" aria-live="assertive" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(candidateCacheState).error)}</p><p data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupUnresolved", { count: unref(candidateCacheState).unresolvedCount }))}</p><p data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetryHelp"))}</p><!--]-->`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`<div class="cache-cleanup-dialog__retained" data-v-bfbcab35${_scopeId}><strong data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetained"))}</strong><ul data-v-bfbcab35${_scopeId}><!--[-->`);
+              _push2(`<div class="cache-cleanup-dialog__retained" data-v-186fdedd${_scopeId}><strong data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetained"))}</strong><ul data-v-186fdedd${_scopeId}><!--[-->`);
               ssrRenderList(unref(candidateCacheState).retainedCategories, (category) => {
-                _push2(`<li data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)(`merge.cacheRetained.${category}`))}</li>`);
+                _push2(`<li data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)(`merge.cacheRetained.${category}`))}</li>`);
               });
-              _push2(`<!--]--></ul></div><div class="asset-actions" data-v-bfbcab35${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(candidateCacheState).locked) ? " disabled" : ""} data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button>`);
+              _push2(`<!--]--></ul></div><div class="asset-actions" data-v-186fdedd${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(candidateCacheState).locked) ? " disabled" : ""} data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button>`);
               if (unref(candidateCacheState).status === "confirming") {
-                _push2(`<button class="primary-button" type="button" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button>`);
+                _push2(`<button class="primary-button" type="button" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button>`);
               } else if (unref(candidateCacheState).status === "failed") {
-                _push2(`<button class="primary-button" type="button" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.retry"))}</button>`);
+                _push2(`<button class="primary-button" type="button" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.retry"))}</button>`);
               } else if (unref(candidateCacheState).status !== "working") {
-                _push2(`<button class="primary-button" type="button" data-v-bfbcab35${_scopeId}>${ssrInterpolate(unref(t)("merge.close"))}</button>`);
+                _push2(`<button class="primary-button" type="button" data-v-186fdedd${_scopeId}>${ssrInterpolate(unref(t)("merge.close"))}</button>`);
               } else {
                 _push2(`<!---->`);
               }
@@ -29173,7 +29183,7 @@ _sfc_main$j.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/MergeStudioView.vue");
   return _sfc_setup$j ? _sfc_setup$j(props, ctx) : void 0;
 };
-const MergeStudioView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$j, [["__scopeId", "data-v-bfbcab35"]]), { __name: "StudioMergeStudioView" });
+const MergeStudioView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$j, [["__scopeId", "data-v-186fdedd"]]), { __name: "StudioMergeStudioView" });
 const _sfc_main$i = /* @__PURE__ */ defineComponent({
   __name: "SettingsCategoryRail",
   __ssrInlineRender: true,
