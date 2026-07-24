@@ -1707,6 +1707,9 @@ const messages = {
   "generation.generate": { en: "Generate", ja: "生成" },
   "generation.generating": { en: "Generating", ja: "生成中" },
   "generation.repeating": { en: "Repeating", ja: "リピート中" },
+  "generation.stopRepeat": { en: "Stop repeat", ja: "リピート停止" },
+  "generation.repeatStopping": { en: "Stopping repeat", ja: "リピート停止待ち" },
+  "generation.repeatStoppingDetail": { en: "Current generation will finish; the next repeat will not start.", ja: "現在の生成は完了まで続け、次のリピートは開始しません。" },
   "generation.stop": { en: "Stop", ja: "停止" },
   "generation.retry": { en: "Retry", ja: "再試行" },
   "generation.cancelling": { en: "Cancelling", ja: "停止処理中" },
@@ -5020,6 +5023,7 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
     canRetry: { type: Boolean },
     autoRepeat: { type: Boolean },
     repeatActive: { type: Boolean },
+    repeatStopRequested: { type: Boolean },
     repeatCount: {},
     seed: {},
     status: {},
@@ -5028,31 +5032,39 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
     readinessItems: {},
     disabledReason: {}
   },
-  emits: ["generate", "cancel", "retry", "update:autoRepeat"],
+  emits: ["generate", "stopRepeat", "cancel", "retry", "update:autoRepeat"],
   setup(__props) {
     const { t } = useAsteriaI18n();
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<div${ssrRenderAttrs(mergeProps({
         class: ["generate-action-strip", { "generate-action-strip--active": __props.loading || __props.repeatActive }]
-      }, _attrs))} data-v-a45589ae><div class="generate-action-strip__context" data-v-a45589ae><strong data-v-a45589ae>${ssrInterpolate(unref(t)("generation.activityBar"))}</strong><span data-v-a45589ae>${ssrInterpolate(__props.mode)} / ${ssrInterpolate(__props.sizeLabel)} / ${ssrInterpolate(__props.status)}</span>`);
-      if (__props.autoRepeat && __props.seed !== -1) {
-        _push(`<small data-v-a45589ae>${ssrInterpolate(unref(t)("generation.fixedSeedRepeat", { seed: __props.seed }))}</small>`);
+      }, _attrs))} data-v-09f97394><div class="generate-action-strip__context" data-v-09f97394><strong data-v-09f97394>${ssrInterpolate(unref(t)("generation.activityBar"))}</strong><span data-v-09f97394>${ssrInterpolate(__props.mode)} / ${ssrInterpolate(__props.sizeLabel)} / ${ssrInterpolate(__props.status)}</span>`);
+      if (__props.repeatStopRequested) {
+        _push(`<small data-v-09f97394>${ssrInterpolate(unref(t)("generation.repeatStoppingDetail"))}</small>`);
+      } else if (__props.autoRepeat && __props.seed !== -1) {
+        _push(`<small data-v-09f97394>${ssrInterpolate(unref(t)("generation.fixedSeedRepeat", { seed: __props.seed }))}</small>`);
       } else if (__props.repeatActive) {
-        _push(`<small data-v-a45589ae>${ssrInterpolate(unref(t)("generation.repeatQueued", { count: __props.repeatCount + 1 }))}</small>`);
+        _push(`<small data-v-09f97394>${ssrInterpolate(unref(t)("generation.repeatQueued", { count: __props.repeatCount + 1 }))}</small>`);
       } else if (__props.disabledReason) {
-        _push(`<small data-v-a45589ae>${ssrInterpolate(__props.disabledReason)}</small>`);
+        _push(`<small data-v-09f97394>${ssrInterpolate(__props.disabledReason)}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="generate-action-strip__readiness"${ssrRenderAttr("aria-label", unref(t)("generation.readiness.needsAttention"))} data-v-a45589ae><!--[-->`);
+      _push(`<div class="generate-action-strip__readiness"${ssrRenderAttr("aria-label", unref(t)("generation.readiness.needsAttention"))} data-v-09f97394><!--[-->`);
       ssrRenderList(__props.readinessItems, (item) => {
         _push(`<span class="${ssrRenderClass([
           "generate-action-strip__readiness-chip",
           item.ready ? "generate-action-strip__readiness-chip--ready" : "generate-action-strip__readiness-chip--missing",
           item.advisory ? "generate-action-strip__readiness-chip--advisory" : ""
-        ])}"${ssrRenderAttr("title", item.message)} data-v-a45589ae>${ssrInterpolate(item.label)}</span>`);
+        ])}"${ssrRenderAttr("title", item.message)} data-v-09f97394>${ssrInterpolate(item.label)}</span>`);
       });
-      _push(`<!--]--></div></div><div class="generate-action-strip__controls" data-v-a45589ae><label class="generate-action-strip__repeat" data-v-a45589ae><input type="checkbox"${ssrIncludeBooleanAttr(__props.autoRepeat) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.loading) ? " disabled" : ""} data-v-a45589ae><span data-v-a45589ae>${ssrInterpolate(unref(t)("generation.autoRepeat"))}</span></label><button class="generate-action-strip__primary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canGenerate) ? " disabled" : ""} data-v-a45589ae>${ssrInterpolate(__props.repeatActive ? unref(t)("generation.repeating") : __props.loading ? unref(t)("generation.generating") : unref(t)("generation.generate"))}</button><button class="generate-action-strip__secondary" type="button"${ssrIncludeBooleanAttr(!__props.canCancel && !__props.repeatActive) ? " disabled" : ""} data-v-a45589ae>${ssrInterpolate(unref(t)("generation.stop"))}</button><button class="generate-action-strip__secondary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canRetry) ? " disabled" : ""} data-v-a45589ae>${ssrInterpolate(unref(t)("generation.retry"))}</button></div></div>`);
+      _push(`<!--]--></div></div><div class="generate-action-strip__controls" data-v-09f97394><label class="generate-action-strip__repeat" data-v-09f97394><input type="checkbox"${ssrIncludeBooleanAttr(__props.autoRepeat) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.loading && !__props.repeatActive || __props.repeatStopRequested) ? " disabled" : ""} data-v-09f97394><span data-v-09f97394>${ssrInterpolate(unref(t)("generation.autoRepeat"))}</span></label><button class="generate-action-strip__primary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canGenerate) ? " disabled" : ""} data-v-09f97394>${ssrInterpolate(__props.repeatActive ? unref(t)("generation.repeating") : __props.loading ? unref(t)("generation.generating") : unref(t)("generation.generate"))}</button>`);
+      if (__props.repeatActive) {
+        _push(`<button class="generate-action-strip__secondary generate-action-strip__repeat-stop" type="button"${ssrIncludeBooleanAttr(__props.repeatStopRequested) ? " disabled" : ""} data-v-09f97394>${ssrInterpolate(__props.repeatStopRequested ? unref(t)("generation.repeatStopping") : unref(t)("generation.stopRepeat"))}</button>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<button class="generate-action-strip__secondary" type="button"${ssrIncludeBooleanAttr(!__props.canCancel && !__props.repeatActive) ? " disabled" : ""} data-v-09f97394>${ssrInterpolate(unref(t)("generation.stop"))}</button><button class="generate-action-strip__secondary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canRetry) ? " disabled" : ""} data-v-09f97394>${ssrInterpolate(unref(t)("generation.retry"))}</button></div></div>`);
     };
   }
 });
@@ -5062,7 +5074,7 @@ _sfc_main$1q.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerateActionStrip.vue");
   return _sfc_setup$1q ? _sfc_setup$1q(props, ctx) : void 0;
 };
-const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1q, [["__scopeId", "data-v-a45589ae"]]), { __name: "StudioGenerateActionStrip" });
+const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1q, [["__scopeId", "data-v-09f97394"]]), { __name: "StudioGenerateActionStrip" });
 const normalizeGenerationSchedulers = (profile, scheduler, hiresScheduler) => profile === "flux2" ? { scheduler: "Flux2", hiresScheduler: "Use same scheduler" } : { scheduler, hiresScheduler };
 const schedulerOptionsForProfile = (profile, runtimeOptions) => {
   if (profile === "flux2") {
@@ -7122,6 +7134,10 @@ const useGenerationStore = defineStore("generation", {
       } finally {
         this.loading = false;
       }
+    },
+    stopAutoRepeat() {
+      this.stopRepeatRequested = true;
+      this.autoRepeatEnabled = false;
     },
     async stopGeneration() {
       this.stopRepeatRequested = true;
@@ -34718,6 +34734,13 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
     const canCancel = computed(() => Boolean(generation.currentJob && ["queued", "running", "cancelling"].includes(generation.currentJob.status)));
     const canRetry = computed(() => Boolean(generation.currentJob && generation.currentJob.status === "failed"));
     const setAutoRepeat = (value) => {
+      if (!value && generation.autoRepeatActive) {
+        generation.stopAutoRepeat();
+        return;
+      }
+      if (value) {
+        generation.stopRepeatRequested = false;
+      }
       generation.autoRepeatEnabled = value;
     };
     const completeWorkspaceNavigation = (id) => {
@@ -34863,6 +34886,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 "can-retry": unref(canRetry),
                 "auto-repeat": unref(generation).autoRepeatEnabled,
                 "repeat-active": unref(generation).autoRepeatActive,
+                "repeat-stop-requested": unref(generation).stopRepeatRequested,
                 "repeat-count": unref(generation).repeatRunCount,
                 seed: unref(generation).seed,
                 status: unref(queueStatus),
@@ -34872,6 +34896,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 "disabled-reason": unref(generationDisabledReason),
                 "onUpdate:autoRepeat": setAutoRepeat,
                 onGenerate: unref(generation).generate,
+                onStopRepeat: unref(generation).stopAutoRepeat,
                 onCancel: unref(generation).stopGeneration,
                 onRetry: unref(generation).retryCurrentJob
               }, null, _parent2, _scopeId));
@@ -34900,6 +34925,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 "can-retry": unref(canRetry),
                 "auto-repeat": unref(generation).autoRepeatEnabled,
                 "repeat-active": unref(generation).autoRepeatActive,
+                "repeat-stop-requested": unref(generation).stopRepeatRequested,
                 "repeat-count": unref(generation).repeatRunCount,
                 seed: unref(generation).seed,
                 status: unref(queueStatus),
@@ -34909,9 +34935,10 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 "disabled-reason": unref(generationDisabledReason),
                 "onUpdate:autoRepeat": setAutoRepeat,
                 onGenerate: unref(generation).generate,
+                onStopRepeat: unref(generation).stopAutoRepeat,
                 onCancel: unref(generation).stopGeneration,
                 onRetry: unref(generation).retryCurrentJob
-              }, null, 8, ["loading", "can-generate", "can-cancel", "can-retry", "auto-repeat", "repeat-active", "repeat-count", "seed", "status", "mode", "size-label", "readiness-items", "disabled-reason", "onGenerate", "onCancel", "onRetry"])) : createCommentVNode("", true)
+              }, null, 8, ["loading", "can-generate", "can-cancel", "can-retry", "auto-repeat", "repeat-active", "repeat-stop-requested", "repeat-count", "seed", "status", "mode", "size-label", "readiness-items", "disabled-reason", "onGenerate", "onStopRepeat", "onCancel", "onRetry"])) : createCommentVNode("", true)
             ];
           }
         }),
@@ -34927,7 +34954,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
               _push2(`<!---->`);
             }
             if (unref(imageWorkspaceMounted)) {
-              _push2(`<div class="image-workspace-mount" style="${ssrRenderStyle(unref(activeWorkspace) === "image" ? null : { display: "none" })}" data-v-43238e0f${_scopeId}>`);
+              _push2(`<div class="image-workspace-mount" style="${ssrRenderStyle(unref(activeWorkspace) === "image" ? null : { display: "none" })}" data-v-0520a510${_scopeId}>`);
               _push2(ssrRenderComponent(ImageWorkspace, {
                 ref_key: "imageWorkspaceRef",
                 ref: imageWorkspaceRef,
@@ -35082,7 +35109,7 @@ _sfc_main$3.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/GenerateStudio.vue");
   return _sfc_setup$3 ? _sfc_setup$3(props, ctx) : void 0;
 };
-const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-43238e0f"]]), { __name: "GenerateStudio" });
+const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-0520a510"]]), { __name: "GenerateStudio" });
 const _sfc_main$2 = {};
 function _sfc_ssrRender(_ctx, _push, _parent, _attrs) {
   const _component_GenerateStudio = __nuxt_component_0;
