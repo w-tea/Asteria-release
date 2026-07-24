@@ -1,4 +1,4 @@
-import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { hasInjectionContext, getCurrentInstance, defineComponent, createElementBlock, shallowRef, provide, cloneVNode, h, useSSRContext, nextTick, createApp, mergeProps, unref, computed, ref, watch, watchEffect, withCtx, createVNode, toDisplayString, withDirectives, isRef, openBlock, createBlock, Fragment, renderList, vModelSelect, createCommentVNode, createTextVNode, vModelText, reactive, vShow, Teleport, withModifiers, vModelCheckbox, withKeys, onErrorCaptured, onServerPrefetch, resolveDynamicComponent, shallowReactive, effectScope, toRef, inject, defineAsyncComponent, getCurrentScope, isReadonly, toValue, toRaw, isShallow, isReactive } from 'vue';
+import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { hasInjectionContext, getCurrentInstance, defineComponent, createElementBlock, shallowRef, provide, cloneVNode, h, useSSRContext, nextTick, createApp, computed, watch, mergeProps, unref, ref, watchEffect, withCtx, createVNode, toDisplayString, withDirectives, isRef, openBlock, createBlock, Fragment, renderList, vModelSelect, createCommentVNode, createTextVNode, vModelText, reactive, vShow, Teleport, withModifiers, vModelCheckbox, withKeys, onErrorCaptured, onServerPrefetch, resolveDynamicComponent, shallowReactive, effectScope, toRef, inject, defineAsyncComponent, getCurrentScope, isReadonly, toValue, toRaw, isShallow, isReactive } from 'vue';
 import { s as parseURL, f as encodePath, d as decodePath, l as hasProtocol, o as isScriptProtocol, q as joinURL, B as withQuery, t as sanitizeStatusCode, g as getContext, $ as $fetch$1, c as createError$1, n as isEqual, m as hash, v as stringifyParsedURL, w as stringifyQuery, r as parseQuery, b as defu } from '../_/nitro.mjs';
 import { b as baseURL } from '../routes/renderer.mjs';
 import { defineStore, setActivePinia, createPinia, shouldHydrate } from 'pinia';
@@ -1495,6 +1495,7 @@ const messages = {
   "status.idle": { en: "Idle", ja: "待機中" },
   "status.runtimeReady": { en: "Generation ready", ja: "生成準備完了" },
   "status.runtimeOffline": { en: "Generation offline", ja: "生成環境: 未接続" },
+  "startup.loading": { en: "Starting Asteria…", ja: "Asteriaを起動中…" },
   "language.aria": { en: "Interface language", ja: "表示言語" },
   "shell.navigationAria": { en: "Studio navigation", ja: "スタジオナビゲーション" },
   "shell.statusAria": { en: "Studio status and actions", ja: "スタジオ状態と操作" },
@@ -1983,6 +1984,9 @@ const messages = {
   "modelSettings.title": { en: "Model / VAE", ja: "モデル / VAE" },
   "modelSettings.refreshing": { en: "Refreshing", ja: "更新中" },
   "modelSettings.refresh": { en: "Asset Refresh", ja: "アセット更新" },
+  "modelSettings.refreshRunning": { en: "Refreshing model assets…", ja: "モデルアセットを更新中…" },
+  "modelSettings.refreshSucceeded": { en: "Model assets refreshed", ja: "モデルアセットを更新しました" },
+  "modelSettings.refreshFailed": { en: "Model asset refresh failed.", ja: "モデルアセットを更新できませんでした。" },
   "modelSettings.refreshHelp": { en: "Use this after adding checkpoints, VAE, LoRA, Embedding, ControlNet, ADetailer, or other generation assets.", ja: "Checkpoint、VAE、LoRA、Embedding、ControlNet、ADetailerなどの生成アセットを追加した後に使います。" },
   "modelSettings.save": { en: "Save model selection", ja: "モデル選択を保存" },
   "modelSettings.profileLoading": { en: "Wait for the selected model profile to finish loading.", ja: "選択したモデルプロファイルの読み込み完了を待ってください。" },
@@ -4942,7 +4946,71 @@ const useAsteriaI18n = () => {
     vocabularyTerm
   };
 };
-const _sfc_main$1p = /* @__PURE__ */ defineComponent({
+const _sfc_main$1r = /* @__PURE__ */ defineComponent({
+  __name: "AssetRefreshIndicator",
+  __ssrInlineRender: true,
+  props: {
+    status: {},
+    message: {}
+  },
+  emits: ["clear"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const emit = __emit;
+    const { t } = useAsteriaI18n();
+    const statusLabel = computed(() => {
+      if (props.status === "running") return t("modelSettings.refreshRunning");
+      if (props.status === "success") return t("modelSettings.refreshSucceeded");
+      if (props.status === "error") return props.message || t("modelSettings.refreshFailed");
+      return "";
+    });
+    watch(
+      () => props.status,
+      (status, _previousStatus, onCleanup) => {
+        const delay = status === "success" ? 1400 : status === "error" ? 6e3 : 0;
+        if (!delay) return;
+        const timer = (void 0).setTimeout(() => emit("clear"), delay);
+        onCleanup(() => (void 0).clearTimeout(timer));
+      },
+      { immediate: true }
+    );
+    return (_ctx, _push, _parent, _attrs) => {
+      if (__props.status !== "idle") {
+        _push(`<div${ssrRenderAttrs(mergeProps({
+          class: [
+            "asset-refresh-indicator",
+            `asset-refresh-indicator--${__props.status}`
+          ],
+          role: __props.status === "error" ? "alert" : "status",
+          "aria-live": __props.status === "error" ? "assertive" : "polite"
+        }, _attrs))} data-v-2642bbad><span class="asset-refresh-indicator__track" aria-hidden="true" data-v-2642bbad><span class="asset-refresh-indicator__signal" data-v-2642bbad></span></span>`);
+        if (__props.status === "error") {
+          _push(`<p class="asset-refresh-indicator__message" data-v-2642bbad>${ssrInterpolate(unref(statusLabel))}</p>`);
+        } else {
+          _push(`<span class="asset-refresh-indicator__sr-only" data-v-2642bbad>${ssrInterpolate(unref(statusLabel))}</span>`);
+        }
+        _push(`</div>`);
+      } else {
+        _push(`<!---->`);
+      }
+    };
+  }
+});
+const _export_sfc = (sfc, props) => {
+  const target = sfc.__vccOpts || sfc;
+  for (const [key, val] of props) {
+    target[key] = val;
+  }
+  return target;
+};
+const _sfc_setup$1r = _sfc_main$1r.setup;
+_sfc_main$1r.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AssetRefreshIndicator.vue");
+  return _sfc_setup$1r ? _sfc_setup$1r(props, ctx) : void 0;
+};
+const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1r, [["__scopeId", "data-v-2642bbad"]]), { __name: "StudioAssetRefreshIndicator" });
+const _sfc_main$1q = /* @__PURE__ */ defineComponent({
   __name: "GenerateActionStrip",
   __ssrInlineRender: true,
   props: {
@@ -4988,20 +5056,13 @@ const _sfc_main$1p = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _export_sfc = (sfc, props) => {
-  const target = sfc.__vccOpts || sfc;
-  for (const [key, val] of props) {
-    target[key] = val;
-  }
-  return target;
-};
-const _sfc_setup$1p = _sfc_main$1p.setup;
-_sfc_main$1p.setup = (props, ctx) => {
+const _sfc_setup$1q = _sfc_main$1q.setup;
+_sfc_main$1q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerateActionStrip.vue");
-  return _sfc_setup$1p ? _sfc_setup$1p(props, ctx) : void 0;
+  return _sfc_setup$1q ? _sfc_setup$1q(props, ctx) : void 0;
 };
-const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1p, [["__scopeId", "data-v-a45589ae"]]), { __name: "StudioGenerateActionStrip" });
+const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1q, [["__scopeId", "data-v-a45589ae"]]), { __name: "StudioGenerateActionStrip" });
 const normalizeGenerationSchedulers = (profile, scheduler, hiresScheduler) => profile === "flux2" ? { scheduler: "Flux2", hiresScheduler: "Use same scheduler" } : { scheduler, hiresScheduler };
 const schedulerOptionsForProfile = (profile, runtimeOptions) => {
   if (profile === "flux2") {
@@ -5333,6 +5394,18 @@ const buildRemasterRequest = (source, snapshot2, state) => {
     remaster: remasterSettingsPayload(normalizedState)
   };
 };
+const useApiBase = () => {
+  const config = /* @__PURE__ */ useRuntimeConfig();
+  return String(config.public.apiBase || "http://127.0.0.1:8000").replace(/\/$/, "");
+};
+const useApiUrl = (path) => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${useApiBase()}${normalizedPath}`;
+};
+const useApiWebSocketUrl = (path) => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${useApiBase().replace(/^http/i, "ws")}${normalizedPath}`;
+};
 const knownErrorCodeKeys = {
   startup_ready: "settings.startup.noIssues",
   startup_readiness_execution_failed: "common.error.startupReadiness",
@@ -5522,18 +5595,270 @@ const userFacingErrorMessage = (error, fallbackKey = "common.error.generic") => 
   }
   return text || fallback;
 };
-const useApiBase = () => {
-  const config = /* @__PURE__ */ useRuntimeConfig();
-  return String(config.public.apiBase || "http://127.0.0.1:8000").replace(/\/$/, "");
-};
-const useApiUrl = (path) => {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${useApiBase()}${normalizedPath}`;
-};
-const useApiWebSocketUrl = (path) => {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${useApiBase().replace(/^http/i, "ws")}${normalizedPath}`;
-};
+const useAdvancedStylesStore = defineStore("advancedStyles", {
+  state: () => ({
+    groups: [],
+    styles: [],
+    sourcePath: "",
+    selectedGroup: "",
+    query: "",
+    manageOpen: false,
+    manageGroup: "",
+    manageName: "",
+    managePrompt: "",
+    manageNegative: "",
+    csvImportGroup: "",
+    csvImportText: "",
+    csvUpdateExisting: true,
+    lastImportCount: 0,
+    customPrompt: "",
+    customNegative: "",
+    activeChain: [],
+    loading: false,
+    error: ""
+  }),
+  getters: {
+    filteredStyles: (state) => {
+      const query = state.query.trim().toLowerCase();
+      return state.styles.filter((style) => {
+        if (state.selectedGroup && style.group !== state.selectedGroup) {
+          return false;
+        }
+        if (!query) {
+          return true;
+        }
+        return `${style.group} ${style.name} ${style.prompt}`.toLowerCase().includes(query);
+      });
+    }
+  },
+  actions: {
+    async fetch() {
+      this.loading = true;
+      this.error = "";
+      try {
+        const response = await $fetch("/api/advanced-styles", {
+          baseURL: useApiBase()
+        });
+        this.groups = response.groups;
+        this.styles = response.styles;
+        this.sourcePath = response.source_path;
+        if (!this.selectedGroup && this.groups.length) {
+          this.selectedGroup = this.groups[0];
+        }
+      } catch (error) {
+        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
+      } finally {
+        this.loading = false;
+      }
+    },
+    addToChain(style) {
+      this.activeChain.push({ ...style, source_type: "style" });
+    },
+    addCustomPromptToChain() {
+      const prompt = this.customPrompt.trim();
+      const negative = this.customNegative.trim();
+      if (!prompt && !negative) {
+        return null;
+      }
+      const style = {
+        id: `custom/${Date.now()}`,
+        group: "custom",
+        name: "<Custom Prompt>",
+        prompt,
+        negative,
+        thumbnail_path: null,
+        source_type: "custom-prompt"
+      };
+      this.activeChain.push(style);
+      this.customPrompt = "";
+      this.customNegative = "";
+      return style;
+    },
+    addRandomFromGroup(group, seed) {
+      const targetGroup = group || this.selectedGroup;
+      const candidates = this.styles.filter((style2) => !targetGroup || style2.group === targetGroup);
+      if (!candidates.length) {
+        return null;
+      }
+      const selectionSeed = Number.isFinite(seed) && seed !== void 0 ? seed : Date.now();
+      const index = Math.abs(Math.trunc(selectionSeed)) % candidates.length;
+      const style = {
+        ...candidates[index],
+        id: `random/${targetGroup || "all"}/${selectionSeed}/${candidates[index].id}`,
+        source_type: "group-random",
+        selected_from_group: targetGroup || "",
+        selection_seed: selectionSeed
+      };
+      this.activeChain.push(style);
+      return style;
+    },
+    removeFromChain(index) {
+      this.activeChain.splice(index, 1);
+    },
+    moveChainItem(index, direction) {
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= this.activeChain.length) {
+        return;
+      }
+      const [item] = this.activeChain.splice(index, 1);
+      this.activeChain.splice(nextIndex, 0, item);
+    },
+    moveChainItemTo(fromIndex, toIndex) {
+      if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= this.activeChain.length || toIndex >= this.activeChain.length) {
+        return;
+      }
+      const [item] = this.activeChain.splice(fromIndex, 1);
+      this.activeChain.splice(toIndex, 0, item);
+    },
+    clearChain() {
+      this.activeChain = [];
+    },
+    replaceActiveChain(styles) {
+      this.activeChain = styles.map((style) => {
+        const { order: _order, ...chainStyle } = style;
+        const libraryStyle = this.styles.find((candidate) => candidate.id === style.id);
+        return {
+          ...chainStyle,
+          thumbnail_path: style.thumbnail_path ?? libraryStyle?.thumbnail_path ?? null
+        };
+      });
+    },
+    editStyle(style) {
+      this.manageOpen = true;
+      this.manageGroup = style.group;
+      this.manageName = style.name;
+      this.managePrompt = style.prompt;
+      this.manageNegative = style.negative;
+    },
+    resetManageForm() {
+      this.manageGroup = this.selectedGroup || this.groups[0] || "default";
+      this.manageName = "";
+      this.managePrompt = "";
+      this.manageNegative = "";
+    },
+    async saveManagedStyle() {
+      this.loading = true;
+      this.error = "";
+      try {
+        await $fetch("/api/advanced-styles/style", {
+          baseURL: useApiBase(),
+          method: "POST",
+          body: {
+            group: this.manageGroup,
+            name: this.manageName,
+            prompt: this.managePrompt,
+            negative: this.manageNegative
+          }
+        });
+        await this.fetch();
+      } catch (error) {
+        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
+      } finally {
+        this.loading = false;
+      }
+    },
+    async deleteManagedStyle() {
+      if (!this.manageGroup.trim() || !this.manageName.trim()) {
+        return;
+      }
+      this.loading = true;
+      this.error = "";
+      try {
+        await $fetch("/api/advanced-styles/style", {
+          baseURL: useApiBase(),
+          method: "DELETE",
+          query: {
+            group: this.manageGroup,
+            name: this.manageName
+          }
+        });
+        this.resetManageForm();
+        await this.fetch();
+      } catch (error) {
+        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
+      } finally {
+        this.loading = false;
+      }
+    },
+    async uploadManagedThumbnail(file) {
+      if (!this.manageGroup.trim() || !this.manageName.trim()) {
+        this.error = useAsteriaI18n().t("advancedStyles.thumbnailIdentityRequired");
+        return;
+      }
+      this.loading = true;
+      this.error = "";
+      try {
+        await $fetch("/api/advanced-styles/style/thumbnail", {
+          baseURL: useApiBase(),
+          method: "POST",
+          query: {
+            group: this.manageGroup,
+            name: this.manageName,
+            filename: file.name
+          },
+          body: await file.arrayBuffer()
+        });
+        await this.fetch();
+      } catch (error) {
+        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
+      } finally {
+        this.loading = false;
+      }
+    },
+    async clearManagedThumbnail() {
+      if (!this.manageGroup.trim() || !this.manageName.trim()) {
+        return;
+      }
+      this.loading = true;
+      this.error = "";
+      try {
+        await $fetch("/api/advanced-styles/style/thumbnail", {
+          baseURL: useApiBase(),
+          method: "DELETE",
+          query: {
+            group: this.manageGroup,
+            name: this.manageName
+          }
+        });
+        await this.fetch();
+      } catch (error) {
+        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
+      } finally {
+        this.loading = false;
+      }
+    },
+    async importCsv() {
+      if (!this.csvImportText.trim()) {
+        return;
+      }
+      this.loading = true;
+      this.error = "";
+      try {
+        const response = await $fetch("/api/advanced-styles/import-csv", {
+          baseURL: useApiBase(),
+          method: "POST",
+          body: {
+            target_group: this.csvImportGroup || this.selectedGroup || "default",
+            csv_text: this.csvImportText,
+            update_existing: this.csvUpdateExisting
+          }
+        });
+        this.lastImportCount = response.imported;
+        await this.fetch();
+      } catch (error) {
+        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
+      } finally {
+        this.loading = false;
+      }
+    },
+    thumbnailUrl(style) {
+      if (!style.thumbnail_path) {
+        return "";
+      }
+      return useApiUrl(`/api/advanced-styles/thumbnail?path=${encodeURIComponent(style.thumbnail_path)}`);
+    }
+  }
+});
 const useRuntimeStore = defineStore("runtime", {
   state: () => ({
     status: null,
@@ -5863,6 +6188,9 @@ const useModelDependenciesStore = defineStore("modelDependencies", {
     selections: {},
     selectionProfile: "",
     refreshRequestId: 0,
+    assetRefreshRequestId: 0,
+    assetRefreshStatus: "idle",
+    assetRefreshMessage: "",
     library: [],
     libraryLoaded: false,
     linkHealth: {
@@ -5900,8 +6228,14 @@ const useModelDependenciesStore = defineStore("modelDependencies", {
       }
       const requestId = this.refreshRequestId + 1;
       this.refreshRequestId = requestId;
+      if (forceLibraryRefresh) {
+        this.assetRefreshRequestId = requestId;
+        this.assetRefreshStatus = "running";
+        this.assetRefreshMessage = "";
+      }
       this.loading = true;
       this.error = "";
+      let completed = false;
       try {
         if (this.profiles.length === 0) {
           const profilesResponse = await $fetch("/api/models/profiles", {
@@ -5945,14 +6279,28 @@ const useModelDependenciesStore = defineStore("modelDependencies", {
           this.selections = selectionResponse.slots;
           this.selectionProfile = selectionResponse.profile;
         }
+        completed = true;
       } catch (error) {
         if (requestId === this.refreshRequestId) {
           this.error = userFacingErrorMessage(error, "common.error.modelDependencies");
         }
+        if (forceLibraryRefresh && requestId === this.assetRefreshRequestId) {
+          this.assetRefreshStatus = "error";
+          this.assetRefreshMessage = userFacingErrorMessage(error, "common.error.modelDependencies");
+        }
       } finally {
+        if (forceLibraryRefresh && requestId === this.assetRefreshRequestId && this.assetRefreshStatus === "running") {
+          this.assetRefreshStatus = completed ? "success" : "idle";
+        }
         if (requestId === this.refreshRequestId) {
           this.loading = false;
         }
+      }
+    },
+    clearAssetRefreshFeedback() {
+      if (this.assetRefreshStatus !== "running") {
+        this.assetRefreshStatus = "idle";
+        this.assetRefreshMessage = "";
       }
     },
     async bootstrap(profile) {
@@ -7510,7 +7858,9 @@ const useGenerationStore = defineStore("generation", {
           }));
         }
         if (Array.isArray(preset.data.advanced_styles)) {
-          this.advancedStyles = preset.data.advanced_styles.map((style) => ({ ...style }));
+          const restoredStyles = preset.data.advanced_styles.map((style) => ({ ...style }));
+          this.advancedStyles = restoredStyles;
+          useAdvancedStylesStore().replaceActiveChain(restoredStyles);
         }
       } catch (error) {
         this.error = errorMessage$3(error);
@@ -7543,7 +7893,7 @@ const useGenerationStore = defineStore("generation", {
     }
   }
 });
-const _sfc_main$1o = /* @__PURE__ */ defineComponent({
+const _sfc_main$1p = /* @__PURE__ */ defineComponent({
   __name: "GenerationPresetBar",
   __ssrInlineRender: true,
   setup(__props) {
@@ -7586,14 +7936,14 @@ const _sfc_main$1o = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1o = _sfc_main$1o.setup;
-_sfc_main$1o.setup = (props, ctx) => {
+const _sfc_setup$1p = _sfc_main$1p.setup;
+_sfc_main$1p.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationPresetBar.vue");
-  return _sfc_setup$1o ? _sfc_setup$1o(props, ctx) : void 0;
+  return _sfc_setup$1p ? _sfc_setup$1p(props, ctx) : void 0;
 };
-const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1o, [["__scopeId", "data-v-c063e83e"]]), { __name: "StudioGenerateGenerationPresetBar" });
-const _sfc_main$1n = /* @__PURE__ */ defineComponent({
+const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1p, [["__scopeId", "data-v-c063e83e"]]), { __name: "StudioGenerateGenerationPresetBar" });
+const _sfc_main$1o = /* @__PURE__ */ defineComponent({
   __name: "ModelSettingsPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -7707,13 +8057,13 @@ const _sfc_main$1n = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1n = _sfc_main$1n.setup;
-_sfc_main$1n.setup = (props, ctx) => {
+const _sfc_setup$1o = _sfc_main$1o.setup;
+_sfc_main$1o.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ModelSettingsPanel.vue");
-  return _sfc_setup$1n ? _sfc_setup$1n(props, ctx) : void 0;
+  return _sfc_setup$1o ? _sfc_setup$1o(props, ctx) : void 0;
 };
-const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1n, [["__scopeId", "data-v-36d77314"]]), { __name: "StudioModelSettingsPanel" });
+const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1o, [["__scopeId", "data-v-36d77314"]]), { __name: "StudioModelSettingsPanel" });
 const promptAssistRequestSignature = (snapshot2) => {
   return JSON.stringify({
     prompt: snapshot2.prompt,
@@ -7797,261 +8147,7 @@ const createLatestPromptAssistRequestExecutor = () => {
     }
   };
 };
-const useAdvancedStylesStore = defineStore("advancedStyles", {
-  state: () => ({
-    groups: [],
-    styles: [],
-    sourcePath: "",
-    selectedGroup: "",
-    query: "",
-    manageOpen: false,
-    manageGroup: "",
-    manageName: "",
-    managePrompt: "",
-    manageNegative: "",
-    csvImportGroup: "",
-    csvImportText: "",
-    csvUpdateExisting: true,
-    lastImportCount: 0,
-    customPrompt: "",
-    customNegative: "",
-    activeChain: [],
-    loading: false,
-    error: ""
-  }),
-  getters: {
-    filteredStyles: (state) => {
-      const query = state.query.trim().toLowerCase();
-      return state.styles.filter((style) => {
-        if (state.selectedGroup && style.group !== state.selectedGroup) {
-          return false;
-        }
-        if (!query) {
-          return true;
-        }
-        return `${style.group} ${style.name} ${style.prompt}`.toLowerCase().includes(query);
-      });
-    }
-  },
-  actions: {
-    async fetch() {
-      this.loading = true;
-      this.error = "";
-      try {
-        const response = await $fetch("/api/advanced-styles", {
-          baseURL: useApiBase()
-        });
-        this.groups = response.groups;
-        this.styles = response.styles;
-        this.sourcePath = response.source_path;
-        if (!this.selectedGroup && this.groups.length) {
-          this.selectedGroup = this.groups[0];
-        }
-      } catch (error) {
-        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
-      } finally {
-        this.loading = false;
-      }
-    },
-    addToChain(style) {
-      this.activeChain.push({ ...style, source_type: "style" });
-    },
-    addCustomPromptToChain() {
-      const prompt = this.customPrompt.trim();
-      const negative = this.customNegative.trim();
-      if (!prompt && !negative) {
-        return null;
-      }
-      const style = {
-        id: `custom/${Date.now()}`,
-        group: "custom",
-        name: "<Custom Prompt>",
-        prompt,
-        negative,
-        thumbnail_path: null,
-        source_type: "custom-prompt"
-      };
-      this.activeChain.push(style);
-      this.customPrompt = "";
-      this.customNegative = "";
-      return style;
-    },
-    addRandomFromGroup(group, seed) {
-      const targetGroup = group || this.selectedGroup;
-      const candidates = this.styles.filter((style2) => !targetGroup || style2.group === targetGroup);
-      if (!candidates.length) {
-        return null;
-      }
-      const selectionSeed = Number.isFinite(seed) && seed !== void 0 ? seed : Date.now();
-      const index = Math.abs(Math.trunc(selectionSeed)) % candidates.length;
-      const style = {
-        ...candidates[index],
-        id: `random/${targetGroup || "all"}/${selectionSeed}/${candidates[index].id}`,
-        source_type: "group-random",
-        selected_from_group: targetGroup || "",
-        selection_seed: selectionSeed
-      };
-      this.activeChain.push(style);
-      return style;
-    },
-    removeFromChain(index) {
-      this.activeChain.splice(index, 1);
-    },
-    moveChainItem(index, direction) {
-      const nextIndex = index + direction;
-      if (nextIndex < 0 || nextIndex >= this.activeChain.length) {
-        return;
-      }
-      const [item] = this.activeChain.splice(index, 1);
-      this.activeChain.splice(nextIndex, 0, item);
-    },
-    moveChainItemTo(fromIndex, toIndex) {
-      if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= this.activeChain.length || toIndex >= this.activeChain.length) {
-        return;
-      }
-      const [item] = this.activeChain.splice(fromIndex, 1);
-      this.activeChain.splice(toIndex, 0, item);
-    },
-    clearChain() {
-      this.activeChain = [];
-    },
-    editStyle(style) {
-      this.manageOpen = true;
-      this.manageGroup = style.group;
-      this.manageName = style.name;
-      this.managePrompt = style.prompt;
-      this.manageNegative = style.negative;
-    },
-    resetManageForm() {
-      this.manageGroup = this.selectedGroup || this.groups[0] || "default";
-      this.manageName = "";
-      this.managePrompt = "";
-      this.manageNegative = "";
-    },
-    async saveManagedStyle() {
-      this.loading = true;
-      this.error = "";
-      try {
-        await $fetch("/api/advanced-styles/style", {
-          baseURL: useApiBase(),
-          method: "POST",
-          body: {
-            group: this.manageGroup,
-            name: this.manageName,
-            prompt: this.managePrompt,
-            negative: this.manageNegative
-          }
-        });
-        await this.fetch();
-      } catch (error) {
-        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
-      } finally {
-        this.loading = false;
-      }
-    },
-    async deleteManagedStyle() {
-      if (!this.manageGroup.trim() || !this.manageName.trim()) {
-        return;
-      }
-      this.loading = true;
-      this.error = "";
-      try {
-        await $fetch("/api/advanced-styles/style", {
-          baseURL: useApiBase(),
-          method: "DELETE",
-          query: {
-            group: this.manageGroup,
-            name: this.manageName
-          }
-        });
-        this.resetManageForm();
-        await this.fetch();
-      } catch (error) {
-        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
-      } finally {
-        this.loading = false;
-      }
-    },
-    async uploadManagedThumbnail(file) {
-      if (!this.manageGroup.trim() || !this.manageName.trim()) {
-        this.error = useAsteriaI18n().t("advancedStyles.thumbnailIdentityRequired");
-        return;
-      }
-      this.loading = true;
-      this.error = "";
-      try {
-        await $fetch("/api/advanced-styles/style/thumbnail", {
-          baseURL: useApiBase(),
-          method: "POST",
-          query: {
-            group: this.manageGroup,
-            name: this.manageName,
-            filename: file.name
-          },
-          body: await file.arrayBuffer()
-        });
-        await this.fetch();
-      } catch (error) {
-        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
-      } finally {
-        this.loading = false;
-      }
-    },
-    async clearManagedThumbnail() {
-      if (!this.manageGroup.trim() || !this.manageName.trim()) {
-        return;
-      }
-      this.loading = true;
-      this.error = "";
-      try {
-        await $fetch("/api/advanced-styles/style/thumbnail", {
-          baseURL: useApiBase(),
-          method: "DELETE",
-          query: {
-            group: this.manageGroup,
-            name: this.manageName
-          }
-        });
-        await this.fetch();
-      } catch (error) {
-        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
-      } finally {
-        this.loading = false;
-      }
-    },
-    async importCsv() {
-      if (!this.csvImportText.trim()) {
-        return;
-      }
-      this.loading = true;
-      this.error = "";
-      try {
-        const response = await $fetch("/api/advanced-styles/import-csv", {
-          baseURL: useApiBase(),
-          method: "POST",
-          body: {
-            target_group: this.csvImportGroup || this.selectedGroup || "default",
-            csv_text: this.csvImportText,
-            update_existing: this.csvUpdateExisting
-          }
-        });
-        this.lastImportCount = response.imported;
-        await this.fetch();
-      } catch (error) {
-        this.error = userFacingErrorMessage(error, "common.error.advancedStyles");
-      } finally {
-        this.loading = false;
-      }
-    },
-    thumbnailUrl(style) {
-      if (!style.thumbnail_path) {
-        return "";
-      }
-      return useApiUrl(`/api/advanced-styles/thumbnail?path=${encodeURIComponent(style.thumbnail_path)}`);
-    }
-  }
-});
-const _sfc_main$1m = /* @__PURE__ */ defineComponent({
+const _sfc_main$1n = /* @__PURE__ */ defineComponent({
   __name: "StyleChain",
   __ssrInlineRender: true,
   props: {
@@ -8100,14 +8196,14 @@ const _sfc_main$1m = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1m = _sfc_main$1m.setup;
-_sfc_main$1m.setup = (props, ctx) => {
+const _sfc_setup$1n = _sfc_main$1n.setup;
+_sfc_main$1n.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StyleChain.vue");
-  return _sfc_setup$1m ? _sfc_setup$1m(props, ctx) : void 0;
+  return _sfc_setup$1n ? _sfc_setup$1n(props, ctx) : void 0;
 };
-const StyleChain = Object.assign(_sfc_main$1m, { __name: "StudioStyleChain" });
-const _sfc_main$1l = /* @__PURE__ */ defineComponent({
+const StyleChain = Object.assign(_sfc_main$1n, { __name: "StudioStyleChain" });
+const _sfc_main$1m = /* @__PURE__ */ defineComponent({
   __name: "AdvancedStylesPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -8205,13 +8301,13 @@ const _sfc_main$1l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1l = _sfc_main$1l.setup;
-_sfc_main$1l.setup = (props, ctx) => {
+const _sfc_setup$1m = _sfc_main$1m.setup;
+_sfc_main$1m.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AdvancedStylesPanel.vue");
-  return _sfc_setup$1l ? _sfc_setup$1l(props, ctx) : void 0;
+  return _sfc_setup$1m ? _sfc_setup$1m(props, ctx) : void 0;
 };
-const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1l, [["__scopeId", "data-v-1eef15e6"]]), { __name: "StudioAdvancedStylesPanel" });
+const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1m, [["__scopeId", "data-v-1eef15e6"]]), { __name: "StudioAdvancedStylesPanel" });
 const unique = (values) => [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 const resolveModelAssetFamily = (item, fallback = "unknown") => {
   const metadata = item.metadata ?? {};
@@ -8266,7 +8362,7 @@ const modelAssetTriggerWords = (metadata) => {
   if (explicit.length) return explicit.slice(0, 16);
   return unique(["ss_tag_frequency", "tag_frequency"].flatMap((key) => metadataWords(metadata[key]))).slice(0, 16);
 };
-const _sfc_main$1k = /* @__PURE__ */ defineComponent({
+const _sfc_main$1l = /* @__PURE__ */ defineComponent({
   __name: "SelectedLoRAStack",
   __ssrInlineRender: true,
   props: {
@@ -8393,14 +8489,14 @@ const _sfc_main$1k = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1k = _sfc_main$1k.setup;
-_sfc_main$1k.setup = (props, ctx) => {
+const _sfc_setup$1l = _sfc_main$1l.setup;
+_sfc_main$1l.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/SelectedLoRAStack.vue");
-  return _sfc_setup$1k ? _sfc_setup$1k(props, ctx) : void 0;
+  return _sfc_setup$1l ? _sfc_setup$1l(props, ctx) : void 0;
 };
-const SelectedLoRAStack = Object.assign(_sfc_main$1k, { __name: "StudioSelectedLoRAStack" });
-const _sfc_main$1j = /* @__PURE__ */ defineComponent({
+const SelectedLoRAStack = Object.assign(_sfc_main$1l, { __name: "StudioSelectedLoRAStack" });
+const _sfc_main$1k = /* @__PURE__ */ defineComponent({
   __name: "LoRABrowser",
   __ssrInlineRender: true,
   props: {
@@ -8522,14 +8618,14 @@ const _sfc_main$1j = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1j = _sfc_main$1j.setup;
-_sfc_main$1j.setup = (props, ctx) => {
+const _sfc_setup$1k = _sfc_main$1k.setup;
+_sfc_main$1k.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/LoRABrowser.vue");
-  return _sfc_setup$1j ? _sfc_setup$1j(props, ctx) : void 0;
+  return _sfc_setup$1k ? _sfc_setup$1k(props, ctx) : void 0;
 };
-const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1j, [["__scopeId", "data-v-84774a2f"]]), { __name: "StudioLoRABrowser" });
-const _sfc_main$1i = /* @__PURE__ */ defineComponent({
+const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1k, [["__scopeId", "data-v-84774a2f"]]), { __name: "StudioLoRABrowser" });
+const _sfc_main$1j = /* @__PURE__ */ defineComponent({
   __name: "PromptAssetsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -8573,13 +8669,13 @@ const _sfc_main$1i = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1i = _sfc_main$1i.setup;
-_sfc_main$1i.setup = (props, ctx) => {
+const _sfc_setup$1j = _sfc_main$1j.setup;
+_sfc_main$1j.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptAssetsDrawer.vue");
-  return _sfc_setup$1i ? _sfc_setup$1i(props, ctx) : void 0;
+  return _sfc_setup$1j ? _sfc_setup$1j(props, ctx) : void 0;
 };
-const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1i, [["__scopeId", "data-v-d2d9152a"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
+const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1j, [["__scopeId", "data-v-d2d9152a"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
 const useAppSettingsStore = defineStore("appSettings", {
   state: () => ({
     outputRoot: "",
@@ -8712,7 +8808,7 @@ const useAppSettingsStore = defineStore("appSettings", {
     }
   }
 });
-const _sfc_main$1h = /* @__PURE__ */ defineComponent({
+const _sfc_main$1i = /* @__PURE__ */ defineComponent({
   __name: "PromptPane",
   __ssrInlineRender: true,
   emits: ["open-help"],
@@ -9581,13 +9677,13 @@ ${generation.negativePrompt}`;
     };
   }
 });
-const _sfc_setup$1h = _sfc_main$1h.setup;
-_sfc_main$1h.setup = (props, ctx) => {
+const _sfc_setup$1i = _sfc_main$1i.setup;
+_sfc_main$1i.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptPane.vue");
-  return _sfc_setup$1h ? _sfc_setup$1h(props, ctx) : void 0;
+  return _sfc_setup$1i ? _sfc_setup$1i(props, ctx) : void 0;
 };
-const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1h, [["__scopeId", "data-v-bad8ec18"]]), { __name: "StudioPromptPane" });
+const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1i, [["__scopeId", "data-v-bad8ec18"]]), { __name: "StudioPromptPane" });
 const normalizeEagleFolderSelection = (folders, selectedId) => selectedId && folders.some((folder) => folder.id === selectedId) ? selectedId : "";
 const errorMessage$2 = (error) => {
   return userFacingErrorMessage(error, "common.error.external");
@@ -9893,7 +9989,7 @@ const useExternalIntegrationsStore = defineStore("externalIntegrations", {
     }
   }
 });
-const _sfc_main$1g = /* @__PURE__ */ defineComponent({
+const _sfc_main$1h = /* @__PURE__ */ defineComponent({
   __name: "EagleFolderSelect",
   __ssrInlineRender: true,
   setup(__props) {
@@ -9923,13 +10019,13 @@ const _sfc_main$1g = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1g = _sfc_main$1g.setup;
-_sfc_main$1g.setup = (props, ctx) => {
+const _sfc_setup$1h = _sfc_main$1h.setup;
+_sfc_main$1h.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/EagleFolderSelect.vue");
-  return _sfc_setup$1g ? _sfc_setup$1g(props, ctx) : void 0;
+  return _sfc_setup$1h ? _sfc_setup$1h(props, ctx) : void 0;
 };
-const __nuxt_component_0$1 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1g, [["__scopeId", "data-v-8d037f26"]]), { __name: "StudioEagleFolderSelect" });
+const __nuxt_component_0$1 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1h, [["__scopeId", "data-v-8d037f26"]]), { __name: "StudioEagleFolderSelect" });
 const notSent = () => ({ status: "not_sent", createdAt: "", folderId: "" });
 const normalizedArtifactPath = (path) => path.trim().replace(/\\/g, "/").replace(/\/{2,}/g, "/").toLocaleLowerCase();
 const resolveEagleRegistration = (settings, selectedPath, selectedSha256 = "") => {
@@ -9955,7 +10051,7 @@ const resolveEagleRegistration = (settings, selectedPath, selectedSha256 = "") =
   return notSent();
 };
 const resolveExplicitSelectedOutput = (outputs, selectedPath) => selectedPath ? outputs.find((output) => output.path === selectedPath) ?? null : null;
-const _sfc_main$1f = /* @__PURE__ */ defineComponent({
+const _sfc_main$1g = /* @__PURE__ */ defineComponent({
   __name: "HistoryPanel",
   __ssrInlineRender: true,
   emits: ["openImage"],
@@ -10106,14 +10202,14 @@ const _sfc_main$1f = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1f = _sfc_main$1f.setup;
-_sfc_main$1f.setup = (props, ctx) => {
+const _sfc_setup$1g = _sfc_main$1g.setup;
+_sfc_main$1g.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/HistoryPanel.vue");
-  return _sfc_setup$1f ? _sfc_setup$1f(props, ctx) : void 0;
+  return _sfc_setup$1g ? _sfc_setup$1g(props, ctx) : void 0;
 };
-const HistoryPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1f, [["__scopeId", "data-v-cedebee6"]]), { __name: "StudioHistoryPanel" });
-const _sfc_main$1e = /* @__PURE__ */ defineComponent({
+const HistoryPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1g, [["__scopeId", "data-v-cedebee6"]]), { __name: "StudioHistoryPanel" });
+const _sfc_main$1f = /* @__PURE__ */ defineComponent({
   __name: "ResultPane",
   __ssrInlineRender: true,
   emits: ["openImage", "openDetails", "openSettings"],
@@ -10418,14 +10514,14 @@ const _sfc_main$1e = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1e = _sfc_main$1e.setup;
-_sfc_main$1e.setup = (props, ctx) => {
+const _sfc_setup$1f = _sfc_main$1f.setup;
+_sfc_main$1f.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ResultPane.vue");
-  return _sfc_setup$1e ? _sfc_setup$1e(props, ctx) : void 0;
+  return _sfc_setup$1f ? _sfc_setup$1f(props, ctx) : void 0;
 };
-const ResultPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1e, [["__scopeId", "data-v-f767271f"]]), { __name: "StudioResultPane" });
-const _sfc_main$1d = /* @__PURE__ */ defineComponent({
+const ResultPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1f, [["__scopeId", "data-v-f767271f"]]), { __name: "StudioResultPane" });
+const _sfc_main$1e = /* @__PURE__ */ defineComponent({
   __name: "AnimaLLLitePanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -10514,14 +10610,14 @@ const _sfc_main$1d = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1d = _sfc_main$1d.setup;
-_sfc_main$1d.setup = (props, ctx) => {
+const _sfc_setup$1e = _sfc_main$1e.setup;
+_sfc_main$1e.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AnimaLLLitePanel.vue");
-  return _sfc_setup$1d ? _sfc_setup$1d(props, ctx) : void 0;
+  return _sfc_setup$1e ? _sfc_setup$1e(props, ctx) : void 0;
 };
-const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1d, [["__scopeId", "data-v-14f8b516"]]), { __name: "StudioAnimaLLLitePanel" });
-const _sfc_main$1c = /* @__PURE__ */ defineComponent({
+const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1e, [["__scopeId", "data-v-14f8b516"]]), { __name: "StudioAnimaLLLitePanel" });
+const _sfc_main$1d = /* @__PURE__ */ defineComponent({
   __name: "ControlNetPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -10632,14 +10728,14 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1c = _sfc_main$1c.setup;
-_sfc_main$1c.setup = (props, ctx) => {
+const _sfc_setup$1d = _sfc_main$1d.setup;
+_sfc_main$1d.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ControlNetPanel.vue");
-  return _sfc_setup$1c ? _sfc_setup$1c(props, ctx) : void 0;
+  return _sfc_setup$1d ? _sfc_setup$1d(props, ctx) : void 0;
 };
-const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1c, [["__scopeId", "data-v-a218c240"]]), { __name: "StudioControlNetPanel" });
-const _sfc_main$1b = /* @__PURE__ */ defineComponent({
+const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1d, [["__scopeId", "data-v-a218c240"]]), { __name: "StudioControlNetPanel" });
+const _sfc_main$1c = /* @__PURE__ */ defineComponent({
   __name: "DetailerPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -10796,14 +10892,14 @@ const _sfc_main$1b = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1b = _sfc_main$1b.setup;
-_sfc_main$1b.setup = (props, ctx) => {
+const _sfc_setup$1c = _sfc_main$1c.setup;
+_sfc_main$1c.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/DetailerPanel.vue");
-  return _sfc_setup$1b ? _sfc_setup$1b(props, ctx) : void 0;
+  return _sfc_setup$1c ? _sfc_setup$1c(props, ctx) : void 0;
 };
-const DetailerPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1b, [["__scopeId", "data-v-514180de"]]), { __name: "StudioDetailerPanel" });
-const _sfc_main$1a = /* @__PURE__ */ defineComponent({
+const DetailerPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1c, [["__scopeId", "data-v-514180de"]]), { __name: "StudioDetailerPanel" });
+const _sfc_main$1b = /* @__PURE__ */ defineComponent({
   __name: "ControlModulesInspector",
   __ssrInlineRender: true,
   setup(__props) {
@@ -10868,14 +10964,14 @@ const _sfc_main$1a = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1a = _sfc_main$1a.setup;
-_sfc_main$1a.setup = (props, ctx) => {
+const _sfc_setup$1b = _sfc_main$1b.setup;
+_sfc_main$1b.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ControlModulesInspector.vue");
-  return _sfc_setup$1a ? _sfc_setup$1a(props, ctx) : void 0;
+  return _sfc_setup$1b ? _sfc_setup$1b(props, ctx) : void 0;
 };
-const ControlModulesInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1a, [["__scopeId", "data-v-a98d6124"]]), { __name: "StudioGenerateControlModulesInspector" });
-const _sfc_main$19 = /* @__PURE__ */ defineComponent({
+const ControlModulesInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1b, [["__scopeId", "data-v-a98d6124"]]), { __name: "StudioGenerateControlModulesInspector" });
+const _sfc_main$1a = /* @__PURE__ */ defineComponent({
   __name: "EnhancementInspector",
   __ssrInlineRender: true,
   props: {
@@ -10903,14 +10999,14 @@ const _sfc_main$19 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$19 = _sfc_main$19.setup;
-_sfc_main$19.setup = (props, ctx) => {
+const _sfc_setup$1a = _sfc_main$1a.setup;
+_sfc_main$1a.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/EnhancementInspector.vue");
-  return _sfc_setup$19 ? _sfc_setup$19(props, ctx) : void 0;
+  return _sfc_setup$1a ? _sfc_setup$1a(props, ctx) : void 0;
 };
-const EnhancementInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$19, [["__scopeId", "data-v-151fed06"]]), { __name: "StudioGenerateEnhancementInspector" });
-const _sfc_main$18 = /* @__PURE__ */ defineComponent({
+const EnhancementInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1a, [["__scopeId", "data-v-151fed06"]]), { __name: "StudioGenerateEnhancementInspector" });
+const _sfc_main$19 = /* @__PURE__ */ defineComponent({
   __name: "RemasterSettingsPanel",
   __ssrInlineRender: true,
   props: {
@@ -10973,14 +11069,14 @@ const _sfc_main$18 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$18 = _sfc_main$18.setup;
-_sfc_main$18.setup = (props, ctx) => {
+const _sfc_setup$19 = _sfc_main$19.setup;
+_sfc_main$19.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RemasterSettingsPanel.vue");
-  return _sfc_setup$18 ? _sfc_setup$18(props, ctx) : void 0;
+  return _sfc_setup$19 ? _sfc_setup$19(props, ctx) : void 0;
 };
-const RemasterSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$18, [["__scopeId", "data-v-58b39268"]]), { __name: "StudioRemasterSettingsPanel" });
-const _sfc_main$17 = /* @__PURE__ */ defineComponent({
+const RemasterSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$19, [["__scopeId", "data-v-58b39268"]]), { __name: "StudioRemasterSettingsPanel" });
+const _sfc_main$18 = /* @__PURE__ */ defineComponent({
   __name: "ExpertToolsInspector",
   __ssrInlineRender: true,
   setup(__props) {
@@ -11055,14 +11151,14 @@ const _sfc_main$17 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$17 = _sfc_main$17.setup;
-_sfc_main$17.setup = (props, ctx) => {
+const _sfc_setup$18 = _sfc_main$18.setup;
+_sfc_main$18.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ExpertToolsInspector.vue");
-  return _sfc_setup$17 ? _sfc_setup$17(props, ctx) : void 0;
+  return _sfc_setup$18 ? _sfc_setup$18(props, ctx) : void 0;
 };
-const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$17, [["__scopeId", "data-v-4c3a1724"]]), { __name: "StudioGenerateExpertToolsInspector" });
-const _sfc_main$16 = /* @__PURE__ */ defineComponent({
+const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$18, [["__scopeId", "data-v-4c3a1724"]]), { __name: "StudioGenerateExpertToolsInspector" });
+const _sfc_main$17 = /* @__PURE__ */ defineComponent({
   __name: "GenerateBaseControlsPanel",
   __ssrInlineRender: true,
   props: {
@@ -11130,13 +11226,13 @@ const _sfc_main$16 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$16 = _sfc_main$16.setup;
-_sfc_main$16.setup = (props, ctx) => {
+const _sfc_setup$17 = _sfc_main$17.setup;
+_sfc_main$17.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateBaseControlsPanel.vue");
-  return _sfc_setup$16 ? _sfc_setup$16(props, ctx) : void 0;
+  return _sfc_setup$17 ? _sfc_setup$17(props, ctx) : void 0;
 };
-const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$16, [["__scopeId", "data-v-b7c5d0a9"]]), { __name: "StudioGenerateBaseControlsPanel" });
+const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$17, [["__scopeId", "data-v-b7c5d0a9"]]), { __name: "StudioGenerateBaseControlsPanel" });
 const modeSourceState = (mode, initImagePath, maskImagePath) => {
   if (mode === "txt2img") {
     return "not-required";
@@ -11160,7 +11256,7 @@ const modeSourceSummaryKey = (state) => ({
   "mask-ready": "modeSource.maskReady"
 })[state];
 const modeSourceSummary = (mode, initImagePath, maskImagePath, translate) => `${mode} · ${translate(modeSourceSummaryKey(modeSourceState(mode, initImagePath, maskImagePath)))}`;
-const _sfc_main$15 = /* @__PURE__ */ defineComponent({
+const _sfc_main$16 = /* @__PURE__ */ defineComponent({
   __name: "GenerateModeSourcePanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -11247,13 +11343,13 @@ const _sfc_main$15 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$15 = _sfc_main$15.setup;
-_sfc_main$15.setup = (props, ctx) => {
+const _sfc_setup$16 = _sfc_main$16.setup;
+_sfc_main$16.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateModeSourcePanel.vue");
-  return _sfc_setup$15 ? _sfc_setup$15(props, ctx) : void 0;
+  return _sfc_setup$16 ? _sfc_setup$16(props, ctx) : void 0;
 };
-const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$15, [["__scopeId", "data-v-0b8c52ca"]]), { __name: "StudioGenerateModeSourcePanel" });
+const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$16, [["__scopeId", "data-v-0b8c52ca"]]), { __name: "StudioGenerateModeSourcePanel" });
 const HIRES_TARGET_MAX = 8192;
 const HIRES_TARGET_STEP = 8;
 const positiveNumber = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
@@ -11286,7 +11382,7 @@ const hiresTargetSummary = (scale, width, height) => {
 const HIRES_SAME_CHECKPOINT = "Use same checkpoint";
 const HIRES_SAME_SAMPLER = "Use same sampler";
 const HIRES_SAME_SCHEDULER = "Use same scheduler";
-const _sfc_main$14 = /* @__PURE__ */ defineComponent({
+const _sfc_main$15 = /* @__PURE__ */ defineComponent({
   __name: "RuntimeSettingsPane",
   __ssrInlineRender: true,
   props: {
@@ -11706,14 +11802,14 @@ const _sfc_main$14 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$14 = _sfc_main$14.setup;
-_sfc_main$14.setup = (props, ctx) => {
+const _sfc_setup$15 = _sfc_main$15.setup;
+_sfc_main$15.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RuntimeSettingsPane.vue");
-  return _sfc_setup$14 ? _sfc_setup$14(props, ctx) : void 0;
+  return _sfc_setup$15 ? _sfc_setup$15(props, ctx) : void 0;
 };
-const RuntimeSettingsPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$14, [["__scopeId", "data-v-32962921"]]), { __name: "StudioRuntimeSettingsPane" });
-const _sfc_main$13 = /* @__PURE__ */ defineComponent({
+const RuntimeSettingsPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$15, [["__scopeId", "data-v-32962921"]]), { __name: "StudioRuntimeSettingsPane" });
+const _sfc_main$14 = /* @__PURE__ */ defineComponent({
   __name: "GenerationInspector",
   __ssrInlineRender: true,
   props: {
@@ -11757,14 +11853,14 @@ const _sfc_main$13 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$13 = _sfc_main$13.setup;
-_sfc_main$13.setup = (props, ctx) => {
+const _sfc_setup$14 = _sfc_main$14.setup;
+_sfc_main$14.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationInspector.vue");
-  return _sfc_setup$13 ? _sfc_setup$13(props, ctx) : void 0;
+  return _sfc_setup$14 ? _sfc_setup$14(props, ctx) : void 0;
 };
-const GenerationInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$13, [["__scopeId", "data-v-9284b83a"]]), { __name: "StudioGenerateGenerationInspector" });
-const _sfc_main$12 = /* @__PURE__ */ defineComponent({
+const GenerationInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$14, [["__scopeId", "data-v-9284b83a"]]), { __name: "StudioGenerateGenerationInspector" });
+const _sfc_main$13 = /* @__PURE__ */ defineComponent({
   __name: "ResultDetailsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -11850,14 +11946,14 @@ const _sfc_main$12 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$12 = _sfc_main$12.setup;
-_sfc_main$12.setup = (props, ctx) => {
+const _sfc_setup$13 = _sfc_main$13.setup;
+_sfc_main$13.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ResultDetailsDrawer.vue");
-  return _sfc_setup$12 ? _sfc_setup$12(props, ctx) : void 0;
+  return _sfc_setup$13 ? _sfc_setup$13(props, ctx) : void 0;
 };
-const ResultDetailsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$12, [["__scopeId", "data-v-7e6f7009"]]), { __name: "StudioGenerateResultDetailsDrawer" });
-const _sfc_main$11 = /* @__PURE__ */ defineComponent({
+const ResultDetailsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$13, [["__scopeId", "data-v-7e6f7009"]]), { __name: "StudioGenerateResultDetailsDrawer" });
+const _sfc_main$12 = /* @__PURE__ */ defineComponent({
   __name: "GenerateWorkspace",
   __ssrInlineRender: true,
   emits: ["openHelp", "openImage", "openSettings"],
@@ -11930,14 +12026,14 @@ const _sfc_main$11 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$11 = _sfc_main$11.setup;
-_sfc_main$11.setup = (props, ctx) => {
+const _sfc_setup$12 = _sfc_main$12.setup;
+_sfc_main$12.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateWorkspace.vue");
-  return _sfc_setup$11 ? _sfc_setup$11(props, ctx) : void 0;
+  return _sfc_setup$12 ? _sfc_setup$12(props, ctx) : void 0;
 };
-const GenerateWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$11, [["__scopeId", "data-v-cc4a61c1"]]), { __name: "StudioGenerateWorkspace" });
-const _sfc_main$10 = /* @__PURE__ */ defineComponent({
+const GenerateWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$12, [["__scopeId", "data-v-cc4a61c1"]]), { __name: "StudioGenerateWorkspace" });
+const _sfc_main$11 = /* @__PURE__ */ defineComponent({
   __name: "HelpArticleCanvas",
   __ssrInlineRender: true,
   props: {
@@ -11962,14 +12058,14 @@ const _sfc_main$10 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$10 = _sfc_main$10.setup;
-_sfc_main$10.setup = (props, ctx) => {
+const _sfc_setup$11 = _sfc_main$11.setup;
+_sfc_main$11.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpArticleCanvas.vue");
-  return _sfc_setup$10 ? _sfc_setup$10(props, ctx) : void 0;
+  return _sfc_setup$11 ? _sfc_setup$11(props, ctx) : void 0;
 };
-const HelpArticleCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$10, [["__scopeId", "data-v-c29a4af4"]]), { __name: "StudioHelpArticleCanvas" });
-const _sfc_main$$ = /* @__PURE__ */ defineComponent({
+const HelpArticleCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$11, [["__scopeId", "data-v-c29a4af4"]]), { __name: "StudioHelpArticleCanvas" });
+const _sfc_main$10 = /* @__PURE__ */ defineComponent({
   __name: "HelpRelatedActions",
   __ssrInlineRender: true,
   emits: ["open-related-action"],
@@ -11983,14 +12079,14 @@ const _sfc_main$$ = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$$ = _sfc_main$$.setup;
-_sfc_main$$.setup = (props, ctx) => {
+const _sfc_setup$10 = _sfc_main$10.setup;
+_sfc_main$10.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpRelatedActions.vue");
-  return _sfc_setup$$ ? _sfc_setup$$(props, ctx) : void 0;
+  return _sfc_setup$10 ? _sfc_setup$10(props, ctx) : void 0;
 };
-const HelpRelatedActions = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$$, [["__scopeId", "data-v-e1f62fb9"]]), { __name: "StudioHelpRelatedActions" });
-const _sfc_main$_ = /* @__PURE__ */ defineComponent({
+const HelpRelatedActions = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$10, [["__scopeId", "data-v-e1f62fb9"]]), { __name: "StudioHelpRelatedActions" });
+const _sfc_main$$ = /* @__PURE__ */ defineComponent({
   __name: "HelpTopicRail",
   __ssrInlineRender: true,
   props: {
@@ -12012,13 +12108,13 @@ const _sfc_main$_ = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$_ = _sfc_main$_.setup;
-_sfc_main$_.setup = (props, ctx) => {
+const _sfc_setup$$ = _sfc_main$$.setup;
+_sfc_main$$.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpTopicRail.vue");
-  return _sfc_setup$_ ? _sfc_setup$_(props, ctx) : void 0;
+  return _sfc_setup$$ ? _sfc_setup$$(props, ctx) : void 0;
 };
-const HelpTopicRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$_, [["__scopeId", "data-v-bc789392"]]), { __name: "StudioHelpTopicRail" });
+const HelpTopicRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$$, [["__scopeId", "data-v-bc789392"]]), { __name: "StudioHelpTopicRail" });
 const helpTopicsByLocale = {
   en: [
     {
@@ -12480,7 +12576,7 @@ const useAsteriaHelpTopics = () => {
     topics
   };
 };
-const _sfc_main$Z = /* @__PURE__ */ defineComponent({
+const _sfc_main$_ = /* @__PURE__ */ defineComponent({
   __name: "HelpView",
   __ssrInlineRender: true,
   props: {
@@ -12513,14 +12609,14 @@ const _sfc_main$Z = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$Z = _sfc_main$Z.setup;
-_sfc_main$Z.setup = (props, ctx) => {
+const _sfc_setup$_ = _sfc_main$_.setup;
+_sfc_main$_.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/HelpView.vue");
-  return _sfc_setup$Z ? _sfc_setup$Z(props, ctx) : void 0;
+  return _sfc_setup$_ ? _sfc_setup$_(props, ctx) : void 0;
 };
-const HelpView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$Z, [["__scopeId", "data-v-4e2efda6"]]), { __name: "StudioHelpView" });
-const _sfc_main$Y = /* @__PURE__ */ defineComponent({
+const HelpView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$_, [["__scopeId", "data-v-4e2efda6"]]), { __name: "StudioHelpView" });
+const _sfc_main$Z = /* @__PURE__ */ defineComponent({
   __name: "HelpGuideDrawer",
   __ssrInlineRender: true,
   props: {
@@ -12550,13 +12646,13 @@ const _sfc_main$Y = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$Y = _sfc_main$Y.setup;
-_sfc_main$Y.setup = (props, ctx) => {
+const _sfc_setup$Z = _sfc_main$Z.setup;
+_sfc_main$Z.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpGuideDrawer.vue");
-  return _sfc_setup$Y ? _sfc_setup$Y(props, ctx) : void 0;
+  return _sfc_setup$Z ? _sfc_setup$Z(props, ctx) : void 0;
 };
-const HelpGuideDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$Y, [["__scopeId", "data-v-c48717b7"]]), { __name: "StudioHelpGuideDrawer" });
+const HelpGuideDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$Z, [["__scopeId", "data-v-c48717b7"]]), { __name: "StudioHelpGuideDrawer" });
 const MIN_CANVAS_ZOOM = 0.25;
 const MAX_CANVAS_ZOOM = 4;
 const CANVAS_ZOOM_STEP = 0.25;
@@ -13033,7 +13129,7 @@ const useImageEditorDraftStore = defineStore("imageEditorDraft", {
     }
   }
 });
-const _sfc_main$X = /* @__PURE__ */ defineComponent({
+const _sfc_main$Y = /* @__PURE__ */ defineComponent({
   __name: "ImageEditWorkspaceBody",
   __ssrInlineRender: true,
   props: {
@@ -13074,14 +13170,14 @@ const _sfc_main$X = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$X = _sfc_main$X.setup;
-_sfc_main$X.setup = (props, ctx) => {
+const _sfc_setup$Y = _sfc_main$Y.setup;
+_sfc_main$Y.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditWorkspaceBody.vue");
-  return _sfc_setup$X ? _sfc_setup$X(props, ctx) : void 0;
+  return _sfc_setup$Y ? _sfc_setup$Y(props, ctx) : void 0;
 };
-const ImageEditWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$X, [["__scopeId", "data-v-62b5470c"]]), { __name: "StudioImageEditWorkspaceBody" });
-const _sfc_main$W = /* @__PURE__ */ defineComponent({
+const ImageEditWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$Y, [["__scopeId", "data-v-62b5470c"]]), { __name: "StudioImageEditWorkspaceBody" });
+const _sfc_main$X = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSummaryBar",
   __ssrInlineRender: true,
   props: {
@@ -13112,14 +13208,14 @@ const _sfc_main$W = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$W = _sfc_main$W.setup;
-_sfc_main$W.setup = (props, ctx) => {
+const _sfc_setup$X = _sfc_main$X.setup;
+_sfc_main$X.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSummaryBar.vue");
-  return _sfc_setup$W ? _sfc_setup$W(props, ctx) : void 0;
+  return _sfc_setup$X ? _sfc_setup$X(props, ctx) : void 0;
 };
-const ImageEditSummaryBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$W, [["__scopeId", "data-v-fb65488f"]]), { __name: "StudioImageEditSummaryBar" });
-const _sfc_main$V = /* @__PURE__ */ defineComponent({
+const ImageEditSummaryBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$X, [["__scopeId", "data-v-fb65488f"]]), { __name: "StudioImageEditSummaryBar" });
+const _sfc_main$W = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSourceInspector",
   __ssrInlineRender: true,
   props: {
@@ -13168,14 +13264,14 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$V = _sfc_main$V.setup;
-_sfc_main$V.setup = (props, ctx) => {
+const _sfc_setup$W = _sfc_main$W.setup;
+_sfc_main$W.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSourceInspector.vue");
-  return _sfc_setup$V ? _sfc_setup$V(props, ctx) : void 0;
+  return _sfc_setup$W ? _sfc_setup$W(props, ctx) : void 0;
 };
-const ImageEditSourceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$V, [["__scopeId", "data-v-71b6876e"]]), { __name: "StudioImageEditSourceInspector" });
-const _sfc_main$U = /* @__PURE__ */ defineComponent({
+const ImageEditSourceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$W, [["__scopeId", "data-v-71b6876e"]]), { __name: "StudioImageEditSourceInspector" });
+const _sfc_main$V = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSourceRemasterInspector",
   __ssrInlineRender: true,
   props: {
@@ -13278,14 +13374,14 @@ const _sfc_main$U = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$U = _sfc_main$U.setup;
-_sfc_main$U.setup = (props, ctx) => {
+const _sfc_setup$V = _sfc_main$V.setup;
+_sfc_main$V.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSourceRemasterInspector.vue");
-  return _sfc_setup$U ? _sfc_setup$U(props, ctx) : void 0;
+  return _sfc_setup$V ? _sfc_setup$V(props, ctx) : void 0;
 };
-const ImageEditSourceRemasterInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$U, [["__scopeId", "data-v-758ddacc"]]), { __name: "StudioImageEditSourceRemasterInspector" });
-const _sfc_main$T = /* @__PURE__ */ defineComponent({
+const ImageEditSourceRemasterInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$V, [["__scopeId", "data-v-758ddacc"]]), { __name: "StudioImageEditSourceRemasterInspector" });
+const _sfc_main$U = /* @__PURE__ */ defineComponent({
   __name: "ImageEditCanvasToolbar",
   __ssrInlineRender: true,
   props: {
@@ -13310,14 +13406,14 @@ const _sfc_main$T = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$T = _sfc_main$T.setup;
-_sfc_main$T.setup = (props, ctx) => {
+const _sfc_setup$U = _sfc_main$U.setup;
+_sfc_main$U.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditCanvasToolbar.vue");
-  return _sfc_setup$T ? _sfc_setup$T(props, ctx) : void 0;
+  return _sfc_setup$U ? _sfc_setup$U(props, ctx) : void 0;
 };
-const ImageEditCanvasToolbar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$T, [["__scopeId", "data-v-e7fd82d2"]]), { __name: "StudioImageEditCanvasToolbar" });
-const _sfc_main$S = /* @__PURE__ */ defineComponent({
+const ImageEditCanvasToolbar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$U, [["__scopeId", "data-v-e7fd82d2"]]), { __name: "StudioImageEditCanvasToolbar" });
+const _sfc_main$T = /* @__PURE__ */ defineComponent({
   __name: "ImageEditMaskInspector",
   __ssrInlineRender: true,
   props: {
@@ -13363,14 +13459,14 @@ const _sfc_main$S = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$S = _sfc_main$S.setup;
-_sfc_main$S.setup = (props, ctx) => {
+const _sfc_setup$T = _sfc_main$T.setup;
+_sfc_main$T.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditMaskInspector.vue");
-  return _sfc_setup$S ? _sfc_setup$S(props, ctx) : void 0;
+  return _sfc_setup$T ? _sfc_setup$T(props, ctx) : void 0;
 };
-const ImageEditMaskInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$S, [["__scopeId", "data-v-d9aa94ad"]]), { __name: "StudioImageEditMaskInspector" });
-const _sfc_main$R = /* @__PURE__ */ defineComponent({
+const ImageEditMaskInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$T, [["__scopeId", "data-v-d9aa94ad"]]), { __name: "StudioImageEditMaskInspector" });
+const _sfc_main$S = /* @__PURE__ */ defineComponent({
   __name: "ImageEditCropInspector",
   __ssrInlineRender: true,
   props: {
@@ -13414,14 +13510,14 @@ const _sfc_main$R = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$R = _sfc_main$R.setup;
-_sfc_main$R.setup = (props, ctx) => {
+const _sfc_setup$S = _sfc_main$S.setup;
+_sfc_main$S.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditCropInspector.vue");
-  return _sfc_setup$R ? _sfc_setup$R(props, ctx) : void 0;
+  return _sfc_setup$S ? _sfc_setup$S(props, ctx) : void 0;
 };
-const ImageEditCropInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$R, [["__scopeId", "data-v-d6beeab6"]]), { __name: "StudioImageEditCropInspector" });
-const _sfc_main$Q = /* @__PURE__ */ defineComponent({
+const ImageEditCropInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$S, [["__scopeId", "data-v-d6beeab6"]]), { __name: "StudioImageEditCropInspector" });
+const _sfc_main$R = /* @__PURE__ */ defineComponent({
   __name: "ImageEditReferenceInspector",
   __ssrInlineRender: true,
   props: {
@@ -13485,14 +13581,14 @@ const _sfc_main$Q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$Q = _sfc_main$Q.setup;
-_sfc_main$Q.setup = (props, ctx) => {
+const _sfc_setup$R = _sfc_main$R.setup;
+_sfc_main$R.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditReferenceInspector.vue");
-  return _sfc_setup$Q ? _sfc_setup$Q(props, ctx) : void 0;
+  return _sfc_setup$R ? _sfc_setup$R(props, ctx) : void 0;
 };
-const ImageEditReferenceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$Q, [["__scopeId", "data-v-4012d280"]]), { __name: "StudioImageEditReferenceInspector" });
-const _sfc_main$P = /* @__PURE__ */ defineComponent({
+const ImageEditReferenceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$R, [["__scopeId", "data-v-4012d280"]]), { __name: "StudioImageEditReferenceInspector" });
+const _sfc_main$Q = /* @__PURE__ */ defineComponent({
   __name: "ImageEditOpenPoseInspector",
   __ssrInlineRender: true,
   props: {
@@ -13524,14 +13620,14 @@ const _sfc_main$P = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$P = _sfc_main$P.setup;
-_sfc_main$P.setup = (props, ctx) => {
+const _sfc_setup$Q = _sfc_main$Q.setup;
+_sfc_main$Q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditOpenPoseInspector.vue");
-  return _sfc_setup$P ? _sfc_setup$P(props, ctx) : void 0;
+  return _sfc_setup$Q ? _sfc_setup$Q(props, ctx) : void 0;
 };
-const ImageEditOpenPoseInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$P, [["__scopeId", "data-v-fa2ce77f"]]), { __name: "StudioImageEditOpenPoseInspector" });
-const _sfc_main$O = /* @__PURE__ */ defineComponent({
+const ImageEditOpenPoseInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$Q, [["__scopeId", "data-v-fa2ce77f"]]), { __name: "StudioImageEditOpenPoseInspector" });
+const _sfc_main$P = /* @__PURE__ */ defineComponent({
   __name: "ImageEditControlNetPresets",
   __ssrInlineRender: true,
   props: {
@@ -13573,14 +13669,14 @@ const _sfc_main$O = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$O = _sfc_main$O.setup;
-_sfc_main$O.setup = (props, ctx) => {
+const _sfc_setup$P = _sfc_main$P.setup;
+_sfc_main$P.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditControlNetPresets.vue");
-  return _sfc_setup$O ? _sfc_setup$O(props, ctx) : void 0;
+  return _sfc_setup$P ? _sfc_setup$P(props, ctx) : void 0;
 };
-const ImageEditControlNetPresets = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$O, [["__scopeId", "data-v-d9e316a7"]]), { __name: "StudioImageEditControlNetPresets" });
-const _sfc_main$N = /* @__PURE__ */ defineComponent({
+const ImageEditControlNetPresets = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$P, [["__scopeId", "data-v-d9e316a7"]]), { __name: "StudioImageEditControlNetPresets" });
+const _sfc_main$O = /* @__PURE__ */ defineComponent({
   __name: "ImageWorkspace",
   __ssrInlineRender: true,
   emits: ["openGenerate", "openLibrary"],
@@ -15397,14 +15493,14 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$N = _sfc_main$N.setup;
-_sfc_main$N.setup = (props, ctx) => {
+const _sfc_setup$O = _sfc_main$O.setup;
+_sfc_main$O.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageWorkspace.vue");
-  return _sfc_setup$N ? _sfc_setup$N(props, ctx) : void 0;
+  return _sfc_setup$O ? _sfc_setup$O(props, ctx) : void 0;
 };
-const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$N, [["__scopeId", "data-v-e50d2d51"]]), { __name: "StudioImageWorkspace" });
-const _sfc_main$M = /* @__PURE__ */ defineComponent({
+const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$O, [["__scopeId", "data-v-e50d2d51"]]), { __name: "StudioImageWorkspace" });
+const _sfc_main$N = /* @__PURE__ */ defineComponent({
   __name: "ImageEditDraftNavigationDialog",
   __ssrInlineRender: true,
   props: {
@@ -15433,14 +15529,14 @@ const _sfc_main$M = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$M = _sfc_main$M.setup;
-_sfc_main$M.setup = (props, ctx) => {
+const _sfc_setup$N = _sfc_main$N.setup;
+_sfc_main$N.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditDraftNavigationDialog.vue");
-  return _sfc_setup$M ? _sfc_setup$M(props, ctx) : void 0;
+  return _sfc_setup$N ? _sfc_setup$N(props, ctx) : void 0;
 };
-const ImageEditDraftNavigationDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$M, [["__scopeId", "data-v-a7434508"]]), { __name: "StudioImageEditDraftNavigationDialog" });
-const _sfc_main$L = {};
+const ImageEditDraftNavigationDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$N, [["__scopeId", "data-v-a7434508"]]), { __name: "StudioImageEditDraftNavigationDialog" });
+const _sfc_main$M = {};
 function _sfc_ssrRender$2(_ctx, _push, _parent, _attrs) {
   _push(`<div${ssrRenderAttrs(mergeProps({ class: "library-workspace-body" }, _attrs))} data-v-11fe10a6>`);
   ssrRenderSlot(_ctx.$slots, "folders", {}, null, _push, _parent);
@@ -15448,14 +15544,14 @@ function _sfc_ssrRender$2(_ctx, _push, _parent, _attrs) {
   ssrRenderSlot(_ctx.$slots, "inspector", {}, null, _push, _parent);
   _push(`</div>`);
 }
-const _sfc_setup$L = _sfc_main$L.setup;
-_sfc_main$L.setup = (props, ctx) => {
+const _sfc_setup$M = _sfc_main$M.setup;
+_sfc_main$M.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryWorkspaceBody.vue");
-  return _sfc_setup$L ? _sfc_setup$L(props, ctx) : void 0;
+  return _sfc_setup$M ? _sfc_setup$M(props, ctx) : void 0;
 };
-const LibraryWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$L, [["ssrRender", _sfc_ssrRender$2], ["__scopeId", "data-v-11fe10a6"]]), { __name: "StudioLibraryWorkspaceBody" });
-const _sfc_main$K = /* @__PURE__ */ defineComponent({
+const LibraryWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$M, [["ssrRender", _sfc_ssrRender$2], ["__scopeId", "data-v-11fe10a6"]]), { __name: "StudioLibraryWorkspaceBody" });
+const _sfc_main$L = /* @__PURE__ */ defineComponent({
   __name: "LibraryFolderRail",
   __ssrInlineRender: true,
   props: {
@@ -15499,14 +15595,14 @@ const _sfc_main$K = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$K = _sfc_main$K.setup;
-_sfc_main$K.setup = (props, ctx) => {
+const _sfc_setup$L = _sfc_main$L.setup;
+_sfc_main$L.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryFolderRail.vue");
-  return _sfc_setup$K ? _sfc_setup$K(props, ctx) : void 0;
+  return _sfc_setup$L ? _sfc_setup$L(props, ctx) : void 0;
 };
-const LibraryFolderRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$K, [["__scopeId", "data-v-36ac2876"]]), { __name: "StudioLibraryFolderRail" });
-const _sfc_main$J = /* @__PURE__ */ defineComponent({
+const LibraryFolderRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$L, [["__scopeId", "data-v-36ac2876"]]), { __name: "StudioLibraryFolderRail" });
+const _sfc_main$K = /* @__PURE__ */ defineComponent({
   __name: "LibraryFilterBar",
   __ssrInlineRender: true,
   props: {
@@ -15615,14 +15711,14 @@ const _sfc_main$J = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$J = _sfc_main$J.setup;
-_sfc_main$J.setup = (props, ctx) => {
+const _sfc_setup$K = _sfc_main$K.setup;
+_sfc_main$K.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryFilterBar.vue");
-  return _sfc_setup$J ? _sfc_setup$J(props, ctx) : void 0;
+  return _sfc_setup$K ? _sfc_setup$K(props, ctx) : void 0;
 };
-const LibraryFilterBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$J, [["__scopeId", "data-v-c7404010"]]), { __name: "StudioLibraryFilterBar" });
-const _sfc_main$I = /* @__PURE__ */ defineComponent({
+const LibraryFilterBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$K, [["__scopeId", "data-v-c7404010"]]), { __name: "StudioLibraryFilterBar" });
+const _sfc_main$J = /* @__PURE__ */ defineComponent({
   __name: "LibraryImageGrid",
   __ssrInlineRender: true,
   props: {
@@ -15680,14 +15776,14 @@ const _sfc_main$I = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$I = _sfc_main$I.setup;
-_sfc_main$I.setup = (props, ctx) => {
+const _sfc_setup$J = _sfc_main$J.setup;
+_sfc_main$J.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryImageGrid.vue");
-  return _sfc_setup$I ? _sfc_setup$I(props, ctx) : void 0;
+  return _sfc_setup$J ? _sfc_setup$J(props, ctx) : void 0;
 };
-const LibraryImageGrid = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$I, [["__scopeId", "data-v-262af478"]]), { __name: "StudioLibraryImageGrid" });
-const _sfc_main$H = /* @__PURE__ */ defineComponent({
+const LibraryImageGrid = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$J, [["__scopeId", "data-v-262af478"]]), { __name: "StudioLibraryImageGrid" });
+const _sfc_main$I = /* @__PURE__ */ defineComponent({
   __name: "LibraryDetailsInspector",
   __ssrInlineRender: true,
   props: {
@@ -15778,14 +15874,14 @@ const _sfc_main$H = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$H = _sfc_main$H.setup;
-_sfc_main$H.setup = (props, ctx) => {
+const _sfc_setup$I = _sfc_main$I.setup;
+_sfc_main$I.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryDetailsInspector.vue");
-  return _sfc_setup$H ? _sfc_setup$H(props, ctx) : void 0;
+  return _sfc_setup$I ? _sfc_setup$I(props, ctx) : void 0;
 };
-const LibraryDetailsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$H, [["__scopeId", "data-v-e162c56c"]]), { __name: "StudioLibraryDetailsInspector" });
-const _sfc_main$G = /* @__PURE__ */ defineComponent({
+const LibraryDetailsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$I, [["__scopeId", "data-v-e162c56c"]]), { __name: "StudioLibraryDetailsInspector" });
+const _sfc_main$H = /* @__PURE__ */ defineComponent({
   __name: "LibrarySelectionInspector",
   __ssrInlineRender: true,
   props: {
@@ -15860,14 +15956,14 @@ const _sfc_main$G = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$G = _sfc_main$G.setup;
-_sfc_main$G.setup = (props, ctx) => {
+const _sfc_setup$H = _sfc_main$H.setup;
+_sfc_main$H.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibrarySelectionInspector.vue");
-  return _sfc_setup$G ? _sfc_setup$G(props, ctx) : void 0;
+  return _sfc_setup$H ? _sfc_setup$H(props, ctx) : void 0;
 };
-const LibrarySelectionInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$G, [["__scopeId", "data-v-c8865bc8"]]), { __name: "StudioLibrarySelectionInspector" });
-const _sfc_main$F = /* @__PURE__ */ defineComponent({
+const LibrarySelectionInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$H, [["__scopeId", "data-v-c8865bc8"]]), { __name: "StudioLibrarySelectionInspector" });
+const _sfc_main$G = /* @__PURE__ */ defineComponent({
   __name: "LibraryActionQueueDrawer",
   __ssrInlineRender: true,
   props: {
@@ -15922,13 +16018,13 @@ const _sfc_main$F = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$F = _sfc_main$F.setup;
-_sfc_main$F.setup = (props, ctx) => {
+const _sfc_setup$G = _sfc_main$G.setup;
+_sfc_main$G.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryActionQueueDrawer.vue");
-  return _sfc_setup$F ? _sfc_setup$F(props, ctx) : void 0;
+  return _sfc_setup$G ? _sfc_setup$G(props, ctx) : void 0;
 };
-const LibraryActionQueueDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$F, [["__scopeId", "data-v-d45d7dae"]]), { __name: "StudioLibraryActionQueueDrawer" });
+const LibraryActionQueueDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$G, [["__scopeId", "data-v-d45d7dae"]]), { __name: "StudioLibraryActionQueueDrawer" });
 const MAX_BULK_DELETE_ITEMS = 500;
 const assertBulkDeleteSelection = (ids) => {
   const uniqueIds2 = [...new Set(ids)];
@@ -15938,7 +16034,7 @@ const assertBulkDeleteSelection = (ids) => {
   return uniqueIds2;
 };
 const canSubmitBulkDelete = (selectionCount, saving) => selectionCount >= 1 && selectionCount <= MAX_BULK_DELETE_ITEMS && !saving;
-const _sfc_main$E = /* @__PURE__ */ defineComponent({
+const _sfc_main$F = /* @__PURE__ */ defineComponent({
   __name: "LibraryProcessDeliverInspector",
   __ssrInlineRender: true,
   props: {
@@ -16071,14 +16167,14 @@ const _sfc_main$E = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$E = _sfc_main$E.setup;
-_sfc_main$E.setup = (props, ctx) => {
+const _sfc_setup$F = _sfc_main$F.setup;
+_sfc_main$F.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryProcessDeliverInspector.vue");
-  return _sfc_setup$E ? _sfc_setup$E(props, ctx) : void 0;
+  return _sfc_setup$F ? _sfc_setup$F(props, ctx) : void 0;
 };
-const LibraryProcessDeliverInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$E, [["__scopeId", "data-v-181862b4"]]), { __name: "StudioLibraryProcessDeliverInspector" });
-const _sfc_main$D = /* @__PURE__ */ defineComponent({
+const LibraryProcessDeliverInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$F, [["__scopeId", "data-v-181862b4"]]), { __name: "StudioLibraryProcessDeliverInspector" });
+const _sfc_main$E = /* @__PURE__ */ defineComponent({
   __name: "LibraryBoardView",
   __ssrInlineRender: true,
   props: {
@@ -16113,14 +16209,14 @@ const _sfc_main$D = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$D = _sfc_main$D.setup;
-_sfc_main$D.setup = (props, ctx) => {
+const _sfc_setup$E = _sfc_main$E.setup;
+_sfc_main$E.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryBoardView.vue");
-  return _sfc_setup$D ? _sfc_setup$D(props, ctx) : void 0;
+  return _sfc_setup$E ? _sfc_setup$E(props, ctx) : void 0;
 };
-const LibraryBoardView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$D, [["__scopeId", "data-v-d8a164fd"]]), { __name: "StudioLibraryBoardView" });
-const _sfc_main$C = /* @__PURE__ */ defineComponent({
+const LibraryBoardView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$E, [["__scopeId", "data-v-d8a164fd"]]), { __name: "StudioLibraryBoardView" });
+const _sfc_main$D = /* @__PURE__ */ defineComponent({
   __name: "LibraryCompareView",
   __ssrInlineRender: true,
   props: {
@@ -16227,13 +16323,13 @@ const _sfc_main$C = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$C = _sfc_main$C.setup;
-_sfc_main$C.setup = (props, ctx) => {
+const _sfc_setup$D = _sfc_main$D.setup;
+_sfc_main$D.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryCompareView.vue");
-  return _sfc_setup$C ? _sfc_setup$C(props, ctx) : void 0;
+  return _sfc_setup$D ? _sfc_setup$D(props, ctx) : void 0;
 };
-const LibraryCompareView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$C, [["__scopeId", "data-v-6897939f"]]), { __name: "StudioLibraryCompareView" });
+const LibraryCompareView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$D, [["__scopeId", "data-v-6897939f"]]), { __name: "StudioLibraryCompareView" });
 const libraryExportMessage = (result, fallbackMessage, t) => {
   if (!result) {
     return fallbackMessage;
@@ -18062,7 +18158,7 @@ const useLoraTrainingStore = defineStore("loraTraining", {
     }
   }
 });
-const _sfc_main$B = /* @__PURE__ */ defineComponent({
+const _sfc_main$C = /* @__PURE__ */ defineComponent({
   __name: "ImageLibraryView",
   __ssrInlineRender: true,
   emits: ["openImage", "openGenerate", "openLora"],
@@ -20108,13 +20204,13 @@ const _sfc_main$B = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$B = _sfc_main$B.setup;
-_sfc_main$B.setup = (props, ctx) => {
+const _sfc_setup$C = _sfc_main$C.setup;
+_sfc_main$C.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageLibraryView.vue");
-  return _sfc_setup$B ? _sfc_setup$B(props, ctx) : void 0;
+  return _sfc_setup$C ? _sfc_setup$C(props, ctx) : void 0;
 };
-const ImageLibraryView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$B, [["__scopeId", "data-v-1207f525"]]), { __name: "StudioImageLibraryView" });
+const ImageLibraryView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$C, [["__scopeId", "data-v-1207f525"]]), { __name: "StudioImageLibraryView" });
 const canonicalDraft = (draft) => ({
   dataset_id: draft.dataset_id,
   dataset_updated_at: draft.dataset_updated_at,
@@ -20182,7 +20278,7 @@ const projectLoRATrainingPlanState = (input) => {
   }
   return { state: "clean-draft", draft_state: draftState, inputs_locked: false, can_start: false };
 };
-const _sfc_main$A = {};
+const _sfc_main$B = {};
 function _sfc_ssrRender$1(_ctx, _push, _parent, _attrs) {
   _push(`<div${ssrRenderAttrs(mergeProps({ class: "lora-training-workspace-body" }, _attrs))} data-v-ee0fe775>`);
   ssrRenderSlot(_ctx.$slots, "header", {}, null, _push, _parent);
@@ -20192,14 +20288,14 @@ function _sfc_ssrRender$1(_ctx, _push, _parent, _attrs) {
   ssrRenderSlot(_ctx.$slots, "overlays", {}, null, _push, _parent);
   _push(`</div>`);
 }
-const _sfc_setup$A = _sfc_main$A.setup;
-_sfc_main$A.setup = (props, ctx) => {
+const _sfc_setup$B = _sfc_main$B.setup;
+_sfc_main$B.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRATrainingWorkspaceBody.vue");
-  return _sfc_setup$A ? _sfc_setup$A(props, ctx) : void 0;
+  return _sfc_setup$B ? _sfc_setup$B(props, ctx) : void 0;
 };
-const LoRATrainingWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$A, [["ssrRender", _sfc_ssrRender$1], ["__scopeId", "data-v-ee0fe775"]]), { __name: "StudioLoraTrainingLoRATrainingWorkspaceBody" });
-const _sfc_main$z = /* @__PURE__ */ defineComponent({
+const LoRATrainingWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$B, [["ssrRender", _sfc_ssrRender$1], ["__scopeId", "data-v-ee0fe775"]]), { __name: "StudioLoraTrainingLoRATrainingWorkspaceBody" });
+const _sfc_main$A = /* @__PURE__ */ defineComponent({
   __name: "LoRAStandardWorkspace",
   __ssrInlineRender: true,
   props: {
@@ -20410,14 +20506,14 @@ const _sfc_main$z = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$z = _sfc_main$z.setup;
-_sfc_main$z.setup = (props, ctx) => {
+const _sfc_setup$A = _sfc_main$A.setup;
+_sfc_main$A.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRAStandardWorkspace.vue");
-  return _sfc_setup$z ? _sfc_setup$z(props, ctx) : void 0;
+  return _sfc_setup$A ? _sfc_setup$A(props, ctx) : void 0;
 };
-const LoRAStandardWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$z, [["__scopeId", "data-v-4f1062ab"]]), { __name: "StudioLoraTrainingLoRAStandardWorkspace" });
-const _sfc_main$y = /* @__PURE__ */ defineComponent({
+const LoRAStandardWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$A, [["__scopeId", "data-v-4f1062ab"]]), { __name: "StudioLoraTrainingLoRAStandardWorkspace" });
+const _sfc_main$z = /* @__PURE__ */ defineComponent({
   __name: "LoRADatasetRail",
   __ssrInlineRender: true,
   props: {
@@ -20442,14 +20538,14 @@ const _sfc_main$y = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$y = _sfc_main$y.setup;
-_sfc_main$y.setup = (props, ctx) => {
+const _sfc_setup$z = _sfc_main$z.setup;
+_sfc_main$z.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRADatasetRail.vue");
-  return _sfc_setup$y ? _sfc_setup$y(props, ctx) : void 0;
+  return _sfc_setup$z ? _sfc_setup$z(props, ctx) : void 0;
 };
-const LoRADatasetRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$y, [["__scopeId", "data-v-b91faa85"]]), { __name: "StudioLoraTrainingLoRADatasetRail" });
-const _sfc_main$x = /* @__PURE__ */ defineComponent({
+const LoRADatasetRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$z, [["__scopeId", "data-v-b91faa85"]]), { __name: "StudioLoraTrainingLoRADatasetRail" });
+const _sfc_main$y = /* @__PURE__ */ defineComponent({
   __name: "LoRACaptionReviewBoard",
   __ssrInlineRender: true,
   props: {
@@ -20507,14 +20603,14 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$x = _sfc_main$x.setup;
-_sfc_main$x.setup = (props, ctx) => {
+const _sfc_setup$y = _sfc_main$y.setup;
+_sfc_main$y.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRACaptionReviewBoard.vue");
-  return _sfc_setup$x ? _sfc_setup$x(props, ctx) : void 0;
+  return _sfc_setup$y ? _sfc_setup$y(props, ctx) : void 0;
 };
-const LoRACaptionReviewBoard = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$x, [["__scopeId", "data-v-c6a5edd2"]]), { __name: "StudioLoraTrainingLoRACaptionReviewBoard" });
-const _sfc_main$w = /* @__PURE__ */ defineComponent({
+const LoRACaptionReviewBoard = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$y, [["__scopeId", "data-v-c6a5edd2"]]), { __name: "StudioLoraTrainingLoRACaptionReviewBoard" });
+const _sfc_main$x = /* @__PURE__ */ defineComponent({
   __name: "LoRACaptionInspector",
   __ssrInlineRender: true,
   props: {
@@ -20581,14 +20677,14 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$w = _sfc_main$w.setup;
-_sfc_main$w.setup = (props, ctx) => {
+const _sfc_setup$x = _sfc_main$x.setup;
+_sfc_main$x.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRACaptionInspector.vue");
-  return _sfc_setup$w ? _sfc_setup$w(props, ctx) : void 0;
+  return _sfc_setup$x ? _sfc_setup$x(props, ctx) : void 0;
 };
-const LoRACaptionInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$w, [["__scopeId", "data-v-7b66b23f"]]), { __name: "StudioLoraTrainingLoRACaptionInspector" });
-const _sfc_main$v = /* @__PURE__ */ defineComponent({
+const LoRACaptionInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$x, [["__scopeId", "data-v-7b66b23f"]]), { __name: "StudioLoraTrainingLoRACaptionInspector" });
+const _sfc_main$w = /* @__PURE__ */ defineComponent({
   __name: "LoRADatasetCaptionStudio",
   __ssrInlineRender: true,
   props: {
@@ -20682,13 +20778,13 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$v = _sfc_main$v.setup;
-_sfc_main$v.setup = (props, ctx) => {
+const _sfc_setup$w = _sfc_main$w.setup;
+_sfc_main$w.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRADatasetCaptionStudio.vue");
-  return _sfc_setup$v ? _sfc_setup$v(props, ctx) : void 0;
+  return _sfc_setup$w ? _sfc_setup$w(props, ctx) : void 0;
 };
-const LoRADatasetCaptionStudio = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$v, [["__scopeId", "data-v-1b41bfdd"]]), { __name: "StudioLoraTrainingLoRADatasetCaptionStudio" });
+const LoRADatasetCaptionStudio = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$w, [["__scopeId", "data-v-1b41bfdd"]]), { __name: "StudioLoraTrainingLoRADatasetCaptionStudio" });
 const sameDimensions = (left, right) => left.width === right.width && left.height === right.height;
 const pairState = (input) => {
   const session = input.session;
@@ -20727,7 +20823,7 @@ const copyMachineMechanicalQualityLabel = (status) => {
   if (status === "good" || status === "poor") return status;
   return "review";
 };
-const _sfc_main$u = /* @__PURE__ */ defineComponent({
+const _sfc_main$v = /* @__PURE__ */ defineComponent({
   __name: "LoRACopyMachineWorkspace",
   __ssrInlineRender: true,
   props: {
@@ -20898,13 +20994,13 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$u = _sfc_main$u.setup;
-_sfc_main$u.setup = (props, ctx) => {
+const _sfc_setup$v = _sfc_main$v.setup;
+_sfc_main$v.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRACopyMachineWorkspace.vue");
-  return _sfc_setup$u ? _sfc_setup$u(props, ctx) : void 0;
+  return _sfc_setup$v ? _sfc_setup$v(props, ctx) : void 0;
 };
-const LoRACopyMachineWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$u, [["__scopeId", "data-v-0b387fd8"]]), { __name: "StudioLoraTrainingLoRACopyMachineWorkspace" });
+const LoRACopyMachineWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$v, [["__scopeId", "data-v-0b387fd8"]]), { __name: "StudioLoraTrainingLoRACopyMachineWorkspace" });
 const compactWhitespace = (value) => value.trim().replace(/\s+/g, " ");
 const normalizeCharacterCaptionPolicy = (policy) => {
   const seen = /* @__PURE__ */ new Set();
@@ -21086,7 +21182,7 @@ const intervalError = "[nuxt] `setInterval` should not be used on the server. Co
 const setInterval = (() => {
   console.error(intervalError);
 });
-const _sfc_main$t = /* @__PURE__ */ defineComponent({
+const _sfc_main$u = /* @__PURE__ */ defineComponent({
   __name: "LoRATrainingView",
   __ssrInlineRender: true,
   emits: ["open-help", "open-generate"],
@@ -25942,14 +26038,14 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$t = _sfc_main$t.setup;
-_sfc_main$t.setup = (props, ctx) => {
+const _sfc_setup$u = _sfc_main$u.setup;
+_sfc_main$u.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/LoRATrainingView.vue");
-  return _sfc_setup$t ? _sfc_setup$t(props, ctx) : void 0;
+  return _sfc_setup$u ? _sfc_setup$u(props, ctx) : void 0;
 };
-const LoRATrainingView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$t, [["__scopeId", "data-v-8ecc946b"]]), { __name: "StudioLoRATrainingView" });
-const _sfc_main$s = /* @__PURE__ */ defineComponent({
+const LoRATrainingView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$u, [["__scopeId", "data-v-8ecc946b"]]), { __name: "StudioLoRATrainingView" });
+const _sfc_main$t = /* @__PURE__ */ defineComponent({
   __name: "MergeWorkspaceBody",
   __ssrInlineRender: true,
   props: {
@@ -25973,14 +26069,14 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$s = _sfc_main$s.setup;
-_sfc_main$s.setup = (props, ctx) => {
+const _sfc_setup$t = _sfc_main$t.setup;
+_sfc_main$t.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeWorkspaceBody.vue");
-  return _sfc_setup$s ? _sfc_setup$s(props, ctx) : void 0;
+  return _sfc_setup$t ? _sfc_setup$t(props, ctx) : void 0;
 };
-const MergeWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$s, [["__scopeId", "data-v-29dcec49"]]), { __name: "StudioMergeWorkspaceBody" });
-const _sfc_main$r = /* @__PURE__ */ defineComponent({
+const MergeWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$t, [["__scopeId", "data-v-29dcec49"]]), { __name: "StudioMergeWorkspaceBody" });
+const _sfc_main$s = /* @__PURE__ */ defineComponent({
   __name: "MergeRecipeConsole",
   __ssrInlineRender: true,
   props: {
@@ -26068,14 +26164,14 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$r = _sfc_main$r.setup;
-_sfc_main$r.setup = (props, ctx) => {
+const _sfc_setup$s = _sfc_main$s.setup;
+_sfc_main$s.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeRecipeConsole.vue");
-  return _sfc_setup$r ? _sfc_setup$r(props, ctx) : void 0;
+  return _sfc_setup$s ? _sfc_setup$s(props, ctx) : void 0;
 };
-const MergeRecipeConsole = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$r, [["__scopeId", "data-v-538990e1"]]), { __name: "StudioMergeRecipeConsole" });
-const _sfc_main$q = /* @__PURE__ */ defineComponent({
+const MergeRecipeConsole = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$s, [["__scopeId", "data-v-538990e1"]]), { __name: "StudioMergeRecipeConsole" });
+const _sfc_main$r = /* @__PURE__ */ defineComponent({
   __name: "MergeOutputHistoryRail",
   __ssrInlineRender: true,
   props: {
@@ -26165,14 +26261,14 @@ const _sfc_main$q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$q = _sfc_main$q.setup;
-_sfc_main$q.setup = (props, ctx) => {
+const _sfc_setup$r = _sfc_main$r.setup;
+_sfc_main$r.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeOutputHistoryRail.vue");
-  return _sfc_setup$q ? _sfc_setup$q(props, ctx) : void 0;
+  return _sfc_setup$r ? _sfc_setup$r(props, ctx) : void 0;
 };
-const MergeOutputHistoryRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$q, [["__scopeId", "data-v-0762f89c"]]), { __name: "StudioMergeOutputHistoryRail" });
-const _sfc_main$p = /* @__PURE__ */ defineComponent({
+const MergeOutputHistoryRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$r, [["__scopeId", "data-v-0762f89c"]]), { __name: "StudioMergeOutputHistoryRail" });
+const _sfc_main$q = /* @__PURE__ */ defineComponent({
   __name: "MergeOperationSetup",
   __ssrInlineRender: true,
   props: {
@@ -26280,14 +26376,14 @@ const _sfc_main$p = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$p = _sfc_main$p.setup;
-_sfc_main$p.setup = (props, ctx) => {
+const _sfc_setup$q = _sfc_main$q.setup;
+_sfc_main$q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeOperationSetup.vue");
-  return _sfc_setup$p ? _sfc_setup$p(props, ctx) : void 0;
+  return _sfc_setup$q ? _sfc_setup$q(props, ctx) : void 0;
 };
-const MergeOperationSetup = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$p, [["__scopeId", "data-v-eaae9884"]]), { __name: "StudioMergeOperationSetup" });
-const _sfc_main$o = /* @__PURE__ */ defineComponent({
+const MergeOperationSetup = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$q, [["__scopeId", "data-v-eaae9884"]]), { __name: "StudioMergeOperationSetup" });
+const _sfc_main$p = /* @__PURE__ */ defineComponent({
   __name: "MergeAnalysisPanel",
   __ssrInlineRender: true,
   props: {
@@ -26422,14 +26518,14 @@ const _sfc_main$o = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$o = _sfc_main$o.setup;
-_sfc_main$o.setup = (props, ctx) => {
+const _sfc_setup$p = _sfc_main$p.setup;
+_sfc_main$p.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeAnalysisPanel.vue");
-  return _sfc_setup$o ? _sfc_setup$o(props, ctx) : void 0;
+  return _sfc_setup$p ? _sfc_setup$p(props, ctx) : void 0;
 };
-const MergeAnalysisPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$o, [["__scopeId", "data-v-bfd65aec"]]), { __name: "StudioMergeAnalysisPanel" });
-const _sfc_main$n = /* @__PURE__ */ defineComponent({
+const MergeAnalysisPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$p, [["__scopeId", "data-v-bfd65aec"]]), { __name: "StudioMergeAnalysisPanel" });
+const _sfc_main$o = /* @__PURE__ */ defineComponent({
   __name: "MergeAdvancedWorkbench",
   __ssrInlineRender: true,
   props: {
@@ -26600,14 +26696,14 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$n = _sfc_main$n.setup;
-_sfc_main$n.setup = (props, ctx) => {
+const _sfc_setup$o = _sfc_main$o.setup;
+_sfc_main$o.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeAdvancedWorkbench.vue");
-  return _sfc_setup$n ? _sfc_setup$n(props, ctx) : void 0;
+  return _sfc_setup$o ? _sfc_setup$o(props, ctx) : void 0;
 };
-const MergeAdvancedWorkbench = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$n, [["__scopeId", "data-v-60610eae"]]), { __name: "StudioMergeAdvancedWorkbench" });
-const _sfc_main$m = /* @__PURE__ */ defineComponent({
+const MergeAdvancedWorkbench = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$o, [["__scopeId", "data-v-60610eae"]]), { __name: "StudioMergeAdvancedWorkbench" });
+const _sfc_main$n = /* @__PURE__ */ defineComponent({
   __name: "MergeCandidateStudio",
   __ssrInlineRender: true,
   props: {
@@ -26745,14 +26841,14 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$m = _sfc_main$m.setup;
-_sfc_main$m.setup = (props, ctx) => {
+const _sfc_setup$n = _sfc_main$n.setup;
+_sfc_main$n.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeCandidateStudio.vue");
-  return _sfc_setup$m ? _sfc_setup$m(props, ctx) : void 0;
+  return _sfc_setup$n ? _sfc_setup$n(props, ctx) : void 0;
 };
-const MergeCandidateStudio = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$m, [["__scopeId", "data-v-92631f05"]]), { __name: "StudioMergeCandidateStudio" });
-const _sfc_main$l = /* @__PURE__ */ defineComponent({
+const MergeCandidateStudio = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$n, [["__scopeId", "data-v-92631f05"]]), { __name: "StudioMergeCandidateStudio" });
+const _sfc_main$m = /* @__PURE__ */ defineComponent({
   __name: "MergeCandidateBoard",
   __ssrInlineRender: true,
   props: {
@@ -26833,13 +26929,13 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$l = _sfc_main$l.setup;
-_sfc_main$l.setup = (props, ctx) => {
+const _sfc_setup$m = _sfc_main$m.setup;
+_sfc_main$m.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeCandidateBoard.vue");
-  return _sfc_setup$l ? _sfc_setup$l(props, ctx) : void 0;
+  return _sfc_setup$m ? _sfc_setup$m(props, ctx) : void 0;
 };
-const MergeCandidateBoard = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$l, [["__scopeId", "data-v-c6985b84"]]), { __name: "StudioMergeCandidateBoard" });
+const MergeCandidateBoard = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$m, [["__scopeId", "data-v-c6985b84"]]), { __name: "StudioMergeCandidateBoard" });
 const RECIPE_PRESENTATION_FIELDS = /* @__PURE__ */ new Set(["id", "output_path", "created_at", "updated_at"]);
 const normalizeValue = (value) => {
   if (Array.isArray(value)) {
@@ -27512,7 +27608,7 @@ const projectMergeCacheCleanupState = ({
     retainedCategories: ["generated-images", "history", "recipes", "promoted-models"]
   });
 };
-const _sfc_main$k = /* @__PURE__ */ defineComponent({
+const _sfc_main$l = /* @__PURE__ */ defineComponent({
   __name: "MergeStudioView",
   __ssrInlineRender: true,
   emits: ["openGenerate"],
@@ -29931,14 +30027,14 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$k = _sfc_main$k.setup;
-_sfc_main$k.setup = (props, ctx) => {
+const _sfc_setup$l = _sfc_main$l.setup;
+_sfc_main$l.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/MergeStudioView.vue");
-  return _sfc_setup$k ? _sfc_setup$k(props, ctx) : void 0;
+  return _sfc_setup$l ? _sfc_setup$l(props, ctx) : void 0;
 };
-const MergeStudioView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$k, [["__scopeId", "data-v-266819f0"]]), { __name: "StudioMergeStudioView" });
-const _sfc_main$j = /* @__PURE__ */ defineComponent({
+const MergeStudioView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$l, [["__scopeId", "data-v-266819f0"]]), { __name: "StudioMergeStudioView" });
+const _sfc_main$k = /* @__PURE__ */ defineComponent({
   __name: "SettingsCategoryRail",
   __ssrInlineRender: true,
   props: {
@@ -29960,14 +30056,14 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$j = _sfc_main$j.setup;
-_sfc_main$j.setup = (props, ctx) => {
+const _sfc_setup$k = _sfc_main$k.setup;
+_sfc_main$k.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsCategoryRail.vue");
-  return _sfc_setup$j ? _sfc_setup$j(props, ctx) : void 0;
+  return _sfc_setup$k ? _sfc_setup$k(props, ctx) : void 0;
 };
-const SettingsCategoryRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$j, [["__scopeId", "data-v-b9ac1fd8"]]), { __name: "StudioSettingsCategoryRail" });
-const _sfc_main$i = /* @__PURE__ */ defineComponent({
+const SettingsCategoryRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$k, [["__scopeId", "data-v-b9ac1fd8"]]), { __name: "StudioSettingsCategoryRail" });
+const _sfc_main$j = /* @__PURE__ */ defineComponent({
   __name: "SettingsWorkspaceBody",
   __ssrInlineRender: true,
   props: {
@@ -29989,14 +30085,14 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$i = _sfc_main$i.setup;
-_sfc_main$i.setup = (props, ctx) => {
+const _sfc_setup$j = _sfc_main$j.setup;
+_sfc_main$j.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsWorkspaceBody.vue");
-  return _sfc_setup$i ? _sfc_setup$i(props, ctx) : void 0;
+  return _sfc_setup$j ? _sfc_setup$j(props, ctx) : void 0;
 };
-const SettingsWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$i, [["__scopeId", "data-v-de6a0b4f"]]), { __name: "StudioSettingsWorkspaceBody" });
-const _sfc_main$h = /* @__PURE__ */ defineComponent({
+const SettingsWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$j, [["__scopeId", "data-v-de6a0b4f"]]), { __name: "StudioSettingsWorkspaceBody" });
+const _sfc_main$i = /* @__PURE__ */ defineComponent({
   __name: "SettingsPathPicker",
   __ssrInlineRender: true,
   props: {
@@ -30065,14 +30161,14 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$h = _sfc_main$h.setup;
-_sfc_main$h.setup = (props, ctx) => {
+const _sfc_setup$i = _sfc_main$i.setup;
+_sfc_main$i.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsPathPicker.vue");
-  return _sfc_setup$h ? _sfc_setup$h(props, ctx) : void 0;
+  return _sfc_setup$i ? _sfc_setup$i(props, ctx) : void 0;
 };
-const SettingsPathPicker = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$h, [["__scopeId", "data-v-5eb17708"]]), { __name: "StudioSettingsPathPicker" });
-const _sfc_main$g = /* @__PURE__ */ defineComponent({
+const SettingsPathPicker = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$i, [["__scopeId", "data-v-5eb17708"]]), { __name: "StudioSettingsPathPicker" });
+const _sfc_main$h = /* @__PURE__ */ defineComponent({
   __name: "SettingsOutputStorageWorkbench",
   __ssrInlineRender: true,
   props: {
@@ -30099,13 +30195,13 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$g = _sfc_main$g.setup;
-_sfc_main$g.setup = (props, ctx) => {
+const _sfc_setup$h = _sfc_main$h.setup;
+_sfc_main$h.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsOutputStorageWorkbench.vue");
-  return _sfc_setup$g ? _sfc_setup$g(props, ctx) : void 0;
+  return _sfc_setup$h ? _sfc_setup$h(props, ctx) : void 0;
 };
-const SettingsOutputStorageWorkbench = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$g, [["__scopeId", "data-v-40237d73"]]), { __name: "StudioSettingsOutputStorageWorkbench" });
+const SettingsOutputStorageWorkbench = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$h, [["__scopeId", "data-v-40237d73"]]), { __name: "StudioSettingsOutputStorageWorkbench" });
 const useEditAssetLifecycleStore = defineStore("editAssetLifecycle", {
   state: () => ({
     inventory: null,
@@ -30147,7 +30243,7 @@ const useEditAssetLifecycleStore = defineStore("editAssetLifecycle", {
     }
   }
 });
-const _sfc_main$f = /* @__PURE__ */ defineComponent({
+const _sfc_main$g = /* @__PURE__ */ defineComponent({
   __name: "SettingsEditAssetsTool",
   __ssrInlineRender: true,
   setup(__props) {
@@ -30191,14 +30287,14 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$f = _sfc_main$f.setup;
-_sfc_main$f.setup = (props, ctx) => {
+const _sfc_setup$g = _sfc_main$g.setup;
+_sfc_main$g.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsEditAssetsTool.vue");
-  return _sfc_setup$f ? _sfc_setup$f(props, ctx) : void 0;
+  return _sfc_setup$g ? _sfc_setup$g(props, ctx) : void 0;
 };
-const SettingsEditAssetsTool = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$f, [["__scopeId", "data-v-b886aa40"]]), { __name: "StudioSettingsEditAssetsTool" });
-const _sfc_main$e = /* @__PURE__ */ defineComponent({
+const SettingsEditAssetsTool = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$g, [["__scopeId", "data-v-b886aa40"]]), { __name: "StudioSettingsEditAssetsTool" });
+const _sfc_main$f = /* @__PURE__ */ defineComponent({
   __name: "SettingsValidationInspector",
   __ssrInlineRender: true,
   props: {
@@ -30235,14 +30331,14 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$e = _sfc_main$e.setup;
-_sfc_main$e.setup = (props, ctx) => {
+const _sfc_setup$f = _sfc_main$f.setup;
+_sfc_main$f.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsValidationInspector.vue");
-  return _sfc_setup$e ? _sfc_setup$e(props, ctx) : void 0;
+  return _sfc_setup$f ? _sfc_setup$f(props, ctx) : void 0;
 };
-const SettingsValidationInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$e, [["__scopeId", "data-v-08a18b1d"]]), { __name: "StudioSettingsValidationInspector" });
-const _sfc_main$d = /* @__PURE__ */ defineComponent({
+const SettingsValidationInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$f, [["__scopeId", "data-v-08a18b1d"]]), { __name: "StudioSettingsValidationInspector" });
+const _sfc_main$e = /* @__PURE__ */ defineComponent({
   __name: "SettingsStartupOverview",
   __ssrInlineRender: true,
   props: {
@@ -30447,13 +30543,13 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$d = _sfc_main$d.setup;
-_sfc_main$d.setup = (props, ctx) => {
+const _sfc_setup$e = _sfc_main$e.setup;
+_sfc_main$e.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsStartupOverview.vue");
-  return _sfc_setup$d ? _sfc_setup$d(props, ctx) : void 0;
+  return _sfc_setup$e ? _sfc_setup$e(props, ctx) : void 0;
 };
-const SettingsStartupOverview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$d, [["__scopeId", "data-v-2f94c967"]]), { __name: "StudioSettingsStartupOverview" });
+const SettingsStartupOverview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$e, [["__scopeId", "data-v-2f94c967"]]), { __name: "StudioSettingsStartupOverview" });
 const SAFE_SUMMARY_KEYS = /* @__PURE__ */ new Set([
   "startup.targetMode.unknown",
   "startup.path.unreadable",
@@ -30593,7 +30689,7 @@ const projectStartupSetup = ({
     starterPacksExecuting: executingStarterPacks
   });
 };
-const _sfc_main$c = /* @__PURE__ */ defineComponent({
+const _sfc_main$d = /* @__PURE__ */ defineComponent({
   __name: "SettingsOperationsConsole",
   __ssrInlineRender: true,
   props: {
@@ -30625,14 +30721,14 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$c = _sfc_main$c.setup;
-_sfc_main$c.setup = (props, ctx) => {
+const _sfc_setup$d = _sfc_main$d.setup;
+_sfc_main$d.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsOperationsConsole.vue");
-  return _sfc_setup$c ? _sfc_setup$c(props, ctx) : void 0;
+  return _sfc_setup$d ? _sfc_setup$d(props, ctx) : void 0;
 };
-const SettingsOperationsConsole = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$c, [["__scopeId", "data-v-c39850e9"]]), { __name: "StudioSettingsOperationsConsole" });
-const _sfc_main$b = /* @__PURE__ */ defineComponent({
+const SettingsOperationsConsole = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$d, [["__scopeId", "data-v-c39850e9"]]), { __name: "StudioSettingsOperationsConsole" });
+const _sfc_main$c = /* @__PURE__ */ defineComponent({
   __name: "SettingsRuntimeTool",
   __ssrInlineRender: true,
   props: {
@@ -30679,14 +30775,14 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$b = _sfc_main$b.setup;
-_sfc_main$b.setup = (props, ctx) => {
+const _sfc_setup$c = _sfc_main$c.setup;
+_sfc_main$c.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsRuntimeTool.vue");
-  return _sfc_setup$b ? _sfc_setup$b(props, ctx) : void 0;
+  return _sfc_setup$c ? _sfc_setup$c(props, ctx) : void 0;
 };
-const SettingsRuntimeTool = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$b, [["__scopeId", "data-v-d83c31e1"]]), { __name: "StudioSettingsRuntimeTool" });
-const _sfc_main$a = /* @__PURE__ */ defineComponent({
+const SettingsRuntimeTool = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$c, [["__scopeId", "data-v-d83c31e1"]]), { __name: "StudioSettingsRuntimeTool" });
+const _sfc_main$b = /* @__PURE__ */ defineComponent({
   __name: "SettingsModelAssetsTool",
   __ssrInlineRender: true,
   props: {
@@ -30765,14 +30861,14 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$a = _sfc_main$a.setup;
-_sfc_main$a.setup = (props, ctx) => {
+const _sfc_setup$b = _sfc_main$b.setup;
+_sfc_main$b.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsModelAssetsTool.vue");
-  return _sfc_setup$a ? _sfc_setup$a(props, ctx) : void 0;
+  return _sfc_setup$b ? _sfc_setup$b(props, ctx) : void 0;
 };
-const SettingsModelAssetsTool = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$a, [["__scopeId", "data-v-861bc5c0"]]), { __name: "StudioSettingsModelAssetsTool" });
-const _sfc_main$9 = /* @__PURE__ */ defineComponent({
+const SettingsModelAssetsTool = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$b, [["__scopeId", "data-v-861bc5c0"]]), { __name: "StudioSettingsModelAssetsTool" });
+const _sfc_main$a = /* @__PURE__ */ defineComponent({
   __name: "SettingsIntegrationsTool",
   __ssrInlineRender: true,
   props: {
@@ -30829,14 +30925,14 @@ const _sfc_main$9 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$9 = _sfc_main$9.setup;
-_sfc_main$9.setup = (props, ctx) => {
+const _sfc_setup$a = _sfc_main$a.setup;
+_sfc_main$a.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsIntegrationsTool.vue");
-  return _sfc_setup$9 ? _sfc_setup$9(props, ctx) : void 0;
+  return _sfc_setup$a ? _sfc_setup$a(props, ctx) : void 0;
 };
-const SettingsIntegrationsTool = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$9, [["__scopeId", "data-v-574fa15b"]]), { __name: "StudioSettingsIntegrationsTool" });
-const _sfc_main$8 = /* @__PURE__ */ defineComponent({
+const SettingsIntegrationsTool = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$a, [["__scopeId", "data-v-574fa15b"]]), { __name: "StudioSettingsIntegrationsTool" });
+const _sfc_main$9 = /* @__PURE__ */ defineComponent({
   __name: "SettingsAIProviderTool",
   __ssrInlineRender: true,
   props: {
@@ -30935,13 +31031,13 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$8 = _sfc_main$8.setup;
-_sfc_main$8.setup = (props, ctx) => {
+const _sfc_setup$9 = _sfc_main$9.setup;
+_sfc_main$9.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsAIProviderTool.vue");
-  return _sfc_setup$8 ? _sfc_setup$8(props, ctx) : void 0;
+  return _sfc_setup$9 ? _sfc_setup$9(props, ctx) : void 0;
 };
-const SettingsAIProviderTool = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$8, [["__scopeId", "data-v-63d1ec76"]]), { __name: "StudioSettingsAIProviderTool" });
+const SettingsAIProviderTool = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$9, [["__scopeId", "data-v-63d1ec76"]]), { __name: "StudioSettingsAIProviderTool" });
 const resolveSettingsAIProviderSelection = (defaultProviderId, providers) => {
   const selectedId = defaultProviderId.trim();
   if (!selectedId) {
@@ -31780,7 +31876,7 @@ const useStartupStore = defineStore("startup", {
 const settingsRefreshConfirmTitleId = "settings-refresh-confirm-title";
 const settingsRefreshConfirmDescriptionId = "settings-refresh-confirm-description";
 const defaultTopazExecutablePath = "C:\\Program Files\\Topaz Labs LLC\\Topaz Photo AI\\tpai.exe";
-const _sfc_main$7 = /* @__PURE__ */ defineComponent({
+const _sfc_main$8 = /* @__PURE__ */ defineComponent({
   __name: "SettingsView",
   __ssrInlineRender: true,
   props: {
@@ -34257,14 +34353,14 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$7 = _sfc_main$7.setup;
-_sfc_main$7.setup = (props, ctx) => {
+const _sfc_setup$8 = _sfc_main$8.setup;
+_sfc_main$8.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/SettingsView.vue");
-  return _sfc_setup$7 ? _sfc_setup$7(props, ctx) : void 0;
+  return _sfc_setup$8 ? _sfc_setup$8(props, ctx) : void 0;
 };
-const SettingsView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$7, [["__scopeId", "data-v-34783e0a"]]), { __name: "StudioSettingsView" });
-const _sfc_main$6 = /* @__PURE__ */ defineComponent({
+const SettingsView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$8, [["__scopeId", "data-v-34783e0a"]]), { __name: "StudioSettingsView" });
+const _sfc_main$7 = /* @__PURE__ */ defineComponent({
   __name: "StudioRail",
   __ssrInlineRender: true,
   props: {
@@ -34320,14 +34416,14 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$6 = _sfc_main$6.setup;
-_sfc_main$6.setup = (props, ctx) => {
+const _sfc_setup$7 = _sfc_main$7.setup;
+_sfc_main$7.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StudioRail.vue");
-  return _sfc_setup$6 ? _sfc_setup$6(props, ctx) : void 0;
+  return _sfc_setup$7 ? _sfc_setup$7(props, ctx) : void 0;
 };
-const StudioRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$6, [["__scopeId", "data-v-38d64fd8"]]), { __name: "StudioRail" });
-const _sfc_main$5 = /* @__PURE__ */ defineComponent({
+const StudioRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$7, [["__scopeId", "data-v-38d64fd8"]]), { __name: "StudioRail" });
+const _sfc_main$6 = /* @__PURE__ */ defineComponent({
   __name: "StudioShell",
   __ssrInlineRender: true,
   setup(__props) {
@@ -34343,13 +34439,42 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const _sfc_setup$6 = _sfc_main$6.setup;
+_sfc_main$6.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StudioShell.vue");
+  return _sfc_setup$6 ? _sfc_setup$6(props, ctx) : void 0;
+};
+const StudioShell = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$6, [["__scopeId", "data-v-d069ee0f"]]), { __name: "StudioShell" });
+const _sfc_main$5 = /* @__PURE__ */ defineComponent({
+  __name: "StartupLoadingOverlay",
+  __ssrInlineRender: true,
+  props: {
+    active: { type: Boolean }
+  },
+  setup(__props) {
+    const { t } = useAsteriaI18n();
+    return (_ctx, _push, _parent, _attrs) => {
+      if (__props.active) {
+        _push(`<div${ssrRenderAttrs(mergeProps({
+          class: "startup-loading-overlay",
+          role: "status",
+          "aria-live": "polite",
+          "aria-label": unref(t)("startup.loading")
+        }, _attrs))} data-v-0bbaf4e8><div class="startup-loading-overlay__status" data-v-0bbaf4e8><span class="startup-loading-overlay__spinner" aria-hidden="true" data-v-0bbaf4e8></span><strong data-v-0bbaf4e8>${ssrInterpolate(unref(t)("startup.loading"))}</strong></div></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+    };
+  }
+});
 const _sfc_setup$5 = _sfc_main$5.setup;
 _sfc_main$5.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StudioShell.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StartupLoadingOverlay.vue");
   return _sfc_setup$5 ? _sfc_setup$5(props, ctx) : void 0;
 };
-const StudioShell = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$5, [["__scopeId", "data-v-d069ee0f"]]), { __name: "StudioShell" });
+const StartupLoadingOverlay = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$5, [["__scopeId", "data-v-0bbaf4e8"]]), { __name: "StudioStartupLoadingOverlay" });
 const _sfc_main$4 = /* @__PURE__ */ defineComponent({
   __name: "TopStatusBar",
   __ssrInlineRender: true,
@@ -34390,6 +34515,27 @@ _sfc_main$4.setup = (props, ctx) => {
   return _sfc_setup$4 ? _sfc_setup$4(props, ctx) : void 0;
 };
 const TopStatusBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$4, [["__scopeId", "data-v-9388b25a"]]), { __name: "StudioTopStatusBar" });
+const createStartupReadinessController = () => {
+  const pending = ref(true);
+  let startup = null;
+  const start = (modelOperation, runtimeOperation) => {
+    if (startup) {
+      return startup;
+    }
+    startup = (async () => {
+      await Promise.allSettled([
+        Promise.resolve().then(modelOperation),
+        Promise.resolve().then(runtimeOperation)
+      ]);
+      pending.value = false;
+    })();
+    return startup;
+  };
+  return {
+    pending,
+    start
+  };
+};
 const STUDIO_WORKSPACE_IDS = [
   "generate",
   "image",
@@ -34423,6 +34569,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
     const runtime = useRuntimeStore();
     const appSettings = useAppSettingsStore();
     const imageEditorDraft = useImageEditorDraftStore();
+    const startupReadiness = createStartupReadinessController();
     const { locale, localeOptions, setLocale, t } = useAsteriaI18n();
     const activeWorkspace = ref("generate");
     const imageWorkspaceMounted = ref(false);
@@ -34673,7 +34820,10 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       activeWorkspace.value = target === "lora-training" ? "lora" : "generate";
     };
     return (_ctx, _push, _parent, _attrs) => {
-      _push(ssrRenderComponent(StudioShell, _attrs, {
+      _push(`<!--[-->`);
+      _push(ssrRenderComponent(StudioShell, {
+        "aria-busy": unref(startupReadiness).pending.value
+      }, {
         rail: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
             _push2(ssrRenderComponent(StudioRail, {
@@ -34777,7 +34927,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
               _push2(`<!---->`);
             }
             if (unref(imageWorkspaceMounted)) {
-              _push2(`<div class="image-workspace-mount" style="${ssrRenderStyle(unref(activeWorkspace) === "image" ? null : { display: "none" })}" data-v-705e3474${_scopeId}>`);
+              _push2(`<div class="image-workspace-mount" style="${ssrRenderStyle(unref(activeWorkspace) === "image" ? null : { display: "none" })}" data-v-43238e0f${_scopeId}>`);
               _push2(ssrRenderComponent(ImageWorkspace, {
                 ref_key: "imageWorkspaceRef",
                 ref: imageWorkspaceRef,
@@ -34914,6 +35064,15 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
         }),
         _: 1
       }, _parent));
+      _push(ssrRenderComponent(AssetRefreshIndicator, {
+        status: unref(modelDependencies).assetRefreshStatus,
+        message: unref(modelDependencies).assetRefreshMessage,
+        onClear: unref(modelDependencies).clearAssetRefreshFeedback
+      }, null, _parent));
+      _push(ssrRenderComponent(StartupLoadingOverlay, {
+        active: unref(startupReadiness).pending.value
+      }, null, _parent));
+      _push(`<!--]-->`);
     };
   }
 });
@@ -34923,7 +35082,7 @@ _sfc_main$3.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/GenerateStudio.vue");
   return _sfc_setup$3 ? _sfc_setup$3(props, ctx) : void 0;
 };
-const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-705e3474"]]), { __name: "GenerateStudio" });
+const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-43238e0f"]]), { __name: "GenerateStudio" });
 const _sfc_main$2 = {};
 function _sfc_ssrRender(_ctx, _push, _parent, _attrs) {
   const _component_GenerateStudio = __nuxt_component_0;
