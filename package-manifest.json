@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.0.3",
   "platform": "windows-x64",
-  "source_commit": "37ec6fddc8c3f498bed65900b72f95cf24b9053a",
-  "build_timestamp_utc": "2026-07-24T01:41:25Z",
+  "source_commit": "f86eac97f8d0764dad5829d84a5bb19694d465a3",
+  "build_timestamp_utc": "2026-07-24T02:38:08Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -73,8 +73,8 @@
     },
     {
       "path": "app/backend/app/api/generation.py",
-      "size_bytes": 151142,
-      "sha256": "0df16c8329dbc099f890bad876210cb1ac7d05e151b6b6253fc8fa89db2c0fa9"
+      "size_bytes": 151137,
+      "sha256": "530548ef6c118ecced9b53d624afe4ba2a2b4696cdadafe55ce41318c0b03676"
     },
     {
       "path": "app/backend/app/api/lora_training.py",
@@ -88,8 +88,8 @@
     },
     {
       "path": "app/backend/app/api/models.py",
-      "size_bytes": 17400,
-      "sha256": "12da8577f5694d44c51c0f17319a1f388eb17e77d1414cd0761389a3ea78110f"
+      "size_bytes": 17460,
+      "sha256": "aa21b8b664bd62d05be47474d93290565c563f8447a78e798b0fc4eacd33c1ec"
     },
     {
       "path": "app/backend/app/api/presets.py",
@@ -372,6 +372,11 @@
       "sha256": "cec6bf6146405f0533d084ef2c8e9ec3ba1bf9dc9cbdf5be215b0a2612174626"
     },
     {
+      "path": "app/backend/app/services/model_library_cache.py",
+      "size_bytes": 983,
+      "sha256": "1024857c707de03df8b73ec3c2b8c31df7579c149319151a4cc064b2d882269b"
+    },
+    {
       "path": "app/backend/app/services/model_profiles.py",
       "size_bytes": 2749,
       "sha256": "2b3848fce5d5511460c924575db57457a4ebdd13b1d5bbc67061482fe1659b33"
@@ -517,39 +522,39 @@
       "sha256": "f951266c7e5251b999dbefa8bf3da5c42628efb54251199cd7ba85dccfccca6f"
     },
     {
-      "path": "app/frontend/public/_nuxt/B_pGpoiP.js",
-      "size_bytes": 1353285,
-      "sha256": "1a481039d0f73a6b42ca64a1d31ca4965a16fb673b24516e1ed51a2e7787bc19"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/Ba-eKUGa.js",
-      "size_bytes": 9536,
-      "sha256": "c5dee5dccc7b540447c47664902feab48afde91cb772c06bfeb37247ca8bfa05"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/CUJBek_Q.js",
-      "size_bytes": 326,
-      "sha256": "40f9ab0b44707a39edb107f725eadf5ee36488a1b16ce0b6ac6b230c379d57ef"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/DyI2T6O5.js",
+      "path": "app/frontend/public/_nuxt/3nuR_iUq.js",
       "size_bytes": 3478,
-      "sha256": "e59e20162c366e557ac9f16f5eed348bcf7b19e2ff899e2d7abbd85e44786c58"
+      "sha256": "f3521d68e5821df3ca346ae57fa808f580710fa4260493610e509c270cfbfabb"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/LfTsKup4.js",
+      "size_bytes": 326,
+      "sha256": "a873bcba6bf2fc14f8aaa72a46514819a3715e33a0841d295a4a6eb65db77073"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/Te-f72uJ.js",
+      "size_bytes": 1353759,
+      "sha256": "5992edaca77dc52c14f49b0375fbfbf252fd9a539941c1da162813f073c58518"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/abh1kXl9.js",
+      "size_bytes": 9536,
+      "sha256": "e80cdb931d448c7a65e955eb318130c7eaa32710cba3941c83a85905e20bc91d"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "e40621a8e49ede8f02c93a247efd34c7ffa30f565ddc1089ef480d6540d1e45b"
+      "sha256": "afb08e1d1fb9cbdaf5c1768a689867b5f03a49fa4582bb8cb19f7be00b896cbd"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/d118b69f-cc01-4fb2-9774-40ef5bdf4fc4.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/7b20922f-6467-4e99-8215-bda9abd56705.json",
       "size_bytes": 88,
-      "sha256": "82fa30b9e744b37d953723ae49301687249360df0f031cdac823fd8b00c11b6e"
+      "sha256": "338f0ea708360dc671dd3dfd7232865ee5770e11191a2495ee9840f8096c31a3"
     },
     {
-      "path": "app/frontend/public/_nuxt/entry.BWB6fOl5.css",
+      "path": "app/frontend/public/_nuxt/entry.bAgvm5Bs.css",
       "size_bytes": 288988,
-      "sha256": "f334876b77ec304f08d8e863a23419dbc155b9abc311c57eaf013ff2bc0725c0"
+      "sha256": "9dac581e5669fd88d1a6d3efec97c7599e8849744a11531c8d7f654ec2558646"
     },
     {
       "path": "app/frontend/public/_nuxt/error-404.BBhU_iaz.css",
@@ -569,7 +574,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162006,
-      "sha256": "cb840fe702ac95ae0a4b24bb1c3c07cd3b20881e32c561ea260f0246318443c9"
+      "sha256": "0bef38bdee849344528d96d123db963480a89f527ca04a01b93a2d6d6919943a"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.DLVS0IeK.mjs",
@@ -637,9 +642,9 @@
       "sha256": "bf3c49cf06cab1395925c10fee64ae5cd87e09c617cf9e46c1631f03b2c09381"
     },
     {
-      "path": "app/frontend/server/chunks/build/GenerationPresetBar-styles.DASenBzO.mjs",
+      "path": "app/frontend/server/chunks/build/GenerationPresetBar-styles.BIVVtWDU.mjs",
       "size_bytes": 1861,
-      "sha256": "3e696b79aa5d88cc83004633b3aefac26100274efd5246a5a782bdbf8716aedb"
+      "sha256": "e1cf8841ac972f09cb6f497d35eb8be599021189eb1455fcf8b930dd4f8f6927"
     },
     {
       "path": "app/frontend/server/chunks/build/HelpArticleCanvas-styles.DLTNtcX5.mjs",
@@ -722,9 +727,9 @@
       "sha256": "07bc5fe2cbb02cdb2e1b06874f2946d589331e0f26fb368762ac486781e1ecc2"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageLibraryView-styles.Dnnh6j8r.mjs",
+      "path": "app/frontend/server/chunks/build/ImageLibraryView-styles.BOx14qf0.mjs",
       "size_bytes": 19899,
-      "sha256": "45276489998af65fde108c9dcca38fa0ce9ccfce560ff60c6aeb7e398c2243e4"
+      "sha256": "06b5ffa270962f750893ac67a3b475f92ba3c3e8db8f2c1f6b02bc918d22cf2d"
     },
     {
       "path": "app/frontend/server/chunks/build/ImageWorkspace-styles.6JU3asFl.mjs",
@@ -984,7 +989,7 @@
     {
       "path": "app/frontend/server/chunks/build/client.precomputed.mjs",
       "size_bytes": 3401,
-      "sha256": "03f7b9a9b2334a110d74b3445617c8deb4e9a4731f5480644d5297295c4af4a2"
+      "sha256": "5ff4683828dd08f8046afeb1e83e4974e237874b1b9b2560f780c601b1dd916f"
     },
     {
       "path": "app/frontend/server/chunks/build/composables-CtXy92-o.mjs",
@@ -1013,13 +1018,13 @@
     },
     {
       "path": "app/frontend/server/chunks/build/server.mjs",
-      "size_bytes": 2240387,
-      "sha256": "5e7e0acd9e656eade352dc88d9c57368f0c6ce844c17fe61b8bec57063053438"
+      "size_bytes": 2241454,
+      "sha256": "52cf32f2b50e32d19e4e6f12b2e9d8f7d068e271d416a91c0597a4bb97fd23bd"
     },
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 11405,
-      "sha256": "5d7b8afe9353afc00c1f251faed51c79bb916e6272cf2fbae10004b7d5581e90"
+      "sha256": "20fa1b5041cadf4bd660b7e37f2ece796bcd8bfe83c7e46be1fab65829570780"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",

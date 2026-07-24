@@ -72,7 +72,7 @@ from app.services.generation_artifact_deletion import delete_generation_artifact
 from app.services.lora_training import LoRATrainingDatasetRepository
 from app.services.metadata import MetadataWriter, read_generation_parameters_from_image
 from app.services.remaster import REMASTER_REQUIRED_NODES, RemasterExecutionError
-from app.services.model_library import ModelLibraryScanner
+from app.services.model_library_cache import get_model_library
 from app.services.model_profiles import ModelProfileRepository
 from app.services.model_selections import ModelSelectionRepository
 from app.services.model_storage import resolve_model_root
@@ -1979,7 +1979,7 @@ def _preflight_profile_prompt_request(request: Txt2ImgRequest) -> None:
 
 
 def _known_embedding_names(config: AppConfig) -> list[str]:
-    library = ModelLibraryScanner(_model_root(config)).scan()
+    library = get_model_library(_model_root(config))
     return [item.path.stem for item in library.by_type("embedding")]
 
 

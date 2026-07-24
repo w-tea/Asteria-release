@@ -28,7 +28,12 @@ from app.services.model_dependencies import (
     ModelDependencyRepository,
     ModelDependencyStatus,
 )
-from app.services.model_library import ModelLibraryItem, ModelLibraryScanner, ModelLinkHealth
+from app.services.model_library import ModelLibraryItem, ModelLinkHealth
+from app.services.model_library_cache import (
+    clear_model_library_cache,
+    get_model_library,
+    refresh_model_library,
+)
 from app.services.model_profiles import ModelProfile, ModelProfileRepository, ModelSlot
 from app.services.model_selections import ModelSelection, ModelSelectionRepository
 from app.services.model_storage import (
@@ -193,10 +198,6 @@ def autofill_selection(profile: str) -> ModelSelection:
     return get_selection_repository().autofill(profile, repository.list_status(), allowed_slot_ids)
 
 
-def get_library_scanner() -> ModelLibraryScanner:
-    return ModelLibraryScanner(get_model_root())
-
-
 def to_response(status: ModelDependencyStatus) -> ModelDependencyStatusResponse:
     if status.provider == "manual" and status.slot_id and status.status != "installed":
         selection = get_selection_repository().get(status.profile)
@@ -330,6 +331,7 @@ def update_storage_settings(request: ModelStorageSettingsRequest) -> ModelStorag
         )
     except OSError as exc:
         raise HTTPException(status_code=409, detail={"code": MODEL_STORAGE_SETTINGS_SAVE_FAILED}) from exc
+    clear_model_library_cache()
     return ModelStorageSettingsResponse(root=root, exists=path_is_dir(root))
 
 
@@ -352,7 +354,7 @@ def list_profiles() -> ModelProfileListResponse:
 
 @router.get("/library", response_model=ModelLibraryResponse)
 def list_library(type: str | None = None) -> ModelLibraryResponse:
-    library = get_library_scanner().scan()
+    library = get_model_library(get_model_root())
     items = library.by_type(type) if type else library.items
     return ModelLibraryResponse(
         items=[library_item_to_response(item) for item in items],
@@ -362,7 +364,7 @@ def list_library(type: str | None = None) -> ModelLibraryResponse:
 
 @router.post("/library/refresh", response_model=ModelLibraryRefreshResponse)
 def refresh_library(type: str | None = None) -> ModelLibraryRefreshResponse:
-    library = get_library_scanner().scan()
+    library = refresh_model_library(get_model_root())
     items = library.by_type(type) if type else library.items
     return ModelLibraryRefreshResponse(
         items=[library_item_to_response(item) for item in items],

@@ -2211,6 +2211,7 @@ const messages = {
   "generationPresetBar.saved": { en: "Saved preset", ja: "保存済みプリセット" },
   "generationPresetBar.select": { en: "Select a preset", ja: "プリセットを選択" },
   "generationPresetBar.apply": { en: "Apply", ja: "適用" },
+  "generationPresetBar.overwrite": { en: "Overwrite", ja: "上書き" },
   "generationPresetBar.delete": { en: "Delete", ja: "削除" },
   "generationPresetBar.reload": { en: "Reload list", ja: "一覧を再読込" },
   "generationPresetBar.name": { en: "New preset name", ja: "新しいプリセット名" },
@@ -6171,9 +6172,6 @@ const asDetailerUnits = (value) => {
     };
   });
 };
-const activeArrayOrCurrent = (next, current) => {
-  return next.length > 0 ? next : current;
-};
 const errorMessage$3 = (error) => {
   return userFacingErrorMessage(error, "generation.error.generic");
 };
@@ -7173,9 +7171,15 @@ const useGenerationStore = defineStore("generation", {
           state[stateKey] = value;
         }
       }
-      this.controlNetUnits = activeArrayOrCurrent(asControlNetUnits(settings.controlnet_units), this.controlNetUnits);
-      this.animaLLLiteUnits = activeArrayOrCurrent(asAnimaLLLiteUnits(settings.anima_lllite_units), this.animaLLLiteUnits);
-      this.detailerUnits = activeArrayOrCurrent(asDetailerUnits(settings.detailer_units), this.detailerUnits);
+      if (Object.hasOwn(settings, "controlnet_units")) {
+        this.controlNetUnits = asControlNetUnits(settings.controlnet_units);
+      }
+      if (Object.hasOwn(settings, "anima_lllite_units")) {
+        this.animaLLLiteUnits = asAnimaLLLiteUnits(settings.anima_lllite_units);
+      }
+      if (Object.hasOwn(settings, "detailer_units")) {
+        this.detailerUnits = asDetailerUnits(settings.detailer_units);
+      }
       if (typeof settings.runtime_adapter === "string") {
         this.runtime = settings.runtime_adapter;
       }
@@ -7353,7 +7357,14 @@ const useGenerationStore = defineStore("generation", {
         this.error = errorMessage$3(error);
       }
     },
-    async saveStudioPreset(kind = "generation") {
+    async saveStudioPreset(kind = "generation", existingPreset = null) {
+      if (kind === "generation") {
+        const modelDependencies = useModelDependenciesStore();
+        if (!modelDependencies.selectionReady(this.profile)) {
+          this.error = useAsteriaI18n().t("modelSettings.profileLoading");
+          return null;
+        }
+      }
       const data = kind === "controlnet" ? { controlnet_units: this.controlNetUnits } : kind === "detailer" ? { detailer_units: this.detailerUnits } : kind === "topaz" ? {
         topaz_enabled: this.topazEnabled,
         topaz_lighting: this.topazLighting,
@@ -7372,11 +7383,12 @@ const useGenerationStore = defineStore("generation", {
         refiner_switch_at: this.refinerSwitchAt
       } : this.snapshotSettings();
       try {
-        const presetName = kind === "generation" ? this.studioPresetName : this.studioPresetNames[kind];
+        const presetName = existingPreset?.name ?? (kind === "generation" ? this.studioPresetName : this.studioPresetNames[kind]);
         const response = await $fetch(`/api/presets/${kind}`, {
           baseURL: useApiBase(),
           method: "POST",
           body: {
+            ...existingPreset ? { id: existingPreset.id } : {},
             kind,
             name: presetName || (kind === "generation" ? `${this.profile} config` : `${kind} preset`),
             data
@@ -7389,12 +7401,16 @@ const useGenerationStore = defineStore("generation", {
         };
         if (kind === "generation") {
           this.studioPresets = this.studioPresetsByKind.generation ?? [];
-          this.studioPresetName = "";
+          if (!existingPreset) {
+            this.studioPresetName = "";
+          }
         } else {
           this.studioPresetNames = { ...this.studioPresetNames, [kind]: "" };
         }
+        return response;
       } catch (error) {
         this.error = errorMessage$3(error);
+        return null;
       }
     },
     async deleteStudioPreset(kind, id) {
@@ -7426,6 +7442,9 @@ const useGenerationStore = defineStore("generation", {
         }
         if (Array.isArray(preset.data.controlnet_units)) {
           this.controlNetUnits = asControlNetUnits(preset.data.controlnet_units);
+        }
+        if (Array.isArray(preset.data.anima_lllite_units)) {
+          this.animaLLLiteUnits = asAnimaLLLiteUnits(preset.data.anima_lllite_units);
         }
         if (Array.isArray(preset.data.detailer_units)) {
           this.detailerUnits = asDetailerUnits(preset.data.detailer_units);
@@ -7489,9 +7508,12 @@ const _sfc_main$1m = /* @__PURE__ */ defineComponent({
   __ssrInlineRender: true,
   setup(__props) {
     const generation = useGenerationStore();
+    const modelDependencies = useModelDependenciesStore();
     const { t } = useAsteriaI18n();
     const selectedPresetId = ref("");
     const presetError = ref("");
+    const presetBusy = ref(false);
+    const modelSelectionReady = computed(() => modelDependencies.selectionReady(generation.profile));
     const presets = computed(() => generation.studioPresetsByKind.generation ?? generation.studioPresets.filter((preset) => preset.kind === "generation"));
     const selectedPreset = computed(() => presets.value.find((preset) => preset.id === selectedPresetId.value) ?? null);
     watch(
@@ -7510,13 +7532,13 @@ const _sfc_main$1m = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "generation-preset-bar",
         "aria-label": unref(t)("generationPresetBar.aria")
-      }, _attrs))} data-v-f60275ae><div class="generation-preset-bar__title" data-v-f60275ae><span data-v-f60275ae>${ssrInterpolate(unref(t)("generationPresetBar.title"))}</span><small data-v-f60275ae>${ssrInterpolate(unref(t)("generationPresetBar.help"))}</small></div><label class="field generation-preset-bar__select" data-v-f60275ae><span data-v-f60275ae>${ssrInterpolate(unref(t)("generationPresetBar.saved"))}</span><select${ssrRenderAttr("aria-label", unref(t)("generationPresetBar.saved"))} data-v-f60275ae><option value="" data-v-f60275ae${ssrIncludeBooleanAttr(Array.isArray(unref(selectedPresetId)) ? ssrLooseContain(unref(selectedPresetId), "") : ssrLooseEqual(unref(selectedPresetId), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("generationPresetBar.select"))}</option><!--[-->`);
+      }, _attrs))} data-v-c063e83e><div class="generation-preset-bar__title" data-v-c063e83e><span data-v-c063e83e>${ssrInterpolate(unref(t)("generationPresetBar.title"))}</span><small data-v-c063e83e>${ssrInterpolate(unref(t)("generationPresetBar.help"))}</small></div><label class="field generation-preset-bar__select" data-v-c063e83e><span data-v-c063e83e>${ssrInterpolate(unref(t)("generationPresetBar.saved"))}</span><select${ssrIncludeBooleanAttr(unref(presetBusy)) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("generationPresetBar.saved"))} data-v-c063e83e><option value="" data-v-c063e83e${ssrIncludeBooleanAttr(Array.isArray(unref(selectedPresetId)) ? ssrLooseContain(unref(selectedPresetId), "") : ssrLooseEqual(unref(selectedPresetId), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("generationPresetBar.select"))}</option><!--[-->`);
       ssrRenderList(unref(presets), (preset) => {
-        _push(`<option${ssrRenderAttr("value", preset.id)} data-v-f60275ae${ssrIncludeBooleanAttr(Array.isArray(unref(selectedPresetId)) ? ssrLooseContain(unref(selectedPresetId), preset.id) : ssrLooseEqual(unref(selectedPresetId), preset.id)) ? " selected" : ""}>${ssrInterpolate(preset.name)}</option>`);
+        _push(`<option${ssrRenderAttr("value", preset.id)} data-v-c063e83e${ssrIncludeBooleanAttr(Array.isArray(unref(selectedPresetId)) ? ssrLooseContain(unref(selectedPresetId), preset.id) : ssrLooseEqual(unref(selectedPresetId), preset.id)) ? " selected" : ""}>${ssrInterpolate(preset.name)}</option>`);
       });
-      _push(`<!--]--></select></label><div class="generation-preset-bar__actions" data-v-f60275ae><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(selectedPreset)) ? " disabled" : ""} data-v-f60275ae>${ssrInterpolate(unref(t)("generationPresetBar.apply"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(selectedPreset)) ? " disabled" : ""} data-v-f60275ae>${ssrInterpolate(unref(t)("generationPresetBar.delete"))}</button><button class="icon-button" type="button" data-v-f60275ae>${ssrInterpolate(unref(t)("generationPresetBar.reload"))}</button></div><label class="field generation-preset-bar__name" data-v-f60275ae><span data-v-f60275ae>${ssrInterpolate(unref(t)("generationPresetBar.name"))}</span><input${ssrRenderAttr("value", unref(generation).studioPresetName)}${ssrRenderAttr("aria-label", unref(t)("generationPresetBar.name"))}${ssrRenderAttr("placeholder", unref(t)("generationPresetBar.namePlaceholder", { profile: unref(generation).profile }))} data-v-f60275ae></label><button class="primary-button generation-preset-bar__save" type="button" data-v-f60275ae>${ssrInterpolate(unref(t)("generationPresetBar.save"))}</button>`);
+      _push(`<!--]--></select></label><div class="generation-preset-bar__actions" data-v-c063e83e><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(selectedPreset)) ? " disabled" : ""} data-v-c063e83e>${ssrInterpolate(unref(t)("generationPresetBar.apply"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(selectedPreset) || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-c063e83e>${ssrInterpolate(unref(t)("generationPresetBar.overwrite"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(selectedPreset)) ? " disabled" : ""} data-v-c063e83e>${ssrInterpolate(unref(t)("generationPresetBar.delete"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(presetBusy)) ? " disabled" : ""} data-v-c063e83e>${ssrInterpolate(unref(t)("generationPresetBar.reload"))}</button></div><label class="field generation-preset-bar__name" data-v-c063e83e><span data-v-c063e83e>${ssrInterpolate(unref(t)("generationPresetBar.name"))}</span><input${ssrRenderAttr("value", unref(generation).studioPresetName)}${ssrIncludeBooleanAttr(unref(presetBusy)) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("generationPresetBar.name"))}${ssrRenderAttr("placeholder", unref(t)("generationPresetBar.namePlaceholder", { profile: unref(generation).profile }))} data-v-c063e83e></label><button class="primary-button generation-preset-bar__save" type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-c063e83e>${ssrInterpolate(unref(t)("generationPresetBar.save"))}</button>`);
       if (unref(presetError)) {
-        _push(`<p class="error generation-preset-bar__error" aria-live="assertive" data-v-f60275ae>${ssrInterpolate(unref(presetError))}</p>`);
+        _push(`<p class="error generation-preset-bar__error" aria-live="assertive" data-v-c063e83e>${ssrInterpolate(unref(presetError))}</p>`);
       } else {
         _push(`<!---->`);
       }
@@ -7530,7 +7552,7 @@ _sfc_main$1m.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationPresetBar.vue");
   return _sfc_setup$1m ? _sfc_setup$1m(props, ctx) : void 0;
 };
-const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1m, [["__scopeId", "data-v-f60275ae"]]), { __name: "StudioGenerateGenerationPresetBar" });
+const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1m, [["__scopeId", "data-v-c063e83e"]]), { __name: "StudioGenerateGenerationPresetBar" });
 const _sfc_main$1l = /* @__PURE__ */ defineComponent({
   __name: "ModelSettingsPanel",
   __ssrInlineRender: true,
@@ -17532,9 +17554,7 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
         denoise: Boolean(data.topaz_denoise),
         override: Boolean(data.topaz_override),
         show_settings: Boolean(data.topaz_show_settings),
-        png_compression: typeof data.topaz_png_compression === "number" ? data.topaz_png_compression : 2,
-        upscale_model: typeof data.topaz_upscale_model === "string" ? data.topaz_upscale_model : "Graphics",
-        upscale_scale: typeof data.topaz_upscale_scale === "number" ? data.topaz_upscale_scale : 2
+        png_compression: typeof data.topaz_png_compression === "number" ? data.topaz_png_compression : 2
       };
     });
     const topazPresetSummary = computed(() => {
@@ -17542,15 +17562,13 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
       if (!data) {
         return t("library.defaultTopazSettings");
       }
-      const model = String(data.topaz_upscale_model ?? "Graphics");
-      const scale = String(data.topaz_upscale_scale ?? 2);
       const adjustments = [
         data.topaz_lighting ? t("runtimePane.lighting") : "",
         data.topaz_color ? t("runtimePane.color") : "",
         data.topaz_sharpen ? t("runtimePane.sharpen") : "",
         data.topaz_denoise ? t("runtimePane.denoise") : ""
       ].filter(Boolean).join(", ");
-      return [model, t("runtimePane.topazScaleSummary", { scale }), adjustments].filter(Boolean).join(" / ");
+      return adjustments || t("library.defaultTopazSettings");
     });
     const selectionActionDrawerAction = ref(null);
     const selectionActionDrawerState = computed(() => selectionActionDrawerAction.value ? selectionActionStates[selectionActionDrawerAction.value] : null);
@@ -18356,7 +18374,7 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
         }],
         tabindex: "0",
         "aria-label": unref(t)("library.workspaceAria")
-      }, _attrs))} data-v-d07a2514>`);
+      }, _attrs))} data-v-eb4effde>`);
       _push(ssrRenderComponent(LibraryWorkspaceBody, null, {
         folders: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
@@ -18399,7 +18417,7 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
         }),
         workspace: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<main class="${ssrRenderClass([{ "library-grid-pane--compare": unref(activeLibraryTask) === "compare" }, "library-grid-pane"])}"${ssrRenderAttr("aria-label", unref(t)("library.imagesAria"))} data-v-d07a2514${_scopeId}>`);
+            _push2(`<main class="${ssrRenderClass([{ "library-grid-pane--compare": unref(activeLibraryTask) === "compare" }, "library-grid-pane"])}"${ssrRenderAttr("aria-label", unref(t)("library.imagesAria"))} data-v-eb4effde${_scopeId}>`);
             _push2(ssrRenderComponent(LibraryFilterBar, {
               "task-options": unref(libraryTaskOptions),
               "active-task": unref(activeLibraryTask),
@@ -18447,9 +18465,9 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
               "task-actions": withCtx((_2, _push3, _parent3, _scopeId2) => {
                 if (_push3) {
                   if (unref(activeLibraryTask) === "organize") {
-                    _push3(`<div class="library-task-context__actions" data-v-d07a2514${_scopeId2}><button class="icon-button" type="button" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.selectAllVisible"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(selectedIds).length) ? " disabled" : ""} data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.clearSelection"))}</button></div>`);
+                    _push3(`<div class="library-task-context__actions" data-v-eb4effde${_scopeId2}><button class="icon-button" type="button" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.selectAllVisible"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(selectedIds).length) ? " disabled" : ""} data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.clearSelection"))}</button></div>`);
                   } else if (unref(activeLibraryTask) === "compare") {
-                    _push3(`<div class="library-task-context__actions" data-v-d07a2514${_scopeId2}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(library).items.length < 2) ? " disabled" : ""} data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.refreshPair"))}</button></div>`);
+                    _push3(`<div class="library-task-context__actions" data-v-eb4effde${_scopeId2}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(library).items.length < 2) ? " disabled" : ""} data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.refreshPair"))}</button></div>`);
                   } else {
                     _push3(`<!---->`);
                   }
@@ -18487,19 +18505,19 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
               "bulk-actions": withCtx((_2, _push3, _parent3, _scopeId2) => {
                 if (_push3) {
                   if (unref(activeLibraryTask) === "organize" && unref(organizeInspectorMode) === "organize") {
-                    _push3(`<!--[--><button class="icon-button" type="button" aria-haspopup="dialog"${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving || unref(bulkCurationSelectionLimitExceeded)) ? " disabled" : ""} data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.bulkCuration"))}</button>`);
+                    _push3(`<!--[--><button class="icon-button" type="button" aria-haspopup="dialog"${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving || unref(bulkCurationSelectionLimitExceeded)) ? " disabled" : ""} data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.bulkCuration"))}</button>`);
                     if (unref(bulkCurationSelectionLimitExceeded)) {
-                      _push3(`<small class="library-toolbar__limit error" aria-live="polite" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.bulkCurationSelectionLimit"))}</small>`);
+                      _push3(`<small class="library-toolbar__limit error" aria-live="polite" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.bulkCurationSelectionLimit"))}</small>`);
                     } else {
                       _push3(`<!---->`);
                     }
-                    _push3(`<select${ssrRenderAttr("value", unref(selectedRating))}${ssrRenderAttr("aria-label", unref(t)("library.bulkRating"))}${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving) ? " disabled" : ""} data-v-d07a2514${_scopeId2}><option value="" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.rating"))}</option><!--[-->`);
+                    _push3(`<select${ssrRenderAttr("value", unref(selectedRating))}${ssrRenderAttr("aria-label", unref(t)("library.bulkRating"))}${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving) ? " disabled" : ""} data-v-eb4effde${_scopeId2}><option value="" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.rating"))}</option><!--[-->`);
                     ssrRenderList([0, 1, 2, 3, 4, 5], (rating) => {
-                      _push3(`<option${ssrRenderAttr("value", rating)} data-v-d07a2514${_scopeId2}>${ssrInterpolate(rating)}</option>`);
+                      _push3(`<option${ssrRenderAttr("value", rating)} data-v-eb4effde${_scopeId2}>${ssrInterpolate(rating)}</option>`);
                     });
-                    _push3(`<!--]--></select><select${ssrRenderAttr("aria-label", unref(t)("library.moveSelectedToFolder"))}${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving) ? " disabled" : ""} data-v-d07a2514${_scopeId2}><option value="" data-v-d07a2514${ssrIncludeBooleanAttr(Array.isArray(unref(selectedMoveFolder)) ? ssrLooseContain(unref(selectedMoveFolder), "") : ssrLooseEqual(unref(selectedMoveFolder), "")) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(unref(t)("library.moveTo"))}</option><!--[-->`);
+                    _push3(`<!--]--></select><select${ssrRenderAttr("aria-label", unref(t)("library.moveSelectedToFolder"))}${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving) ? " disabled" : ""} data-v-eb4effde${_scopeId2}><option value="" data-v-eb4effde${ssrIncludeBooleanAttr(Array.isArray(unref(selectedMoveFolder)) ? ssrLooseContain(unref(selectedMoveFolder), "") : ssrLooseEqual(unref(selectedMoveFolder), "")) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(unref(t)("library.moveTo"))}</option><!--[-->`);
                     ssrRenderList(unref(movableFolders), (folder) => {
-                      _push3(`<option${ssrRenderAttr("value", folderKey(folder))} data-v-d07a2514${ssrIncludeBooleanAttr(Array.isArray(unref(selectedMoveFolder)) ? ssrLooseContain(unref(selectedMoveFolder), folderKey(folder)) : ssrLooseEqual(unref(selectedMoveFolder), folderKey(folder))) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(folder.name)}</option>`);
+                      _push3(`<option${ssrRenderAttr("value", folderKey(folder))} data-v-eb4effde${ssrIncludeBooleanAttr(Array.isArray(unref(selectedMoveFolder)) ? ssrLooseContain(unref(selectedMoveFolder), folderKey(folder)) : ssrLooseEqual(unref(selectedMoveFolder), folderKey(folder))) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(folder.name)}</option>`);
                     });
                     _push3(`<!--]--></select><!--]-->`);
                   } else {
@@ -18936,42 +18954,42 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
               }, {
                 actions: withCtx((_2, _push3, _parent3, _scopeId2) => {
                   if (_push3) {
-                    _push3(`<div class="library-action-stack"${ssrRenderAttr("aria-label", unref(t)("library.selectedImageActionsAria"))} data-v-d07a2514${_scopeId2}><section class="library-action-group library-action-group--primary" data-v-d07a2514${_scopeId2}><div data-v-d07a2514${_scopeId2}><strong data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.reuse"))}</strong><small data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.reuseDetailHelp"))}</small></div><div class="asset-actions library-action-row" data-v-d07a2514${_scopeId2}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.useAsImg2Img"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.openInImage"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.expand"))}</button></div></section><section class="library-action-group" data-v-d07a2514${_scopeId2}><div data-v-d07a2514${_scopeId2}><strong data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.externalTools"))}</strong><small data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.externalToolsHelp"))}</small></div>`);
+                    _push3(`<div class="library-action-stack"${ssrRenderAttr("aria-label", unref(t)("library.selectedImageActionsAria"))} data-v-eb4effde${_scopeId2}><section class="library-action-group library-action-group--primary" data-v-eb4effde${_scopeId2}><div data-v-eb4effde${_scopeId2}><strong data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.reuse"))}</strong><small data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.reuseDetailHelp"))}</small></div><div class="asset-actions library-action-row" data-v-eb4effde${_scopeId2}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.useAsImg2Img"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.openInImage"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.expand"))}</button></div></section><section class="library-action-group" data-v-eb4effde${_scopeId2}><div data-v-eb4effde${_scopeId2}><strong data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.externalTools"))}</strong><small data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.externalToolsHelp"))}</small></div>`);
                     _push3(ssrRenderComponent(_component_StudioEagleFolderSelect, null, null, _parent3, _scopeId2));
-                    _push3(`<small class="${ssrRenderClass({ error: eagleRegistration(unref(primarySelection)).status === "failed" })}" data-v-d07a2514${_scopeId2}>${ssrInterpolate(eagleRegistrationLabel(unref(primarySelection)))}</small><label class="field library-topaz-preset" data-v-d07a2514${_scopeId2}><span data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.topazPreset"))}</span><select${ssrRenderAttr("aria-label", unref(t)("library.topazPreset"))} data-v-d07a2514${_scopeId2}><option value="" data-v-d07a2514${ssrIncludeBooleanAttr(Array.isArray(unref(selectedTopazPresetId)) ? ssrLooseContain(unref(selectedTopazPresetId), "") : ssrLooseEqual(unref(selectedTopazPresetId), "")) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(unref(t)("library.defaultTopazSettings"))}</option><!--[-->`);
+                    _push3(`<small class="${ssrRenderClass({ error: eagleRegistration(unref(primarySelection)).status === "failed" })}" data-v-eb4effde${_scopeId2}>${ssrInterpolate(eagleRegistrationLabel(unref(primarySelection)))}</small><label class="field library-topaz-preset" data-v-eb4effde${_scopeId2}><span data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.topazPreset"))}</span><select${ssrRenderAttr("aria-label", unref(t)("library.topazPreset"))} data-v-eb4effde${_scopeId2}><option value="" data-v-eb4effde${ssrIncludeBooleanAttr(Array.isArray(unref(selectedTopazPresetId)) ? ssrLooseContain(unref(selectedTopazPresetId), "") : ssrLooseEqual(unref(selectedTopazPresetId), "")) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(unref(t)("library.defaultTopazSettings"))}</option><!--[-->`);
                     ssrRenderList(unref(topazPresets), (preset) => {
-                      _push3(`<option${ssrRenderAttr("value", preset.id)} data-v-d07a2514${ssrIncludeBooleanAttr(Array.isArray(unref(selectedTopazPresetId)) ? ssrLooseContain(unref(selectedTopazPresetId), preset.id) : ssrLooseEqual(unref(selectedTopazPresetId), preset.id)) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(preset.name)}</option>`);
+                      _push3(`<option${ssrRenderAttr("value", preset.id)} data-v-eb4effde${ssrIncludeBooleanAttr(Array.isArray(unref(selectedTopazPresetId)) ? ssrLooseContain(unref(selectedTopazPresetId), preset.id) : ssrLooseEqual(unref(selectedTopazPresetId), preset.id)) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(preset.name)}</option>`);
                     });
-                    _push3(`<!--]--></select><small data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(topazPresetSummary))}</small></label><div class="asset-actions library-action-row" data-v-d07a2514${_scopeId2}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(externalIntegrations).eagleLoading || !unref(externalIntegrations).eagleStatus?.connected || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-d07a2514${_scopeId2}>${ssrInterpolate(eagleActionLabel(unref(primarySelection)))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(externalIntegrations).topazLoading || !unref(externalIntegrations).topazStatus?.installed || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).topazLoading ? unref(t)("library.processing") : unref(t)("library.sendToTopaz"))}</button></div>`);
+                    _push3(`<!--]--></select><small data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(topazPresetSummary))}</small></label><div class="asset-actions library-action-row" data-v-eb4effde${_scopeId2}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(externalIntegrations).eagleLoading || !unref(externalIntegrations).eagleStatus?.connected || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-eb4effde${_scopeId2}>${ssrInterpolate(eagleActionLabel(unref(primarySelection)))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(externalIntegrations).topazLoading || !unref(externalIntegrations).topazStatus?.installed || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).topazLoading ? unref(t)("library.processing") : unref(t)("library.sendToTopaz"))}</button></div>`);
                     if (unref(externalIntegrations).eagleError) {
-                      _push3(`<p class="error" aria-live="assertive" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).eagleError)}</p>`);
+                      _push3(`<p class="error" aria-live="assertive" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).eagleError)}</p>`);
                     } else {
                       _push3(`<!---->`);
                     }
                     if (unref(externalIntegrations).topazError) {
-                      _push3(`<p class="error" aria-live="assertive" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).topazError)}</p>`);
+                      _push3(`<p class="error" aria-live="assertive" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).topazError)}</p>`);
                     } else {
                       _push3(`<!---->`);
                     }
-                    _push3(`</section><section class="library-action-group" data-v-d07a2514${_scopeId2}><div data-v-d07a2514${_scopeId2}><strong data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.export"))}</strong><small data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.exportDetailHelp"))}</small></div><div class="asset-actions library-action-row" data-v-d07a2514${_scopeId2}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(library).exportingId !== null) ? " disabled" : ""} data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(library).exportingId === unref(primarySelection).id ? unref(t)("library.exporting") : unref(t)("library.exportBundle"))}</button></div>`);
+                    _push3(`</section><section class="library-action-group" data-v-eb4effde${_scopeId2}><div data-v-eb4effde${_scopeId2}><strong data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.export"))}</strong><small data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.exportDetailHelp"))}</small></div><div class="asset-actions library-action-row" data-v-eb4effde${_scopeId2}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(library).exportingId !== null) ? " disabled" : ""} data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(library).exportingId === unref(primarySelection).id ? unref(t)("library.exporting") : unref(t)("library.exportBundle"))}</button></div>`);
                     if (unref(libraryExportError)) {
-                      _push3(`<p class="error" aria-live="assertive" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(libraryExportError))}</p>`);
+                      _push3(`<p class="error" aria-live="assertive" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(libraryExportError))}</p>`);
                     } else {
                       _push3(`<!---->`);
                     }
-                    _push3(`</section></div><small class="muted" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.eagleStatus", { status: unref(externalIntegrations).eagleStatus?.connected ? unref(t)("library.connected") : unref(t)("library.notConnected") }))}</small><small class="muted" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(t)("library.topazStatus", { status: unref(externalIntegrations).topazStatus?.installed ? unref(t)("library.installed") : unref(t)("library.notInstalled") }))}</small>`);
+                    _push3(`</section></div><small class="muted" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.eagleStatus", { status: unref(externalIntegrations).eagleStatus?.connected ? unref(t)("library.connected") : unref(t)("library.notConnected") }))}</small><small class="muted" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(t)("library.topazStatus", { status: unref(externalIntegrations).topazStatus?.installed ? unref(t)("library.installed") : unref(t)("library.notInstalled") }))}</small>`);
                     if (unref(eagleIntegrationMessage)) {
-                      _push3(`<small class="muted" aria-live="polite" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(eagleIntegrationMessage))}</small>`);
+                      _push3(`<small class="muted" aria-live="polite" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(eagleIntegrationMessage))}</small>`);
                     } else {
                       _push3(`<!---->`);
                     }
                     if (unref(topazIntegrationMessage)) {
-                      _push3(`<small class="muted" aria-live="polite" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(topazIntegrationMessage))}</small>`);
+                      _push3(`<small class="muted" aria-live="polite" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(topazIntegrationMessage))}</small>`);
                     } else {
                       _push3(`<!---->`);
                     }
                     if (unref(libraryExportMessage$1)) {
-                      _push3(`<small class="muted library-export-message" data-v-d07a2514${_scopeId2}>${ssrInterpolate(unref(libraryExportMessage$1))}</small>`);
+                      _push3(`<small class="muted library-export-message" data-v-eb4effde${_scopeId2}>${ssrInterpolate(unref(libraryExportMessage$1))}</small>`);
                     } else {
                       _push3(`<!---->`);
                     }
@@ -19337,77 +19355,77 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
         _: 1
       }, _parent));
       if (unref(contextMenu).open) {
-        _push(`<div class="library-context-menu" role="menu" tabindex="-1"${ssrRenderAttr("aria-label", unref(t)("library.selectedCount", { count: unref(contextMenu).ids.length }))} style="${ssrRenderStyle({ left: `${unref(contextMenu).x}px`, top: `${unref(contextMenu).y}px` })}" data-v-d07a2514><strong data-v-d07a2514>${ssrInterpolate(unref(t)("library.selectedCount", { count: unref(contextMenu).ids.length }))}</strong><span data-v-d07a2514>${ssrInterpolate(unref(t)("library.rating"))}</span><div class="library-context-menu__row" data-v-d07a2514><!--[-->`);
+        _push(`<div class="library-context-menu" role="menu" tabindex="-1"${ssrRenderAttr("aria-label", unref(t)("library.selectedCount", { count: unref(contextMenu).ids.length }))} style="${ssrRenderStyle({ left: `${unref(contextMenu).x}px`, top: `${unref(contextMenu).y}px` })}" data-v-eb4effde><strong data-v-eb4effde>${ssrInterpolate(unref(t)("library.selectedCount", { count: unref(contextMenu).ids.length }))}</strong><span data-v-eb4effde>${ssrInterpolate(unref(t)("library.rating"))}</span><div class="library-context-menu__row" data-v-eb4effde><!--[-->`);
         ssrRenderList([0, 1, 2, 3, 4, 5], (rating) => {
-          _push(`<button role="menuitem" type="button" data-v-d07a2514>${ssrInterpolate(rating)}</button>`);
+          _push(`<button role="menuitem" type="button" data-v-eb4effde>${ssrInterpolate(rating)}</button>`);
         });
-        _push(`<!--]--></div><span data-v-d07a2514>${ssrInterpolate(unref(t)("library.moveToFolder"))}</span><!--[-->`);
+        _push(`<!--]--></div><span data-v-eb4effde>${ssrInterpolate(unref(t)("library.moveToFolder"))}</span><!--[-->`);
         ssrRenderList(unref(movableFolders), (folder) => {
-          _push(`<button class="library-context-menu__item" role="menuitem" type="button" data-v-d07a2514>${ssrInterpolate(folderNameForKey(folderKey(folder)))}</button>`);
+          _push(`<button class="library-context-menu__item" role="menuitem" type="button" data-v-eb4effde>${ssrInterpolate(folderNameForKey(folderKey(folder)))}</button>`);
         });
         _push(`<!--]--></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(bulkCurationOpen)) {
-        _push(`<div class="library-modal" data-v-d07a2514><section class="library-modal__panel library-bulk-curation" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("library.bulkCuration"))} aria-describedby="library-bulk-curation-status" tabindex="-1" data-v-d07a2514><header class="library-modal__header" data-v-d07a2514><div data-v-d07a2514><strong data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkCuration"))}</strong><small data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkCurationSelected", { count: unref(selectedIds).length }))}</small></div><button class="icon-button library-modal__close" type="button"${ssrRenderAttr("aria-label", unref(t)("library.close"))}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-d07a2514>×</button></header><fieldset class="library-bulk-curation__group" data-v-d07a2514><legend data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkFavorite"))}</legend><div class="library-bulk-curation__segments" data-v-d07a2514><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "unchanged")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "unchanged" })}" data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkFavoriteUnchanged"))}</button><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "on")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "on" })}" data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkFavoriteOn"))}</button><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "off")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "off" })}" data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkFavoriteOff"))}</button></div></fieldset><div class="library-bulk-curation__fields" data-v-d07a2514><label class="field" data-v-d07a2514><span data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkTagsAdd"))}</span><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("library.bulkTagsPlaceholder"))}${ssrRenderAttr("aria-invalid", unref(bulkTagConflictValues).length || unref(bulkCurationOperationLimitExceeded) || unref(bulkCurationTagLimitExceeded) ? "true" : void 0)} aria-describedby="library-bulk-curation-status" data-v-d07a2514>${ssrInterpolate(unref(bulkTagsAddDraft))}</textarea>`);
+        _push(`<div class="library-modal" data-v-eb4effde><section class="library-modal__panel library-bulk-curation" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("library.bulkCuration"))} aria-describedby="library-bulk-curation-status" tabindex="-1" data-v-eb4effde><header class="library-modal__header" data-v-eb4effde><div data-v-eb4effde><strong data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkCuration"))}</strong><small data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkCurationSelected", { count: unref(selectedIds).length }))}</small></div><button class="icon-button library-modal__close" type="button"${ssrRenderAttr("aria-label", unref(t)("library.close"))}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-eb4effde>×</button></header><fieldset class="library-bulk-curation__group" data-v-eb4effde><legend data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkFavorite"))}</legend><div class="library-bulk-curation__segments" data-v-eb4effde><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "unchanged")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "unchanged" })}" data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkFavoriteUnchanged"))}</button><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "on")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "on" })}" data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkFavoriteOn"))}</button><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "off")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "off" })}" data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkFavoriteOff"))}</button></div></fieldset><div class="library-bulk-curation__fields" data-v-eb4effde><label class="field" data-v-eb4effde><span data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkTagsAdd"))}</span><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("library.bulkTagsPlaceholder"))}${ssrRenderAttr("aria-invalid", unref(bulkTagConflictValues).length || unref(bulkCurationOperationLimitExceeded) || unref(bulkCurationTagLimitExceeded) ? "true" : void 0)} aria-describedby="library-bulk-curation-status" data-v-eb4effde>${ssrInterpolate(unref(bulkTagsAddDraft))}</textarea>`);
         if (unref(bulkTagsAdd).length) {
-          _push(`<span class="library-bulk-curation__chips" data-v-d07a2514><!--[-->`);
+          _push(`<span class="library-bulk-curation__chips" data-v-eb4effde><!--[-->`);
           ssrRenderList(unref(bulkTagsAdd), (tag) => {
-            _push(`<span data-v-d07a2514>+ ${ssrInterpolate(tag)}</span>`);
+            _push(`<span data-v-eb4effde>+ ${ssrInterpolate(tag)}</span>`);
           });
           _push(`<!--]--></span>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</label><label class="field" data-v-d07a2514><span data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkTagsRemove"))}</span><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("library.bulkTagsPlaceholder"))}${ssrRenderAttr("aria-invalid", unref(bulkTagConflictValues).length || unref(bulkCurationOperationLimitExceeded) || unref(bulkCurationTagLimitExceeded) ? "true" : void 0)} aria-describedby="library-bulk-curation-status" data-v-d07a2514>${ssrInterpolate(unref(bulkTagsRemoveDraft))}</textarea>`);
+        _push(`</label><label class="field" data-v-eb4effde><span data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkTagsRemove"))}</span><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("library.bulkTagsPlaceholder"))}${ssrRenderAttr("aria-invalid", unref(bulkTagConflictValues).length || unref(bulkCurationOperationLimitExceeded) || unref(bulkCurationTagLimitExceeded) ? "true" : void 0)} aria-describedby="library-bulk-curation-status" data-v-eb4effde>${ssrInterpolate(unref(bulkTagsRemoveDraft))}</textarea>`);
         if (unref(bulkTagsRemove).length) {
-          _push(`<span class="library-bulk-curation__chips library-bulk-curation__chips--remove" data-v-d07a2514><!--[-->`);
+          _push(`<span class="library-bulk-curation__chips library-bulk-curation__chips--remove" data-v-eb4effde><!--[-->`);
           ssrRenderList(unref(bulkTagsRemove), (tag) => {
-            _push(`<span data-v-d07a2514>− ${ssrInterpolate(tag)}</span>`);
+            _push(`<span data-v-eb4effde>− ${ssrInterpolate(tag)}</span>`);
           });
           _push(`<!--]--></span>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</label></div><div id="library-bulk-curation-status" class="library-bulk-curation__status" aria-live="polite" data-v-d07a2514>`);
+        _push(`</label></div><div id="library-bulk-curation-status" class="library-bulk-curation__status" aria-live="polite" data-v-eb4effde>`);
         if (unref(bulkTagConflictValues).length) {
-          _push(`<p class="error" data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkCurationConflict", { tags: unref(bulkTagConflictValues).join(", ") }))}</p>`);
+          _push(`<p class="error" data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkCurationConflict", { tags: unref(bulkTagConflictValues).join(", ") }))}</p>`);
         } else if (unref(bulkCurationOperationLimitExceeded)) {
-          _push(`<p class="error" data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkCurationOperationLimit"))}</p>`);
+          _push(`<p class="error" data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkCurationOperationLimit"))}</p>`);
         } else if (unref(bulkCurationTagLimitExceeded)) {
-          _push(`<p class="error" data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkCurationTagLimit"))}</p>`);
+          _push(`<p class="error" data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkCurationTagLimit"))}</p>`);
         } else {
-          _push(`<small class="muted" data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkCurationHelp"))}</small>`);
+          _push(`<small class="muted" data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkCurationHelp"))}</small>`);
         }
-        _push(`<small class="muted" data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkCurationPreview", { count: unref(bulkCurationPreview).length, add: unref(bulkTagsAdd).length, remove: unref(bulkTagsRemove).length }))}</small></div><footer class="library-bulk-curation__actions" data-v-d07a2514><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-d07a2514>${ssrInterpolate(unref(t)("library.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(bulkCurationCanApply)) ? " disabled" : ""} data-v-d07a2514>${ssrInterpolate(unref(library).saving ? unref(t)("library.saving") : unref(t)("library.apply"))}</button></footer></section></div>`);
+        _push(`<small class="muted" data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkCurationPreview", { count: unref(bulkCurationPreview).length, add: unref(bulkTagsAdd).length, remove: unref(bulkTagsRemove).length }))}</small></div><footer class="library-bulk-curation__actions" data-v-eb4effde><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-eb4effde>${ssrInterpolate(unref(t)("library.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(bulkCurationCanApply)) ? " disabled" : ""} data-v-eb4effde>${ssrInterpolate(unref(library).saving ? unref(t)("library.saving") : unref(t)("library.apply"))}</button></footer></section></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(bulkDeleteOpen)) {
-        _push(`<div class="library-modal" data-v-d07a2514><section class="library-modal__panel library-bulk-delete" role="alertdialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("library.bulkDelete"))} aria-describedby="library-bulk-delete-description" tabindex="-1" data-v-d07a2514><header class="library-modal__header" data-v-d07a2514><div data-v-d07a2514><strong data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkDelete"))}</strong><small data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkDeleteSelected", { count: unref(selectedIds).length }))}</small></div><button class="icon-button library-modal__close" type="button"${ssrRenderAttr("aria-label", unref(t)("library.close"))}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-d07a2514>×</button></header><p id="library-bulk-delete-description" class="library-bulk-delete__description" data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkDeleteDescription"))}</p><fieldset class="library-bulk-delete__modes" data-v-d07a2514><legend data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkDeleteMode"))}</legend><button type="button" class="${ssrRenderClass({ active: unref(bulkDeleteMode) === "history_only" })}"${ssrRenderAttr("aria-pressed", unref(bulkDeleteMode) === "history_only")}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-d07a2514><strong data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkDeleteHistoryOnly"))}</strong><small data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkDeleteHistoryOnlyHelp"))}</small></button><button type="button" class="${ssrRenderClass({ active: unref(bulkDeleteMode) === "history_and_artifacts" })}"${ssrRenderAttr("aria-pressed", unref(bulkDeleteMode) === "history_and_artifacts")}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-d07a2514><strong data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkDeleteWithArtifacts"))}</strong><small data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkDeleteWithArtifactsHelp"))}</small></button></fieldset>`);
+        _push(`<div class="library-modal" data-v-eb4effde><section class="library-modal__panel library-bulk-delete" role="alertdialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("library.bulkDelete"))} aria-describedby="library-bulk-delete-description" tabindex="-1" data-v-eb4effde><header class="library-modal__header" data-v-eb4effde><div data-v-eb4effde><strong data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkDelete"))}</strong><small data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkDeleteSelected", { count: unref(selectedIds).length }))}</small></div><button class="icon-button library-modal__close" type="button"${ssrRenderAttr("aria-label", unref(t)("library.close"))}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-eb4effde>×</button></header><p id="library-bulk-delete-description" class="library-bulk-delete__description" data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkDeleteDescription"))}</p><fieldset class="library-bulk-delete__modes" data-v-eb4effde><legend data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkDeleteMode"))}</legend><button type="button" class="${ssrRenderClass({ active: unref(bulkDeleteMode) === "history_only" })}"${ssrRenderAttr("aria-pressed", unref(bulkDeleteMode) === "history_only")}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-eb4effde><strong data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkDeleteHistoryOnly"))}</strong><small data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkDeleteHistoryOnlyHelp"))}</small></button><button type="button" class="${ssrRenderClass({ active: unref(bulkDeleteMode) === "history_and_artifacts" })}"${ssrRenderAttr("aria-pressed", unref(bulkDeleteMode) === "history_and_artifacts")}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-eb4effde><strong data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkDeleteWithArtifacts"))}</strong><small data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkDeleteWithArtifactsHelp"))}</small></button></fieldset>`);
         if (unref(bulkDeleteMode) === "history_and_artifacts") {
-          _push(`<p class="library-bulk-delete__warning" data-v-d07a2514>${ssrInterpolate(unref(t)("library.bulkDeleteArtifactsWarning"))}</p>`);
+          _push(`<p class="library-bulk-delete__warning" data-v-eb4effde>${ssrInterpolate(unref(t)("library.bulkDeleteArtifactsWarning"))}</p>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(bulkDeleteError)) {
-          _push(`<p class="error" aria-live="assertive" data-v-d07a2514>${ssrInterpolate(unref(bulkDeleteError))}</p>`);
+          _push(`<p class="error" aria-live="assertive" data-v-eb4effde>${ssrInterpolate(unref(bulkDeleteError))}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<footer class="library-bulk-delete__actions" data-v-d07a2514><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-d07a2514>${ssrInterpolate(unref(t)("library.cancel"))}</button><button class="library-danger-button library-danger-button--filled" type="button"${ssrIncludeBooleanAttr(!unref(canSubmitBulkDelete)(unref(selectedIds).length, unref(library).saving)) ? " disabled" : ""} data-v-d07a2514>${ssrInterpolate(unref(library).saving ? unref(t)("library.bulkDeleting") : unref(t)("library.bulkDeleteConfirm", { count: unref(selectedIds).length }))}</button></footer></section></div>`);
+        _push(`<footer class="library-bulk-delete__actions" data-v-eb4effde><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-eb4effde>${ssrInterpolate(unref(t)("library.cancel"))}</button><button class="library-danger-button library-danger-button--filled" type="button"${ssrIncludeBooleanAttr(!unref(canSubmitBulkDelete)(unref(selectedIds).length, unref(library).saving)) ? " disabled" : ""} data-v-eb4effde>${ssrInterpolate(unref(library).saving ? unref(t)("library.bulkDeleting") : unref(t)("library.bulkDeleteConfirm", { count: unref(selectedIds).length }))}</button></footer></section></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(lightboxItem)) {
-        _push(`<div class="library-lightbox" role="dialog" aria-modal="true" tabindex="-1"${ssrRenderAttr("aria-label", unref(t)("library.lightboxAria"))} data-v-d07a2514>`);
+        _push(`<div class="library-lightbox" role="dialog" aria-modal="true" tabindex="-1"${ssrRenderAttr("aria-label", unref(t)("library.lightboxAria"))} data-v-eb4effde>`);
         if (selectedImageOutput(unref(lightboxItem))) {
-          _push(`<img${ssrRenderAttr("src", outputUrl(selectedImageOutput(unref(lightboxItem))))}${ssrRenderAttr("alt", outputFilename(selectedImageOutput(unref(lightboxItem))))} data-v-d07a2514>`);
+          _push(`<img${ssrRenderAttr("src", outputUrl(selectedImageOutput(unref(lightboxItem))))}${ssrRenderAttr("alt", outputFilename(selectedImageOutput(unref(lightboxItem))))} data-v-eb4effde>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<button class="library-lightbox__nav library-lightbox__nav--previous" type="button"${ssrIncludeBooleanAttr(unref(library).items[0]?.id === unref(lightboxItem).id) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.previousImage"))} data-v-d07a2514> ‹ </button><button class="library-lightbox__nav library-lightbox__nav--next" type="button"${ssrIncludeBooleanAttr(unref(library).items[unref(library).items.length - 1]?.id === unref(lightboxItem).id) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.nextImage"))} data-v-d07a2514> › </button><div class="library-lightbox__identity" data-v-d07a2514><strong data-v-d07a2514>#${ssrInterpolate(unref(lightboxItem).id)} / ${ssrInterpolate(unref(lightboxItem).profile)}</strong><small data-v-d07a2514>${ssrInterpolate(outputFilename(selectedImageOutput(unref(lightboxItem))))}</small></div><button class="icon-button" type="button" data-v-d07a2514>${ssrInterpolate(unref(t)("library.close"))}</button></div>`);
+        _push(`<button class="library-lightbox__nav library-lightbox__nav--previous" type="button"${ssrIncludeBooleanAttr(unref(library).items[0]?.id === unref(lightboxItem).id) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.previousImage"))} data-v-eb4effde> ‹ </button><button class="library-lightbox__nav library-lightbox__nav--next" type="button"${ssrIncludeBooleanAttr(unref(library).items[unref(library).items.length - 1]?.id === unref(lightboxItem).id) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.nextImage"))} data-v-eb4effde> › </button><div class="library-lightbox__identity" data-v-eb4effde><strong data-v-eb4effde>#${ssrInterpolate(unref(lightboxItem).id)} / ${ssrInterpolate(unref(lightboxItem).profile)}</strong><small data-v-eb4effde>${ssrInterpolate(outputFilename(selectedImageOutput(unref(lightboxItem))))}</small></div><button class="icon-button" type="button" data-v-eb4effde>${ssrInterpolate(unref(t)("library.close"))}</button></div>`);
       } else {
         _push(`<!---->`);
       }
@@ -19421,7 +19439,7 @@ _sfc_main$A.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageLibraryView.vue");
   return _sfc_setup$A ? _sfc_setup$A(props, ctx) : void 0;
 };
-const ImageLibraryView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$A, [["__scopeId", "data-v-d07a2514"]]), { __name: "StudioImageLibraryView" });
+const ImageLibraryView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$A, [["__scopeId", "data-v-eb4effde"]]), { __name: "StudioImageLibraryView" });
 const canonicalDraft = (draft) => ({
   dataset_id: draft.dataset_id,
   dataset_updated_at: draft.dataset_updated_at,
