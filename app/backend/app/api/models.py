@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from dataclasses import replace
 import threading
 
@@ -313,6 +313,15 @@ def path_is_file(path: Path) -> bool:
         return False
 
 
+def normalized_library_asset_path(path: str) -> str | None:
+    normalized = PurePosixPath(path.replace("\\", "/"))
+    if normalized.is_absolute() or not normalized.parts:
+        return None
+    if any(part in {"", ".", ".."} for part in normalized.parts):
+        return None
+    return normalized.as_posix()
+
+
 @router.get("/storage", response_model=ModelStorageSettingsResponse)
 def get_storage_settings() -> ModelStorageSettingsResponse:
     root = get_model_root()
@@ -375,14 +384,26 @@ def refresh_library(type: str | None = None) -> ModelLibraryRefreshResponse:
 
 @router.get("/library-asset")
 def library_asset(path: str) -> FileResponse:
+    relative_path = normalized_library_asset_path(path)
+    allowed_suffixes = {".png", ".jpg", ".jpeg", ".webp"}
+    if relative_path is None or PurePosixPath(relative_path).suffix.lower() not in allowed_suffixes:
+        raise HTTPException(status_code=404, detail="Model asset not found")
+
+    model_root = get_model_root()
+    library = get_model_library(model_root)
+    indexed_previews = {
+        normalized.casefold()
+        for item in library.items
+        if (normalized := normalized_library_asset_path(item.metadata.get("preview_image_path", ""))) is not None
+    }
+    if relative_path.casefold() not in indexed_previews:
+        raise HTTPException(status_code=404, detail="Model asset not found")
+
     try:
-        root = get_model_root().resolve()
-        asset_path = (root / path).resolve()
+        root = model_root.resolve()
+        asset_path = (root / Path(*PurePosixPath(relative_path).parts)).resolve()
     except OSError as exc:
         raise HTTPException(status_code=404, detail="Model asset not found") from exc
-    allowed_suffixes = {".png", ".jpg", ".jpeg", ".webp"}
-    if root not in asset_path.parents or asset_path.suffix.lower() not in allowed_suffixes:
-        raise HTTPException(status_code=404, detail="Model asset not found")
     if not path_exists(asset_path) or not path_is_file(asset_path):
         raise HTTPException(status_code=404, detail="Model asset not found")
     return FileResponse(asset_path)
