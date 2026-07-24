@@ -79,6 +79,8 @@ def _settings_validation_error_code(error: ValidationError) -> str:
     for item in error.errors():
         loc = tuple(str(part) for part in item.get("loc", ()))
         message = str(item.get("msg", ""))
+        if "library" in loc or "Library saved filter" in message:
+            return "settings_library_saved_filters_invalid"
         if loc[-1:] == ("api_key_env_var",):
             return "settings_ai_api_key_env_var_invalid"
         if loc[-1:] == ("id",):
@@ -101,7 +103,7 @@ def _validate_settings_payload(payload: dict[str, Any]) -> UserSettings:
 
 def _merge_settings_payload(current: UserSettings, payload: dict[str, Any]) -> dict[str, Any]:
     merged = current.model_dump()
-    for section in ("output", "storage", "ai"):
+    for section in ("output", "storage", "ai", "library"):
         if section not in payload:
             continue
         value = payload[section]
@@ -121,6 +123,7 @@ def _settings_response(settings: UserSettings, *, ensure_directories: bool = Fal
         output=settings.output,
         storage=settings.storage,
         ai=settings.ai,
+        library=settings.library,
         resolved_paths=SettingsResolvedPaths(
             output_root=str(output_root),
             merge_preset_dir=str(merge_preset_dir),

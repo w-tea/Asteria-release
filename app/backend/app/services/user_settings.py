@@ -78,10 +78,44 @@ class AISettings(BaseModel):
         return self
 
 
+class LibrarySavedFilter(BaseModel):
+    id: str
+    label: str
+    query: str = ""
+    profile: str = ""
+    tag: str = ""
+    tagSource: Literal["creator", "prompt", "all"] = "creator"
+    favoriteOnly: bool = False
+    showInternalTags: bool = False
+
+    @field_validator("id", "label", "query", "profile", "tag", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: object) -> str:
+        return " ".join(str(value or "").strip().split())
+
+    @model_validator(mode="after")
+    def _require_identity(self) -> "LibrarySavedFilter":
+        if not self.id or not self.label:
+            raise ValueError("Library saved filter id and label are required.")
+        return self
+
+
+class LibrarySettings(BaseModel):
+    saved_filters: list[LibrarySavedFilter] = Field(default_factory=list, max_length=12)
+
+    @model_validator(mode="after")
+    def _require_unique_ids(self) -> "LibrarySettings":
+        ids = [item.id.casefold() for item in self.saved_filters]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Library saved filter ids must be unique.")
+        return self
+
+
 class UserSettings(BaseModel):
     output: OutputSettings = Field(default_factory=OutputSettings)
     storage: StorageSettings = Field(default_factory=StorageSettings)
     ai: AISettings = Field(default_factory=AISettings)
+    library: LibrarySettings = Field(default_factory=LibrarySettings)
 
 
 class UserSettingsRepository:

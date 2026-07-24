@@ -7,11 +7,12 @@ import hashlib
 from itertools import product
 import sqlite3
 import threading
+import unicodedata
 from typing import Any
 from uuid import uuid4
 import zipfile
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from PIL import Image
 from pydantic import BaseModel, Field, field_validator
@@ -21,6 +22,7 @@ from app.schemas.generation import (
     AdvancedStyleSelection,
     GenerationFolderResponse,
     GenerationHistoryResponse,
+    GenerationTagCatalogResponse,
     GenerationResponse,
     Img2ImgRequest,
     InpaintRequest,
@@ -39,6 +41,7 @@ from app.services.artifact_lifecycle import (
     end_orphan_cleanup as _end_orphan_cleanup,
 )
 from app.services.image_validation import InvalidImageContentError, validate_image_file
+from app.services.library_thumbnails import LibraryThumbnailError, LibraryThumbnailService
 from app.services.inpaint_region import InpaintRegionError, validate_only_masked_inputs
 from app.services.external_settings import ExternalIntegrationSettingsRepository
 from app.services.generation_schema import GenerationSchema, GenerationSchemaNotFound, GenerationSchemaRepository
@@ -3265,7 +3268,8 @@ def retry_job(job_id: str) -> GenerationJobResponse:
 
 @router.get("/history", response_model=GenerationHistoryResponse)
 def history(
-    limit: int = 50,
+    limit: int = Query(default=72, ge=1, le=100),
+    cursor: str = "",
     q: str = "",
     profile: str = "",
     favorite: bool = False,
@@ -3273,11 +3277,82 @@ def history(
     folder: str = "all",
 ) -> GenerationHistoryResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
-    if q or profile or favorite or tag or folder not in {"", "all"}:
-        return GenerationHistoryResponse(
-            items=repository.search(limit=limit, query=q, profile=profile, favorite=favorite, tag=tag, folder=folder)
+    try:
+        page = repository.page(
+            limit=limit,
+            cursor=cursor,
+            query=q,
+            profile=profile,
+            favorite=favorite,
+            tag=tag,
+            folder=folder,
         )
-    return GenerationHistoryResponse(items=repository.list_recent(limit=limit, folder=folder))
+    except ValueError as error:
+        if str(error) == "invalid_history_cursor":
+            raise HTTPException(status_code=400, detail={"code": "invalid_history_cursor"}) from error
+        raise
+    return GenerationHistoryResponse(
+        items=page.items,
+        next_cursor=page.next_cursor,
+        has_more=page.has_more,
+    )
+
+
+@router.get("/history/tags", response_model=GenerationTagCatalogResponse)
+def history_tags() -> GenerationTagCatalogResponse:
+    repository = HistoryRepository(_data_dir() / "asteria.db")
+    tags: list[str] = []
+    generated_tags: list[str] = []
+    seen_tags: set[str] = set()
+    seen_generated_tags: set[str] = set()
+    before_id: int | None = None
+    while True:
+        rows, next_before = repository.tag_page(before_id=before_id, limit=128)
+        for row in rows:
+            for target, seen, values in (
+                (tags, seen_tags, row["tags"]),
+                (generated_tags, seen_generated_tags, row["generated_tags"]),
+            ):
+                for raw_value in values:
+                    value = " ".join(str(raw_value).strip().split())
+                    key = unicodedata.normalize("NFKC", value).casefold()
+                    if value and key not in seen:
+                        target.append(value)
+                        seen.add(key)
+        if next_before is None:
+            break
+        before_id = next_before
+    return GenerationTagCatalogResponse(tags=tags, generated_tags=generated_tags)
+
+
+@router.get("/history/{generation_id}/thumbnail")
+def history_thumbnail(generation_id: int) -> FileResponse:
+    data_dir = _data_dir()
+    item = HistoryRepository(data_dir / "asteria.db").get(generation_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_NOT_FOUND})
+    accepted_roots = _known_output_roots(data_dir, [item])
+    accepted_roots.update(
+        {
+            data_dir / "init_images",
+            data_dir / "mask_images",
+            data_dir / "control_images",
+        }
+    )
+    try:
+        thumbnail = LibraryThumbnailService(data_dir / "cache" / "library-thumbnails").thumbnail_for(
+            item,
+            accepted_roots,
+        )
+    except LibraryThumbnailError as error:
+        unavailable = error.code in {"library_thumbnail_cache_unavailable", "library_thumbnail_encode_failed"}
+        code = api_errors.LIBRARY_THUMBNAIL_UNAVAILABLE if unavailable else api_errors.LIBRARY_THUMBNAIL_NOT_FOUND
+        raise HTTPException(status_code=503 if unavailable else 404, detail={"code": code}) from error
+    return FileResponse(
+        thumbnail,
+        media_type="image/webp",
+        headers={"Cache-Control": "private, max-age=31536000, immutable"},
+    )
 
 
 @router.get("/history/folders", response_model=GenerationFolderResponse)

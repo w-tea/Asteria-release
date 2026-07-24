@@ -30,6 +30,13 @@ from app.services.image_edit_lineage import (
     load_image_edit_lineage,
     write_image_edit_lineage,
 )
+from app.services.edit_asset_lifecycle import AssetMeasure, EditAssetLifecycleService
+from app.services.image_editor_drafts import (
+    DraftConflictError,
+    ImageEditorDraft,
+    ImageEditorDraftRepository,
+    ImageEditorDraftWrite,
+)
 from app.services.user_settings import UserSettingsRepository, resolve_output_root
 
 router = APIRouter(prefix="/api/assets", tags=["assets"])
@@ -64,6 +71,30 @@ class CropInitImageRequest(BaseModel):
 class CropInitImageResponse(UploadedAssetResponse):
     lineage_path: str
     lineage: ImageEditLineage
+
+
+class AssetMeasureResponse(BaseModel):
+    count: int = 0
+    bytes: int = 0
+
+
+class EditAssetLifecycleResponse(BaseModel):
+    editing_temp: AssetMeasureResponse
+    safe_reclaimable: AssetMeasureResponse
+    thumbnail_cache: AssetMeasureResponse
+    protected: AssetMeasureResponse
+    reference_health: str
+
+
+class EditAssetCleanupResponse(BaseModel):
+    removed: AssetMeasureResponse
+    skipped: AssetMeasureResponse
+    failed: AssetMeasureResponse
+    reference_health: str
+
+
+def _measure_response(measure: AssetMeasure) -> AssetMeasureResponse:
+    return AssetMeasureResponse(count=measure.count, bytes=measure.bytes)
 
 
 def _safe_filename(filename: str) -> str:
@@ -273,9 +304,115 @@ async def upload_mask_image(request: Request, filename: str) -> UploadedAssetRes
     return await _upload_image_asset(request, filename, "mask_images", "mask")
 
 
+@router.get("/lifecycle", response_model=EditAssetLifecycleResponse)
+def edit_asset_lifecycle() -> EditAssetLifecycleResponse:
+    inventory = EditAssetLifecycleService(_asset_data_dir()).inventory()
+    return EditAssetLifecycleResponse(
+        editing_temp=_measure_response(inventory.editing_temp),
+        safe_reclaimable=_measure_response(inventory.safe_reclaimable),
+        thumbnail_cache=_measure_response(inventory.thumbnail_cache),
+        protected=_measure_response(inventory.protected),
+        reference_health=inventory.reference_health,
+    )
+
+
+@router.post("/lifecycle/cleanup", response_model=EditAssetCleanupResponse)
+def cleanup_edit_assets() -> EditAssetCleanupResponse:
+    result = EditAssetLifecycleService(_asset_data_dir()).cleanup()
+    if result is None:
+        raise HTTPException(status_code=409, detail={"code": api_errors.ASSET_LIFECYCLE_BUSY})
+    return EditAssetCleanupResponse(
+        removed=_measure_response(result.removed),
+        skipped=_measure_response(result.skipped),
+        failed=_measure_response(result.failed),
+        reference_health=result.reference_health,
+    )
+
+
+def _draft_repository() -> ImageEditorDraftRepository:
+    return ImageEditorDraftRepository(_asset_data_dir())
+
+
+def _draft_conflict(exc: DraftConflictError) -> HTTPException:
+    return HTTPException(status_code=409, detail={"code": exc.code})
+
+
+@router.get("/editor-draft", response_model=ImageEditorDraft, status_code=200)
+def get_image_editor_draft():
+    try:
+        draft = _draft_repository().load()
+    except DraftConflictError as exc:
+        raise _draft_conflict(exc) from exc
+    if draft is None:
+        from fastapi import Response
+        return Response(status_code=204)
+    return draft
+
+
+@router.post("/editor-draft/replace", response_model=ImageEditorDraft)
+def replace_image_editor_draft(request: ImageEditorDraftWrite) -> ImageEditorDraft:
+    import time
+    try:
+        return _draft_repository().replace(request, updated_at=time.time())
+    except (OSError, DraftConflictError) as exc:
+        if isinstance(exc, DraftConflictError):
+            raise _draft_conflict(exc) from exc
+        raise HTTPException(status_code=409, detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED}) from exc
+
+
+@router.put("/editor-draft", response_model=ImageEditorDraft)
+def update_image_editor_draft(request: ImageEditorDraftWrite) -> ImageEditorDraft:
+    import time
+    try:
+        return _draft_repository().update(request, updated_at=time.time())
+    except DraftConflictError as exc:
+        raise _draft_conflict(exc) from exc
+    except OSError as exc:
+        raise HTTPException(status_code=409, detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED}) from exc
+
+
+@router.post("/editor-draft/mask", response_model=ImageEditorDraft)
+async def save_image_editor_draft_mask(
+    request: Request,
+    draft_id: str,
+    revision: int,
+) -> ImageEditorDraft:
+    import time
+    data = await request.body()
+    try:
+        validate_image_bytes(
+            data,
+            ".png",
+            max_bytes=MAX_UPLOAD_IMAGE_BYTES,
+            max_pixels=MAX_UPLOAD_IMAGE_PIXELS,
+        )
+    except InvalidImageContentError as exc:
+        raise HTTPException(status_code=400, detail={"code": api_errors.ASSET_IMAGE_INVALID, "label": "draft-mask"}) from exc
+    try:
+        return _draft_repository().save_mask(draft_id, revision, data, updated_at=time.time())
+    except DraftConflictError as exc:
+        raise _draft_conflict(exc) from exc
+    except OSError as exc:
+        raise HTTPException(status_code=409, detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED}) from exc
+
+
+@router.delete("/editor-draft/{draft_id}", status_code=204)
+def discard_image_editor_draft(draft_id: str, revision: int):
+    from fastapi import Response
+    try:
+        _draft_repository().discard(draft_id, revision)
+    except DraftConflictError as exc:
+        raise _draft_conflict(exc) from exc
+    except OSError as exc:
+        raise HTTPException(status_code=409, detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED}) from exc
+    return Response(status_code=204)
+
+
 @router.get("/{directory_name}/{filename}")
 def asset_file(directory_name: str, filename: str) -> FileResponse:
-    if directory_name not in {"control_images", "init_images", "mask_images"}:
+    if directory_name not in {"control_images", "init_images", "mask_images", "editor_drafts"}:
+        raise HTTPException(status_code=404, detail={"code": api_errors.ASSET_NOT_FOUND})
+    if directory_name == "editor_drafts" and not re.fullmatch(r"[0-9a-f]{32}_[0-9]+_mask\.png", filename):
         raise HTTPException(status_code=404, detail={"code": api_errors.ASSET_NOT_FOUND})
     try:
         root = (AppConfig().data_dir / directory_name).resolve()

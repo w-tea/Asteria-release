@@ -251,6 +251,13 @@ class GenerationHistoryItem(BaseModel):
 
 class GenerationHistoryResponse(BaseModel):
     items: list[GenerationHistoryItem]
+    next_cursor: str | None = None
+    has_more: bool = False
+
+
+class GenerationTagCatalogResponse(BaseModel):
+    tags: list[str] = Field(default_factory=list)
+    generated_tags: list[str] = Field(default_factory=list)
 
 
 class GenerationFolderItem(BaseModel):

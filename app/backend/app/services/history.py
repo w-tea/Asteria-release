@@ -1,5 +1,7 @@
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime
+import base64
 import json
 from pathlib import Path
 import sqlite3
@@ -9,6 +11,43 @@ from app.services.generation_metadata import metadata_tags
 
 
 MAX_USER_TAGS = 160
+HISTORY_PAGE_SCAN_BATCH = 128
+
+
+@dataclass(frozen=True)
+class HistoryPage:
+    items: list[dict]
+    next_cursor: str | None
+    has_more: bool
+
+
+def _history_cursor_payload(cursor: str) -> tuple[int, int | None]:
+    try:
+        padded = cursor + ("=" * (-len(cursor) % 4))
+        payload = json.loads(base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8"))
+        scanned_id = int(payload["scan"])
+        pending_id = payload.get("pending")
+        if pending_id is not None:
+            pending_id = int(pending_id)
+        if payload.get("v") != 1 or scanned_id <= 0 or (pending_id is not None and pending_id != scanned_id):
+            raise ValueError
+        return scanned_id, pending_id
+    except (KeyError, TypeError, ValueError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError("invalid_history_cursor") from error
+
+
+def encode_history_cursor(scanned_id: int, *, pending_id: int | None = None) -> str:
+    payload = {"v": 1, "scan": int(scanned_id)}
+    if pending_id is not None:
+        payload["pending"] = int(pending_id)
+    encoded = base64.urlsafe_b64encode(
+        json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    ).decode("ascii")
+    return encoded.rstrip("=")
+
+
+def decode_history_cursor(cursor: str) -> int:
+    return _history_cursor_payload(cursor)[0]
 
 
 class HistoryTagLimitExceededError(ValueError):
@@ -133,6 +172,119 @@ class HistoryRepository:
             ).fetchall()
         return [self._row_to_dict(row) for row in rows]
 
+    def page(
+        self,
+        *,
+        limit: int = 72,
+        cursor: str = "",
+        query: str = "",
+        profile: str = "",
+        favorite: bool = False,
+        tag: str = "",
+        folder: str = "all",
+    ) -> HistoryPage:
+        if limit < 1 or limit > 100:
+            raise ValueError("invalid_history_limit")
+        query = query.strip().lower()
+        tag = tag.strip().lower()
+        scanned_id: int | None = None
+        pending_id: int | None = None
+        if cursor:
+            scanned_id, pending_id = _history_cursor_payload(cursor)
+
+        folder_where, folder_params = self._folder_where(folder)
+        clauses = [folder_where.removeprefix("where ")] if folder_where else []
+        params = list(folder_params)
+        if profile:
+            clauses.append("g.profile = ?")
+            params.append(profile)
+        if favorite:
+            clauses.append("g.favorite != 0")
+        base_where = f"where {' and '.join(clauses)}" if clauses else ""
+
+        items: list[dict] = []
+        next_pending_id: int | None = None
+        scan_before = scanned_id
+        with sqlite3.connect(self.db_path) as con:
+            con.row_factory = sqlite3.Row
+            if pending_id is not None:
+                pending = self._page_row(con, pending_id, base_where, params)
+                if pending is not None:
+                    pending_item = self._row_to_dict(pending)
+                    if self._matches_page_filters(pending_item, query=query, tag=tag):
+                        items.append(pending_item)
+                scan_before = pending_id
+
+            exhausted = False
+            while not exhausted and next_pending_id is None:
+                cursor_clause = "g.id < ?" if scan_before is not None else ""
+                where = self._combine_where(base_where, cursor_clause)
+                page_params = [*params]
+                if scan_before is not None:
+                    page_params.append(scan_before)
+                rows = con.execute(
+                    f"""
+                    select g.*, f.name as folder_name
+                    from generations g
+                    left join history_folders f on f.id = g.folder_id
+                    {where}
+                    order by g.id desc
+                    limit ?
+                    """,
+                    (*page_params, HISTORY_PAGE_SCAN_BATCH),
+                ).fetchall()
+                if not rows:
+                    exhausted = True
+                    break
+                for row in rows:
+                    scan_before = int(row["id"])
+                    item = self._row_to_dict(row)
+                    if not self._matches_page_filters(item, query=query, tag=tag):
+                        continue
+                    if len(items) < limit:
+                        items.append(item)
+                    else:
+                        next_pending_id = int(row["id"])
+                        break
+                if len(rows) < HISTORY_PAGE_SCAN_BATCH:
+                    exhausted = True
+
+        if next_pending_id is None:
+            return HistoryPage(items=items, next_cursor=None, has_more=False)
+        return HistoryPage(
+            items=items,
+            next_cursor=encode_history_cursor(next_pending_id, pending_id=next_pending_id),
+            has_more=True,
+        )
+
+    def tag_page(self, *, before_id: int | None = None, limit: int = 128) -> tuple[list[dict], int | None]:
+        if limit < 1:
+            return [], None
+        where = "where id < ?" if before_id is not None else ""
+        params = (before_id, limit) if before_id is not None else (limit,)
+        with sqlite3.connect(self.db_path) as con:
+            con.row_factory = sqlite3.Row
+            rows = con.execute(
+                f"""
+                select id, tags_json, generated_tags_json
+                from generations
+                {where}
+                order by id desc
+                limit ?
+                """,
+                params,
+            ).fetchall()
+        items = [
+            {
+                "id": int(row["id"]),
+                "tags": self._normalize_tags(self._json_list(row["tags_json"])),
+                "generated_tags": self._normalize_tags(self._json_list(row["generated_tags_json"])),
+            }
+            for row in rows
+        ]
+        next_before = int(rows[-1]["id"]) if len(rows) == limit else None
+        return items, next_before
+
     def list_all(self) -> list[dict]:
         with sqlite3.connect(self.db_path) as con:
             con.row_factory = sqlite3.Row
@@ -209,6 +361,54 @@ class HistoryRepository:
                 if len(filtered) >= limit:
                     break
         return filtered
+
+    def _page_row(
+        self,
+        con: sqlite3.Connection,
+        generation_id: int,
+        base_where: str,
+        params: list[object],
+    ) -> sqlite3.Row | None:
+        id_clause = "g.id = ?"
+        where = self._combine_where(base_where, id_clause)
+        return con.execute(
+            f"""
+            select g.*, f.name as folder_name
+            from generations g
+            left join history_folders f on f.id = g.folder_id
+            {where}
+            """,
+            (*params, generation_id),
+        ).fetchone()
+
+    def _combine_where(self, base_where: str, clause: str) -> str:
+        if not clause:
+            return base_where
+        if base_where:
+            return f"{base_where} and {clause}"
+        return f"where {clause}"
+
+    def _matches_page_filters(self, item: dict, *, query: str, tag: str) -> bool:
+        tags = [str(value).lower() for value in item["tags"]]
+        generated_tags = [str(value).lower() for value in item["generated_tags"]]
+        if tag and tag not in [*tags, *generated_tags]:
+            return False
+        if not query:
+            return True
+        haystack = " ".join(
+            [
+                item["prompt"],
+                item["expanded_prompt"],
+                item["negative_prompt"],
+                item["profile"],
+                item["notes"],
+                " ".join(tags),
+                " ".join(generated_tags),
+                json.dumps(item["settings"], ensure_ascii=False),
+                json.dumps(item["model_slots"], ensure_ascii=False),
+            ]
+        ).lower()
+        return query in haystack
 
     def get(self, generation_id: int) -> dict | None:
         with sqlite3.connect(self.db_path) as con:
