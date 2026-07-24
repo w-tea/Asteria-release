@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 from PIL import Image, ImageOps
 from pydantic import BaseModel, Field, model_validator
@@ -34,8 +34,8 @@ from app.services.edit_asset_lifecycle import AssetMeasure, EditAssetLifecycleSe
 from app.services.image_editor_drafts import (
     DraftConflictError,
     ImageEditorDraft,
+    ImageEditorDraftCommitRequest,
     ImageEditorDraftRepository,
-    ImageEditorDraftWrite,
 )
 from app.services.user_settings import UserSettingsRepository, resolve_output_root
 
@@ -91,6 +91,10 @@ class EditAssetCleanupResponse(BaseModel):
     skipped: AssetMeasureResponse
     failed: AssetMeasureResponse
     reference_health: str
+
+
+class ImageEditorDraftMaskStageResponse(BaseModel):
+    stage_token: str = Field(pattern=r"^[0-9a-f]{32}$")
 
 
 def _measure_response(measure: AssetMeasure) -> AssetMeasureResponse:
@@ -349,35 +353,8 @@ def get_image_editor_draft():
     return draft
 
 
-@router.post("/editor-draft/replace", response_model=ImageEditorDraft)
-def replace_image_editor_draft(request: ImageEditorDraftWrite) -> ImageEditorDraft:
-    import time
-    try:
-        return _draft_repository().replace(request, updated_at=time.time())
-    except (OSError, DraftConflictError) as exc:
-        if isinstance(exc, DraftConflictError):
-            raise _draft_conflict(exc) from exc
-        raise HTTPException(status_code=409, detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED}) from exc
-
-
-@router.put("/editor-draft", response_model=ImageEditorDraft)
-def update_image_editor_draft(request: ImageEditorDraftWrite) -> ImageEditorDraft:
-    import time
-    try:
-        return _draft_repository().update(request, updated_at=time.time())
-    except DraftConflictError as exc:
-        raise _draft_conflict(exc) from exc
-    except OSError as exc:
-        raise HTTPException(status_code=409, detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED}) from exc
-
-
-@router.post("/editor-draft/mask", response_model=ImageEditorDraft)
-async def save_image_editor_draft_mask(
-    request: Request,
-    draft_id: str,
-    revision: int,
-) -> ImageEditorDraft:
-    import time
+@router.post("/editor-draft/mask-stage", response_model=ImageEditorDraftMaskStageResponse)
+async def stage_image_editor_draft_mask(request: Request) -> ImageEditorDraftMaskStageResponse:
     data = await request.body()
     try:
         validate_image_bytes(
@@ -387,13 +364,69 @@ async def save_image_editor_draft_mask(
             max_pixels=MAX_UPLOAD_IMAGE_PIXELS,
         )
     except InvalidImageContentError as exc:
-        raise HTTPException(status_code=400, detail={"code": api_errors.ASSET_IMAGE_INVALID, "label": "draft-mask"}) from exc
+        raise HTTPException(
+            status_code=400,
+            detail={"code": api_errors.ASSET_IMAGE_INVALID, "label": "draft-mask"},
+        ) from exc
     try:
-        return _draft_repository().save_mask(draft_id, revision, data, updated_at=time.time())
+        token = _draft_repository().stage_mask(data)
+    except OSError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED},
+        ) from exc
+    return ImageEditorDraftMaskStageResponse(stage_token=token)
+
+
+@router.delete("/editor-draft/mask-stage/{stage_token}", status_code=204)
+def cancel_image_editor_draft_mask_stage(stage_token: str) -> Response:
+    try:
+        _draft_repository().cancel_stage(stage_token)
+    except OSError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED},
+        ) from exc
+    return Response(status_code=204)
+
+
+@router.post("/editor-draft/commit", response_model=ImageEditorDraft)
+def commit_image_editor_draft(request: ImageEditorDraftCommitRequest) -> ImageEditorDraft:
+    import time
+
+    try:
+        return _draft_repository().commit(request, updated_at=time.time())
     except DraftConflictError as exc:
         raise _draft_conflict(exc) from exc
     except OSError as exc:
-        raise HTTPException(status_code=409, detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED}) from exc
+        raise HTTPException(
+            status_code=409,
+            detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED},
+        ) from exc
+
+
+@router.post("/editor-draft/replace", response_model=ImageEditorDraft)
+def replace_image_editor_draft() -> ImageEditorDraft:
+    raise HTTPException(
+        status_code=409,
+        detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED},
+    )
+
+
+@router.put("/editor-draft", response_model=ImageEditorDraft)
+def update_image_editor_draft() -> ImageEditorDraft:
+    raise HTTPException(
+        status_code=409,
+        detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED},
+    )
+
+
+@router.post("/editor-draft/mask", response_model=ImageEditorDraft)
+async def save_image_editor_draft_mask() -> ImageEditorDraft:
+    raise HTTPException(
+        status_code=409,
+        detail={"code": api_errors.IMAGE_EDITOR_DRAFT_SAVE_FAILED},
+    )
 
 
 @router.delete("/editor-draft/{draft_id}", status_code=204)

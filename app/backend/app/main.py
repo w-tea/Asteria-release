@@ -1,8 +1,9 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.concurrency import run_in_threadpool
 
 from app.api.advanced_styles import router as advanced_styles_router
 from app.api.assets import router as assets_router
@@ -22,6 +23,11 @@ from app.api.startup import router as startup_router
 from app.api.topaz import router as topaz_router
 from app.api.workflow_mapping import router as workflow_mapping_router
 from app.core.config import AppConfig
+from app.services.reference_mutation import reference_mutation_coordinator
+
+
+MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+EDIT_ASSET_CLEANUP_PATH = "/api/assets/lifecycle/cleanup"
 
 
 @asynccontextmanager
@@ -33,6 +39,17 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Asteria API", lifespan=lifespan)
+
+    @app.middleware("http")
+    async def coordinate_reference_mutations(request: Request, call_next):
+        if request.method not in MUTATING_METHODS or request.url.path == EDIT_ASSET_CLEANUP_PATH:
+            return await call_next(request)
+        lease = await run_in_threadpool(reference_mutation_coordinator.acquire_publisher)
+        try:
+            return await call_next(request)
+        finally:
+            lease.release()
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],

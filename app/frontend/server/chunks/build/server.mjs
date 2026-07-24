@@ -5428,6 +5428,7 @@ const knownErrorCodeKeys = {
   image_editor_draft_corrupt: "imageEditor.draftLoadFailed",
   image_editor_draft_missing: "imageEditor.draftLoadFailed",
   image_editor_draft_save_failed: "imageEditor.draftSaveFailed",
+  image_editor_draft_stage_unavailable: "imageEditor.draftSaveFailed",
   image_editor_draft_stale: "imageEditor.draftChanged",
   image_editor_draft_superseded: "imageEditor.draftChanged",
   asset_image_unsupported: "common.error.assetImageUnsupported",
@@ -12730,6 +12731,308 @@ const IMAGE_EDIT_INSPECTOR_IDS = [
 ];
 const isImageEditInspectorId = (value) => IMAGE_EDIT_INSPECTOR_IDS.some((id) => id === value);
 const imageEditInspectorPlacement = (id) => id === "mask" || id === "crop" ? "before-canvas" : "after-handoff";
+const canClearDraftDirtyAfterSave = (saved, savedRevision, currentRevision) => saved && savedRevision === currentRevision;
+const pendingMaskStages = /* @__PURE__ */ new WeakMap();
+const draftSaveCoordinators = /* @__PURE__ */ new WeakMap();
+const apiErrorCode = (error) => {
+  if (!error || typeof error !== "object" || !("data" in error)) return "";
+  const detail = error.data?.detail;
+  if (!detail || typeof detail !== "object" || Array.isArray(detail)) return "";
+  return String(detail.code ?? "");
+};
+const cancelPendingMaskStage = async (store) => {
+  const pending = pendingMaskStages.get(store);
+  if (!pending) return;
+  pendingMaskStages.delete(store);
+  try {
+    await $fetch(`/api/assets/editor-draft/mask-stage/${encodeURIComponent(pending.stageToken)}`, {
+      baseURL: useApiBase(),
+      method: "DELETE"
+    });
+  } catch {
+  }
+};
+const sha256BlobDigest = async (blob) => {
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
+  return Array.from(
+    new Uint8Array(digest),
+    (byte) => byte.toString(16).padStart(2, "0")
+  ).join("");
+};
+const snapshotDraftPayload = (payload) => ({
+  ...payload,
+  crop_rect: payload.crop_rect ? { ...payload.crop_rect } : null,
+  pose_joints: payload.pose_joints.map((joint) => ({ ...joint }))
+});
+const prepareDraftSave = async (payload, mask) => {
+  const maskDigest = mask instanceof Blob ? await sha256BlobDigest(mask) : "";
+  const maskSignature = mask === void 0 ? ["none"] : mask === null ? ["encoding-failed"] : ["blob", maskDigest];
+  return {
+    payload,
+    mask,
+    maskDigest,
+    signature: JSON.stringify([
+      [
+        payload.draft_id ?? null,
+        payload.revision ?? null,
+        payload.source_path,
+        payload.mask_path ?? null,
+        payload.crop_rect ? [
+          payload.crop_rect.x,
+          payload.crop_rect.y,
+          payload.crop_rect.width,
+          payload.crop_rect.height
+        ] : null,
+        payload.pose_joints.map((joint) => [joint.id, joint.x, joint.y]),
+        payload.active_tool,
+        payload.active_inspector,
+        payload.brush_size,
+        payload.brush_opacity,
+        payload.mask_visible
+      ],
+      maskSignature
+    ])
+  };
+};
+const draftSaveCoordinator = (store) => {
+  const existing = draftSaveCoordinators.get(store);
+  if (existing) return existing;
+  const created = {
+    active: null,
+    decisionTail: Promise.resolve(),
+    pendingCount: 0
+  };
+  draftSaveCoordinators.set(store, created);
+  return created;
+};
+const pendingMaskStageKey = (expectedDraftId, expectedRevision, operation, sourceIdentity, maskDigest) => JSON.stringify([
+  expectedDraftId,
+  expectedRevision,
+  operation,
+  sourceIdentity,
+  maskDigest
+]);
+const normalizeWindowsSourceIdentity = (sourcePath) => {
+  const windowsPath = sourcePath.replace(/\//g, "\\");
+  let prefix = "";
+  let remainder = windowsPath;
+  let rooted = false;
+  let separatePrefix = false;
+  const leadingSeparators = windowsPath.match(/^\\+/)?.[0].length ?? 0;
+  if (leadingSeparators >= 3) {
+    prefix = "\\".repeat(leadingSeparators === 3 ? 3 : 4);
+    remainder = windowsPath.slice(leadingSeparators);
+    rooted = true;
+  } else if (windowsPath.startsWith("\\\\")) {
+    const uncParts = windowsPath.slice(2).split("\\").filter(Boolean);
+    if (uncParts.length >= 2) {
+      prefix = `\\\\${uncParts.shift()}\\${uncParts.shift()}`;
+      remainder = uncParts.join("\\");
+    } else {
+      prefix = "\\\\";
+      remainder = uncParts.join("\\");
+    }
+    rooted = true;
+    separatePrefix = true;
+  } else if (/^[a-zA-Z]:/.test(windowsPath)) {
+    prefix = windowsPath.slice(0, 2);
+    remainder = windowsPath.slice(2);
+    rooted = remainder.startsWith("\\");
+    separatePrefix = rooted;
+    remainder = remainder.replace(/^\\+/, "");
+  } else if (windowsPath.startsWith("\\")) {
+    prefix = "\\";
+    rooted = true;
+    remainder = windowsPath.replace(/^\\+/, "");
+  }
+  const normalizedParts = [];
+  for (const part of remainder.split("\\")) {
+    if (!part || part === ".") continue;
+    if (part === "..") {
+      if (normalizedParts.length > 0 && normalizedParts.at(-1) !== "..") {
+        normalizedParts.pop();
+      } else if (!rooted) {
+        normalizedParts.push(part);
+      }
+      continue;
+    }
+    normalizedParts.push(part);
+  }
+  const separator = separatePrefix ? "\\" : "";
+  const normalized = `${prefix}${separator}${normalizedParts.join("\\")}`;
+  return (normalized || ".").toLowerCase();
+};
+const useImageEditorDraftStore = defineStore("imageEditorDraft", {
+  state: () => ({
+    current: null,
+    loading: false,
+    saving: false,
+    error: ""
+  }),
+  actions: {
+    async fetch() {
+      this.loading = true;
+      this.error = "";
+      try {
+        this.current = await $fetch("/api/assets/editor-draft", {
+          baseURL: useApiBase()
+        }) ?? null;
+      } catch (error) {
+        this.error = userFacingErrorMessage(error, "imageEditor.draftLoadFailed");
+      } finally {
+        this.loading = false;
+      }
+    },
+    save(payload, mask) {
+      const coordinator = draftSaveCoordinator(this);
+      const payloadSnapshot = snapshotDraftPayload(payload);
+      const preparedSave = prepareDraftSave(payloadSnapshot, mask);
+      const previousDecision = coordinator.decisionTail;
+      let releaseDecision = () => {
+      };
+      coordinator.decisionTail = new Promise((resolve) => {
+        releaseDecision = resolve;
+      });
+      coordinator.pendingCount += 1;
+      this.saving = true;
+      return (async () => {
+        let decisionReleased = false;
+        const release = () => {
+          if (decisionReleased) return;
+          decisionReleased = true;
+          releaseDecision();
+        };
+        try {
+          await previousDecision;
+          let prepared;
+          try {
+            prepared = await preparedSave;
+          } catch (error) {
+            this.error = userFacingErrorMessage(error, "imageEditor.draftSaveFailed");
+            return false;
+          }
+          const active = coordinator.active;
+          if (active) {
+            if (active.signature === prepared.signature) {
+              release();
+              return await active.promise;
+            }
+            await active.promise;
+            if (coordinator.active === active) {
+              coordinator.active = null;
+            }
+          }
+          const execution = (async () => {
+            if (prepared.mask === null) {
+              this.error = userFacingErrorMessage(
+                void 0,
+                "imageEditor.draftSaveFailed"
+              );
+              return false;
+            }
+            this.error = "";
+            const currentSnapshot = this.current ? {
+              draft_id: this.current.draft_id,
+              revision: this.current.revision,
+              source_path: this.current.source_path,
+              mask_path: this.current.mask_path
+            } : null;
+            try {
+              const operation = !currentSnapshot ? "create" : normalizeWindowsSourceIdentity(currentSnapshot.source_path) === normalizeWindowsSourceIdentity(prepared.payload.source_path) ? "update" : "replace";
+              let stageToken = "";
+              if (prepared.mask !== void 0) {
+                const stageKey = pendingMaskStageKey(
+                  currentSnapshot?.draft_id ?? "",
+                  currentSnapshot?.revision ?? 0,
+                  operation,
+                  normalizeWindowsSourceIdentity(prepared.payload.source_path),
+                  prepared.maskDigest
+                );
+                const pendingStage = pendingMaskStages.get(this);
+                if (pendingStage?.key === stageKey) {
+                  stageToken = pendingStage.stageToken;
+                } else {
+                  await cancelPendingMaskStage(this);
+                  const stage = await $fetch("/api/assets/editor-draft/mask-stage", {
+                    baseURL: useApiBase(),
+                    method: "POST",
+                    body: prepared.mask,
+                    headers: { "content-type": "application/octet-stream" }
+                  });
+                  stageToken = stage.stage_token;
+                  pendingMaskStages.set(this, { key: stageKey, stageToken });
+                }
+              } else {
+                await cancelPendingMaskStage(this);
+              }
+              const maskIntent = prepared.mask !== void 0 ? "replace" : operation === "update" && Boolean(currentSnapshot?.mask_path) ? "preserve" : "clear";
+              const committed = await $fetch("/api/assets/editor-draft/commit", {
+                baseURL: useApiBase(),
+                method: "POST",
+                body: {
+                  operation,
+                  mask_intent: maskIntent,
+                  expected_draft_id: currentSnapshot?.draft_id ?? "",
+                  expected_revision: currentSnapshot?.revision ?? 0,
+                  stage_token: stageToken,
+                  draft: prepared.payload
+                }
+              });
+              this.current = committed;
+              pendingMaskStages.delete(this);
+              return true;
+            } catch (error) {
+              if (apiErrorCode(error) === "image_editor_draft_stage_unavailable") {
+                pendingMaskStages.delete(this);
+              }
+              this.error = userFacingErrorMessage(error, "imageEditor.draftSaveFailed");
+              return false;
+            }
+          })();
+          const ownActive = {
+            signature: prepared.signature,
+            promise: execution
+          };
+          coordinator.active = ownActive;
+          void execution.then(() => {
+            if (coordinator.active === ownActive) {
+              coordinator.active = null;
+            }
+          });
+          release();
+          return await execution;
+        } finally {
+          release();
+          coordinator.pendingCount -= 1;
+          if (coordinator.pendingCount === 0) {
+            this.saving = false;
+          }
+        }
+      })();
+    },
+    async discard() {
+      if (!this.current) {
+        await cancelPendingMaskStage(this);
+        this.error = "";
+        return true;
+      }
+      this.error = "";
+      try {
+        await $fetch(`/api/assets/editor-draft/${this.current.draft_id}`, {
+          baseURL: useApiBase(),
+          method: "DELETE",
+          query: { revision: this.current.revision }
+        });
+        await cancelPendingMaskStage(this);
+        this.current = null;
+        return true;
+      } catch (error) {
+        this.error = userFacingErrorMessage(error, "imageEditor.draftDiscardFailed");
+        return false;
+      }
+    }
+  }
+});
 const _sfc_main$X = /* @__PURE__ */ defineComponent({
   __name: "ImageEditWorkspaceBody",
   __ssrInlineRender: true,
@@ -13277,84 +13580,6 @@ _sfc_main$O.setup = (props, ctx) => {
   return _sfc_setup$O ? _sfc_setup$O(props, ctx) : void 0;
 };
 const ImageEditControlNetPresets = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$O, [["__scopeId", "data-v-d9e316a7"]]), { __name: "StudioImageEditControlNetPresets" });
-const useImageEditorDraftStore = defineStore("imageEditorDraft", {
-  state: () => ({
-    current: null,
-    loading: false,
-    saving: false,
-    error: ""
-  }),
-  actions: {
-    async fetch() {
-      this.loading = true;
-      this.error = "";
-      try {
-        this.current = await $fetch("/api/assets/editor-draft", {
-          baseURL: useApiBase()
-        }) ?? null;
-      } catch (error) {
-        this.error = userFacingErrorMessage(error, "imageEditor.draftLoadFailed");
-      } finally {
-        this.loading = false;
-      }
-    },
-    async save(payload, mask) {
-      if (this.saving) return false;
-      this.saving = true;
-      this.error = "";
-      try {
-        const sameDraft = Boolean(
-          this.current && this.current.source_path === payload.source_path && payload.source_path
-        );
-        this.current = await $fetch(
-          sameDraft ? "/api/assets/editor-draft" : "/api/assets/editor-draft/replace",
-          {
-            baseURL: useApiBase(),
-            method: sameDraft ? "PUT" : "POST",
-            body: sameDraft ? { ...payload, draft_id: this.current.draft_id, revision: this.current.revision } : payload
-          }
-        );
-        if (mask) {
-          this.current = await $fetch("/api/assets/editor-draft/mask", {
-            baseURL: useApiBase(),
-            method: "POST",
-            query: {
-              draft_id: this.current.draft_id,
-              revision: this.current.revision
-            },
-            body: mask,
-            headers: { "content-type": "application/octet-stream" }
-          });
-        }
-        return true;
-      } catch (error) {
-        this.error = userFacingErrorMessage(error, "imageEditor.draftSaveFailed");
-        return false;
-      } finally {
-        this.saving = false;
-      }
-    },
-    async discard() {
-      if (!this.current) {
-        this.error = "";
-        return true;
-      }
-      this.error = "";
-      try {
-        await $fetch(`/api/assets/editor-draft/${this.current.draft_id}`, {
-          baseURL: useApiBase(),
-          method: "DELETE",
-          query: { revision: this.current.revision }
-        });
-        this.current = null;
-        return true;
-      } catch (error) {
-        this.error = userFacingErrorMessage(error, "imageEditor.draftDiscardFailed");
-        return false;
-      }
-    }
-  }
-});
 const _sfc_main$N = /* @__PURE__ */ defineComponent({
   __name: "ImageWorkspace",
   __ssrInlineRender: true,
@@ -13392,6 +13617,10 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
     const maskDirty = ref(false);
     const draftMaskDirty = ref(false);
     const poseDirty = ref(false);
+    const draftEditRevision = ref(0);
+    const markDraftEdited = () => {
+      draftEditRevision.value += 1;
+    };
     const maskLoading = ref(false);
     const maskSaving = ref(false);
     const maskError = ref("");
@@ -13760,6 +13989,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
       spacePressed.value = false;
     };
     const resetSourceEditorState = () => {
+      markDraftEdited();
       resetCanvasNavigation();
       cropStart.value = null;
       cropRect.value = null;
@@ -13881,6 +14111,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
       context.restore();
       maskDirty.value = true;
       draftMaskDirty.value = true;
+      markDraftEdited();
     };
     const normalizeCrop = (start, end) => {
       const x = clamp2(Math.min(start.x, end.x), 0, canvasSize.width);
@@ -13930,6 +14161,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
         isCropping.value = true;
         cropStart.value = point;
         cropRect.value = { x: point.x, y: point.y, width: 0, height: 0 };
+        markDraftEdited();
         return;
       }
       pushUndo();
@@ -13955,6 +14187,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
       }
       if (isCropping.value && cropStart.value) {
         cropRect.value = normalizeCrop(cropStart.value, point);
+        markDraftEdited();
         return;
       }
       if (isDrawing.value) {
@@ -13984,6 +14217,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
         context.putImageData(result.restore.value, 0, 0);
         maskDirty.value = maskCanvasHasContent();
         draftMaskDirty.value = true;
+        markDraftEdited();
       }
     };
     const redoMask = () => {
@@ -14003,6 +14237,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
         context.putImageData(result.restore.value, 0, 0);
         maskDirty.value = maskCanvasHasContent();
         draftMaskDirty.value = true;
+        markDraftEdited();
       }
     };
     const invertMask = () => {
@@ -14024,6 +14259,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
       context.putImageData(imageData, 0, 0);
       maskDirty.value = true;
       draftMaskDirty.value = true;
+      markDraftEdited();
     };
     const clearMask = () => {
       if (!maskCanvas.value) {
@@ -14033,6 +14269,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
       clearMaskCanvas();
       maskDirty.value = false;
       draftMaskDirty.value = true;
+      markDraftEdited();
       maskError.value = "";
       if (shouldArmLocalMaskClear(generation.maskImagePath)) {
         localMaskClearFromPath = generation.maskImagePath;
@@ -14093,6 +14330,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
       joint.x = point.x;
       joint.y = point.y;
       poseDirty.value = true;
+      markDraftEdited();
     };
     const stopPoseDrag = (event) => {
       if (!draggingPoseJoint.value) {
@@ -14126,6 +14364,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
         joint.y = defaults[index][1];
       });
       poseDirty.value = true;
+      markDraftEdited();
     };
     const ensureControlUnit = () => {
       if (!generation.controlNetUnits[selectedControlUnit.value]) {
@@ -14290,6 +14529,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
     const clearCropSelection = () => {
       cropStart.value = null;
       cropRect.value = null;
+      markDraftEdited();
       cropError.value = "";
     };
     const applyCropToInit = async () => {
@@ -14494,6 +14734,8 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
     const persistDraftBeforeLeave = async () => {
       if (!await waitForMaskSave()) return false;
       if (!hasPendingDraft.value) return true;
+      const saveRevision = draftEditRevision.value;
+      const draftMask = draftMaskDirty.value ? await draftMaskBlob() : void 0;
       const saved = await editorDraft.save({
         source_path: generation.initImagePath,
         mask_path: editorDraft.current?.mask_path ?? "",
@@ -14504,12 +14746,17 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
         brush_size: brushSize.value,
         brush_opacity: brushOpacity.value,
         mask_visible: showMask.value
-      }, draftMaskDirty.value ? await draftMaskBlob() : null);
-      if (saved) {
+      }, draftMask);
+      const savedCurrentRevision = canClearDraftDirtyAfterSave(
+        saved,
+        saveRevision,
+        draftEditRevision.value
+      );
+      if (savedCurrentRevision) {
         draftMaskDirty.value = false;
         poseDirty.value = false;
       }
-      return saved;
+      return savedCurrentRevision;
     };
     const discardDraft = async () => {
       if (!await editorDraft.discard()) return false;
@@ -14598,7 +14845,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
       hasPendingDraft
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<!--[--><input hidden type="file" accept="image/*" data-v-6260e39d><input hidden type="file" accept="image/*" data-v-6260e39d>`);
+      _push(`<!--[--><input hidden type="file" accept="image/*" data-v-e50d2d51><input hidden type="file" accept="image/*" data-v-e50d2d51>`);
       _push(ssrRenderComponent(ImageEditWorkspaceBody, {
         "aria-label": unref(t)("imageEditor.workspaceAria"),
         "inspector-placement": unref(inspectorPlacement)
@@ -14639,7 +14886,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
         }),
         inspector: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<aside class="image-workspace__panel image-workspace__panel--inspector" style="${ssrRenderStyle(!unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-6260e39d${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-6260e39d${_scopeId}><span data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.editWorkflow"))}</span><small data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(editModeLabel))}</small></div>`);
+            _push2(`<aside class="image-workspace__panel image-workspace__panel--inspector" style="${ssrRenderStyle(!unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-e50d2d51${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-e50d2d51${_scopeId}><span data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.editWorkflow"))}</span><small data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(editModeLabel))}</small></div>`);
             _push2(ssrRenderComponent(ImageEditSourceInspector, {
               style: unref(activeInspectorSection) === "source" ? null : { display: "none" },
               mode: unref(generation).mode,
@@ -14800,7 +15047,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
         }),
         canvas: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<main class="image-workspace__preview" data-v-6260e39d${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-6260e39d${_scopeId}><span data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.canvas"))}</span><small data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(generation).initImagePath ? outputFilename(unref(generation).initImagePath) : unref(t)("imageEditor.empty"))}</small></div>`);
+            _push2(`<main class="image-workspace__preview" data-v-e50d2d51${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-e50d2d51${_scopeId}><span data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.canvas"))}</span><small data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(generation).initImagePath ? outputFilename(unref(generation).initImagePath) : unref(t)("imageEditor.empty"))}</small></div>`);
             _push2(ssrRenderComponent(ImageEditCanvasToolbar, {
               tool: unref(editTool),
               "brush-size": unref(brushSize),
@@ -14826,26 +15073,26 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
               "image-preview-stage--empty": !unref(canEdit),
               "image-preview-stage--pan": unref(canEdit) && (unref(editTool) === "pan" || unref(spacePressed)),
               "image-preview-stage--panning": unref(isPanning)
-            }, "image-preview-stage"])}" tabindex="0" role="region"${ssrRenderAttr("aria-label", unref(t)("imageEditor.canvasNavigationAria"))} data-v-6260e39d${_scopeId}>`);
+            }, "image-preview-stage"])}" tabindex="0" role="region"${ssrRenderAttr("aria-label", unref(t)("imageEditor.canvasNavigationAria"))} data-v-e50d2d51${_scopeId}>`);
             if (unref(canEdit)) {
-              _push2(`<div class="canvas-stack" style="${ssrRenderStyle(unref(canvasStackStyle))}" data-v-6260e39d${_scopeId}><canvas class="edit-canvas"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sourceCanvas"))} data-v-6260e39d${_scopeId}></canvas><canvas class="edit-canvas edit-canvas--mask"${ssrRenderAttr("aria-label", unref(t)("imageEditor.maskCanvas"))} style="${ssrRenderStyle(unref(showMask) ? null : { display: "none" })}" data-v-6260e39d${_scopeId}></canvas>`);
+              _push2(`<div class="canvas-stack" style="${ssrRenderStyle(unref(canvasStackStyle))}" data-v-e50d2d51${_scopeId}><canvas class="edit-canvas"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sourceCanvas"))} data-v-e50d2d51${_scopeId}></canvas><canvas class="edit-canvas edit-canvas--mask"${ssrRenderAttr("aria-label", unref(t)("imageEditor.maskCanvas"))} style="${ssrRenderStyle(unref(showMask) ? null : { display: "none" })}" data-v-e50d2d51${_scopeId}></canvas>`);
               if (unref(cropRect)) {
-                _push2(`<div class="crop-rect" style="${ssrRenderStyle(unref(cropStyle))}" data-v-6260e39d${_scopeId}></div>`);
+                _push2(`<div class="crop-rect" style="${ssrRenderStyle(unref(cropStyle))}" data-v-e50d2d51${_scopeId}></div>`);
               } else {
                 _push2(`<!---->`);
               }
               _push2(`</div>`);
             } else {
-              _push2(`<div class="image-empty-state" data-v-6260e39d${_scopeId}><span class="image-empty-state__label" data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.noSource"))}</span><strong data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openToStart"))}</strong><p data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.emptyHelp"))}</p><div class="image-empty-state__actions" data-v-6260e39d${_scopeId}><button class="primary-button" type="button" data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openLibrary"))}</button><button class="icon-button" type="button" data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.uploadImage"))}</button></div></div>`);
+              _push2(`<div class="image-empty-state" data-v-e50d2d51${_scopeId}><span class="image-empty-state__label" data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.noSource"))}</span><strong data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openToStart"))}</strong><p data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.emptyHelp"))}</p><div class="image-empty-state__actions" data-v-e50d2d51${_scopeId}><button class="primary-button" type="button" data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openLibrary"))}</button><button class="icon-button" type="button" data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.uploadImage"))}</button></div></div>`);
             }
             _push2(`</div>`);
             if (unref(historyWarning)) {
-              _push2(`<p class="warning" aria-live="polite" data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(historyWarning))}</p>`);
+              _push2(`<p class="warning" aria-live="polite" data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(historyWarning))}</p>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(editorError)) {
-              _push2(`<p class="error" aria-live="assertive" data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(editorError))}</p>`);
+              _push2(`<p class="error" aria-live="assertive" data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(editorError))}</p>`);
             } else {
               _push2(`<!---->`);
             }
@@ -14962,7 +15209,7 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
         }),
         handoff: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="image-send-panel"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sendAria"))} data-v-6260e39d${_scopeId}><div class="image-step-header image-step-header--compact" data-v-6260e39d${_scopeId}><span data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.send"))}</span><small data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendHelp"))}</small></div><div class="image-workspace__actions" data-v-6260e39d${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(generation).mode !== "txt2img" && !unref(generation).initImagePath) ? " disabled" : ""} data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendToGenerate"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(generation).initImagePath) ? " disabled" : ""} data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.useSourceAsControlNet"))}</button></div></div>`);
+            _push2(`<div class="image-send-panel"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sendAria"))} data-v-e50d2d51${_scopeId}><div class="image-step-header image-step-header--compact" data-v-e50d2d51${_scopeId}><span data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.send"))}</span><small data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendHelp"))}</small></div><div class="image-workspace__actions" data-v-e50d2d51${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(generation).mode !== "txt2img" && !unref(generation).initImagePath) ? " disabled" : ""} data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendToGenerate"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(generation).initImagePath) ? " disabled" : ""} data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.useSourceAsControlNet"))}</button></div></div>`);
           } else {
             return [
               createVNode("div", {
@@ -14993,13 +15240,13 @@ const _sfc_main$N = /* @__PURE__ */ defineComponent({
         }),
         reference: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<aside class="image-workspace__panel image-workspace__panel--reference" style="${ssrRenderStyle(unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-6260e39d${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-6260e39d${_scopeId}><span data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.referenceWorkflow"))}</span>`);
+            _push2(`<aside class="image-workspace__panel image-workspace__panel--reference" style="${ssrRenderStyle(unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-e50d2d51${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-e50d2d51${_scopeId}><span data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.referenceWorkflow"))}</span>`);
             if (unref(generation).controlNetUnits.length > 0) {
-              _push2(`<button class="icon-button" type="button" data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.add"))}</button>`);
+              _push2(`<button class="icon-button" type="button" data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.add"))}</button>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</div><nav class="reference-focus-tabs"${ssrRenderAttr("aria-label", unref(t)("imageEditor.referenceTabsAria"))} data-v-6260e39d${_scopeId}><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "reference" }, "icon-button"])}" data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.reference"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "openpose" }, "icon-button"])}" data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openPose"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "presets" }, "icon-button"])}" data-v-6260e39d${_scopeId}>${ssrInterpolate(unref(t)("controlNet.presets"))}</button></nav>`);
+            _push2(`</div><nav class="reference-focus-tabs"${ssrRenderAttr("aria-label", unref(t)("imageEditor.referenceTabsAria"))} data-v-e50d2d51${_scopeId}><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "reference" }, "icon-button"])}" data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.reference"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "openpose" }, "icon-button"])}" data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openPose"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "presets" }, "icon-button"])}" data-v-e50d2d51${_scopeId}>${ssrInterpolate(unref(t)("controlNet.presets"))}</button></nav>`);
             _push2(ssrRenderComponent(ImageEditReferenceInspector, {
               style: unref(activeInspectorSection) === "reference" ? null : { display: "none" },
               units: unref(generation).controlNetUnits,
@@ -15156,7 +15403,7 @@ _sfc_main$N.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageWorkspace.vue");
   return _sfc_setup$N ? _sfc_setup$N(props, ctx) : void 0;
 };
-const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$N, [["__scopeId", "data-v-6260e39d"]]), { __name: "StudioImageWorkspace" });
+const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$N, [["__scopeId", "data-v-e50d2d51"]]), { __name: "StudioImageWorkspace" });
 const _sfc_main$M = /* @__PURE__ */ defineComponent({
   __name: "ImageEditDraftNavigationDialog",
   __ssrInlineRender: true,

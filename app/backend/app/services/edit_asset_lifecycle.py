@@ -8,10 +8,14 @@ from pathlib import Path
 import re
 import sqlite3
 import stat
-from threading import Lock
-from typing import Any
+from typing import Any, Callable
 
+from pydantic import ValidationError
+
+from app.schemas.image_edit import ImageEditLineage
 from app.services.library_thumbnails import LibraryThumbnailService
+from app.services.reference_mutation import reference_mutation_coordinator
+from app.services.user_settings import UserSettings, resolve_output_root
 
 
 EDIT_ASSET_DIRECTORIES = ("init_images", "mask_images", "control_images", "editor_drafts")
@@ -25,7 +29,8 @@ LINEAGE_PATTERN = re.compile(
 )
 THUMBNAIL_PATTERN = re.compile(r"^[0-9a-f]{64}\.webp$", re.IGNORECASE)
 DEFAULT_ORPHAN_GRACE = timedelta(days=7)
-_cleanup_lock = Lock()
+MAX_REFERENCE_TRAVERSAL_DEPTH = 64
+MAX_REFERENCE_TRAVERSAL_ENTRIES = 100_000
 
 
 @dataclass(frozen=True)
@@ -73,7 +78,7 @@ class EditAssetCleanupResult:
 def _safe_resolve(path: Path, *, strict: bool) -> Path | None:
     try:
         return path.resolve(strict=strict)
-    except (OSError, RuntimeError):
+    except (OSError, RuntimeError, ValueError):
         return None
 
 
@@ -155,9 +160,10 @@ class EditAssetLifecycleService:
         )
 
     def cleanup(self) -> EditAssetCleanupResult | None:
-        if not _cleanup_lock.acquire(blocking=False):
+        cleanup_lease = reference_mutation_coordinator.try_acquire_cleanup()
+        if cleanup_lease is None:
             return None
-        try:
+        with cleanup_lease:
             inventory = self.inventory()
             removed = AssetMeasure()
             skipped = AssetMeasure()
@@ -194,8 +200,6 @@ class EditAssetLifecycleService:
                 failed=failed,
                 reference_health=inventory.reference_health,
             )
-        finally:
-            _cleanup_lock.release()
 
     def _revalidate_group(
         self,
@@ -265,15 +269,100 @@ class EditAssetLifecycleService:
     def _persisted_references(self) -> tuple[set[str], bool]:
         references: set[str] = set()
         healthy = self._history_references(references)
-        json_sources = self._known_json_sources()
+        json_sources, sources_healthy = self._known_json_sources()
+        healthy = healthy and sources_healthy
         for path in json_sources:
             try:
                 payload = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
+            except (OSError, UnicodeError, json.JSONDecodeError, TypeError):
                 healthy = False
                 continue
             self._collect_strings(payload, references)
+        lineage_dependencies, lineage_healthy = self._lineage_dependencies()
+        healthy = healthy and lineage_healthy
+        if lineage_healthy:
+            healthy = self._expand_lineage_references(
+                references,
+                lineage_dependencies,
+            ) and healthy
         return references, healthy
+
+    def _lineage_dependencies(self) -> tuple[dict[str, set[str]], bool]:
+        dependencies: dict[str, set[str]] = {}
+        healthy = True
+        for directory_name in EDIT_ASSET_DIRECTORIES:
+            root = self.data_dir / directory_name
+            manifests, manifests_healthy = self._enumerate_json_sources(
+                root,
+                recursive=False,
+                predicate=lambda path: path.name.lower().endswith(".asteria.edit.json"),
+            )
+            healthy = healthy and manifests_healthy
+            for manifest_path in manifests:
+                if not is_owned_edit_asset(manifest_path, root):
+                    healthy = False
+                    continue
+                try:
+                    lineage = ImageEditLineage.model_validate_json(
+                        manifest_path.read_text(encoding="utf-8")
+                    )
+                except (OSError, UnicodeError, ValidationError):
+                    healthy = False
+                    continue
+                try:
+                    paired_image = Path(
+                        str(manifest_path)[: -len(".asteria.edit.json")]
+                    )
+                    current_key = self._path_key(Path(lineage.current.path))
+                    paired_image_key = self._path_key(paired_image)
+                    if current_key != paired_image_key:
+                        healthy = False
+                        continue
+                    upstream = {
+                        self._path_key(Path(lineage.root.path)),
+                        *(
+                            self._path_key(Path(operation.source.path))
+                            for operation in lineage.operations
+                        ),
+                        *(
+                            self._path_key(Path(operation.output.path))
+                            for operation in lineage.operations[:-1]
+                        ),
+                    }
+                    upstream.discard(current_key)
+                    keys = {
+                        current_key,
+                        self._path_key(manifest_path),
+                        paired_image_key,
+                    }
+                except (OSError, RuntimeError, TypeError, ValueError):
+                    healthy = False
+                    continue
+                for key in keys:
+                    dependencies.setdefault(key, set()).update(upstream)
+        return dependencies, healthy
+
+    @staticmethod
+    def _expand_lineage_references(
+        references: set[str],
+        dependencies: dict[str, set[str]],
+    ) -> bool:
+        pending = list(references)
+        visited: set[str] = set()
+        traversed = 0
+        while pending:
+            key = pending.pop()
+            if key in visited:
+                continue
+            visited.add(key)
+            traversed += 1
+            if traversed > MAX_REFERENCE_TRAVERSAL_ENTRIES:
+                return False
+            for dependency in dependencies.get(key, ()):
+                if dependency not in references:
+                    references.add(dependency)
+                    pending.append(dependency)
+        return True
 
     def _history_references(self, references: set[str]) -> bool:
         db_path = self.data_dir / "asteria.db"
@@ -296,35 +385,171 @@ class EditAssetLifecycleService:
         except (OSError, sqlite3.Error, json.JSONDecodeError, TypeError):
             return False
 
-    def _known_json_sources(self) -> set[Path]:
+    def _known_json_sources(self) -> tuple[set[Path], bool]:
         sources: set[Path] = set()
-        for pattern in ("*.json", "config/**/*.json", "lora-training/**/*.json", "editor_drafts/**/*.json"):
-            try:
-                sources.update(path for path in self.data_dir.glob(pattern) if path.is_file())
-            except OSError:
-                continue
-        sources = {
-            path
-            for path in sources
-            if not path.name.endswith(".asteria.edit.json")
-        }
-        output_roots = {self.data_dir / "outputs"}
+        healthy = True
+        root_sources, root_healthy = self._enumerate_json_sources(
+            self.data_dir,
+            recursive=False,
+            predicate=lambda path: path.name.lower().endswith(".json"),
+        )
+        sources.update(root_sources)
+        healthy = healthy and root_healthy
+        for root in (
+            self.data_dir / "config",
+            self.data_dir / "lora-training",
+            self.data_dir / "editor_drafts",
+        ):
+            nested_sources, nested_healthy = self._enumerate_json_sources(
+                root,
+                recursive=True,
+                predicate=lambda path: path.name.lower().endswith(".json"),
+            )
+            sources.update(nested_sources)
+            healthy = healthy and nested_healthy
+
+        settings = UserSettings()
         settings_path = self.data_dir / "user-settings.json"
         if settings_path in sources:
             try:
-                settings = json.loads(settings_path.read_text(encoding="utf-8"))
-                root = settings.get("output", {}).get("root", "")
-                if root:
-                    output_roots.add(Path(root))
-            except (OSError, json.JSONDecodeError, AttributeError):
-                pass
-        for root in output_roots:
+                payload = json.loads(settings_path.read_text(encoding="utf-8"))
+                settings = UserSettings.model_validate(payload)
+            except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValidationError):
+                healthy = False
+        output_roots = {self.data_dir / "outputs": True}
+        try:
+            configured_root = resolve_output_root(self.data_dir, settings.output)
+            explicitly_configured = bool(settings.output.root.strip())
+            output_roots[configured_root] = (
+                output_roots.get(configured_root, True) and not explicitly_configured
+            )
+        except (OSError, RuntimeError, TypeError, ValueError):
+            healthy = False
+        for root, missing_is_healthy in output_roots.items():
+            sidecars, sidecars_healthy = self._enumerate_json_sources(
+                root,
+                recursive=True,
+                predicate=lambda path: path.name.lower().endswith(
+                    (".asteria.json", ".asteria.merge-candidate.json")
+                ),
+                missing_is_healthy=missing_is_healthy,
+            )
+            sources.update(sidecars)
+            healthy = healthy and sidecars_healthy
+        sources = {
+            path
+            for path in sources
+            if not path.name.lower().endswith(".asteria.edit.json")
+        }
+        return sources, healthy
+
+    def _enumerate_json_sources(
+        self,
+        root: Path,
+        *,
+        recursive: bool,
+        predicate: Callable[[Path], bool],
+        missing_is_healthy: bool = True,
+    ) -> tuple[set[Path], bool]:
+        try:
+            root_details = os.lstat(root)
+        except FileNotFoundError:
+            return set(), missing_is_healthy
+        except (OSError, TypeError, ValueError):
+            return set(), False
+        try:
+            if self._details_are_reparse(root, root_details) or not stat.S_ISDIR(root_details.st_mode):
+                return set(), False
+        except (OSError, TypeError, ValueError):
+            return set(), False
+        root_identity = self._directory_identity(root_details)
+        try:
+            current = Path(os.path.abspath(os.fspath(root)))
+        except (TypeError, ValueError):
+            return set(), False
+        current = current.parent
+        while True:
+            boundary = self._reparse_boundary(current)
+            if boundary is not False:
+                return set(), False
+            parent = current.parent
+            if parent == current:
+                break
+            current = parent
+
+        sources: set[Path] = set()
+        healthy = True
+        visited = 0
+        pending = [(root, 0, root_identity)]
+        while pending:
+            directory, depth, expected_identity = pending.pop()
             try:
-                sources.update(root.rglob("*.asteria.json"))
-                sources.update(root.rglob("*.asteria.merge-candidate.json"))
-            except OSError:
-                continue
-        return sources
+                current_details = os.lstat(directory)
+                if (
+                    self._details_are_reparse(directory, current_details)
+                    or not stat.S_ISDIR(current_details.st_mode)
+                    or self._directory_identity(current_details) != expected_identity
+                ):
+                    healthy = False
+                    continue
+                with os.scandir(directory) as entries:
+                    for entry in entries:
+                        visited += 1
+                        if visited > MAX_REFERENCE_TRAVERSAL_ENTRIES:
+                            return sources, False
+                        path = Path(entry.path)
+                        try:
+                            if entry.is_symlink():
+                                healthy = False
+                                continue
+                            details = os.lstat(path)
+                            if self._details_are_reparse(path, details):
+                                healthy = False
+                                continue
+                            is_file = stat.S_ISREG(details.st_mode)
+                            is_dir = stat.S_ISDIR(details.st_mode)
+                        except (OSError, TypeError, ValueError):
+                            healthy = False
+                            continue
+                        if is_file:
+                            try:
+                                if predicate(path):
+                                    sources.add(path)
+                            except (AttributeError, TypeError):
+                                healthy = False
+                            continue
+                        if not is_dir or not recursive:
+                            continue
+                        if depth >= MAX_REFERENCE_TRAVERSAL_DEPTH:
+                            healthy = False
+                            continue
+                        pending.append((path, depth + 1, self._directory_identity(details)))
+            except FileNotFoundError:
+                healthy = False
+            except (OSError, TypeError, ValueError):
+                healthy = False
+        return sources, healthy
+
+    def _directory_identity(self, details: os.stat_result) -> tuple[int, int, int]:
+        return int(details.st_dev), int(details.st_ino), int(details.st_ctime_ns)
+
+    def _details_are_reparse(self, path: Path, details: os.stat_result) -> bool:
+        attributes = getattr(details, "st_file_attributes", 0)
+        if stat.S_ISLNK(details.st_mode):
+            return True
+        if attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400):
+            return True
+        junction_check = getattr(os.path, "isjunction", None)
+        return bool(junction_check(path)) if junction_check is not None else False
+
+    def _reparse_boundary(self, path: Path) -> bool | None:
+        try:
+            details = os.lstat(path)
+            return self._details_are_reparse(path, details)
+        except FileNotFoundError:
+            return None
+        except (OSError, TypeError, ValueError):
+            return None
 
     def _collect_strings(self, value: Any, references: set[str]) -> None:
         if isinstance(value, str):

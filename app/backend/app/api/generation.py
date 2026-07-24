@@ -75,6 +75,10 @@ from app.services.generation_artifact_deletion import delete_generation_artifact
 from app.services.lora_training import LoRATrainingDatasetRepository
 from app.services.metadata import MetadataWriter, read_generation_parameters_from_image
 from app.services.remaster import REMASTER_REQUIRED_NODES, RemasterExecutionError
+from app.services.reference_mutation import (
+    ReferenceMutationLease,
+    reference_mutation_coordinator,
+)
 from app.services.model_library_cache import get_model_library
 from app.services.model_profiles import ModelProfileRepository
 from app.services.model_selections import ModelSelectionRepository
@@ -3112,61 +3116,85 @@ def _set_job(job_id: str, **patch: Any) -> None:
             _jobs[job_id].update(patch)
 
 
-def _run_job(job_id: str) -> None:
-    with _jobs_lock:
-        job = _jobs[job_id]
-        mode = job["mode"]
-        request = job["request"]
-    _set_job(job_id, status="running", progress=0.05, phase="preparing")
+def _run_job(job_id: str, publisher_lease: ReferenceMutationLease) -> None:
     try:
-        if mode == "remaster":
-            from app.api.remaster import execute_remaster
+        with _jobs_lock:
+            job = _jobs[job_id]
+            mode = job["mode"]
+            request = job["request"]
+        _set_job(job_id, status="running", progress=0.05, phase="preparing")
+        try:
+            if mode == "remaster":
+                from app.api.remaster import execute_remaster
 
-            result = execute_remaster(
-                request,
-                cancel_requested=lambda: bool(_jobs.get(job_id, {}).get("cancelled")),
-                runtime_job_callback=lambda prompt_id: _set_job(job_id, runtime_job_id=prompt_id),
-                runtime_stop_confirmed=lambda: bool(_jobs.get(job_id, {}).get("runtime_stop_confirmed")),
+                result = execute_remaster(
+                    request,
+                    cancel_requested=lambda: bool(_jobs.get(job_id, {}).get("cancelled")),
+                    runtime_job_callback=lambda prompt_id: _set_job(job_id, runtime_job_id=prompt_id),
+                    runtime_stop_confirmed=lambda: bool(_jobs.get(job_id, {}).get("runtime_stop_confirmed")),
+                )
+            elif mode == "img2img":
+                result = _generate(request, "img2img", job_id=job_id)
+            elif mode == "inpaint":
+                result = _generate(request, "inpaint", job_id=job_id)
+            else:
+                result = _generate(request, "txt2img", job_id=job_id)
+        except Exception as exc:  # noqa: BLE001 - surface job failure to UI.
+            _set_job(
+                job_id,
+                status="cancelled" if _jobs.get(job_id, {}).get("cancelled") else "failed",
+                progress=1,
+                error=str(exc),
             )
-        elif mode == "img2img":
-            result = _generate(request, "img2img", job_id=job_id)
-        elif mode == "inpaint":
-            result = _generate(request, "inpaint", job_id=job_id)
-        else:
-            result = _generate(request, "txt2img", job_id=job_id)
-    except Exception as exc:  # noqa: BLE001 - surface job failure to UI.
-        _set_job(job_id, status="cancelled" if _jobs.get(job_id, {}).get("cancelled") else "failed", progress=1, error=str(exc))
-        return
-    total = int(_jobs.get(job_id, {}).get("total", 1))
-    result_field = "remaster" if mode == "remaster" else "generation"
-    _set_job(job_id, status="completed", progress=1, current=total, phase="completed", **{result_field: result})
+            return
+        total = int(_jobs.get(job_id, {}).get("total", 1))
+        result_field = "remaster" if mode == "remaster" else "generation"
+        _set_job(job_id, status="completed", progress=1, current=total, phase="completed", **{result_field: result})
+    finally:
+        publisher_lease.release()
 
 
 def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest) -> GenerationJobResponse:
     job_id = uuid4().hex
-    with _jobs_lock:
-        _jobs[job_id] = {
-            "status": "queued",
-            "mode": mode,
-            "progress": 0,
-            "current": 0,
-            "total": max(1, int(getattr(request, "batch_count", 1))),
-            "step": 0,
-            "steps": 0,
-            "phase": "queued",
-            "request": request,
-            "generation": None,
-            "remaster": None,
-            "preview_path": "",
-            "preview_paths": [],
-            "error": "",
-            "cancelled": False,
-            "runtime_job_id": "",
-            "runtime_stop_confirmed": False,
-            "cancel_warnings": [],
-        }
-    threading.Thread(target=_run_job, args=(job_id,), daemon=True).start()
-    return _job_response(job_id, _jobs[job_id])
+    publisher_lease = reference_mutation_coordinator.acquire_publisher()
+    registered = False
+    try:
+        with _jobs_lock:
+            _jobs[job_id] = {
+                "status": "queued",
+                "mode": mode,
+                "progress": 0,
+                "current": 0,
+                "total": max(1, int(getattr(request, "batch_count", 1))),
+                "step": 0,
+                "steps": 0,
+                "phase": "queued",
+                "request": request,
+                "generation": None,
+                "remaster": None,
+                "preview_path": "",
+                "preview_paths": [],
+                "error": "",
+                "cancelled": False,
+                "runtime_job_id": "",
+                "runtime_stop_confirmed": False,
+                "cancel_warnings": [],
+            }
+            registered = True
+            response = _job_response(job_id, _jobs[job_id])
+        worker = threading.Thread(
+            target=_run_job,
+            args=(job_id, publisher_lease),
+            daemon=True,
+        )
+        worker.start()
+    except BaseException:
+        publisher_lease.release()
+        if registered:
+            with _jobs_lock:
+                _jobs.pop(job_id, None)
+        raise
+    return response
 
 
 @router.post("/jobs/txt2img", response_model=GenerationJobResponse)
