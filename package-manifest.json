@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.0.3",
   "platform": "windows-x64",
-  "source_commit": "59ede7f8b770414da44881b9803b0c0b1dcaef67",
-  "build_timestamp_utc": "2026-07-24T12:09:52Z",
+  "source_commit": "bc0b015cfc89f4360075137f27649ce207e7fb40",
+  "build_timestamp_utc": "2026-07-24T15:06:15Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 14442,
-      "sha256": "3c6ee6adb8999c536713fb16e998a123f30589efd381ec0ac51d686b7572a385"
+      "size_bytes": 21289,
+      "sha256": "8e1a0882c438cf36778798abd4cf6b914895808fefe6e21979343c0e4e7578cb"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -564,12 +564,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "7dc877fb8c399ed213cf468e6d05ea9e583b312d4ec1562578e8fb53797da930"
+      "sha256": "42e07503c23b0e234c5ee297e5d76d971c3e8a6951fb2fc47785b70a5abb3703"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/19fb9d66-b97a-4b45-831a-8ef5a5c0039f.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/7914787a-4674-4edf-aa73-2a947654e62c.json",
       "size_bytes": 88,
-      "sha256": "3bf0e9bcfa1c3935363b47cdefbec93e5755e874ced65f8ba4242e9a55535349"
+      "sha256": "ce4cd572e6655a45eec5a5cb497a07d14b5242fd2ab02fa38afb38b457ae2fd8"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.B43dzPTS.css",
@@ -594,7 +594,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162006,
-      "sha256": "b95997a27bf6c6dfa8c5b2de5b8d3d24fbaae4c570284054d86ecb227c440bbe"
+      "sha256": "f1cdbfc0636756136305252252e83ab6c7f16e93b06ea454f833121358245b10"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.DLVS0IeK.mjs",
@@ -1059,7 +1059,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 11817,
-      "sha256": "667b57f5be17cbe0dc08e3825e321aa181e80907eb3209039e22d5ccb2922aad"
+      "sha256": "e1304dedc811a956cfe628fea938a31f43dfa0017eb22134b5b21d766d7ae2d6"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
