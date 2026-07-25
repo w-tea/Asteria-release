@@ -9,6 +9,8 @@ from pathlib import Path
 import re
 from typing import Any
 
+from app.services.xyz_grid import bounded_contact_sheet_size
+
 
 SUPPORTED_MODEL_FAMILIES = frozenset({"sdxl", "anima"})
 SOURCE_CHANGING_TARGETS = frozenset(
@@ -196,6 +198,7 @@ def estimate_merge_xyz_resources(
         raise ValueError("tile dimensions must be positive")
     if margin < 0 or annotation_band < 0:
         raise ValueError("margin and annotation band must be non-negative")
+    tile_width, tile_height = bounded_contact_sheet_size(tile_width, tile_height)
 
     counts = [len(axis.values) for axis in plan.axes]
     x_count = counts[0]

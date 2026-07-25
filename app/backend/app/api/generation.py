@@ -2791,6 +2791,7 @@ def _xyz_contact_sheet_result(
             XYZGridCell(
                 labels=cell.labels,
                 image_path=_first_image_output(cell.generation.output_paths),
+                display_id=f"#{cell.index + 1:03d}",
             )
             for cell in cells
         ],
@@ -2863,13 +2864,26 @@ def _record_xyz_history(
                 "inpaint_area": request.base.inpaint_area,
             }
         )
+    config = AppConfig()
+    model_slots = _model_slots_for_request(request.base, config)
     generated_tags = metadata_tags(
         profile=request.base.profile,
         prompt=request.base.prompt,
-        model_slots=_model_slots_for_request(request.base, AppConfig()),
+        model_slots=model_slots,
         embeddings=[],
         loras=[lora.model_dump() for lora in request.base.loras],
     )
+    xyz_tags = [*generated_tags, "xyz plot"]
+    if contact_sheet_path:
+        _auto_send_primary_outputs_to_eagle(
+            data_dir=data_dir,
+            config=config,
+            primary_outputs=[{"path": contact_sheet_path, "output_index": 0}],
+            generated_tags=xyz_tags,
+            prompt=request.base.prompt,
+            negative_prompt=request.base.negative_prompt,
+            settings=settings,
+        )
     history = HistoryRepository(data_dir / "asteria.db")
     generation_id = history.add(
         status=status,
@@ -2878,11 +2892,11 @@ def _record_xyz_history(
         expanded_prompt=request.base.prompt,
         negative_prompt=request.base.negative_prompt,
         settings=settings,
-        model_slots=_model_slots_for_request(request.base, AppConfig()),
+        model_slots=model_slots,
         loras=[lora.model_dump() for lora in request.base.loras],
         embeddings=[],
         output_paths=output_paths,
-        generated_tags=[*generated_tags, "xyz plot"],
+        generated_tags=xyz_tags,
     )
     sidecar_paths = MetadataWriter().write_generation_sidecars(
         {
@@ -2893,10 +2907,10 @@ def _record_xyz_history(
             "expanded_prompt": request.base.prompt,
             "negative_prompt": request.base.negative_prompt,
             "settings": settings,
-            "model_slots": _model_slots_for_request(request.base, AppConfig()),
+            "model_slots": model_slots,
             "loras": [lora.model_dump() for lora in request.base.loras],
             "embeddings": [],
-            "metadata_tags": [*generated_tags, "xyz plot"],
+            "metadata_tags": xyz_tags,
         },
         output_paths,
     )

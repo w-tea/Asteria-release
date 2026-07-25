@@ -3850,6 +3850,11 @@ const messages = {
   "merge.metadataPathMissing": { en: "This merge result has no metadata path to open.", ja: "このマージ結果には開けるメタデータパスがありません。" },
   "merge.fillAlpha": { en: "Fill Alpha", ja: "Alphaを埋める" },
   "merge.fillBeta": { en: "Fill Beta", ja: "Betaを埋める" },
+  "merge.randomizeAlpha": { en: "Randomize Alpha", ja: "Alphaをランダム化" },
+  "merge.randomizeBeta": { en: "Randomize Beta", ja: "Betaをランダム化" },
+  "merge.undoAlphaRandomize": { en: "Undo Alpha", ja: "Alphaを元に戻す" },
+  "merge.undoBetaRandomize": { en: "Undo Beta", ja: "Betaを元に戻す" },
+  "merge.randomizeRange": { en: "Independent 0.00–1.00 draw", ja: "各階層を0.00～1.00で独立抽選" },
   "merge.blockWeightSlidersAria": { en: "Block weight sliders", ja: "ブロック重みスライダー" },
   "merge.alphaMbwValues": { en: "Alpha MBW values", ja: "Alpha MBW値" },
   "merge.alphaMbwValuesHelp": { en: "Comma-separated block weights for the Alpha curve.", ja: "Alphaカーブ用のカンマ区切りブロック重みです。" },
@@ -4013,6 +4018,8 @@ const messages = {
   "merge.loadingHistorySettings": { en: "Loading history", ja: "履歴を読込中" },
   "merge.xyzAxes": { en: "Comparison axes", ja: "比較軸" },
   "merge.xyzAxesHelp": { en: "Use 1–3 axes. Candidate count is unrestricted; large runs show a resource estimate and require confirmation.", ja: "1～3軸で設定します。候補数に上限はなく、大規模な実行ではリソース見積もりを表示して確認を求めます。" },
+  "merge.xyzPresetHelper": { en: "MBW preset helper", ja: "MBWプリセット入力補助" },
+  "merge.addPresetToAxis": { en: "Add to axis", ja: "軸へ追加" },
   "merge.alphaBetaValuesPlaceholder": { en: "0.25,0.50\n0.40,0.20", ja: "0.25,0.50\n0.40,0.20" },
   "merge.xyzOverrides": { en: "Bound overrides", ja: "固定後の上書き" },
   "merge.xyzNoSnapshot": { en: "No snapshot bound", ja: "未固定" },
@@ -26564,6 +26571,9 @@ const _sfc_main$o = /* @__PURE__ */ defineComponent({
     presetImporting: { type: Boolean },
     presetError: {},
     presetMessage: {},
+    randomizeDisabled: { type: Boolean },
+    canUndoAlphaRandomize: { type: Boolean },
+    canUndoBetaRandomize: { type: Boolean },
     elementalRules: {},
     elementalAliasHint: {},
     elementalMatches: {},
@@ -26585,7 +26595,7 @@ const _sfc_main$o = /* @__PURE__ */ defineComponent({
     analysisActiveTab: {},
     analysisAdvancedDetails: { type: Boolean }
   },
-  emits: ["update-active-tool", "update-block-list", "update-preset-query", "select-preset", "apply-preset", "update-user-preset-name", "save-preset", "delete-preset", "export-presets", "import-presets", "fill-blocks", "update-block-weight", "update-vector", "update-pattern", "update-elemental-rules", "analyze-elemental", "update-adjust", "update-dice-mode", "update-dice-seed", "update-dice-range", "update-challenge-count", "update-challenge-start-seed", "build-dice", "export-analysis", "update-analysis-tab", "update-analysis-details"],
+  emits: ["update-active-tool", "update-block-list", "update-preset-query", "select-preset", "apply-preset", "update-user-preset-name", "save-preset", "delete-preset", "export-presets", "import-presets", "fill-blocks", "randomize-blocks", "undo-randomize-blocks", "update-block-weight", "update-vector", "update-pattern", "update-elemental-rules", "analyze-elemental", "update-adjust", "update-dice-mode", "update-dice-seed", "update-dice-range", "update-challenge-count", "update-challenge-start-seed", "build-dice", "export-analysis", "update-analysis-tab", "update-analysis-details"],
   setup(__props, { emit: __emit }) {
     const emit = __emit;
     const { t } = useAsteriaI18n();
@@ -26601,89 +26611,89 @@ const _sfc_main$o = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         id: "merge-advanced-recipe",
         class: "merge-panel advanced-workbench"
-      }, _attrs))} data-v-60610eae><div class="merge-section-header" data-v-60610eae><div data-v-60610eae><h2 data-v-60610eae>${ssrInterpolate(unref(t)("merge.advancedWorkbench.title"))}</h2><small data-v-60610eae>${ssrInterpolate(unref(t)("merge.blocksCount", { count: String(__props.state.blockCount) }))} · ${ssrInterpolate(__props.schemaLabel)}</small></div></div><div class="advanced-workbench__tabs" role="tablist"${ssrRenderAttr("aria-label", unref(t)("merge.advancedWorkbench.title"))} data-v-60610eae><!--[-->`);
+      }, _attrs))} data-v-2353be26><div class="merge-section-header" data-v-2353be26><div data-v-2353be26><h2 data-v-2353be26>${ssrInterpolate(unref(t)("merge.advancedWorkbench.title"))}</h2><small data-v-2353be26>${ssrInterpolate(unref(t)("merge.blocksCount", { count: String(__props.state.blockCount) }))} · ${ssrInterpolate(__props.schemaLabel)}</small></div></div><div class="advanced-workbench__tabs" role="tablist"${ssrRenderAttr("aria-label", unref(t)("merge.advancedWorkbench.title"))} data-v-2353be26><!--[-->`);
       ssrRenderList(__props.state.tools, (tool) => {
-        _push(`<button type="button" role="tab"${ssrRenderAttr("aria-selected", tool.active)} class="${ssrRenderClass({ active: tool.active })}" data-v-60610eae>${ssrInterpolate(unref(t)(toolLabels[tool.id]))}</button>`);
+        _push(`<button type="button" role="tab"${ssrRenderAttr("aria-selected", tool.active)} class="${ssrRenderClass({ active: tool.active })}" data-v-2353be26>${ssrInterpolate(unref(t)(toolLabels[tool.id]))}</button>`);
       });
       _push(`<!--]--></div>`);
       if (__props.state.activeTool === "block-weights") {
-        _push(`<div class="advanced-workbench__panel" data-v-60610eae><div class="advanced-workbench__filters" data-v-60610eae><small class="advanced-workbench__scope-label" data-v-60610eae>${ssrInterpolate(unref(t)("merge.advancedWorkbench.normalRun"))}</small><label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.includeBlocks"))}</span><small class="field-help" data-v-60610eae>${ssrInterpolate(unref(t)("merge.includeBlocksHelp"))}</small><input${ssrRenderAttr("value", __props.state.normalRunFilters.includeBlocks.join(","))}${ssrRenderAttr("placeholder", unref(t)("merge.includeBlocksPlaceholder"))} data-v-60610eae></label><label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.excludeBlocks"))}</span><small class="field-help" data-v-60610eae>${ssrInterpolate(unref(t)("merge.excludeBlocksHelp"))}</small><input${ssrRenderAttr("value", __props.state.normalRunFilters.excludeBlocks.join(","))}${ssrRenderAttr("placeholder", unref(t)("merge.excludeBlocksPlaceholder"))} data-v-60610eae></label><label class="field advanced-workbench__candidate-filter" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.pinpointBlocks"))} · ${ssrInterpolate(unref(t)("merge.advancedWorkbench.candidateOnly"))}</span><small class="field-help" data-v-60610eae>${ssrInterpolate(unref(t)("merge.pinpointBlocksHelp"))}</small><input${ssrRenderAttr("value", __props.state.candidateOnlyFilters.pinpointBlocks.join(","))}${ssrRenderAttr("placeholder", unref(t)("merge.pinpointBlocksPlaceholder"))} data-v-60610eae></label></div><p class="capability-note" data-v-60610eae>${ssrInterpolate(__props.blockFilterHint)}</p><div class="advanced-workbench__preset" data-v-60610eae><label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.presetSearch"))}</span><input${ssrRenderAttr("value", __props.presetQuery)}${ssrRenderAttr("placeholder", unref(t)("merge.presetSearchPlaceholder"))} data-v-60610eae></label><label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.layerPreset"))}</span><small class="field-help" data-v-60610eae>${ssrInterpolate(unref(t)("merge.advancedWorkbench.selectDoesNotApply"))}</small><select${ssrRenderAttr("value", __props.state.preset.selectedId)} data-v-60610eae><option value="" data-v-60610eae>${ssrInterpolate(unref(t)("merge.selectPreset"))}</option><!--[-->`);
+        _push(`<div class="advanced-workbench__panel" data-v-2353be26><div class="advanced-workbench__filters" data-v-2353be26><small class="advanced-workbench__scope-label" data-v-2353be26>${ssrInterpolate(unref(t)("merge.advancedWorkbench.normalRun"))}</small><label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.includeBlocks"))}</span><small class="field-help" data-v-2353be26>${ssrInterpolate(unref(t)("merge.includeBlocksHelp"))}</small><input${ssrRenderAttr("value", __props.state.normalRunFilters.includeBlocks.join(","))}${ssrRenderAttr("placeholder", unref(t)("merge.includeBlocksPlaceholder"))} data-v-2353be26></label><label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.excludeBlocks"))}</span><small class="field-help" data-v-2353be26>${ssrInterpolate(unref(t)("merge.excludeBlocksHelp"))}</small><input${ssrRenderAttr("value", __props.state.normalRunFilters.excludeBlocks.join(","))}${ssrRenderAttr("placeholder", unref(t)("merge.excludeBlocksPlaceholder"))} data-v-2353be26></label><label class="field advanced-workbench__candidate-filter" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.pinpointBlocks"))} · ${ssrInterpolate(unref(t)("merge.advancedWorkbench.candidateOnly"))}</span><small class="field-help" data-v-2353be26>${ssrInterpolate(unref(t)("merge.pinpointBlocksHelp"))}</small><input${ssrRenderAttr("value", __props.state.candidateOnlyFilters.pinpointBlocks.join(","))}${ssrRenderAttr("placeholder", unref(t)("merge.pinpointBlocksPlaceholder"))} data-v-2353be26></label></div><p class="capability-note" data-v-2353be26>${ssrInterpolate(__props.blockFilterHint)}</p><div class="advanced-workbench__preset" data-v-2353be26><label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.presetSearch"))}</span><input${ssrRenderAttr("value", __props.presetQuery)}${ssrRenderAttr("placeholder", unref(t)("merge.presetSearchPlaceholder"))} data-v-2353be26></label><label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.layerPreset"))}</span><small class="field-help" data-v-2353be26>${ssrInterpolate(unref(t)("merge.advancedWorkbench.selectDoesNotApply"))}</small><select${ssrRenderAttr("value", __props.state.preset.selectedId)} data-v-2353be26><option value="" data-v-2353be26>${ssrInterpolate(unref(t)("merge.selectPreset"))}</option><!--[-->`);
         ssrRenderList(__props.presets, (preset) => {
-          _push(`<option${ssrRenderAttr("value", preset.id)} data-v-60610eae>${ssrInterpolate(preset.name)} / ${ssrInterpolate(preset.family)}</option>`);
+          _push(`<option${ssrRenderAttr("value", preset.id)} data-v-2353be26>${ssrInterpolate(preset.name)} / ${ssrInterpolate(preset.family)}</option>`);
         });
-        _push(`<!--]--></select></label><div class="advanced-workbench__actions" data-v-60610eae><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!__props.state.preset.canApply) ? " disabled" : ""} data-v-60610eae>${ssrInterpolate(unref(t)("merge.applyAlpha"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!__props.state.preset.canApply) ? " disabled" : ""} data-v-60610eae>${ssrInterpolate(unref(t)("merge.applyBeta"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!__props.state.preset.canApply) ? " disabled" : ""} data-v-60610eae>${ssrInterpolate(unref(t)("merge.applyBoth"))}</button></div><label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.userPresetName"))}</span><input${ssrRenderAttr("value", __props.userPresetName)}${ssrRenderAttr("placeholder", unref(t)("merge.userPresetNamePlaceholder"))} data-v-60610eae></label><div class="advanced-workbench__actions" data-v-60610eae><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.userPresetName.trim()) ? " disabled" : ""} data-v-60610eae>${ssrInterpolate(unref(t)("merge.saveAlphaPreset"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.state.preset.canDelete) ? " disabled" : ""} data-v-60610eae>${ssrInterpolate(unref(t)("merge.deleteUserPreset"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.presetExporting) ? " disabled" : ""} data-v-60610eae>${ssrInterpolate(__props.presetExporting ? unref(t)("merge.exporting") : unref(t)("merge.exportUserPresets"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.presetImporting) ? " disabled" : ""} data-v-60610eae>${ssrInterpolate(__props.presetImporting ? unref(t)("merge.importing") : unref(t)("merge.importPresetJson"))}</button><input class="advanced-workbench__file-input" type="file" tabindex="-1" accept="application/json,.json" data-v-60610eae></div>`);
+        _push(`<!--]--></select></label><div class="advanced-workbench__actions" data-v-2353be26><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!__props.state.preset.canApply) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(unref(t)("merge.applyAlpha"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!__props.state.preset.canApply) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(unref(t)("merge.applyBeta"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!__props.state.preset.canApply) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(unref(t)("merge.applyBoth"))}</button></div><label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.userPresetName"))}</span><input${ssrRenderAttr("value", __props.userPresetName)}${ssrRenderAttr("placeholder", unref(t)("merge.userPresetNamePlaceholder"))} data-v-2353be26></label><div class="advanced-workbench__actions" data-v-2353be26><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.userPresetName.trim()) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(unref(t)("merge.saveAlphaPreset"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.state.preset.canDelete) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(unref(t)("merge.deleteUserPreset"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.presetExporting) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(__props.presetExporting ? unref(t)("merge.exporting") : unref(t)("merge.exportUserPresets"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.presetImporting) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(__props.presetImporting ? unref(t)("merge.importing") : unref(t)("merge.importPresetJson"))}</button><input class="advanced-workbench__file-input" type="file" tabindex="-1" accept="application/json,.json" data-v-2353be26></div>`);
         if (__props.presetError) {
-          _push(`<p class="error" aria-live="assertive" data-v-60610eae>${ssrInterpolate(__props.presetError)}</p>`);
+          _push(`<p class="error" aria-live="assertive" data-v-2353be26>${ssrInterpolate(__props.presetError)}</p>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.presetMessage) {
-          _push(`<small class="muted" data-v-60610eae>${ssrInterpolate(__props.presetMessage)}</small>`);
+          _push(`<small class="muted" data-v-2353be26>${ssrInterpolate(__props.presetMessage)}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.selectedPreset) {
-          _push(`<small class="muted" data-v-60610eae>${ssrInterpolate(__props.selectedPreset.source)} · ${ssrInterpolate(__props.selectedPreset.description)}</small>`);
+          _push(`<small class="muted" data-v-2353be26>${ssrInterpolate(__props.selectedPreset.source)} · ${ssrInterpolate(__props.selectedPreset.description)}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</div><div class="advanced-workbench__actions" data-v-60610eae><button class="icon-button" type="button" data-v-60610eae>${ssrInterpolate(unref(t)("merge.fillAlpha"))}</button><button class="icon-button" type="button" data-v-60610eae>${ssrInterpolate(unref(t)("merge.fillBeta"))}</button></div><div class="advanced-workbench__scroll"${ssrRenderAttr("aria-label", unref(t)("merge.blockWeightSlidersAria"))} data-v-60610eae><!--[-->`);
+        _push(`</div><div class="advanced-workbench__actions" data-v-2353be26><button class="icon-button" type="button" data-v-2353be26>${ssrInterpolate(unref(t)("merge.fillAlpha"))}</button><button class="icon-button" type="button" data-v-2353be26>${ssrInterpolate(unref(t)("merge.fillBeta"))}</button></div><div class="advanced-workbench__randomize" data-v-2353be26><section data-v-2353be26><div data-v-2353be26><strong data-v-2353be26>Alpha</strong><small data-v-2353be26>${ssrInterpolate(unref(t)("merge.randomizeRange"))}</small></div><div class="advanced-workbench__actions" data-v-2353be26><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.randomizeDisabled) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(unref(t)("merge.randomizeAlpha"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.randomizeDisabled || !__props.canUndoAlphaRandomize) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(unref(t)("merge.undoAlphaRandomize"))}</button></div></section><section data-v-2353be26><div data-v-2353be26><strong data-v-2353be26>Beta</strong><small data-v-2353be26>${ssrInterpolate(unref(t)("merge.randomizeRange"))}</small></div><div class="advanced-workbench__actions" data-v-2353be26><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.randomizeDisabled) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(unref(t)("merge.randomizeBeta"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.randomizeDisabled || !__props.canUndoBetaRandomize) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(unref(t)("merge.undoBetaRandomize"))}</button></div></section></div><div class="advanced-workbench__scroll"${ssrRenderAttr("aria-label", unref(t)("merge.blockWeightSlidersAria"))} data-v-2353be26><!--[-->`);
         ssrRenderList(__props.state.blockIds, (block, index) => {
-          _push(`<article class="advanced-workbench__block" data-v-60610eae><header data-v-60610eae><strong data-v-60610eae>${ssrInterpolate(block)}</strong><small data-v-60610eae>${ssrInterpolate(__props.alphaWeights[index]?.toFixed(3))} / ${ssrInterpolate(__props.betaWeights[index]?.toFixed(3))}</small></header><label data-v-60610eae><span data-v-60610eae>A</span><input type="range" min="-2" max="2" step="0.01"${ssrRenderAttr("value", __props.alphaWeights[index])} data-v-60610eae><input type="number" step="0.01"${ssrRenderAttr("value", __props.alphaWeights[index])} data-v-60610eae></label><label data-v-60610eae><span data-v-60610eae>B</span><input type="range" min="-2" max="2" step="0.01"${ssrRenderAttr("value", __props.betaWeights[index])} data-v-60610eae><input type="number" step="0.01"${ssrRenderAttr("value", __props.betaWeights[index])} data-v-60610eae></label></article>`);
+          _push(`<article class="advanced-workbench__block" data-v-2353be26><header data-v-2353be26><strong data-v-2353be26>${ssrInterpolate(block)}</strong><small data-v-2353be26>${ssrInterpolate(__props.alphaWeights[index]?.toFixed(3))} / ${ssrInterpolate(__props.betaWeights[index]?.toFixed(3))}</small></header><label data-v-2353be26><span data-v-2353be26>A</span><input type="range" min="-2" max="2" step="0.01"${ssrRenderAttr("value", __props.alphaWeights[index])} data-v-2353be26><input type="number" step="0.01"${ssrRenderAttr("value", __props.alphaWeights[index])} data-v-2353be26></label><label data-v-2353be26><span data-v-2353be26>B</span><input type="range" min="-2" max="2" step="0.01"${ssrRenderAttr("value", __props.betaWeights[index])} data-v-2353be26><input type="number" step="0.01"${ssrRenderAttr("value", __props.betaWeights[index])} data-v-2353be26></label></article>`);
         });
-        _push(`<!--]--></div><div class="advanced-workbench__vectors" data-v-60610eae><label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.alphaMbwValues"))}</span><textarea rows="4" data-v-60610eae>${ssrInterpolate(__props.alphaVector)}</textarea></label><label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.betaMbwValues"))}</span><textarea rows="4" data-v-60610eae>${ssrInterpolate(__props.betaVector)}</textarea></label></div><label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.patternOverrides"))}</span><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("merge.patternOverridesPlaceholder"))} data-v-60610eae>${ssrInterpolate(__props.patternOverrides)}</textarea></label></div>`);
+        _push(`<!--]--></div><div class="advanced-workbench__vectors" data-v-2353be26><label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.alphaMbwValues"))}</span><textarea rows="4" data-v-2353be26>${ssrInterpolate(__props.alphaVector)}</textarea></label><label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.betaMbwValues"))}</span><textarea rows="4" data-v-2353be26>${ssrInterpolate(__props.betaVector)}</textarea></label></div><label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.patternOverrides"))}</span><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("merge.patternOverridesPlaceholder"))} data-v-2353be26>${ssrInterpolate(__props.patternOverrides)}</textarea></label></div>`);
       } else if (__props.state.activeTool === "elemental-adjust") {
-        _push(`<div class="advanced-workbench__panel" data-v-60610eae><label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.elementalRules"))}</span><textarea rows="7"${ssrRenderAttr("placeholder", unref(t)("merge.elementalRulesPlaceholder"))} data-v-60610eae>${ssrInterpolate(__props.elementalRules)}</textarea></label><p class="capability-note" data-v-60610eae>${ssrInterpolate(__props.elementalAliasHint)}</p><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!__props.analysisState.canAnalyze) ? " disabled" : ""} data-v-60610eae>${ssrInterpolate(unref(t)("merge.advancedWorkbench.analyzeMatches"))}</button>`);
+        _push(`<div class="advanced-workbench__panel" data-v-2353be26><label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.elementalRules"))}</span><textarea rows="7"${ssrRenderAttr("placeholder", unref(t)("merge.elementalRulesPlaceholder"))} data-v-2353be26>${ssrInterpolate(__props.elementalRules)}</textarea></label><p class="capability-note" data-v-2353be26>${ssrInterpolate(__props.elementalAliasHint)}</p><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!__props.analysisState.canAnalyze) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(unref(t)("merge.advancedWorkbench.analyzeMatches"))}</button>`);
         if (__props.elementalMatches.length) {
-          _push(`<div class="advanced-workbench__matches" data-v-60610eae><!--[-->`);
+          _push(`<div class="advanced-workbench__matches" data-v-2353be26><!--[-->`);
           ssrRenderList(__props.elementalMatches, (match) => {
-            _push(`<small data-v-60610eae>${ssrInterpolate(match.rule)} · ${ssrInterpolate(match.matched_keys.length)}</small>`);
+            _push(`<small data-v-2353be26>${ssrInterpolate(match.rule)} · ${ssrInterpolate(match.matched_keys.length)}</small>`);
           });
           _push(`<!--]--></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="advanced-workbench__adjust" data-v-60610eae><p class="${ssrRenderClass([{ "capability-note--warning": !__props.state.adjust.enabled }, "capability-note"])}" data-v-60610eae>${ssrInterpolate(unref(t)(`merge.advancedWorkbench.adjust.${__props.state.adjust.status}`))}</p><!--[-->`);
+        _push(`<div class="advanced-workbench__adjust" data-v-2353be26><p class="${ssrRenderClass([{ "capability-note--warning": !__props.state.adjust.enabled }, "capability-note"])}" data-v-2353be26>${ssrInterpolate(unref(t)(`merge.advancedWorkbench.adjust.${__props.state.adjust.status}`))}</p><!--[-->`);
         ssrRenderList(__props.adjustParameters, (item) => {
-          _push(`<label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(item.label)}</span><input type="number" step="0.01"${ssrIncludeBooleanAttr(!__props.state.adjust.enabled) ? " disabled" : ""}${ssrRenderAttr("value", __props.adjustValues[item.id] ?? 0)} data-v-60610eae></label>`);
+          _push(`<label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(item.label)}</span><input type="number" step="0.01"${ssrIncludeBooleanAttr(!__props.state.adjust.enabled) ? " disabled" : ""}${ssrRenderAttr("value", __props.adjustValues[item.id] ?? 0)} data-v-2353be26></label>`);
         });
         _push(`<!--]--></div></div>`);
       } else if (__props.state.activeTool === "dice") {
-        _push(`<div class="advanced-workbench__panel" data-v-60610eae><div class="advanced-workbench__dice-grid" data-v-60610eae><label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.diceMode"))}</span><select${ssrRenderAttr("value", __props.diceMode)} data-v-60610eae><option value="" data-v-60610eae>${ssrInterpolate(unref(t)("merge.off"))}</option><!--[-->`);
+        _push(`<div class="advanced-workbench__panel" data-v-2353be26><div class="advanced-workbench__dice-grid" data-v-2353be26><label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.diceMode"))}</span><select${ssrRenderAttr("value", __props.diceMode)} data-v-2353be26><option value="" data-v-2353be26>${ssrInterpolate(unref(t)("merge.off"))}</option><!--[-->`);
         ssrRenderList(__props.diceModes, (mode) => {
-          _push(`<option${ssrRenderAttr("value", mode)} data-v-60610eae>${ssrInterpolate(mode)}</option>`);
+          _push(`<option${ssrRenderAttr("value", mode)} data-v-2353be26>${ssrInterpolate(mode)}</option>`);
         });
         _push(`<!--]--></select></label>`);
         if (__props.diceMode) {
-          _push(`<label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.diceSeed"))}</span><input type="number"${ssrRenderAttr("value", __props.diceSeed ?? "")} data-v-60610eae></label>`);
+          _push(`<label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.diceSeed"))}</span><input type="number"${ssrRenderAttr("value", __props.diceSeed ?? "")} data-v-2353be26></label>`);
         } else {
           _push(`<!---->`);
         }
         _push(`<!--[-->`);
         ssrRenderList(__props.diceMode ? __props.diceRangeParameters : [], (item) => {
-          _push(`<label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(item.label)}</span><input${ssrRenderAttr("value", __props.state.dice.ranges[item.id] ?? "")}${ssrRenderAttr("placeholder", item.placeholder)}${ssrRenderAttr("title", item.help)} data-v-60610eae></label>`);
+          _push(`<label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(item.label)}</span><input${ssrRenderAttr("value", __props.state.dice.ranges[item.id] ?? "")}${ssrRenderAttr("placeholder", item.placeholder)}${ssrRenderAttr("title", item.help)} data-v-2353be26></label>`);
         });
         _push(`<!--]-->`);
         if (__props.diceMode) {
-          _push(`<label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.challengeCount"))}</span><input type="number" min="1" max="64"${ssrRenderAttr("value", __props.diceChallengeCount)} data-v-60610eae></label>`);
+          _push(`<label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.challengeCount"))}</span><input type="number" min="1" max="64"${ssrRenderAttr("value", __props.diceChallengeCount)} data-v-2353be26></label>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.diceMode) {
-          _push(`<label class="field" data-v-60610eae><span data-v-60610eae>${ssrInterpolate(unref(t)("merge.challengeStartSeed"))}</span><input type="number"${ssrRenderAttr("value", __props.diceChallengeStartSeed ?? "")} data-v-60610eae></label>`);
+          _push(`<label class="field" data-v-2353be26><span data-v-2353be26>${ssrInterpolate(unref(t)("merge.challengeStartSeed"))}</span><input type="number"${ssrRenderAttr("value", __props.diceChallengeStartSeed ?? "")} data-v-2353be26></label>`);
         } else {
           _push(`<!---->`);
         }
         _push(`</div>`);
         if (__props.diceMode) {
-          _push(`<button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.diceLoading) ? " disabled" : ""} data-v-60610eae>${ssrInterpolate(__props.diceLoading ? unref(t)("merge.building") : unref(t)("merge.buildDiceChallenge"))}</button>`);
+          _push(`<button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.diceLoading) ? " disabled" : ""} data-v-2353be26>${ssrInterpolate(__props.diceLoading ? unref(t)("merge.building") : unref(t)("merge.buildDiceChallenge"))}</button>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.diceReport) {
-          _push(`<div class="advanced-workbench__report" aria-live="polite" data-v-60610eae><strong data-v-60610eae>${ssrInterpolate(unref(t)("merge.challengeCountSummary", { count: __props.diceReport.items.length }))}</strong><small data-v-60610eae>${ssrInterpolate(filename2(__props.diceReport.report_path))}</small><!--[-->`);
+          _push(`<div class="advanced-workbench__report" aria-live="polite" data-v-2353be26><strong data-v-2353be26>${ssrInterpolate(unref(t)("merge.challengeCountSummary", { count: __props.diceReport.items.length }))}</strong><small data-v-2353be26>${ssrInterpolate(filename2(__props.diceReport.report_path))}</small><!--[-->`);
           ssrRenderList(__props.diceReport.items.slice(0, 12), (item) => {
-            _push(`<small data-v-60610eae>${ssrInterpolate(unref(t)("merge.seed"))} ${ssrInterpolate(item.dice_seed)} · ${ssrInterpolate(item.merge_recipe_patch.elemental_rules || unref(t)("merge.noElementalRules"))}</small>`);
+            _push(`<small data-v-2353be26>${ssrInterpolate(unref(t)("merge.seed"))} ${ssrInterpolate(item.dice_seed)} · ${ssrInterpolate(item.merge_recipe_patch.elemental_rules || unref(t)("merge.noElementalRules"))}</small>`);
           });
           _push(`<!--]--></div>`);
         } else {
@@ -26691,7 +26701,7 @@ const _sfc_main$o = /* @__PURE__ */ defineComponent({
         }
         _push(`</div>`);
       } else if (__props.state.activeTool === "analysis") {
-        _push(`<div class="advanced-workbench__panel advanced-workbench__analysis" data-v-60610eae>`);
+        _push(`<div class="advanced-workbench__panel advanced-workbench__analysis" data-v-2353be26>`);
         _push(ssrRenderComponent(MergeAnalysisPanel, {
           "analysis-state": __props.analysisState,
           result: __props.analysisResult,
@@ -26718,13 +26728,15 @@ _sfc_main$o.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeAdvancedWorkbench.vue");
   return _sfc_setup$o ? _sfc_setup$o(props, ctx) : void 0;
 };
-const MergeAdvancedWorkbench = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$o, [["__scopeId", "data-v-60610eae"]]), { __name: "StudioMergeAdvancedWorkbench" });
+const MergeAdvancedWorkbench = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$o, [["__scopeId", "data-v-2353be26"]]), { __name: "StudioMergeAdvancedWorkbench" });
+const schemaCompatiblePresetOptions = (presets, schema) => presets.filter((preset) => preset.compatible_schemas.includes(schema) || preset.family === schema).map(({ id, name, family }) => ({ id, name, family }));
 const _sfc_main$n = /* @__PURE__ */ defineComponent({
   __name: "MergeCandidateStudio",
   __ssrInlineRender: true,
   props: {
     axes: {},
     targetOptions: {},
+    mbwPresetOptions: {},
     bindingState: {},
     preflight: {},
     studioState: {},
@@ -26744,6 +26756,7 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
   emits: ["update-axis", "add-axis", "remove-axis", "update-history-input", "bind-current", "load-history", "release-snapshot", "update-override", "compare-saved", "generate"],
   setup(__props, { emit: __emit }) {
     const { t, vocabularyDescription, vocabularyTerm } = useAsteriaI18n();
+    const mbwPresetSelections = ref({});
     const issueKeys = {
       "axes-required": "merge.xyzIssue.axesRequired",
       "axes-limit": "merge.xyzIssue.axesLimit",
@@ -26782,33 +26795,43 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         id: "merge-candidate-studio",
         class: "candidate-studio"
-      }, _attrs))} data-v-92631f05><header class="candidate-studio__header" data-v-92631f05><div data-v-92631f05><span class="candidate-studio__eyebrow" data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzPrecheck"))}</span><h2 data-v-92631f05>${ssrInterpolate(unref(t)("merge.candidateSetupTitle"))}</h2><small data-v-92631f05>${ssrInterpolate(unref(t)("merge.candidateSetupHelp"))}</small></div><span class="candidate-studio__status"${ssrRenderAttr("data-status", __props.studioState.status)} data-v-92631f05>${ssrInterpolate(unref(t)(statusKeys[__props.studioState.status]))}</span></header><div class="candidate-studio__summary" data-v-92631f05><div data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.recipe"))}</span><strong data-v-92631f05>${ssrInterpolate(__props.recipeName)}</strong><small data-v-92631f05>${ssrInterpolate(__props.familyLabel)}</small></div><div data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.baseSettings"))}</span><strong data-v-92631f05>${ssrInterpolate(__props.baseLabel)}</strong><small data-v-92631f05>${ssrInterpolate(unref(t)(bindingKeys[__props.bindingState.status]))}</small></div><div data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.estimatedCandidates"))}</span><strong data-v-92631f05>${ssrInterpolate(__props.preflight.cellCount)}</strong><small data-v-92631f05>${ssrInterpolate(__props.preflight.counts.join(" × ") || "—")}</small></div><div data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.hiresState"))}</span><strong data-v-92631f05>${ssrInterpolate(__props.hiresLabel)}</strong></div></div><div class="candidate-studio__grid" data-v-92631f05><section class="candidate-studio__rail"${ssrRenderAttr("aria-label", unref(t)("merge.xyzGenerationSnapshot"))} data-v-92631f05><header data-v-92631f05><strong data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzGenerationSnapshot"))}</strong><small data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzGenerationSnapshotHelp"))}</small></header><div class="candidate-studio__actions" data-v-92631f05><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""} data-v-92631f05>${ssrInterpolate(unref(t)("merge.bindCurrentGenerate"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || !__props.bindingState.canRelease) ? " disabled" : ""} data-v-92631f05>${ssrInterpolate(unref(t)("merge.releaseSnapshot"))}</button></div><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.historyBase"))}</span><input${ssrRenderAttr("value", __props.historyInput)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.historyBasePlaceholder"))} data-v-92631f05></label><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || __props.bindingState.status === "loading-history" || !__props.historyInput.trim()) ? " disabled" : ""} data-v-92631f05>${ssrInterpolate(__props.bindingState.status === "loading-history" ? unref(t)("merge.loadingHistorySettings") : unref(t)("merge.useHistorySettings"))}</button></section><section class="candidate-studio__axes"${ssrRenderAttr("aria-label", unref(t)("merge.xyzAxes"))} data-v-92631f05><header data-v-92631f05><strong data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzAxes"))}</strong><small data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzAxesHelp"))}</small></header><!--[-->`);
+      }, _attrs))} data-v-0389e6fe><header class="candidate-studio__header" data-v-0389e6fe><div data-v-0389e6fe><span class="candidate-studio__eyebrow" data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzPrecheck"))}</span><h2 data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.candidateSetupTitle"))}</h2><small data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.candidateSetupHelp"))}</small></div><span class="candidate-studio__status"${ssrRenderAttr("data-status", __props.studioState.status)} data-v-0389e6fe>${ssrInterpolate(unref(t)(statusKeys[__props.studioState.status]))}</span></header><div class="candidate-studio__summary" data-v-0389e6fe><div data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.recipe"))}</span><strong data-v-0389e6fe>${ssrInterpolate(__props.recipeName)}</strong><small data-v-0389e6fe>${ssrInterpolate(__props.familyLabel)}</small></div><div data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.baseSettings"))}</span><strong data-v-0389e6fe>${ssrInterpolate(__props.baseLabel)}</strong><small data-v-0389e6fe>${ssrInterpolate(unref(t)(bindingKeys[__props.bindingState.status]))}</small></div><div data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.estimatedCandidates"))}</span><strong data-v-0389e6fe>${ssrInterpolate(__props.preflight.cellCount)}</strong><small data-v-0389e6fe>${ssrInterpolate(__props.preflight.counts.join(" × ") || "—")}</small></div><div data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.hiresState"))}</span><strong data-v-0389e6fe>${ssrInterpolate(__props.hiresLabel)}</strong></div></div><div class="candidate-studio__grid" data-v-0389e6fe><section class="candidate-studio__rail"${ssrRenderAttr("aria-label", unref(t)("merge.xyzGenerationSnapshot"))} data-v-0389e6fe><header data-v-0389e6fe><strong data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzGenerationSnapshot"))}</strong><small data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzGenerationSnapshotHelp"))}</small></header><div class="candidate-studio__actions" data-v-0389e6fe><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""} data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.bindCurrentGenerate"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || !__props.bindingState.canRelease) ? " disabled" : ""} data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.releaseSnapshot"))}</button></div><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.historyBase"))}</span><input${ssrRenderAttr("value", __props.historyInput)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.historyBasePlaceholder"))} data-v-0389e6fe></label><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || __props.bindingState.status === "loading-history" || !__props.historyInput.trim()) ? " disabled" : ""} data-v-0389e6fe>${ssrInterpolate(__props.bindingState.status === "loading-history" ? unref(t)("merge.loadingHistorySettings") : unref(t)("merge.useHistorySettings"))}</button></section><section class="candidate-studio__axes"${ssrRenderAttr("aria-label", unref(t)("merge.xyzAxes"))} data-v-0389e6fe><header data-v-0389e6fe><strong data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzAxes"))}</strong><small data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzAxesHelp"))}</small></header><!--[-->`);
       ssrRenderList(__props.axes, (axis, index) => {
-        _push(`<article class="candidate-studio__axis" data-v-92631f05><span class="candidate-studio__axis-index" data-v-92631f05>${ssrInterpolate(String.fromCharCode(88 + index))}</span><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(vocabularyTerm)("axisType"))}</span><small class="field-help" data-v-92631f05>${ssrInterpolate(unref(vocabularyDescription)("axisType"))}</small><select${ssrRenderAttr("value", axis.target)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""} data-v-92631f05><!--[-->`);
+        _push(`<article class="candidate-studio__axis" data-v-0389e6fe><span class="candidate-studio__axis-index" data-v-0389e6fe>${ssrInterpolate(String.fromCharCode(88 + index))}</span><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(vocabularyTerm)("axisType"))}</span><small class="field-help" data-v-0389e6fe>${ssrInterpolate(unref(vocabularyDescription)("axisType"))}</small><select${ssrRenderAttr("value", axis.target)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""} data-v-0389e6fe><!--[-->`);
         ssrRenderList(__props.targetOptions, (option) => {
-          _push(`<option${ssrRenderAttr("value", option.id)} data-v-92631f05>${ssrInterpolate(option.label)}</option>`);
+          _push(`<option${ssrRenderAttr("value", option.id)} data-v-0389e6fe>${ssrInterpolate(option.label)}</option>`);
         });
-        _push(`<!--]--></select></label><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.values"))} · ${ssrInterpolate(__props.preflight.counts[index] ?? 0)}</span><textarea rows="4"${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", axis.target === "alpha_beta" ? unref(t)("merge.alphaBetaValuesPlaceholder") : unref(t)("merge.oneValuePerLine"))} data-v-92631f05>${ssrInterpolate(axis.values)}</textarea></label><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.axisLabel"))}</span><input${ssrRenderAttr("value", axis.label)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""} data-v-92631f05></label><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || __props.axes.length <= 1) ? " disabled" : ""} data-v-92631f05>${ssrInterpolate(unref(t)("merge.remove"))}</button></article>`);
+        _push(`<!--]--></select></label><div class="candidate-studio__axis-values" data-v-0389e6fe><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.values"))} · ${ssrInterpolate(__props.preflight.counts[index] ?? 0)}</span><textarea rows="4"${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", axis.target === "alpha_beta" ? unref(t)("merge.alphaBetaValuesPlaceholder") : unref(t)("merge.oneValuePerLine"))} data-v-0389e6fe>${ssrInterpolate(axis.values)}</textarea></label>`);
+        if (axis.target === "mbw_preset") {
+          _push(`<div class="candidate-studio__preset-helper" data-v-0389e6fe><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzPresetHelper"))}</span><select${ssrRenderAttr("value", unref(mbwPresetSelections)[index] ?? "")}${ssrIncludeBooleanAttr(__props.studioState.locked || !__props.mbwPresetOptions.length) ? " disabled" : ""} data-v-0389e6fe><option value="" data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.selectPreset"))}</option><!--[-->`);
+          ssrRenderList(__props.mbwPresetOptions, (preset) => {
+            _push(`<option${ssrRenderAttr("value", preset.id)} data-v-0389e6fe>${ssrInterpolate(preset.name)} / ${ssrInterpolate(preset.family)}</option>`);
+          });
+          _push(`<!--]--></select></label><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || !(unref(mbwPresetSelections)[index] ?? "")) ? " disabled" : ""} data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.addPresetToAxis"))}</button></div>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</div><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.axisLabel"))}</span><input${ssrRenderAttr("value", axis.label)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""} data-v-0389e6fe></label><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || __props.axes.length <= 1) ? " disabled" : ""} data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.remove"))}</button></article>`);
       });
-      _push(`<!--]--><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || __props.axes.length >= 3) ? " disabled" : ""} data-v-92631f05>${ssrInterpolate(unref(t)("merge.addAxis"))}</button></section></div><details class="candidate-studio__overrides"${ssrIncludeBooleanAttr(false) ? " open" : ""} data-v-92631f05><summary data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzOverrides"))}</summary><div class="candidate-studio__override-grid" data-v-92631f05><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.overrideSeed"))}</span><input${ssrRenderAttr("value", __props.overrides.seed)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-92631f05></label><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.overrideSteps"))}</span><input${ssrRenderAttr("value", __props.overrides.steps)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-92631f05></label><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.overrideCfg"))}</span><input${ssrRenderAttr("value", __props.overrides.cfgScale)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-92631f05></label><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.overrideDenoise"))}</span><input${ssrRenderAttr("value", __props.overrides.denoisingStrength)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-92631f05></label><label class="field" data-v-92631f05><span data-v-92631f05>Hires.fix</span><select${ssrRenderAttr("value", __props.overrides.hiresEnabled === null ? "" : String(__props.overrides.hiresEnabled))}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""} data-v-92631f05><option value="" data-v-92631f05>${ssrInterpolate(unref(t)("merge.inherit"))}</option><option value="true" data-v-92631f05>${ssrInterpolate(unref(t)("merge.enabled"))}</option><option value="false" data-v-92631f05>${ssrInterpolate(unref(t)("merge.disabled"))}</option></select></label><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.hiresDenoise"))}</span><input${ssrRenderAttr("value", __props.overrides.hiresDenoisingStrength)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-92631f05></label><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.hiresScale"))}</span><input${ssrRenderAttr("value", __props.overrides.hiresScale)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-92631f05></label><label class="field" data-v-92631f05><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.hiresSteps"))}</span><input${ssrRenderAttr("value", __props.overrides.hiresSteps)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-92631f05></label></div></details>`);
+      _push(`<!--]--><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || __props.axes.length >= 3) ? " disabled" : ""} data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.addAxis"))}</button></section></div><details class="candidate-studio__overrides"${ssrIncludeBooleanAttr(false) ? " open" : ""} data-v-0389e6fe><summary data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzOverrides"))}</summary><div class="candidate-studio__override-grid" data-v-0389e6fe><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.overrideSeed"))}</span><input${ssrRenderAttr("value", __props.overrides.seed)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-0389e6fe></label><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.overrideSteps"))}</span><input${ssrRenderAttr("value", __props.overrides.steps)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-0389e6fe></label><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.overrideCfg"))}</span><input${ssrRenderAttr("value", __props.overrides.cfgScale)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-0389e6fe></label><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.overrideDenoise"))}</span><input${ssrRenderAttr("value", __props.overrides.denoisingStrength)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-0389e6fe></label><label class="field" data-v-0389e6fe><span data-v-0389e6fe>Hires.fix</span><select${ssrRenderAttr("value", __props.overrides.hiresEnabled === null ? "" : String(__props.overrides.hiresEnabled))}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""} data-v-0389e6fe><option value="" data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.inherit"))}</option><option value="true" data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.enabled"))}</option><option value="false" data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.disabled"))}</option></select></label><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.hiresDenoise"))}</span><input${ssrRenderAttr("value", __props.overrides.hiresDenoisingStrength)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-0389e6fe></label><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.hiresScale"))}</span><input${ssrRenderAttr("value", __props.overrides.hiresScale)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-0389e6fe></label><label class="field" data-v-0389e6fe><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.hiresSteps"))}</span><input${ssrRenderAttr("value", __props.overrides.hiresSteps)}${ssrIncludeBooleanAttr(__props.studioState.locked) ? " disabled" : ""}${ssrRenderAttr("placeholder", unref(t)("merge.inherit"))} data-v-0389e6fe></label></div></details>`);
       if (__props.preflight.issues.length) {
-        _push(`<ul class="candidate-studio__issues" aria-live="polite" data-v-92631f05><!--[-->`);
+        _push(`<ul class="candidate-studio__issues" aria-live="polite" data-v-0389e6fe><!--[-->`);
         ssrRenderList(__props.preflight.issues, (issue2, index) => {
-          _push(`<li${ssrRenderAttr("data-severity", issue2.severity)} data-v-92631f05>${ssrInterpolate(issue2.axisIndex === null ? "" : `${String.fromCharCode(88 + issue2.axisIndex)} · `)}${ssrInterpolate(unref(t)(issueKeys[issue2.code]))}</li>`);
+          _push(`<li${ssrRenderAttr("data-severity", issue2.severity)} data-v-0389e6fe>${ssrInterpolate(issue2.axisIndex === null ? "" : `${String.fromCharCode(88 + issue2.axisIndex)} · `)}${ssrInterpolate(unref(t)(issueKeys[issue2.code]))}</li>`);
         });
         _push(`<!--]--></ul>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.estimate) {
-        _push(`<section class="candidate-studio__estimate"${ssrRenderAttr("data-severity", __props.estimate.warning_severity)} aria-live="polite" data-v-92631f05><strong data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzEstimateTitle"))}</strong><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzEstimateOrder"))}</span><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzEstimateDimensions", { width: __props.estimate.final_width, height: __props.estimate.final_height }))}</span><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzEstimateTemporary", { lower: formatBytes(__props.estimate.temporary_bytes_lower_bound), upper: formatBytes(__props.estimate.temporary_bytes_upper_bound) }))}</span><span data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzEstimateSources", { size: formatBytes(__props.estimate.source_size_lower_bound_bytes) }))}</span><span data-v-92631f05>${ssrInterpolate(__props.estimate.duration_seconds === null ? unref(t)("merge.xyzEstimateDurationUnknown") : unref(t)("merge.xyzEstimateDuration", { duration: __props.estimate.duration_label }))}</span>`);
+        _push(`<section class="candidate-studio__estimate"${ssrRenderAttr("data-severity", __props.estimate.warning_severity)} aria-live="polite" data-v-0389e6fe><strong data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzEstimateTitle"))}</strong><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzEstimateOrder"))}</span><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzEstimateDimensions", { width: __props.estimate.final_width, height: __props.estimate.final_height }))}</span><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzEstimateTemporary", { lower: formatBytes(__props.estimate.temporary_bytes_lower_bound), upper: formatBytes(__props.estimate.temporary_bytes_upper_bound) }))}</span><span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzEstimateSources", { size: formatBytes(__props.estimate.source_size_lower_bound_bytes) }))}</span><span data-v-0389e6fe>${ssrInterpolate(__props.estimate.duration_seconds === null ? unref(t)("merge.xyzEstimateDurationUnknown") : unref(t)("merge.xyzEstimateDuration", { duration: __props.estimate.duration_label }))}</span>`);
         if (__props.estimate.requires_confirmation) {
-          _push(`<small data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzEstimateWarning"))}</small>`);
+          _push(`<small data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzEstimateWarning"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (!__props.estimate.png_representable) {
-          _push(`<small data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzEstimateBlocked"))}</small>`);
+          _push(`<small data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzEstimateBlocked"))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -26817,37 +26840,37 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
         _push(`<!---->`);
       }
       if (__props.studioState.status === "completed-with-warnings") {
-        _push(`<p class="candidate-studio__warning" data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzContactSheetWarning"))}</p>`);
+        _push(`<p class="candidate-studio__warning" data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzContactSheetWarning"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.actionError) {
-        _push(`<p class="error" aria-live="assertive" data-v-92631f05>${ssrInterpolate(__props.actionError)}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-0389e6fe>${ssrInterpolate(__props.actionError)}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.assetBlockMessage) {
-        _push(`<p class="candidate-studio__blocked" data-v-92631f05>${ssrInterpolate(__props.assetBlockMessage)}</p>`);
+        _push(`<p class="candidate-studio__blocked" data-v-0389e6fe>${ssrInterpolate(__props.assetBlockMessage)}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.studioState.status === "stale-board") {
-        _push(`<p class="candidate-studio__blocked" data-v-92631f05>${ssrInterpolate(unref(t)("merge.xyzBoardStale"))}</p>`);
+        _push(`<p class="candidate-studio__blocked" data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.xyzBoardStale"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<footer class="candidate-studio__footer" data-v-92631f05><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || !__props.savedOutputAvailable) ? " disabled" : ""} data-v-92631f05>${ssrInterpolate(unref(t)("merge.compareSavedOutput"))}</button>`);
+      _push(`<footer class="candidate-studio__footer" data-v-0389e6fe><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.studioState.locked || !__props.savedOutputAvailable) ? " disabled" : ""} data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.compareSavedOutput"))}</button>`);
       if (__props.contactSheetUrl) {
-        _push(`<a class="icon-button"${ssrRenderAttr("href", __props.contactSheetUrl)} target="_blank" rel="noopener" data-v-92631f05>${ssrInterpolate(unref(t)("merge.openContactSheet"))}</a>`);
+        _push(`<a class="icon-button"${ssrRenderAttr("href", __props.contactSheetUrl)} target="_blank" rel="noopener" data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.openContactSheet"))}</a>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.completedCount !== null) {
-        _push(`<span data-v-92631f05>${ssrInterpolate(unref(t)("merge.precheckCompleted", { count: __props.completedCount }))}</span>`);
+        _push(`<span data-v-0389e6fe>${ssrInterpolate(unref(t)("merge.precheckCompleted", { count: __props.completedCount }))}</span>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<button class="primary-button" type="button"${ssrIncludeBooleanAttr(!__props.studioState.canGenerate) ? " disabled" : ""} data-v-92631f05>${ssrInterpolate(__props.studioState.locked ? unref(t)("merge.runningPrecheck") : unref(t)("merge.generatePrecheckXyz"))}</button></footer>`);
+      _push(`<button class="primary-button" type="button"${ssrIncludeBooleanAttr(!__props.studioState.canGenerate) ? " disabled" : ""} data-v-0389e6fe>${ssrInterpolate(__props.studioState.locked ? unref(t)("merge.runningPrecheck") : unref(t)("merge.generatePrecheckXyz"))}</button></footer>`);
       if (__props.studioState.showBoard) {
         ssrRenderSlot(_ctx.$slots, "board", {}, null, _push, _parent);
       } else {
@@ -26863,7 +26886,7 @@ _sfc_main$n.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeCandidateStudio.vue");
   return _sfc_setup$n ? _sfc_setup$n(props, ctx) : void 0;
 };
-const MergeCandidateStudio = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$n, [["__scopeId", "data-v-92631f05"]]), { __name: "StudioMergeCandidateStudio" });
+const MergeCandidateStudio = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$n, [["__scopeId", "data-v-0389e6fe"]]), { __name: "StudioMergeCandidateStudio" });
 const _sfc_main$m = /* @__PURE__ */ defineComponent({
   __name: "MergeCandidateBoard",
   __ssrInlineRender: true,
@@ -27262,6 +27285,52 @@ const projectMergeAdvancedWorkbenchState = (input) => {
     }
   };
 };
+const createBlockWeightRandomSession = (schemaKey) => ({
+  schemaKey,
+  undoAlpha: null,
+  undoBeta: null
+});
+const randomHundredth = (random) => Math.min(100, Math.max(0, Math.floor(random() * 101))) / 100;
+const randomizeBlockWeightSide = (session, vectors, side, random = Math.random) => {
+  const alpha = [...vectors.alpha];
+  const beta = [...vectors.beta];
+  if (side === "alpha") {
+    return {
+      alpha: alpha.map(() => randomHundredth(random)),
+      beta,
+      session: { ...session, undoAlpha: alpha }
+    };
+  }
+  return {
+    alpha,
+    beta: beta.map(() => randomHundredth(random)),
+    session: { ...session, undoBeta: beta }
+  };
+};
+const canUndoBlockWeightSide = (session, side, expectedLength) => {
+  const snapshot2 = side === "alpha" ? session.undoAlpha : session.undoBeta;
+  return snapshot2 !== null && snapshot2.length === expectedLength;
+};
+const undoBlockWeightSide = (session, vectors, side) => {
+  const alpha = [...vectors.alpha];
+  const beta = [...vectors.beta];
+  if (side === "alpha" && canUndoBlockWeightSide(session, side, alpha.length)) {
+    return {
+      alpha: [...session.undoAlpha],
+      beta,
+      session: { ...session, undoAlpha: null }
+    };
+  }
+  if (side === "beta" && canUndoBlockWeightSide(session, side, beta.length)) {
+    return {
+      alpha,
+      beta: [...session.undoBeta],
+      session: { ...session, undoBeta: null }
+    };
+  }
+  return { alpha, beta, session: { ...session } };
+};
+const resetBlockWeightRandomSession = (session, schemaKey) => session.schemaKey === schemaKey ? session : createBlockWeightRandomSession(schemaKey);
 const SNAPSHOT_FIELDS = [
   "profile",
   "runtime",
@@ -27788,6 +27857,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
     const analysisActiveTab = ref("overview");
     const analysisAdvancedDetails = ref(false);
     const advancedTool = ref("block-weights");
+    const blockWeightRandomSession = ref(createBlockWeightRandomSession(`${draft.value.id}|${draft.value.block_schema}`));
     const diceChallengeCount = ref(3);
     const diceChallengeStartSeed = ref(null);
     const diceChallengeLoading = ref(false);
@@ -27891,10 +27961,15 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
       const query = presetQuery.value.trim().toLowerCase();
       return (catalog.value?.block_presets ?? []).filter((preset) => preset.compatible_schemas.includes(draft.value.block_schema) || preset.family === draft.value.block_schema).filter((preset) => !query || preset.name.toLowerCase().includes(query) || preset.id.toLowerCase().includes(query));
     });
+    const mergeXyzPresetOptions = computed(() => schemaCompatiblePresetOptions(catalog.value?.block_presets ?? [], draft.value.block_schema));
     const selectedPreset = computed(() => compatiblePresets.value.find((preset) => preset.id === draft.value.block_weight_preset) ?? null);
     const selectedPresetIsUser = computed(() => selectedPreset.value?.source === "user");
     const alphaWeights = computed(() => blockWeightsArray(draft.value.block_weights_alpha, draft.value.alpha));
     const betaWeights = computed(() => blockWeightsArray(draft.value.block_weights_beta, draft.value.beta));
+    const blockWeightRandomSchemaKey = computed(() => `${draft.value.id}|${draft.value.block_schema}`);
+    const blockWeightRandomLocked = computed(() => loading.value || recipeActivity.value !== "idle" || mergeXyzLoading.value || !activeBlockSchema.value);
+    const canUndoAlphaRandomize = computed(() => canUndoBlockWeightSide(blockWeightRandomSession.value, "alpha", alphaWeights.value.length));
+    const canUndoBetaRandomize = computed(() => canUndoBlockWeightSide(blockWeightRandomSession.value, "beta", betaWeights.value.length));
     const activeFamilyCapability = computed(() => catalog.value?.model_family_capabilities.find((item) => item.id === draft.value.model_family) ?? null);
     const activeFamilyLabel = computed(() => modelFamilies.value.find((item) => item.id === draft.value.model_family)?.label ?? draft.value.model_family);
     const familyVerificationStatus = computed(() => activeFamilyCapability.value?.verification_status ?? "schema_pending");
@@ -28265,6 +28340,34 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
         draft.value.block_weights_alpha = serialized;
       } else {
         draft.value.block_weights_beta = serialized;
+      }
+    };
+    const randomizeBlockWeights = (target) => {
+      if (blockWeightRandomLocked.value) return;
+      const result = randomizeBlockWeightSide(
+        blockWeightRandomSession.value,
+        { alpha: alphaWeights.value, beta: betaWeights.value },
+        target
+      );
+      blockWeightRandomSession.value = result.session;
+      if (target === "alpha") {
+        draft.value.block_weights_alpha = serializeWeights(result.alpha);
+      } else {
+        draft.value.block_weights_beta = serializeWeights(result.beta);
+      }
+    };
+    const undoRandomizeBlockWeights = (target) => {
+      if (blockWeightRandomLocked.value) return;
+      const result = undoBlockWeightSide(
+        blockWeightRandomSession.value,
+        { alpha: alphaWeights.value, beta: betaWeights.value },
+        target
+      );
+      blockWeightRandomSession.value = result.session;
+      if (target === "alpha") {
+        draft.value.block_weights_alpha = serializeWeights(result.alpha);
+      } else {
+        draft.value.block_weights_beta = serializeWeights(result.beta);
       }
     };
     const applySelectedPreset = (target = "alpha") => {
@@ -29224,6 +29327,9 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
         resetMergeAnalysis();
       }
     });
+    watch(blockWeightRandomSchemaKey, (schemaKey) => {
+      blockWeightRandomSession.value = resetBlockWeightRandomSession(blockWeightRandomSession.value, schemaKey);
+    });
     watch(() => draft.value.merge_mode, () => {
       const allowed = catalog.value?.calculation_mode_compatibility?.[draft.value.merge_mode] ?? [];
       if (allowed.length && !allowed.includes(draft.value.calc_mode)) {
@@ -29236,15 +29342,15 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
       }, _attrs), {
         headerTask: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="merge-hero" data-v-266819f0${_scopeId}><div data-v-266819f0${_scopeId}><span class="eyebrow" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.eyebrow"))}</span><h1 data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.title"))}</h1><p data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.description"))}</p></div><div class="hero-actions" data-v-266819f0${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(refreshingModels) || unref(modelDependencies).loading) ? " disabled" : ""} data-v-266819f0${_scopeId}>${ssrInterpolate(unref(refreshingModels) ? unref(t)("merge.refreshing") : unref(t)("merge.refreshModels"))}</button><button id="merge-clear-candidate-cache" class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(clearingCandidateCache)) ? " disabled" : ""} data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(runDisabled)) ? " disabled" : ""} data-v-266819f0${_scopeId}>${ssrInterpolate(unref(loading) ? unref(t)("merge.working") : unref(t)("merge.runMerge"))}</button></div></div>`);
+            _push2(`<div class="merge-hero" data-v-df60c99a${_scopeId}><div data-v-df60c99a${_scopeId}><span class="eyebrow" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.eyebrow"))}</span><h1 data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.title"))}</h1><p data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.description"))}</p></div><div class="hero-actions" data-v-df60c99a${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(refreshingModels) || unref(modelDependencies).loading) ? " disabled" : ""} data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(refreshingModels) ? unref(t)("merge.refreshing") : unref(t)("merge.refreshModels"))}</button><button id="merge-clear-candidate-cache" class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(clearingCandidateCache)) ? " disabled" : ""} data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(runDisabled)) ? " disabled" : ""} data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(loading) ? unref(t)("merge.working") : unref(t)("merge.runMerge"))}</button></div></div>`);
             if (unref(candidateCacheError)) {
-              _push2(`<p class="error merge-workspace-action-error" aria-live="assertive" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(candidateCacheError))}</p>`);
+              _push2(`<p class="error merge-workspace-action-error" aria-live="assertive" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(candidateCacheError))}</p>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<nav class="merge-tabs"${ssrRenderAttr("aria-label", unref(t)("merge.mergeTypeAria"))} data-v-266819f0${_scopeId}><!--[-->`);
+            _push2(`<nav class="merge-tabs"${ssrRenderAttr("aria-label", unref(t)("merge.mergeTypeAria"))} data-v-df60c99a${_scopeId}><!--[-->`);
             ssrRenderList(unref(catalog)?.merge_types ?? [], (type) => {
-              _push2(`<button type="button" class="${ssrRenderClass({ active: unref(activeTab) === type.id })}" data-v-266819f0${_scopeId}>${ssrInterpolate(type.label)}</button>`);
+              _push2(`<button type="button" class="${ssrRenderClass({ active: unref(activeTab) === type.id })}" data-v-df60c99a${_scopeId}>${ssrInterpolate(type.label)}</button>`);
             });
             _push2(`<!--]--></nav>`);
           } else {
@@ -29368,6 +29474,9 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
               "preset-importing": unref(presetImporting),
               "preset-error": unref(presetActionError),
               "preset-message": unref(presetImportMessage),
+              "randomize-disabled": unref(blockWeightRandomLocked),
+              "can-undo-alpha-randomize": unref(canUndoAlphaRandomize),
+              "can-undo-beta-randomize": unref(canUndoBetaRandomize),
               "elemental-rules": unref(draft).elemental_rules,
               "elemental-alias-hint": unref(elementalAliasHint),
               "elemental-matches": unref(mergeAnalysis)?.elemental_matches ?? [],
@@ -29399,6 +29508,8 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
               onExportPresets: downloadUserPresetBundle,
               onImportPresets: importPresetBundle,
               onFillBlocks: fillBlockWeights,
+              onRandomizeBlocks: randomizeBlockWeights,
+              onUndoRandomizeBlocks: undoRandomizeBlockWeights,
               onUpdateBlockWeight: setBlockWeight,
               onUpdateVector: setBlockWeightVector,
               onUpdatePattern: ($event) => unref(draft).block_weights = $event,
@@ -29418,6 +29529,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
             _push2(ssrRenderComponent(MergeCandidateStudio, {
               axes: unref(mergeXyzAxes),
               "target-options": unref(mergeXyzTargetOptions),
+              "mbw-preset-options": unref(mergeXyzPresetOptions),
               "binding-state": unref(mergeGenerationBindingState),
               preflight: unref(mergeXyzPreflight),
               "studio-state": unref(mergeCandidateStudioState),
@@ -29546,6 +29658,9 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
                 "preset-importing": unref(presetImporting),
                 "preset-error": unref(presetActionError),
                 "preset-message": unref(presetImportMessage),
+                "randomize-disabled": unref(blockWeightRandomLocked),
+                "can-undo-alpha-randomize": unref(canUndoAlphaRandomize),
+                "can-undo-beta-randomize": unref(canUndoBetaRandomize),
                 "elemental-rules": unref(draft).elemental_rules,
                 "elemental-alias-hint": unref(elementalAliasHint),
                 "elemental-matches": unref(mergeAnalysis)?.elemental_matches ?? [],
@@ -29577,6 +29692,8 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
                 onExportPresets: downloadUserPresetBundle,
                 onImportPresets: importPresetBundle,
                 onFillBlocks: fillBlockWeights,
+                onRandomizeBlocks: randomizeBlockWeights,
+                onUndoRandomizeBlocks: undoRandomizeBlockWeights,
                 onUpdateBlockWeight: setBlockWeight,
                 onUpdateVector: setBlockWeightVector,
                 onUpdatePattern: ($event) => unref(draft).block_weights = $event,
@@ -29592,10 +29709,11 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
                 onExportAnalysis: downloadAnalysisExport,
                 onUpdateAnalysisTab: ($event) => analysisActiveTab.value = $event,
                 onUpdateAnalysisDetails: ($event) => analysisAdvancedDetails.value = $event
-              }, null, 8, ["state", "schema-label", "alpha", "beta", "alpha-weights", "beta-weights", "alpha-vector", "beta-vector", "pattern-overrides", "block-filter-hint", "presets", "preset-query", "selected-preset", "user-preset-name", "loading", "preset-exporting", "preset-importing", "preset-error", "preset-message", "elemental-rules", "elemental-alias-hint", "elemental-matches", "adjust-parameters", "adjust-values", "dice-modes", "dice-range-parameters", "dice-mode", "dice-seed", "dice-challenge-count", "dice-challenge-start-seed", "dice-loading", "dice-report", "analysis-loading", "analysis-exporting", "analysis-error", "analysis-state", "analysis-result", "analysis-active-tab", "analysis-advanced-details", "onUpdateActiveTool", "onUpdatePresetQuery", "onSelectPreset", "onUpdateUserPresetName", "onUpdatePattern", "onUpdateElementalRules", "onUpdateDiceMode", "onUpdateDiceSeed", "onUpdateChallengeCount", "onUpdateChallengeStartSeed", "onUpdateAnalysisTab", "onUpdateAnalysisDetails"]),
+              }, null, 8, ["state", "schema-label", "alpha", "beta", "alpha-weights", "beta-weights", "alpha-vector", "beta-vector", "pattern-overrides", "block-filter-hint", "presets", "preset-query", "selected-preset", "user-preset-name", "loading", "preset-exporting", "preset-importing", "preset-error", "preset-message", "randomize-disabled", "can-undo-alpha-randomize", "can-undo-beta-randomize", "elemental-rules", "elemental-alias-hint", "elemental-matches", "adjust-parameters", "adjust-values", "dice-modes", "dice-range-parameters", "dice-mode", "dice-seed", "dice-challenge-count", "dice-challenge-start-seed", "dice-loading", "dice-report", "analysis-loading", "analysis-exporting", "analysis-error", "analysis-state", "analysis-result", "analysis-active-tab", "analysis-advanced-details", "onUpdateActiveTool", "onUpdatePresetQuery", "onSelectPreset", "onUpdateUserPresetName", "onUpdatePattern", "onUpdateElementalRules", "onUpdateDiceMode", "onUpdateDiceSeed", "onUpdateChallengeCount", "onUpdateChallengeStartSeed", "onUpdateAnalysisTab", "onUpdateAnalysisDetails"]),
               createVNode(MergeCandidateStudio, {
                 axes: unref(mergeXyzAxes),
                 "target-options": unref(mergeXyzTargetOptions),
+                "mbw-preset-options": unref(mergeXyzPresetOptions),
                 "binding-state": unref(mergeGenerationBindingState),
                 preflight: unref(mergeXyzPreflight),
                 "studio-state": unref(mergeCandidateStudioState),
@@ -29638,7 +29756,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
                   }, null, 8, ["board-state", "rating-saving-index", "promoting-index", "action-error"])
                 ]),
                 _: 1
-              }, 8, ["axes", "target-options", "binding-state", "preflight", "studio-state", "history-input", "overrides", "recipe-name", "family-label", "base-label", "hires-label", "action-error", "asset-block-message", "completed-count", "saved-output-available", "estimate", "contact-sheet-url", "onUpdateHistoryInput"])
+              }, 8, ["axes", "target-options", "mbw-preset-options", "binding-state", "preflight", "studio-state", "history-input", "overrides", "recipe-name", "family-label", "base-label", "hires-label", "action-error", "asset-block-message", "completed-count", "saved-output-available", "estimate", "contact-sheet-url", "onUpdateHistoryInput"])
             ];
           }
         }),
@@ -29700,82 +29818,82 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
         overlays: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
             if (unref(pendingMergeXyzConfirmation)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-266819f0${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-xyz-confirmation-title" data-v-266819f0${_scopeId}><span class="eyebrow" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunEyebrow"))}</span><h2 id="merge-xyz-confirmation-title" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunTitle", { count: unref(pendingMergeXyzConfirmation).estimate.candidate_count }))}</h2><p data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunHelp"))}</p><ul data-v-266819f0${_scopeId}><li data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateOrder"))}</li><li data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDimensions", { width: unref(pendingMergeXyzConfirmation).estimate.final_width, height: unref(pendingMergeXyzConfirmation).estimate.final_height }))}</li><li data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateTemporary", { lower: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_lower_bound), upper: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_upper_bound) }))}</li><li data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDurationUnknown"))}</li></ul><div class="asset-actions" data-v-266819f0${_scopeId}><button class="icon-button" type="button" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.continueLargeRun"))}</button></div></section></div>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-df60c99a${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-xyz-confirmation-title" data-v-df60c99a${_scopeId}><span class="eyebrow" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunEyebrow"))}</span><h2 id="merge-xyz-confirmation-title" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunTitle", { count: unref(pendingMergeXyzConfirmation).estimate.candidate_count }))}</h2><p data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunHelp"))}</p><ul data-v-df60c99a${_scopeId}><li data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateOrder"))}</li><li data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDimensions", { width: unref(pendingMergeXyzConfirmation).estimate.final_width, height: unref(pendingMergeXyzConfirmation).estimate.final_height }))}</li><li data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateTemporary", { lower: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_lower_bound), upper: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_upper_bound) }))}</li><li data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDurationUnknown"))}</li></ul><div class="asset-actions" data-v-df60c99a${_scopeId}><button class="icon-button" type="button" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.continueLargeRun"))}</button></div></section></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(pendingRecipeConfirmation)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-266819f0${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "merge-confirmation-title")} data-v-266819f0${_scopeId}><span class="eyebrow" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.confirmationEyebrow"))}</span><h2 id="merge-confirmation-title" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.confirmDeleteRecipe") : unref(t)("merge.confirmDiscardDraft"))}</h2>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-df60c99a${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "merge-confirmation-title")} data-v-df60c99a${_scopeId}><span class="eyebrow" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.confirmationEyebrow"))}</span><h2 id="merge-confirmation-title" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.confirmDeleteRecipe") : unref(t)("merge.confirmDiscardDraft"))}</h2>`);
               if (unref(pendingRecipeConfirmation).kind === "delete-recipe") {
-                _push2(`<p data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.deleteRecipeOnlyHelp", { name: unref(pendingRecipeConfirmation).recipeName }))}</p>`);
+                _push2(`<p data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.deleteRecipeOnlyHelp", { name: unref(pendingRecipeConfirmation).recipeName }))}</p>`);
               } else {
-                _push2(`<p data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.discardDraftHelp"))}</p>`);
+                _push2(`<p data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.discardDraftHelp"))}</p>`);
               }
-              _push2(`<div class="asset-actions" data-v-266819f0${_scopeId}><button class="icon-button" type="button" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(loading)) ? " disabled" : ""} data-v-266819f0${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.deleteRecipeOnly") : unref(t)("merge.discardAndSwitch"))}</button></div></section></div>`);
+              _push2(`<div class="asset-actions" data-v-df60c99a${_scopeId}><button class="icon-button" type="button" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(loading)) ? " disabled" : ""} data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.deleteRecipeOnly") : unref(t)("merge.discardAndSwitch"))}</button></div></section></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(lightboxCandidate)) {
-              _push2(`<div class="candidate-lightbox" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("merge.candidateLightbox"))} data-v-266819f0${_scopeId}><button class="candidate-lightbox__nav candidate-lightbox__nav--left" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.previousCandidate"))} data-v-266819f0${_scopeId}>‹</button><div class="candidate-lightbox__stage" data-v-266819f0${_scopeId}>`);
+              _push2(`<div class="candidate-lightbox" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("merge.candidateLightbox"))} data-v-df60c99a${_scopeId}><button class="candidate-lightbox__nav candidate-lightbox__nav--left" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.previousCandidate"))} data-v-df60c99a${_scopeId}>‹</button><div class="candidate-lightbox__stage" data-v-df60c99a${_scopeId}>`);
               if (candidateImageUrl(unref(lightboxCandidate))) {
-                _push2(`<img${ssrRenderAttr("src", candidateImageUrl(unref(lightboxCandidate)))}${ssrRenderAttr("alt", candidateDisplayId(unref(lightboxCandidate)))} data-v-266819f0${_scopeId}>`);
+                _push2(`<img${ssrRenderAttr("src", candidateImageUrl(unref(lightboxCandidate)))}${ssrRenderAttr("alt", candidateDisplayId(unref(lightboxCandidate)))} data-v-df60c99a${_scopeId}>`);
               } else {
-                _push2(`<div class="candidate-lightbox__empty" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.noImageOutput"))}</div>`);
+                _push2(`<div class="candidate-lightbox__empty" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.noImageOutput"))}</div>`);
               }
-              _push2(`</div><button class="candidate-lightbox__nav candidate-lightbox__nav--right" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.nextCandidate"))} data-v-266819f0${_scopeId}>›</button><div class="candidate-lightbox__bar" data-v-266819f0${_scopeId}><div data-v-266819f0${_scopeId}><strong data-v-266819f0${_scopeId}>${ssrInterpolate(candidateDisplayId(unref(lightboxCandidate)))}</strong><small data-v-266819f0${_scopeId}>${ssrInterpolate(candidateAxisSummary(unref(lightboxCandidate)))}</small></div><div class="candidate-rating" data-v-266819f0${_scopeId}><!--[-->`);
+              _push2(`</div><button class="candidate-lightbox__nav candidate-lightbox__nav--right" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.nextCandidate"))} data-v-df60c99a${_scopeId}>›</button><div class="candidate-lightbox__bar" data-v-df60c99a${_scopeId}><div data-v-df60c99a${_scopeId}><strong data-v-df60c99a${_scopeId}>${ssrInterpolate(candidateDisplayId(unref(lightboxCandidate)))}</strong><small data-v-df60c99a${_scopeId}>${ssrInterpolate(candidateAxisSummary(unref(lightboxCandidate)))}</small></div><div class="candidate-rating" data-v-df60c99a${_scopeId}><!--[-->`);
               ssrRenderList([1, 2, 3, 4, 5], (rating) => {
-                _push2(`<button type="button" class="${ssrRenderClass({ active: candidateRating(unref(lightboxCandidate)) >= rating })}"${ssrIncludeBooleanAttr(unref(candidateRatingSaving) === unref(lightboxCandidate).index) ? " disabled" : ""} data-v-266819f0${_scopeId}> ★ </button>`);
+                _push2(`<button type="button" class="${ssrRenderClass({ active: candidateRating(unref(lightboxCandidate)) >= rating })}"${ssrIncludeBooleanAttr(unref(candidateRatingSaving) === unref(lightboxCandidate).index) ? " disabled" : ""} data-v-df60c99a${_scopeId}> ★ </button>`);
               });
-              _push2(`<!--]--></div><button class="primary-button" type="button" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.setToRecipe"))}</button><button class="icon-button" type="button" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.close"))}</button></div></div>`);
+              _push2(`<!--]--></div><button class="primary-button" type="button" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.setToRecipe"))}</button><button class="icon-button" type="button" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.close"))}</button></div></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(candidatePromotionIntent)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-266819f0${_scopeId}><section class="candidate-promotion-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-candidate-promotion-title" data-v-266819f0${_scopeId}><span class="eyebrow" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionEyebrow"))}</span><h2 id="merge-candidate-promotion-title" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionTitle"))}</h2><p data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionHelp", { name: unref(candidatePromotionIntent).outputName }))}</p>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-df60c99a${_scopeId}><section class="candidate-promotion-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-candidate-promotion-title" data-v-df60c99a${_scopeId}><span class="eyebrow" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionEyebrow"))}</span><h2 id="merge-candidate-promotion-title" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionTitle"))}</h2><p data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionHelp", { name: unref(candidatePromotionIntent).outputName }))}</p>`);
               if (unref(candidateActionError)) {
-                _push2(`<p class="error" aria-live="assertive" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(candidateActionError))}</p>`);
+                _push2(`<p class="error" aria-live="assertive" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(candidateActionError))}</p>`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`<div class="asset-actions" data-v-266819f0${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-266819f0${_scopeId}>${ssrInterpolate(unref(promotingCandidateIndex) !== null ? unref(t)("merge.saving") : unref(t)("merge.promote"))}</button></div></section></div>`);
+              _push2(`<div class="asset-actions" data-v-df60c99a${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(promotingCandidateIndex) !== null ? unref(t)("merge.saving") : unref(t)("merge.promote"))}</button></div></section></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(candidateCacheOverlay)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-266819f0${_scopeId}><section class="merge-confirmation-dialog cache-cleanup-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-cache-cleanup-title" data-v-266819f0${_scopeId}><span class="eyebrow" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupEyebrow"))}</span><h2 id="merge-cache-cleanup-title" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupTitle"))}</h2>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-df60c99a${_scopeId}><section class="merge-confirmation-dialog cache-cleanup-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-cache-cleanup-title" data-v-df60c99a${_scopeId}><span class="eyebrow" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupEyebrow"))}</span><h2 id="merge-cache-cleanup-title" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupTitle"))}</h2>`);
               if (unref(candidateCacheState).status === "confirming") {
-                _push2(`<!--[--><p data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupHelp"))}</p>`);
+                _push2(`<!--[--><p data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupHelp"))}</p>`);
                 if (unref(candidateCacheState).warningCurrentBoard) {
-                  _push2(`<p class="warning" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupBoardWarning"))}</p>`);
+                  _push2(`<p class="warning" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupBoardWarning"))}</p>`);
                 } else {
                   _push2(`<!---->`);
                 }
                 if (unref(candidateCacheState).warningUnpromoted) {
-                  _push2(`<p class="warning" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupPromotionWarning"))}</p>`);
+                  _push2(`<p class="warning" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupPromotionWarning"))}</p>`);
                 } else {
                   _push2(`<!---->`);
                 }
                 _push2(`<!--]-->`);
               } else if (unref(candidateCacheState).status === "working") {
-                _push2(`<p data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupWorking"))}</p>`);
+                _push2(`<p data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupWorking"))}</p>`);
               } else if (unref(candidateCacheState).status === "succeeded") {
-                _push2(`<p data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupSucceeded", { count: unref(candidateCacheState).deletedFiles }))}</p>`);
+                _push2(`<p data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupSucceeded", { count: unref(candidateCacheState).deletedFiles }))}</p>`);
               } else if (unref(candidateCacheState).status === "failed") {
-                _push2(`<!--[--><p class="error" aria-live="assertive" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(candidateCacheState).error)}</p><p data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupUnresolved", { count: unref(candidateCacheState).unresolvedCount }))}</p><p data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetryHelp"))}</p><!--]-->`);
+                _push2(`<!--[--><p class="error" aria-live="assertive" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(candidateCacheState).error)}</p><p data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupUnresolved", { count: unref(candidateCacheState).unresolvedCount }))}</p><p data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetryHelp"))}</p><!--]-->`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`<div class="cache-cleanup-dialog__retained" data-v-266819f0${_scopeId}><strong data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetained"))}</strong><ul data-v-266819f0${_scopeId}><!--[-->`);
+              _push2(`<div class="cache-cleanup-dialog__retained" data-v-df60c99a${_scopeId}><strong data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetained"))}</strong><ul data-v-df60c99a${_scopeId}><!--[-->`);
               ssrRenderList(unref(candidateCacheState).retainedCategories, (category) => {
-                _push2(`<li data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)(`merge.cacheRetained.${category}`))}</li>`);
+                _push2(`<li data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)(`merge.cacheRetained.${category}`))}</li>`);
               });
-              _push2(`<!--]--></ul></div><div class="asset-actions" data-v-266819f0${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(candidateCacheState).locked) ? " disabled" : ""} data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button>`);
+              _push2(`<!--]--></ul></div><div class="asset-actions" data-v-df60c99a${_scopeId}><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(candidateCacheState).locked) ? " disabled" : ""} data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button>`);
               if (unref(candidateCacheState).status === "confirming") {
-                _push2(`<button class="primary-button" type="button" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button>`);
+                _push2(`<button class="primary-button" type="button" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button>`);
               } else if (unref(candidateCacheState).status === "failed") {
-                _push2(`<button class="primary-button" type="button" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.retry"))}</button>`);
+                _push2(`<button class="primary-button" type="button" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.retry"))}</button>`);
               } else if (unref(candidateCacheState).status !== "working") {
-                _push2(`<button class="primary-button" type="button" data-v-266819f0${_scopeId}>${ssrInterpolate(unref(t)("merge.close"))}</button>`);
+                _push2(`<button class="primary-button" type="button" data-v-df60c99a${_scopeId}>${ssrInterpolate(unref(t)("merge.close"))}</button>`);
               } else {
                 _push2(`<!---->`);
               }
@@ -30049,7 +30167,7 @@ _sfc_main$l.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/MergeStudioView.vue");
   return _sfc_setup$l ? _sfc_setup$l(props, ctx) : void 0;
 };
-const MergeStudioView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$l, [["__scopeId", "data-v-266819f0"]]), { __name: "StudioMergeStudioView" });
+const MergeStudioView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$l, [["__scopeId", "data-v-df60c99a"]]), { __name: "StudioMergeStudioView" });
 const _sfc_main$k = /* @__PURE__ */ defineComponent({
   __name: "SettingsCategoryRail",
   __ssrInlineRender: true,

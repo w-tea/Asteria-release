@@ -1804,6 +1804,7 @@ def run_merge_xyz_precheck(request: MergeXYZPrecheckRequest) -> XYZPlotResponse:
                         XYZGridCell(
                             labels=labels,
                             image_path=image_paths[0] if image_paths else None,
+                            display_id=str(candidate["candidate_id"]),
                         )
                     )
     except BaseException:

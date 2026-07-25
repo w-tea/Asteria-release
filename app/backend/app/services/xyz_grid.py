@@ -13,6 +13,9 @@ from uuid import uuid4
 from PIL import Image, ImageDraw, ImageFont
 
 
+CONTACT_SHEET_MAX_TILE_WIDTH = 600
+
+
 @dataclass(frozen=True)
 class XYZGridAxis:
     key: str
@@ -24,6 +27,7 @@ class XYZGridAxis:
 class XYZGridCell:
     labels: dict[str, str]
     image_path: Path | None
+    display_id: str = ""
 
 
 class XYZContactSheetError(RuntimeError):
@@ -49,7 +53,7 @@ class XYZContactSheetStager:
         self.staging_dir.mkdir(parents=True, exist_ok=False)
         self.warning_code = ""
         self.staged_row_count = 0
-        self._buffer: list[XYZGridCell] = []
+        self._cells: list[XYZGridCell] = []
         self._rows: list[list[dict[str, object]]] = [[] for _ in self._z_values]
         self._tile_width = 0
         self._tile_height = 0
@@ -75,37 +79,39 @@ class XYZContactSheetStager:
     def add_cell(self, cell: XYZGridCell) -> None:
         if self.warning_code or self._closed:
             return
-        self._buffer.append(cell)
-        if len(self._buffer) < len(self._x_axis.values):
-            return
-        try:
-            self._stage_buffered_row()
-        except (OSError, ValueError, MemoryError, subprocess.SubprocessError, XYZContactSheetError):
-            self.warning_code = "contact_sheet_creation_failed"
-        finally:
-            self._buffer.clear()
+        self._cells.append(cell)
 
     def finalize(self) -> Path | None:
         if self.warning_code or self._closed:
             return None
-        if self._buffer or self.staged_row_count != len(self._y_axis.values) * len(self._z_values):
+        expected_count = len(self._x_axis.values) * len(self._y_axis.values) * len(self._z_values)
+        if len(self._cells) != expected_count:
             self.warning_code = "contact_sheet_creation_failed"
             return None
-        output_path = self.output_dir / f"xyz_{self.operation_id}.png"
-        z_header_height = max(16, min(64, self._tile_height // 8)) if self._z_axis.key else 0
-        manifest = {
-            "schema": "asteria.xyz-contact-sheet-final.v1",
-            "staging_root": str(self.staging_dir),
-            "output_path": str(output_path),
-            "plane_width": self._plane_width,
-            "tile_width": self._tile_width,
-            "z_labels": list(self._z_values),
-            "z_header_height": z_header_height,
-            "rows": self._rows,
-        }
-        manifest_path = self.staging_dir / "final.json"
-        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
         try:
+            metadata = self._cell_metadata()
+            self._tile_width = max(size[0] for _, size, _ in metadata)
+            self._tile_height = max(size[1] for _, size, _ in metadata)
+            x_count = len(self._x_axis.values)
+            for start in range(0, len(self._cells), x_count):
+                self._stage_row(
+                    self._cells[start : start + x_count],
+                    metadata[start : start + x_count],
+                )
+            output_path = self.output_dir / f"xyz_{self.operation_id}.png"
+            z_header_height = max(16, min(64, self._tile_height // 8)) if self._z_axis.key else 0
+            manifest = {
+                "schema": "asteria.xyz-contact-sheet-final.v1",
+                "staging_root": str(self.staging_dir),
+                "output_path": str(output_path),
+                "plane_width": self._plane_width,
+                "tile_width": self._tile_width,
+                "z_labels": list(self._z_values),
+                "z_header_height": z_header_height,
+                "rows": self._rows,
+            }
+            manifest_path = self.staging_dir / "final.json"
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
             result = self._run_child("finalize", manifest_path)
             resolved = Path(str(result.get("output_path") or "")).resolve()
             if resolved != output_path.resolve() or not resolved.is_file():
@@ -126,11 +132,9 @@ class XYZContactSheetStager:
         except OSError:
             pass
 
-    def _stage_buffered_row(self) -> None:
-        if len(self._buffer) != len(self._x_axis.values):
-            raise XYZContactSheetError("incomplete X row")
-        image_paths: list[Path] = []
-        for cell in self._buffer:
+    def _cell_metadata(self) -> list[tuple[Path, tuple[int, int], str]]:
+        metadata: list[tuple[Path, tuple[int, int], str]] = []
+        for index, cell in enumerate(self._cells):
             if cell.image_path is None:
                 raise XYZContactSheetError("candidate image is missing")
             image_path = cell.image_path.resolve()
@@ -139,11 +143,23 @@ class XYZContactSheetStager:
             with Image.open(image_path) as image:
                 width, height = image.size
                 image.verify()
-            if self._tile_width == 0:
-                self._tile_width, self._tile_height = width, height
-            elif width > self._tile_width or height > self._tile_height:
-                raise XYZContactSheetError("candidate image exceeds the first tile size")
-            image_paths.append(image_path)
+            metadata.append(
+                (
+                    image_path,
+                    bounded_contact_sheet_size(width, height),
+                    cell.display_id.strip() or f"#{index + 1:03d}",
+                )
+            )
+        return metadata
+
+    def _stage_row(
+        self,
+        cells: Sequence[XYZGridCell],
+        metadata: Sequence[tuple[Path, tuple[int, int], str]],
+    ) -> None:
+        if len(cells) != len(self._x_axis.values) or len(metadata) != len(cells):
+            raise XYZContactSheetError("incomplete X row")
+        image_paths = [item[0] for item in metadata]
         x_count = len(self._x_axis.values)
         y_count = len(self._y_axis.values)
         row_index = self.staged_row_count
@@ -160,6 +176,8 @@ class XYZContactSheetStager:
             "allowed_roots": [str(self.output_dir)],
             "output_path": str(row_path),
             "images": [str(path) for path in image_paths],
+            "bounded_sizes": [list(item[1]) for item in metadata],
+            "display_ids": [item[2] for item in metadata],
             "x_labels": list(self._x_axis.values),
             "y_label": f"{self._y_axis.label or self._y_axis.key}:\n{self._y_axis.values[y_index]}" if self._y_axis.key else "",
             "tile_width": self._tile_width,
@@ -202,6 +220,13 @@ class XYZContactSheetStager:
         if not isinstance(payload, dict):
             raise XYZContactSheetError("contact sheet child returned invalid JSON")
         return payload
+
+
+def bounded_contact_sheet_size(width: int, height: int, max_width: int = CONTACT_SHEET_MAX_TILE_WIDTH) -> tuple[int, int]:
+    if width <= 0 or height <= 0 or max_width <= 0:
+        raise ValueError("contact sheet dimensions must be positive")
+    scale = min(1.0, max_width / width)
+    return max(1, round(width * scale)), max(1, round(height * scale))
 
 
 def create_xyz_contact_sheet_streaming(

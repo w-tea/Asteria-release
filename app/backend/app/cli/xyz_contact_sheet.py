@@ -27,6 +27,8 @@ def stage_contact_sheet_row(manifest_path: Path) -> dict[str, Any]:
         _contained_path(value, allowed_roots, "xyz_contact_sheet_image_path_outside_allowed_roots")
         for value in manifest.get("images", [])
     ]
+    bounded_sizes = [_size_pair(value) for value in manifest.get("bounded_sizes", [])]
+    display_ids = [str(value).strip() for value in manifest.get("display_ids", [])]
     x_labels = [str(value) for value in manifest.get("x_labels", [])]
     tile_width = _positive_int(manifest.get("tile_width"), "tile_width")
     tile_height = _positive_int(manifest.get("tile_height"), "tile_height")
@@ -35,6 +37,10 @@ def stage_contact_sheet_row(manifest_path: Path) -> dict[str, Any]:
     margin = _non_negative_int(manifest.get("margin"), "margin")
     if not images or len(images) != len(x_labels):
         raise ValueError("xyz_contact_sheet_row_cell_count_invalid")
+    if bounded_sizes and len(bounded_sizes) != len(images):
+        raise ValueError("xyz_contact_sheet_row_bounded_size_count_invalid")
+    if display_ids and len(display_ids) != len(images):
+        raise ValueError("xyz_contact_sheet_row_display_id_count_invalid")
     width = _checked_dimension(left_width + len(images) * tile_width + max(0, len(images) - 1) * margin)
     height = _checked_dimension(top_height + tile_height)
     size_bytes = _checked_bytes(width, height, 3)
@@ -54,10 +60,17 @@ def stage_contact_sheet_row(manifest_path: Path) -> dict[str, Any]:
                 with Image.open(image_path) as opened:
                     opened.load()
                     image = opened.convert("RGB")
+                    bounded_width, bounded_height = bounded_sizes[index] if bounded_sizes else image.size
+                    if bounded_width > image.width or bounded_height > image.height:
+                        raise ValueError("xyz_contact_sheet_tile_upscale_forbidden")
+                    if image.size != (bounded_width, bounded_height):
+                        image = image.resize((bounded_width, bounded_height), Image.Resampling.LANCZOS)
                     if image.width > tile_width or image.height > tile_height:
                         raise ValueError("xyz_contact_sheet_tile_exceeds_declared_size")
                     x = left_width + index * (tile_width + margin) + (tile_width - image.width) // 2
                     y = top_height + (tile_height - image.height) // 2
+                    if display_ids and display_ids[index]:
+                        image = _draw_identity_badge(image, display_ids[index])
                     _write_image(handle, image, width, x, y)
             handle.flush()
         temp.replace(output)
@@ -209,6 +222,15 @@ def _non_negative_int(value: Any, name: str) -> int:
     return result
 
 
+def _size_pair(value: Any) -> tuple[int, int]:
+    if not isinstance(value, list) or len(value) != 2:
+        raise ValueError("xyz_contact_sheet_bounded_size_invalid")
+    return (
+        _positive_int(value[0], "bounded_width"),
+        _positive_int(value[1], "bounded_height"),
+    )
+
+
 def _checked_dimension(value: int) -> int:
     if value <= 0 or value > PNG_MAX_DIMENSION:
         raise ValueError("xyz_contact_sheet_dimension_overflow")
@@ -251,6 +273,32 @@ def _label_image(width: int, height: int, text: str) -> Image.Image:
     draw = ImageDraw.Draw(image)
     font = _font(max(10, min(24, height // 2)))
     draw.multiline_text((width // 2, height // 2), text, fill="black", font=font, anchor="mm", align="center")
+    return image
+
+
+def _draw_identity_badge(source: Image.Image, text: str) -> Image.Image:
+    image = source.copy()
+    draw = ImageDraw.Draw(image)
+    font = _font(max(8, min(24, image.height // 16)))
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = max(1, bbox[2] - bbox[0])
+    text_height = max(1, bbox[3] - bbox[1])
+    padding_x = max(3, min(8, image.width // 40))
+    padding_y = max(2, min(6, image.height // 60))
+    badge_width = min(image.width, text_width + padding_x * 2)
+    badge_height = min(image.height, text_height + padding_y * 2)
+    draw.rounded_rectangle(
+        (0, 0, max(0, badge_width - 1), max(0, badge_height - 1)),
+        radius=min(5, badge_height // 3),
+        fill=(16, 20, 24),
+        outline=(255, 255, 255),
+    )
+    draw.text(
+        (min(padding_x, badge_width // 2), min(padding_y, badge_height // 2)),
+        text,
+        fill="white",
+        font=font,
+    )
     return image
 
 
