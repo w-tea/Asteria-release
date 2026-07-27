@@ -1,4 +1,4 @@
-# Direct ComfyUI v0.28.0 runtime requirements verified for Asteria V1.0.3.
+# Direct ComfyUI v0.28.0 runtime requirements verified for Asteria V1.0.4.
 aiohttp==3.13.5
 alembic==1.18.4
 av==17.0.1

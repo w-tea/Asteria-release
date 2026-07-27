@@ -1,4 +1,4 @@
-# Asteria V1.0.3 Windows Portable
+# Asteria V1.0.4 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -16,6 +16,17 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 - **LoRA学習**: 学習用画像とキャプションを準備し、Asteriaから学習を実行して結果をモデル一覧へ登録します。
 - **Merge Studio**: CheckpointやLoRAのマージ条件を比較し、確認後にマージモデルを書き出します。
 
+### 更新履歴
+
+#### V1.0.4
+
+- 手持ちのCheckpointやVAEを設定している場合に、スターターパック不足の警告が残る問題を修正しました。
+- 生成画像とは別に、中間PNGが`outputs/`へ残る問題を修正しました。
+- 生成結果と履歴で、画像の生成時間を確認できるようにしました。
+- LoRAと同じ名前の画像をサムネイルとして表示できるようにしました。ジャンクションやシンボリックリンクで共有しているLoRAにも対応します。
+- SettingsにRuntime Monitorを追加しました。次回起動時に別ウィンドウで生成ログを確認でき、Monitorを閉じてもAsteria本体は終了しません。
+- 生成結果や履歴から、選択した画像のSeedだけを現在の生成設定へ適用できるようにしました。
+
 ### 必要最低限のスペックと動作環境
 
 - 64-bit版Windows 10またはWindows 11
@@ -26,7 +37,7 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 - 展開先への書き込み権限
 - 初回取得、追加するモデル、生成画像を保存できる空き容量
 
-AMD／Intel GPUとCPUのみの実行には対応していません。macOSとLinuxもV1.0.3では未対応です。
+AMD／Intel GPUとCPUのみの実行には対応していません。macOSとLinuxもV1.0.4では未対応です。
 
 必要なGPUメモリとシステムメモリは、使用するモデル、生成解像度、LoRA学習などの処理によって変わります。高解像度生成や学習を行う場合は、より多くのメモリが必要です。
 
@@ -168,6 +179,17 @@ Asteria is a Windows application for local AI image production. It covers image 
 - **LoRA training**: Prepare training images and captions, run training from Asteria, and register the result in the model list.
 - **Merge Studio**: Compare checkpoint or LoRA merge settings, then write the selected merged model.
 
+### Release history
+
+#### V1.0.4
+
+- Fixed the starter-pack warning remaining visible when your own checkpoint or VAE is already selected.
+- Fixed intermediate PNG files being left under `outputs/` in addition to the final generated image.
+- Added generation-time information to results and history.
+- Added LoRA thumbnails from image files with the same name, including LoRAs shared through junctions or symbolic links.
+- Added Runtime Monitor under Settings. It can open on the next launch to show generation logs in a separate window, and closing it does not stop Asteria.
+- Added an action to apply only the seed from a selected result or history image to the current generation settings.
+
 ### Minimum requirements and supported environment
 
 - 64-bit Windows 10 or Windows 11
@@ -178,7 +200,7 @@ Asteria is a Windows application for local AI image production. It covers image 
 - Write access to the extracted folder
 - Enough free space for first-run downloads, added models, and generated images
 
-AMD and Intel GPUs and CPU-only operation are unsupported. macOS and Linux are also unsupported in V1.0.3.
+AMD and Intel GPUs and CPU-only operation are unsupported. macOS and Linux are also unsupported in V1.0.4.
 
 GPU-memory and system-memory requirements depend on the selected model, output resolution, and workloads such as LoRA training. High-resolution generation and training require more memory.
 

@@ -11,6 +11,11 @@ def _default_root() -> Path:
     return Path(os.environ.get("ASTERIA_ROOT_DIR", _SOURCE_ROOT))
 
 
+def _optional_path_environment(name: str) -> Path | None:
+    value = os.environ.get(name, "").strip()
+    return Path(value) if value else None
+
+
 class AppConfig(BaseModel):
     root_dir: Path = Field(default_factory=_default_root)
     data_dir: Path = Field(
@@ -145,6 +150,9 @@ class AppConfig(BaseModel):
                 _default_root() / "data" / "comfyui.pid",
             )
         )
+    )
+    comfy_output_dir: Path | None = Field(
+        default_factory=lambda: _optional_path_environment("ASTERIA_COMFY_OUTPUT_DIR")
     )
     output_dir: Path = Field(default_factory=lambda: Path(os.environ.get("ASTERIA_OUTPUT_DIR", _default_root() / "outputs")))
     remaster_max_final_pixels: int = Field(

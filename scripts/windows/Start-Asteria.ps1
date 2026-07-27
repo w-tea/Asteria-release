@@ -131,9 +131,16 @@ $failurePath = [System.IO.Path]::Combine($logsRoot, "launcher-failure.json")
 [System.IO.Directory]::CreateDirectory($logsRoot) | Out-Null
 [System.IO.Directory]::CreateDirectory($processRoot) | Out-Null
 $existing = Read-AsteriaLauncherState -Path $statePath
+function Test-AsteriaOptionalProcessRecord {
+    param($Record)
+    return ($Record.PSObject.Properties.Name -contains "optional") -and [bool]$Record.optional
+}
 if ($null -ne $existing) {
-    $owned = @($existing.processes | Where-Object { (Get-AsteriaOwnedProcessState -Record $_) -eq "owned" })
-    if ($owned.Count -eq @($existing.processes).Count) { Complete-Start "running" "launcher_already_running" 0 "Asteria is already running under this launcher." }
+    $required = @($existing.processes | Where-Object { -not (Test-AsteriaOptionalProcessRecord -Record $_) })
+    $ownedRequired = @($required | Where-Object { (Get-AsteriaOwnedProcessState -Record $_) -eq "owned" })
+    if ($required.Count -gt 0 -and $ownedRequired.Count -eq $required.Count) {
+        Complete-Start "running" "launcher_already_running" 0 "Asteria is already running under this launcher."
+    }
     Complete-Start "blocked" "launcher_state_stale" 74 "A stale launcher record must be stopped or repaired before starting."
 }
 foreach ($port in @(8188, 8000, 3000)) {
@@ -145,7 +152,7 @@ $comfyUser = [System.IO.Path]::Combine($resolvedDataRoot, "comfy-user")
 $comfyDefaultUser = [System.IO.Path]::Combine($comfyUser, "default")
 $comfyDatabase = [System.IO.Path]::Combine($comfyUser, "comfyui.db")
 $comfyDatabaseUrl = "sqlite:///$($comfyDatabase.Replace('\', '/'))"
-$comfyOutput = [System.IO.Path]::Combine($resolvedOutputRoot, "comfy")
+$comfyOutput = [System.IO.Path]::Combine($resolvedTempRoot, "comfy-output")
 foreach ($path in @($comfyInput, $comfyUser, $comfyDefaultUser, $comfyOutput)) { [System.IO.Directory]::CreateDirectory($path) | Out-Null }
 $extraModels = [System.IO.Path]::Combine($processRoot, "extra_model_paths.yaml")
 Write-AsteriaExtraModelPaths -Path $extraModels -ModelRoot $resolvedModelRoot
@@ -161,6 +168,7 @@ $env:ASTERIA_DEFAULTS_DIR = [System.IO.Path]::Combine($resolvedAppRoot, "default
 $env:ASTERIA_COMFY_DIR = $resolvedComfyRoot
 $env:ASTERIA_COMFY_PYTHON = $resolvedPython
 $env:ASTERIA_COMFY_PID_PATH = [System.IO.Path]::Combine($processRoot, "comfyui.pid")
+$env:ASTERIA_COMFY_OUTPUT_DIR = $comfyOutput
 $env:ASTERIA_AUTO_BOOTSTRAP_MODELS = "0"
 $env:ASTERIA_TARGET_MODE = $TargetMode
 $env:NITRO_HOST = "127.0.0.1"
@@ -189,9 +197,10 @@ function Stop-NewProcesses {
 $comfyUrl = "http://127.0.0.1:8188/system_stats"
 $backendUrl = "http://127.0.0.1:8000/api/health"
 $frontendUrl = "http://127.0.0.1:3000/"
+$comfyErrorLog = Join-Path $logsRoot "comfyui.err.log"
 $launchStage = "comfy_start"
 try {
-    $comfyRecord = Start-AsteriaOwnedProcess -Name "comfyui" -FilePath $resolvedPython -ArgumentList @("main.py", "--listen", "127.0.0.1", "--port", "8188", "--preview-method", "auto", "--extra-model-paths-config", "`"$extraModels`"", "--input-directory", "`"$comfyInput`"", "--output-directory", "`"$comfyOutput`"", "--user-directory", "`"$comfyUser`"", "--database-url", $comfyDatabaseUrl) -WorkingDirectory $resolvedComfyRoot -StandardOutputPath (Join-Path $logsRoot "comfyui.out.log") -StandardErrorPath (Join-Path $logsRoot "comfyui.err.log")
+    $comfyRecord = Start-AsteriaOwnedProcess -Name "comfyui" -FilePath $resolvedPython -ArgumentList @("main.py", "--listen", "127.0.0.1", "--port", "8188", "--preview-method", "auto", "--extra-model-paths-config", "`"$extraModels`"", "--input-directory", "`"$comfyInput`"", "--output-directory", "`"$comfyOutput`"", "--user-directory", "`"$comfyUser`"", "--database-url", $comfyDatabaseUrl) -WorkingDirectory $resolvedComfyRoot -StandardOutputPath (Join-Path $logsRoot "comfyui.out.log") -StandardErrorPath $comfyErrorLog
     Add-OwnedProcess $comfyRecord
     Set-Content -LiteralPath $env:ASTERIA_COMFY_PID_PATH -Value $comfyRecord.pid -Encoding ascii
     $launchStage = "comfy_health"
@@ -227,6 +236,18 @@ catch {
         Complete-Start "blocked" "launcher_rollback_incomplete" 75 "A started process could not be safely stopped. Run Stop-Asteria.cmd and review the preserved logs."
     }
     Complete-Start "error" "launcher_health_failed" 76 "Asteria did not become ready in time. Started processes were stopped; review the preserved logs."
+}
+
+if (Get-AsteriaRuntimeMonitorPreference -SettingsPath ([System.IO.Path]::Combine($resolvedDataRoot, "user-settings.json"))) {
+    try {
+        $monitorScript = Join-Path $PSScriptRoot "Show-AsteriaRuntimeMonitor.ps1"
+        $monitorPowerShell = (Get-Command powershell.exe -ErrorAction Stop | Select-Object -First 1).Source
+        $monitorRecord = Start-AsteriaOwnedProcess -Name "runtime-monitor" -FilePath $monitorPowerShell -ArgumentList @("-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$monitorScript`"", "-LogPath", "`"$comfyErrorLog`"") -WorkingDirectory $resolvedAppRoot -WindowStyle Normal -Optional
+        Add-OwnedProcess $monitorRecord
+    }
+    catch {
+        Write-Warning "Asteria started, but the optional Runtime Monitor could not be opened."
+    }
 }
 
 if (-not $NoOpen) { Start-Process $frontendUrl }

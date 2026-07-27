@@ -20,7 +20,16 @@ MODEL_TYPE_EXTENSIONS = {
     "detailer": frozenset({".pt", ".pth", ".onnx"}),
     "upscaler": COMFY_WEIGHT_EXTENSIONS,
 }
-MODEL_SIDECAR_IMAGE_EXTENSIONS = (".preview.webp", ".preview.png", ".preview.jpg", ".preview.jpeg")
+MODEL_SIDECAR_IMAGE_EXTENSIONS = (
+    ".preview.webp",
+    ".preview.png",
+    ".preview.jpg",
+    ".preview.jpeg",
+    ".webp",
+    ".png",
+    ".jpg",
+    ".jpeg",
+)
 
 MODEL_TYPE_DIRECTORIES = {
     "checkpoint": ("checkpoints", "diffusion_models", "unet", "merged/checkpoints"),
@@ -254,7 +263,7 @@ class ModelLibraryScanner:
     def _metadata_for(self, path: Path) -> dict[str, str]:
         metadata: dict[str, str] = {}
         if path.suffix.casefold() != ".safetensors":
-            return metadata
+            return self._sidecar_metadata_for(path)
         try:
             with path.open("rb") as handle:
                 header_size = struct.unpack("<Q", handle.read(8))[0]

@@ -7,6 +7,7 @@ import hashlib
 from itertools import product
 import sqlite3
 import threading
+import time
 import unicodedata
 from typing import Any
 from uuid import uuid4
@@ -304,6 +305,7 @@ def _runtime(config: AppConfig, runtime_id: str | None = None):
         return ComfyGenerationRuntime(
             ComfyClient(config.comfy_base_url),
             model_root=config.model_dir,
+            comfy_output_dir=config.comfy_output_dir,
             topaz_executable=_topaz_executable(config),
         )
     raise HTTPException(
@@ -2278,6 +2280,7 @@ def _generate(
     comfy_admission_lease_token: str | None = None,
     merge_xyz_metadata: dict[str, Any] | None = None,
 ) -> GenerationResponse:
+    generation_started = time.perf_counter()
     _preflight_profile_prompt_request(request)
     data_dir = _data_dir()
     config = AppConfig()
@@ -2440,6 +2443,10 @@ def _generate(
             settings["primary_output_manifest_warning"] = "output_format_path_mapping_failed"
     except OutputFinalizationError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    settings["generation_duration_seconds"] = round(
+        max(0.0, time.perf_counter() - generation_started),
+        3,
+    )
     generated_tags = metadata_tags(
         profile=request.profile,
         prompt=prompt_expansion.expanded or request.prompt,

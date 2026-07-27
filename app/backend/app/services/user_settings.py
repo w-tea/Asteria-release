@@ -111,11 +111,16 @@ class LibrarySettings(BaseModel):
         return self
 
 
+class LauncherSettings(BaseModel):
+    runtime_monitor_on_start: bool = False
+
+
 class UserSettings(BaseModel):
     output: OutputSettings = Field(default_factory=OutputSettings)
     storage: StorageSettings = Field(default_factory=StorageSettings)
     ai: AISettings = Field(default_factory=AISettings)
     library: LibrarySettings = Field(default_factory=LibrarySettings)
+    launcher: LauncherSettings = Field(default_factory=LauncherSettings)
 
 
 class UserSettingsRepository:

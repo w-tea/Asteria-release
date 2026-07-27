@@ -30,7 +30,11 @@ def _build_orchestrator() -> RemasterOrchestrator:
     return RemasterOrchestrator(
         config=config,
         history=HistoryRepository(config.data_dir / "asteria.db"),
-        runtime=ComfyGenerationRuntime(client=client),
+        runtime=ComfyGenerationRuntime(
+            client=client,
+            model_root=config.model_dir,
+            comfy_output_dir=config.comfy_output_dir,
+        ),
         object_info_provider=client.object_info,
     )
 

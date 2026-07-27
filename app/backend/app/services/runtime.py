@@ -2655,6 +2655,7 @@ class ComfyGenerationRuntime:
         client: ComfyClient,
         workflow_builder: ComfyTxt2ImgWorkflowBuilder | None = None,
         model_root: Path | None = None,
+        comfy_output_dir: Path | None = None,
         topaz_executable: Path | None = None,
         topaz_processor: Callable[..., dict[str, str | list[str]]] = process_topaz_image,
         admission_service: ComfyAdmissionService = comfy_admission,
@@ -2662,6 +2663,7 @@ class ComfyGenerationRuntime:
     ) -> None:
         self.client = client
         self.workflow_builder = workflow_builder or ComfyTxt2ImgWorkflowBuilder(model_root=model_root)
+        self.comfy_output_dir = Path(comfy_output_dir) if comfy_output_dir else None
         self.topaz_executable = topaz_executable
         self.topaz_processor = topaz_processor
         self.admission_service = admission_service
@@ -2935,6 +2937,8 @@ class ComfyGenerationRuntime:
                                 "runtime_job_id": prompt_id,
                             }
                         )
+                    if self.comfy_output_dir is not None and not self._remove_local_comfy_intermediate(image):
+                        settings["comfy_intermediate_cleanup_warning"] = True
                 self._publish_generation_progress(
                     progress_callback,
                     batch_index + 1,
@@ -2957,6 +2961,25 @@ class ComfyGenerationRuntime:
             "generated_seeds": generated_seeds,
             "primary_outputs": primary_outputs,
         }
+
+    def _remove_local_comfy_intermediate(self, image: dict) -> bool:
+        if self.comfy_output_dir is None or str(image.get("type") or "output") != "output":
+            return False
+        filename = str(image.get("filename") or "")
+        subfolder = str(image.get("subfolder") or "")
+        if not filename or Path(filename).name != filename:
+            return False
+        try:
+            root = self.comfy_output_dir.resolve()
+            candidate = (root / subfolder / filename).resolve()
+            if candidate.parent != root and root not in candidate.parents:
+                return False
+            if not candidate.is_file():
+                return False
+            candidate.unlink()
+        except OSError:
+            return False
+        return True
 
     def _merge_builder_runtime_settings(self, target_request: dict, iteration_request: dict) -> None:
         target_settings = target_request.setdefault("settings", {})

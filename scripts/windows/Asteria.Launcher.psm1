@@ -143,11 +143,22 @@ function Start-AsteriaOwnedProcess {
         [Parameter(Mandatory = $true)][string]$FilePath,
         [Parameter(Mandatory = $true)][string[]]$ArgumentList,
         [Parameter(Mandatory = $true)][string]$WorkingDirectory,
-        [Parameter(Mandatory = $true)][string]$StandardOutputPath,
-        [Parameter(Mandatory = $true)][string]$StandardErrorPath
+        [string]$StandardOutputPath = "",
+        [string]$StandardErrorPath = "",
+        [ValidateSet("Hidden", "Normal", "Minimized", "Maximized")][string]$WindowStyle = "Hidden",
+        [switch]$Optional
     )
 
-    $process = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -WorkingDirectory $WorkingDirectory -RedirectStandardOutput $StandardOutputPath -RedirectStandardError $StandardErrorPath -WindowStyle Hidden -PassThru
+    $startParameters = @{
+        FilePath = $FilePath
+        ArgumentList = $ArgumentList
+        WorkingDirectory = $WorkingDirectory
+        WindowStyle = $WindowStyle
+        PassThru = $true
+    }
+    if ($StandardOutputPath) { $startParameters.RedirectStandardOutput = $StandardOutputPath }
+    if ($StandardErrorPath) { $startParameters.RedirectStandardError = $StandardErrorPath }
+    $process = Start-Process @startParameters
     try {
         $process.Refresh()
         return [pscustomobject][ordered]@{
@@ -155,6 +166,7 @@ function Start-AsteriaOwnedProcess {
             pid = $process.Id
             executable_path = [System.IO.Path]::GetFullPath($FilePath)
             started_at_utc = $process.StartTime.ToUniversalTime().ToString("o")
+            optional = [bool]$Optional
         }
     }
     catch {
@@ -163,6 +175,22 @@ function Start-AsteriaOwnedProcess {
         }
         catch {}
         throw
+    }
+}
+
+function Get-AsteriaRuntimeMonitorPreference {
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][string]$SettingsPath)
+
+    if (-not (Test-Path -LiteralPath $SettingsPath -PathType Leaf)) { return $false }
+    try {
+        $settings = Get-Content -LiteralPath $SettingsPath -Raw -Encoding utf8 | ConvertFrom-Json
+        if ($null -eq $settings.launcher) { return $false }
+        $preference = $settings.launcher.runtime_monitor_on_start
+        return ($preference -is [bool]) -and $preference
+    }
+    catch {
+        return $false
     }
 }
 
@@ -293,4 +321,4 @@ function Read-AsteriaLauncherState {
     catch { throw "The launcher ownership state is invalid." }
 }
 
-Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Write-AsteriaExtraModelPaths, Start-AsteriaOwnedProcess, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState
+Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Write-AsteriaExtraModelPaths, Start-AsteriaOwnedProcess, Get-AsteriaRuntimeMonitorPreference, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState
