@@ -168,6 +168,7 @@ class StartupSetupExecuteRequest(BaseModel):
 class StartupSetupExecutionResponse(BaseModel):
     step_id: str
     status: Literal["completed"]
+    operation_id: str | None = None
 
 
 class StartupStarterPackExecuteRequest(BaseModel):
@@ -205,7 +206,11 @@ def _inspect_startup_readiness(
     model_dependencies = ModelDependencyRepository(config.model_dependencies_path, model_root)
     model_profiles = ModelProfileRepository(config.model_profiles_path)
     model_selections = ModelSelectionRepository(config.model_selections_path)
-    runtime_dependencies = RuntimeDependencyRepository(config.runtime_dependencies_path, config.comfy_dir)
+    runtime_dependencies = RuntimeDependencyRepository(
+        config.runtime_dependencies_path,
+        config.comfy_dir,
+        python_path=config.comfy_python_path,
+    )
     profiles_by_id = {profile.id: profile for profile in model_profiles.list()}
     service = StartupReadinessService(
         product_paths=(
@@ -302,7 +307,11 @@ def _setup_plan_response(plan: StartupSetupPlan) -> StartupSetupPlanResponse:
     )
 
 
-@router.post("/setup/execute", response_model=StartupSetupExecutionResponse)
+@router.post(
+    "/setup/execute",
+    response_model=StartupSetupExecutionResponse,
+    response_model_exclude_none=True,
+)
 def execute_startup_setup(request: StartupSetupExecuteRequest) -> StartupSetupExecutionResponse:
     if not _startup_setup_execution_lock.acquire(blocking=False):
         raise HTTPException(status_code=409, detail={"code": STARTUP_SETUP_BUSY})
@@ -394,7 +403,11 @@ def _startup_setup_handlers() -> Mapping[str, Callable[[StartupSetupStep], None]
         repo_url=config.comfy_repo_url,
         ref=config.comfy_repo_ref,
     )
-    runtime_repository = RuntimeDependencyRepository(config.runtime_dependencies_path, config.comfy_dir)
+    runtime_repository = RuntimeDependencyRepository(
+        config.runtime_dependencies_path,
+        config.comfy_dir,
+        python_path=config.comfy_python_path,
+    )
     runtime_installer = RuntimeDependencyInstaller(runtime_repository, python_path=config.comfy_python_path)
     model_root = resolve_model_root(data_dir=config.data_dir, fallback=config.model_dir)
     model_installer = ModelDependencyInstaller(

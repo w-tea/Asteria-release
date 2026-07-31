@@ -73,6 +73,7 @@ class StartupSetupPlan:
 class StartupSetupExecution:
     step_id: str
     status: Literal["completed"] = "completed"
+    operation_id: str | None = None
 
 
 class StartupSetupStepError(Exception):
@@ -245,7 +246,11 @@ def _public_https_url(value: str) -> bool:
 
 
 class StartupSetupExecutor:
-    def __init__(self, *, handlers: Mapping[str, Callable[[StartupSetupStep], None]]) -> None:
+    def __init__(
+        self,
+        *,
+        handlers: Mapping[str, Callable[[StartupSetupStep], str | None]],
+    ) -> None:
         self.handlers = dict(handlers)
 
     def execute(
@@ -272,8 +277,12 @@ class StartupSetupExecutor:
         handler = self.handlers.get(step.operation)
         if handler is None:
             raise StartupSetupStepError("startup setup operation is unavailable")
-        handler(step)
-        return StartupSetupExecution(step_id=step.id)
+        operation_id = handler(step)
+        return StartupSetupExecution(
+            step_id=step.id,
+            status="completed" if operation_id is None else "completed",
+            operation_id=operation_id,
+        )
 
 
 def validate_starter_pack_selection(

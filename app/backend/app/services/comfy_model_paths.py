@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Iterable
 
+from app.services.external_model_libraries import ExternalModelRoot
 from app.services.model_library import MODEL_TYPE_DIRECTORIES
 
 
@@ -33,8 +35,24 @@ COMFY_MODEL_PATH_DIRECTORIES: dict[str, tuple[str, ...]] = {
 }
 
 
-def comfy_extra_model_paths_document(model_root: Path) -> dict[str, dict[str, str]]:
-    return {
+_EXTERNAL_COMFY_KEYS: dict[str, tuple[str, ...]] = {
+    "checkpoint": ("checkpoints", "diffusion_models", "unet"),
+    "vae": ("vae",),
+    "text_encoder": ("text_encoders", "clip"),
+    "tokenizer": ("tokenizers", "tokenizer"),
+    "lora": ("loras",),
+    "embedding": ("embeddings",),
+    "controlnet": ("controlnet",),
+    "detailer": ("ultralytics_bbox",),
+    "upscaler": ("upscale_models",),
+}
+
+
+def comfy_extra_model_paths_document(
+    model_root: Path,
+    external_roots: Iterable[ExternalModelRoot] = (),
+) -> dict[str, dict[str, str]]:
+    document: dict[str, dict[str, str]] = {
         "asteria": {
             "base_path": Path(model_root).as_posix(),
             **{
@@ -43,13 +61,30 @@ def comfy_extra_model_paths_document(model_root: Path) -> dict[str, dict[str, st
             },
         }
     }
+    for root in external_roots:
+        if not root.enabled or not root.path:
+            continue
+        entry: dict[str, str] = {"base_path": Path(root.path).as_posix()}
+        for model_type, directories in root.mappings.items():
+            for folder_name in _EXTERNAL_COMFY_KEYS.get(model_type, ()):
+                entry[folder_name] = "\n".join(directories)
+        if len(entry) > 1:
+            document[f"asteria_external_{root.root_id}"] = entry
+    return document
 
 
-def render_comfy_extra_model_paths(model_root: Path) -> str:
-    lines = ["asteria:", f"  base_path: {json.dumps(Path(model_root).as_posix())}"]
-    for folder_name, directories in COMFY_MODEL_PATH_DIRECTORIES.items():
-        lines.append(f"  {folder_name}: |-")
-        lines.extend(f"    {directory}" for directory in directories)
+def render_comfy_extra_model_paths(
+    model_root: Path,
+    external_roots: Iterable[ExternalModelRoot] = (),
+) -> str:
+    lines: list[str] = []
+    for section, entry in comfy_extra_model_paths_document(model_root, external_roots).items():
+        lines.extend([f"{section}:", f"  base_path: {json.dumps(entry['base_path'])}"])
+        for folder_name, value in entry.items():
+            if folder_name == "base_path":
+                continue
+            lines.append(f"  {folder_name}: |-")
+            lines.extend(f"    {directory}" for directory in value.splitlines())
     return "\n".join([*lines, ""])
 
 

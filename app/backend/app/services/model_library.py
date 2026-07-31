@@ -78,6 +78,11 @@ class ModelLibraryItem:
     size_bytes: int
     metadata: dict[str, str]
     source: str = "local"
+    root_id: str = "asteria-local"
+    stable_model_id: str | None = None
+    fingerprint_algorithm: str | None = None
+    fingerprint_version: int | None = None
+    fingerprint_value: str | None = None
 
 
 @dataclass(frozen=True)

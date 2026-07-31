@@ -42,6 +42,33 @@ class PresetRepository:
         )
         return len(next_items) != len(items)
 
+    def migrate_model_references(self, candidates: list[object]) -> int:
+        from app.services.model_reference_migration import migrate_generation_reference_metadata
+
+        items = self._read(strict=True)
+        changed = 0
+        migrated_items: list[Preset] = []
+        for item in items:
+            if item.kind not in {"generation", "model_profile"}:
+                migrated_items.append(item)
+                continue
+            migrated_data = migrate_generation_reference_metadata(item.data, candidates)
+            if migrated_data != item.data:
+                item = item.model_copy(update={"data": migrated_data})
+                changed += 1
+            migrated_items.append(item)
+        if changed:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(
+                json.dumps(
+                    {"items": [item.model_dump() for item in migrated_items]},
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+        return changed
+
     def _read(self, *, strict: bool = False) -> list[Preset]:
         try:
             if not self.path.exists():

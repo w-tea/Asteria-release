@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 import os
+from typing import Any
 from uuid import uuid4
 
-import cv2
-import numpy as np
 from PIL import Image
+
+cv2: Any = None
+np: Any = None
 
 
 class ControlNetPreprocessorError(Exception):
@@ -43,6 +46,7 @@ def preprocess_control_image(image_path: Path, preprocessor: str, output_dir: Pa
         output_dir.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
         raise ControlNetPreprocessorError(f"Failed to prepare control image output: {output_dir}") from exc
+    _load_native_dependencies()
     image = _read_rgb(image_path)
     if mode == "canny":
         processed = _canny(image)
@@ -69,6 +73,17 @@ def preprocess_control_image(image_path: Path, preprocessor: str, output_dir: Pa
     except OSError as exc:
         raise ControlNetPreprocessorError(f"Failed to save processed control image: {output_path}") from exc
     return output_path
+
+
+def _load_native_dependencies() -> None:
+    global cv2, np
+    if cv2 is not None and np is not None:
+        return
+    try:
+        cv2 = importlib.import_module("cv2")
+        np = importlib.import_module("numpy")
+    except ImportError as exc:
+        raise ControlNetPreprocessorError("ControlNet preprocessor runtime is not installed") from exc
 
 
 def _path_exists(path: Path) -> bool:

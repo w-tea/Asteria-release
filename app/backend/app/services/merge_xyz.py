@@ -78,6 +78,23 @@ class MergeXYZSourceIdentity:
     name: str
     size_bytes: int
     sha256: str
+    mtime_ns: int = 0
+    stable_model_id: str = ""
+    resolved_root_id: str = ""
+    normalized_relative_path: str = ""
+
+    def fingerprint(self) -> dict[str, Any]:
+        return {
+            "role": self.role,
+            "algorithm": "sha256",
+            "version": 1,
+            "file_size": self.size_bytes,
+            "mtime_ns": self.mtime_ns,
+            "stable_model_id": self.stable_model_id,
+            "resolved_root_id": self.resolved_root_id,
+            "normalized_relative_path": self.normalized_relative_path,
+            "value": self.sha256,
+        }
 
     def metadata(self) -> dict[str, Any]:
         return {
@@ -86,6 +103,7 @@ class MergeXYZSourceIdentity:
             "name": self.name,
             "size_bytes": self.size_bytes,
             "sha256": self.sha256,
+            "fingerprint": self.fingerprint(),
         }
 
 
@@ -152,6 +170,11 @@ def resolve_merge_xyz_sources(recipe: Any, *, requires_source_c: bool) -> tuple[
         if str(getattr(source, "role", "")).strip()
     }
     required_roles = ("A", "B", "C") if requires_source_c else ("A", "B")
+    references = {
+        str(item.get("role") or "").strip().upper(): item
+        for item in getattr(recipe, "model_reference_snapshots", ())
+        if isinstance(item, Mapping) and str(item.get("role") or "").strip()
+    }
     identities: list[MergeXYZSourceIdentity] = []
     for role in required_roles:
         source = by_role.get(role)
@@ -166,7 +189,8 @@ def resolve_merge_xyz_sources(recipe: Any, *, requires_source_c: bool) -> tuple[
                 raise OSError("source is not a file")
             if resolved.suffix.lower() != ".safetensors":
                 raise MergeXYZValidationError("xyz_precheck_source_must_be_safetensors")
-            size_bytes = resolved.stat().st_size
+            details = resolved.stat()
+            size_bytes = details.st_size
             digest = _file_sha256(resolved)
         except MergeXYZValidationError:
             raise
@@ -179,6 +203,16 @@ def resolve_merge_xyz_sources(recipe: Any, *, requires_source_c: bool) -> tuple[
                 name=logical.name,
                 size_bytes=size_bytes,
                 sha256=digest,
+                mtime_ns=details.st_mtime_ns,
+                stable_model_id=str(
+                    references.get(role, {}).get("stable_model_id") or ""
+                ),
+                resolved_root_id=str(
+                    references.get(role, {}).get("root_id") or ""
+                ),
+                normalized_relative_path=str(
+                    references.get(role, {}).get("normalized_relative_path") or ""
+                ),
             )
         )
     return tuple(identities)

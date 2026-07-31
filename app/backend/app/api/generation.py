@@ -3,6 +3,7 @@ import logging
 import os
 from pathlib import Path
 import asyncio
+from datetime import UTC, datetime
 import hashlib
 from itertools import product
 import sqlite3
@@ -35,6 +36,7 @@ from app.schemas.generation import (
 )
 from app.schemas.common import LoraSelection
 from app.schemas.remaster import RemasterRequest, RemasterResponse
+from app.schemas.operations import OperationChildSummary, OperationRecord
 from app.services.history import HistoryBulkDeleteConflictError, HistoryRepository, HistoryTagLimitExceededError
 from app.services.artifact_lifecycle import (
     artifact_write_operation as _artifact_write_operation,
@@ -81,9 +83,24 @@ from app.services.reference_mutation import (
     reference_mutation_coordinator,
 )
 from app.services.model_library_cache import get_model_library
+from app.services.model_fingerprints import ModelFingerprintService
 from app.services.model_profiles import ModelProfileRepository
 from app.services.model_selections import ModelSelectionRepository
 from app.services.model_storage import resolve_model_root
+from app.services.operation_coordinator import OperationCoordinator
+from app.services.operation_executor import (
+    OperationCancelled,
+    OperationExecutionContext,
+    OperationExecutionError,
+    OperationExecutionResult,
+)
+from app.services.operation_repository import (
+    OperationNotFoundError,
+    OperationRepository,
+    OperationRetryError,
+)
+from app.services.operation_retention import OperationRetentionService
+from app.services.preview_registry import PreviewRegistry
 from app.services.parameter_mapper import ParameterMapper
 from app.services.prompt_pipeline import expand_dynamic_prompt, extract_embeddings, extract_loras, list_wildcards
 from app.services.runtime import (
@@ -91,6 +108,7 @@ from app.services.runtime import (
     ComfyGenerationRuntime,
     INSPIRE_KSAMPLER_CLASS,
     LORA_BLOCK_WEIGHT_CLASS,
+    RuntimeCancellationConfirmed,
     RuntimeErrorResponse,
 )
 from app.services.seed_resize import (
@@ -107,6 +125,7 @@ from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
 from app.services.user_settings import UserSettingsRepository, resolve_output_root, safe_segment
 from app.services.xyz_grid import XYZGridAxis, XYZGridCell, create_xyz_contact_sheet_streaming
 from app.services.workflow_mapping import WorkflowMappingRepository
+from app.services.schema_versions import CURRENT_SCHEMA_VERSIONS
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/generations", tags=["generations"])
@@ -248,6 +267,13 @@ class GenerationJobResponse(BaseModel):
     cancelled: bool = False
 
 
+class GenerationJobCleanupResponse(BaseModel):
+    removed_jobs: int
+    remaining_active_jobs: int
+    remaining_terminal_jobs: int
+    removed_preview_references: int
+
+
 def _data_dir() -> Path:
     return Path(os.environ.get("ASTERIA_DATA_DIR", Path(__file__).resolve().parents[3] / "data"))
 
@@ -286,6 +312,251 @@ LORA_BLOCK_WEIGHT_REQUIRED_NODES = {LORA_BLOCK_WEIGHT_CLASS}
 HIRES_COMMON_REQUIRED_NODES = {"KSampler", "VAEDecode"}
 _jobs_lock = threading.Lock()
 _jobs: dict[str, dict] = {}
+_publisher_leases: dict[str, ReferenceMutationLease] = {}
+_operation_coordinators: dict[Path, OperationCoordinator] = {}
+
+
+def _generation_operation_coordinator() -> OperationCoordinator:
+    db_path = (_data_dir() / "asteria.db").absolute()
+    coordinator = _operation_coordinators.get(db_path)
+    if coordinator is None:
+        coordinator = OperationCoordinator(OperationRepository(db_path), auto_start=False)
+        _register_generation_executors(coordinator)
+        _operation_coordinators[db_path] = coordinator
+    return coordinator
+
+
+def configure_generation_operation_coordinator(
+    coordinator: OperationCoordinator,
+) -> OperationCoordinator:
+    _register_generation_executors(coordinator)
+    _operation_coordinators[coordinator.repository.db_path.absolute()] = coordinator
+    return coordinator
+
+
+def _register_generation_executors(coordinator: OperationCoordinator) -> None:
+    for mode in ("txt2img", "img2img", "inpaint"):
+        coordinator.register_executor(f"generation.{mode}", _GenerationOperationExecutor(mode))
+    coordinator.register_executor("generation.remaster", _RemasterOperationExecutor())
+
+
+class _GenerationOperationExecutor:
+    version = "generation-v1.1"
+
+    def __init__(self, mode: str) -> None:
+        self.mode = mode
+
+    def resource_claims(self, _snapshot: dict) -> tuple[str, ...]:
+        return ("comfy_gpu_exclusive",)
+
+    def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
+        return _execute_generation_operation(context, self.mode)
+
+
+class _RemasterOperationExecutor:
+    version = "remaster-v1.1"
+
+    def resource_claims(self, _snapshot: dict) -> tuple[str, ...]:
+        return ("comfy_gpu_exclusive",)
+
+    def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
+        return _execute_generation_operation(context, "remaster")
+
+
+def _execute_generation_operation(
+    context: OperationExecutionContext,
+    mode: str,
+) -> OperationExecutionResult:
+        job_id = context.operation.operation_id
+        payload = context.request_snapshot
+        request_type = {
+            "txt2img": Txt2ImgRequest,
+            "img2img": Img2ImgRequest,
+            "inpaint": InpaintRequest,
+            "remaster": RemasterRequest,
+        }[mode]
+        request_payload = dict(payload["request"])
+        submitted_fields = payload.get("request_fields_set")
+        if isinstance(submitted_fields, list):
+            request_payload = {
+                key: value
+                for key, value in request_payload.items()
+                if key in set(submitted_fields)
+            }
+        discord_snapshot = payload.get("discord")
+        if isinstance(discord_snapshot, dict):
+            model_references = discord_snapshot.get("model_references")
+            if isinstance(model_references, dict) and model_references:
+                request_payload["model_slot_overrides"] = _resolve_discord_model_slots(
+                    {
+                        str(slot_id): str(stable_model_id)
+                        for slot_id, stable_model_id in model_references.items()
+                    }
+                )
+        request = request_type.model_validate(request_payload)
+        with _jobs_lock:
+            cache = _jobs.setdefault(job_id, _new_job_cache(mode, request))
+            cache["request"] = request
+        lease = _publisher_leases.pop(job_id, None)
+        if lease is None:
+            lease = reference_mutation_coordinator.acquire_publisher()
+        try:
+            context.raise_if_cancelled()
+            if mode == "remaster":
+                from app.api.remaster import execute_remaster
+
+                result = execute_remaster(
+                    request,
+                    cancel_requested=lambda: context.cancel_requested
+                    or bool(_jobs.get(job_id, {}).get("cancelled")),
+                    runtime_job_callback=lambda prompt_id: _set_job(job_id, runtime_job_id=prompt_id),
+                    runtime_stop_confirmed=lambda: bool(
+                        _jobs.get(job_id, {}).get("runtime_stop_confirmed")
+                    ),
+                )
+            elif mode == "img2img":
+                result = _generate(request, "img2img", job_id=job_id)
+            elif mode == "inpaint":
+                result = _generate(request, "inpaint", job_id=job_id)
+            else:
+                result = _generate(request, "txt2img", job_id=job_id)
+            context.raise_if_cancelled()
+            result_field = "remaster" if mode == "remaster" else "generation"
+            _set_job(job_id, **{result_field: result})
+            artifact_refs = _generation_artifact_refs(result)
+            child_summaries, warning_codes = _generation_child_summaries(
+                context,
+                request,
+                result,
+                artifact_refs,
+            )
+            return OperationExecutionResult(
+                artifact_refs=artifact_refs,
+                warning_codes=warning_codes,
+                child_summaries=child_summaries,
+            )
+        except OperationCancelled:
+            raise
+        except RemasterExecutionError as exc:
+            code = exc.code if isinstance(exc.code, str) else "remaster_failed"
+            if code == "remaster_cancelled":
+                raise OperationCancelled() from exc
+            raise OperationExecutionError(code, retryable=True) from exc
+        except HTTPException as exc:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            code = detail.get("code")
+            if not isinstance(code, str):
+                code = "generation_request_failed"
+            safe_parts = [code]
+            unsupported = detail.get("unsupported")
+            if isinstance(unsupported, list):
+                for item in unsupported:
+                    reason = item.get("reason") if isinstance(item, dict) else None
+                    if isinstance(reason, str) and all(
+                        character.isalnum() or character in "_.:-" for character in reason
+                    ):
+                        safe_parts.append(reason[:127])
+            missing_nodes = detail.get("missing_nodes")
+            if isinstance(missing_nodes, list):
+                safe_parts.extend(
+                    value
+                    for value in missing_nodes
+                    if isinstance(value, str)
+                    and 0 < len(value) <= 128
+                    and all(character.isalnum() or character in "_.:-" for character in value)
+                )
+            _set_job(job_id, error=":".join(dict.fromkeys(safe_parts)))
+            raise OperationExecutionError(code, retryable=False) from exc
+        finally:
+            try:
+                PreviewRegistry(_data_dir() / "asteria.db").mark_terminal(job_id)
+            except (OSError, sqlite3.Error):
+                pass
+            if lease is not None:
+                lease.release()
+
+
+def _generation_child_summaries(
+    context: OperationExecutionContext,
+    request: Txt2ImgRequest | RemasterRequest,
+    result: Any,
+    artifact_refs: tuple[str, ...],
+) -> tuple[tuple[OperationChildSummary, ...], tuple[str, ...]]:
+    if not isinstance(request, Txt2ImgRequest) or not isinstance(result, GenerationResponse):
+        return (), ()
+    completed_at = datetime.now(UTC)
+    started_at = context.operation.started_at or completed_at
+    summaries: list[OperationChildSummary] = []
+    warning_codes: list[str] = []
+    if request.restore_faces or any(unit.enabled for unit in request.detailer_units):
+        summaries.append(OperationChildSummary(
+            child_summary_id="detailer",
+            ordinal=len(summaries),
+            kind="detailer",
+            status="completed",
+            started_at=started_at,
+            completed_at=completed_at,
+            artifact_refs=artifact_refs,
+        ))
+    if request.topaz_enabled or request.hires_upscaler == "Topaz Photo AI":
+        topaz_failed = str(result.settings.get("topaz_postprocess", "")).startswith("failed:")
+        status = "failed" if topaz_failed else "completed"
+        error_code = "topaz_process_failed" if topaz_failed else None
+        if error_code:
+            warning_codes.append(error_code)
+        summaries.append(OperationChildSummary(
+            child_summary_id="topaz",
+            ordinal=len(summaries),
+            kind="topaz",
+            status=status,
+            started_at=started_at,
+            completed_at=completed_at,
+            artifact_refs=artifact_refs,
+            warning_codes=(error_code,) if error_code else (),
+            error_code=error_code,
+        ))
+    if request.remaster.enabled:
+        remaster_failed = bool(result.settings.get("remaster_partial_failure"))
+        error_code = "remaster_partial_failure" if remaster_failed else None
+        if error_code:
+            warning_codes.append(error_code)
+        summaries.append(OperationChildSummary(
+            child_summary_id="remaster",
+            ordinal=len(summaries),
+            kind="remaster",
+            status="failed" if remaster_failed else "completed",
+            started_at=started_at,
+            completed_at=completed_at,
+            artifact_refs=artifact_refs,
+            warning_codes=(error_code,) if error_code else (),
+            error_code=error_code,
+        ))
+    return tuple(summaries), tuple(warning_codes)
+
+
+def _generation_artifact_refs(result: Any) -> tuple[str, ...]:
+    if isinstance(result, GenerationResponse):
+        return (f"history:{result.id}",)
+    if isinstance(result, RemasterResponse):
+        return (f"remaster:{result.id}",)
+    return ()
+
+
+def _new_job_cache(mode: str, request: Txt2ImgRequest | RemasterRequest) -> dict[str, Any]:
+    return {
+        "mode": mode,
+        "request": request,
+        "generation": None,
+        "remaster": None,
+        "preview_path": "",
+        "preview_paths": [],
+        "step": 0,
+        "steps": 0,
+        "runtime_job_id": "",
+        "runtime_stop_confirmed": False,
+        "cancel_warnings": [],
+        "cancelled": False,
+    }
 
 
 def _runtime(config: AppConfig, runtime_id: str | None = None):
@@ -1646,6 +1917,35 @@ def _model_root(config: AppConfig) -> Path:
     return resolve_model_root(data_dir=config.data_dir, fallback=config.model_dir)
 
 
+def _resolve_discord_model_slots(model_references: dict[str, str]) -> dict[str, str]:
+    config = AppConfig()
+    library = get_model_library(_model_root(config))
+    by_stable_id: dict[str, Path] = {}
+    duplicate_ids: set[str] = set()
+    for item in library.items:
+        stable_model_id = str(item.stable_model_id or "").strip()
+        if not stable_model_id:
+            continue
+        if stable_model_id in by_stable_id:
+            duplicate_ids.add(stable_model_id)
+            continue
+        by_stable_id[stable_model_id] = item.path
+
+    resolved: dict[str, str] = {}
+    for slot_id, stable_model_id in model_references.items():
+        normalized_slot = str(slot_id).strip()
+        normalized_model_id = str(stable_model_id).strip()
+        if (
+            not normalized_slot
+            or not normalized_model_id
+            or normalized_model_id in duplicate_ids
+            or normalized_model_id not in by_stable_id
+        ):
+            raise OperationExecutionError("discord_model_unresolved", retryable=False)
+        resolved[normalized_slot] = str(by_stable_id[normalized_model_id])
+    return resolved
+
+
 def _schema_to_response(schema: GenerationSchema) -> GenerationSchemaResponse:
     return GenerationSchemaResponse(
         profile=schema.profile,
@@ -1687,6 +1987,70 @@ def _validate_required_model_slots(profile: str, model_slots: dict[str, str], co
             status_code=400,
             detail={"code": api_errors.MISSING_REQUIRED_MODEL_FILES, "slots": missing_files},
         )
+
+
+def _external_model_reference_snapshots(
+    model_slots: dict[str, str],
+    config: AppConfig,
+) -> list[dict[str, Any]]:
+    library = get_model_library(_model_root(config))
+    by_path = {
+        os.path.normcase(os.path.abspath(os.fspath(item.path))): item
+        for item in library.items
+        if item.stable_model_id
+    }
+    snapshots: list[dict[str, Any]] = []
+    for slot_id, value in sorted(model_slots.items()):
+        item = by_path.get(os.path.normcase(os.path.abspath(value)))
+        if item is None:
+            continue
+        snapshots.append(
+            {
+                "slot_id": slot_id,
+                "stable_model_id": item.stable_model_id,
+                "root_id": item.root_id,
+                "model_type": item.type,
+                "normalized_relative_path": item.metadata.get(
+                    "external_relative_path",
+                    item.relative_path.as_posix(),
+                ),
+                "fingerprint_algorithm": item.fingerprint_algorithm,
+                "fingerprint_version": item.fingerprint_version,
+                "fingerprint_value": item.fingerprint_value,
+                "execution_path": str(item.path),
+            }
+        )
+    return snapshots
+
+
+def _revalidate_external_model_reference_snapshots(
+    snapshots: list[dict[str, Any]],
+    config: AppConfig,
+) -> None:
+    fingerprints = ModelFingerprintService(config.data_dir / "config" / "model-fingerprints.json")
+    for snapshot in snapshots:
+        path = Path(str(snapshot["execution_path"]))
+        try:
+            current = fingerprints.fast_fingerprint(
+                path,
+                root_id=str(snapshot["root_id"]),
+                model_type=str(snapshot["model_type"]),
+                relative_path=str(snapshot["normalized_relative_path"]),
+            )
+        except OSError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "external_model_offline", "slot": snapshot["slot_id"]},
+            ) from exc
+        if (
+            snapshot.get("fingerprint_algorithm") != current.algorithm
+            or snapshot.get("fingerprint_version") != current.version
+            or snapshot.get("fingerprint_value") != current.value
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "external_model_fingerprint_changed", "slot": snapshot["slot_id"]},
+            )
 
 
 def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str = "txt2img") -> tuple[dict, str]:
@@ -2286,6 +2650,7 @@ def _generate(
     config = AppConfig()
     model_slots = _model_slots_for_request(request, config)
     _validate_required_model_slots(request.profile, model_slots, config)
+    external_model_snapshots = _external_model_reference_snapshots(model_slots, config)
     styled_prompt, styled_negative_prompt = _compose_with_advanced_styles(
         request.prompt,
         request.negative_prompt,
@@ -2297,6 +2662,11 @@ def _generate(
         wildcard_dir=config.wildcard_dir,
     )
     settings, negative_prompt = _settings_from_request(request, config, mode)
+    if external_model_snapshots:
+        settings["model_reference_snapshots"] = [
+            {key: value for key, value in snapshot.items() if key != "execution_path"}
+            for snapshot in external_model_snapshots
+        ]
     record_merge_xyz_metadata(settings, merge_xyz_metadata)
     negative_prompt = styled_negative_prompt
     if request.advanced_styles:
@@ -2366,11 +2736,32 @@ def _generate(
                 with _jobs_lock:
                     preview_paths = [*_jobs.get(job_id, {}).get("preview_paths", []), preview_path]
                 patch["preview_path"] = preview_path
-                patch["preview_paths"] = preview_paths
+                patch["preview_paths"] = preview_paths[-33:]
+                try:
+                    preview = Path(preview_path)
+                    PreviewRegistry(_data_dir() / "asteria.db").register(
+                        job_id,
+                        preview,
+                        output_root=preview.parent.parent,
+                    )
+                except (OSError, RuntimeError, ValueError, sqlite3.Error):
+                    pass
             _set_job(job_id, **patch)
 
         runtime_request["progress_callback"] = update_job_progress
+        runtime_request["cancel_requested"] = lambda: bool(
+            _jobs.get(job_id, {}).get("cancelled")
+        )
+        runtime_request["runtime_job_callback"] = lambda prompt_id: _set_job(
+            job_id,
+            runtime_job_id=prompt_id,
+            runtime_stop_confirmed=False,
+        )
+        runtime_request["runtime_stop_confirmed"] = lambda: bool(
+            _jobs.get(job_id, {}).get("runtime_stop_confirmed")
+        )
     runtime = _runtime(config, selected_runtime)
+    _revalidate_external_model_reference_snapshots(external_model_snapshots, config)
     try:
         if mode == "img2img":
             result = runtime.generate_img2img(runtime_request, _output_dir_for(data_dir, request.profile))
@@ -2378,6 +2769,8 @@ def _generate(
             result = runtime.generate_inpaint(runtime_request, _output_dir_for(data_dir, request.profile))
         else:
             result = runtime.generate_txt2img(runtime_request, _output_dir_for(data_dir, request.profile))
+    except RuntimeCancellationConfirmed as exc:
+        raise OperationCancelled() from exc
     except (RuntimeErrorResponse, RuntimeAdapterError, TopazError) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     if result.get("runtime_adapter"):
@@ -3111,23 +3504,48 @@ def _ensure_supported_inpaint_request(request: InpaintRequest) -> None:
             raise HTTPException(status_code=400, detail={"code": exc.code}) from None
 
 
-def _job_response(job_id: str, job: dict) -> GenerationJobResponse:
+def _job_response(job_id: str, job: dict, operation=None) -> GenerationJobResponse:
+    if operation is None:
+        try:
+            operation = _generation_operation_coordinator().get(job_id)
+        except OperationNotFoundError:
+            operation = None
+    status = operation.status if operation is not None else job.get("status", "queued")
+    current = operation.progress_current if operation is not None else int(job.get("current", 0))
+    total_value = (
+        operation.progress_total
+        if operation is not None and operation.progress_total is not None
+        else int(job.get("total", 1))
+    )
+    progress = (
+        min(1.0, current / total_value)
+        if total_value > 0
+        else (1.0 if status in {"completed", "completed_with_warnings"} else 0.0)
+    )
+    if status in {"completed", "completed_with_warnings", "failed", "cancelled", "interrupted"}:
+        progress = 1.0
     return GenerationJobResponse(
         id=job_id,
-        status=job["status"],
-        mode=job["mode"],
-        progress=float(job.get("progress", 0)),
-        current=int(job.get("current", 0)),
-        total=int(job.get("total", 1)),
+        status=status,
+        mode=job.get("mode") or (
+            str(operation.request_snapshot.get("mode", "")) if operation is not None else ""
+        ),
+        progress=progress,
+        current=current,
+        total=total_value,
         step=int(job.get("step", 0)),
         steps=int(job.get("steps", 0)),
-        phase=str(job.get("phase", "")),
+        phase=operation.phase if operation is not None else str(job.get("phase", "")),
         generation=job.get("generation"),
         remaster=job.get("remaster"),
         preview_path=str(job.get("preview_path", "")),
         preview_paths=list(job.get("preview_paths", [])),
-        error=str(job.get("error", "")),
-        cancelled=bool(job.get("cancelled", False)),
+        error=(
+            str(job.get("error", "")) or operation.error_code or ""
+            if operation is not None
+            else str(job.get("error", ""))
+        ),
+        cancelled=bool(job.get("cancelled", False)) or status in {"cancelling", "cancelled"},
     )
 
 
@@ -3135,74 +3553,92 @@ def _set_job(job_id: str, **patch: Any) -> None:
     with _jobs_lock:
         if job_id in _jobs:
             _jobs[job_id].update(patch)
-
-
-def _run_job(job_id: str, publisher_lease: ReferenceMutationLease) -> None:
+    progress_keys = {"current", "total", "phase", "step", "steps"}
+    if not progress_keys.intersection(patch):
+        return
     try:
-        with _jobs_lock:
-            job = _jobs[job_id]
-            mode = job["mode"]
-            request = job["request"]
-        _set_job(job_id, status="running", progress=0.05, phase="preparing")
-        try:
-            if mode == "remaster":
-                from app.api.remaster import execute_remaster
-
-                result = execute_remaster(
-                    request,
-                    cancel_requested=lambda: bool(_jobs.get(job_id, {}).get("cancelled")),
-                    runtime_job_callback=lambda prompt_id: _set_job(job_id, runtime_job_id=prompt_id),
-                    runtime_stop_confirmed=lambda: bool(_jobs.get(job_id, {}).get("runtime_stop_confirmed")),
-                )
-            elif mode == "img2img":
-                result = _generate(request, "img2img", job_id=job_id)
-            elif mode == "inpaint":
-                result = _generate(request, "inpaint", job_id=job_id)
-            else:
-                result = _generate(request, "txt2img", job_id=job_id)
-        except Exception as exc:  # noqa: BLE001 - surface job failure to UI.
-            _set_job(
-                job_id,
-                status="cancelled" if _jobs.get(job_id, {}).get("cancelled") else "failed",
-                progress=1,
-                error=str(exc),
-            )
+        coordinator = _generation_operation_coordinator()
+        current_operation = coordinator.get(job_id)
+        if current_operation.status not in {"preparing", "running"}:
             return
-        total = int(_jobs.get(job_id, {}).get("total", 1))
-        result_field = "remaster" if mode == "remaster" else "generation"
-        _set_job(job_id, status="completed", progress=1, current=total, phase="completed", **{result_field: result})
-    finally:
-        publisher_lease.release()
+        total = patch.get("total", current_operation.progress_total)
+        current = patch.get("current")
+        if current is None and "progress" in patch and total is not None:
+            current = round(float(patch["progress"]) * total)
+        coordinator.repository.transition(
+            job_id,
+            expected_revision=current_operation.row_revision,
+            target_status="running",
+            phase=str(patch.get("phase", current_operation.phase)),
+            progress_current=(
+                int(current) if current is not None else current_operation.progress_current
+            ),
+            progress_total=int(total) if total is not None else None,
+            progress_unit=current_operation.progress_unit,
+        )
+    except (OperationNotFoundError, ValueError):
+        return
+
+
+def _run_job(job_id: str, _publisher_lease: ReferenceMutationLease) -> None:
+    coordinator = _generation_operation_coordinator()
+    while True:
+        operation = coordinator.execute_operation(job_id)
+        if operation.status != "queued":
+            return
+        if job_id not in _publisher_leases:
+            return
+        threading.Event().wait(0.05)
+
+
+def _fail_scheduled_operation(job_id: str) -> None:
+    try:
+        coordinator = _generation_operation_coordinator()
+        current = coordinator.get(job_id)
+        if current.status == "queued":
+            coordinator.repository.transition(
+                job_id,
+                expected_revision=current.row_revision,
+                target_status="failed",
+                phase="failed",
+                error_code="operation_schedule_failed",
+                retryable=True,
+            )
+    except (OperationNotFoundError, ValueError):
+        pass
+    lease = _publisher_leases.pop(job_id, None)
+    if lease is not None:
+        lease.release()
 
 
 def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest) -> GenerationJobResponse:
-    job_id = uuid4().hex
+    coordinator = _generation_operation_coordinator()
     publisher_lease = reference_mutation_coordinator.acquire_publisher()
     registered = False
+    operation = None
     try:
+        snapshot = {
+            "mode": mode,
+            "generation_contract_version": CURRENT_SCHEMA_VERSIONS.generation,
+            "profile": getattr(request, "profile", ""),
+            "runtime": getattr(request, "runtime", None),
+            "request": request.model_dump(mode="json"),
+            "request_fields_set": sorted(request.model_fields_set),
+        }
+        operation = coordinator.enqueue(
+            kind=f"generation.{mode}",
+            source_actor="local",
+            request_snapshot=snapshot,
+            request_contract_version=CURRENT_SCHEMA_VERSIONS.generation,
+            progress_total=max(1, int(getattr(request, "batch_count", 1))),
+            progress_unit="images",
+        )
+        job_id = operation.operation_id
         with _jobs_lock:
-            _jobs[job_id] = {
-                "status": "queued",
-                "mode": mode,
-                "progress": 0,
-                "current": 0,
-                "total": max(1, int(getattr(request, "batch_count", 1))),
-                "step": 0,
-                "steps": 0,
-                "phase": "queued",
-                "request": request,
-                "generation": None,
-                "remaster": None,
-                "preview_path": "",
-                "preview_paths": [],
-                "error": "",
-                "cancelled": False,
-                "runtime_job_id": "",
-                "runtime_stop_confirmed": False,
-                "cancel_warnings": [],
-            }
+            _jobs[job_id] = _new_job_cache(mode, request)
+            _publisher_leases[job_id] = publisher_lease
             registered = True
-            response = _job_response(job_id, _jobs[job_id])
+            response = _job_response(job_id, _jobs[job_id], operation)
         worker = threading.Thread(
             target=_run_job,
             args=(job_id, publisher_lease),
@@ -3210,12 +3646,79 @@ def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest
         )
         worker.start()
     except BaseException:
-        publisher_lease.release()
+        if operation is not None:
+            _fail_scheduled_operation(operation.operation_id)
+        else:
+            publisher_lease.release()
         if registered:
             with _jobs_lock:
                 _jobs.pop(job_id, None)
         raise
     return response
+
+
+def enqueue_discord_txt2img(
+    request: Txt2ImgRequest,
+    *,
+    discord_snapshot: dict[str, Any],
+    identity,
+    requester_id: str,
+    guild_id: str | None,
+    channel_id: str | None,
+):
+    from app.services.discord_receipts import DiscordOperationClaim
+
+    _preflight_controlnet_mode_request(request, "txt2img")
+    coordinator = _generation_operation_coordinator()
+    publisher_lease = reference_mutation_coordinator.acquire_publisher()
+    registered = False
+    claim: DiscordOperationClaim | None = None
+    try:
+        snapshot = {
+            "mode": "txt2img",
+            "generation_contract_version": CURRENT_SCHEMA_VERSIONS.generation,
+            "profile": request.profile,
+            "runtime": request.runtime,
+            "request": request.model_dump(mode="json"),
+            "request_fields_set": sorted(request.model_fields_set),
+            "discord": dict(discord_snapshot),
+        }
+        claim = coordinator.enqueue_with_discord_receipt(
+            kind="generation.txt2img",
+            source_actor="discord",
+            request_snapshot=snapshot,
+            identity=identity,
+            requester_id=requester_id,
+            guild_id=guild_id,
+            channel_id=channel_id,
+            request_contract_version=CURRENT_SCHEMA_VERSIONS.generation,
+            progress_total=max(1, request.batch_count),
+            progress_unit="images",
+        )
+        if not claim.created:
+            publisher_lease.release()
+            return claim
+        job_id = claim.operation.operation_id
+        with _jobs_lock:
+            _jobs[job_id] = _new_job_cache("txt2img", request)
+            _publisher_leases[job_id] = publisher_lease
+            registered = True
+        worker = threading.Thread(
+            target=_run_job,
+            args=(job_id, publisher_lease),
+            daemon=True,
+        )
+        worker.start()
+        return claim
+    except BaseException:
+        if claim is not None and claim.created:
+            _fail_scheduled_operation(claim.operation.operation_id)
+        else:
+            publisher_lease.release()
+        if registered:
+            with _jobs_lock:
+                _jobs.pop(claim.operation.operation_id, None)
+        raise
 
 
 @router.post("/jobs/txt2img", response_model=GenerationJobResponse)
@@ -3240,11 +3743,27 @@ def queue_inpaint(request: InpaintRequest) -> GenerationJobResponse:
 
 @router.get("/jobs/{job_id}", response_model=GenerationJobResponse)
 def get_job(job_id: str) -> GenerationJobResponse:
+    try:
+        operation = _generation_operation_coordinator().get(job_id)
+    except OperationNotFoundError:
+        raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_JOB_NOT_FOUND}) from None
     with _jobs_lock:
         job = _jobs.get(job_id)
     if job is None:
-        raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_JOB_NOT_FOUND})
-    return _job_response(job_id, job)
+        mode = str(operation.request_snapshot.get("mode", ""))
+        request_payload = operation.request_snapshot.get("request", {})
+        request_type = {
+            "txt2img": Txt2ImgRequest,
+            "img2img": Img2ImgRequest,
+            "inpaint": InpaintRequest,
+            "remaster": RemasterRequest,
+        }.get(mode, Txt2ImgRequest)
+        try:
+            request = request_type.model_validate(request_payload)
+            job = _new_job_cache(mode, request)
+        except ValueError:
+            job = {"mode": mode}
+    return _job_response(job_id, job, operation)
 
 
 @router.websocket("/jobs/{job_id}/events")
@@ -3252,14 +3771,19 @@ async def job_events(websocket: WebSocket, job_id: str) -> None:
     await websocket.accept()
     try:
         while True:
-            with _jobs_lock:
-                job = _jobs.get(job_id)
-            if job is None:
+            try:
+                response = get_job(job_id).model_dump(mode="json")
+            except HTTPException:
                 await websocket.send_json({"id": job_id, "status": "missing"})
                 return
-            response = _job_response(job_id, job).model_dump(mode="json")
             await websocket.send_json(response)
-            if response["status"] in {"completed", "failed", "cancelled"}:
+            if response["status"] in {
+                "completed",
+                "completed_with_warnings",
+                "failed",
+                "cancelled",
+                "interrupted",
+            }:
                 return
             await asyncio.sleep(0.5)
     except WebSocketDisconnect:
@@ -3268,19 +3792,35 @@ async def job_events(websocket: WebSocket, job_id: str) -> None:
 
 @router.post("/jobs/{job_id}/cancel", response_model=GenerationJobResponse)
 def cancel_job(job_id: str) -> GenerationJobResponse:
+    try:
+        cancel_generation_operation(job_id)
+    except OperationNotFoundError:
+        with _jobs_lock:
+            legacy_job = _jobs.get(job_id)
+        if legacy_job is not None and legacy_job.get("mode") == "remaster":
+            return _cancel_legacy_remaster_job(job_id, legacy_job)
+        raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_JOB_NOT_FOUND}) from None
+    return get_job(job_id)
+
+
+def cancel_generation_operation(job_id: str) -> OperationRecord:
+    coordinator = _generation_operation_coordinator()
+    operation = coordinator.get(job_id)
     with _jobs_lock:
         job = _jobs.get(job_id)
     if job is None:
-        raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_JOB_NOT_FOUND})
-    if job["status"] in {"completed", "failed", "cancelled"}:
-        return _job_response(job_id, job)
-    if job["mode"] == "remaster":
-        _set_job(job_id, cancelled=True, status="cancelling", phase="cancelling")
+        return coordinator.request_cancel(job_id)
+    if operation.status in {"completed", "completed_with_warnings", "failed", "cancelled", "interrupted"}:
+        return operation
+    _set_job(job_id, cancelled=True)
+    operation = coordinator.request_cancel(job_id)
+    if operation.status != "cancelling":
+        return operation
+    if job["mode"] == "remaster" and operation.status == "cancelling":
         prompt_id = str(job.get("runtime_job_id") or "")
         if not prompt_id:
             _set_job(job_id, runtime_stop_confirmed=True)
-            with _jobs_lock:
-                return _job_response(job_id, _jobs[job_id])
+            return coordinator.get(job_id)
         warnings: list[str] = []
         try:
             client = ComfyClient(AppConfig().comfy_base_url)
@@ -3295,24 +3835,109 @@ def cancel_job(job_id: str) -> GenerationJobResponse:
             warnings.append("runtime_cancel_operation_failed")
         if warnings:
             _set_job(job_id, cancel_warnings=warnings)
-        with _jobs_lock:
-            return _job_response(job_id, _jobs[job_id])
-    _set_job(job_id, cancelled=True, status="cancelled", progress=1)
+        return coordinator.get(job_id)
     try:
         ComfyClient(AppConfig().comfy_base_url).interrupt()
+        _set_job(job_id, runtime_stop_confirmed=True)
     except RuntimeErrorResponse:
         pass
+    return coordinator.get(job_id)
+
+
+def _cancel_legacy_remaster_job(job_id: str, job: dict[str, Any]) -> GenerationJobResponse:
+    if job.get("status") in {"completed", "failed", "cancelled"}:
+        return _job_response(job_id, job)
+    _set_job(job_id, cancelled=True, status="cancelling", phase="cancelling")
+    prompt_id = str(job.get("runtime_job_id") or "")
+    if not prompt_id:
+        _set_job(job_id, runtime_stop_confirmed=True)
+        with _jobs_lock:
+            return _job_response(job_id, _jobs[job_id])
+    warnings: list[str] = []
+    try:
+        client = ComfyClient(AppConfig().comfy_base_url)
+        queue = client.queue_state()
+        if prompt_id in queue["pending"]:
+            client.delete_queued_prompt(prompt_id)
+            _set_job(job_id, runtime_stop_confirmed=True)
+        elif prompt_id in queue["running"]:
+            client.interrupt()
+            _set_job(job_id, runtime_stop_confirmed=True)
+    except RuntimeErrorResponse:
+        warnings.append("runtime_cancel_operation_failed")
+    if warnings:
+        _set_job(job_id, cancel_warnings=warnings)
     with _jobs_lock:
         return _job_response(job_id, _jobs[job_id])
 
 
 @router.post("/jobs/{job_id}/retry", response_model=GenerationJobResponse)
 def retry_job(job_id: str) -> GenerationJobResponse:
+    coordinator = _generation_operation_coordinator()
+    try:
+        operation = coordinator.retry(job_id, source_actor="local")
+    except OperationNotFoundError:
+        raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_JOB_NOT_FOUND}) from None
+    except OperationRetryError as exc:
+        raise HTTPException(status_code=409, detail={"code": str(exc)}) from exc
+    mode = str(operation.request_snapshot["mode"])
+    request_type = {
+        "txt2img": Txt2ImgRequest,
+        "img2img": Img2ImgRequest,
+        "inpaint": InpaintRequest,
+        "remaster": RemasterRequest,
+    }[mode]
+    request = request_type.model_validate(operation.request_snapshot["request"])
+    publisher_lease = reference_mutation_coordinator.acquire_publisher()
     with _jobs_lock:
-        job = _jobs.get(job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_JOB_NOT_FOUND})
-    return _enqueue_generation_job(job["mode"], job["request"])
+        _jobs[operation.operation_id] = _new_job_cache(mode, request)
+        _publisher_leases[operation.operation_id] = publisher_lease
+        response = _job_response(operation.operation_id, _jobs[operation.operation_id], operation)
+    try:
+        threading.Thread(
+            target=_run_job,
+            args=(operation.operation_id, publisher_lease),
+            daemon=True,
+        ).start()
+    except BaseException:
+        _fail_scheduled_operation(operation.operation_id)
+        with _jobs_lock:
+            _jobs.pop(operation.operation_id, None)
+        raise
+    return response
+
+
+@router.post("/jobs/cleanup", response_model=GenerationJobCleanupResponse)
+def cleanup_jobs() -> GenerationJobCleanupResponse:
+    data_dir = _data_dir()
+    preview_registry = PreviewRegistry(data_dir / "asteria.db")
+    before_preview_count = sum(
+        len(preview_registry.operation_paths(item.operation_id))
+        for item in _generation_operation_coordinator().list(limit=1000)
+    )
+    result = OperationRetentionService(
+        _generation_operation_coordinator().repository
+    ).cleanup()
+    preview_result = preview_registry.cleanup()
+    with _jobs_lock:
+        known_operation_ids = {
+            item.operation_id
+            for item in _generation_operation_coordinator().list(
+                limit=1000,
+            )
+        }
+        for cached_id in tuple(_jobs):
+            if cached_id not in known_operation_ids:
+                _jobs.pop(cached_id, None)
+    return GenerationJobCleanupResponse(
+        removed_jobs=result.removed_operations,
+        remaining_active_jobs=result.remaining_active_operations,
+        remaining_terminal_jobs=result.remaining_terminal_operations,
+        removed_preview_references=min(
+            before_preview_count,
+            preview_result.deleted_preview_files,
+        ),
+    )
 
 
 @router.get("/history", response_model=GenerationHistoryResponse)
@@ -3350,28 +3975,8 @@ def history(
 @router.get("/history/tags", response_model=GenerationTagCatalogResponse)
 def history_tags() -> GenerationTagCatalogResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
-    tags: list[str] = []
-    generated_tags: list[str] = []
-    seen_tags: set[str] = set()
-    seen_generated_tags: set[str] = set()
-    before_id: int | None = None
-    while True:
-        rows, next_before = repository.tag_page(before_id=before_id, limit=128)
-        for row in rows:
-            for target, seen, values in (
-                (tags, seen_tags, row["tags"]),
-                (generated_tags, seen_generated_tags, row["generated_tags"]),
-            ):
-                for raw_value in values:
-                    value = " ".join(str(raw_value).strip().split())
-                    key = unicodedata.normalize("NFKC", value).casefold()
-                    if value and key not in seen:
-                        target.append(value)
-                        seen.add(key)
-        if next_before is None:
-            break
-        before_id = next_before
-    return GenerationTagCatalogResponse(tags=tags, generated_tags=generated_tags)
+    catalog = repository.tag_catalog()
+    return GenerationTagCatalogResponse(**catalog)
 
 
 @router.get("/history/{generation_id}/thumbnail")

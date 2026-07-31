@@ -11,6 +11,11 @@ from typing import Literal
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 from app.services.atomic_json import write_json_atomic
+from app.services.schema_versions import CURRENT_SCHEMA_VERSIONS
+
+
+class SettingsSchemaTooNewError(RuntimeError):
+    pass
 
 
 class OutputSettings(BaseModel):
@@ -111,15 +116,27 @@ class LibrarySettings(BaseModel):
         return self
 
 
+class AppearanceSettings(BaseModel):
+    theme: Literal["light", "dark", "system"] = "system"
+
+    @field_validator("theme", mode="before")
+    @classmethod
+    def _normalize_theme(cls, value: object) -> str:
+        normalized = str(value or "").strip().lower()
+        return normalized if normalized in {"light", "dark", "system"} else "system"
+
+
 class LauncherSettings(BaseModel):
     runtime_monitor_on_start: bool = False
 
 
 class UserSettings(BaseModel):
+    schema_version: Literal[3] = CURRENT_SCHEMA_VERSIONS.settings
     output: OutputSettings = Field(default_factory=OutputSettings)
     storage: StorageSettings = Field(default_factory=StorageSettings)
     ai: AISettings = Field(default_factory=AISettings)
     library: LibrarySettings = Field(default_factory=LibrarySettings)
+    appearance: AppearanceSettings = Field(default_factory=AppearanceSettings)
     launcher: LauncherSettings = Field(default_factory=LauncherSettings)
 
 
@@ -132,7 +149,15 @@ class UserSettingsRepository:
             if not self.path.exists():
                 return UserSettings()
             payload = json.loads(self.path.read_text(encoding="utf-8"))
+            if (
+                isinstance(payload, dict)
+                and isinstance(payload.get("schema_version"), int)
+                and payload["schema_version"] > CURRENT_SCHEMA_VERSIONS.settings
+            ):
+                raise SettingsSchemaTooNewError("user settings schema is newer than this application")
             return UserSettings.model_validate(payload)
+        except SettingsSchemaTooNewError:
+            raise
         except (OSError, json.JSONDecodeError, ValidationError):
             return UserSettings()
 

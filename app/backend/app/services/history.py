@@ -8,10 +8,12 @@ import sqlite3
 import unicodedata
 
 from app.services.generation_metadata import metadata_tags
+from app.services.schema_migrations import migrate_history_database_schema
 
 
 MAX_USER_TAGS = 160
 HISTORY_PAGE_SCAN_BATCH = 128
+HISTORY_TAG_CATALOG_LIMIT = 1_000
 
 
 @dataclass(frozen=True)
@@ -83,6 +85,17 @@ create table if not exists generations (
 )
 """
 
+HISTORY_TAG_INDEX_SQL = """
+create table if not exists history_tag_index (
+    generation_id integer not null,
+    kind text not null,
+    normalized_key text not null,
+    value text not null,
+    ordinal integer not null,
+    primary key(generation_id, kind, normalized_key)
+)
+"""
+
 
 class HistoryRepository:
     def __init__(self, db_path: Path):
@@ -91,6 +104,11 @@ class HistoryRepository:
         with sqlite3.connect(db_path) as con:
             self._drop_legacy_table(con)
             con.execute(GENERATIONS_TABLE_SQL)
+            con.execute(HISTORY_TAG_INDEX_SQL)
+            con.execute(
+                "create index if not exists history_tag_catalog_idx "
+                "on history_tag_index(kind, normalized_key, generation_id desc)"
+            )
             con.execute(
                 """
                 create table if not exists history_folders (
@@ -101,6 +119,8 @@ class HistoryRepository:
                 """
             )
             self._backfill_generated_tags(con)
+            self._backfill_tag_index(con)
+            migrate_history_database_schema(con)
 
     def add(
         self,
@@ -153,7 +173,76 @@ class HistoryRepository:
                     json.dumps(normalized_generated_tags, ensure_ascii=False),
                 ),
             )
-            return int(cur.lastrowid)
+            generation_id = int(cur.lastrowid)
+            self._replace_tag_index(
+                con,
+                generation_id,
+                tags=normalized_tags,
+                generated_tags=normalized_generated_tags,
+            )
+            return generation_id
+
+    def tag_catalog(self) -> dict[str, list[str]]:
+        with sqlite3.connect(self.db_path) as con:
+            rows = con.execute(
+                """
+                with latest as (
+                    select kind, value, generation_id, ordinal,
+                           row_number() over (
+                               partition by kind, normalized_key
+                               order by generation_id desc
+                           ) as identity_rank
+                    from history_tag_index
+                ),
+                bounded as (
+                    select kind, value, generation_id, ordinal,
+                           row_number() over (
+                               partition by kind
+                               order by generation_id desc, ordinal
+                           ) as catalog_rank
+                    from latest
+                    where identity_rank = 1
+                )
+                select kind, value, generation_id
+                from bounded
+                where catalog_rank <= ?
+                order by kind, generation_id desc, ordinal
+                """,
+                (HISTORY_TAG_CATALOG_LIMIT,),
+            ).fetchall()
+        return {
+            "tags": [value for kind, value, _ in rows if kind == "user"],
+            "generated_tags": [value for kind, value, _ in rows if kind == "generated"],
+        }
+
+    def migrate_model_references(self, candidates: list[object]) -> int:
+        from app.services.model_reference_migration import migrate_generation_reference_metadata
+
+        changed = 0
+        with sqlite3.connect(self.db_path) as con:
+            rows = con.execute(
+                "select id, settings_json, model_slots_json, loras_json from generations"
+            ).fetchall()
+            for generation_id, settings_json, model_slots_json, loras_json in rows:
+                settings = self._json_dict(settings_json)
+                payload = {
+                    **settings,
+                    "model_slots": self._json_dict(model_slots_json),
+                    "loras": [
+                        item for item in self._json_list(loras_json) if isinstance(item, dict)
+                    ],
+                }
+                migrated = migrate_generation_reference_metadata(payload, candidates)
+                migrated.pop("model_slots", None)
+                migrated.pop("loras", None)
+                if migrated == settings:
+                    continue
+                con.execute(
+                    "update generations set settings_json = ? where id = ?",
+                    (json.dumps(migrated, ensure_ascii=False), generation_id),
+                )
+                changed += 1
+        return changed
 
     def list_recent(self, limit: int = 50, folder: str = "all") -> list[dict]:
         where, params = self._folder_where(folder)
@@ -603,6 +692,7 @@ class HistoryRepository:
 
     def delete(self, generation_id: int) -> bool:
         with sqlite3.connect(self.db_path) as con:
+            con.execute("delete from history_tag_index where generation_id = ?", (generation_id,))
             cur = con.execute("delete from generations where id = ?", (generation_id,))
             return cur.rowcount > 0
 
@@ -618,6 +708,10 @@ class HistoryRepository:
             if missing_ids:
                 raise HistoryBulkDeleteConflictError(missing_ids)
             placeholders = ", ".join("?" for _ in unique_ids)
+            con.execute(
+                f"delete from history_tag_index where generation_id in ({placeholders})",
+                unique_ids,
+            )
             cur = con.execute(
                 f"delete from generations where id in ({placeholders})",
                 unique_ids,
@@ -653,6 +747,13 @@ class HistoryRepository:
             )
             self._validate_folder_with_connection(con, values[4])
             self._update_curation_with_connection(con, generation_id, values)
+            if tags is not None:
+                self._replace_tag_index(
+                    con,
+                    generation_id,
+                    tags=values[2],
+                    generated_tags=item["generated_tags"],
+                )
             return self._get_with_connection(con, generation_id)
 
     def bulk_update_curation(
@@ -695,6 +796,14 @@ class HistoryRepository:
                 self._validate_folder_with_connection(con, values[4])
             for generation_id, values in updates:
                 self._update_curation_with_connection(con, generation_id, values)
+                if normalized_add or normalized_remove:
+                    item = next(item for item_id, item in targets if item_id == generation_id)
+                    self._replace_tag_index(
+                        con,
+                        generation_id,
+                        tags=values[2],
+                        generated_tags=item["generated_tags"],
+                    )
             return [
                 item
                 for generation_id, _ in updates
@@ -959,6 +1068,46 @@ class HistoryRepository:
                 )
         finally:
             con.row_factory = original_row_factory
+
+    def _backfill_tag_index(self, con: sqlite3.Connection) -> None:
+        indexed = con.execute("select 1 from history_tag_index limit 1").fetchone()
+        if indexed is not None:
+            return
+        rows = con.execute(
+            "select id, tags_json, generated_tags_json from generations order by id"
+        ).fetchall()
+        for generation_id, tags_json, generated_tags_json in rows:
+            self._replace_tag_index(
+                con,
+                int(generation_id),
+                tags=self._normalize_tags(self._json_list(tags_json)),
+                generated_tags=self._normalize_tags(self._json_list(generated_tags_json)),
+            )
+
+    def _replace_tag_index(
+        self,
+        con: sqlite3.Connection,
+        generation_id: int,
+        *,
+        tags: list[str],
+        generated_tags: list[str],
+    ) -> None:
+        con.execute("delete from history_tag_index where generation_id = ?", (generation_id,))
+        values: list[tuple[int, str, str, str, int]] = []
+        for kind, entries in (("user", tags), ("generated", generated_tags)):
+            seen: set[str] = set()
+            for ordinal, value in enumerate(entries):
+                key = unicodedata.normalize("NFKC", value).casefold()
+                if value and key not in seen:
+                    values.append((generation_id, kind, key, value, ordinal))
+                    seen.add(key)
+        con.executemany(
+            """
+            insert into history_tag_index(generation_id, kind, normalized_key, value, ordinal)
+            values (?, ?, ?, ?, ?)
+            """,
+            values,
+        )
 
     def _folder_where(self, folder: str) -> tuple[str, tuple]:
         folder = str(folder or "all").strip().lower()

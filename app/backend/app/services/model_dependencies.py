@@ -15,6 +15,7 @@ from app.services.managed_artifacts import (
     ManagedArtifactService,
     ManagedArtifactSpec,
 )
+from app.services.model_fingerprints import ModelFingerprintService
 
 
 class ModelDependencyError(Exception):
@@ -83,9 +84,15 @@ class ModelDependencyStatus:
 
 
 class ModelDependencyRepository:
-    def __init__(self, manifest_path: Path, model_root: Path) -> None:
+    def __init__(
+        self,
+        manifest_path: Path,
+        model_root: Path,
+        fingerprint_service: ModelFingerprintService | None = None,
+    ) -> None:
         self.manifest_path = manifest_path
         self.model_root = model_root
+        self.fingerprint_service = fingerprint_service
 
     def list(self) -> list[ModelDependency]:
         try:
@@ -114,8 +121,13 @@ class ModelDependencyRepository:
                 continue
         return parsed
 
-    def list_status(self) -> list[ModelDependencyStatus]:
-        return [self._status_for(dependency) for dependency in self.list()]
+    def list_status(self, dependency_ids: set[str] | None = None) -> list[ModelDependencyStatus]:
+        dependencies = self.list()
+        if dependency_ids is not None:
+            dependencies = [
+                dependency for dependency in dependencies if dependency.id in dependency_ids
+            ]
+        return [self._status_for(dependency) for dependency in dependencies]
 
     def get(self, dependency_id: str) -> ModelDependency:
         for dependency in self.list():
@@ -178,6 +190,8 @@ class ModelDependencyRepository:
 
     def _local_checksum(self, path: Path) -> tuple[str | None, bool]:
         try:
+            if self.fingerprint_service is not None:
+                return self.fingerprint_service.strong_hash(path), True
             return self._sha256(path), True
         except OSError:
             return None, False

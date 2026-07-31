@@ -44,6 +44,7 @@ from app.services.merge_recipes import (
     analyze_merge_recipe,
     execute_merge_recipe,
     expand_dice_recipe,
+    resolve_merge_source_fingerprints,
 )
 from app.services.merge_runtime_contract import (
     MERGE_RUNTIME_CONTRACT_VERSION,
@@ -68,7 +69,22 @@ from app.services.merge_presets import (
     user_preset_id,
 )
 from app.services.model_dependencies import ModelDependencyRepository, ModelDependencyStatus
+from app.services.model_fingerprints import ModelFingerprintService
 from app.services.model_storage import resolve_model_root
+from app.services.operation_coordinator import OperationCoordinator
+from app.services.operation_executor import (
+    OperationExecutionContext,
+    OperationExecutionError,
+    OperationExecutionResult,
+)
+from app.services.merge_calculation_modes import (
+    V11_CALCULATION_MODES,
+    calculation_mode_contract,
+    normalize_calculation_parameters,
+)
+from app.services.disk_reservation import DiskReservationError, disk_reservations
+from app.services.operation_repository import OperationRepository
+from app.services.schema_versions import CURRENT_SCHEMA_VERSIONS
 from app.services.metadata import MetadataWriter
 from app.services.xyz_grid import XYZContactSheetStager, XYZGridAxis, XYZGridCell
 from app.services.user_settings import UserSettingsRepository, resolve_merge_preset_dir
@@ -103,6 +119,85 @@ MERGE_XYZ_AXIS_TARGETS = (
     "dice",
 )
 MERGE_XYZ_CANONICAL_TARGETS = {target.lower() for target in MERGE_XYZ_AXIS_TARGETS}
+_merge_operation_coordinators: dict[Path, OperationCoordinator] = {}
+_merge_operation_results: dict[str, MergeRun] = {}
+_merge_operation_errors: dict[str, HTTPException] = {}
+
+
+class MergeRecipeOperationExecutor:
+    version = "merge-recipe-v1.1"
+
+    def resource_claims(self, _snapshot: dict) -> tuple[str, ...]:
+        recipe = _snapshot.get("recipe")
+        if isinstance(recipe, dict) and recipe.get("save_model"):
+            return ("disk_write_heavy",)
+        return ("cpu_heavy",)
+
+    def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
+        recipe = MergeRecipe.model_validate(context.request_snapshot["recipe"])
+        config = AppConfig()
+        output_root = resolve_model_root(data_dir=config.data_dir, fallback=config.model_dir)
+        source_sizes: list[int] = []
+        for source in recipe.sources:
+            try:
+                source_sizes.append(Path(source.path).stat().st_size)
+            except OSError:
+                continue
+        try:
+            with disk_reservations.reserve(
+                output_root,
+                max(source_sizes, default=64 * 1024 * 1024),
+                owner_id=context.operation.operation_id,
+            ):
+                run = execute_merge_recipe(
+                    recipe,
+                    output_root,
+                    transient=not recipe.save_model,
+                    fingerprint_service=ModelFingerprintService(
+                        config.data_dir / "config" / "model-fingerprints.json"
+                    ),
+                )
+            run.operation_id = context.operation.operation_id
+            recipe.source_fingerprints = [
+                dict(item) for item in run.source_fingerprints
+            ]
+        except DiskReservationError as exc:
+            raise OperationExecutionError("disk_space_insufficient", retryable=True) from exc
+        except MergeExecutionError as exc:
+            error = HTTPException(status_code=400, detail=str(exc))
+            _merge_operation_errors[context.operation.operation_id] = error
+            raise OperationExecutionError("merge_execution_failed", retryable=True) from exc
+        if recipe.save_model:
+            recipe.output_path = run.output_path
+        try:
+            _repository().save(recipe)
+        except OSError as exc:
+            error = HTTPException(status_code=409, detail=f"Could not save merge recipe: {exc}")
+            _merge_operation_errors[context.operation.operation_id] = error
+            raise OperationExecutionError("merge_result_persistence_failed", retryable=True) from exc
+        try:
+            _run_repository().save(run)
+        except OSError as exc:
+            error = HTTPException(status_code=409, detail=f"Could not save merge run history: {exc}")
+            _merge_operation_errors[context.operation.operation_id] = error
+            raise OperationExecutionError("merge_result_persistence_failed", retryable=True) from exc
+        _merge_operation_results[context.operation.operation_id] = run
+        return OperationExecutionResult(artifact_refs=(f"merge-run:{run.id}",))
+
+
+def _merge_operation_coordinator() -> OperationCoordinator:
+    db_path = (AppConfig().data_dir / "asteria.db").absolute()
+    coordinator = _merge_operation_coordinators.get(db_path)
+    if coordinator is None:
+        coordinator = OperationCoordinator(OperationRepository(db_path), auto_start=False)
+        coordinator.register_executor("merge.recipe", MergeRecipeOperationExecutor())
+        _merge_operation_coordinators[db_path] = coordinator
+    return coordinator
+
+
+def configure_merge_operation_coordinator(coordinator: OperationCoordinator) -> None:
+    coordinator.register_executor("merge.recipe", MergeRecipeOperationExecutor())
+    _merge_operation_coordinators[coordinator.repository.db_path.absolute()] = coordinator
 
 
 class MergeXYZAxis(XYZAxis):
@@ -365,6 +460,11 @@ REPRODUCIBLE_RECIPE_FIELDS = [
     "elemental_rules",
     "adjust_values",
     "calculation_option",
+    "calculation_contract_version",
+    "calculation_parameter_schema_version",
+    "calculation_parameters",
+    "calculation_implementation_revision",
+    "source_fingerprints",
     "dice_mode",
     "dice_seed",
     "dice_ranges",
@@ -529,7 +629,14 @@ def merge_catalog() -> dict:
             {"id": "extract_lora", "label": "Extract LoRA"},
         ],
         "merge_modes": [{"id": key, **value} for key, value in MERGE_MODES.items()],
-        "calculation_modes": [{"id": key, "label": key, "description": value} for key, value in CALCULATION_MODES.items()],
+        "calculation_modes": [
+            (
+                calculation_mode_contract(key)
+                if key in V11_CALCULATION_MODES
+                else {"id": key, "label": key, "description": value, "parameters": {}}
+            )
+            for key, value in CALCULATION_MODES.items()
+        ],
         "calculation_mode_compatibility": CALCULATION_MODE_COMPATIBILITY,
         "block_schemas": [{"id": key, "label": _block_schema_label(key), "blocks": value} for key, value in public_block_schemas.items()],
         "block_filter_help": {
@@ -736,6 +843,18 @@ def save_merge_recipe(recipe: MergeRecipe) -> MergeRecipe:
         if required_sources == 3:
             raise HTTPException(status_code=400, detail="merge_recipe_requires_source_c")
         raise HTTPException(status_code=400, detail="merge_recipe_requires_at_least_two_sources")
+    existing = _repository().get(recipe.id) if recipe.id else None
+    existing_sources = (
+        [(item.role.upper(), item.path) for item in existing.sources]
+        if existing is not None
+        else []
+    )
+    incoming_sources = [(item.role.upper(), item.path) for item in recipe.sources]
+    recipe.source_fingerprints = (
+        [dict(item) for item in existing.source_fingerprints]
+        if existing is not None and existing_sources == incoming_sources
+        else []
+    )
     try:
         return _repository().save(recipe)
     except OSError as exc:
@@ -901,23 +1020,37 @@ def run_merge_recipe(recipe_id: str) -> MergeRun:
         raise HTTPException(status_code=404, detail="merge_recipe_not_found")
     config = AppConfig()
     try:
-        run = execute_merge_recipe(
+        recipe.source_fingerprints = resolve_merge_source_fingerprints(
             recipe,
-            resolve_model_root(data_dir=config.data_dir, fallback=config.model_dir),
-            transient=not recipe.save_model,
+            ModelFingerprintService(
+                config.data_dir / "config" / "model-fingerprints.json"
+            ),
         )
-    except MergeExecutionError as exc:
+    except (MergeExecutionError, OSError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    if recipe.save_model:
-        recipe.output_path = run.output_path
-    try:
-        _repository().save(recipe)
-    except OSError as exc:
-        raise HTTPException(status_code=409, detail=f"Could not save merge recipe: {exc}") from exc
-    try:
-        _run_repository().save(run)
-    except OSError as exc:
-        raise HTTPException(status_code=409, detail=f"Could not save merge run history: {exc}") from exc
+    coordinator = _merge_operation_coordinator()
+    operation = coordinator.enqueue(
+        kind="merge.recipe",
+        source_actor="local",
+        request_snapshot={
+            "recipe": recipe.model_dump(mode="json"),
+            "merge_recipe_contract_version": CURRENT_SCHEMA_VERSIONS.merge_recipe,
+            "calculation_schema_version": CURRENT_SCHEMA_VERSIONS.calculation,
+            "calculation_contract_version": recipe.calculation_contract_version,
+            "calculation_parameter_schema_version": recipe.calculation_parameter_schema_version,
+            "calculation_implementation_revision": recipe.calculation_implementation_revision,
+        },
+        request_contract_version=CURRENT_SCHEMA_VERSIONS.merge_recipe,
+        progress_total=1,
+        progress_unit="model",
+    )
+    completed = coordinator.execute_operation(operation.operation_id)
+    error = _merge_operation_errors.pop(operation.operation_id, None)
+    if error is not None:
+        raise error
+    run = _merge_operation_results.pop(operation.operation_id, None)
+    if completed.status not in {"completed", "completed_with_warnings"} or run is None:
+        raise HTTPException(status_code=409, detail="merge_operation_failed")
     return run
 
 
@@ -1153,6 +1286,11 @@ def _apply_precheck_axis(recipe: MergeRecipe, target: str, value: str, data_dir)
         recipe.merge_mode = value
     elif target == "calculation_mode":
         recipe.calc_mode = value
+        recipe.calculation_parameters = (
+            normalize_calculation_parameters(value, {})
+            if value in V11_CALCULATION_MODES
+            else {}
+        )
     elif target == "mbw_preset":
         recipe.block_weight_preset = value
         weights = _preset_weights(value)
@@ -1218,6 +1356,28 @@ def _validate_merge_xyz_precheck_axes(request: MergeXYZPrecheckRequest) -> None:
         axis.target = normalized.target
         axis.label = normalized.label
         axis.values = list(normalized.values)
+
+
+def _validate_merge_xyz_candidate_contracts(
+    request: MergeXYZPrecheckRequest,
+    plan: MergeXYZPlan,
+    data_dir: Path,
+) -> None:
+    for planned_candidate in iter_merge_xyz_candidates(plan):
+        candidate_recipe = request.recipe.model_copy(deep=True)
+        for axis, value in zip(
+            request.axes,
+            planned_candidate.values,
+            strict=True,
+        ):
+            _apply_precheck_axis(
+                candidate_recipe,
+                axis.target,
+                str(value),
+                data_dir,
+            )
+        _apply_pinpoint_axes(candidate_recipe, request.recipe, request.axes)
+        normalize_merge_runtime_recipe(candidate_recipe)
 
 
 
@@ -1306,6 +1466,7 @@ def _candidate_recipe_patch(recipe: MergeRecipe) -> dict[str, Any]:
         "calc_mode": recipe.calc_mode,
         "alpha": recipe.alpha,
         "beta": recipe.beta,
+        "block_weights": recipe.block_weights,
         "block_weight_preset": recipe.block_weight_preset,
         "block_weights_alpha": recipe.block_weights_alpha,
         "block_weights_beta": recipe.block_weights_beta,
@@ -1315,6 +1476,10 @@ def _candidate_recipe_patch(recipe: MergeRecipe) -> dict[str, Any]:
         "pinpoint_elements": recipe.pinpoint_elements,
         "elemental_rules": recipe.elemental_rules,
         "calculation_option": recipe.calculation_option,
+        "calculation_contract_version": recipe.calculation_contract_version,
+        "calculation_parameter_schema_version": recipe.calculation_parameter_schema_version,
+        "calculation_parameters": recipe.resolved_calculation_parameters(),
+        "calculation_implementation_revision": recipe.calculation_implementation_revision,
         "dice_mode": recipe.dice_mode,
         "dice_seed": recipe.dice_seed,
         "dice_ranges": recipe.dice_ranges,
@@ -1472,37 +1637,79 @@ def _draw_candidate_overlay(image_path: Path, label: str) -> None:
 
 
 def _write_candidate_sidecars(generation: XYZCellResult, candidate: dict[str, Any]) -> list[str]:
-    sidecars: list[str] = []
+    targets: list[tuple[Path, str]] = []
     for image_path in _candidate_image_paths(generation.generation.output_paths):
-        payload = {
-            "schema": "asteria.merge-candidate.v1",
-            "written_at": datetime.now(UTC).isoformat(),
-            **candidate,
-            "image_path": str(image_path),
-        }
         sidecar_path = image_path.with_suffix(".asteria.merge-candidate.json")
-        sidecar_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-        sidecars.append(str(sidecar_path))
+        targets.append((sidecar_path, str(image_path)))
     checkpoint_path_text = str(candidate.get("candidate_checkpoint_path") or "").strip()
     checkpoint_path = Path(checkpoint_path_text) if checkpoint_path_text else None
     if checkpoint_path is not None and _path_exists(checkpoint_path) and _path_is_file(checkpoint_path):
+        targets.append(
+            (
+                checkpoint_path.with_suffix(".asteria.merge-candidate.json"),
+                candidate["image_paths"][0] if candidate.get("image_paths") else "",
+            )
+        )
+    sidecars = [str(path) for path, _image_path in targets]
+    known = set(generation.generation.output_paths)
+    generation.generation.output_paths.extend(
+        path for path in sidecars if path not in known
+    )
+    candidate["output_paths"] = list(generation.generation.output_paths)
+    for sidecar_path, image_path in targets:
         payload = {
             "schema": "asteria.merge-candidate.v1",
             "written_at": datetime.now(UTC).isoformat(),
             **candidate,
-            "image_path": candidate["image_paths"][0] if candidate.get("image_paths") else "",
+            "image_path": image_path,
         }
-        sidecar_path = checkpoint_path.with_suffix(".asteria.merge-candidate.json")
         sidecar_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-        sidecars.append(str(sidecar_path))
     if sidecars:
-        generation.generation.output_paths = [*generation.generation.output_paths, *sidecars]
         _update_output_paths_safely(
             HistoryRepository(AppConfig().data_dir / "asteria.db"),
             generation.generation.id,
             generation.generation.output_paths,
         )
     return sidecars
+
+
+def _refresh_generation_json_sidecars(generation: XYZCellResult) -> None:
+    for raw_path in generation.generation.output_paths:
+        path = Path(raw_path)
+        if not path.name.endswith(".asteria.json"):
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(payload, dict):
+                continue
+            payload["settings"] = generation.generation.settings
+            path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+        except (OSError, json.JSONDecodeError):
+            continue
+
+
+def _artifact_content_hashes(paths: list[Path]) -> list[dict[str, object]]:
+    hashes: list[dict[str, object]] = []
+    for path in paths:
+        digest = sha256()
+        size = 0
+        with path.open("rb") as handle:
+            while chunk := handle.read(1024 * 1024):
+                size += len(chunk)
+                digest.update(chunk)
+        hashes.append(
+            {
+                "algorithm": "sha256",
+                "version": 1,
+                "file_size": size,
+                "path": str(path),
+                "value": digest.hexdigest(),
+            }
+        )
+    return hashes
 
 
 def _update_output_paths_safely(repository: HistoryRepository, generation_id: int, output_paths: list[str]) -> None:
@@ -1586,9 +1793,17 @@ def _build_candidate_metadata(
             "block_weights_beta": normalized_recipe.get("block_weights_beta"),
         },
         "calculation": {
-            "mode": normalized_recipe.get("calculation_mode"),
+            "mode": normalized_recipe.get("calculation_mode_id"),
             "option": normalized_recipe.get("calculation_option"),
             "merge_mode": normalized_recipe.get("merge_mode"),
+            "contract_version": normalized_recipe.get("calculation_contract_version"),
+            "parameter_schema_version": normalized_recipe.get(
+                "calculation_parameter_schema_version"
+            ),
+            "parameters": normalized_recipe.get("calculation_parameters"),
+            "implementation_revision": normalized_recipe.get(
+                "calculation_implementation_revision"
+            ),
         },
         "source_models": _candidate_source_models(candidate_recipe),
         "source_identities": [source.metadata() for source in source_identities],
@@ -1664,6 +1879,7 @@ def run_merge_xyz_precheck(request: MergeXYZPrecheckRequest) -> XYZPlotResponse:
             merge_type=request.recipe.merge_type,
             model_family=request.recipe.model_family,
         )
+        _validate_merge_xyz_candidate_contracts(request, plan, data_dir)
         source_identities = resolve_merge_xyz_sources(
             request.recipe,
             requires_source_c=initial_contract.requires_source_c,
@@ -1714,6 +1930,9 @@ def run_merge_xyz_precheck(request: MergeXYZPrecheckRequest) -> XYZPlotResponse:
                 candidate_recipe.name = f"{request.recipe.name} precheck {index + 1}"
                 candidate_recipe.output_name = ""
                 candidate_recipe.save_model = False
+                candidate_recipe.source_fingerprints = [
+                    source.fingerprint() for source in source_identities
+                ]
                 labels: dict[str, str] = {}
                 for axis, value in zip(request.axes, values, strict=True):
                     value_text = str(value)
@@ -1762,9 +1981,21 @@ def run_merge_xyz_precheck(request: MergeXYZPrecheckRequest) -> XYZPlotResponse:
                         "block_weights_beta": normalized_recipe.get("block_weights_beta"),
                     },
                     "calculation": {
-                        "mode": normalized_recipe.get("calculation_mode"),
+                        "mode": normalized_recipe.get("calculation_mode_id"),
                         "option": normalized_recipe.get("calculation_option"),
                         "merge_mode": normalized_recipe.get("merge_mode"),
+                        "contract_version": normalized_recipe.get(
+                            "calculation_contract_version"
+                        ),
+                        "parameter_schema_version": normalized_recipe.get(
+                            "calculation_parameter_schema_version"
+                        ),
+                        "parameters": normalized_recipe.get(
+                            "calculation_parameters"
+                        ),
+                        "implementation_revision": normalized_recipe.get(
+                            "calculation_implementation_revision"
+                        ),
                     },
                     "generation_snapshot": generation_snapshot,
                     "seed": cell_request.seed,
@@ -1829,10 +2060,14 @@ def run_merge_xyz_precheck(request: MergeXYZPrecheckRequest) -> XYZPlotResponse:
         for image_path in _candidate_image_paths(cell.generation.output_paths):
             _draw_candidate_overlay(image_path, candidate["overlay_label"])
         candidate["output_paths"] = cell.generation.output_paths
-        _write_candidate_sidecars(cell, candidate)
-        candidate["output_paths"] = cell.generation.output_paths
-        cell.generation.settings["merge_candidate"] = candidate
         _rewrite_merge_xyz_generation_metadata(cell)
+        candidate["output_content_hashes"] = _artifact_content_hashes(
+            _candidate_image_paths(cell.generation.output_paths)
+        )
+        _write_candidate_sidecars(cell, candidate)
+        cell.generation.settings["merge_candidate"] = candidate
+        cell.generation.settings["merge_xyz"] = candidate
+        _refresh_generation_json_sidecars(cell)
         _update_settings_safely(history, cell.generation.id, cell.generation.settings)
         _update_output_paths_safely(history, cell.generation.id, cell.generation.output_paths)
     operation_status = "completed-with-warnings" if contact_sheet_warning else "completed"
@@ -1864,6 +2099,7 @@ def run_merge_xyz_precheck(request: MergeXYZPrecheckRequest) -> XYZPlotResponse:
 @router.post("/xyz-precheck/estimate", response_model=MergeXYZEstimateResponse)
 def estimate_merge_xyz_precheck(request: MergeXYZPrecheckRequest) -> MergeXYZEstimateResponse:
     _validate_merge_xyz_precheck_axes(request)
+    data_dir = AppConfig().data_dir
     if request.base.profile != request.recipe.model_family:
         raise HTTPException(status_code=400, detail="xyz_precheck_profile_family_mismatch")
     try:
@@ -1875,6 +2111,7 @@ def estimate_merge_xyz_precheck(request: MergeXYZPrecheckRequest) -> MergeXYZEst
             merge_type=request.recipe.merge_type,
             model_family=request.recipe.model_family,
         )
+        _validate_merge_xyz_candidate_contracts(request, plan, data_dir)
         source_identities = resolve_merge_xyz_sources(
             request.recipe,
             requires_source_c=initial_contract.requires_source_c,

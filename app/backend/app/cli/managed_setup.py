@@ -279,6 +279,7 @@ class PortableSetupRuntime:
         self.runtime_repository = RuntimeDependencyRepository(
             self.app_root / "runtime-dependencies.yaml",
             self.app_root / "runtime" / "ComfyUI",
+            python_path=self.python_path,
         )
         self.runtime_installer = RuntimeDependencyInstaller(
             self.runtime_repository,

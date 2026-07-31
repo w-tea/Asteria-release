@@ -27,6 +27,10 @@ class ManagedArtifactError(Exception):
     pass
 
 
+class ManagedArtifactCancelled(ManagedArtifactError):
+    pass
+
+
 @dataclass(frozen=True)
 class ManagedArtifactSpec:
     manifest_version: int
@@ -70,12 +74,16 @@ class ManagedArtifactService:
         opener: Callable[..., BinaryIO] | None = None,
         clock: Callable[[], float] | None = None,
         progress_callback: Callable[[str, int, int], None] | None = None,
+        cancel_requested: Callable[[], bool] | None = None,
+        resume_ttl_seconds: float = 7 * 24 * 60 * 60,
     ) -> None:
         self.temp_root = self._absolute_without_resolving(temp_root)
         self.timeout_seconds = timeout_seconds
         self.opener = opener or urlopen
         self.clock = clock or time.time
         self.progress_callback = progress_callback
+        self.cancel_requested = cancel_requested or (lambda: False)
+        self.resume_ttl_seconds = resume_ttl_seconds
 
     def acquire(self, spec: ManagedArtifactSpec) -> ManagedArtifactResult:
         destination = self._absolute_without_resolving(spec.destination)
@@ -132,6 +140,17 @@ class ManagedArtifactService:
             return destination / ".asteria-managed.json"
         return destination.with_name(f"{destination.name}.asteria-managed.json")
 
+    def discard_partial(self, spec: ManagedArtifactSpec) -> None:
+        self._remove_file_safely(self.part_path_for(spec))
+        self._remove_file_safely(self.resume_receipt_path_for(spec))
+
+    def has_valid_partial(self, spec: ManagedArtifactSpec) -> bool:
+        return self._resume_offset(
+            spec,
+            self.part_path_for(spec),
+            self.resume_receipt_path_for(spec),
+        ) > 0
+
     def is_installed(self, spec: ManagedArtifactSpec, *, require_post_install: bool = False) -> bool:
         destination = self._absolute_without_resolving(spec.destination)
         self._validate_managed_write_path(destination)
@@ -184,6 +203,8 @@ class ManagedArtifactService:
                 self._report_progress(spec, written)
                 with part_path.open(mode) as output:
                     while True:
+                        if self.cancel_requested():
+                            raise ManagedArtifactCancelled("managed artifact download cancelled")
                         chunk = response.read(_CHUNK_SIZE)
                         if not chunk:
                             break
@@ -217,7 +238,16 @@ class ManagedArtifactService:
             self._remove_file_safely(resume_path)
             return 0
         size = self._file_size(part_path)
-        if size <= 0 or size >= spec.expected_size or self._read_json(resume_path) != self._resume_receipt(spec):
+        try:
+            receipt_age = max(0.0, self.clock() - resume_path.stat().st_mtime)
+        except OSError:
+            receipt_age = self.resume_ttl_seconds + 1
+        if (
+            size <= 0
+            or size >= spec.expected_size
+            or receipt_age > self.resume_ttl_seconds
+            or self._read_json(resume_path) != self._resume_receipt(spec)
+        ):
             self._remove_file_safely(part_path)
             self._remove_file_safely(resume_path)
             return 0

@@ -12,12 +12,22 @@ import shutil
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 from safetensors import safe_open
 from safetensors.torch import load_file, save_file
 import scipy.ndimage
 import torch
 
+from app.services.merge_calculation_modes import (
+    CALCULATION_CONTRACT_VERSION,
+    CALCULATION_IMPLEMENTATION_REVISION,
+    CALCULATION_PARAMETER_SCHEMA_VERSION,
+    V11_CALCULATION_MODES,
+    CalculationModeError,
+    merge_weight_sum_tensor,
+    normalize_calculation_parameters,
+)
+from app.services.model_fingerprints import ModelFingerprintService
 from app.services.merge_presets import BLOCK_SCHEMAS, is_flux_schema, migrate_legacy_flux2_weight_text
 
 if TYPE_CHECKING:
@@ -62,10 +72,24 @@ CALCULATION_MODES = {
     "tensor2": "Tensor slice replacement along the second axis for wide tensors",
     "self": "Scale A tensors except projection/norm tensors",
     "plus random": "Add random noise to A tensors except projection/norm tensors",
+    "slerp": "Global spherical interpolation over the flattened tensor",
+    "nuslerp": "Vector-wise spherical interpolation with stable linear fallback",
+    "nearswap": "Element-wise interpolation weighted toward similar parameters",
 }
 
 CALCULATION_MODE_COMPATIBILITY = {
-    "weight_sum": ["normal", "cosineA", "cosineB", "tensor", "tensor2", "self", "plus random"],
+    "weight_sum": [
+        "normal",
+        "cosineA",
+        "cosineB",
+        "tensor",
+        "tensor2",
+        "self",
+        "plus random",
+        "slerp",
+        "nuslerp",
+        "nearswap",
+    ],
     "add_difference": ["normal", "trainDifference", "smoothAdd", "smoothAdd MT", "extract", "tensor", "tensor2", "plus random"],
     "triple_sum": ["normal", "cosineA", "cosineB", "tensor", "tensor2"],
     "sum_twice": ["normal", "cosineA", "cosineB", "tensor", "tensor2"],
@@ -89,6 +113,8 @@ class MergeSource(BaseModel):
 
 
 class MergeRecipe(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     id: str = ""
     name: str = "Untitled merge"
     merge_type: str = "checkpoint"
@@ -111,6 +137,11 @@ class MergeRecipe(BaseModel):
     elemental_rules: str = ""
     adjust_values: dict[str, float] = Field(default_factory=dict)
     calculation_option: float = Field(default=0.3, ge=0, le=20)
+    calculation_contract_version: str = CALCULATION_CONTRACT_VERSION
+    calculation_parameter_schema_version: int = CALCULATION_PARAMETER_SCHEMA_VERSION
+    calculation_parameters: dict[str, object] = Field(default_factory=dict)
+    calculation_implementation_revision: str = CALCULATION_IMPLEMENTATION_REVISION
+    source_fingerprints: list[dict[str, object]] = Field(default_factory=list)
     dice_mode: str = ""
     dice_seed: int | None = None
     dice_ranges: dict[str, str] = Field(default_factory=dict)
@@ -156,6 +187,40 @@ class MergeRecipe(BaseModel):
         }
         return self
 
+    @model_validator(mode="after")
+    def normalize_v11_calculation_contract(self) -> MergeRecipe:
+        mode = self.normalized_calc_mode()
+        if mode not in V11_CALCULATION_MODES:
+            return self
+        if self.merge_type != "checkpoint":
+            raise ValueError("V1.1 calculation modes require checkpoint merge type")
+        if self.model_family not in {"sdxl", "anima"}:
+            raise ValueError("V1.1 calculation modes require SDXL or Anima model family")
+        if self.normalized_merge_mode() != "weight_sum":
+            raise ValueError("V1.1 calculation modes require weight_sum")
+        if not 0.0 <= self.alpha <= 1.0:
+            raise ValueError(f"{mode} alpha must be between 0 and 1")
+        if self.calculation_contract_version != CALCULATION_CONTRACT_VERSION:
+            raise ValueError("incompatible calculation contract version")
+        if (
+            self.calculation_parameter_schema_version
+            != CALCULATION_PARAMETER_SCHEMA_VERSION
+        ):
+            raise ValueError("incompatible calculation parameter schema version")
+        if (
+            self.calculation_implementation_revision
+            != CALCULATION_IMPLEMENTATION_REVISION
+        ):
+            raise ValueError("incompatible calculation implementation revision")
+        try:
+            self.calculation_parameters = normalize_calculation_parameters(
+                mode,
+                self.calculation_parameters,
+            )
+        except CalculationModeError as exc:
+            raise ValueError(str(exc)) from exc
+        return self
+
     def normalized_merge_mode(self) -> str:
         if self.calc_mode == "weighted_sum":
             return "weight_sum"
@@ -173,13 +238,30 @@ class MergeRecipe(BaseModel):
 
         return normalize_merge_runtime_recipe(self)
 
+    def resolved_calculation_parameters(self) -> dict[str, object]:
+        mode = self.normalized_calc_mode()
+        if mode not in V11_CALCULATION_MODES:
+            return dict(self.calculation_parameters)
+        try:
+            return normalize_calculation_parameters(
+                mode,
+                self.calculation_parameters,
+            )
+        except CalculationModeError as exc:
+            raise ValueError(str(exc)) from exc
+
 
 class MergeRun(BaseModel):
     id: str = ""
+    operation_id: str = ""
     recipe_id: str
     status: str = "completed"
     output_path: str = ""
     metadata_path: str = ""
+    calculation_mode_id: str = ""
+    normalized_recipe: dict[str, object] = Field(default_factory=dict)
+    source_fingerprints: list[dict[str, object]] = Field(default_factory=list)
+    output_content_hash: dict[str, object] = Field(default_factory=dict)
     logs: list[str] = Field(default_factory=list)
     created_at: str = ""
 
@@ -288,6 +370,21 @@ class MergeRecipeRepository:
         next_items = [item for item in items if item.get("id") != recipe_id]
         self._write(next_items)
         return len(next_items) != len(items)
+
+    def migrate_model_references(self, candidates: list[object]) -> int:
+        from app.services.model_reference_migration import migrate_merge_reference_metadata
+
+        items = self._read(strict=True)
+        changed = 0
+        migrated_items: list[dict] = []
+        for item in items:
+            migrated = migrate_merge_reference_metadata(item, candidates)
+            if migrated != item:
+                changed += 1
+            migrated_items.append(migrated)
+        if changed:
+            self._write(migrated_items)
+        return changed
 
     def _read(self, *, strict: bool = False) -> list[dict]:
         try:
@@ -496,6 +593,131 @@ def _safetensors_metadata(path: Path) -> dict[str, str]:
     except Exception:
         return {}
     return dict(metadata or {})
+
+
+def _source_reference_snapshots(recipe: MergeRecipe) -> dict[str, dict[str, object]]:
+    extra = recipe.model_extra or {}
+    raw = extra.get("model_reference_snapshots")
+    if not isinstance(raw, list):
+        return {}
+    snapshots: dict[str, dict[str, object]] = {}
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "").upper()
+        if role:
+            snapshots[role] = item
+    return snapshots
+
+
+def _source_content_fingerprints(
+    recipe: MergeRecipe,
+    sources: dict[str, Path],
+    fingerprint_service: ModelFingerprintService,
+    *,
+    refresh_hash: bool = False,
+) -> list[dict[str, object]]:
+    references = _source_reference_snapshots(recipe)
+    fingerprints: list[dict[str, object]] = []
+    for role, path in sorted(sources.items()):
+        try:
+            stat = path.stat()
+        except OSError as exc:
+            raise MergeExecutionError(
+                f"merge source provenance inspection failed: {path}"
+            ) from exc
+        reference = references.get(role, {})
+        fingerprints.append(
+            {
+                "role": role,
+                "algorithm": "sha256",
+                "version": 1,
+                "file_size": stat.st_size,
+                "mtime_ns": stat.st_mtime_ns,
+                "stable_model_id": str(reference.get("stable_model_id") or ""),
+                "resolved_root_id": str(reference.get("root_id") or ""),
+                "normalized_relative_path": str(
+                    reference.get("normalized_relative_path") or ""
+                ),
+                "value": fingerprint_service.strong_hash(
+                    path,
+                    refresh=refresh_hash,
+                ),
+            }
+        )
+    return fingerprints
+
+
+def resolve_merge_source_fingerprints(
+    recipe: MergeRecipe,
+    fingerprint_service: ModelFingerprintService,
+) -> list[dict[str, object]]:
+    source_a = _source(recipe, "A")
+    source_b = _source(recipe, "B")
+    source_c = (
+        _source(recipe, "C")
+        if MERGE_MODES.get(recipe.normalized_merge_mode(), {}).get("requires_c")
+        else None
+    )
+    sources = {
+        "A": source_a,
+        "B": source_b,
+        **({"C": source_c} if source_c is not None else {}),
+    }
+    if recipe.merge_type == "lora_to_checkpoint":
+        sources.update(
+            {
+                role: path
+                for role, _source_item, path in _lora_to_checkpoint_sources(recipe)
+                if role not in sources
+            }
+        )
+    return _source_content_fingerprints(
+        recipe,
+        sources,
+        fingerprint_service,
+    )
+
+
+def _output_content_hash(
+    path: Path,
+    fingerprint_service: ModelFingerprintService,
+) -> dict[str, object]:
+    try:
+        size = path.stat().st_size
+    except OSError as exc:
+        raise MergeExecutionError(
+            f"merge output provenance inspection failed: {path}"
+        ) from exc
+    return {
+        "algorithm": "sha256",
+        "version": 1,
+        "file_size": size,
+        "value": fingerprint_service.strong_hash(path),
+    }
+
+
+def _normalized_recipe_provenance(
+    recipe: MergeRecipe,
+    *,
+    output_content_hash: dict[str, object] | None = None,
+) -> dict[str, object]:
+    payload = recipe.model_dump(mode="json")
+    payload.update(
+        {
+            "calculation_mode_id": recipe.normalized_calc_mode(),
+            "calculation_parameters": recipe.resolved_calculation_parameters(),
+            "dtype_policy": "float32_arithmetic_then_requested_output_dtype",
+            "key_policy": {
+                "include": list(recipe.include_blocks),
+                "exclude": list(recipe.exclude_blocks),
+                "missing_or_non_floating": "preserve_source_a",
+            },
+        }
+    )
+    if output_content_hash is not None:
+        payload["output_content_hash"] = dict(output_content_hash)
+    return payload
 
 
 def _safe_model_name(value: str, fallback: str) -> str:
@@ -1495,6 +1717,19 @@ def _merge_tensor(
     alpha = _block_weight_for_key(recipe, key, recipe.block_weights_alpha or recipe.block_weights, recipe.alpha, tensor_index)
     beta = _block_weight_for_key(recipe, key, recipe.block_weights_beta, recipe.beta, tensor_index)
     calc_mode = recipe.normalized_calc_mode()
+    if calc_mode in V11_CALCULATION_MODES:
+        try:
+            value = merge_weight_sum_tensor(
+                calc_mode,
+                a.float(),
+                b.float(),
+                alpha,
+                recipe.resolved_calculation_parameters(),
+            )
+        except CalculationModeError as exc:
+            raise MergeExecutionError(f"{key}: {exc}") from exc
+        value = _apply_adjust_values(recipe, key, value)
+        return value.to(dtype=torch.float16 if recipe.fp16 else a.dtype)
     if calc_mode == "trainDifference":
         if c is None:
             raise MergeExecutionError(f"source C is missing key for trainDifference: {key}")
@@ -2502,9 +2737,21 @@ def _apply_materialized_lora_delta(
     return current.to(dtype=output_dtype) + delta.to(dtype=output_dtype), False
 
 
-def execute_merge_recipe(recipe: MergeRecipe, output_root: Path, transient: bool = False) -> MergeRun:
+def execute_merge_recipe(
+    recipe: MergeRecipe,
+    output_root: Path,
+    transient: bool = False,
+    *,
+    fingerprint_service: ModelFingerprintService | None = None,
+) -> MergeRun:
     if recipe.merge_type not in MERGE_TYPES:
         raise MergeExecutionError("invalid merge type")
+    fingerprints = fingerprint_service or ModelFingerprintService(
+        output_root / ".asteria" / "model-fingerprints.json"
+    )
+    expected_source_fingerprints = [
+        dict(item) for item in recipe.source_fingerprints
+    ]
     recipe = _apply_dice(recipe)
     recipe = _apply_prompt_ratio_source(recipe)
     source_a = _source(recipe, "A")
@@ -2514,6 +2761,21 @@ def execute_merge_recipe(recipe: MergeRecipe, output_root: Path, transient: bool
     lora_checkpoint_sources = _lora_to_checkpoint_sources(recipe) if recipe.merge_type == "lora_to_checkpoint" else []
     if recipe.merge_type == "lora_to_checkpoint":
         sources.update({role: path for role, _source_item, path in lora_checkpoint_sources if role not in sources})
+    try:
+        resolved_source_fingerprints = _source_content_fingerprints(
+            recipe,
+            sources,
+            fingerprints,
+            refresh_hash=True,
+        )
+    except OSError as exc:
+        raise MergeExecutionError("merge source provenance hash failed") from exc
+    if (
+        expected_source_fingerprints
+        and resolved_source_fingerprints != expected_source_fingerprints
+    ):
+        raise MergeExecutionError("merge source changed after enqueue")
+    recipe.source_fingerprints = resolved_source_fingerprints
     logs = [f"loading A: {source_a}", f"loading B: {source_b}"]
     merge_device = _merge_device(recipe, logs)
     stream_flux_extract = recipe.merge_type == "extract_lora" and recipe.block_schema in {"flux1", "flux2"}
@@ -2751,12 +3013,32 @@ def execute_merge_recipe(recipe: MergeRecipe, output_root: Path, transient: bool
     if vae_baked_tensors:
         logs.append(f"baked VAE tensors: {vae_baked_tensors}")
     output_path = _output_path(recipe, output_root, transient=transient)
+    normalized_recipe = _normalized_recipe_provenance(recipe)
     metadata = {
-        "asteria.merge.recipe": recipe.model_dump_json(),
+        "asteria.merge.recipe": json.dumps(
+            normalized_recipe,
+            ensure_ascii=False,
+            sort_keys=True,
+        ),
         "asteria.merge.type": recipe.merge_type,
         "asteria.merge.merge_mode": recipe.normalized_merge_mode(),
         "asteria.merge.calc_mode": recipe.calc_mode,
         "asteria.merge.calculation_mode": recipe.normalized_calc_mode(),
+        "asteria.merge.calculation_contract_version": recipe.calculation_contract_version,
+        "asteria.merge.calculation_parameter_schema_version": str(
+            recipe.calculation_parameter_schema_version
+        ),
+        "asteria.merge.calculation_parameters": json.dumps(
+            recipe.calculation_parameters,
+            ensure_ascii=False,
+            sort_keys=True,
+        ),
+        "asteria.merge.calculation_implementation_revision": recipe.calculation_implementation_revision,
+        "asteria.merge.source_fingerprints": json.dumps(
+            recipe.source_fingerprints,
+            ensure_ascii=False,
+            sort_keys=True,
+        ),
         "asteria.merge.block_schema": recipe.block_schema,
         "asteria.merge.alpha": str(recipe.alpha),
         "asteria.merge.beta": str(recipe.beta),
@@ -2805,7 +3087,15 @@ def execute_merge_recipe(recipe: MergeRecipe, output_root: Path, transient: bool
         save_file(_cpu_tensors_for_save(merged), str(output_path), metadata=output_metadata)
     except Exception as exc:
         raise MergeExecutionError(f"merge output save failed: {output_path}") from exc
+    try:
+        output_content_hash = _output_content_hash(output_path, fingerprints)
+    except OSError as exc:
+        raise MergeExecutionError("merge output provenance hash failed") from exc
     copied_configs = _copy_source_configs(recipe, sources, output_path)
+    normalized_recipe = _normalized_recipe_provenance(
+        recipe,
+        output_content_hash=output_content_hash,
+    )
     if copied_configs:
         logs.append(f"copied configs: {len(copied_configs)}")
     metadata_path = output_path.with_suffix(".asteria.merge.json")
@@ -2814,8 +3104,9 @@ def execute_merge_recipe(recipe: MergeRecipe, output_root: Path, transient: bool
         payload = {
             "schema": "asteria.merge.v1",
             "transient": transient,
-            "recipe": recipe.model_dump(),
+            "recipe": normalized_recipe,
             "output_path": str(output_path),
+            "output_content_hash": output_content_hash,
             "logs": [*logs, f"skipped blocks: {skipped}"],
             "pruned_keys": pruned_keys[:200],
             "clip_position_ids_reset": clip_ids_reset,
@@ -2841,6 +3132,12 @@ def execute_merge_recipe(recipe: MergeRecipe, output_root: Path, transient: bool
         status="completed",
         output_path=str(output_path),
         metadata_path=metadata_path_text,
+        calculation_mode_id=recipe.normalized_calc_mode(),
+        normalized_recipe=normalized_recipe,
+        source_fingerprints=[
+            dict(item) for item in recipe.source_fingerprints
+        ],
+        output_content_hash=dict(output_content_hash),
         logs=[*logs, f"skipped blocks: {skipped}", f"saved: {output_path}"],
         created_at=_now(),
     )

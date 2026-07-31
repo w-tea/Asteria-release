@@ -75,13 +75,14 @@ function Write-AsteriaExtraModelPaths {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$Path,
-        [Parameter(Mandatory = $true)][string]$ModelRoot
+        [Parameter(Mandatory = $true)][string]$ModelRoot,
+        [string]$ExternalRegistryPath = ""
     )
 
     $parent = [System.IO.Path]::GetDirectoryName($Path)
     [System.IO.Directory]::CreateDirectory($parent) | Out-Null
     $basePath = $ModelRoot.Replace('\', '/').Replace('"', '\"')
-    @(
+    $lines = @(
         "asteria:"
         "  base_path: `"$basePath`""
         "  checkpoints: |-"
@@ -133,7 +134,59 @@ function Write-AsteriaExtraModelPaths {
         "    upscalers"
         "    esrgan"
         "    realesrgan"
-    ) | Set-Content -LiteralPath $Path -Encoding utf8
+    )
+    if ($ExternalRegistryPath -and [System.IO.File]::Exists($ExternalRegistryPath)) {
+        try {
+            $registry = Get-Content -LiteralPath $ExternalRegistryPath -Raw | ConvertFrom-Json
+            $keyMap = @{
+                checkpoint = @("checkpoints", "diffusion_models", "unet")
+                vae = @("vae")
+                text_encoder = @("text_encoders", "clip")
+                tokenizer = @("tokenizers", "tokenizer")
+                lora = @("loras")
+                embedding = @("embeddings")
+                controlnet = @("controlnet")
+                detailer = @("ultralytics_bbox")
+                upscaler = @("upscale_models")
+            }
+            foreach ($root in @($registry.roots | Sort-Object @{ Expression = "priority"; Descending = $true }, display_name)) {
+                if (-not $root.enabled -or -not $root.path -or -not [System.IO.Directory]::Exists([string]$root.path)) { continue }
+                $section = ([string]$root.root_id -replace '[^A-Za-z0-9_]', '_')
+                $externalBase = ([string]$root.path).Replace('\', '/').Replace('"', '\"')
+                $lines += "asteria_external_$section`:"
+                $lines += "  base_path: `"$externalBase`""
+                foreach ($modelType in $keyMap.Keys) {
+                    $directories = @($root.mappings.$modelType)
+                    if ($directories.Count -eq 0) { continue }
+                    foreach ($folderName in $keyMap[$modelType]) {
+                        $lines += "  $folderName`: |-"
+                        foreach ($directory in $directories) { $lines += "    $directory" }
+                    }
+                }
+            }
+        } catch {
+            throw "External model registry could not be projected safely."
+        }
+    }
+    $transactionId = [Guid]::NewGuid().ToString("N")
+    $temporary = "$Path.$transactionId.tmp"
+    $backup = "$Path.$transactionId.bak"
+    try {
+        $lines | Set-Content -LiteralPath $temporary -Encoding utf8
+        if ([System.IO.File]::Exists($Path)) {
+            [System.IO.File]::Replace($temporary, $Path, $backup, $true)
+        } else {
+            [System.IO.File]::Move($temporary, $Path)
+        }
+    }
+    finally {
+        if ([System.IO.File]::Exists($temporary)) {
+            [System.IO.File]::Delete($temporary)
+        }
+        if ([System.IO.File]::Exists($backup)) {
+            [System.IO.File]::Delete($backup)
+        }
+    }
 }
 
 function Start-AsteriaOwnedProcess {
@@ -148,6 +201,17 @@ function Start-AsteriaOwnedProcess {
         [ValidateSet("Hidden", "Normal", "Minimized", "Maximized")][string]$WindowStyle = "Hidden",
         [switch]$Optional
     )
+
+    # Windows treats environment names case-insensitively, but some parent
+    # processes can still pass both Path and PATH. Windows PowerShell 5.1
+    # Start-Process rejects that environment block as a duplicate dictionary
+    # key, so collapse it before starting any launcher-owned child.
+    $processPath = [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::Process)
+    [Environment]::SetEnvironmentVariable("Path", $null, [EnvironmentVariableTarget]::Process)
+    [Environment]::SetEnvironmentVariable("PATH", $null, [EnvironmentVariableTarget]::Process)
+    if ($null -ne $processPath) {
+        [Environment]::SetEnvironmentVariable("Path", $processPath, [EnvironmentVariableTarget]::Process)
+    }
 
     $startParameters = @{
         FilePath = $FilePath

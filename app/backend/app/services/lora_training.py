@@ -579,6 +579,7 @@ class LoRATrainingRunPreflight(BaseModel):
 
 class LoRATrainingRun(BaseModel):
     id: str
+    operation_id: str = ""
     dataset_id: str
     dataset_name: str
     preset_id: str

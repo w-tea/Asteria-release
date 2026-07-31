@@ -28,6 +28,7 @@ from app.services.model_dependencies import (
     ModelDependencyRepository,
     ModelDependencyStatus,
 )
+from app.services.model_fingerprints import ModelFingerprintService
 from app.services.model_library import ModelLibraryItem, ModelLinkHealth
 from app.services.model_library_cache import (
     clear_model_library_cache,
@@ -132,6 +133,11 @@ class ModelLibraryItemResponse(BaseModel):
     size_bytes: int
     metadata: dict[str, str]
     source: str
+    root_id: str = "asteria-local"
+    stable_model_id: str | None = None
+    fingerprint_algorithm: str | None = None
+    fingerprint_version: int | None = None
+    fingerprint_value: str | None = None
 
 
 class ModelLinkHealthResponse(BaseModel):
@@ -171,6 +177,9 @@ def get_repository() -> ModelDependencyRepository:
     return ModelDependencyRepository(
         manifest_path=config.model_dependencies_path,
         model_root=get_model_root(),
+        fingerprint_service=ModelFingerprintService(
+            config.data_dir / "config" / "model-fingerprints.json"
+        ),
     )
 
 

@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from app.core.config import AppConfig
 from app.services.comfy_model_paths import render_comfy_extra_model_paths
+from app.services.external_model_libraries import ExternalModelLibraryRepository
 from app.services.runtime import ComfyClient
 
 
@@ -183,7 +184,13 @@ class RuntimeProcessManager:
     def _write_extra_model_paths_config(self) -> None:
         path = self.config.comfy_dir / "extra_model_paths.yaml"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(render_comfy_extra_model_paths(self.config.model_dir), encoding="utf-8")
+        roots = ExternalModelLibraryRepository(
+            self.config.data_dir / "config" / "external-model-libraries.json"
+        ).list()
+        content = render_comfy_extra_model_paths(self.config.model_dir, roots)
+        temporary = path.with_name(f".{path.name}.tmp")
+        temporary.write_text(content, encoding="utf-8")
+        os.replace(temporary, path)
 
     def _creation_flags(self) -> int:
         if sys.platform != "win32":

@@ -1,6 +1,17 @@
-# Asteria V1.0.4 Windows Portable
+# Asteria V1.1.0 Windows Portable
 
 [日本語](#日本語) | [English](#english)
+
+## 更新履歴 / Release history
+
+- **V1.1.0** — 永続操作、更新・復旧保護、外部モデルライブラリ、追加Merge方式、テーマ、Discord生成、診断を追加。 / Added durable operations, safer update and recovery, external model libraries, new Merge modes, themes, Discord generation, and diagnostics.
+- **V1.0.4** — Runtime Monitor、生成時間、Seed単独適用、LoRAサムネイルと生成出力を改善。 / Added Runtime Monitor and generation time, seed-only reuse, LoRA thumbnails, and generation-output fixes.
+- **V1.0.3** — LibraryとImage Editの長期利用・データ保護、Generate／Merge XYZ、Topaz／Eagle連携、モデル参照と操作UIを強化。 / Strengthened long-term Library and Image Edit safety, Generate/Merge XYZ, Topaz/Eagle integration, model handling, and operation UI.
+- **V1.0.2** — Generateのモデル一覧cache、Generation Preset、Prompt & Assets、画面遷移時のrefresh契約を整理。 / Refined Generate model caching, Generation Presets, Prompt & Assets, and navigation refresh behavior.
+- **V1.0.1** — Merge XYZ、Windows linked model、Portable bootstrap／repairを強化。 / Added Merge XYZ and strengthened Windows linked-model and Portable bootstrap/repair behavior.
+- **V1.0.0** — Windows Portable初回公開版。 / Initial Windows Portable release.
+
+この一覧には、各バージョンで利用者が使える正式な変更だけを記載します。 / This list contains only supported user-facing changes for each version.
 
 ## 日本語
 
@@ -15,8 +26,26 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 - **プロンプトと生成設定の再利用**: スタイル、ワイルドカード、Embedding、LoRA、生成プリセットを呼び出して設定を再利用します。
 - **LoRA学習**: 学習用画像とキャプションを準備し、Asteriaから学習を実行して結果をモデル一覧へ登録します。
 - **Merge Studio**: CheckpointやLoRAのマージ条件を比較し、確認後にマージモデルを書き出します。
+- **表示テーマと進行状況**: Light／Dark／Systemテーマを切り替え、画面を移動しても処理状況を確認・取消・再試行できます。
+- **外部モデルライブラリ**: 手持ちのAsteria／ComfyUI／Forge系モデル保管先を登録し、元ファイルを移動せずに利用できます。
+- **Discord生成**: Generateで明示公開した設定だけを、許可したDiscordサーバーやチャンネルから利用できます。
 
 ### 更新履歴
+
+#### V1.1.0
+
+- 長時間処理を永続操作として管理し、画面を移動しても進行状況、取消、再試行、復旧結果を確認できるようにしました。
+- 中断可能なダウンロード、schema migration、バックアップ／復元、署名付き管理対象更新にデータ保護と再開処理を追加しました。
+- Light／Dark／Systemテーマと、全画面共通の処理状況表示を追加しました。
+- 外部モデルライブラリを登録し、元ファイルを移動せずに安定したモデル参照として利用できるようにしました。
+- Windows標準のファイル／フォルダ選択を追加しました。外部モデルライブラリはフォルダ構成とモデル件数を自動判定し、初回登録で内部形式や数値優先度を入力する必要がなくなりました。
+- Merge StudioへSLERP、NuSLERP、Nearswapを追加し、Weight sum、MBW、Merge XYZで利用できるようにしました。
+- Generate設定を明示公開して利用するDiscord生成を追加しました。許可範囲、進行表示、取消、混雑制御、配送失敗時の復旧案内に対応します。
+- Settingsへ秘匿情報やprompt、絶対パス、プロセス詳細を含まない診断出力と、安全なランタイム復旧操作を追加しました。
+- 診断の警告へ具体的な解決手順を追加し、Discord設定には各IDの取得場所と使い方を表示するようにしました。
+- Lightテーマのガイド、詳細カード、XYZ、AIプロンプト支援などの動的画面を見直し、画面の再訪時には読込済みデータを再利用するようにしました。
+- 画像ライブラリへ戻った時は、表示中の一覧を残したまま最新72件だけを確認するようにしました。新しい生成画像をすぐ確認でき、更新に失敗しても現在の一覧は消えません。
+- Windows標準の参照画面を開いている間は、アプリ内の参照モーダルを重ねて表示しないようにしました。
 
 #### V1.0.4
 
@@ -37,7 +66,7 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 - 展開先への書き込み権限
 - 初回取得、追加するモデル、生成画像を保存できる空き容量
 
-AMD／Intel GPUとCPUのみの実行には対応していません。macOSとLinuxもV1.0.4では未対応です。
+AMD／Intel GPUとCPUのみの実行には対応していません。macOSとLinuxもV1.1.0では未対応です。
 
 必要なGPUメモリとシステムメモリは、使用するモデル、生成解像度、LoRA学習などの処理によって変わります。高解像度生成や学習を行う場合は、より多くのメモリが必要です。
 
@@ -92,7 +121,9 @@ SDXLスターターパックは、Checkpointを`models/checkpoints/sdxl/`、VAE�
 
 #### 別の場所にあるモデルを共有する
 
-Portable版では、Settingsから外部モデルルートへ切り替えるのではなく、`models/`内のジャンクションまたはシンボリックリンクを使って外部モデルを共有します。まず`Stop-Asteria.cmd`でAsteriaを終了してください。
+Settingsの「外部モデルライブラリ」から、既存のAsteria／ComfyUI／Forge系モデル保管先を登録できます。レイアウトとモデル種別の対応を確認してから有効化し、一覧を更新してください。Asteriaは登録先のモデル本体を移動・削除しません。接続できないドライブやネットワーク先はオフラインとして扱われ、再接続後に再スキャンできます。
+
+従来どおり、`models/`内のジャンクションまたはシンボリックリンクで共有することもできます。リンクを作る場合は、まず`Stop-Asteria.cmd`でAsteriaを終了してください。
 
 一般的なWindows環境では、管理者権限を要求しにくいジャンクションを使用します。次のコマンドをコマンドプロンプトで実行します。
 
@@ -120,6 +151,18 @@ mklink /J "<Asteriaのモデル種別フォルダー内に作るリンク>" "<�
 生成完了時に、最終生成画像をEagleへ自動送信できます。Eagleを起動してから、Settingsの「外部ツール」でEagleのURL、送信先フォルダー、「生成完了時にEagleへ自動送信」を設定して保存してください。
 
 Hires.fixなどの中間画像は自動送信の対象外です。Eagleへの送信に失敗しても画像生成は完了します。接続を直した後、ライブラリの履歴から手動で再送できます。
+
+### Discord生成
+
+Settingsの「Discord」でBot接続先と許可範囲を保存した後、Generateの「Discordへ公開」で現在の設定を公開します。公開後にGenerateを編集してもDiscord側の設定は変わりません。変更を反映するには再公開してください。公開解除中はDiscordから生成できません。
+
+Bot tokenは保存後に再表示されません。許可するサーバー、チャンネル、ユーザーを必要最小限にし、不要になった場合は公開解除とtoken削除を行ってください。
+
+### 診断、バックアップ、復旧
+
+Settingsの「診断」では、ランタイムの準備状況と必要な対応を確認できます。明示的に出力した診断レポートには、prompt、token、絶対パス、プロセス情報、raw logは含まれません。完了済み記録の整理と、Asteriaが所有権を確認できたランタイムの安全な再起動もここから行えます。
+
+Settingsの「メンテナンス」では、互換性情報を確認し、バックアップを作成できます。復元時は内容の事前確認と明示確認が必要です。更新や復元に失敗した場合は、Asteriaを停止してから`Repair-Asteria.cmd`を実行してください。
 
 ### よくある質問（簡易Q&A）
 
@@ -178,8 +221,25 @@ Asteria is a Windows application for local AI image production. It covers image 
 - **Reusable prompts and settings**: Reuse styles, wildcards, embeddings, LoRAs, and generation presets.
 - **LoRA training**: Prepare training images and captions, run training from Asteria, and register the result in the model list.
 - **Merge Studio**: Compare checkpoint or LoRA merge settings, then write the selected merged model.
+- **Themes and operation status**: Select Light, Dark, or System and keep track of running work across workspace navigation, including safe cancel and retry.
+- **External model libraries**: Register existing Asteria, ComfyUI, or Forge-style model locations without moving their source files.
+- **Discord generation**: Use only the Generate settings you explicitly publish from allowed Discord servers or channels.
 
 ### Release history
+
+#### V1.1.0
+
+- Added durable operations so long-running work keeps its status across navigation and can be cancelled, retried, and recovered safely.
+- Added resumable downloads, schema migrations, backup and restore safeguards, and signed managed-update protection.
+- Added Light, Dark, and System themes plus shared operation progress across all workspaces.
+- Added external model libraries with stable references while leaving source model files in place.
+- Added SLERP, NuSLERP, and Nearswap to Merge Studio for Weight sum, MBW, and Merge XYZ workflows.
+- Added Discord generation from explicitly published Generate settings, including allowlists, progress, cancellation, queue controls, and actionable delivery/runtime recovery.
+- Added sanitized diagnostics and ownership-checked runtime recovery without exporting secrets, prompts, absolute paths, or process internals.
+- Added concrete recovery steps to diagnostics warnings and in-place guidance showing where Discord IDs come from and how each one is used.
+- Improved Light-theme readability for dynamic guides, detail cards, XYZ, and AI Prompt Assist, and reused loaded workspace data when revisiting screens.
+- When returning to the Image Library, Asteria now checks only the latest 72 matching records while keeping the current list visible. New generations appear promptly, and a failed check no longer clears the list.
+- Prevented the in-app path browser from appearing behind the native Windows picker.
 
 #### V1.0.4
 
@@ -200,7 +260,7 @@ Asteria is a Windows application for local AI image production. It covers image 
 - Write access to the extracted folder
 - Enough free space for first-run downloads, added models, and generated images
 
-AMD and Intel GPUs and CPU-only operation are unsupported. macOS and Linux are also unsupported in V1.0.4.
+AMD and Intel GPUs and CPU-only operation are unsupported. macOS and Linux are also unsupported in V1.1.0.
 
 GPU-memory and system-memory requirements depend on the selected model, output resolution, and workloads such as LoRA training. High-resolution generation and training require more memory.
 
@@ -255,7 +315,9 @@ The SDXL starter pack places its checkpoint in `models/checkpoints/sdxl/` and it
 
 #### Sharing models stored elsewhere
 
-In the Portable edition, use a junction or symbolic link inside `models/` to share an external model library instead of changing the model root in Settings. Stop Asteria with `Stop-Asteria.cmd` before creating the link.
+Register existing Asteria, ComfyUI, or Forge-style model locations under External Model Libraries in Settings. Review the layout and model-type mappings, enable the library, and refresh the inventory. Asteria does not move or delete model files at the registered location. Disconnected drives and network locations are shown as offline and can be rescanned after reconnection.
+
+You can still share models through a junction or symbolic link inside `models/`. Stop Asteria with `Stop-Asteria.cmd` before creating a link.
 
 A junction is the usual choice on Windows because it is less likely to require administrator privileges. Run the following command in Command Prompt.
 
@@ -283,6 +345,18 @@ All of these locations are inside the extracted Asteria folder. Do not manually 
 Asteria can automatically send the final generated image to Eagle. Start Eagle, then configure its URL, destination folder, and **Automatically send completed generations to Eagle** under **External Tools** in Settings.
 
 Intermediate files such as Hires.fix passes are not sent automatically. A failed Eagle transfer does not fail image generation. After restoring the connection, you can retry the transfer manually from the Library history.
+
+### Discord generation
+
+After saving the Bot connection and allowlists under Discord in Settings, publish the current configuration with **Publish to Discord** in Generate. Editing Generate later does not change the Discord configuration; publish again to apply changes. Discord generation is rejected while no profile is published.
+
+The Bot token is never displayed after it is saved. Keep server, channel, and user allowlists as narrow as practical. Unpublish the profile and remove the token when the integration is no longer needed.
+
+### Diagnostics, backup, and recovery
+
+Diagnostics in Settings shows runtime readiness and actionable recovery. A diagnostics report is created only when you explicitly export it, and excludes prompts, tokens, absolute paths, process details, and raw logs. You can also clean completed records or safely restart a runtime whose Asteria ownership can be verified.
+
+Maintenance in Settings shows compatibility information and creates backups. Restore requires both a preview and explicit confirmation. If an update or restore cannot complete, stop Asteria and run `Repair-Asteria.cmd`.
 
 ### Quick Q&A
 

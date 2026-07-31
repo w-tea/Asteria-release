@@ -1,4 +1,6 @@
-# Asteria V1.0.4 direct backend runtime set.
+# Asteria V1.1.0 direct backend runtime set.
+cryptography==49.0.0
+discord.py==2.7.1
 fastapi==0.136.3
 httpx==0.28.1
 numpy==2.4.4

@@ -179,6 +179,7 @@ def _dependency_repository() -> RuntimeDependencyRepository:
     return RuntimeDependencyRepository(
         manifest_path=app_config.runtime_dependencies_path,
         runtime_root=app_config.comfy_dir,
+        python_path=app_config.comfy_python_path,
     )
 
 
@@ -633,7 +634,11 @@ def upscaler_options() -> RuntimeUpscalerResponse:
     except RuntimeErrorResponse:
         object_info = {}
     model_values = _node_input_values(object_info, "UpscaleModelLoader", "model_name")
-    dependency_statuses = {status.id: status for status in _model_dependency_repository().list_status()}
+    dependency_ids = {option.dependency_id for option in UPSCALERS if option.dependency_id}
+    dependency_statuses = {
+        status.id: status
+        for status in _model_dependency_repository().list_status(dependency_ids)
+    }
     upscalers: list[RuntimeUpscalerOptionResponse] = []
     for option in UPSCALERS:
         dependency_status = dependency_statuses.get(option.dependency_id) if option.dependency_id else None
@@ -701,6 +706,7 @@ def install_dependency(dependency_id: str) -> RuntimeDependencyStatusResponse:
     repository = RuntimeDependencyRepository(
         manifest_path=app_config.runtime_dependencies_path,
         runtime_root=app_config.comfy_dir,
+        python_path=app_config.comfy_python_path,
     )
     try:
         status = RuntimeDependencyInstaller(repository, runner=_runtime_dependency_runner(), python_path=app_config.comfy_python_path).install(dependency_id)
@@ -716,6 +722,15 @@ def repair_dependency(dependency_id: str) -> RuntimeDependencyRepairResponse:
     app_config = AppConfig()
     manager = _manager()
     was_running = manager.status().running
+    if was_running:
+        try:
+            manager.stop()
+        except RuntimeProcessError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": RUNTIME_DEPENDENCY_REPAIR_FAILED},
+            ) from exc
+
     try:
         status = RuntimeDependencyInstaller(
             _dependency_repository(),
@@ -723,13 +738,28 @@ def repair_dependency(dependency_id: str) -> RuntimeDependencyRepairResponse:
             python_path=app_config.comfy_python_path,
         ).repair(dependency_id)
     except RuntimeDependencyNotFound as exc:
+        if was_running:
+            try:
+                manager.start()
+            except RuntimeProcessError as restart_exc:
+                raise HTTPException(
+                    status_code=409,
+                    detail={"code": RUNTIME_START_FAILED},
+                ) from restart_exc
         raise HTTPException(status_code=404, detail={"code": RUNTIME_DEPENDENCY_NOT_FOUND}) from exc
     except RuntimeDependencyError as exc:
+        if was_running:
+            try:
+                manager.start()
+            except RuntimeProcessError as restart_exc:
+                raise HTTPException(
+                    status_code=409,
+                    detail={"code": RUNTIME_START_FAILED},
+                ) from restart_exc
         raise HTTPException(status_code=409, detail={"code": RUNTIME_DEPENDENCY_REPAIR_FAILED}) from exc
 
     runtime_restarted = False
     if was_running:
-        manager.stop()
         try:
             manager.start()
         except RuntimeProcessError as exc:
@@ -746,6 +776,7 @@ def _install_dependencies(only_missing: bool, update: bool = False, repair: bool
     repository = RuntimeDependencyRepository(
         manifest_path=app_config.runtime_dependencies_path,
         runtime_root=app_config.comfy_dir,
+        python_path=app_config.comfy_python_path,
     )
     installer = RuntimeDependencyInstaller(repository, runner=_runtime_dependency_runner(), python_path=app_config.comfy_python_path)
     statuses: list[RuntimeDependencyStatusResponse] = []

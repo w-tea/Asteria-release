@@ -2845,6 +2845,28 @@ class ComfyGenerationRuntime:
         if not status.ready:
             raise RuntimeErrorResponse(api_errors.MISSING_CONTROLNET_MODE_RUNTIME_NODES)
 
+    def _raise_if_generation_cancelled(
+        self,
+        request: dict,
+        unpublished_paths: list[str | Path] | tuple[str | Path, ...] = (),
+    ) -> None:
+        cancel_requested = request.get("cancel_requested")
+        runtime_stop_confirmed = request.get("runtime_stop_confirmed")
+        if not (
+            (callable(cancel_requested) and cancel_requested())
+            or (callable(runtime_stop_confirmed) and runtime_stop_confirmed())
+        ):
+            return
+        self._discard_unpublished_paths(unpublished_paths)
+        raise RuntimeCancellationConfirmed("generation_cancelled")
+
+    @staticmethod
+    def _discard_unpublished_paths(
+        unpublished_paths: list[str | Path] | tuple[str | Path, ...],
+    ) -> None:
+        for path in unpublished_paths:
+            _unlink_safely(Path(path))
+
     def _generate(self, request: dict, output_dir: Path) -> dict:
         try:
             if output_dir.exists() and not output_dir.is_dir():
@@ -2856,6 +2878,7 @@ class ComfyGenerationRuntime:
             raise RuntimeErrorResponse(f"Failed to prepare ComfyUI output directory: {output_dir}") from exc
         self._prepare_control_images(request, output_dir / "controlnet")
         self._prepare_anima_lllite_images(request)
+        self._raise_if_generation_cancelled(request)
         batch_count = max(1, int(request.get("settings", {}).get("batch_count", 1)))
         base_seed = int(request.get("settings", {}).get("seed", -1))
         progress_callback = request.get("progress_callback")
@@ -2871,6 +2894,7 @@ class ComfyGenerationRuntime:
             self._step_callback(progress_callback, batch_count, batch_state),
         ):
             for batch_index in range(batch_count):
+                self._raise_if_generation_cancelled(request, output_paths)
                 batch_state["index"] = batch_index
                 iteration_request = deepcopy(request)
                 settings = iteration_request.setdefault("settings", {})
@@ -2887,12 +2911,17 @@ class ComfyGenerationRuntime:
                     runtime_job_callback(prompt_id)
                 runtime_stop_confirmed = iteration_request.get("runtime_stop_confirmed")
                 if callable(runtime_stop_confirmed):
-                    history = self.client.wait_for_history(
-                        prompt_id,
-                        runtime_stop_confirmed=runtime_stop_confirmed,
-                    )
+                    try:
+                        history = self.client.wait_for_history(
+                            prompt_id,
+                            runtime_stop_confirmed=runtime_stop_confirmed,
+                        )
+                    except RuntimeCancellationConfirmed:
+                        self._discard_unpublished_paths(output_paths)
+                        raise
                 else:
                     history = self.client.wait_for_history(prompt_id)
+                self._raise_if_generation_cancelled(request, output_paths)
                 images = self._images_from_history(history, prompt_id)
                 primary_node_ids = {
                     str(node_id) for node_id in settings.get("primary_output_node_ids", [])
@@ -2905,6 +2934,8 @@ class ComfyGenerationRuntime:
                         path.write_bytes(image_bytes)
                     except OSError as exc:
                         raise RuntimeErrorResponse(f"Failed to save ComfyUI output image: {path}") from exc
+                    output_paths.append(str(path))
+                    self._raise_if_generation_cancelled(request, output_paths)
                     if settings.get("mode") == "inpaint":
                         if settings.get("inpaint_runtime") == "sdxl_only_masked_crop_composite":
                             try:
@@ -2927,7 +2958,6 @@ class ComfyGenerationRuntime:
                     if settings.get("tiling"):
                         self._apply_tiling_postprocess(path, settings)
                         self._merge_builder_runtime_settings(request, iteration_request)
-                    output_paths.append(str(path))
                     if str(image.get("node_id", "")) in primary_node_ids:
                         primary_outputs.append(
                             {
@@ -2945,6 +2975,7 @@ class ComfyGenerationRuntime:
                     batch_count,
                     output_paths[-1] if output_paths else "",
                 )
+        self._raise_if_generation_cancelled(request, output_paths)
         if not output_paths:
             raise RuntimeErrorResponse(f"ComfyUI completed without image outputs: {', '.join(prompt_ids)}")
         request.setdefault("settings", {})["generated_seeds"] = generated_seeds
@@ -3154,6 +3185,7 @@ class ComfyGenerationRuntime:
         first_result = self._generate(first_request, output_dir)
         self._merge_builder_runtime_settings(request, first_request)
         first_paths = [Path(path) for path in first_result["output_paths"]]
+        self._raise_if_generation_cancelled(request, first_paths)
         generated_seeds = list(first_result.get("generated_seeds", []))
         if len(first_paths) != len(generated_seeds):
             raise RuntimeErrorResponse(
@@ -3170,6 +3202,7 @@ class ComfyGenerationRuntime:
         topaz_source_sizes: list[tuple[int, int] | None] = []
         topaz_size_evidence: list[dict[str, object]] = []
         for path in first_paths:
+            self._raise_if_generation_cancelled(request, [*first_paths, *topaz_paths])
             source_size = self._image_size(path)
             if source_size is None:
                 raise RuntimeErrorResponse(f"Could not read Topaz Hires first-pass image size: {path}")
@@ -3185,6 +3218,7 @@ class ComfyGenerationRuntime:
             if not _path_exists_safely(topaz_path) or not _path_is_file_safely(topaz_path):
                 raise RuntimeErrorResponse(f"Topaz Hires did not produce a valid image file: {topaz_path}")
             topaz_paths.append(topaz_path)
+            self._raise_if_generation_cancelled(request, [*first_paths, *topaz_paths])
             source_size = _size_tuple(result.get("source_size")) or source_size
             output_size = _size_tuple(result.get("output_size")) or self._image_size(topaz_path) or target_size
             topaz_source_sizes.append(source_size)
@@ -3216,6 +3250,10 @@ class ComfyGenerationRuntime:
         second_prompt_ids: list[str] = []
         primary_outputs: list[dict[str, str | int]] = []
         for index, topaz_path in enumerate(topaz_paths):
+            self._raise_if_generation_cancelled(
+                request,
+                [*first_paths, *topaz_paths, *(Path(path) for path in final_paths)],
+            )
             second_request = deepcopy(request)
             second_settings = second_request.setdefault("settings", {})
             second_width, second_height = topaz_sizes[index]
@@ -3257,7 +3295,22 @@ class ComfyGenerationRuntime:
             if settings.get("hires_negative_prompt"):
                 second_request["negative_prompt"] = settings["hires_negative_prompt"]
 
-            second_result = self._generate(second_request, output_dir)
+            try:
+                second_result = self._generate(second_request, output_dir)
+            except RuntimeCancellationConfirmed:
+                self._discard_unpublished_paths(
+                    [*first_paths, *topaz_paths, *(Path(path) for path in final_paths)],
+                )
+                raise
+            self._raise_if_generation_cancelled(
+                request,
+                [
+                    *first_paths,
+                    *topaz_paths,
+                    *(Path(path) for path in final_paths),
+                    *(Path(path) for path in second_result["output_paths"]),
+                ],
+            )
             if request.get("profile") == "anima":
                 self._merge_builder_runtime_settings(request, second_request)
             if source_mode == "inpaint":

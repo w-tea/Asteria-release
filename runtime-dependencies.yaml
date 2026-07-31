@@ -1,3 +1,15 @@
+security_contracts:
+  official_release_signing:
+    format_version: 1
+    algorithm: ed25519
+    verifier_package: cryptography==49.0.0
+    scope:
+      - official_application_payload
+      - managed_component_update
+      - migration_bundle
+    excludes:
+      - development_git_pull
+
 dependencies:
   - id: asteria-merge-runtime
     label: Asteria Merge Runtime
@@ -10,12 +22,12 @@ dependencies:
       provider: bundled
       url: runtime-components/comfyui/Asteria-Merge-Runtime
       ref: asteria.merge.runtime.v1
-      verified_at: "2026-07-22"
+      verified_at: "2026-07-28"
       provenance_url: bundled://asteria/merge-runtime/v1
     target:
       relative_path: custom_nodes/Asteria-Merge-Runtime
-    size_bytes: 29950
-    checksum_sha256: 52426a5aa6ccf881ca845a736ac2c080188ca3f7da2f866da43f32aecf1748a4
+    size_bytes: 40738
+    checksum_sha256: 320ca29f320165f5e7f0328a9815caf263affbda5591fc17592c040303c0abd2
     license:
       id: proprietary
       url: bundled://asteria/license

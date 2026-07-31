@@ -1,8 +1,0 @@
-const ControlNetPanel_vue_vue_type_style_index_0_scoped_a218c240_lang = ".control-unit__header[data-v-a218c240]{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}.control-unit__header>div[data-v-a218c240]{display:grid;gap:2px;min-width:0}.control-unit__header strong[data-v-a218c240]{color:#f1f6fa;font-size:12px;font-weight:700}.control-unit__header small[data-v-a218c240]{overflow:hidden;color:var(--asteria-muted);font-size:11px;text-overflow:ellipsis;white-space:nowrap}.control-unit__toggle[data-v-a218c240]{flex:0 0 auto;margin:0;width:auto;white-space:nowrap}.control-unit__mode-note[data-v-a218c240]{display:block;line-height:1.4}.tool-preset-item__main[data-v-a218c240],.tool-preset-list[data-v-a218c240],.tool-preset-panel[data-v-a218c240]{display:grid;min-width:0;gap:8px}.tool-preset-panel[data-v-a218c240]{padding:10px;border:1px solid var(--asteria-border-soft);border-radius:var(--asteria-radius);background:#0a0f1452}.tool-preset-item[data-v-a218c240],.tool-preset-panel__header[data-v-a218c240]{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.tool-preset-item__main[data-v-a218c240]{text-align:left}.tool-preset-item__main small[data-v-a218c240],.tool-preset-item__main span[data-v-a218c240]{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tool-preset-item__main small[data-v-a218c240]{color:var(--asteria-muted);font-size:11px}";
-
-const ControlNetPanelStyles_Crn8r_d8 = [
-  ControlNetPanel_vue_vue_type_style_index_0_scoped_a218c240_lang
-];
-
-export { ControlNetPanelStyles_Crn8r_d8 as default };
-//# sourceMappingURL=ControlNetPanel-styles.Crn8r_d8.mjs.map

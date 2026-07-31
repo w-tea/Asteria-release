@@ -26,6 +26,15 @@ class AppConfig(BaseModel):
             )
         )
     )
+    secret_dir: Path = Field(
+        default_factory=lambda: Path(
+            os.environ.get(
+                "ASTERIA_SECRET_DIR",
+                Path(os.environ.get("ASTERIA_DATA_DIR", _default_root() / "data"))
+                / "secrets",
+            )
+        )
+    )
     schema_dir: Path = Field(
         default_factory=lambda: Path(
             os.environ.get(

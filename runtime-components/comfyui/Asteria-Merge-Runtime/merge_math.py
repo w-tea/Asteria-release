@@ -1,12 +1,44 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
+from pathlib import Path
 import re
 from typing import Any
 
 import numpy as np
 import scipy.ndimage
 import torch
+
+try:
+    from .calculation_modes import (
+        CALCULATION_CONTRACT_VERSION,
+        CALCULATION_IMPLEMENTATION_REVISION,
+        CALCULATION_PARAMETER_SCHEMA_VERSION,
+        V11_CALCULATION_MODES,
+        CalculationModeError,
+        merge_weight_sum_tensor,
+    )
+except ImportError:
+    _calculation_path = Path(__file__).with_name("calculation_modes.py")
+    _calculation_spec = importlib.util.spec_from_file_location(
+        "asteria_merge_runtime_calculation_modes",
+        _calculation_path,
+    )
+    if _calculation_spec is None or _calculation_spec.loader is None:
+        raise RuntimeError("Asteria Merge calculation modes could not be loaded")
+    _calculation_module = importlib.util.module_from_spec(_calculation_spec)
+    _calculation_spec.loader.exec_module(_calculation_module)
+    CALCULATION_CONTRACT_VERSION = _calculation_module.CALCULATION_CONTRACT_VERSION
+    CALCULATION_IMPLEMENTATION_REVISION = (
+        _calculation_module.CALCULATION_IMPLEMENTATION_REVISION
+    )
+    CALCULATION_PARAMETER_SCHEMA_VERSION = (
+        _calculation_module.CALCULATION_PARAMETER_SCHEMA_VERSION
+    )
+    V11_CALCULATION_MODES = _calculation_module.V11_CALCULATION_MODES
+    CalculationModeError = _calculation_module.CalculationModeError
+    merge_weight_sum_tensor = _calculation_module.merge_weight_sum_tensor
 
 
 CONTRACT_VERSION = "asteria.merge.runtime.v1"
@@ -38,6 +70,26 @@ def validate_payload(payload: dict[str, Any]) -> None:
         raise MergeRuntimeMathError("unsupported merge runtime family")
     if payload.get("merge_mode") not in {"weight_sum", "add_difference", "triple_sum", "sum_twice"}:
         raise MergeRuntimeMathError("unsupported merge mode")
+    calculation_mode = payload.get("calculation_mode_id") or payload.get("calculation_mode")
+    if calculation_mode in V11_CALCULATION_MODES:
+        if payload.get("calculation_mode_id") != payload.get("calculation_mode"):
+            raise MergeRuntimeMathError("calculation mode identity mismatch")
+        if payload.get("merge_mode") != "weight_sum":
+            raise MergeRuntimeMathError(
+                "V1.1 calculation modes require weight_sum"
+            )
+        if payload.get("calculation_contract_version") != CALCULATION_CONTRACT_VERSION:
+            raise MergeRuntimeMathError("incompatible calculation contract")
+        if (
+            payload.get("calculation_parameter_schema_version")
+            != CALCULATION_PARAMETER_SCHEMA_VERSION
+        ):
+            raise MergeRuntimeMathError("incompatible calculation parameter schema")
+        if (
+            payload.get("calculation_implementation_revision")
+            != CALCULATION_IMPLEMENTATION_REVISION
+        ):
+            raise MergeRuntimeMathError("incompatible calculation implementation")
 
 
 def _canonical_key(key: str, domain: str) -> str:
@@ -323,10 +375,21 @@ def _replace_slice(a: torch.Tensor, b: torch.Tensor, alpha: float, beta: float, 
 def _merge_tensor(payload: dict[str, Any], key: str, a: torch.Tensor, b: torch.Tensor, c: torch.Tensor | None, context: dict[str, float] | None, tensor_index: int) -> torch.Tensor:
     alpha = _block_weight(payload, key, payload.get("block_weights_alpha") or payload.get("block_weights", ""), float(payload["alpha"]), tensor_index)
     beta = _block_weight(payload, key, payload.get("block_weights_beta", ""), float(payload["beta"]), tensor_index)
-    mode = payload["calculation_mode"]
+    mode = payload.get("calculation_mode_id") or payload["calculation_mode"]
     a_float, b_float = a.float(), b.float()
     c_float = c.float() if c is not None else None
-    if mode == "trainDifference":
+    if mode in V11_CALCULATION_MODES:
+        try:
+            value = merge_weight_sum_tensor(
+                mode,
+                a_float,
+                b_float,
+                alpha,
+                payload.get("calculation_parameters"),
+            )
+        except CalculationModeError as exc:
+            raise MergeRuntimeMathError(str(exc)) from exc
+    elif mode == "trainDifference":
         if c_float is None:
             raise MergeRuntimeMathError("source C is required")
         if torch.allclose(b_float, c_float.to(device=b_float.device), rtol=0, atol=0):
@@ -385,7 +448,12 @@ def _merge_tensor(payload: dict[str, Any], key: str, a: torch.Tensor, b: torch.T
             value = (a_float * (1.0 - alpha) + b_float * alpha) * (1.0 - beta) + c_float * beta
         else:
             value = a_float * (1.0 - alpha) + b_float * alpha
-    return _adjust(payload, key, value).to(dtype=a.dtype)
+    output_dtype = (
+        torch.float16
+        if bool(payload.get("export_controls", {}).get("fp16"))
+        else a.dtype
+    )
+    return _adjust(payload, key, value).to(dtype=output_dtype)
 
 
 def cosine_context_for_pairs(payload: dict[str, Any], pairs, *, domain: str) -> dict[str, float] | None:

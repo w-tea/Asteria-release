@@ -19,6 +19,14 @@ from app.services.external_settings import (
 from app.services.history import HistoryRepository
 from app.services.artifact_lifecycle import artifact_write_operation
 from app.services.metadata import MetadataWriter
+from app.services.operation_coordinator import OperationCoordinator
+from app.services.operation_executor import (
+    OperationExecutionContext,
+    OperationExecutionError,
+    OperationExecutionResult,
+)
+from app.services.disk_reservation import DiskReservationError, disk_reservations
+from app.services.operation_repository import OperationRepository
 from app.services.topaz import TopazError, TopazSettings, process_topaz_image
 from app.services.user_settings import UserSettingsRepository, resolve_output_root
 from app.services.api_errors import (
@@ -59,6 +67,7 @@ class TopazProcessRequest(BaseModel):
 
 class TopazProcessResponse(BaseModel):
     status: str
+    operation_id: str = ""
     output_path: str
     metadata_path: str | None = None
     source_artifact: dict[str, Any] | None = None
@@ -67,6 +76,66 @@ class TopazProcessResponse(BaseModel):
     output_size: dict[str, int] | None = None
     logs: list[str] = []
     warnings: list[str] = []
+
+
+_topaz_operation_coordinators: dict[Path, OperationCoordinator] = {}
+_topaz_operation_results: dict[str, TopazProcessResponse] = {}
+_topaz_operation_errors: dict[str, HTTPException] = {}
+
+
+class TopazOperationExecutor:
+    version = "topaz-v1.1"
+
+    def resource_claims(self, _snapshot: dict) -> tuple[str, ...]:
+        return ("external_gpu_or_cpu", "disk_write_heavy")
+
+    def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
+        request = TopazProcessRequest.model_validate(context.request_snapshot["request"])
+        try:
+            output_root = AppConfig().output_dir
+            estimate = 64 * 1024 * 1024
+            with disk_reservations.reserve(
+                output_root,
+                estimate,
+                owner_id=context.operation.operation_id,
+            ):
+                result = _execute_topaz_process(request)
+        except DiskReservationError as exc:
+            raise OperationExecutionError("disk_space_insufficient", retryable=True) from exc
+        except HTTPException as exc:
+            _topaz_operation_errors[context.operation.operation_id] = exc
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            code = detail.get("code") if isinstance(detail.get("code"), str) else "topaz_process_failed"
+            raise OperationExecutionError(code, retryable=True) from exc
+        result.operation_id = context.operation.operation_id
+        _topaz_operation_results[context.operation.operation_id] = result
+        artifact_ref = (
+            f"history:{request.generation_id}"
+            if request.generation_id is not None
+            else f"topaz-output:{result.output_artifact.get('sha256', '')[:24]}"
+        )
+        warning_codes = (TOPAZ_HISTORY_REGISTRATION_FAILED,) if (
+            TOPAZ_HISTORY_REGISTRATION_FAILED in result.warnings
+        ) else (("topaz_completed_with_warnings",) if result.warnings else ())
+        return OperationExecutionResult(
+            artifact_refs=(artifact_ref,),
+            warning_codes=warning_codes,
+        )
+
+
+def _topaz_operation_coordinator() -> OperationCoordinator:
+    db_path = (_data_dir() / "asteria.db").absolute()
+    coordinator = _topaz_operation_coordinators.get(db_path)
+    if coordinator is None:
+        coordinator = OperationCoordinator(OperationRepository(db_path), auto_start=False)
+        coordinator.register_executor("topaz.process", TopazOperationExecutor())
+        _topaz_operation_coordinators[db_path] = coordinator
+    return coordinator
+
+
+def configure_topaz_operation_coordinator(coordinator: OperationCoordinator) -> None:
+    coordinator.register_executor("topaz.process", TopazOperationExecutor())
+    _topaz_operation_coordinators[coordinator.repository.db_path.absolute()] = coordinator
 
 
 def _topaz_log_messages(value: Any) -> list[str]:
@@ -471,8 +540,27 @@ def update_settings(request: TopazSettingsRequest) -> TopazSettingsResponse:
 
 
 @router.post("/process", response_model=TopazProcessResponse)
-@artifact_write_operation
 def process(request: TopazProcessRequest) -> TopazProcessResponse:
+    coordinator = _topaz_operation_coordinator()
+    operation = coordinator.enqueue(
+        kind="topaz.process",
+        source_actor="local",
+        request_snapshot={"request": request.model_dump(mode="json")},
+        progress_total=1,
+        progress_unit="image",
+    )
+    completed = coordinator.execute_operation(operation.operation_id)
+    error = _topaz_operation_errors.pop(operation.operation_id, None)
+    if error is not None:
+        raise error
+    result = _topaz_operation_results.pop(operation.operation_id, None)
+    if completed.status not in {"completed", "completed_with_warnings"} or result is None:
+        raise HTTPException(status_code=409, detail={"code": TOPAZ_PROCESS_FAILED})
+    return result
+
+
+@artifact_write_operation
+def _execute_topaz_process(request: TopazProcessRequest) -> TopazProcessResponse:
     executable = _topaz_executable()
     path = _output_path(request.filename, request.generation_id)
     source_artifact = _image_artifact(path)

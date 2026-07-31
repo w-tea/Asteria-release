@@ -103,7 +103,7 @@ def _validate_settings_payload(payload: dict[str, Any]) -> UserSettings:
 
 def _merge_settings_payload(current: UserSettings, payload: dict[str, Any]) -> dict[str, Any]:
     merged = current.model_dump()
-    for section in ("output", "storage", "ai", "library", "launcher"):
+    for section in ("output", "storage", "ai", "library", "appearance", "launcher"):
         if section not in payload:
             continue
         value = payload[section]
@@ -124,6 +124,7 @@ def _settings_response(settings: UserSettings, *, ensure_directories: bool = Fal
         storage=settings.storage,
         ai=settings.ai,
         library=settings.library,
+        appearance=settings.appearance,
         launcher=settings.launcher,
         resolved_paths=SettingsResolvedPaths(
             output_root=str(output_root),

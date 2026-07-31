@@ -20,12 +20,20 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 Import-Module (Join-Path $PSScriptRoot "Asteria.Launcher.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "Asteria.Maintenance.psm1") -Force
 
 function Complete-Start {
     param([string]$Status, [string]$Code, [int]$ExitCode, [string]$Message)
     $payload = [ordered]@{ status = $Status; code = $Code; exit_code = $ExitCode; message = $Message }
     if ($Json) { Write-Output ($payload | ConvertTo-Json -Compress) } else { Write-Output "[Asteria] $Message" }
     exit $ExitCode
+}
+
+function Write-StartProgress {
+    param([string]$Message)
+    if (-not $Json) {
+        Write-Output "[Asteria] $Message"
+    }
 }
 
 function Test-SamePath {
@@ -38,6 +46,18 @@ foreach ($explicitPath in @($PythonPath, $NodePath, $DataRoot, $ModelRoot, $Outp
     if ($explicitPath -and -not (Test-AsteriaFullyQualifiedPath $explicitPath)) { Complete-Start "invalid" "launcher_path_not_absolute" 64 "Every explicit launcher path must be absolute." }
 }
 $resolvedAppRoot = [System.IO.Path]::GetFullPath($AppRoot)
+$maintenanceJournalPath = [System.IO.Path]::Combine("$resolvedAppRoot.maintenance", "journal.json")
+if (Test-Path -LiteralPath $maintenanceJournalPath -PathType Leaf) {
+    try {
+        $maintenanceRecovery = Repair-AsteriaMaintenanceTransaction -JournalPath $maintenanceJournalPath
+        if ($maintenanceRecovery.status -eq "recovery_required") {
+            Complete-Start "blocked" "launcher_maintenance_recovery_required" 75 "The previous update could not be recovered automatically. Run Repair-Asteria.cmd."
+        }
+    }
+    catch {
+        Complete-Start "blocked" "launcher_maintenance_recovery_failed" 75 "The previous update could not be recovered automatically. Run Repair-Asteria.cmd."
+    }
+}
 $layoutPath = [System.IO.Path]::Combine($resolvedAppRoot, "release-layout.yaml")
 try {
     $backendRoot = Resolve-AsteriaPackagePath $resolvedAppRoot (Get-AsteriaReleaseLayoutValue $layoutPath "package" "backend_root")
@@ -82,6 +102,19 @@ if ($TargetMode -eq "packaged") {
     for ($index = 0; $index -lt $actualPaths.Count; $index++) {
         if (-not (Test-SamePath $actualPaths[$index] $packagePaths[$index])) {
             Complete-Start "invalid" "launcher_packaged_path_override" 65 "Packaged launches must use paths contained by the application folder."
+        }
+    }
+
+    $releaseManifestPath = [System.IO.Path]::Combine($resolvedAppRoot, "release-manifest.yaml")
+    $releaseSignaturePath = [System.IO.Path]::Combine($resolvedAppRoot, "release-manifest.sig.json")
+    $trustedKeysPath = [System.IO.Path]::Combine($resolvedAppRoot, "release-public-keys.json")
+    $hasSigningInput = (Test-Path -LiteralPath $releaseSignaturePath -PathType Leaf) -or (Test-Path -LiteralPath $trustedKeysPath -PathType Leaf)
+    if ($hasSigningInput) {
+        try {
+            Test-AsteriaOfficialManifest -PythonPath $resolvedPython -BackendRoot $backendRoot -ManifestPath $releaseManifestPath -SignaturePath $releaseSignaturePath -TrustedKeysPath $trustedKeysPath | Out-Null
+        }
+        catch {
+            Complete-Start "blocked" "launcher_release_signature_invalid" 76 "The official release signature is missing or invalid. Run Repair-Asteria.cmd."
         }
     }
 
@@ -155,7 +188,8 @@ $comfyDatabaseUrl = "sqlite:///$($comfyDatabase.Replace('\', '/'))"
 $comfyOutput = [System.IO.Path]::Combine($resolvedTempRoot, "comfy-output")
 foreach ($path in @($comfyInput, $comfyUser, $comfyDefaultUser, $comfyOutput)) { [System.IO.Directory]::CreateDirectory($path) | Out-Null }
 $extraModels = [System.IO.Path]::Combine($processRoot, "extra_model_paths.yaml")
-Write-AsteriaExtraModelPaths -Path $extraModels -ModelRoot $resolvedModelRoot
+$externalModelRegistry = [System.IO.Path]::Combine($resolvedDataRoot, "config", "external-model-libraries.json")
+Write-AsteriaExtraModelPaths -Path $extraModels -ModelRoot $resolvedModelRoot -ExternalRegistryPath $externalModelRegistry
 
 $env:PYTHONPATH = $backendRoot
 $env:ASTERIA_ROOT_DIR = $resolvedAppRoot
@@ -200,23 +234,29 @@ $frontendUrl = "http://127.0.0.1:3000/"
 $comfyErrorLog = Join-Path $logsRoot "comfyui.err.log"
 $launchStage = "comfy_start"
 try {
+    Write-StartProgress "Starting ComfyUI..."
     $comfyRecord = Start-AsteriaOwnedProcess -Name "comfyui" -FilePath $resolvedPython -ArgumentList @("main.py", "--listen", "127.0.0.1", "--port", "8188", "--preview-method", "auto", "--extra-model-paths-config", "`"$extraModels`"", "--input-directory", "`"$comfyInput`"", "--output-directory", "`"$comfyOutput`"", "--user-directory", "`"$comfyUser`"", "--database-url", $comfyDatabaseUrl) -WorkingDirectory $resolvedComfyRoot -StandardOutputPath (Join-Path $logsRoot "comfyui.out.log") -StandardErrorPath $comfyErrorLog
     Add-OwnedProcess $comfyRecord
     Set-Content -LiteralPath $env:ASTERIA_COMFY_PID_PATH -Value $comfyRecord.pid -Encoding ascii
     $launchStage = "comfy_health"
     if (-not (Wait-AsteriaHttpReady -Uri $comfyUrl -TimeoutSeconds $HealthTimeoutSeconds)) { throw "ComfyUI health timeout." }
+    Write-StartProgress "ComfyUI is ready."
 
     $launchStage = "backend_start"
+    Write-StartProgress "Starting the Asteria backend..."
     $backendRecord = Start-AsteriaOwnedProcess -Name "backend" -FilePath $resolvedPython -ArgumentList @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000", "--log-level", "info") -WorkingDirectory $backendRoot -StandardOutputPath (Join-Path $logsRoot "backend.out.log") -StandardErrorPath (Join-Path $logsRoot "backend.err.log")
     Add-OwnedProcess $backendRecord
     $launchStage = "backend_health"
     if (-not (Wait-AsteriaHttpReady -Uri $backendUrl -TimeoutSeconds $HealthTimeoutSeconds)) { throw "Backend health timeout." }
+    Write-StartProgress "Asteria backend is ready."
 
     $launchStage = "frontend_start"
+    Write-StartProgress "Starting the Asteria frontend..."
     $frontendRecord = Start-AsteriaOwnedProcess -Name "frontend" -FilePath $resolvedNode -ArgumentList @("`"$frontendEntry`"") -WorkingDirectory ([System.IO.Path]::GetDirectoryName($frontendEntry)) -StandardOutputPath (Join-Path $logsRoot "frontend.out.log") -StandardErrorPath (Join-Path $logsRoot "frontend.err.log")
     Add-OwnedProcess $frontendRecord
     $launchStage = "frontend_health"
     if (-not (Wait-AsteriaHttpReady -Uri $frontendUrl -TimeoutSeconds $HealthTimeoutSeconds)) { throw "Frontend health timeout." }
+    Write-StartProgress "Asteria frontend is ready."
 }
 catch {
     $launchFailure = $_

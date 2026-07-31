@@ -4,6 +4,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.services.merge_calculation_modes import (
+    CALCULATION_CONTRACT_VERSION,
+    CALCULATION_IMPLEMENTATION_REVISION,
+    CALCULATION_PARAMETER_SCHEMA_VERSION,
+    V11_CALCULATION_MODES,
+)
 from app.services.merge_recipes import (
     CALCULATION_MODE_COMPATIBILITY,
     MERGE_MODES,
@@ -41,7 +47,15 @@ class MergeRuntimeRecipeContract(BaseModel):
     model_family: Literal["sdxl", "anima"]
     merge_mode: Literal["weight_sum", "add_difference", "triple_sum", "sum_twice"]
     calculation_mode: str
+    calculation_mode_id: str
     calculation_option: float
+    calculation_contract_version: str = CALCULATION_CONTRACT_VERSION
+    calculation_parameter_schema_version: int = CALCULATION_PARAMETER_SCHEMA_VERSION
+    calculation_parameters: dict[str, object] = Field(default_factory=dict)
+    calculation_implementation_revision: str = CALCULATION_IMPLEMENTATION_REVISION
+    dtype_policy: str
+    key_policy: dict[str, object]
+    source_fingerprints: list[dict[str, object]] = Field(default_factory=list)
     block_schema: Literal["sdxl", "anima"]
     alpha: float
     beta: float
@@ -87,6 +101,14 @@ def normalize_merge_runtime_recipe(recipe: MergeRecipe) -> MergeRuntimeRecipeCon
         "smoothAdd MT",
         "extract",
     }
+    if calculation_mode in V11_CALCULATION_MODES and merge_mode != "weight_sum":
+        raise MergeRuntimeContractError(
+            "V1.1 calculation modes require weight_sum"
+        )
+    try:
+        calculation_parameters = expanded.resolved_calculation_parameters()
+    except ValueError as exc:
+        raise MergeRuntimeContractError(str(exc)) from exc
 
     return MergeRuntimeRecipeContract(
         recipe_id=expanded.id,
@@ -94,7 +116,21 @@ def normalize_merge_runtime_recipe(recipe: MergeRecipe) -> MergeRuntimeRecipeCon
         model_family=expanded.model_family,
         merge_mode=merge_mode,
         calculation_mode=calculation_mode,
+        calculation_mode_id=calculation_mode,
         calculation_option=expanded.calculation_option,
+        calculation_contract_version=CALCULATION_CONTRACT_VERSION,
+        calculation_parameter_schema_version=CALCULATION_PARAMETER_SCHEMA_VERSION,
+        calculation_parameters=calculation_parameters,
+        calculation_implementation_revision=CALCULATION_IMPLEMENTATION_REVISION,
+        dtype_policy="float32_arithmetic_then_requested_output_dtype",
+        key_policy={
+            "include": list(expanded.include_blocks),
+            "exclude": list(expanded.exclude_blocks),
+            "missing_or_non_floating": "preserve_source_a",
+        },
+        source_fingerprints=[
+            dict(item) for item in expanded.source_fingerprints
+        ],
         block_schema=expanded.block_schema,
         alpha=expanded.alpha,
         beta=expanded.beta,

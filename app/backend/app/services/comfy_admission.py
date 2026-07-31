@@ -7,6 +7,11 @@ import time
 from typing import Any, Iterator, Literal
 from uuid import uuid4
 
+from app.services.resource_lifecycle import (
+    ResourceAdmissionLease,
+    ResourceAdmissionService,
+    resource_admission,
+)
 
 AdmissionKind = Literal["operation", "xyz"]
 
@@ -53,11 +58,13 @@ class ComfyAdmissionLease:
 
 
 class ComfyAdmissionService:
-    def __init__(self) -> None:
+    def __init__(self, resources: ResourceAdmissionService | None = None) -> None:
         self._condition = Condition(RLock())
+        self._resources = resources or ResourceAdmissionService()
         self._owner_token: str | None = None
         self._owner_kind: AdmissionKind | None = None
         self._cleanup_pending_token: str | None = None
+        self._resource_leases: dict[str, ResourceAdmissionLease] = {}
 
     def acquire(self, kind: AdmissionKind, *, timeout_seconds: float | None = None) -> ComfyAdmissionLease:
         if kind not in {"operation", "xyz"}:
@@ -72,8 +79,14 @@ class ComfyAdmissionService:
                     self._raise_unavailable()
                 self._condition.wait(timeout=remaining)
             token = uuid4().hex
+            resource_lease = self._resources.acquire(
+                ("comfy_gpu_exclusive",),
+                operation_id=f"comfy:{kind}:{token}",
+                timeout_seconds=0,
+            )
             self._owner_token = token
             self._owner_kind = kind
+            self._resource_leases[token] = resource_lease
             return ComfyAdmissionLease(self, token, kind)
 
     @contextmanager
@@ -96,6 +109,9 @@ class ComfyAdmissionService:
             if self._cleanup_pending_token != token:
                 raise ComfyAdmissionError("Comfy cleanup token is not pending")
             self._cleanup_pending_token = None
+            resource_lease = self._resource_leases.pop(token, None)
+            if resource_lease is not None:
+                resource_lease.release()
             self._condition.notify_all()
 
     def complete_deferred_cleanup(self, token: str) -> None:
@@ -113,6 +129,10 @@ class ComfyAdmissionService:
                 raise ComfyCleanupPendingError("Comfy cleanup acknowledgement is pending")
             self._owner_token = None
             self._owner_kind = None
+            if not defer_cleanup:
+                resource_lease = self._resource_leases.pop(token, None)
+                if resource_lease is not None:
+                    resource_lease.release()
             self._condition.notify_all()
 
     def snapshot(self) -> ComfyAdmissionSnapshot:
@@ -164,4 +184,4 @@ def _request_and_wait_for_cleanup(client: Any, fence_workflow: dict, timeout_sec
         client.wait_for_history(prompt_id, timeout_seconds=timeout_seconds)
 
 
-comfy_admission = ComfyAdmissionService()
+comfy_admission = ComfyAdmissionService(resource_admission)

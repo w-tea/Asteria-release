@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+import json
 import subprocess
 import shutil
 import hashlib
@@ -75,9 +76,16 @@ class RuntimeDependencyStatus:
 
 
 class RuntimeDependencyRepository:
-    def __init__(self, manifest_path: Path, runtime_root: Path) -> None:
+    def __init__(
+        self,
+        manifest_path: Path,
+        runtime_root: Path,
+        *,
+        python_path: Path | None = None,
+    ) -> None:
         self.manifest_path = manifest_path.resolve()
         self.runtime_root = runtime_root.resolve()
+        self.python_path = python_path.resolve() if python_path is not None else None
 
     def list(self) -> list[RuntimeDependency]:
         try:
@@ -122,8 +130,8 @@ class RuntimeDependencyRepository:
         status = "missing"
         if self._path_is_dir_safely(path):
             status = "installed"
-            if self._requires_post_install(dependency) and not self._path_is_file_safely(
-                self.post_install_marker_for(dependency)
+            if self._requires_post_install(dependency) and not self._post_install_marker_is_current(
+                dependency
             ):
                 status = "post_install_pending"
         return RuntimeDependencyStatus(
@@ -152,6 +160,67 @@ class RuntimeDependencyRepository:
 
     def post_install_marker_for(self, dependency: RuntimeDependency) -> Path:
         return self.path_for(dependency) / ".asteria-postinstall-ok"
+
+    def python_environment_marker_path(self) -> Path:
+        if self.python_path is None:
+            raise RuntimeDependencyError("Runtime dependency Python path is not configured")
+        return self.python_path.parent / ".asteria-python-environment-id"
+
+    def write_post_install_marker(self, dependency: RuntimeDependency) -> None:
+        marker = self.post_install_marker_for(dependency)
+        if self.python_path is None:
+            payload = "ok\n"
+        else:
+            payload = json.dumps(
+                {
+                    "schema_version": 1,
+                    "python_environment_id": self._ensure_python_environment_id(),
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ) + "\n"
+        try:
+            marker.write_text(payload, encoding="utf-8")
+        except OSError as exc:
+            message = str(exc) or f"Failed to write runtime dependency post-install marker: {dependency.id}"
+            raise RuntimeDependencyError(message) from exc
+
+    def _post_install_marker_is_current(self, dependency: RuntimeDependency) -> bool:
+        marker = self.post_install_marker_for(dependency)
+        if not self._path_is_file_safely(marker):
+            return False
+        if self.python_path is None:
+            return True
+        environment_marker = self.python_environment_marker_path()
+        if not self._path_is_file_safely(environment_marker):
+            return False
+        try:
+            environment_id = environment_marker.read_text(encoding="utf-8").strip()
+            payload = json.loads(marker.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return False
+        return (
+            bool(environment_id)
+            and isinstance(payload, dict)
+            and payload.get("schema_version") == 1
+            and payload.get("python_environment_id") == environment_id
+        )
+
+    def _ensure_python_environment_id(self) -> str:
+        marker = self.python_environment_marker_path()
+        try:
+            if marker.is_file():
+                current = marker.read_text(encoding="utf-8").strip()
+                if current:
+                    return current
+            environment_id = uuid4().hex
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(f"{environment_id}\n", encoding="utf-8")
+            return environment_id
+        except OSError as exc:
+            message = str(exc) or "Failed to write runtime dependency Python environment marker"
+            raise RuntimeDependencyError(message) from exc
 
     def _path_is_dir_safely(self, path: Path) -> bool:
         try:
@@ -285,7 +354,9 @@ class RuntimeDependencyInstaller:
     ) -> None:
         self.repository = repository
         self.runner = runner or self._run
-        self.python_path = python_path
+        self.python_path = python_path.resolve() if python_path is not None else None
+        if self.repository.python_path is None and self.python_path is not None:
+            self.repository.python_path = self.python_path
         self.managed_artifact_service = managed_artifact_service
         self.constraints_path = constraints_path
 
@@ -473,12 +544,7 @@ class RuntimeDependencyInstaller:
             script = target / dependency.install_script
             if self._post_install_file_exists(script, dependency.id):
                 self._run_checked([str(python_path), str(script)], target, dependency.id)
-        marker = self.repository.post_install_marker_for(dependency)
-        try:
-            marker.write_text("ok\n", encoding="utf-8")
-        except OSError as exc:
-            message = str(exc) or f"Failed to write runtime dependency post-install marker: {dependency.id}"
-            raise RuntimeDependencyError(message) from exc
+        self.repository.write_post_install_marker(dependency)
 
     def _post_install_file_exists(self, path: Path, dependency_id: str) -> bool:
         try:
@@ -496,9 +562,36 @@ class RuntimeDependencyInstaller:
 
     def _run_checked(self, command: list[str], cwd: Path, dependency_id: str) -> None:
         result = self._run_command(command, cwd, dependency_id)
+        if result.returncode != 0 and self._is_missing_pip(command, result):
+            bootstrap = self._run_command(
+                [command[0], "-m", "ensurepip", "--upgrade"],
+                cwd,
+                dependency_id,
+            )
+            if bootstrap.returncode != 0:
+                stderr = bootstrap.stderr if isinstance(bootstrap.stderr, str) else ""
+                raise RuntimeDependencyError(
+                    stderr.strip()
+                    or f"Failed to bootstrap pip for runtime dependency: {dependency_id}"
+                )
+            result = self._run_command(command, cwd, dependency_id)
         if result.returncode != 0:
             stderr = result.stderr if isinstance(result.stderr, str) else ""
             raise RuntimeDependencyError(stderr.strip() or f"Failed post-install for runtime dependency: {dependency_id}")
+
+    @staticmethod
+    def _is_missing_pip(
+        command: list[str],
+        result: subprocess.CompletedProcess,
+    ) -> bool:
+        if command[1:3] != ["-m", "pip"]:
+            return False
+        output = " ".join(
+            value
+            for value in (result.stdout, result.stderr)
+            if isinstance(value, str)
+        ).casefold()
+        return "no module named pip" in output
 
     def _run_command(self, command: list[str], cwd: Path, dependency_id: str) -> subprocess.CompletedProcess:
         try:
