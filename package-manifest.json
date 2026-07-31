@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.1.0",
   "platform": "windows-x64",
-  "source_commit": "4faf30623b7362c7bc8d6e9214622da932c96db7",
-  "build_timestamp_utc": "2026-07-31T03:54:05Z",
+  "source_commit": "5482e22173a32d49f59a519f2752761f6802c689",
+  "build_timestamp_utc": "2026-07-31T05:12:10Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -178,8 +178,8 @@
     },
     {
       "path": "app/backend/app/cli/bootstrap_environment.py",
-      "size_bytes": 1341,
-      "sha256": "90b1a260bdbaa4f3d0bee35aeb1678fcbf7e883ad34b23d1f758849fdcda4c53"
+      "size_bytes": 1837,
+      "sha256": "13e9d1a2cc69910327b474df9e4d048a3fb8d71b7cef95eeb1e891ca91d8a9a5"
     },
     {
       "path": "app/backend/app/cli/maintenance.py",
@@ -752,6 +752,11 @@
       "sha256": "beb2cbb9031b24a6e143908fe43f23e1606837c8f718fb011d07b956b8070eca"
     },
     {
+      "path": "app/backend/requirements-release-verifier.lock",
+      "size_bytes": 79,
+      "sha256": "bdbb9019d6961c5c05a36e9227283073247577f2b1a481b57d32221974b95329"
+    },
+    {
       "path": "app/backend/requirements-release.lock",
       "size_bytes": 284,
       "sha256": "909a33aca172566cf5ee84a38ab81633527c34f11f4416414a3e6bbdb516f010"
@@ -774,12 +779,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "1a8357cb3e264b1bcb9bcde01f2a298fb2203f42c696a5879051069a2547ff0b"
+      "sha256": "4cbf0de7c9fb8c50d731f1c9be6e5128f9a56b5cb571def0a5c0f2e903b885c7"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/626dbf01-02c2-478f-aa37-a54204818de4.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/f125393a-0cbe-4a05-b785-dee9a0366562.json",
       "size_bytes": 88,
-      "sha256": "414ce2b6eef02472f13647a84f383820becf0ecfc8bf545ce5e72f11631bb90a"
+      "sha256": "c6ef45c87851944eb6ff99b66bf5808fc8ce072bb593b4ae8580390afe0d2fb8"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.DzijEXjB.css",
@@ -804,7 +809,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 161778,
-      "sha256": "7511520508a68ae55aa885032383ed0264fc1731570c70387fd307f12ac0f7d2"
+      "sha256": "f82fdbfd3a04e6af9b89b549746cd187096ac8d065406053499a0f1b763a34c8"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.p0bNvJto.mjs",
@@ -1309,7 +1314,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 13051,
-      "sha256": "12b9dc12d3d8e956efd0b84fd9625ebc43e9c9bce61fb076bae641c744828e68"
+      "sha256": "1a2e3bbfcd21a31eba2cd18dc6d0d7385ec897e12af32904f6b9988815fa9cc8"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -1978,8 +1983,8 @@
     },
     {
       "path": "scripts/windows/Asteria.Bootstrap.psm1",
-      "size_bytes": 32538,
-      "sha256": "b0be215f1d66208e55e76844579af1755870faed6d4e928ee4aa43ced986c221"
+      "size_bytes": 34547,
+      "sha256": "0599990609839a677bd7fb40a0981c4054b0089478906efc09939ea1f26a0e8a"
     },
     {
       "path": "scripts/windows/Asteria.Launcher.psm1",
@@ -1993,13 +1998,13 @@
     },
     {
       "path": "scripts/windows/Install-Asteria.ps1",
-      "size_bytes": 589,
-      "sha256": "87c185619ffd193ce9ff147e1861db129c1ddc255c0922fbfd8010280eb93f5f"
+      "size_bytes": 847,
+      "sha256": "505bc94181be20549e6a53001d9bc7e374cc59c194fa0f037303259617fe6c18"
     },
     {
       "path": "scripts/windows/Repair-Asteria.ps1",
-      "size_bytes": 2730,
-      "sha256": "561f6d0d6c3d5244ace993dc0916a461c77864a53f5deef004b3ae59c9bfefb9"
+      "size_bytes": 2238,
+      "sha256": "f4efaab6fd1f55f6c60e637e49495b46a8ec54fd80c45eb75d901be89a0d145a"
     },
     {
       "path": "scripts/windows/Show-AsteriaRuntimeMonitor.ps1",
@@ -2008,8 +2013,8 @@
     },
     {
       "path": "scripts/windows/Start-Asteria.ps1",
-      "size_bytes": 17764,
-      "sha256": "66f03d2f69f3e412a3da52beda4ffccb8fa07ce730f007ba878133097e2683a9"
+      "size_bytes": 17628,
+      "sha256": "95e758270f3d437027cfedc4e2d994e97e579a3d0572398bd6e32ac220df0f08"
     },
     {
       "path": "scripts/windows/Stop-Asteria.ps1",

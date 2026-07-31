@@ -27,23 +27,13 @@ if (Test-Path -LiteralPath $maintenanceJournalPath -PathType Leaf) {
 }
 $releaseSignaturePath = [System.IO.Path]::Combine($resolvedAppRoot, "release-manifest.sig.json")
 $trustedKeysPath = [System.IO.Path]::Combine($resolvedAppRoot, "release-public-keys.json")
-if ((Test-Path -LiteralPath $releaseSignaturePath -PathType Leaf) -or (Test-Path -LiteralPath $trustedKeysPath -PathType Leaf)) {
-    try {
-        $layoutPath = [System.IO.Path]::Combine($resolvedAppRoot, "release-layout.yaml")
-        $backendRoot = Resolve-AsteriaPackagePath $resolvedAppRoot (Get-AsteriaReleaseLayoutValue $layoutPath "package" "backend_root")
-        $pythonPath = Resolve-AsteriaPackagePath $resolvedAppRoot (Get-AsteriaReleaseLayoutValue $layoutPath "package" "python")
-        Test-AsteriaOfficialManifest -PythonPath $pythonPath -BackendRoot $backendRoot -ManifestPath ([System.IO.Path]::Combine($resolvedAppRoot, "release-manifest.yaml")) -SignaturePath $releaseSignaturePath -TrustedKeysPath $trustedKeysPath | Out-Null
-    }
-    catch {
-        if ($Json) {
-            Write-Output (@{ status = "blocked"; code = "launcher_release_signature_invalid"; exit_code = 76 } | ConvertTo-Json -Compress)
-        }
-        else {
-            Write-Output "[Asteria] The official release signature is missing or invalid."
-        }
-        exit 76
-    }
-}
+$releaseManifestPath = [System.IO.Path]::Combine($resolvedAppRoot, "release-manifest.yaml")
+$hasSigningInput = (Test-Path -LiteralPath $releaseSignaturePath -PathType Leaf) -or (Test-Path -LiteralPath $trustedKeysPath -PathType Leaf)
 Import-Module (Join-Path $PSScriptRoot "Asteria.Bootstrap.psm1") -Force
-$exitCode = Invoke-AsteriaBootstrap -AppRoot $AppRoot -Mode Repair -ConfirmDownload:$ConfirmDownload -StarterPack $StarterPack -AcceptAnimaLicense:$AcceptAnimaLicense -PlanOnly:$PlanOnly -Json:$Json
+if ($hasSigningInput) {
+    $exitCode = Invoke-AsteriaBootstrap -AppRoot $AppRoot -Mode Repair -ConfirmDownload:$ConfirmDownload -StarterPack $StarterPack -AcceptAnimaLicense:$AcceptAnimaLicense -PlanOnly:$PlanOnly -Json:$Json -OfficialManifestPath $releaseManifestPath -OfficialSignaturePath $releaseSignaturePath -OfficialTrustedKeysPath $trustedKeysPath
+}
+else {
+    $exitCode = Invoke-AsteriaBootstrap -AppRoot $AppRoot -Mode Repair -ConfirmDownload:$ConfirmDownload -StarterPack $StarterPack -AcceptAnimaLicense:$AcceptAnimaLicense -PlanOnly:$PlanOnly -Json:$Json
+}
 exit $exitCode

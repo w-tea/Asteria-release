@@ -1,5 +1,6 @@
 Set-StrictMode -Version 3.0
 $ErrorActionPreference = "Stop"
+Import-Module (Join-Path $PSScriptRoot "Asteria.Maintenance.psm1") -Force
 
 function New-AsteriaBootstrapError {
     param(
@@ -558,7 +559,10 @@ function Invoke-AsteriaBootstrap {
         [string[]]$StarterPack = @(),
         [switch]$AcceptAnimaLicense,
         [switch]$PlanOnly,
-        [switch]$Json
+        [switch]$Json,
+        [string]$OfficialManifestPath = "",
+        [string]$OfficialSignaturePath = "",
+        [string]$OfficialTrustedKeysPath = ""
     )
     try {
         $root = Resolve-AsteriaBootstrapRoot -AppRoot $AppRoot
@@ -613,7 +617,31 @@ function Invoke-AsteriaBootstrap {
         if (-not (Test-Path -LiteralPath $backendRoot -PathType Container)) {
             throw (New-AsteriaBootstrapError -Code "bootstrap_application_missing" -Message "Packaged backend is missing.")
         }
-        $backendEnvironmentArguments = @("-E", "-s", "-m", "app.cli.bootstrap_environment", "--app-root", $plan.app_root)
+        $officialSigningInputs = @($OfficialManifestPath, $OfficialSignaturePath, $OfficialTrustedKeysPath)
+        $hasOfficialSigningInput = @($officialSigningInputs | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count -gt 0
+        if ($hasOfficialSigningInput) {
+            if (@($officialSigningInputs | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) {
+                throw (New-AsteriaBootstrapError -Code "bootstrap_release_signature_invalid" -Message "Official release signing inputs are incomplete.")
+            }
+            $verifierEnvironmentArguments = @("-E", "-s", "-m", "app.cli.bootstrap_environment", "--app-root", $plan.app_root, "--profile", "release-verifier")
+            Push-Location $backendRoot
+            try {
+                & $plan.contained_python @verifierEnvironmentArguments | ForEach-Object { [Console]::Out.WriteLine([string]$_) }
+                if ($LASTEXITCODE -ne 0) {
+                    throw (New-AsteriaBootstrapError -Code "bootstrap_release_verifier_failed" -Message "The official release verifier could not be installed.")
+                }
+            }
+            finally {
+                Pop-Location
+            }
+            try {
+                Test-AsteriaOfficialManifest -PythonPath $plan.contained_python -BackendRoot $backendRoot -ManifestPath $OfficialManifestPath -SignaturePath $OfficialSignaturePath -TrustedKeysPath $OfficialTrustedKeysPath | Out-Null
+            }
+            catch {
+                throw (New-AsteriaBootstrapError -Code "bootstrap_release_signature_invalid" -Message "The official release signature is missing or invalid.")
+            }
+        }
+        $backendEnvironmentArguments = @("-E", "-s", "-m", "app.cli.bootstrap_environment", "--app-root", $plan.app_root, "--profile", "backend")
         if ($Json) {
             [Console]::Out.WriteLine((([ordered]@{ code = "bootstrap_component_started"; component_id = "asteria-backend-environment" }) | ConvertTo-Json -Compress))
         }
@@ -666,6 +694,8 @@ function Invoke-AsteriaBootstrap {
             "bootstrap_hardware_probe_timeout" { return 70 }
             "bootstrap_hardware_probe_failed" { return 70 }
             "bootstrap_hardware_probe_invalid" { return 70 }
+            "bootstrap_release_verifier_failed" { return 76 }
+            "bootstrap_release_signature_invalid" { return 76 }
             default { return 70 }
         }
     }

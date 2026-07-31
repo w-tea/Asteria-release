@@ -109,18 +109,15 @@ if ($TargetMode -eq "packaged") {
     $releaseSignaturePath = [System.IO.Path]::Combine($resolvedAppRoot, "release-manifest.sig.json")
     $trustedKeysPath = [System.IO.Path]::Combine($resolvedAppRoot, "release-public-keys.json")
     $hasSigningInput = (Test-Path -LiteralPath $releaseSignaturePath -PathType Leaf) -or (Test-Path -LiteralPath $trustedKeysPath -PathType Leaf)
-    if ($hasSigningInput) {
-        try {
-            Test-AsteriaOfficialManifest -PythonPath $resolvedPython -BackendRoot $backendRoot -ManifestPath $releaseManifestPath -SignaturePath $releaseSignaturePath -TrustedKeysPath $trustedKeysPath | Out-Null
-        }
-        catch {
-            Complete-Start "blocked" "launcher_release_signature_invalid" 76 "The official release signature is missing or invalid. Run Repair-Asteria.cmd."
-        }
-    }
-
     Initialize-AsteriaModelDirectories -ModelRoot $resolvedModelRoot
-    $installPath = Join-Path $PSScriptRoot "Install-Asteria.ps1"
-    & $installPath -AppRoot $resolvedAppRoot -ConfirmDownload -Json:$Json
+    if ($hasSigningInput) {
+        $installPath = Join-Path $PSScriptRoot "Install-Asteria.ps1"
+        & $installPath -AppRoot $resolvedAppRoot -ConfirmDownload -Json:$Json -OfficialManifestPath $releaseManifestPath -OfficialSignaturePath $releaseSignaturePath -OfficialTrustedKeysPath $trustedKeysPath
+    }
+    else {
+        $installPath = Join-Path $PSScriptRoot "Install-Asteria.ps1"
+        & $installPath -AppRoot $resolvedAppRoot -ConfirmDownload -Json:$Json
+    }
     $installExit = $LASTEXITCODE
     if ($installExit -ne 0) { Complete-Start "blocked" "launcher_install_failed" $installExit "Required setup is incomplete. Run Repair-Asteria.cmd and retry." }
 }

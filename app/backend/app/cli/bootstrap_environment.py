@@ -10,6 +10,11 @@ from app.services.package_environment import PackageEnvironmentError, PackageEnv
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Install the minimal Asteria backend environment")
     parser.add_argument("--app-root", type=Path, required=True)
+    parser.add_argument(
+        "--profile",
+        choices=("release-verifier", "backend"),
+        default="backend",
+    )
     return parser
 
 
@@ -23,16 +28,31 @@ def main() -> int:
         _emit("bootstrap_backend_environment_invalid")
         return 64
     app_root = args.app_root.resolve()
+    profiles = {
+        "release-verifier": (
+            "asteria-release-verifier",
+            app_root / "app" / "backend" / "requirements-release-verifier.lock",
+        ),
+        "backend": (
+            "asteria-backend-environment",
+            app_root / "app" / "backend" / "requirements-release.lock",
+        ),
+    }
+    environment_id, lock_path = profiles[args.profile]
     try:
         result = PackageEnvironmentManager(app_root).install(
-            "asteria-backend-environment",
+            environment_id,
             app_root / "runtime" / "python" / "python.exe",
-            app_root / "app" / "backend" / "requirements-release.lock",
+            lock_path,
         )
     except (OSError, ValueError, PackageEnvironmentError):
         _emit("bootstrap_backend_environment_failed")
         return 69
-    _emit("bootstrap_backend_environment_ready", status=result.status)
+    _emit(
+        "bootstrap_backend_environment_ready",
+        component_id=environment_id,
+        status=result.status,
+    )
     return 0
 
 

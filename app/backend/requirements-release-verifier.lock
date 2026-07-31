@@ -1,0 +1,2 @@
+# Bootstrap trust dependency for signed Asteria releases.
+cryptography==49.0.0
