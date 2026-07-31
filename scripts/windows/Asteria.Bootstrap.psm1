@@ -358,10 +358,15 @@ function Invoke-AsteriaVerifiedDownload {
         Assert-AsteriaManagedWritePath -Path $DownloadPath
         Remove-Item -LiteralPath $DownloadPath -Force
     }
+    if (Test-AsteriaVerifiedDownload -Artifact $Artifact -DownloadPath $partPath) {
+        Assert-AsteriaManagedWritePath -Path $DownloadPath
+        Move-Item -LiteralPath $partPath -Destination $DownloadPath -Force
+        return
+    }
     $offset = 0L
     if (Test-Path -LiteralPath $partPath -PathType Leaf) {
         $offset = (Get-Item -LiteralPath $partPath).Length
-        if ($offset -gt [int64]$Artifact.size_bytes) {
+        if ($offset -ge [int64]$Artifact.size_bytes) {
             Assert-AsteriaManagedWritePath -Path $partPath
             Remove-Item -LiteralPath $partPath -Force
             $offset = 0L

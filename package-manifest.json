@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.1.0",
   "platform": "windows-x64",
-  "source_commit": "5482e22173a32d49f59a519f2752761f6802c689",
-  "build_timestamp_utc": "2026-07-31T05:12:10Z",
+  "source_commit": "a855478fcf422ed4dd82bd3fa6770477698dcf7b",
+  "build_timestamp_utc": "2026-07-31T05:19:00Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -779,12 +779,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "4cbf0de7c9fb8c50d731f1c9be6e5128f9a56b5cb571def0a5c0f2e903b885c7"
+      "sha256": "695bc86a49eb6c9ae4196fbfd4e80f39a2c508013ff1d18c3f32f939e1a4cf2c"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/f125393a-0cbe-4a05-b785-dee9a0366562.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/3fc58693-cb46-4179-911e-cce46cb37622.json",
       "size_bytes": 88,
-      "sha256": "c6ef45c87851944eb6ff99b66bf5808fc8ce072bb593b4ae8580390afe0d2fb8"
+      "sha256": "f3f6f22365a6d162c54a2d4f0339adc5325eca69d46f45c0d1c1ea880a7a4769"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.DzijEXjB.css",
@@ -809,7 +809,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 161778,
-      "sha256": "f82fdbfd3a04e6af9b89b549746cd187096ac8d065406053499a0f1b763a34c8"
+      "sha256": "df99d05e415abd55d4d29e61952263818571e3a459a1df6e6590c88b125619fb"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.p0bNvJto.mjs",
@@ -1314,7 +1314,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 13051,
-      "sha256": "1a2e3bbfcd21a31eba2cd18dc6d0d7385ec897e12af32904f6b9988815fa9cc8"
+      "sha256": "1a63698a5d390f8657a4c97491e4c4a68ce782707b3b7a9bfb3c2fbd9195c3a1"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -1983,8 +1983,8 @@
     },
     {
       "path": "scripts/windows/Asteria.Bootstrap.psm1",
-      "size_bytes": 34547,
-      "sha256": "0599990609839a677bd7fb40a0981c4054b0089478906efc09939ea1f26a0e8a"
+      "size_bytes": 34775,
+      "sha256": "4fe832015eb403641d0231f4ac0b0946c603a61042f3065cebdfd1b4981e9e76"
     },
     {
       "path": "scripts/windows/Asteria.Launcher.psm1",
