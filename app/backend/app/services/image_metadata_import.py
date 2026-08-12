@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import json
+from math import isfinite
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,7 @@ from app.services.model_library import ModelLibrary, ModelLibraryItem
 
 
 MAX_SIDECAR_BYTES = 4 * 1024 * 1024
+MAX_EMBEDDED_METADATA_BYTES = 4 * 1024 * 1024
 MAX_JSON_DEPTH = 32
 MAX_JSON_MEMBERS = 10_000
 SUPPORTED_ASTERIA_SCHEMAS = {"asteria.generation.v1"}
@@ -59,7 +61,11 @@ def build_image_metadata_preview(
     if sidecar is not None:
         sources.append(("asteria", _canonical_payload(sidecar)))
 
-    embedded_asteria = _json_object(image_info.get("Asteria"))
+    embedded_asteria = _json_object(
+        image_info.get("Asteria"),
+        warnings,
+        warning_prefix="embedded_asteria",
+    )
     if embedded_asteria is not None:
         sources.append(("asteria", _canonical_payload(embedded_asteria)))
 
@@ -70,9 +76,17 @@ def build_image_metadata_preview(
             parsed["_negative_present"] = "Negative prompt:" in parameters_text
             sources.append(("a1111_forge", _canonical_payload(parsed)))
 
-    comfy_graph = _json_object(image_info.get("prompt"))
+    comfy_graph = _json_object(
+        image_info.get("prompt"),
+        warnings,
+        warning_prefix="embedded_comfy",
+    )
     if comfy_graph is None:
-        comfy_graph = _json_object(image_info.get("workflow"))
+        comfy_graph = _json_object(
+            image_info.get("workflow"),
+            warnings,
+            warning_prefix="embedded_comfy",
+        )
     if comfy_graph is not None:
         mapped, comfy_warnings = _map_comfy_graph(comfy_graph)
         warnings.extend(comfy_warnings)
@@ -85,7 +99,7 @@ def build_image_metadata_preview(
     settings, setting_warnings = _compatible_settings(merged)
     warnings.extend(setting_warnings)
     resources = resolve_resource_references(
-        _resource_references(merged),
+        _resource_references(merged, warnings),
         library=model_library,
         available_style_ids=available_style_ids,
         available_preset_ids=available_preset_ids,
@@ -126,17 +140,40 @@ def build_image_metadata_preview(
     )
 
 
-def _json_object(value: object) -> dict[str, Any] | None:
+def _json_object(
+    value: object,
+    warnings: list[str],
+    *,
+    warning_prefix: str,
+) -> dict[str, Any] | None:
     if isinstance(value, dict):
-        return {str(key): item for key, item in value.items()}
-    text = metadata_value_to_text(value).strip()
-    if not text or text[0] != "{":
+        parsed: object = {str(key): item for key, item in value.items()}
+    else:
+        text = metadata_value_to_text(value).strip()
+        if not text or text[0] != "{":
+            return None
+        if len(text) > MAX_EMBEDDED_METADATA_BYTES or len(
+            text.encode("utf-8", errors="replace")
+        ) > MAX_EMBEDDED_METADATA_BYTES:
+            warnings.append(f"{warning_prefix}_too_large")
+            return None
+        try:
+            parsed = json.loads(text)
+        except RecursionError:
+            warnings.append(f"{warning_prefix}_too_deep")
+            return None
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return None
+    if not isinstance(parsed, dict):
         return None
-    try:
-        parsed = json.loads(text)
-    except (json.JSONDecodeError, TypeError, ValueError):
+    depth, members = _json_shape(parsed)
+    if depth > MAX_JSON_DEPTH:
+        warnings.append(f"{warning_prefix}_too_deep")
         return None
-    return parsed if isinstance(parsed, dict) else None
+    if members > MAX_JSON_MEMBERS:
+        warnings.append(f"{warning_prefix}_too_many_members")
+        return None
+    return parsed
 
 
 def _read_associated_sidecar(
@@ -153,6 +190,9 @@ def _read_associated_sidecar(
             warnings.append("sidecar_too_large")
             return None
         payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    except RecursionError:
+        warnings.append("sidecar_too_deep")
+        return None
     except (OSError, json.JSONDecodeError, UnicodeError):
         warnings.append("sidecar_unreadable")
         return None
@@ -176,23 +216,26 @@ def _read_associated_sidecar(
 
 
 def _json_shape(value: object, depth: int = 1) -> tuple[int, int]:
-    if isinstance(value, dict):
-        maximum = depth
-        members = len(value)
-        for item in value.values():
-            child_depth, child_members = _json_shape(item, depth + 1)
-            maximum = max(maximum, child_depth)
-            members += child_members
-        return maximum, members
-    if isinstance(value, list):
-        maximum = depth
-        members = len(value)
-        for item in value:
-            child_depth, child_members = _json_shape(item, depth + 1)
-            maximum = max(maximum, child_depth)
-            members += child_members
-        return maximum, members
-    return depth, 0
+    maximum = depth
+    members = 0
+    pending: list[tuple[object, int]] = [(value, depth)]
+    while pending:
+        current, current_depth = pending.pop()
+        maximum = max(maximum, current_depth)
+        if maximum > MAX_JSON_DEPTH:
+            return maximum, members
+        if isinstance(current, dict):
+            members += len(current)
+            children = current.values()
+        elif isinstance(current, list):
+            members += len(current)
+            children = current
+        else:
+            continue
+        if members > MAX_JSON_MEMBERS:
+            return maximum, members
+        pending.extend((child, current_depth + 1) for child in children)
+    return maximum, members
 
 
 def _sidecar_matches_image(payload: dict[str, Any], image_path: Path) -> bool:
@@ -282,7 +325,10 @@ def _integer_value(value: object) -> int | None:
         return None
 
 
-def _resource_references(payload: dict[str, Any]) -> list[ResourceReference]:
+def _resource_references(
+    payload: dict[str, Any],
+    warnings: list[str],
+) -> list[ResourceReference]:
     resources: list[ResourceReference] = []
     model_slots = payload.get("model_slots")
     if isinstance(model_slots, dict):
@@ -313,7 +359,28 @@ def _resource_references(payload: dict[str, Any]) -> list[ResourceReference]:
             name = str(item.get("name") or "").strip()
             if not name:
                 continue
-            weight = float(item.get("weight", 1.0))
+            weight = _metadata_weight(
+                item["weight"] if "weight" in item else 1.0,
+                minimum=-10.0,
+                maximum=10.0,
+            )
+            if weight is None:
+                warnings.append("resource_invalid_lora_weight")
+                continue
+            if "clip_weight" in item:
+                clip_weight_value = item["clip_weight"]
+            elif "clipWeight" in item:
+                clip_weight_value = item["clipWeight"]
+            else:
+                clip_weight_value = weight
+            clip_weight = _metadata_weight(
+                clip_weight_value,
+                minimum=-10.0,
+                maximum=10.0,
+            )
+            if clip_weight is None:
+                warnings.append("resource_invalid_lora_clip_weight")
+                continue
             resources.append(
                 LoRAReference(
                     source_name=name,
@@ -321,7 +388,7 @@ def _resource_references(payload: dict[str, Any]) -> list[ResourceReference]:
                     order=index,
                     enabled=bool(item.get("enabled", True)),
                     weight=weight,
-                    clip_weight=float(item.get("clip_weight", item.get("clipWeight", weight))),
+                    clip_weight=clip_weight,
                     block_weight=str(item.get("block_weight", item.get("blockWeight", "")) or ""),
                     block_weight_preset=str(
                         item.get("block_weight_preset", item.get("blockWeightPreset", "")) or ""
@@ -349,6 +416,10 @@ def _resource_references(payload: dict[str, Any]) -> list[ResourceReference]:
                 continue
             style_id = str(item.get("id") or item.get("name") or "").strip()
             if style_id:
+                weight = _metadata_weight(item["weight"] if "weight" in item else 1.0)
+                if weight is None:
+                    warnings.append("resource_invalid_advanced_style_weight")
+                    continue
                 resources.append(
                     InformationalReference(
                         kind="preset",
@@ -356,7 +427,7 @@ def _resource_references(payload: dict[str, Any]) -> list[ResourceReference]:
                         source_name=style_id,
                         status="missing",
                         order=index,
-                        weight=float(item.get("weight", 1.0)),
+                        weight=weight,
                     )
                 )
     for key, kind in (
@@ -375,6 +446,27 @@ def _resource_references(payload: dict[str, Any]) -> list[ResourceReference]:
                 )
             )
     return resources
+
+
+def _metadata_weight(
+    value: object,
+    *,
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> float | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not isfinite(parsed):
+        return None
+    if minimum is not None and parsed < minimum:
+        return None
+    if maximum is not None and parsed > maximum:
+        return None
+    return parsed
 
 
 def resolve_resource_references(

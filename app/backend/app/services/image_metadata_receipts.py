@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -127,12 +128,13 @@ class ImageMetadataReceiptStore:
 
     def get(self, token: str) -> ImageMetadataReceipt:
         self._validate_token(token)
-        if (self.consumed_root / f"{token}.json").is_file():
+        if (self.consumed_root / f"{token}.json").is_file() or self._claim_path(token).is_file():
             raise ImageMetadataReceiptError("image_metadata_receipt_consumed")
-        receipt_path = self.root / token / "receipt.json"
+        stage_dir = self.root / token
+        receipt_path = stage_dir / "receipt.json"
         try:
             payload = json.loads(receipt_path.read_text(encoding="utf-8"))
-            receipt = self._receipt_from_payload(token, payload)
+            receipt = self._receipt_from_payload(token, payload, stage_dir=stage_dir)
         except FileNotFoundError as exc:
             raise ImageMetadataReceiptError("image_metadata_receipt_not_found") from exc
         except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
@@ -143,12 +145,25 @@ class ImageMetadataReceiptStore:
         return receipt
 
     def consume_as_init_image(self, token: str) -> SavedImageAsset:
-        receipt = self.get(token)
+        stage_dir, claim_path = self._claim(token)
+        asset: SavedImageAsset | None = None
+        try:
+            payload = json.loads((stage_dir / "receipt.json").read_text(encoding="utf-8"))
+            receipt = self._receipt_from_payload(token, payload, stage_dir=stage_dir)
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            self._release_claim(claim_path)
+            raise ImageMetadataReceiptError("image_metadata_receipt_invalid") from exc
+        if receipt.expires_at <= self._aware_now():
+            shutil.rmtree(stage_dir, ignore_errors=True)
+            self._release_claim(claim_path)
+            raise ImageMetadataReceiptError("image_metadata_receipt_expired")
         try:
             data = receipt.staged_path.read_bytes()
         except OSError as exc:
+            self._release_claim(claim_path)
             raise ImageMetadataReceiptError("image_metadata_receipt_mismatch") from exc
         if len(data) != receipt.size_bytes or hashlib.sha256(data).hexdigest() != receipt.sha256:
+            self._release_claim(claim_path)
             raise ImageMetadataReceiptError("image_metadata_receipt_mismatch")
         try:
             asset = save_validated_image_bytes(
@@ -157,13 +172,22 @@ class ImageMetadataReceiptStore:
                 output_dir=self.data_dir / "init_images",
             )
         except ImageAssetError as exc:
+            self._release_claim(claim_path)
             raise ImageMetadataReceiptError("image_metadata_input_save_failed") from exc
-        self.consumed_root.mkdir(parents=True, exist_ok=True)
-        write_json_atomic(
-            self.consumed_root / f"{token}.json",
-            {"consumed_at": self._aware_now().isoformat(), "expires_at": receipt.expires_at.isoformat()},
-        )
-        shutil.rmtree(self.root / token, ignore_errors=True)
+        try:
+            write_json_atomic(
+                self.consumed_root / f"{token}.json",
+                {"consumed_at": self._aware_now().isoformat(), "expires_at": receipt.expires_at.isoformat()},
+            )
+        except OSError as exc:
+            try:
+                asset.path.unlink(missing_ok=True)
+            except OSError:
+                raise ImageMetadataReceiptError("image_metadata_input_save_failed") from exc
+            self._release_claim(claim_path)
+            raise ImageMetadataReceiptError("image_metadata_input_save_failed") from exc
+        shutil.rmtree(stage_dir, ignore_errors=True)
+        self._release_claim(claim_path)
         return asset
 
     def cleanup_expired(self) -> None:
@@ -196,11 +220,68 @@ class ImageMetadataReceiptStore:
             except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
                 continue
 
-    def _receipt_from_payload(self, token: str, payload: object) -> ImageMetadataReceipt:
+        try:
+            claims = list(self.consumed_root.glob("*.claim")) if self.consumed_root.is_dir() else []
+        except OSError:
+            return
+        for claim in claims:
+            token = claim.name.removesuffix(".claim")
+            if not claim.is_file() or not TOKEN_PATTERN.fullmatch(token):
+                continue
+            try:
+                stage_dir = self.root / token
+                payload = json.loads((stage_dir / "receipt.json").read_text(encoding="utf-8"))
+                expires_at = self._as_aware(datetime.fromisoformat(str(payload["expires_at"])))
+                if expires_at <= now:
+                    shutil.rmtree(stage_dir, ignore_errors=True)
+                    claim.unlink(missing_ok=True)
+            except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+                continue
+
+    def _claim(self, token: str) -> tuple[Path, Path]:
+        self._validate_token(token)
+        self.consumed_root.mkdir(parents=True, exist_ok=True)
+        tombstone = self.consumed_root / f"{token}.json"
+        claim_path = self._claim_path(token)
+        if tombstone.is_file():
+            raise ImageMetadataReceiptError("image_metadata_receipt_consumed")
+        try:
+            descriptor = os.open(claim_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(descriptor)
+        except FileExistsError as exc:
+            raise ImageMetadataReceiptError("image_metadata_receipt_consumed") from exc
+        except OSError as exc:
+            raise ImageMetadataReceiptError("image_metadata_receipt_invalid") from exc
+        stage_dir = self.root / token
+        if tombstone.is_file():
+            self._release_claim(claim_path)
+            raise ImageMetadataReceiptError("image_metadata_receipt_consumed")
+        if not (stage_dir / "receipt.json").is_file():
+            self._release_claim(claim_path)
+            raise ImageMetadataReceiptError("image_metadata_receipt_not_found")
+        return stage_dir, claim_path
+
+    @staticmethod
+    def _release_claim(claim_path: Path) -> None:
+        try:
+            claim_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+    def _claim_path(self, token: str) -> Path:
+        return self.consumed_root / f"{token}.claim"
+
+    def _receipt_from_payload(
+        self,
+        token: str,
+        payload: object,
+        *,
+        stage_dir: Path | None = None,
+    ) -> ImageMetadataReceipt:
         if not isinstance(payload, dict) or payload.get("token") != token:
             raise ValueError("receipt token mismatch")
         filename = safe_image_filename(str(payload["filename"]))
-        staged_path = self.root / token / filename
+        staged_path = (stage_dir or self.root / token) / filename
         return ImageMetadataReceipt(
             token=token,
             filename=filename,
