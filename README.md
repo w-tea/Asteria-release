@@ -47,6 +47,7 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 - 画像ライブラリへ戻った時は、表示中の一覧を残したまま最新72件だけを確認するようにしました。新しい生成画像をすぐ確認でき、更新に失敗しても現在の一覧は消えません。
 - Windows標準の参照画面を開いている間は、アプリ内の参照モーダルを重ねて表示しないようにしました。
 - PNG／JPEG／WebPを選び、Asteria、A1111／Forge、一般的なComfyUIのmetadataを確認して再利用できるようにしました。画像のプロンプトだけ、現在のSeedを変えずに生成設定、画像入力、Seedだけをそれぞれ明示的に適用でき、適用だけで生成は開始しません。
+- 壊れた値や極端に大きい画像metadataでも安全に部分表示できるようにし、同じ画像入力が同時操作で重複登録されないようにしました。
 - 全画面の配色と面の区切り、通常／実行／選択／削除操作の見分けやすさ、Light／Dark／Systemでの可読性を見直しました。既存の画面構成と操作順は維持しています。
 - 閉じる操作を×アイコンへ統一し、Libraryのフォルダー列、画像一覧のスクロール境界、Image Edit／Library／Mergeの狭い画面での配置、画面下部の不要な空白を改善しました。
 
@@ -245,6 +246,7 @@ Asteria is a Windows application for local AI image production. It covers image 
 - When returning to the Image Library, Asteria now checks only the latest 72 matching records while keeping the current list visible. New generations appear promptly, and a failed check no longer clears the list.
 - Prevented the in-app path browser from appearing behind the native Windows picker.
 - Added preview and reuse of Asteria, A1111/Forge, and common ComfyUI metadata from PNG, JPEG, and WebP images. Apply prompts only, compatible generation settings without changing the current Seed, the image input, or the Seed alone; applying settings never starts generation automatically.
+- Made metadata preview resilient to malformed or excessively large image metadata and prevented concurrent image-input actions from registering the same image twice.
 - Improved visual hierarchy across every workspace, including clearer surfaces and normal, primary, selected, and destructive actions in Light, Dark, and System themes, while preserving the existing screen structure and workflow order.
 - Standardized direct close actions as × icons and improved the Library folder rail and scrolling boundary, narrow Image Edit/Library/Merge layouts, and unintended empty space below workspaces.
 
