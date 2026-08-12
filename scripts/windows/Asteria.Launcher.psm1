@@ -64,7 +64,9 @@ function Initialize-AsteriaModelDirectories {
         "loras",
         "embeddings",
         "controlnet",
+        "adetailer",
         "bbox",
+        "segm",
         "upscalers"
     )) {
         [System.IO.Directory]::CreateDirectory([System.IO.Path]::Combine($ModelRoot, $directory)) | Out-Null
@@ -128,8 +130,13 @@ function Write-AsteriaExtraModelPaths {
         "    controlnet"
         "    controlnets"
         "  ultralytics_bbox: |-"
+        "    adetailer"
         "    bbox"
         "    ultralytics/bbox"
+        "  ultralytics_segm: |-"
+        "    adetailer"
+        "    segm"
+        "    ultralytics/segm"
         "  upscale_models: |-"
         "    upscalers"
         "    esrgan"
@@ -146,7 +153,6 @@ function Write-AsteriaExtraModelPaths {
                 lora = @("loras")
                 embedding = @("embeddings")
                 controlnet = @("controlnet")
-                detailer = @("ultralytics_bbox")
                 upscaler = @("upscale_models")
             }
             foreach ($root in @($registry.roots | Sort-Object @{ Expression = "priority"; Descending = $true }, display_name)) {
@@ -161,6 +167,30 @@ function Write-AsteriaExtraModelPaths {
                     foreach ($folderName in $keyMap[$modelType]) {
                         $lines += "  $folderName`: |-"
                         foreach ($directory in $directories) { $lines += "    $directory" }
+                    }
+                }
+                $detailerDirectories = @($root.mappings.detailer)
+                if ($detailerDirectories.Count -gt 0) {
+                    $bboxDirectories = @()
+                    $segmDirectories = @()
+                    foreach ($directory in $detailerDirectories) {
+                        $parts = ([string]$directory).Replace('\', '/').Split('/')
+                        if ($parts -contains "segm") {
+                            $segmDirectories += [string]$directory
+                        } elseif ($parts -contains "bbox") {
+                            $bboxDirectories += [string]$directory
+                        } else {
+                            $bboxDirectories += [string]$directory
+                            $segmDirectories += [string]$directory
+                        }
+                    }
+                    if ($bboxDirectories.Count -gt 0) {
+                        $lines += "  ultralytics_bbox: |-"
+                        foreach ($directory in $bboxDirectories | Select-Object -Unique) { $lines += "    $directory" }
+                    }
+                    if ($segmDirectories.Count -gt 0) {
+                        $lines += "  ultralytics_segm: |-"
+                        foreach ($directory in $segmDirectories | Select-Object -Unique) { $lines += "    $directory" }
                     }
                 }
             }

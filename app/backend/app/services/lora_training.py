@@ -22,6 +22,8 @@ import httpx
 from PIL import ExifTags, Image, ImageFilter, ImageOps, ImageStat
 from pydantic import BaseModel, Field
 
+from app.services.image_metadata_text import metadata_value_to_text
+
 TrainingProfile = Literal["sdxl", "anima"]
 TrainingType = Literal["copy_lora", "character_lora", "style_lora"]
 LoRATrainingRunStatus = Literal["planned", "blocked", "running", "completed", "failed", "cancelled"]
@@ -5905,29 +5907,13 @@ def _tags_from_embedded_image_metadata(image_path: Path) -> list[str]:
     except (OSError, ValueError):
         return []
     for value in metadata_values:
-        text = _metadata_value_to_text(value)
+        text = metadata_value_to_text(value)
         if not text:
             continue
         prompt_text = _embedded_generation_prompt_text(text)
         if prompt_text:
             tags.extend(_prompt_tokens_for_lora_caption(prompt_text))
     return _normalize_tags(tags)
-
-
-def _metadata_value_to_text(value: object) -> str:
-    if isinstance(value, bytes):
-        if value.startswith(b"UNICODE\x00"):
-            payload = value[8:]
-            if payload.startswith((b"\xfe\xff", b"\xff\xfe")):
-                return payload.decode("utf-16", errors="ignore")
-            return payload.decode("utf-16-be", errors="ignore")
-        decoded = value.decode("utf-8", errors="ignore")
-        if not decoded.strip():
-            decoded = value.decode("latin-1", errors="ignore")
-        return re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]+", " ", decoded)
-    if isinstance(value, str):
-        return value
-    return ""
 
 
 def _embedded_generation_prompt_text(text: str) -> str:

@@ -4,7 +4,7 @@
 
 ## 更新履歴 / Release history
 
-- **V1.1.0** — 永続操作、更新・復旧保護、外部モデルライブラリ、追加Merge方式、テーマ、Discord生成、診断を追加。 / Added durable operations, safer update and recovery, external model libraries, new Merge modes, themes, Discord generation, and diagnostics.
+- **V1.1.0** — 永続操作、更新・復旧保護、外部モデルライブラリ、追加Merge方式、全画面テーマ刷新、画像metadata再利用、Discord生成、診断を追加。 / Added durable operations, safer update and recovery, external model libraries, new Merge modes, a full visual refresh, image-metadata reuse, Discord generation, and diagnostics.
 - **V1.0.4** — Runtime Monitor、生成時間、Seed単独適用、LoRAサムネイルと生成出力を改善。 / Added Runtime Monitor and generation time, seed-only reuse, LoRA thumbnails, and generation-output fixes.
 - **V1.0.3** — LibraryとImage Editの長期利用・データ保護、Generate／Merge XYZ、Topaz／Eagle連携、モデル参照と操作UIを強化。 / Strengthened long-term Library and Image Edit safety, Generate/Merge XYZ, Topaz/Eagle integration, model handling, and operation UI.
 - **V1.0.2** — Generateのモデル一覧cache、Generation Preset、Prompt & Assets、画面遷移時のrefresh契約を整理。 / Refined Generate model caching, Generation Presets, Prompt & Assets, and navigation refresh behavior.
@@ -23,7 +23,7 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 
 - **画像生成と補正**: txt2img／img2imgに加え、Hires.fix、ControlNet、Detailer、Topaz Photo AI連携を利用します。
 - **画像編集とライブラリ**: マスクや切り抜きを使った編集、生成履歴の閲覧、画像の比較、評価やタグによる整理を行います。
-- **プロンプトと生成設定の再利用**: スタイル、ワイルドカード、Embedding、LoRA、生成プリセットを呼び出して設定を再利用します。
+- **プロンプトと生成設定の再利用**: スタイル、ワイルドカード、Embedding、LoRA、生成プリセットに加え、PNG／JPEG／WebP画像からプロンプトや対応する生成設定を再利用します。
 - **LoRA学習**: 学習用画像とキャプションを準備し、Asteriaから学習を実行して結果をモデル一覧へ登録します。
 - **Merge Studio**: CheckpointやLoRAのマージ条件を比較し、確認後にマージモデルを書き出します。
 - **表示テーマと進行状況**: Light／Dark／Systemテーマを切り替え、画面を移動しても処理状況を確認・取消・再試行できます。
@@ -46,6 +46,9 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 - Lightテーマのガイド、詳細カード、XYZ、AIプロンプト支援などの動的画面を見直し、画面の再訪時には読込済みデータを再利用するようにしました。
 - 画像ライブラリへ戻った時は、表示中の一覧を残したまま最新72件だけを確認するようにしました。新しい生成画像をすぐ確認でき、更新に失敗しても現在の一覧は消えません。
 - Windows標準の参照画面を開いている間は、アプリ内の参照モーダルを重ねて表示しないようにしました。
+- PNG／JPEG／WebPを選び、Asteria、A1111／Forge、一般的なComfyUIのmetadataを確認して再利用できるようにしました。画像のプロンプトだけ、現在のSeedを変えずに生成設定、画像入力、Seedだけをそれぞれ明示的に適用でき、適用だけで生成は開始しません。
+- 全画面の配色と面の区切り、通常／実行／選択／削除操作の見分けやすさ、Light／Dark／Systemでの可読性を見直しました。既存の画面構成と操作順は維持しています。
+- 閉じる操作を×アイコンへ統一し、Libraryのフォルダー列、画像一覧のスクロール境界、Image Edit／Library／Mergeの狭い画面での配置、画面下部の不要な空白を改善しました。
 
 #### V1.0.4
 
@@ -112,7 +115,8 @@ SDXL／Animaスターターパックは必須ではありません。CMDで行�
 - LoRA: `models/loras/`
 - Embedding: `models/embeddings/`
 - ControlNet: `models/controlnet/`
-- Detailer検出モデル: `models/bbox/`
+- ADetailer／検出モデル: `models/adetailer/`または`models/bbox/`
+- 領域分割モデル: `models/segm/`
 - Upscaler: `models/upscalers/`
 
 `sdxl`や`anima`などのサブフォルダーは任意です。モデルを追加した後は、Settingsの「モデルアセット」でモデル一覧を更新してください。
@@ -121,7 +125,7 @@ SDXLスターターパックは、Checkpointを`models/checkpoints/sdxl/`、VAE�
 
 #### 別の場所にあるモデルを共有する
 
-Settingsの「外部モデルライブラリ」から、既存のAsteria／ComfyUI／Forge系モデル保管先を登録できます。レイアウトとモデル種別の対応を確認してから有効化し、一覧を更新してください。Asteriaは登録先のモデル本体を移動・削除しません。接続できないドライブやネットワーク先はオフラインとして扱われ、再接続後に再スキャンできます。
+Settingsの「外部モデルライブラリ」から、共有`models`フォルダや既存のAsteria／ComfyUI／Forge系モデル保管先を登録できます。`StableDiffusion`／`Stable-diffusion`、`Lora`、`Embeddings`、`adetailer`、`bbox`、`segm`などを自動判定します。`adetailer`と`bbox`はどちらも検出モデルとして、`segm`は領域分割モデルとして取得します。Asteriaは登録先のモデル本体を移動・削除しません。接続できないドライブやネットワーク先はオフラインとして扱われ、再接続後に再スキャンできます。
 
 従来どおり、`models/`内のジャンクションまたはシンボリックリンクで共有することもできます。リンクを作る場合は、まず`Stop-Asteria.cmd`でAsteriaを終了してください。
 
@@ -218,7 +222,7 @@ Asteria is a Windows application for local AI image production. It covers image 
 
 - **Generation and enhancement**: Use txt2img, img2img, Hires.fix, ControlNet, Detailer, and Topaz Photo AI integration.
 - **Image editing and Library**: Edit with masks and crops, browse generation history, compare images, and organize them with ratings and tags.
-- **Reusable prompts and settings**: Reuse styles, wildcards, embeddings, LoRAs, and generation presets.
+- **Reusable prompts and settings**: Reuse styles, wildcards, embeddings, LoRAs, generation presets, and compatible prompts or settings found in PNG, JPEG, and WebP images.
 - **LoRA training**: Prepare training images and captions, run training from Asteria, and register the result in the model list.
 - **Merge Studio**: Compare checkpoint or LoRA merge settings, then write the selected merged model.
 - **Themes and operation status**: Select Light, Dark, or System and keep track of running work across workspace navigation, including safe cancel and retry.
@@ -240,6 +244,9 @@ Asteria is a Windows application for local AI image production. It covers image 
 - Improved Light-theme readability for dynamic guides, detail cards, XYZ, and AI Prompt Assist, and reused loaded workspace data when revisiting screens.
 - When returning to the Image Library, Asteria now checks only the latest 72 matching records while keeping the current list visible. New generations appear promptly, and a failed check no longer clears the list.
 - Prevented the in-app path browser from appearing behind the native Windows picker.
+- Added preview and reuse of Asteria, A1111/Forge, and common ComfyUI metadata from PNG, JPEG, and WebP images. Apply prompts only, compatible generation settings without changing the current Seed, the image input, or the Seed alone; applying settings never starts generation automatically.
+- Improved visual hierarchy across every workspace, including clearer surfaces and normal, primary, selected, and destructive actions in Light, Dark, and System themes, while preserving the existing screen structure and workflow order.
+- Standardized direct close actions as × icons and improved the Library folder rail and scrolling boundary, narrow Image Edit/Library/Merge layouts, and unintended empty space below workspaces.
 
 #### V1.0.4
 
@@ -306,7 +313,8 @@ The following folders are created automatically on first launch. Place each file
 - LoRA: `models/loras/`
 - Embedding: `models/embeddings/`
 - ControlNet: `models/controlnet/`
-- Detailer detector: `models/bbox/`
+- ADetailer / detector: `models/adetailer/` or `models/bbox/`
+- Segmentation detector: `models/segm/`
 - Upscaler: `models/upscalers/`
 
 Additional subfolders such as `sdxl` or `anima` are optional. After adding a model, refresh the model list under **Model Assets** in Settings.
@@ -315,7 +323,7 @@ The SDXL starter pack places its checkpoint in `models/checkpoints/sdxl/` and it
 
 #### Sharing models stored elsewhere
 
-Register existing Asteria, ComfyUI, or Forge-style model locations under External Model Libraries in Settings. Review the layout and model-type mappings, enable the library, and refresh the inventory. Asteria does not move or delete model files at the registered location. Disconnected drives and network locations are shown as offline and can be rescanned after reconnection.
+Register a shared `models` folder or an existing Asteria, ComfyUI, or Forge-style model location under External Model Libraries in Settings. Asteria automatically recognizes folders such as `StableDiffusion` / `Stable-diffusion`, `Lora`, `Embeddings`, `adetailer`, `bbox`, and `segm`. Both `adetailer` and `bbox` are loaded as detector sources, while `segm` is loaded as a segmentation source. Asteria does not move or delete model files at the registered location. Disconnected drives and network locations are shown as offline and can be rescanned after reconnection.
 
 You can still share models through a junction or symbolic link inside `models/`. Stop Asteria with `Stop-Asteria.cmd` before creating a link.
 

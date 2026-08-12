@@ -13,6 +13,8 @@ _CHECKPOINT_DIRECTORIES = MODEL_TYPE_DIRECTORIES["checkpoint"]
 _VAE_DIRECTORIES = MODEL_TYPE_DIRECTORIES["vae"]
 _TEXT_ENCODER_DIRECTORIES = MODEL_TYPE_DIRECTORIES["text_encoder"]
 _TOKENIZER_DIRECTORIES = MODEL_TYPE_DIRECTORIES["tokenizer"]
+_DETAILER_BBOX_DIRECTORIES = ("adetailer", "bbox", "ultralytics/bbox")
+_DETAILER_SEGM_DIRECTORIES = ("adetailer", "segm", "ultralytics/segm")
 
 # Every directory recognized by ModelLibraryScanner must be registered with
 # ComfyUI under the folder key used by its loader (or a dedicated registry key
@@ -30,7 +32,8 @@ COMFY_MODEL_PATH_DIRECTORIES: dict[str, tuple[str, ...]] = {
     "loras": MODEL_TYPE_DIRECTORIES["lora"],
     "embeddings": MODEL_TYPE_DIRECTORIES["embedding"],
     "controlnet": MODEL_TYPE_DIRECTORIES["controlnet"],
-    "ultralytics_bbox": MODEL_TYPE_DIRECTORIES["detailer"],
+    "ultralytics_bbox": _DETAILER_BBOX_DIRECTORIES,
+    "ultralytics_segm": _DETAILER_SEGM_DIRECTORIES,
     "upscale_models": MODEL_TYPE_DIRECTORIES["upscaler"],
 }
 
@@ -43,7 +46,6 @@ _EXTERNAL_COMFY_KEYS: dict[str, tuple[str, ...]] = {
     "lora": ("loras",),
     "embedding": ("embeddings",),
     "controlnet": ("controlnet",),
-    "detailer": ("ultralytics_bbox",),
     "upscaler": ("upscale_models",),
 }
 
@@ -66,11 +68,39 @@ def comfy_extra_model_paths_document(
             continue
         entry: dict[str, str] = {"base_path": Path(root.path).as_posix()}
         for model_type, directories in root.mappings.items():
+            if model_type == "detailer":
+                detailer_paths = _external_detailer_paths(directories)
+                for folder_name, paths in detailer_paths.items():
+                    if paths:
+                        entry[folder_name] = "\n".join(paths)
+                continue
             for folder_name in _EXTERNAL_COMFY_KEYS.get(model_type, ()):
                 entry[folder_name] = "\n".join(directories)
         if len(entry) > 1:
             document[f"asteria_external_{root.root_id}"] = entry
     return document
+
+
+def _external_detailer_paths(
+    directories: Iterable[str],
+) -> dict[str, tuple[str, ...]]:
+    bbox: list[str] = []
+    segm: list[str] = []
+    for directory in directories:
+        parts = {part.casefold() for part in Path(directory.replace("\\", "/")).parts}
+        if "segm" in parts:
+            segm.append(directory)
+        elif "bbox" in parts:
+            bbox.append(directory)
+        else:
+            # ADetailer and custom detector folders may contain either model
+            # family, so ComfyUI must be able to discover them from both lists.
+            bbox.append(directory)
+            segm.append(directory)
+    return {
+        "ultralytics_bbox": tuple(dict.fromkeys(bbox)),
+        "ultralytics_segm": tuple(dict.fromkeys(segm)),
+    }
 
 
 def render_comfy_extra_model_paths(

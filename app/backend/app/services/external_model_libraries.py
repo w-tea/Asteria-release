@@ -24,7 +24,7 @@ ROOT_LAYOUTS: dict[str, dict[str, tuple[str, ...]]] = {
         "lora": ("loras", "lora", "merged/lora"),
         "embedding": ("embeddings",),
         "controlnet": ("controlnet", "controlnets"),
-        "detailer": ("bbox", "ultralytics/bbox"),
+        "detailer": ("adetailer", "bbox", "ultralytics/bbox", "segm", "ultralytics/segm"),
         "upscaler": ("upscalers", "esrgan", "realesrgan"),
     },
     "forge_a1111": {
@@ -35,8 +35,25 @@ ROOT_LAYOUTS: dict[str, dict[str, tuple[str, ...]]] = {
         "lora": ("models/Lora", "models/LyCORIS"),
         "embedding": ("embeddings",),
         "controlnet": ("models/ControlNet",),
-        "detailer": ("models/adetailer",),
+        "detailer": (
+            "models/adetailer",
+            "models/bbox",
+            "models/ultralytics/bbox",
+            "models/segm",
+            "models/ultralytics/segm",
+        ),
         "upscaler": ("models/ESRGAN", "models/RealESRGAN", "models/SwinIR"),
+    },
+    "shared_models": {
+        "checkpoint": ("StableDiffusion", "Stable-diffusion"),
+        "vae": ("VAE", "vae"),
+        "text_encoder": ("text_encoder", "text_encoders", "clip"),
+        "tokenizer": ("tokenizer", "tokenizers"),
+        "lora": ("Lora", "LyCORIS"),
+        "embedding": ("Embeddings",),
+        "controlnet": ("ControlNet",),
+        "detailer": ("adetailer", "bbox", "ultralytics/bbox", "segm", "ultralytics/segm"),
+        "upscaler": ("ESRGAN", "RealESRGAN", "SwinIR"),
     },
 }
 
@@ -50,7 +67,7 @@ class ExternalModelRoot:
     root_id: str
     display_name: str
     path: str | None
-    layout: Literal["asteria_comfy", "forge_a1111", "custom"]
+    layout: Literal["asteria_comfy", "forge_a1111", "shared_models", "custom"]
     mappings: dict[str, tuple[str, ...]]
     priority: int
     enabled: bool
@@ -101,7 +118,7 @@ class ExternalModelRootPreview:
     path: str
     path_hint: str
     suggested_name: str
-    detected_layout: Literal["asteria_comfy", "forge_a1111"] | None
+    detected_layout: Literal["asteria_comfy", "forge_a1111", "shared_models"] | None
     counts: dict[str, int]
     total_items: int
     truncated: bool
@@ -645,7 +662,7 @@ class ExternalModelLibraryService:
         layout: str,
         mappings: object,
     ) -> dict[str, tuple[str, ...]]:
-        if layout not in {"asteria_comfy", "forge_a1111", "custom"}:
+        if layout not in {"asteria_comfy", "forge_a1111", "shared_models", "custom"}:
             raise ExternalModelLibraryError("layout_invalid")
         source = ROOT_LAYOUTS.get(layout) if mappings is None else mappings
         if not isinstance(source, dict):

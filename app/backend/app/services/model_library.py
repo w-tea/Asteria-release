@@ -39,7 +39,7 @@ MODEL_TYPE_DIRECTORIES = {
     "lora": ("loras", "lora", "merged/lora"),
     "embedding": ("embeddings", "textual_inversion"),
     "controlnet": ("controlnet", "controlnets"),
-    "detailer": ("bbox", "ultralytics/bbox"),
+    "detailer": ("adetailer", "bbox", "ultralytics/bbox", "segm", "ultralytics/segm"),
     "upscaler": ("upscalers", "esrgan", "realesrgan"),
 }
 HIDDEN_MODEL_PATH_PARTS = {"merge-candidates"}

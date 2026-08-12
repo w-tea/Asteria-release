@@ -116,6 +116,13 @@ class AppConfig(BaseModel):
         )
     )
     generation_runtime: str = Field(default_factory=lambda: os.environ.get("ASTERIA_GENERATION_RUNTIME", "asteria"))
+    target_mode: str = Field(
+        default_factory=lambda: (
+            "packaged"
+            if os.environ.get("ASTERIA_TARGET_MODE") == "packaged"
+            else "development"
+        )
+    )
     auto_bootstrap_models: bool = Field(default_factory=lambda: os.environ.get("ASTERIA_AUTO_BOOTSTRAP_MODELS", "1") not in {"0", "false", "False"})
     engine_command: str = Field(default_factory=lambda: os.environ.get("ASTERIA_ENGINE_COMMAND", ""))
     eagle_base_url: str = Field(default_factory=lambda: os.environ.get("ASTERIA_EAGLE_BASE_URL", "http://localhost:41595"))

@@ -11,6 +11,8 @@ from urllib.parse import quote, unquote
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
+from app.services.image_metadata_text import first_generation_parameters_text, read_image_metadata_values
+
 
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 PARAMETER_LABELS = [
@@ -182,11 +184,11 @@ def parse_generation_parameters_text(text: str) -> dict[str, Any] | None:
 
 def read_generation_parameters_from_image(path: Path) -> dict[str, Any] | None:
     try:
-        with Image.open(path) as image:
-            parameters = image.info.get("parameters")
-    except OSError:
+        image_info, metadata_values, _format, _width, _height = read_image_metadata_values(path)
+    except (OSError, ValueError):
         return None
-    if not isinstance(parameters, str):
+    parameters = first_generation_parameters_text(image_info, metadata_values)
+    if not parameters:
         return None
     return parse_generation_parameters_text(parameters)
 

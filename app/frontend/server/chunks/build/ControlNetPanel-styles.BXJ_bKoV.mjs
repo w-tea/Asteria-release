@@ -1,8 +1,0 @@
-const ControlNetPanel_vue_vue_type_style_index_0_scoped_4b912d46_lang = ".control-unit__header[data-v-4b912d46]{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}.control-unit__header>div[data-v-4b912d46]{display:grid;gap:2px;min-width:0}.control-unit__header strong[data-v-4b912d46]{color:var(--asteria-text-strong);font-size:12px;font-weight:700}.control-unit__header small[data-v-4b912d46]{overflow:hidden;color:var(--asteria-muted);font-size:11px;text-overflow:ellipsis;white-space:nowrap}.control-unit__toggle[data-v-4b912d46]{flex:0 0 auto;margin:0;width:auto;white-space:nowrap}.control-unit__mode-note[data-v-4b912d46]{display:block;line-height:1.4}.tool-preset-item__main[data-v-4b912d46],.tool-preset-list[data-v-4b912d46],.tool-preset-panel[data-v-4b912d46]{display:grid;min-width:0;gap:8px}.tool-preset-panel[data-v-4b912d46]{padding:10px;border:1px solid var(--asteria-border-soft);border-radius:var(--asteria-radius);background:#0a0f1452}.tool-preset-item[data-v-4b912d46],.tool-preset-panel__header[data-v-4b912d46]{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.tool-preset-item__main[data-v-4b912d46]{text-align:left}.tool-preset-item__main small[data-v-4b912d46],.tool-preset-item__main span[data-v-4b912d46]{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tool-preset-item__main small[data-v-4b912d46]{color:var(--asteria-muted);font-size:11px}";
-
-const ControlNetPanelStyles_BXJ_bKoV = [
-  ControlNetPanel_vue_vue_type_style_index_0_scoped_4b912d46_lang
-];
-
-export { ControlNetPanelStyles_BXJ_bKoV as default };
-//# sourceMappingURL=ControlNetPanel-styles.BXJ_bKoV.mjs.map

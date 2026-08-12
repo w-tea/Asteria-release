@@ -17,6 +17,7 @@ from app.api.discord import (
 )
 from app.api.diagnostics import router as diagnostics_router
 from app.api.filesystem import router as filesystem_router
+from app.api.image_metadata import router as image_metadata_router
 from app.api.generation import configure_generation_operation_coordinator, router as generation_router
 from app.api.remaster import router as remaster_router
 from app.api.lora_training import configure_lora_operation_coordinator, router as lora_training_router
@@ -89,6 +90,7 @@ def create_app() -> FastAPI:
     app.include_router(maintenance_router)
     app.include_router(assets_router)
     app.include_router(filesystem_router)
+    app.include_router(image_metadata_router)
     app.include_router(models_router)
     app.include_router(operations_router)
     app.include_router(runtime_router)
@@ -108,7 +110,11 @@ def create_app() -> FastAPI:
 
     @app.get("/api/health")
     def health() -> dict[str, str]:
-        return {"status": "ok", "app": "asteria"}
+        return {
+            "status": "ok",
+            "app": "asteria",
+            "target_mode": AppConfig().target_mode,
+        }
 
     return app
 

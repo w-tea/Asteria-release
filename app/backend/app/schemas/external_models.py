@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 
 
-ExternalModelLayout = Literal["asteria_comfy", "forge_a1111", "custom"]
+ExternalModelLayout = Literal["asteria_comfy", "forge_a1111", "shared_models", "custom"]
 ExternalModelRootStatus = Literal["online", "offline", "disabled", "conflict"]
 
 
@@ -46,7 +46,7 @@ class ExternalModelRootPreviewResponse(BaseModel):
     path: str
     path_hint: str
     suggested_name: str
-    detected_layout: Literal["asteria_comfy", "forge_a1111"] | None
+    detected_layout: Literal["asteria_comfy", "forge_a1111", "shared_models"] | None
     counts: dict[str, int]
     total_items: int
     truncated: bool

@@ -1,7 +1,5 @@
 from io import BytesIO
 from pathlib import Path
-import re
-from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import FileResponse
@@ -17,6 +15,13 @@ from app.schemas.image_edit import (
 )
 from app.services import api_errors
 from app.services.history import HistoryRepository
+from app.services.image_assets import (
+    ImageAssetError,
+    image_asset_destination,
+    safe_image_filename,
+    save_validated_image_bytes,
+    write_image_bytes_atomic,
+)
 from app.services.image_validation import (
     DEFAULT_MAX_IMAGE_BYTES,
     DEFAULT_MAX_IMAGE_PIXELS,
@@ -102,35 +107,29 @@ def _measure_response(measure: AssetMeasure) -> AssetMeasureResponse:
 
 
 def _safe_filename(filename: str) -> str:
-    name = re.sub(r"[^A-Za-z0-9._-]+", "_", Path(filename).name)
-    return name or "asset.png"
+    return safe_image_filename(filename)
 
 
 async def _upload_image_asset(request: Request, filename: str, directory_name: str, label: str) -> UploadedAssetResponse:
-    suffix = Path(filename).suffix.lower()
-    if suffix not in SUPPORTED_IMAGE_FORMATS:
-        raise HTTPException(status_code=400, detail={"code": api_errors.ASSET_IMAGE_UNSUPPORTED, "label": label})
     data = await request.body()
-    if not data:
-        raise HTTPException(status_code=400, detail={"code": api_errors.ASSET_IMAGE_EMPTY, "label": label})
     try:
-        validate_image_bytes(
+        asset = save_validated_image_bytes(
             data,
-            suffix,
+            filename=filename,
+            output_dir=AppConfig().data_dir / directory_name,
             max_bytes=MAX_UPLOAD_IMAGE_BYTES,
             max_pixels=MAX_UPLOAD_IMAGE_PIXELS,
         )
-    except InvalidImageContentError as exc:
-        raise HTTPException(status_code=400, detail={"code": api_errors.ASSET_IMAGE_INVALID, "label": label}) from exc
-    output_dir = AppConfig().data_dir / directory_name
-    filename = f"{uuid4().hex}_{_safe_filename(filename)}"
-    path = output_dir / filename
-    try:
-        output_dir.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(data)
-    except OSError as exc:
-        raise HTTPException(status_code=409, detail={"code": api_errors.ASSET_IMAGE_SAVE_FAILED, "label": label}) from exc
-    return UploadedAssetResponse(path=str(path), filename=filename)
+    except ImageAssetError as exc:
+        status_code = 409 if exc.code == "save_failed" else 400
+        code = {
+            "unsupported": api_errors.ASSET_IMAGE_UNSUPPORTED,
+            "empty": api_errors.ASSET_IMAGE_EMPTY,
+            "invalid": api_errors.ASSET_IMAGE_INVALID,
+            "save_failed": api_errors.ASSET_IMAGE_SAVE_FAILED,
+        }[exc.code]
+        raise HTTPException(status_code=status_code, detail={"code": code, "label": label}) from exc
+    return UploadedAssetResponse(path=str(asset.path), filename=asset.filename)
 
 
 def _asset_data_dir() -> Path:
@@ -167,26 +166,14 @@ def _is_asteria_init_image_path(path: Path) -> bool:
 
 
 def _init_image_destination(filename: str) -> tuple[Path, str]:
-    output_dir = _asset_data_dir() / "init_images"
-    safe_name = _safe_filename(filename)
-    if Path(safe_name).suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp"}:
-        safe_name = f"{Path(safe_name).stem or 'asset'}.png"
-    final_name = f"{uuid4().hex}_{safe_name}"
-    return output_dir / final_name, final_name
+    destination = image_asset_destination(_asset_data_dir() / "init_images", filename)
+    return destination.path, destination.filename
 
 
 def _save_init_image_bytes(path: Path, data: bytes) -> None:
-    temporary_path = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
     try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        temporary_path.write_bytes(data)
-        temporary_path.replace(path)
-    except OSError as exc:
-        for cleanup_path in (temporary_path, path):
-            try:
-                cleanup_path.unlink(missing_ok=True)
-            except OSError:
-                pass
+        write_image_bytes_atomic(path, data)
+    except ImageAssetError as exc:
         raise HTTPException(status_code=409, detail={"code": api_errors.ASSET_IMAGE_SAVE_FAILED, "label": "init"}) from exc
 
 
