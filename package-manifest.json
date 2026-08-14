@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.1.0",
   "platform": "windows-x64",
-  "source_commit": "d27cf80a3e63c4104cf7d040fb62608b29c79fe0",
-  "build_timestamp_utc": "2026-08-12T17:31:10Z",
+  "source_commit": "22f53cf59636e4f4f5010d01769bb44d9d57ef63",
+  "build_timestamp_utc": "2026-08-14T02:09:17Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 34916,
-      "sha256": "14bda153ae6178e6b4fa2d39b1d9147b648b312977ee819896d80e8573586901"
+      "size_bytes": 37571,
+      "sha256": "34f30a9c59d6a971c6c19c557d47e83346851b1f9e28356e2e0d14ed9dc85fb7"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -797,34 +797,34 @@
       "sha256": "909a33aca172566cf5ee84a38ab81633527c34f11f4416414a3e6bbdb516f010"
     },
     {
-      "path": "app/frontend/public/_nuxt/B2783FCm.js",
+      "path": "app/frontend/public/_nuxt/CbBsrulU.js",
       "size_bytes": 9504,
-      "sha256": "5021df0c6ee79a4548643d55c928d77066ab38e2278843d77b3a27d89ccfa24d"
+      "sha256": "9173b03cce7723aa4166c7a8ea9ad5b35d6345043fb7ff0982f4ffdc8012d6cc"
     },
     {
-      "path": "app/frontend/public/_nuxt/BWluYWUe.js",
-      "size_bytes": 1517304,
-      "sha256": "b8cdeb3ad6180994911052c2432c67c67b2b68f9c3ae8894e709ed32c922c32c"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/Cp3AUjwH.js",
+      "path": "app/frontend/public/_nuxt/DeVyRU03.js",
       "size_bytes": 3451,
-      "sha256": "61dfba786db0631dd66338ad5644336c5004038507b68236292f360a5bbbe69e"
+      "sha256": "747b6d87bc273434a12b29682cadc5ade29a8d9f81485a7032ba5df89601e38e"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/R4JEM0kz.js",
+      "size_bytes": 1520157,
+      "sha256": "b8876631152d4e039483d4b9aa79227578684390f37836e0cc398bf9422892a3"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "01c02a1053e58ff930db2cef82eaf011e285cedd6c89e883dd78cfed29298e59"
+      "sha256": "3a677237e81449a9da524133ad2ed12b23de02796a3d30ab76e02fe01c493b7a"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/b3a2250c-db31-4069-8600-1f6c2e569d1f.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/00d0c5d0-0782-4f78-b6fe-dcc66cc6fab8.json",
       "size_bytes": 88,
-      "sha256": "69d7283cb61d7c20f458cccaf30f465d8142f942f89a252d10eb903026cf8dce"
+      "sha256": "f0c865e3d3fc71f742946a3843b682e62d05be0a178b8d898e6cb398885f2a5f"
     },
     {
-      "path": "app/frontend/public/_nuxt/entry.B2LgMCPN.css",
-      "size_bytes": 354637,
-      "sha256": "c692d186755bc8dbc1a3a67ae09fdeb3e957c166692836eb97a269bd7d893ccf"
+      "path": "app/frontend/public/_nuxt/entry.Bwpda1mL.css",
+      "size_bytes": 357497,
+      "sha256": "f7fa276b1c6b42ef53535f9bfd789b42e74a3f51e354ab5562bb9aa7052af6b5"
     },
     {
       "path": "app/frontend/public/_nuxt/error-404.BBhU_iaz.css",
@@ -837,19 +837,39 @@
       "sha256": "0c15608923a40f738550fa46af7ba60565a26e866581d6ea7800907920a1e2d7"
     },
     {
+      "path": "app/frontend/public/brand/asteria-mark-navy.svg",
+      "size_bytes": 689,
+      "sha256": "4d739a30da0acc4f8bd6b9caf34980a42c3b72d76d4555ca977d4f84307d015e"
+    },
+    {
+      "path": "app/frontend/public/brand/asteria-mark-white.svg",
+      "size_bytes": 722,
+      "sha256": "05b4a057c936961d7db8244568fbf33f2d4a3e4a2e1915fa8b628329f26a9dc1"
+    },
+    {
+      "path": "app/frontend/public/brand/asteria-wordmark.svg",
+      "size_bytes": 2657,
+      "sha256": "22aeb6bb1f6a4a19b0e0b4ae64635f9b5ce8f707f311096a45168dceef428675"
+    },
+    {
+      "path": "app/frontend/public/brand/icon-close.svg",
+      "size_bytes": 167,
+      "sha256": "b34f35efa171d769068a8b1fda175adbae9f967e8c74ddce4cd2b930ddc3db62"
+    },
+    {
       "path": "app/frontend/server/chunks/_/error-500.mjs",
       "size_bytes": 5093,
       "sha256": "2ba5c88b1daaa088d0af39e2dc47d33aad884e96d859129d35efbc4e2384a1f0"
     },
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
-      "size_bytes": 161778,
-      "sha256": "1a797fd336860108f8fc8188a8cc05cea86cc1b7c1ab6888ab0f575493b37519"
+      "size_bytes": 162688,
+      "sha256": "0b1f676ce43b06a66e20bab8a6022e23bdc3c98fa58f30985ab5d43cc642c190"
     },
     {
-      "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.BbygIMYZ.mjs",
+      "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.NLK6jfRQ.mjs",
       "size_bytes": 2258,
-      "sha256": "56b149cc86c01c1d822420aa0c504214211d42a407438523371218d13649b7d4"
+      "sha256": "6af7ea9dfe355e9d158dd8bf5e8852bd5eee83bd344e316c738a5694c3afe7a2"
     },
     {
       "path": "app/frontend/server/chunks/build/AnimaLLLitePanel-styles.DbUZkJow.mjs",
@@ -857,14 +877,14 @@
       "sha256": "849d66a66249a4cc9855da68327c93a8abc709b276b9ee98c30ce3d9b65d039f"
     },
     {
-      "path": "app/frontend/server/chunks/build/AssetRefreshIndicator-styles.B0FsSe2F.mjs",
-      "size_bytes": 2844,
-      "sha256": "e692adc471e0de13424390d719a83f0b6e31ad72c310f92bf48e11fa82c1563d"
+      "path": "app/frontend/server/chunks/build/AssetRefreshIndicator-styles.C5_T47oM.mjs",
+      "size_bytes": 2558,
+      "sha256": "b91e680b747f713304a693f25033ff05decab15f9ffcff1474b9a139d7eeaf43"
     },
     {
-      "path": "app/frontend/server/chunks/build/ControlModulesInspector-styles.Dc72W_sS.mjs",
-      "size_bytes": 2356,
-      "sha256": "f98a069c673a6c2b060844b2369c485fbfc98f6b3ec9a8231bfb53888048869a"
+      "path": "app/frontend/server/chunks/build/ControlModulesInspector-styles.DAMYGlgt.mjs",
+      "size_bytes": 2354,
+      "sha256": "a4abe0f84323b55e3e81c6043f8c1f711e323dd6f83ef8f50b75bc0d6f739b4e"
     },
     {
       "path": "app/frontend/server/chunks/build/ControlNetPanel-styles.B-iUOVmt.mjs",
@@ -882,19 +902,19 @@
       "sha256": "f760207fbe30038ec396707821a2f86c07d945c9744a6b012f28265d860d1b73"
     },
     {
-      "path": "app/frontend/server/chunks/build/EnhancementInspector-styles.DIInql4b.mjs",
-      "size_bytes": 1913,
-      "sha256": "4f5cfc88744f667e69daab49395aa5a525dca535b959c8b084e8763b60bb970f"
+      "path": "app/frontend/server/chunks/build/EnhancementInspector-styles.BpGRoAng.mjs",
+      "size_bytes": 1910,
+      "sha256": "dd32e7618b814f810249325090e25c6f908215a8ef1b55d01d167f1a22e2a502"
     },
     {
-      "path": "app/frontend/server/chunks/build/ExpertToolsInspector-styles.CJO5SIJB.mjs",
-      "size_bytes": 1308,
-      "sha256": "e1da5072fa2dcce824cd21c227879a8f7e6b83600dbf686e456673e566c62ebf"
+      "path": "app/frontend/server/chunks/build/ExpertToolsInspector-styles.BmAyZ3fe.mjs",
+      "size_bytes": 1305,
+      "sha256": "f1d35cf3fdd986d69508ef0a5aed70b06babe6b21fabe154b2fe2c09af44c3be"
     },
     {
-      "path": "app/frontend/server/chunks/build/GenerateActionStrip-styles.C4TFfumR.mjs",
-      "size_bytes": 6304,
-      "sha256": "d3d52207ada709d99dd2dcde59e8663bb8d4288b5f32f874712a38cd999ba710"
+      "path": "app/frontend/server/chunks/build/GenerateActionStrip-styles.6bIw9TvW.mjs",
+      "size_bytes": 6303,
+      "sha256": "766134fffee86b2da3e459c53676657726e0266ba54f2af0fe230d74864ad51a"
     },
     {
       "path": "app/frontend/server/chunks/build/GenerateBaseControlsPanel-styles.oe_VW3Oa.mjs",
@@ -902,9 +922,9 @@
       "sha256": "d868e9f46697ac7d6e2a4d832fce604a88511552bc9d66922fe14f592b5cf671"
     },
     {
-      "path": "app/frontend/server/chunks/build/GenerateModeSourcePanel-styles.DkGT0MZ9.mjs",
-      "size_bytes": 2950,
-      "sha256": "d2880a45355445dea74f41bf72fc4310d5ab4cb2558388a9f0f8bdc11cbdde52"
+      "path": "app/frontend/server/chunks/build/GenerateModeSourcePanel-styles.C1pU1TO7.mjs",
+      "size_bytes": 2948,
+      "sha256": "088bcd1f60ce9fcebe522272b45d38723575d0aedbb1533a31fd689edc6846db"
     },
     {
       "path": "app/frontend/server/chunks/build/GenerateStudio-styles.DMZyk4z7.mjs",
@@ -912,14 +932,14 @@
       "sha256": "7b4c5b7331e7819b10c5dabb6e3f858b1358e3c64073bf4286b1675f67cb7b32"
     },
     {
-      "path": "app/frontend/server/chunks/build/GenerateWorkspace-styles.B_xSC_Ee.mjs",
-      "size_bytes": 995,
-      "sha256": "3a08dee93fe8699e2084d064ae4d70cb9f4b5258e3ea0bc3178219ad4150b65a"
+      "path": "app/frontend/server/chunks/build/GenerateWorkspace-styles.CySXa8cF.mjs",
+      "size_bytes": 1010,
+      "sha256": "97a279641b97b34bd792dddc4826727abe8fff86664806e795228781b6158e03"
     },
     {
-      "path": "app/frontend/server/chunks/build/GenerationInspector-styles.B_T7uRKv.mjs",
-      "size_bytes": 2765,
-      "sha256": "191bcef88dc495a62c13ff6e4b4d0f14ee42774911388c00eaa6e69b6790657e"
+      "path": "app/frontend/server/chunks/build/GenerationInspector-styles.DhIhcs8k.mjs",
+      "size_bytes": 2762,
+      "sha256": "229a9788e2a38132131ab368b4501001f4c5398402a2e7d4c4e609410dab0a4a"
     },
     {
       "path": "app/frontend/server/chunks/build/GenerationPresetBar-styles.Dy4UVer8.mjs",
@@ -942,24 +962,24 @@
       "sha256": "131c117348ad9317e368b72656b7a629c99fd63d582265896bb38bcd8866f5f2"
     },
     {
-      "path": "app/frontend/server/chunks/build/HelpTopicRail-styles.BopwRWlm.mjs",
-      "size_bytes": 1958,
-      "sha256": "5f23dfe2599d1d5a7b65b765786c4ce1b42e88be1aba1abba6af3808047a8b9e"
+      "path": "app/frontend/server/chunks/build/HelpTopicRail-styles.DjVlpaPV.mjs",
+      "size_bytes": 1974,
+      "sha256": "8166ff7172c67a0fe437395fa35e460de442593bca2f808510fd70c5213c44b9"
     },
     {
-      "path": "app/frontend/server/chunks/build/HelpView-styles.4IjErecl.mjs",
-      "size_bytes": 919,
-      "sha256": "edcddfad9b0659ad4a15d67350aa460aed0a871b1c13ecc5135e1616e01bacca"
+      "path": "app/frontend/server/chunks/build/HelpView-styles.xDazYlPa.mjs",
+      "size_bytes": 931,
+      "sha256": "73119e7802b4123070ecc87a18bf934075b74f995dfa2d842136a5c83403a5c6"
     },
     {
-      "path": "app/frontend/server/chunks/build/HistoryPanel-styles.CzSFmavI.mjs",
+      "path": "app/frontend/server/chunks/build/HistoryPanel-styles.C4LYrcWo.mjs",
       "size_bytes": 607,
-      "sha256": "18fb7329be11241231c4ecea16c21393108ed26296554f04be06d1af7a305dc6"
+      "sha256": "4677392cae5464357a575d990c10b13db4616d47f0da0df9e201e28571ecc086"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageEditCanvasToolbar-styles.DXd4fnu2.mjs",
+      "path": "app/frontend/server/chunks/build/ImageEditCanvasToolbar-styles.DzvzD0aS.mjs",
       "size_bytes": 1912,
-      "sha256": "7ff6396a523ce0a70f02e97624edcac353ca191cd9fdb920128bd7bfee192ea2"
+      "sha256": "f0b6b847246d3a63d671d4fbf5ad063755ab81fa6da9ddff9326a7e268c2d8a5"
     },
     {
       "path": "app/frontend/server/chunks/build/ImageEditControlNetPresets-styles.h-KlVJOH.mjs",
@@ -972,14 +992,14 @@
       "sha256": "dc19d13cd54ad536869a44d1b8b3e2a1566cfbcb8366705047be0b4fec6eb851"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageEditDraftNavigationDialog-styles.C7VNEqB2.mjs",
-      "size_bytes": 966,
-      "sha256": "41d746297c91258d64cd448c034b02e815273fa396a396c3907d18757623d61f"
+      "path": "app/frontend/server/chunks/build/ImageEditDraftNavigationDialog-styles.D4aODk4D.mjs",
+      "size_bytes": 957,
+      "sha256": "daa289b7348c84753005368367bf0b75cd3b49ac2b832d050fec5a95c8f05853"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageEditMaskInspector-styles.C18016Y8.mjs",
+      "path": "app/frontend/server/chunks/build/ImageEditMaskInspector-styles.BYwVZsyU.mjs",
       "size_bytes": 2091,
-      "sha256": "ae64244dd98499fe1108091a8f78d17b38c468d2849e5161e2c89f2717cab43c"
+      "sha256": "ed75a7312efdae506376b507bca98be57e15f2de63542478296da71ddf0e2c7c"
     },
     {
       "path": "app/frontend/server/chunks/build/ImageEditOpenPoseInspector-styles.DVHH8ALI.mjs",
@@ -992,9 +1012,9 @@
       "sha256": "fd4bf3b0da9311ca80c8ca79edc6bd25f746c2a6a3cc7d72e19fb5182566c786"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageEditSourceInspector-styles.ClsaKll3.mjs",
-      "size_bytes": 3805,
-      "sha256": "520e33669a78315de254a3f2b49223fc2098cf1f560d3e46910351e9e554341f"
+      "path": "app/frontend/server/chunks/build/ImageEditSourceInspector-styles.BAj7Ee6N.mjs",
+      "size_bytes": 3802,
+      "sha256": "c11a5257427c923a32cec21cc08d649ee08b1d9fc4256e1c6313f240bd290158"
     },
     {
       "path": "app/frontend/server/chunks/build/ImageEditSourceRemasterInspector-styles.2iJa8uQz.mjs",
@@ -1002,39 +1022,39 @@
       "sha256": "c9d4c473f06a6c1f8dcc677393532ad4ee73a3cddd59ec09c3a8b7c6212a1572"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageEditSummaryBar-styles.BmDcTvdW.mjs",
-      "size_bytes": 2690,
-      "sha256": "7a7442f0951917a381fb4df222d364e2e76ea4aa3d08aaee6c908a90bdc8d674"
+      "path": "app/frontend/server/chunks/build/ImageEditSummaryBar-styles.DDNCp5Cl.mjs",
+      "size_bytes": 2687,
+      "sha256": "93ec5413c3ac105f6bedd2677442a88da49b3e5348f56e8edbe6067db410d2da"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageEditWorkspaceBody-styles.Ds5OXzK3.mjs",
-      "size_bytes": 2051,
-      "sha256": "5129f91a1c52933ab1e36f5a291ed7c9a6d41932678f635bb41f8385281a4701"
+      "path": "app/frontend/server/chunks/build/ImageEditWorkspaceBody-styles.7yDLUE5Z.mjs",
+      "size_bytes": 2055,
+      "sha256": "6c0cf563b85d44cfd8592b60e77cfb19204e6439026c0292395be98a3366628a"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageLibraryView-styles.DNs3fu7L.mjs",
-      "size_bytes": 22099,
-      "sha256": "30a3f71433818701f79f5bfe14f1609a5e3219a12abc31fb51e827c1d0fb2ec0"
+      "path": "app/frontend/server/chunks/build/ImageLibraryView-styles.7uD2puUI.mjs",
+      "size_bytes": 22058,
+      "sha256": "79799ad00de3d449df1a5a3f5973951c205febee982de8cb1ee44194e563e597"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageMetadataImportDialog-styles.CQEjRxJE.mjs",
-      "size_bytes": 4286,
-      "sha256": "c9699f97f5ae6684254189b92107a9fd824b94213ba09c0c10b66941115bd963"
+      "path": "app/frontend/server/chunks/build/ImageMetadataImportDialog-styles.DyZjN4mz.mjs",
+      "size_bytes": 4257,
+      "sha256": "511785cdbc2f376a0940f48f4a8119f5e9b9ac8c498bb2a6bded3d6e0008d59f"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageMetadataImportFlow-styles.DMCPnZXs.mjs",
-      "size_bytes": 1406,
-      "sha256": "6b0f373f6cf64c18625652612ffbc4f9816acc0297bc4ad53a6825fdeba07a5c"
+      "path": "app/frontend/server/chunks/build/ImageMetadataImportFlow-styles.DI2OY_U-.mjs",
+      "size_bytes": 1373,
+      "sha256": "6deaf0627687e92347e141399cd6fb4c5618422d8c81a1bb00a0d60ef759d6e4"
     },
     {
-      "path": "app/frontend/server/chunks/build/ImageWorkspace-styles.Uuuj3zlu.mjs",
-      "size_bytes": 6277,
-      "sha256": "065444abfb24b804c336dff1fd27f6b248b745e79335ac747dec3c68f6856976"
+      "path": "app/frontend/server/chunks/build/ImageWorkspace-styles.P2S03dQL.mjs",
+      "size_bytes": 6371,
+      "sha256": "561284e9d9df3b189aac46e27bc93e8dcafdb949df0f0599e9240b509cce12e8"
     },
     {
-      "path": "app/frontend/server/chunks/build/LibraryActionQueueDrawer-styles.B2W916sp.mjs",
-      "size_bytes": 2908,
-      "sha256": "1e278e06baa6f89ec88ab868f006512ad8a6fb81d1531f75884621cc571d87d4"
+      "path": "app/frontend/server/chunks/build/LibraryActionQueueDrawer-styles.Ca2nf78k.mjs",
+      "size_bytes": 3012,
+      "sha256": "5317856b08608cce37ffe8d1111d24a6a4ff85ab426e730b0a541ed8b6763d86"
     },
     {
       "path": "app/frontend/server/chunks/build/LibraryBoardView-styles.BHWQyQ8G.mjs",
@@ -1052,24 +1072,24 @@
       "sha256": "d067fb1c49810f80a36c92bd2ad4fca278234c26c037706190abdcb1a29b0d93"
     },
     {
-      "path": "app/frontend/server/chunks/build/LibraryFilterBar-styles.BkALyXuR.mjs",
+      "path": "app/frontend/server/chunks/build/LibraryFilterBar-styles.DIs37lv7.mjs",
       "size_bytes": 4584,
-      "sha256": "9739c4694193294cd282571e93a100fe39991b1f601854389c0f5bcc60a7a393"
+      "sha256": "877a49388b04dc4c935dd5abe4d5f232ddb42f44e60ca353a1957808fa50d0a6"
     },
     {
-      "path": "app/frontend/server/chunks/build/LibraryFolderRail-styles.CbhHpJnw.mjs",
-      "size_bytes": 2694,
-      "sha256": "055f39e030d688b95aec476e526c598e69aae84cc74d100b47e61127bdbdcf08"
+      "path": "app/frontend/server/chunks/build/LibraryFolderRail-styles.DMf8FQ04.mjs",
+      "size_bytes": 2699,
+      "sha256": "d7ea355b88e963abaf9ae0c3453f29043fb5b2bd1314cf877fb44017ab3ce106"
     },
     {
-      "path": "app/frontend/server/chunks/build/LibraryImageGrid-styles.BtyLA7Ew.mjs",
-      "size_bytes": 4102,
-      "sha256": "75444fd6c2e2f48db755f8b82744a97e25ea94081170d970653552cc5e85ef93"
+      "path": "app/frontend/server/chunks/build/LibraryImageGrid-styles.B2YESSNg.mjs",
+      "size_bytes": 4301,
+      "sha256": "58971c415b377223e3ef3d6867e3830000331992a950a595ee8bdf98b7c72f4a"
     },
     {
-      "path": "app/frontend/server/chunks/build/LibraryProcessDeliverInspector-styles.DcwNhwws.mjs",
-      "size_bytes": 5781,
-      "sha256": "10ce04561567910632297928c788a8801dd1397aa4396ed17bacc2a822350697"
+      "path": "app/frontend/server/chunks/build/LibraryProcessDeliverInspector-styles.BD5sde3E.mjs",
+      "size_bytes": 5792,
+      "sha256": "3f99b50e143661bffdbb3883edd0da2421914193647b560d407b47e505b725e2"
     },
     {
       "path": "app/frontend/server/chunks/build/LibrarySelectionInspector-styles.COg0XmRu.mjs",
@@ -1082,9 +1102,9 @@
       "sha256": "5645ea3d97f80fea6373ce8e0b193a37ad7de8f9978159c9928e86854e5d3f0b"
     },
     {
-      "path": "app/frontend/server/chunks/build/LoRABrowser-styles.Bj_qceMe.mjs",
+      "path": "app/frontend/server/chunks/build/LoRABrowser-styles.C0L42XjY.mjs",
       "size_bytes": 2015,
-      "sha256": "3bdc753438b93b63005f8eaf473bcd1f6d89c78e03020adbb300416a71776de3"
+      "sha256": "b77c37e0de550fcb3369bbe79273f418ebbeb7c7092287d36ea8c4d765b415ea"
     },
     {
       "path": "app/frontend/server/chunks/build/LoRACaptionInspector-styles.DeTFl2hN.mjs",
@@ -1097,9 +1117,9 @@
       "sha256": "aecfb2340bf6553d34932fdbd3d8d9db6676c3f5b1e74081490bd24b60e2817f"
     },
     {
-      "path": "app/frontend/server/chunks/build/LoRACopyMachineWorkspace-styles.DBhWVby3.mjs",
-      "size_bytes": 5035,
-      "sha256": "5af49c3f9d57ed381d69a63f3c5f75f353d3e559162d351a31c8df04f352dce7"
+      "path": "app/frontend/server/chunks/build/LoRACopyMachineWorkspace-styles.CJLu_fLm.mjs",
+      "size_bytes": 5034,
+      "sha256": "727147ad1fa54980bf607e4bf68b2535346ae50984bbc705ea8ba6eaaeec256f"
     },
     {
       "path": "app/frontend/server/chunks/build/LoRADatasetCaptionStudio-styles.DZQVxig5.mjs",
@@ -1112,14 +1132,14 @@
       "sha256": "36754b3821d09a792fb6e892cf236016f1cdba77dae6acd9f0eff7afb816f512"
     },
     {
-      "path": "app/frontend/server/chunks/build/LoRAStandardWorkspace-styles.DB82maQa.mjs",
-      "size_bytes": 4701,
-      "sha256": "1b3a874a276d8ba0a2d15c0bfb1fbc23b906ecc513aabe76258cefe3e47417d1"
+      "path": "app/frontend/server/chunks/build/LoRAStandardWorkspace-styles.DngHgxEF.mjs",
+      "size_bytes": 4956,
+      "sha256": "94d175ac54957f0fee07eb373689ad753bebc9272cca7eacd25b850bcae8ed7c"
     },
     {
-      "path": "app/frontend/server/chunks/build/LoRATrainingView-styles.SSuEJeB9.mjs",
-      "size_bytes": 24910,
-      "sha256": "e4c5490b35c46e06db860833b5da97f6f2e9574b2348f92a241ea610b36c34b4"
+      "path": "app/frontend/server/chunks/build/LoRATrainingView-styles.BpoE7AOX.mjs",
+      "size_bytes": 24889,
+      "sha256": "eb5c4c7385b8c47473c7dd53c0a72b7beeb6a3d9fc331b28540b95569dc9bb7f"
     },
     {
       "path": "app/frontend/server/chunks/build/LoRATrainingWorkspaceBody-styles.BtumwPjY.mjs",
@@ -1127,9 +1147,9 @@
       "sha256": "8e8638c45dc51b9eae871cf7cf2941411bd3f58b678016224f9526547444956b"
     },
     {
-      "path": "app/frontend/server/chunks/build/MergeAdvancedWorkbench-styles.DduI6Ohm.mjs",
-      "size_bytes": 3794,
-      "sha256": "b383cbbe44ad24fc10c1ca056b6c7910a6fe183209a6cb582748fd661ccb8dc1"
+      "path": "app/frontend/server/chunks/build/MergeAdvancedWorkbench-styles.C3-adxAW.mjs",
+      "size_bytes": 3790,
+      "sha256": "a8e7116f99d065109f0c3c5370f0ccfdbe41a0e6d4677274d0f4d77ee42819ca"
     },
     {
       "path": "app/frontend/server/chunks/build/MergeAnalysisPanel-styles.Ds2_D5Ju.mjs",
@@ -1137,9 +1157,9 @@
       "sha256": "d65d7c7a7f8fa7a2cb774085cd4d74890bf658321c9d2e18f8edf736870ce266"
     },
     {
-      "path": "app/frontend/server/chunks/build/MergeCandidateBoard-styles.V3Ys2Q7z.mjs",
-      "size_bytes": 4954,
-      "sha256": "dc7441b32e6f779f1b69ae7ea393b2e9ca6363204f54ed9ae78760dc19ded4c8"
+      "path": "app/frontend/server/chunks/build/MergeCandidateBoard-styles.1uLaj6cf.mjs",
+      "size_bytes": 4965,
+      "sha256": "fa58fe5ad5969b832d62f5a3c2d1bad3fdfe3608b3ec63f5529d9132e38d8f0f"
     },
     {
       "path": "app/frontend/server/chunks/build/MergeCandidateStudio-styles.D3FhPKIz.mjs",
@@ -1152,9 +1172,9 @@
       "sha256": "1969b33947f817c6da0fe824235f3dc06be840ba7567d59fb8da584e5deef299"
     },
     {
-      "path": "app/frontend/server/chunks/build/MergeOutputHistoryRail-styles.DJpx7BFt.mjs",
-      "size_bytes": 2478,
-      "sha256": "0522af9a54c8a5642f64c4af75466b66cd2ab5d4f019651395a657d8426846f0"
+      "path": "app/frontend/server/chunks/build/MergeOutputHistoryRail-styles.BeZSBMW4.mjs",
+      "size_bytes": 2815,
+      "sha256": "215b6ad1041a08d9217b38cf3f6d1fae8380e0bdcdba9175863f34f7831acc31"
     },
     {
       "path": "app/frontend/server/chunks/build/MergeRecipeConsole-styles.D7VYI3oJ.mjs",
@@ -1162,34 +1182,34 @@
       "sha256": "1744f2ba330a526245d575fc3c112354713a1452bfa475fd53bc780cd54f702e"
     },
     {
-      "path": "app/frontend/server/chunks/build/MergeStudioView-styles.C7Uzk-FD.mjs",
-      "size_bytes": 30939,
-      "sha256": "be334bcf8becf51f4e9986429f2ddf8d55ba6f7280d985a3025ea7d1d3aab3f6"
+      "path": "app/frontend/server/chunks/build/MergeStudioView-styles.ZAmJm8SM.mjs",
+      "size_bytes": 30704,
+      "sha256": "aafe012025618cdc31ba2e2aab630f29c563562de704a35d9b9906272924fc8a"
     },
     {
-      "path": "app/frontend/server/chunks/build/MergeWorkspaceBody-styles.mGYgSl8F.mjs",
-      "size_bytes": 2007,
-      "sha256": "11557699c835e1fee9254fe62c3e90514dfc426e7d4599fe81248df1b8db0b0c"
+      "path": "app/frontend/server/chunks/build/MergeWorkspaceBody-styles.CA81Ulna.mjs",
+      "size_bytes": 1964,
+      "sha256": "644efc85273d58e7ee9f2b99396f76a1dc40cb58db8e33d948467f04ea07cd06"
     },
     {
-      "path": "app/frontend/server/chunks/build/ModelSettingsPanel-styles.Bcy6B2kR.mjs",
+      "path": "app/frontend/server/chunks/build/ModelSettingsPanel-styles.Q7wsHrMt.mjs",
       "size_bytes": 3468,
-      "sha256": "97f95d3021870fdabc1fbdfadba12f6e6290068247f4403c86d7afb88018de71"
+      "sha256": "1dd6cf697a006283d5da229a60de35e5d77689fd28ed87cea1beb6c1c27d966f"
     },
     {
-      "path": "app/frontend/server/chunks/build/OperationIndicator-styles.CoNTNhZM.mjs",
-      "size_bytes": 4076,
-      "sha256": "f0eb1da370153a26d10b9785fd40fa5740d78a67a0d4ec53cec38290a4e5587e"
+      "path": "app/frontend/server/chunks/build/OperationIndicator-styles.DPfx1bII.mjs",
+      "size_bytes": 3999,
+      "sha256": "d14894aca21a41a5225213ae94ed6633fe02788fff49b93165e0ffef155b679c"
     },
     {
-      "path": "app/frontend/server/chunks/build/PromptAssetsDrawer-styles.BNzgEgqt.mjs",
-      "size_bytes": 2971,
-      "sha256": "7c41085b4089bf38ff977551f3f340d1d022ebf19ec6a43fea4387dea1ce29bf"
+      "path": "app/frontend/server/chunks/build/PromptAssetsDrawer-styles.CEe4DoZq.mjs",
+      "size_bytes": 2777,
+      "sha256": "54d42ef76cc2d1097b95c80c87d223e9d4fc35e36da90904c4a669f8b40246fa"
     },
     {
-      "path": "app/frontend/server/chunks/build/PromptPane-styles.B_HB-kSv.mjs",
-      "size_bytes": 5936,
-      "sha256": "077081255a3bfd989f3e17786b736e7bce924176e79addd9ee7c824878738aba"
+      "path": "app/frontend/server/chunks/build/PromptPane-styles.kK66rNDW.mjs",
+      "size_bytes": 6323,
+      "sha256": "c01aa546a7afdae6ca6e198edeff98b573f1b2e56d0f16593318daadad99ead9"
     },
     {
       "path": "app/frontend/server/chunks/build/RemasterSettingsPanel-styles._TVnkfgq.mjs",
@@ -1197,9 +1217,9 @@
       "sha256": "d127bbfcc4b6248a39b3ade5ef6a0a18e134269ccacba5ffca0c0a815c97ff1f"
     },
     {
-      "path": "app/frontend/server/chunks/build/ResultDetailsDrawer-styles.BJFfqHVU.mjs",
-      "size_bytes": 1955,
-      "sha256": "77ffab9457629ccc1e01fbf219ba53360b2936883cb39c9542babf19b2efea3c"
+      "path": "app/frontend/server/chunks/build/ResultDetailsDrawer-styles.CCZv-GTN.mjs",
+      "size_bytes": 1885,
+      "sha256": "c9cbe1bff14100ca42d56c6755ee60349770d87470a757bbad1ddf7dd9bfda46"
     },
     {
       "path": "app/frontend/server/chunks/build/ResultPane-styles.D1ilMhtp.mjs",
@@ -1212,24 +1232,24 @@
       "sha256": "85c655513318b23de17121e089a31bf92120bd94da4a7ee833433f7dea1962a7"
     },
     {
-      "path": "app/frontend/server/chunks/build/SelectedLoRAStack-styles.DR5buT1_.mjs",
+      "path": "app/frontend/server/chunks/build/SelectedLoRAStack-styles.Hq8Q975M.mjs",
       "size_bytes": 1961,
-      "sha256": "a26df2d595af88d4b2ca9c1f2263eb09521e7618a1f2d60a5e94b70f6af03fb2"
+      "sha256": "88059c17d3c7a38a24eea898c4a94ecb890f04c5963babe03946aea77f672289"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsAIProviderTool-styles.B_X8EmpR.mjs",
-      "size_bytes": 5589,
-      "sha256": "02748872334c610ff3e6da891e94cf1eb10eb927135b53569b2f59eaaae5f899"
+      "path": "app/frontend/server/chunks/build/SettingsAIProviderTool-styles.D4-zeHEA.mjs",
+      "size_bytes": 5634,
+      "sha256": "84741fbdbd893b052bed5e51a12b313c3f0144b9931c6bca9da6f6d763d6e835"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsAppearanceTool-styles.-GPoXIab.mjs",
-      "size_bytes": 2750,
-      "sha256": "c2131778ce47254204d16e4577d157c0b4966ffad93307bd674015510ec5a503"
+      "path": "app/frontend/server/chunks/build/SettingsAppearanceTool-styles.CfS77Glb.mjs",
+      "size_bytes": 3351,
+      "sha256": "86c89ffeaf31820660d325a8f21c5a3b2f0410c153cd07cd463276c83af0b74a"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsCategoryRail-styles.D4YuFVgo.mjs",
-      "size_bytes": 2114,
-      "sha256": "674cf73c605a5e591640e01e41aee45414c7bac784bd535f8e480d957c06167b"
+      "path": "app/frontend/server/chunks/build/SettingsCategoryRail-styles.pBREzFFI.mjs",
+      "size_bytes": 2130,
+      "sha256": "4aa6623d8dadfe8268baf906626f9edba8372d0a296e7743b1d5ffde0f61fe38"
     },
     {
       "path": "app/frontend/server/chunks/build/SettingsDiagnosticsTool-styles.DwHUDTgq.mjs",
@@ -1252,9 +1272,9 @@
       "sha256": "95e984a49a1889256de6e02e8eaa5daac7ff1b0b44c4263eee6f5033a5e1ebcb"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsIntegrationsTool-styles.CBryqWES.mjs",
-      "size_bytes": 3987,
-      "sha256": "451d73ed1a662d52f01c240204c6c51549a95970d3fe3367a589f80249f5ab35"
+      "path": "app/frontend/server/chunks/build/SettingsIntegrationsTool-styles.BvLzgPMN.mjs",
+      "size_bytes": 4026,
+      "sha256": "cefb5c1d45a8a0739350bd366457e1501a9d37c1700c81faaad480060501958e"
     },
     {
       "path": "app/frontend/server/chunks/build/SettingsMaintenanceTool-styles.CkLLX38q.mjs",
@@ -1267,9 +1287,9 @@
       "sha256": "05aed1f7c1b2351460fb2fdcb166091b47116242a599af3e1a310d91ae2dcabf"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsOperationsConsole-styles.BYFeJ8LQ.mjs",
-      "size_bytes": 2579,
-      "sha256": "63ae99d5c1eb324d66bd4da46654b497282da9f0c9b6dc9941d79ae80dbda6b1"
+      "path": "app/frontend/server/chunks/build/SettingsOperationsConsole-styles.CzLXXUJz.mjs",
+      "size_bytes": 2576,
+      "sha256": "38b9f26e626f538c2c241d6102772777b18b968d4cf34ce141ef0bab41bee809"
     },
     {
       "path": "app/frontend/server/chunks/build/SettingsOutputStorageWorkbench-styles.LHnd20mc.mjs",
@@ -1277,9 +1297,9 @@
       "sha256": "da98b8805f95294a8a58fa87eaf49ec85bb7a2f61d4777c980d31696056bec6f"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsPathPicker-styles.B-M54zcu.mjs",
-      "size_bytes": 4855,
-      "sha256": "100690371d43b390b1731043483cb5c557a43968140673b09929a6233e6f5b4c"
+      "path": "app/frontend/server/chunks/build/SettingsPathPicker-styles.CBtjv8FK.mjs",
+      "size_bytes": 4863,
+      "sha256": "10274a9861a65814bf537b7fe7ef172ad2abc8e27cf64ce9154b425922e12dad"
     },
     {
       "path": "app/frontend/server/chunks/build/SettingsRuntimeTool-styles.CXH1oRCJ.mjs",
@@ -1287,49 +1307,49 @@
       "sha256": "bac8dde1e03f004d0b5910fc47b9adfb8638a869875b33a997478cbff9308c9d"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsStartupOverview-styles.Cxfi3BaI.mjs",
-      "size_bytes": 7017,
-      "sha256": "57642bfabe04c71f8b4ebc29d12c60ef11646298a7b9cc64fdf293b219f4a48e"
+      "path": "app/frontend/server/chunks/build/SettingsStartupOverview-styles.CvKoul00.mjs",
+      "size_bytes": 6984,
+      "sha256": "e3eaacfa1b80f4b497231e08eb5bfaff54429eb08f3599326ea2a4347daef63c"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsValidationInspector-styles.BBmVbjzL.mjs",
-      "size_bytes": 3968,
-      "sha256": "4ddf2add97bede170c78363b7283b9c700337360cc2d6c1f67cda75fa798d851"
+      "path": "app/frontend/server/chunks/build/SettingsValidationInspector-styles.COxWJaFu.mjs",
+      "size_bytes": 3965,
+      "sha256": "72c3df5c32d3d1d0bf443578c3530d036d7d739cc93b1bce6d21e5a711605e6f"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsView-styles.CkaAEZYv.mjs",
-      "size_bytes": 9837,
-      "sha256": "73b2aa276f2967961b856af713256727399c1809ad2364ad477dd0490960df9d"
+      "path": "app/frontend/server/chunks/build/SettingsView-styles.CCEvBYrs.mjs",
+      "size_bytes": 9820,
+      "sha256": "3a33c5c8b0c83fb46c4a0b5f05b0ff31fe37cad96e7d28cce54c0250891dab44"
     },
     {
-      "path": "app/frontend/server/chunks/build/SettingsWorkspaceBody-styles.D6nmkKK3.mjs",
-      "size_bytes": 888,
-      "sha256": "d7bde805d14f0ec19fd25ac0bc1c5f099c5dc31e1179364991c69328be6526e0"
+      "path": "app/frontend/server/chunks/build/SettingsWorkspaceBody-styles.ZH4S7e2T.mjs",
+      "size_bytes": 900,
+      "sha256": "0a283341b7d4a5133c043e354b08effede1e92fba7365b6cc7802321e7d31212"
     },
     {
-      "path": "app/frontend/server/chunks/build/StartupLoadingOverlay-styles.CtNDQDCM.mjs",
-      "size_bytes": 2078,
-      "sha256": "35bab4cd42cb075557aed166deb070786dd6b9acf761b1a2cb170d9bead1e2eb"
+      "path": "app/frontend/server/chunks/build/StartupLoadingOverlay-styles.Day8kWmE.mjs",
+      "size_bytes": 2662,
+      "sha256": "182591039938dc3e8f8e465686f3251c48ebbf3773a7088545843d4360e6bc56"
     },
     {
-      "path": "app/frontend/server/chunks/build/StudioRail-styles.4sZ1j0FC.mjs",
-      "size_bytes": 2426,
-      "sha256": "6dfe422484c1c8131d4d8759c2d9e303f04f1c3838d9ad0216b0873321728ebe"
+      "path": "app/frontend/server/chunks/build/StudioRail-styles.CRlACwwD.mjs",
+      "size_bytes": 2605,
+      "sha256": "b2a4a45223115afa0d8a453ddbf820fccc6fe399c9749bd7e22808eaf9e09066"
     },
     {
-      "path": "app/frontend/server/chunks/build/StudioShell-styles.ey_0J-Lz.mjs",
-      "size_bytes": 1404,
-      "sha256": "030e700b39091c3a6b7e5a6c149a2d3b11b77fa076fec21adb378f0ab50ad456"
+      "path": "app/frontend/server/chunks/build/StudioShell-styles.DJagUOE9.mjs",
+      "size_bytes": 1495,
+      "sha256": "7b3f9bf48d9c0e617837e87cf371c3e2014ac14ba8ebbd15d5fdb7a9d2ae3ffc"
     },
     {
-      "path": "app/frontend/server/chunks/build/TopStatusBar-styles.BrNjrd5H.mjs",
-      "size_bytes": 4319,
-      "sha256": "80922071399b6e766d46c9991f0e7be678767e50c3b1c760a72e960dddf2f018"
+      "path": "app/frontend/server/chunks/build/TopStatusBar-styles.DmVE_Bsx.mjs",
+      "size_bytes": 5232,
+      "sha256": "1b5833e742b41290661a9c53a57ea945ebc8f871fc3a570f812a134f2226d9f1"
     },
     {
       "path": "app/frontend/server/chunks/build/client.precomputed.mjs",
       "size_bytes": 2916,
-      "sha256": "45802f5d71aa5d0a6e504e3e9b0c64181fa6b6a335eeef47e1f827a03dbaa5c7"
+      "sha256": "685b46e4d24dac1b2b2333a310b8d8b60e495ce8c9f1a00640ffbd06fa793c1a"
     },
     {
       "path": "app/frontend/server/chunks/build/error-404-DXgHoesY.mjs",
@@ -1353,18 +1373,18 @@
     },
     {
       "path": "app/frontend/server/chunks/build/server.mjs",
-      "size_bytes": 2491168,
-      "sha256": "3c05a6fd18e5384b0220e2d0d435b70ceb4d15f81331acb4beb0bc63907edabb"
+      "size_bytes": 2498713,
+      "sha256": "c9dfad637e22c5ed43c436fb628a7d38641a4bce199d285432aa39833bb08160"
     },
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 13325,
-      "sha256": "5a51b139c5c92a9622eea79a2e3528556a04fbc92dcbd3c38d9315c0efb2fe5e"
+      "sha256": "8ab5bec39256f11e0cae45f53653977af44228e3ff77e81f4a02c25903e98291"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
-      "size_bytes": 15685,
-      "sha256": "b6ef0f51cd1117232e267947c5f7d61e3a6dfbafc6a5e101328f031369454064"
+      "size_bytes": 16234,
+      "sha256": "424d8c79a810190433f1b57f2923fa6a3d8765f066352e031e9707c5d7746784"
     },
     {
       "path": "app/frontend/server/chunks/virtual/_virtual_spa-template.mjs",

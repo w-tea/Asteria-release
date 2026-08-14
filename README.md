@@ -49,7 +49,12 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 - PNG／JPEG／WebPを選び、Asteria、A1111／Forge、一般的なComfyUIのmetadataを確認して再利用できるようにしました。画像のプロンプトだけ、現在のSeedを変えずに生成設定、画像入力、Seedだけをそれぞれ明示的に適用でき、適用だけで生成は開始しません。
 - 壊れた値や極端に大きい画像metadataでも安全に部分表示できるようにし、同じ画像入力が同時操作で重複登録されないようにしました。
 - 全画面の配色と面の区切り、通常／実行／選択／削除操作の見分けやすさ、Light／Dark／Systemでの可読性を見直しました。既存の画面構成と操作順は維持しています。
+- 固定Navyのナビゲーション、Cobaltの選択／通常操作、Tealの実行操作、役割別の作業面と入力面を使う配色へ刷新しました。文字、余白、グルーピングも見直し、必要な操作や別レイヤーだけに控えめな奥行き表現を使います。
 - 閉じる操作を×アイコンへ統一し、Libraryのフォルダー列、画像一覧のスクロール境界、Image Edit／Library／Mergeの狭い画面での配置、画面下部の不要な空白を改善しました。
+- 公式Asteriaロゴとテーマ対応faviconを追加し、小さい表示でも読みやすい太さのwordmarkへ更新しました。閉じるアイコンの中心、AIプロンプト支援／履歴の内余白、Merge履歴列の不要な横スクロールも改善しました。
+- 履歴や設定の外枠など操作できない面のhover反応をなくし、実際に選択・実行できる行やボタンだけが反応するよう整理しました。閉じるアイコンは余分な位置補正をなくし、標準的なflex中央揃えへ単純化しました。
+- 英数字をNoto Sans、日本語をNoto Sans JPへ統一しました。日本語のボタンや見出しが最後の一文字だけ次の行へ落ちないよう、文字を分割せずボタンや隣接操作を行単位で折り返す表示へ改善しました。
+- Libraryの前後移動ボタンが押下時に動いて閉じてしまう問題を修正しました。Generateを含むボタン文字の縦位置を揃え、Merge履歴列とLoRA実行履歴の長い英字による不要な横スクロールを解消しました。
 
 #### V1.0.4
 
@@ -248,7 +253,12 @@ Asteria is a Windows application for local AI image production. It covers image 
 - Added preview and reuse of Asteria, A1111/Forge, and common ComfyUI metadata from PNG, JPEG, and WebP images. Apply prompts only, compatible generation settings without changing the current Seed, the image input, or the Seed alone; applying settings never starts generation automatically.
 - Made metadata preview resilient to malformed or excessively large image metadata and prevented concurrent image-input actions from registering the same image twice.
 - Improved visual hierarchy across every workspace, including clearer surfaces and normal, primary, selected, and destructive actions in Light, Dark, and System themes, while preserving the existing screen structure and workflow order.
+- Refreshed the product with a fixed Navy shell, Cobalt selection and normal actions, Teal execution actions, role-specific work and input surfaces, stronger typography and spacing, and restrained depth only where it clarifies an action or detached layer.
 - Standardized direct close actions as × icons and improved the Library folder rail and scrolling boundary, narrow Image Edit/Library/Merge layouts, and unintended empty space below workspaces.
+- Added the official Asteria wordmark and theme-aware favicons, updated the wordmark for clearer small-size rendering, centered the close icon precisely, added missing inner spacing to Prompt Assist and History surfaces, and removed the unintended horizontal scroll from the Merge history rail.
+- Removed hover feedback from passive History and settings surfaces so only actionable rows and controls react, and simplified the shared close icon to standard flex centering without positional compensation.
+- Standardized Latin text on Noto Sans and Japanese text on Noto Sans JP. Japanese controls and headings now wrap adjacent actions or whole controls before splitting a label or leaving one character alone on the final line.
+- Fixed Library previous/next controls moving and closing the preview when pressed. Button labels, including Generate controls, are vertically centered, and long Merge history and LoRA run text no longer creates unintended horizontal scrolling.
 
 #### V1.0.4
 
