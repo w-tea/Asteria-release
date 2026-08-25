@@ -1,9 +1,10 @@
-# Asteria V1.1.0 Windows Portable
+# Asteria V1.1.1 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
 ## 更新履歴 / Release history
 
+- **V1.1.1** — 空白を含むフォルダへ配置した場合にComfyUIのデータベース引数が分割され、Asteriaを起動できない問題を修正。 / Fixed startup failure when Asteria was installed under a folder path containing spaces and the ComfyUI database argument was split.
 - **V1.1.0** — 永続操作、更新・復旧保護、外部モデルライブラリ、追加Merge方式、全画面テーマ刷新、画像metadata再利用、Discord生成、診断を追加。 / Added durable operations, safer update and recovery, external model libraries, new Merge modes, a full visual refresh, image-metadata reuse, Discord generation, and diagnostics.
 - **V1.0.4** — Runtime Monitor、生成時間、Seed単独適用、LoRAサムネイルと生成出力を改善。 / Added Runtime Monitor and generation time, seed-only reuse, LoRA thumbnails, and generation-output fixes.
 - **V1.0.3** — LibraryとImage Editの長期利用・データ保護、Generate／Merge XYZ、Topaz／Eagle連携、モデル参照と操作UIを強化。 / Strengthened long-term Library and Image Edit safety, Generate/Merge XYZ, Topaz/Eagle integration, model handling, and operation UI.
@@ -31,6 +32,11 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 - **Discord生成**: Generateで明示公開した設定だけを、許可したDiscordサーバーやチャンネルから利用できます。
 
 ### 更新履歴
+
+#### V1.1.1
+
+- Asteriaの配置先フォルダ名に空白が含まれる場合でも、ComfyUIのデータベースURLを1つの起動引数として安全に渡すよう修正しました。
+- この問題はComfyUIがGPUを初期化する前に発生する起動引数の不備で、GPUやメモリの性能には依存しません。
 
 #### V1.1.0
 
@@ -236,6 +242,11 @@ Asteria is a Windows application for local AI image production. It covers image 
 - **Discord generation**: Use only the Generate settings you explicitly publish from allowed Discord servers or channels.
 
 ### Release history
+
+#### V1.1.1
+
+- Fixed the ComfyUI database URL so it remains one process argument when the Asteria installation path contains spaces.
+- This failure occurred during command-line parsing before GPU initialization and was unrelated to GPU or system-memory performance.
 
 #### V1.1.0
 
