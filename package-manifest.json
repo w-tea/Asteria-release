@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "904a766662f927c49193f0cb1359f51c3f4d7192",
-  "build_timestamp_utc": "2026-08-27T09:18:52Z",
+  "source_commit": "8553cc6b21dbcfac696e0ad55f1d67544743a185",
+  "build_timestamp_utc": "2026-08-27T10:53:46Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -1179,12 +1179,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "a73279628f285bcd32ef6c83427ba84995baf3687ea49ab5312256c4f0161974"
+      "sha256": "a60c1a54000ea4447db44f27f176074d0176b853255911106f5a133d5fa6cd51"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/4ffc1cec-440d-4a64-9e85-837b42258186.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/193313e9-ff80-4a49-af67-3cca96df9a7f.json",
       "size_bytes": 88,
-      "sha256": "9adc8480b1af0db5c52892c303b19230943c0e6fac7849580820d12fe3425ae6"
+      "sha256": "96a0f276c61641ef40a78170752aa913dd204a8b071ee6c2d23a0962520bac62"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.BHybjkUT.css",
@@ -1229,7 +1229,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "69339f3d283f3fe9fc1cfa3995a66538509f3a9930d05f04f750dcd7442996c8"
+      "sha256": "a7798717bf2dfe823b7260935f1e63f5653859da42503e8435709d6fce212c48"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.NLK6jfRQ.mjs",
@@ -1919,7 +1919,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 17958,
-      "sha256": "ee466ed6c1bbfd32a54039e8668c0c0afa18d7b51a2071219d626d02f35b8e59"
+      "sha256": "10dbfd7de50e013ed51f84c5b7d597eb8a0ccb8849acd6b35a0ee7919e0b6848"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -2545,6 +2545,16 @@
       "path": "notices/THIRD_PARTY_NOTICES.txt",
       "size_bytes": 2036,
       "sha256": "3f21d4bee936c264e92d72b2a100f5dae5295efb249e541b61e934a0067b6cba"
+    },
+    {
+      "path": "profiles/music/minimax-music3-local.v1.json",
+      "size_bytes": 7546,
+      "sha256": "31b5704e9dad5c9589ade3e4c3d8682b324701e02f7d6cb36f2230cf2f5222b9"
+    },
+    {
+      "path": "profiles/video/minimax-h3-local.v1.json",
+      "size_bytes": 5360,
+      "sha256": "e397ae5091ecc793308ef45a0523591e07ba7e1be586984ab84e35fea3ba777a"
     },
     {
       "path": "release-layout.yaml",

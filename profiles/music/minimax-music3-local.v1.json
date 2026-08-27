@@ -1,0 +1,158 @@
+{
+  "schema_version": "asteria.music.model-profile.v1",
+  "profile_id": "minimax-music3-local",
+  "version": 1,
+  "provider": "local_music3",
+  "attribution": "MiniMax-Music3",
+  "runtime": {
+    "component_id": "comfyui-core",
+    "minimum_version": "0.33.0",
+    "managed_version": "0.33.1",
+    "minimum_commit": "efd4e951a00e85bd92e79f1d685427912b0dad5e",
+    "python_version": "3.12.13",
+    "pytorch_package_set": "pytorch-cu128",
+    "cuda_required": true
+  },
+  "model_repository": {
+    "url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3",
+    "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
+    "original_url": "https://huggingface.co/MiniMaxAI/MiniMax-Music3",
+    "verified_at": "2026-08-20"
+  },
+  "license": {
+    "id": "minimax-music3-community",
+    "name": "MiniMax-Music3 Community License",
+    "version": "2026-08-06",
+    "revision": "fbdf52fbaaca799592917417eb05f1899f1255ec",
+    "url": "https://huggingface.co/MiniMaxAI/MiniMax-Music3/blob/fbdf52fbaaca799592917417eb05f1899f1255ec/LICENSE"
+  },
+  "official_api": {
+    "advertised": true,
+    "model_id": "music-3.0",
+    "availability": "legacy_existing_paid_users_only",
+    "implemented": false,
+    "url": "https://platform.minimax.io/docs/api-reference/music-generation",
+    "policy_url": "https://platform.minimax.io/docs/guides/models-intro",
+    "verified_at": "2026-08-20"
+  },
+  "execution_profiles": [
+    {
+      "id": "full",
+      "label": "Full",
+      "runtime_mode": "resident",
+      "vram_advisory_gb": 24,
+      "recommended_bundle_id": "official-fp16"
+    },
+    {
+      "id": "offload",
+      "label": "CPU offload",
+      "runtime_mode": "cpu_offload",
+      "vram_advisory_gb": 22,
+      "recommended_bundle_id": "official-fp16-pruned"
+    },
+    {
+      "id": "layer_streaming",
+      "label": "Layer streaming",
+      "runtime_mode": "layer_streaming",
+      "vram_advisory_gb": 8,
+      "recommended_bundle_id": "official-int8"
+    }
+  ],
+  "model_bundles": [
+    {
+      "id": "official-fp16",
+      "label": "MiniMax Music3 FP16",
+      "asset_ids": [
+        "minimax-music3-dit-fp16",
+        "minimax-music3-text-bf16",
+        "minimax-music3-dav"
+      ]
+    },
+    {
+      "id": "official-fp16-pruned",
+      "label": "MiniMax Music3 FP16 / pruned text encoder",
+      "asset_ids": [
+        "minimax-music3-dit-fp16",
+        "minimax-music3-text-pruned-bf16",
+        "minimax-music3-dav"
+      ]
+    },
+    {
+      "id": "official-int8",
+      "label": "MiniMax Music3 INT8 ConvRot",
+      "asset_ids": [
+        "minimax-music3-dit-int8",
+        "minimax-music3-text-pruned-int8",
+        "minimax-music3-dav"
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "minimax-music3-dit-fp16",
+      "label": "MiniMax Music3 DiT FP16",
+      "component_role": "diffusion_model",
+      "relative_path": "models/diffusion_models/minimax_music3_dit_fp16.safetensors",
+      "source_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/resolve/6baad88896848433857c170ba4f05d2ea9d5f218/diffusion_models/minimax_music3_dit_fp16.safetensors?download=true",
+      "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
+      "provenance_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/blob/6baad88896848433857c170ba4f05d2ea9d5f218/diffusion_models/minimax_music3_dit_fp16.safetensors",
+      "size_bytes": 4914197682,
+      "checksum_sha256": "45494a2b6b69af115902ff28eaf54118d19067aa54da01000f3e3efce7ba0e34"
+    },
+    {
+      "id": "minimax-music3-dit-int8",
+      "label": "MiniMax Music3 DiT INT8 ConvRot",
+      "component_role": "diffusion_model",
+      "relative_path": "models/diffusion_models/minimax_music3_dit_int8_convrot.safetensors",
+      "source_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/resolve/6baad88896848433857c170ba4f05d2ea9d5f218/diffusion_models/minimax_music3_dit_int8_convrot.safetensors?download=true",
+      "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
+      "provenance_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/blob/6baad88896848433857c170ba4f05d2ea9d5f218/diffusion_models/minimax_music3_dit_int8_convrot.safetensors",
+      "size_bytes": 2502161682,
+      "checksum_sha256": "d6b959633e69899f99f3a92d6741c0fe79f26958a30811e50e372ef978b24d5f"
+    },
+    {
+      "id": "minimax-music3-text-bf16",
+      "label": "MiniMax Music3 text encoder BF16",
+      "component_role": "text_encoder",
+      "relative_path": "models/text_encoders/minimax_music3_text_encoder_bf16.safetensors",
+      "source_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/resolve/6baad88896848433857c170ba4f05d2ea9d5f218/text_encoders/minimax_music3_text_encoder_bf16.safetensors?download=true",
+      "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
+      "provenance_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/blob/6baad88896848433857c170ba4f05d2ea9d5f218/text_encoders/minimax_music3_text_encoder_bf16.safetensors",
+      "size_bytes": 18472478038,
+      "checksum_sha256": "9805d045978ce917cd1e6327b5cd8b85df1a46e4c69b61c9acf3eb29891c3958"
+    },
+    {
+      "id": "minimax-music3-text-pruned-bf16",
+      "label": "MiniMax Music3 pruned text encoder BF16",
+      "component_role": "text_encoder",
+      "relative_path": "models/text_encoders/minimax_music3_text_encoder_pruned_bf16.safetensors",
+      "source_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/resolve/6baad88896848433857c170ba4f05d2ea9d5f218/text_encoders/minimax_music3_text_encoder_pruned_bf16.safetensors?download=true",
+      "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
+      "provenance_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/blob/6baad88896848433857c170ba4f05d2ea9d5f218/text_encoders/minimax_music3_text_encoder_pruned_bf16.safetensors",
+      "size_bytes": 16706629398,
+      "checksum_sha256": "e81e469c92af324dc69b77e5a11179e22542a6d628f2b205c8cf6143e510d976"
+    },
+    {
+      "id": "minimax-music3-text-pruned-int8",
+      "label": "MiniMax Music3 pruned text encoder INT8 ConvRot",
+      "component_role": "text_encoder",
+      "relative_path": "models/text_encoders/minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+      "source_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/resolve/6baad88896848433857c170ba4f05d2ea9d5f218/text_encoders/minimax_music3_text_encoder_pruned_int8_convrot.safetensors?download=true",
+      "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
+      "provenance_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/blob/6baad88896848433857c170ba4f05d2ea9d5f218/text_encoders/minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+      "size_bytes": 9196611886,
+      "checksum_sha256": "010b7416d2336a08c711bc22ee65849c9623069ddb7d89bec011a75699e52014"
+    },
+    {
+      "id": "minimax-music3-dav",
+      "label": "MiniMax Music3 DAV",
+      "component_role": "audio_vae",
+      "relative_path": "models/vae/minimax_music3_dav.safetensors",
+      "source_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/resolve/6baad88896848433857c170ba4f05d2ea9d5f218/vae/minimax_music3_dav.safetensors?download=true",
+      "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
+      "provenance_url": "https://huggingface.co/Comfy-Org/MiniMax-Music-3/blob/6baad88896848433857c170ba4f05d2ea9d5f218/vae/minimax_music3_dav.safetensors",
+      "size_bytes": 216696128,
+      "checksum_sha256": "2a32155b769be01445fcc2a8663b910fc9e1751e18dc1c3ec528064512d9ef0c"
+    }
+  ]
+}
