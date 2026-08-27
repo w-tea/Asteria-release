@@ -53,7 +53,9 @@ def list_operations(limit: int = Query(default=200, ge=1, le=1000)) -> dict[str,
 @router.get("/{operation_id}")
 def get_operation(operation_id: str) -> dict[str, Any]:
     try:
-        return get_operation_coordinator().get(operation_id).model_dump(mode="json")
+        operation = get_operation_coordinator().get(operation_id)
+        excluded = {"request_snapshot"} if operation.kind.startswith("extension.") else None
+        return operation.model_dump(mode="json", exclude=excluded)
     except OperationNotFoundError as exc:
         raise _not_found(exc) from exc
 
@@ -72,7 +74,7 @@ def get_operation_events(
         )
     except OperationNotFoundError as exc:
         raise _not_found(exc) from exc
-    return {"items": [event.model_dump(mode="json") for event in events]}
+    return {"items": [_summary(event) for event in events]}
 
 
 @router.post("/{operation_id}/cancel")
@@ -86,7 +88,7 @@ def cancel_operation(operation_id: str) -> dict[str, Any]:
             operation = cancel_generation_operation(operation_id)
         else:
             operation = coordinator.request_cancel(operation_id)
-        return operation.model_dump(mode="json")
+        return _summary(operation)
     except OperationNotFoundError as exc:
         raise _not_found(exc) from exc
 
@@ -94,11 +96,18 @@ def cancel_operation(operation_id: str) -> dict[str, Any]:
 @router.post("/{operation_id}/retry")
 def retry_operation(operation_id: str, request: OperationRetryRequest) -> dict[str, Any]:
     try:
-        return get_operation_coordinator().retry(
+        coordinator = get_operation_coordinator()
+        original = coordinator.get(operation_id)
+        if original.kind == "video.generate":
+            raise OperationRetryError("operation_retry_requires_video_studio")
+        if original.kind == "music.generate":
+            raise OperationRetryError("operation_retry_requires_music_studio")
+        operation = coordinator.retry(
             operation_id,
             source_actor=request.source_actor,
             idempotency_key=request.idempotency_key,
-        ).model_dump(mode="json")
+        )
+        return _summary(operation)
     except OperationNotFoundError as exc:
         raise _not_found(exc) from exc
     except OperationRetryError as exc:
@@ -108,7 +117,7 @@ def retry_operation(operation_id: str, request: OperationRetryRequest) -> dict[s
 @router.post("/{operation_id}/dismiss")
 def dismiss_operation(operation_id: str) -> dict[str, Any]:
     try:
-        return get_operation_coordinator().dismiss(operation_id).model_dump(mode="json")
+        return _summary(get_operation_coordinator().dismiss(operation_id))
     except OperationNotFoundError as exc:
         raise _not_found(exc) from exc
     except OperationDismissError as exc:

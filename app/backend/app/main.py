@@ -2,13 +2,17 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
 from app.api.advanced_styles import router as advanced_styles_router
 from app.api.assets import router as assets_router
 from app.api.eagle import router as eagle_router
 from app.api.external_models import router as external_models_router
+from app.api.extensions import router as extensions_router
 from app.api.downloads import configure_download_operation_coordinator, router as downloads_router
 from app.api.discord import (
     router as discord_router,
@@ -30,12 +34,33 @@ from app.api.prompt_presets import router as prompt_presets_router
 from app.api.presets import router as presets_router
 from app.api.runtime import router as runtime_router
 from app.api.resources import router as resources_router
+from app.api.resource_advisory import router as resource_advisory_router
 from app.api.settings import router as settings_router
 from app.api.startup import router as startup_router
 from app.api.topaz import configure_topaz_operation_coordinator, router as topaz_router
+from app.api.video import configure_video_operation_coordinator, router as video_router
+from app.api.video_upscale import (
+    configure_video_upscale_operation_coordinator,
+    router as video_upscale_router,
+)
+from app.api.video_sequences import (
+    configure_video_sequence_operation_coordinator,
+    router as video_sequences_router,
+)
+from app.api.video_setup import router as video_setup_router
+from app.api.music_setup import router as music_setup_router
+from app.api.music import configure_music_operation_coordinator, router as music_router
 from app.api.workflow_mapping import router as workflow_mapping_router
 from app.core.config import AppConfig
+from app.services.extension_installer import configure_extension_operation_coordinator
+from app.services.extension_catalog import ExtensionCatalogService
+from app.services.extension_loader import ExtensionLoader, clear_loaded_extension_modules
+from app.services.extension_repository import ExtensionRepository
+from app.services.extension_startup import ExtensionStartupService
+from app.services.resource_advisor import ResourceCapabilityRegistry
 from app.services.reference_mutation import reference_mutation_coordinator
+from app.services.video_runtime_adapters import default_video_adapters
+from app.services.music_runtime_adapters import default_music_adapters
 
 
 MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
@@ -45,15 +70,34 @@ EDIT_ASSET_CLEANUP_PATH = "/api/assets/lifecycle/cleanup"
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     coordinator = get_operation_coordinator()
+    config = getattr(_app.state, "config", AppConfig())
     configure_generation_operation_coordinator(coordinator)
     configure_merge_operation_coordinator(coordinator)
     configure_topaz_operation_coordinator(coordinator)
     configure_lora_operation_coordinator(coordinator)
-    configure_download_operation_coordinator(coordinator)
+    configure_download_operation_coordinator(coordinator, config=config)
+    video_service = configure_video_operation_coordinator(coordinator, config=config)
+    configure_video_upscale_operation_coordinator(
+        coordinator,
+        video_service=video_service,
+        config=config,
+    )
+    sequence_service = configure_video_sequence_operation_coordinator(
+        coordinator,
+        config=config,
+    )
+    configure_music_operation_coordinator(coordinator, config=config)
+    configure_extension_operation_coordinator(
+        coordinator,
+        extension_root=config.extension_root,
+    )
     coordinator.recover_startup()
+    if video_service is not None:
+        video_service.cleanup_working_artifacts()
+    sequence_service.sequences.interrupt_active_sequences()
     coordinator.start()
     start_discord_runtime()
-    if AppConfig().auto_bootstrap_models:
+    if config.auto_bootstrap_models:
         start_model_bootstrap()
     try:
         yield
@@ -62,8 +106,28 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         coordinator.shutdown(wait=False)
 
 
-def create_app() -> FastAPI:
+def create_app(*, config: AppConfig | None = None) -> FastAPI:
+    config = config or AppConfig()
     app = FastAPI(title="Asteria API", lifespan=lifespan)
+    app.state.config = config
+    app.state.resource_capability_registry = ResourceCapabilityRegistry(
+        tuple(
+            (lambda adapter=adapter: adapter.capabilities())
+            for adapter in (*default_video_adapters(), *default_music_adapters())
+        )
+    )
+
+    @app.exception_handler(RequestValidationError)
+    async def sanitize_extension_validation_error(
+        request: Request,
+        error: RequestValidationError,
+    ):
+        if not request.url.path.startswith("/api/extensions"):
+            return await request_validation_exception_handler(request, error)
+        return JSONResponse(
+            status_code=422,
+            content={"detail": {"code": "extension_request_invalid"}},
+        )
 
     @app.middleware("http")
     async def coordinate_reference_mutations(request: Request, call_next):
@@ -95,6 +159,7 @@ def create_app() -> FastAPI:
     app.include_router(operations_router)
     app.include_router(runtime_router)
     app.include_router(resources_router)
+    app.include_router(resource_advisory_router)
     app.include_router(settings_router)
     app.include_router(startup_router)
     app.include_router(prompt_assist_router)
@@ -103,9 +168,16 @@ def create_app() -> FastAPI:
     app.include_router(topaz_router)
     app.include_router(eagle_router)
     app.include_router(external_models_router)
+    app.include_router(extensions_router)
     app.include_router(downloads_router)
     app.include_router(discord_router)
     app.include_router(diagnostics_router)
+    app.include_router(video_router)
+    app.include_router(video_upscale_router)
+    app.include_router(video_sequences_router)
+    app.include_router(video_setup_router)
+    app.include_router(music_setup_router)
+    app.include_router(music_router)
     app.include_router(workflow_mapping_router)
 
     @app.get("/api/health")
@@ -115,6 +187,25 @@ def create_app() -> FastAPI:
             "app": "asteria",
             "target_mode": AppConfig().target_mode,
         }
+
+    operation_coordinator = get_operation_coordinator()
+    app.state.operation_coordinator = operation_coordinator
+    operation_coordinator.clear_executor_groups(prefix="extension:")
+    clear_loaded_extension_modules()
+    extension_repository = ExtensionRepository(extension_root=config.extension_root)
+    app.state.extension_catalog = ExtensionCatalogService(
+        config.extension_catalog_cache_dir,
+        catalog_url=config.extension_catalog_url,
+        asteria_version=extension_repository.asteria_version,
+    )
+    extension_loader = ExtensionLoader(
+        extension_repository,
+        operation_coordinator=operation_coordinator,
+    )
+    app.state.extension_startup = ExtensionStartupService(
+        extension_loader,
+        journal_path=config.extension_root / "startup-journal.json",
+    ).initialize(app, safe_mode=config.disable_extensions)
 
     return app
 

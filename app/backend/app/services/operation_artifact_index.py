@@ -41,3 +41,8 @@ class OperationArtifactIndex:
                 (artifact_ref,),
             ).fetchall()
         return tuple(row[0] for row in rows)
+
+    def media_artifact_operations(self, artifact_id: str) -> tuple[str, ...]:
+        if not artifact_id.startswith("media:"):
+            raise ValueError("media_artifact_id_invalid")
+        return self.referencing_operations(artifact_id)

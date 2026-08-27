@@ -21,6 +21,10 @@ class ReleaseLayout:
     def cache_root(self) -> Path:
         return self.writable_roots["temp"] / "cache"
 
+    @property
+    def extension_root(self) -> Path:
+        return self.writable_roots["data"] / "extensions"
+
 
 class ReleaseLayoutRepository:
     def __init__(self, manifest_path: Path) -> None:
@@ -31,7 +35,7 @@ class ReleaseLayoutRepository:
             payload = yaml.safe_load(self.manifest_path.read_text(encoding="utf-8"))
         except (OSError, yaml.YAMLError) as exc:
             raise ValueError("release layout manifest could not be loaded") from exc
-        if not isinstance(payload, dict) or payload.get("version") != 2:
+        if not isinstance(payload, dict) or payload.get("version") != 3:
             raise ValueError("release layout manifest version is unsupported")
         package = payload.get("package")
         writable_roots = payload.get("writable_roots")
@@ -48,7 +52,7 @@ class ReleaseLayoutRepository:
                 "comfy_root",
             )
         }
-        required_writable_roots = {"data", "models", "outputs", "logs", "temp"}
+        required_writable_roots = {"data", "models", "logs", "temp"}
         if set(writable_roots) != required_writable_roots:
             raise ValueError("release writable root set is invalid")
         contained_writable_roots: dict[str, Path] = {}
@@ -67,7 +71,7 @@ class ReleaseLayoutRepository:
         if len(normalized_roots) != len(contained_writable_roots):
             raise ValueError("release writable roots must be distinct")
         return ReleaseLayout(
-            version=2,
+            version=3,
             backend_root=paths["backend_root"],
             backend_app=paths["backend_app"],
             frontend_entry=paths["frontend_entry"],

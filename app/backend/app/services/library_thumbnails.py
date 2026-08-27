@@ -12,6 +12,8 @@ from uuid import uuid4
 
 from PIL import Image, UnidentifiedImageError
 
+from app.schemas.media import MediaArtifact
+from app.services.media_artifacts import MediaArtifactAccessError, resolve_registered_media_artifact
 
 THUMBNAIL_EDGE = 384
 THUMBNAIL_ENCODER_REVISION = 1
@@ -41,7 +43,7 @@ class LibraryThumbnailService:
         self.cache_root = cache_root
 
     def thumbnail_for(self, item: dict, accepted_roots: set[Path]) -> Path:
-        source = self._source_for(item)
+        source = self._source_for(item, accepted_roots)
         resolved_source = self._validated_source(source, accepted_roots)
         try:
             details = resolved_source.stat()
@@ -124,7 +126,37 @@ class LibraryThumbnailService:
             removed_bytes += entry.size
         return removed_count, removed_bytes
 
-    def _source_for(self, item: dict) -> Path:
+    def _source_for(self, item: dict, accepted_roots: set[Path]) -> Path:
+        media_kind = item.get("media_kind", "image")
+        if media_kind == "audio":
+            raise LibraryThumbnailError("library_thumbnail_source_missing")
+        if media_kind == "video":
+            poster_id = ""
+            for candidate in item.get("artifacts", []):
+                try:
+                    artifact = MediaArtifact.model_validate(candidate)
+                except ValueError:
+                    continue
+                if artifact.kind == "video" and artifact.role == "primary":
+                    poster_id = artifact.poster_artifact_id or ""
+                    break
+            if not poster_id:
+                raise LibraryThumbnailError("library_thumbnail_source_missing")
+            try:
+                _, poster = resolve_registered_media_artifact(
+                    item,
+                    poster_id,
+                    accepted_roots=accepted_roots,
+                    allowed_kinds={"poster"},
+                )
+            except MediaArtifactAccessError as error:
+                code = (
+                    "library_thumbnail_source_not_registered"
+                    if error.code in {"media_artifact_not_registered", "media_artifact_changed"}
+                    else "library_thumbnail_source_missing"
+                )
+                raise LibraryThumbnailError(code) from error
+            return poster
         output_paths = [
             Path(value)
             for value in item.get("output_paths", [])

@@ -47,7 +47,48 @@ class_types:
   detailer_detector: UltralyticsDetectorProvider
   face_detailer: FaceDetailer
   merge_runtime: AsteriaSDXLMergeRuntime
+  conditioning_time_range: ConditioningSetTimestepRange
+  conditioning_combine: ConditioningCombine
+  conditioning_multiply: ConditioningMultiply
+  conditioning_concat: ConditioningConcat
+  prompt_step_schedule: AsteriaPromptStepSchedule
 node_contracts:
+  conditioning_time_range:
+    required_inputs:
+      - conditioning
+      - start
+      - end
+    outputs_by_index:
+      0: CONDITIONING
+  conditioning_combine:
+    required_inputs:
+      - conditioning_1
+      - conditioning_2
+    outputs_by_index:
+      0: CONDITIONING
+  conditioning_multiply:
+    required_inputs:
+      - conditioning
+      - multiplier
+    outputs_by_index:
+      0: CONDITIONING
+  conditioning_concat:
+    required_inputs:
+      - conditioning_to
+      - conditioning_from
+    outputs_by_index:
+      0: CONDITIONING
+  prompt_step_schedule:
+    required_inputs:
+      - model
+      - conditioning_a
+      - conditioning_b
+      - steps
+      - sampler_name
+      - scheduler
+      - denoise
+    outputs_by_index:
+      0: CONDITIONING
   controlnet_soft_weights:
     required_inputs:
       - base_multiplier

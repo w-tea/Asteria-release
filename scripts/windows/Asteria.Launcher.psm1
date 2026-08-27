@@ -67,7 +67,8 @@ function Initialize-AsteriaModelDirectories {
         "adetailer",
         "bbox",
         "segm",
-        "upscalers"
+        "upscalers",
+        "latent_upscale_models"
     )) {
         [System.IO.Directory]::CreateDirectory([System.IO.Path]::Combine($ModelRoot, $directory)) | Out-Null
     }
@@ -141,6 +142,7 @@ function Write-AsteriaExtraModelPaths {
         "    upscalers"
         "    esrgan"
         "    realesrgan"
+        "    latent_upscale_models"
     )
     if ($ExternalRegistryPath -and [System.IO.File]::Exists($ExternalRegistryPath)) {
         try {
@@ -198,9 +200,9 @@ function Write-AsteriaExtraModelPaths {
             throw "External model registry could not be projected safely."
         }
     }
-    $transactionId = [Guid]::NewGuid().ToString("N")
-    $temporary = "$Path.$transactionId.tmp"
-    $backup = "$Path.$transactionId.bak"
+        $transactionId = [Guid]::NewGuid().ToString("N")
+        $temporary = "$Path.$transactionId.tmp"
+        $backup = "$Path.$transactionId.bak"
     try {
         $lines | Set-Content -LiteralPath $temporary -Encoding utf8
         if ([System.IO.File]::Exists($Path)) {
@@ -213,10 +215,10 @@ function Write-AsteriaExtraModelPaths {
         if ([System.IO.File]::Exists($temporary)) {
             [System.IO.File]::Delete($temporary)
         }
-        if ([System.IO.File]::Exists($backup)) {
-            [System.IO.File]::Delete($backup)
+          if ([System.IO.File]::Exists($backup)) {
+              [System.IO.File]::Delete($backup)
+          }
         }
-    }
 }
 
 function Start-AsteriaOwnedProcess {
@@ -272,20 +274,56 @@ function Start-AsteriaOwnedProcess {
     }
 }
 
+function Get-AsteriaLauncherPreferences {
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][string]$SettingsPath)
+
+    $result = [ordered]@{
+        RuntimeMonitorOnStart = $false
+        DisablePinnedMemory = $false
+        ReasonId = $null
+    }
+    if (-not (Test-Path -LiteralPath $SettingsPath -PathType Leaf)) {
+        return [pscustomobject]$result
+    }
+    try {
+        $content = Get-Content -LiteralPath $SettingsPath -Raw -Encoding utf8 -ErrorAction Stop
+    }
+    catch {
+        $result.ReasonId = "access_denied"
+        return [pscustomobject]$result
+    }
+    try {
+        $settings = $content | ConvertFrom-Json -ErrorAction Stop
+    }
+    catch {
+        $result.ReasonId = "json_invalid"
+        return [pscustomobject]$result
+    }
+    if ($null -eq $settings.launcher) { return [pscustomobject]$result }
+
+    $runtimeProperty = $settings.launcher.PSObject.Properties["runtime_monitor_on_start"]
+    if ($null -ne $runtimeProperty) {
+        $runtimeMonitor = $runtimeProperty.Value
+        $result.RuntimeMonitorOnStart = ($runtimeMonitor -is [bool]) -and $runtimeMonitor
+    }
+    if ($null -ne $settings.launcher.PSObject.Properties["disable_pinned_memory"]) {
+        $memoryPreference = $settings.launcher.disable_pinned_memory
+        if ($memoryPreference -is [bool]) {
+            $result.DisablePinnedMemory = $memoryPreference
+        }
+        else {
+            $result.ReasonId = "field_type_invalid"
+        }
+    }
+    return [pscustomobject]$result
+}
+
 function Get-AsteriaRuntimeMonitorPreference {
     [CmdletBinding()]
     param([Parameter(Mandatory = $true)][string]$SettingsPath)
 
-    if (-not (Test-Path -LiteralPath $SettingsPath -PathType Leaf)) { return $false }
-    try {
-        $settings = Get-Content -LiteralPath $SettingsPath -Raw -Encoding utf8 | ConvertFrom-Json
-        if ($null -eq $settings.launcher) { return $false }
-        $preference = $settings.launcher.runtime_monitor_on_start
-        return ($preference -is [bool]) -and $preference
-    }
-    catch {
-        return $false
-    }
+    return [bool](Get-AsteriaLauncherPreferences -SettingsPath $SettingsPath).RuntimeMonitorOnStart
 }
 
 function Get-AsteriaOwnedProcessState {
@@ -415,4 +453,4 @@ function Read-AsteriaLauncherState {
     catch { throw "The launcher ownership state is invalid." }
 }
 
-Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Write-AsteriaExtraModelPaths, Start-AsteriaOwnedProcess, Get-AsteriaRuntimeMonitorPreference, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState
+Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Write-AsteriaExtraModelPaths, Start-AsteriaOwnedProcess, Get-AsteriaLauncherPreferences, Get-AsteriaRuntimeMonitorPreference, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState

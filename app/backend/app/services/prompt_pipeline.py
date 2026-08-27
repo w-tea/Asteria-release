@@ -3,6 +3,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from app.services.prompt_syntax import PromptSyntaxPlan, parse_prompt_syntax
+
 
 @dataclass
 class PromptExpansion:
@@ -16,6 +18,14 @@ class WildcardFile:
     name: str
     path: str
     option_count: int
+
+
+@dataclass(frozen=True)
+class PreparedPrompt:
+    expansion: PromptExpansion
+    loras: tuple[dict[str, float | str], ...]
+    embeddings: tuple[str, ...]
+    syntax: PromptSyntaxPlan
 
 
 def _wildcard_path(wildcard_dir: Path, name: str) -> Path:
@@ -122,3 +132,23 @@ def extract_embeddings(prompt: str, known_names: list[str]) -> list[str]:
         if re.search(pattern, prompt):
             found.append(name)
     return found
+
+
+def prepare_prompt(
+    prompt: str,
+    *,
+    profile_id: str,
+    seed: int | None = None,
+    wildcard_dir: Path | None = None,
+    known_embedding_names: list[str] | None = None,
+) -> PreparedPrompt:
+    expansion = expand_dynamic_prompt(prompt, seed=seed, wildcard_dir=wildcard_dir)
+    loras = tuple(extract_loras(expansion.expanded))
+    embeddings = tuple(extract_embeddings(expansion.expanded, known_embedding_names or []))
+    syntax = parse_prompt_syntax(expansion.expanded, profile_id=profile_id)
+    return PreparedPrompt(
+        expansion=expansion,
+        loras=loras,
+        embeddings=embeddings,
+        syntax=syntax,
+    )

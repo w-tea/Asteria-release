@@ -10,7 +10,50 @@ security_contracts:
     excludes:
       - development_git_pull
 
+feature_requirements:
+  minimax_music3_local:
+    minimum_comfyui_version: "0.33.0"
+    managed_comfyui_version: "0.33.1"
+    minimum_comfyui_commit: efd4e951a00e85bd92e79f1d685427912b0dad5e
+    implementation: comfyui-native
+    cuda_required: true
+    verified_at: "2026-08-20"
+    provenance_url: https://github.com/Comfy-Org/ComfyUI/pull/15570
+    official_api_model: music-3.0
+    official_api_availability: legacy-existing-paid-users-only
+    official_api_url: https://platform.minimax.io/docs/api-reference/music-generation
+
+  minimax_h3_local:
+    minimum_comfyui_version: "0.30.0"
+    managed_comfyui_version: "0.33.1"
+    implementation: comfyui-native
+    verified_at: "2026-08-18"
+    provenance_url: https://docs.comfy.org/tutorials/video/minimax/minimax-h3
+
 dependencies:
+  - id: asteria-prompt-syntax
+    label: Asteria Prompt Syntax
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - prompt_syntax
+      - alternating_switch
+    source:
+      provider: bundled
+      url: runtime-components/comfyui/Asteria-Prompt-Syntax
+      ref: asteria.prompt.step-schedule.v1
+      verified_at: "2026-08-27"
+      provenance_url: bundled://asteria/prompt-syntax/v1.2
+    target:
+      relative_path: custom_nodes/Asteria-Prompt-Syntax
+    size_bytes: 4367
+    checksum_sha256: 54717524f99270ebd326770a46e5ec28738b5f154e3a4e925c0a6535ec8fd8e9
+    license:
+      id: mit
+      url: bundled://asteria/license
+    repair_policy: replace-managed-component
+    auto_install: true
+
   - id: asteria-merge-runtime
     label: Asteria Merge Runtime
     type: comfy_custom_node
@@ -22,15 +65,88 @@ dependencies:
       provider: bundled
       url: runtime-components/comfyui/Asteria-Merge-Runtime
       ref: asteria.merge.runtime.v1
-      verified_at: "2026-07-28"
-      provenance_url: bundled://asteria/merge-runtime/v1
+      verified_at: "2026-08-21"
+      provenance_url: bundled://asteria/merge-runtime/v1.2
     target:
       relative_path: custom_nodes/Asteria-Merge-Runtime
-    size_bytes: 40738
-    checksum_sha256: 320ca29f320165f5e7f0328a9815caf263affbda5591fc17592c040303c0abd2
+    size_bytes: 51518
+    checksum_sha256: 46b4bd473fcb300a99b3ad24489c28b42b0a5a9169a4fbcc02aa49e84e3a7873
     license:
       id: proprietary
       url: bundled://asteria/license
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: asteria-anima-lora-remap
+    label: Asteria Anima LoRA Compatibility
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - anima
+      - anima_lora_remap
+    source:
+      provider: bundled
+      url: runtime-components/comfyui/Asteria-Anima-LoRA-Remap
+      ref: asteria.anima_lora_remap.v1
+      verified_at: "2026-08-24"
+      provenance_url: bundled://asteria/anima-lora-remap/v1.2
+    target:
+      relative_path: custom_nodes/Asteria-Anima-LoRA-Remap
+    size_bytes: 14994
+    checksum_sha256: 9d3e61d384287c2a2b5acac252d77f41410bafdc79247199a128a8b6795264f7
+    license:
+      id: proprietary
+      url: bundled://asteria/license
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: comfyui-anima-3-8b
+    label: ComfyUI Anima 3.8B Conditioning
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - anima
+      - anima_3_8b
+      - qwen3_5_conditioning
+    source:
+      provider: archive
+      url: https://codeload.github.com/GumGum10/comfyui-anima-3-8B/zip/98403d3634a9a3bf929451e0d1a362345e59d982
+      ref: 98403d3634a9a3bf929451e0d1a362345e59d982
+      verified_at: "2026-08-25"
+      provenance_url: https://github.com/GumGum10/comfyui-anima-3-8B/commit/98403d3634a9a3bf929451e0d1a362345e59d982
+    target:
+      relative_path: custom_nodes/comfyui-anima-3-8B
+    post_install:
+      requirements_file: requirements.txt
+      install_script:
+    size_bytes: 3639232
+    checksum_sha256: 05fa0c8d72b80bc730261d06fbf9cda5faff21163cb49a77a7b9785bfd65c448
+    license:
+      id: mit
+      url: https://github.com/GumGum10/comfyui-anima-3-8B/blob/98403d3634a9a3bf929451e0d1a362345e59d982/LICENSE
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: asteria-qwen2d-vae
+    label: Asteria Qwen2D VAE Compatibility
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - anima
+      - qwen2d_vae
+    source:
+      provider: bundled
+      url: runtime-components/comfyui/Asteria-Qwen2D-VAE
+      ref: asteria.qwen2d_vae.v1
+      verified_at: "2026-08-26"
+      provenance_url: bundled://asteria/qwen2d-vae/v1.2
+    target:
+      relative_path: custom_nodes/Asteria-Qwen2D-VAE
+    size_bytes: 27122
+    checksum_sha256: 09479d844bb401a83849cdd4acc50d98df76d4097d06a081718d2821999c5252
+    license:
+      id: apache-2.0
+      url: https://github.com/huggingface/diffusers/blob/e87b2a7ad836f843295dbc60428e29ec4d5aadb0/LICENSE
     repair_policy: replace-managed-component
     auto_install: true
 
@@ -221,5 +337,81 @@ dependencies:
     license:
       id: agpl-3.0
       url: https://github.com/pamparamm/ComfyUI-ppm/blob/cb4a46ba9b0ebdb1f9a228a901bb958bfc8ed3ba/LICENSE
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: asteria-h3-latent-assembly
+    label: Asteria H3 Latent Assembly
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - video_sequence
+      - video_latent_assembly
+      - av_crossfade
+    source:
+      provider: bundled
+      url: runtime-components/comfyui/Asteria-H3-Latent-Assembly
+      ref: asteria.video.sequence.latent-assembly.v1
+      verified_at: "2026-08-24"
+      provenance_url: https://github.com/noembryo/ComfyUI-noEmbryo/commit/e0f6fd1622cf1fe9390beef5543b1be0d222df05
+    target:
+      relative_path: custom_nodes/Asteria-H3-Latent-Assembly
+    size_bytes: 17443
+    checksum_sha256: d4a2c705dbe4cb446a1a24bb24d094d68612b0f117c6d71bfa848dbc769a233f
+    license:
+      id: mit
+      url: https://github.com/noembryo/ComfyUI-noEmbryo/blob/e0f6fd1622cf1fe9390beef5543b1be0d222df05/LICENSE
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: comfyui-h3-motion-context
+    label: H3 Motion Context
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - video_sequence
+      - video_motion_context
+      - av_latent
+    source:
+      provider: archive
+      url: https://codeload.github.com/NikoDemon80/ComfyUI-H3-Motion-Context/zip/f80e36bc1d7887a143b12e6645313fd6b9cd2aee
+      ref: f80e36bc1d7887a143b12e6645313fd6b9cd2aee
+      verified_at: "2026-08-24"
+      provenance_url: https://github.com/NikoDemon80/ComfyUI-H3-Motion-Context/commit/f80e36bc1d7887a143b12e6645313fd6b9cd2aee
+    target:
+      relative_path: custom_nodes/ComfyUI-H3-Motion-Context
+    post_install:
+      requirements_file: requirements.txt
+      install_script:
+    size_bytes: 114930
+    checksum_sha256: f77107ff2e32f59fd222b79cf9e29c66c40c38038330e85d869e1715ce5f263c
+    license:
+      id: gpl-3.0
+      url: https://github.com/NikoDemon80/ComfyUI-H3-Motion-Context/blob/f80e36bc1d7887a143b12e6645313fd6b9cd2aee/LICENSE
+    repair_policy: replace-managed-component
+    auto_install: true
+
+  - id: comfyui-mmh3-ultimate-upscale
+    label: MiniMax H3 Ultimate Upscale
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - video_upscale
+      - h3_latent_upscale
+      - h3_temporal_chunking
+      - h3_spatial_tiling
+    source:
+      provider: archive
+      url: https://codeload.github.com/bbaudio-2025/Comfyui-MMH3-UltimateUpscale/zip/2553ad1b66ee0956df02e9146dd78b93395f9f69
+      ref: 2553ad1b66ee0956df02e9146dd78b93395f9f69
+      verified_at: "2026-08-24"
+      provenance_url: https://github.com/bbaudio-2025/Comfyui-MMH3-UltimateUpscale/commit/2553ad1b66ee0956df02e9146dd78b93395f9f69
+    target:
+      relative_path: custom_nodes/Comfyui-MMH3-UltimateUpscale
+    size_bytes: 39713
+    checksum_sha256: 12b11671cc79feaa9b0adefcd8c863dc844d2d1ec1d2645717f84a91892aa52b
+    license:
+      id: mit
+      url: https://github.com/bbaudio-2025/Comfyui-MMH3-UltimateUpscale/blob/2553ad1b66ee0956df02e9146dd78b93395f9f69/LICENSE
     repair_policy: replace-managed-component
     auto_install: true

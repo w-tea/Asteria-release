@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from hashlib import sha256
 from http.client import HTTPException, IncompleteRead
 import json
@@ -13,7 +13,8 @@ import stat
 import time
 from typing import BinaryIO
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.parse import urlparse
+from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 from uuid import uuid4
 import zipfile
 
@@ -21,6 +22,28 @@ import zipfile
 _COMPONENT_ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _CHUNK_SIZE = 1024 * 1024
+
+
+def _validate_https_url(value: str) -> None:
+    parsed = urlparse(value)
+    if (
+        parsed.scheme.casefold() != "https"
+        or not parsed.netloc
+        or parsed.hostname is None
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
+        raise ValueError("managed artifact URL must use HTTPS without credentials")
+
+
+class _HTTPSOnlyRedirectHandler(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+        _validate_https_url(str(newurl))
+        return super().redirect_request(request, fp, code, msg, headers, newurl)
+
+
+def _strict_https_open(request: Request, *, timeout: float):
+    return build_opener(_HTTPSOnlyRedirectHandler()).open(request, timeout=timeout)
 
 
 class ManagedArtifactError(Exception):
@@ -37,10 +60,13 @@ class ManagedArtifactSpec:
     component_id: str
     source_url: str
     destination: Path
-    expected_size: int
-    checksum_sha256: str
+    expected_size: int | None
+    checksum_sha256: str | None
     kind: str
     strip_single_root: bool = False
+    allow_unverified: bool = False
+    require_https: bool = False
+    max_size: int | None = None
 
     def __post_init__(self) -> None:
         if self.manifest_version <= 0:
@@ -49,12 +75,26 @@ class ManagedArtifactSpec:
             raise ValueError("managed artifact component id is invalid")
         if not self.source_url:
             raise ValueError("managed artifact source URL is missing")
-        if self.expected_size <= 0:
+        if self.expected_size is not None and self.expected_size <= 0:
             raise ValueError("managed artifact size must be positive")
-        if _SHA256_RE.fullmatch(self.checksum_sha256) is None:
+        if self.max_size is not None and self.max_size <= 0:
+            raise ValueError("managed artifact bounded maximum must be positive")
+        if self.max_size is not None and self.expected_size is not None and self.expected_size > self.max_size:
+            raise ValueError("managed artifact size exceeds bounded maximum")
+        if self.checksum_sha256 is not None and _SHA256_RE.fullmatch(self.checksum_sha256) is None:
             raise ValueError("managed artifact checksum must be lowercase SHA-256")
+        if self.checksum_sha256 is None and not self.allow_unverified:
+            raise ValueError("managed artifact checksum is required")
+        if self.allow_unverified and self.checksum_sha256 is not None:
+            raise ValueError("unverified managed artifact cannot include an expected checksum")
+        if self.require_https:
+            _validate_https_url(self.source_url)
         if self.kind not in {"file", "zip"}:
             raise ValueError("managed artifact kind is unsupported")
+
+    @property
+    def size_limit(self) -> int:
+        return self.max_size or self.expected_size or 512 * 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -63,6 +103,7 @@ class ManagedArtifactResult:
     destination: Path
     receipt_path: Path
     downloaded_bytes: int
+    checksum_sha256: str = ""
 
 
 class ManagedArtifactService:
@@ -75,14 +116,16 @@ class ManagedArtifactService:
         clock: Callable[[], float] | None = None,
         progress_callback: Callable[[str, int, int], None] | None = None,
         cancel_requested: Callable[[], bool] | None = None,
+        before_publish: Callable[[], object] | None = None,
         resume_ttl_seconds: float = 7 * 24 * 60 * 60,
     ) -> None:
         self.temp_root = self._absolute_without_resolving(temp_root)
         self.timeout_seconds = timeout_seconds
-        self.opener = opener or urlopen
+        self.opener = opener
         self.clock = clock or time.time
         self.progress_callback = progress_callback
         self.cancel_requested = cancel_requested or (lambda: False)
+        self.before_publish = before_publish
         self.resume_ttl_seconds = resume_ttl_seconds
 
     def acquire(self, spec: ManagedArtifactSpec) -> ManagedArtifactResult:
@@ -96,18 +139,34 @@ class ManagedArtifactService:
                 destination=destination,
                 receipt_path=receipt_path,
                 downloaded_bytes=0,
+                checksum_sha256=spec.checksum_sha256 or "",
             )
 
         repaired = self._path_exists(destination)
         part_path = self.part_path_for(spec)
         resume_path = self.resume_receipt_path_for(spec)
+        effective_spec = spec
         try:
             downloaded_bytes = self._download(spec, part_path, resume_path)
-            self._validate_download(spec, part_path)
+            actual_hash = self._validate_download(spec, part_path)
+            if spec.checksum_sha256 is None or spec.expected_size is None:
+                effective_spec = replace(
+                    spec,
+                    expected_size=downloaded_bytes,
+                    checksum_sha256=spec.checksum_sha256 or actual_hash,
+                    allow_unverified=False,
+                )
             self._validate_managed_write_path(destination)
-            receipt = self._receipt(spec)
+            receipt = self._receipt(effective_spec)
+            if self.before_publish is not None:
+                try:
+                    self.before_publish()
+                except Exception as exc:
+                    raise ManagedArtifactError(
+                        f"managed artifact pre-publish preparation failed: {exc}"
+                    ) from exc
             if spec.kind == "zip":
-                self._publish_zip(spec, part_path, destination, receipt)
+                self._publish_zip(effective_spec, part_path, destination, receipt)
             else:
                 self._publish_file(part_path, destination)
                 self._validate_managed_write_path(receipt_path)
@@ -117,7 +176,7 @@ class ManagedArtifactService:
         except (OSError, zipfile.BadZipFile) as exc:
             raise ManagedArtifactError(f"managed artifact publish failed: {exc}") from exc
         finally:
-            if self._installed_receipt_matches(spec, destination, receipt_path):
+            if self._installed_receipt_matches(effective_spec, destination, receipt_path):
                 self._remove_file_safely(part_path)
                 self._remove_file_safely(resume_path)
 
@@ -126,6 +185,7 @@ class ManagedArtifactService:
             destination=destination,
             receipt_path=receipt_path,
             downloaded_bytes=downloaded_bytes,
+            checksum_sha256=effective_spec.checksum_sha256 or "",
         )
 
     def part_path_for(self, spec: ManagedArtifactSpec) -> Path:
@@ -151,6 +211,28 @@ class ManagedArtifactService:
             self.resume_receipt_path_for(spec),
         ) > 0
 
+    def valid_partial_size(self, spec: ManagedArtifactSpec) -> int:
+        """Inspect resumable state without deleting it."""
+        part_path = self.part_path_for(spec)
+        resume_path = self.resume_receipt_path_for(spec)
+        self._validate_managed_write_path(part_path)
+        self._validate_managed_write_path(resume_path)
+        if not self._path_is_file(part_path):
+            return 0
+        size = self._file_size(part_path)
+        try:
+            receipt_age = max(0.0, self.clock() - resume_path.stat().st_mtime)
+        except OSError:
+            return 0
+        if (
+            size <= 0
+            or size >= spec.size_limit
+            or receipt_age > self.resume_ttl_seconds
+            or self._read_json(resume_path) != self._resume_receipt(spec)
+        ):
+            return 0
+        return size
+
     def is_installed(self, spec: ManagedArtifactSpec, *, require_post_install: bool = False) -> bool:
         destination = self._absolute_without_resolving(spec.destination)
         self._validate_managed_write_path(destination)
@@ -159,19 +241,87 @@ class ManagedArtifactService:
             return False
         if not require_post_install:
             return True
-        return self._read_json(receipt_path) == self._completed_receipt(spec)
+        receipt = self._read_json(receipt_path)
+        expected = self._completed_receipt(spec)
+        return isinstance(receipt, dict) and all(
+            receipt.get(key) == value for key, value in expected.items()
+        )
+
+    def verify_installed_contents(self, spec: ManagedArtifactSpec) -> bool:
+        """Deep-check a managed artifact against its installed-content receipt."""
+        if not self.is_installed(spec):
+            return False
+        if spec.kind == "zip":
+            receipt = self._read_json(self.receipt_path_for(spec))
+            if not isinstance(receipt, dict) or not isinstance(receipt.get("installed_tree"), list):
+                return False
+            try:
+                expected_tree = receipt["installed_tree"]
+                if not expected_tree or not all(isinstance(item, dict) for item in expected_tree):
+                    return False
+                root = self._absolute_without_resolving(spec.destination)
+                seen: set[str] = set()
+                for item in expected_tree:
+                    kind = item.get("kind")
+                    relative = item.get("path")
+                    if kind not in {"file", "directory"} or not isinstance(relative, str):
+                        return False
+                    parts = PurePosixPath(relative).parts
+                    windows_path = PureWindowsPath(relative)
+                    if (
+                        not parts
+                        or relative.startswith(("/", "//"))
+                        or windows_path.is_absolute()
+                        or windows_path.drive
+                        or any(part in {"", ".", ".."} or self._unsafe_windows_part(part) for part in parts)
+                    ):
+                        return False
+                    key = relative.casefold()
+                    if key in seen:
+                        return False
+                    seen.add(key)
+                    target = root.joinpath(*parts)
+                    self._validate_managed_write_path(target)
+                    if kind == "directory":
+                        if set(item) != {"kind", "path"} or not self._path_is_dir(target):
+                            return False
+                        continue
+                    size_bytes = item.get("size_bytes")
+                    checksum = item.get("sha256")
+                    if (
+                        set(item) != {"kind", "path", "size_bytes", "sha256"}
+                        or not isinstance(size_bytes, int)
+                        or size_bytes < 0
+                        or not isinstance(checksum, str)
+                        or _SHA256_RE.fullmatch(checksum) is None
+                        or not self._path_is_file(target)
+                        or self._file_size(target) != size_bytes
+                        or self._sha256(target) != checksum
+                    ):
+                        return False
+                return True
+            except (ManagedArtifactError, OSError):
+                return False
+        try:
+            return self._sha256(self._absolute_without_resolving(spec.destination)) == spec.checksum_sha256
+        except OSError:
+            return False
+
+    def invalidate_install_receipt(self, spec: ManagedArtifactSpec) -> None:
+        receipt_path = self.receipt_path_for(spec)
+        self._validate_managed_write_path(receipt_path)
+        self._remove_file_safely(receipt_path)
 
     def mark_post_install_complete(self, spec: ManagedArtifactSpec) -> None:
         self._validate_managed_write_path(self._absolute_without_resolving(spec.destination))
         receipt_path = self.receipt_path_for(spec)
         receipt = self._read_json(receipt_path)
-        if receipt != self._receipt(spec):
-            expected = self._receipt(spec)
-            comparable = dict(receipt) if isinstance(receipt, dict) else {}
-            comparable["post_install_state"] = "pending"
-            if comparable != expected:
-                raise ManagedArtifactError("managed artifact receipt identity is invalid")
-        completed = self._receipt(spec)
+        expected = self._receipt(spec)
+        comparable = dict(receipt) if isinstance(receipt, dict) else {}
+        comparable["post_install_state"] = "pending"
+        if not all(comparable.get(key) == value for key, value in expected.items()):
+            raise ManagedArtifactError("managed artifact receipt identity is invalid")
+        completed = dict(receipt) if isinstance(receipt, dict) else self._receipt(spec)
         completed["post_install_state"] = "complete"
         self._validate_managed_write_path(receipt_path)
         self._write_json_atomic(receipt_path, completed)
@@ -191,8 +341,17 @@ class ManagedArtifactService:
             headers["Range"] = f"bytes={offset}-"
         request = Request(spec.source_url, headers=headers)
         try:
-            response = self.opener(request, timeout=self.timeout_seconds)
+            opener = self.opener or (_strict_https_open if spec.require_https else urlopen)
+            response = opener(request, timeout=self.timeout_seconds)
             with response:
+                if spec.require_https:
+                    final_url = response.geturl() if hasattr(response, "geturl") else spec.source_url
+                    try:
+                        _validate_https_url(str(final_url))
+                    except ValueError as exc:
+                        raise ManagedArtifactError(
+                            "managed artifact redirected URL must remain HTTPS without credentials"
+                        ) from exc
                 status = getattr(response, "status", None) or response.getcode()
                 append = offset > 0 and status == 206 and self._valid_content_range(response, offset)
                 if status not in {200, 206}:
@@ -212,42 +371,35 @@ class ManagedArtifactService:
                         written += len(chunk)
                         received += len(chunk)
                         self._report_progress(spec, written)
-                        if written > spec.expected_size:
+                        if written > spec.size_limit:
                             raise ManagedArtifactError("managed artifact size mismatch")
                 content_length = response.headers.get("Content-Length")
                 if content_length and content_length.isdigit() and received != int(content_length):
                     raise ManagedArtifactError("managed artifact download interrupted")
-                if written < spec.expected_size:
+                if spec.expected_size is not None and written < spec.expected_size:
                     raise ManagedArtifactError("managed artifact download interrupted")
+                if written <= 0:
+                    raise ManagedArtifactError("managed artifact download is empty")
                 return written
         except ManagedArtifactError:
-            if self._file_size(part_path) > spec.expected_size:
+            if self._file_size(part_path) > spec.size_limit:
                 self._remove_file_safely(part_path)
                 self._remove_file_safely(resume_path)
             raise
-        except (HTTPError, URLError, OSError, HTTPException, IncompleteRead) as exc:
+        except (HTTPError, URLError, OSError, HTTPException, IncompleteRead, ValueError) as exc:
             raise ManagedArtifactError(f"managed artifact download failed: {exc}") from exc
 
     def _report_progress(self, spec: ManagedArtifactSpec, downloaded_bytes: int) -> None:
         if self.progress_callback is not None:
-            self.progress_callback(spec.component_id, downloaded_bytes, spec.expected_size)
+            self.progress_callback(
+                spec.component_id,
+                downloaded_bytes,
+                spec.expected_size or spec.size_limit,
+            )
 
     def _resume_offset(self, spec: ManagedArtifactSpec, part_path: Path, resume_path: Path) -> int:
-        if not self._path_is_file(part_path):
-            self._remove_file_safely(part_path)
-            self._remove_file_safely(resume_path)
-            return 0
-        size = self._file_size(part_path)
-        try:
-            receipt_age = max(0.0, self.clock() - resume_path.stat().st_mtime)
-        except OSError:
-            receipt_age = self.resume_ttl_seconds + 1
-        if (
-            size <= 0
-            or size >= spec.expected_size
-            or receipt_age > self.resume_ttl_seconds
-            or self._read_json(resume_path) != self._resume_receipt(spec)
-        ):
+        size = self.valid_partial_size(spec)
+        if size <= 0:
             self._remove_file_safely(part_path)
             self._remove_file_safely(resume_path)
             return 0
@@ -295,8 +447,11 @@ class ManagedArtifactService:
                     "managed artifact destination uses a filesystem link or reparse point"
                 )
 
-    def _validate_download(self, spec: ManagedArtifactSpec, part_path: Path) -> None:
-        if self._file_size(part_path) != spec.expected_size:
+    def _validate_download(self, spec: ManagedArtifactSpec, part_path: Path) -> str:
+        actual_size = self._file_size(part_path)
+        if actual_size <= 0 or actual_size > spec.size_limit or (
+            spec.expected_size is not None and actual_size != spec.expected_size
+        ):
             self._remove_file_safely(part_path)
             self._remove_file_safely(self.resume_receipt_path_for(spec))
             raise ManagedArtifactError("managed artifact size mismatch")
@@ -304,10 +459,11 @@ class ManagedArtifactService:
             actual_hash = self._sha256(part_path)
         except OSError as exc:
             raise ManagedArtifactError(f"managed artifact checksum failed: {exc}") from exc
-        if actual_hash != spec.checksum_sha256:
+        if spec.checksum_sha256 is not None and actual_hash != spec.checksum_sha256:
             self._remove_file_safely(part_path)
             self._remove_file_safely(self.resume_receipt_path_for(spec))
             raise ManagedArtifactError("managed artifact checksum mismatch")
+        return actual_hash
 
     def _publish_file(self, part_path: Path, destination: Path) -> None:
         self._validate_managed_write_path(destination)
@@ -339,6 +495,7 @@ class ManagedArtifactService:
             self._validate_managed_write_path(stage)
             self._validate_managed_write_path(backup)
             self._extract_zip(part_path, stage, strip_single_root=spec.strip_single_root)
+            receipt["installed_tree"] = self._installed_tree(stage)
             self._write_json_atomic(stage / ".asteria-managed.json", receipt)
             self._validate_managed_write_path(destination)
             had_destination = self._path_exists(destination)
@@ -457,15 +614,65 @@ class ManagedArtifactService:
         }
 
     def _installed_receipt_matches(self, spec: ManagedArtifactSpec, destination: Path, receipt_path: Path) -> bool:
+        if spec.checksum_sha256 is None or spec.expected_size is None:
+            return False
         if spec.kind == "zip":
             if not self._path_is_dir(destination):
                 return False
         elif not self._path_is_file(destination) or self._file_size(destination) != spec.expected_size:
             return False
         receipt = self._read_json(receipt_path)
-        return receipt == self._receipt(spec) or receipt == self._completed_receipt(spec)
+        if not isinstance(receipt, dict):
+            return False
+        expected = self._receipt(spec)
+        return all(receipt.get(key) == value for key, value in expected.items()) or all(
+            receipt.get(key) == value for key, value in self._completed_receipt(spec).items()
+        )
+
+    def _installed_tree(self, root: Path) -> list[dict[str, object]]:
+        self._validate_managed_write_path(root)
+        records: list[dict[str, object]] = []
+        seen: set[str] = set()
+
+        def visit(directory: Path) -> None:
+            try:
+                entries = sorted(os.scandir(directory), key=lambda item: item.name.casefold())
+            except OSError as exc:
+                raise ManagedArtifactError("managed artifact installed tree could not be inspected") from exc
+            for entry in entries:
+                path = Path(entry.path)
+                if directory == root and entry.name == ".asteria-managed.json":
+                    continue
+                self._validate_managed_write_path(path)
+                relative = path.relative_to(root).as_posix()
+                key = relative.casefold()
+                if key in seen:
+                    raise ManagedArtifactError("managed artifact installed tree has duplicate paths")
+                seen.add(key)
+                try:
+                    if entry.is_dir(follow_symlinks=False):
+                        records.append({"kind": "directory", "path": relative})
+                        visit(path)
+                    elif entry.is_file(follow_symlinks=False):
+                        records.append(
+                            {
+                                "kind": "file",
+                                "path": relative,
+                                "size_bytes": entry.stat(follow_symlinks=False).st_size,
+                                "sha256": self._sha256(path),
+                            }
+                        )
+                    else:
+                        raise ManagedArtifactError("managed artifact installed tree contains an unsupported entry")
+                except OSError as exc:
+                    raise ManagedArtifactError("managed artifact installed tree could not be inspected") from exc
+
+        visit(root)
+        return records
 
     def _receipt(self, spec: ManagedArtifactSpec) -> dict[str, object]:
+        if spec.checksum_sha256 is None or spec.expected_size is None:
+            raise ManagedArtifactError("managed artifact receipt requires verified size and checksum")
         return {
             "manifest_version": spec.manifest_version,
             "component_id": spec.component_id,
@@ -480,13 +687,20 @@ class ManagedArtifactService:
         return receipt
 
     def _resume_receipt(self, spec: ManagedArtifactSpec) -> dict[str, object]:
-        return {
+        receipt: dict[str, object] = {
             "manifest_version": spec.manifest_version,
             "component_id": spec.component_id,
             "source_url": spec.source_url,
             "expected_size": spec.expected_size,
             "checksum_sha256": spec.checksum_sha256,
         }
+        if spec.allow_unverified:
+            receipt["allow_unverified"] = True
+        if spec.require_https:
+            receipt["require_https"] = True
+        if spec.expected_size is None:
+            receipt["max_size"] = spec.size_limit
+        return receipt
 
     @staticmethod
     def _valid_content_range(response: BinaryIO, offset: int) -> bool:

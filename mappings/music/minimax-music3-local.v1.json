@@ -1,0 +1,111 @@
+{
+  "schema_version": "asteria.music.mapping.v1",
+  "mapping_id": "minimax-music3-local.v1",
+  "mapping_revision": 2,
+  "provider": "local_music3",
+  "adapter_id": "minimax_music3_local",
+  "mode_mappings": {
+    "vocal": {
+      "provider_task": "vocal",
+      "payload_template": {
+        "workflow_template_id": "music_minimax_music3_local.v1",
+        "task": "${provider_task}",
+        "model_profile": "${model_profile}",
+        "conditioning": {
+          "caption": "${description}",
+          "lyrics": "${lyrics}"
+        },
+        "generation": {
+          "seed": "${seed}",
+          "max_duration": "${duration_intent}"
+        },
+        "runtime": {}
+      },
+      "v2_payload_template": {
+        "workflow_template_id": "music_minimax_music3_local.v1",
+        "task": "${provider_task}",
+        "model_profile": "${model_profile}",
+        "model_selection": "${model_selection}",
+        "conditioning": {
+          "caption": "${description}",
+          "lyrics": "${lyrics}"
+        },
+        "generation": {
+          "seed": "${seed}",
+          "max_duration": "${duration_intent}",
+          "text_guidance": "${text_guidance}",
+          "top_k": "${top_k}",
+          "steps": "${steps}",
+          "sampler": "${sampler}",
+          "scheduler": "${scheduler}",
+          "denoise": "${denoise}",
+          "ksampler_cfg": "${ksampler_cfg}"
+        },
+        "runtime": {
+          "tiled_decode": "${tiled_decode}",
+          "execution_profile": "${execution_profile}"
+        }
+      }
+    },
+    "instrumental": {
+      "provider_task": "instrumental",
+      "payload_template": {
+        "workflow_template_id": "music_minimax_music3_local.v1",
+        "task": "${provider_task}",
+        "model_profile": "${model_profile}",
+        "conditioning": {
+          "caption": "${description}",
+          "lyrics": null
+        },
+        "generation": {
+          "seed": "${seed}",
+          "max_duration": "${duration_intent}"
+        },
+        "runtime": {}
+      },
+      "v2_payload_template": {
+        "workflow_template_id": "music_minimax_music3_local.v1",
+        "task": "${provider_task}",
+        "model_profile": "${model_profile}",
+        "model_selection": "${model_selection}",
+        "conditioning": {
+          "caption": "${description}",
+          "lyrics": null
+        },
+        "generation": {
+          "seed": "${seed}",
+          "max_duration": "${duration_intent}",
+          "text_guidance": "${text_guidance}",
+          "top_k": "${top_k}",
+          "steps": "${steps}",
+          "sampler": "${sampler}",
+          "scheduler": "${scheduler}",
+          "denoise": "${denoise}",
+          "ksampler_cfg": "${ksampler_cfg}"
+        },
+        "runtime": {
+          "tiled_decode": "${tiled_decode}",
+          "execution_profile": "${execution_profile}"
+        }
+      }
+    }
+  },
+  "provider_options": {
+    "cfg_scale": {
+      "value_type": "number",
+      "target": "generation.cfg_scale",
+      "minimum": 0.0,
+      "maximum": 100.0
+    },
+    "top_k": {
+      "value_type": "integer",
+      "target": "generation.top_k",
+      "minimum": 1,
+      "maximum": 16384
+    },
+    "tiled_decode": {
+      "value_type": "boolean",
+      "target": "runtime.tiled_decode"
+    }
+  }
+}

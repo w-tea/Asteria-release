@@ -40,7 +40,12 @@ MODEL_TYPE_DIRECTORIES = {
     "embedding": ("embeddings", "textual_inversion"),
     "controlnet": ("controlnet", "controlnets"),
     "detailer": ("adetailer", "bbox", "ultralytics/bbox", "segm", "ultralytics/segm"),
-    "upscaler": ("upscalers", "esrgan", "realesrgan"),
+    "upscaler": (
+        "upscalers",
+        "esrgan",
+        "realesrgan",
+        "latent_upscale_models",
+    ),
 }
 HIDDEN_MODEL_PATH_PARTS = {"merge-candidates"}
 _REPARSE_ATTRIBUTE = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)

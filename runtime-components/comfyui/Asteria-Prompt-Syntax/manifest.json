@@ -1,0 +1,6 @@
+{
+  "id": "asteria-prompt-syntax",
+  "version": "1.2.0",
+  "contract_version": "asteria.prompt.step-schedule.v1",
+  "files": ["__init__.py", "nodes.py", "LICENSE"]
+}

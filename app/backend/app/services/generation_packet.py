@@ -76,6 +76,9 @@ class ForgeLineageTxt2ImgPacketBuilder:
             "payload": payload,
             "infotext": self._infotext(payload, model_slots),
         }
+        prompt_syntax = settings.get("prompt_syntax")
+        if isinstance(prompt_syntax, dict):
+            packet["prompt_syntax"] = prompt_syntax
         if settings.get("image_edit_lineage"):
             packet["image_edit_lineage"] = settings["image_edit_lineage"]
         return packet

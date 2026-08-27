@@ -21,7 +21,12 @@ _EXACT_REQUIREMENT_RE = re.compile(r"^[A-Za-z0-9_.-]+==[^<>=!*~\s]+$")
 _REVISION_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 _VERIFIED_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _MANDATORY_RUNTIME_IDS = {
+    "asteria-prompt-syntax",
     "asteria-merge-runtime",
+    "asteria-h3-latent-assembly",
+    "asteria-anima-lora-remap",
+    "asteria-qwen2d-vae",
+    "comfyui-anima-3-8b",
     "comfyui-impact-pack",
     "comfyui-impact-subpack",
     "comfyui-controlnet-aux",
@@ -29,6 +34,8 @@ _MANDATORY_RUNTIME_IDS = {
     "comfyui-advanced-controlnet",
     "comfyui-anima-lllite",
     "comfyui-ppm",
+    "comfyui-h3-motion-context",
+    "comfyui-mmh3-ultimate-upscale",
 }
 _MANDATORY_MODEL_IDS = {
     "realesrgan-x4plus",
@@ -49,6 +56,9 @@ _STARTER_ASSETS = {
     "anima-base-v1": ("anima", 4182218328, "bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e"),
     "anima-text-encoder": ("anima", 1192135096, "cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba"),
     "anima-vae": ("anima", 253806246, "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"),
+    "anima-3.8b-diffusion": ("anima-3.8b", 7504189974, "1432c925752447df86da7b277e3797f077d358bc24e3950685b13cc0e465c7d5"),
+    "anima-3.8b-qwen35": ("anima-3.8b", 4779016600, "ea289be7c916726d09953c7db9971c82b280e694b5d7c47f8ad9ffad6acb54ba"),
+    "anima-3.8b-progressive-adapter": ("anima-3.8b", 88131712, "f9851ac4668ce069f7be7cf99755335c98879b463f3d486aaa731083978f0d71"),
 }
 
 
@@ -312,11 +322,34 @@ def _validate_runtime_catalog_item(item: object) -> None:
         raise ValueError("release catalog runtime ownership is invalid")
     provider = getattr(item, "provider", None)
     if provider == "bundled":
-        if getattr(item, "id", None) != "asteria-merge-runtime":
+        bundled_contracts = {
+            "asteria-prompt-syntax": (
+                "runtime-components/comfyui/Asteria-Prompt-Syntax",
+                "asteria.prompt.step-schedule.v1",
+            ),
+            "asteria-merge-runtime": (
+                "runtime-components/comfyui/Asteria-Merge-Runtime",
+                "asteria.merge.runtime.v1",
+            ),
+            "asteria-h3-latent-assembly": (
+                "runtime-components/comfyui/Asteria-H3-Latent-Assembly",
+                "asteria.video.sequence.latent-assembly.v1",
+            ),
+            "asteria-anima-lora-remap": (
+                "runtime-components/comfyui/Asteria-Anima-LoRA-Remap",
+                "asteria.anima_lora_remap.v1",
+            ),
+            "asteria-qwen2d-vae": (
+                "runtime-components/comfyui/Asteria-Qwen2D-VAE",
+                "asteria.qwen2d_vae.v1",
+            ),
+        }
+        expected = bundled_contracts.get(getattr(item, "id", None))
+        if expected is None:
             raise ValueError("release catalog bundled runtime ownership is invalid")
-        if getattr(item, "url", None) != "runtime-components/comfyui/Asteria-Merge-Runtime":
+        if getattr(item, "url", None) != expected[0]:
             raise ValueError("release catalog bundled runtime source is invalid")
-        if getattr(item, "ref", None) != "asteria.merge.runtime.v1":
+        if getattr(item, "ref", None) != expected[1]:
             raise ValueError("release catalog bundled runtime contract is invalid")
         if getattr(item, "auto_install", None) is not True:
             raise ValueError("release catalog mandatory runtime must auto install")

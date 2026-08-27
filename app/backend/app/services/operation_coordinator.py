@@ -4,7 +4,8 @@ from concurrent.futures import Future, ThreadPoolExecutor
 import re
 from threading import Event, Lock, Thread
 from time import sleep
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Mapping
 
 from app.schemas.operations import OperationRecord, TERMINAL_OPERATION_STATUSES
 from app.services.operation_executor import (
@@ -26,6 +27,12 @@ from app.services.resource_lifecycle import claims_are_compatible, normalize_cla
 _SAFE_CODE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
 
 
+@dataclass(frozen=True, slots=True)
+class ExecutorGroupSnapshot:
+    group_id: str
+    executors: tuple[tuple[str, OperationExecutor], ...]
+
+
 class OperationCoordinator:
     def __init__(
         self,
@@ -36,6 +43,7 @@ class OperationCoordinator:
     ) -> None:
         self.repository = repository
         self._executors: dict[str, OperationExecutor] = {}
+        self._executor_groups: dict[str, set[str]] = {}
         self._cancel_events: dict[str, Event] = {}
         self._active_claims: dict[str, tuple[str, ...]] = {}
         self._futures: dict[str, Future[None]] = {}
@@ -51,7 +59,66 @@ class OperationCoordinator:
         if not _SAFE_CODE.fullmatch(kind):
             raise ValueError("operation_kind_invalid")
         with self._lock:
+            if any(kind in kinds for kinds in self._executor_groups.values()):
+                raise ValueError("operation_kind_owned")
             self._executors[kind] = executor
+
+    def replace_executor_group(
+        self,
+        group_id: str,
+        executors: Mapping[str, OperationExecutor],
+    ) -> ExecutorGroupSnapshot:
+        if not _SAFE_CODE.fullmatch(group_id):
+            raise ValueError("operation_executor_group_invalid")
+        if any(not _SAFE_CODE.fullmatch(kind) for kind in executors):
+            raise ValueError("operation_kind_invalid")
+        with self._lock:
+            current_kinds = self._executor_groups.get(group_id, set())
+            for kind in executors:
+                if kind in self._executors and kind not in current_kinds:
+                    raise ValueError("operation_kind_conflict")
+            snapshot = ExecutorGroupSnapshot(
+                group_id=group_id,
+                executors=tuple(
+                    (kind, self._executors[kind])
+                    for kind in sorted(current_kinds)
+                    if kind in self._executors
+                ),
+            )
+            for kind in current_kinds:
+                self._executors.pop(kind, None)
+            self._executors.update(executors)
+            if executors:
+                self._executor_groups[group_id] = set(executors)
+            else:
+                self._executor_groups.pop(group_id, None)
+            return snapshot
+
+    def restore_executor_group(self, snapshot: ExecutorGroupSnapshot) -> None:
+        with self._lock:
+            current_kinds = self._executor_groups.get(snapshot.group_id, set())
+            previous = dict(snapshot.executors)
+            for kind in previous:
+                if kind in self._executors and kind not in current_kinds:
+                    raise ValueError("operation_kind_conflict")
+            for kind in current_kinds:
+                self._executors.pop(kind, None)
+            self._executors.update(previous)
+            if previous:
+                self._executor_groups[snapshot.group_id] = set(previous)
+            else:
+                self._executor_groups.pop(snapshot.group_id, None)
+
+    def clear_executor_groups(self, *, prefix: str) -> None:
+        with self._lock:
+            group_ids = tuple(
+                group_id
+                for group_id in self._executor_groups
+                if group_id.startswith(prefix)
+            )
+            for group_id in group_ids:
+                for kind in self._executor_groups.pop(group_id):
+                    self._executors.pop(kind, None)
 
     def start(self) -> None:
         with self._lock:
@@ -93,6 +160,7 @@ class OperationCoordinator:
         progress_total: int | None = None,
         progress_unit: str = "",
         parent_operation_id: str | None = None,
+        operation_id: str | None = None,
     ) -> OperationRecord:
         executor = self._executors.get(kind)
         executor_version = executor.version if executor is not None else "unregistered-v1"
@@ -106,6 +174,7 @@ class OperationCoordinator:
             progress_unit=progress_unit,
             parent_operation_id=parent_operation_id,
             executor_version=executor_version,
+            operation_id=operation_id,
         )
 
     def enqueue_with_discord_receipt(
@@ -188,11 +257,13 @@ class OperationCoordinator:
         *,
         source_actor: str,
         idempotency_key: str | None = None,
+        request_snapshot: dict[str, Any] | None = None,
     ) -> OperationRecord:
         return self.repository.retry(
             operation_id,
             source_actor=source_actor,
             idempotency_key=idempotency_key,
+            request_snapshot=request_snapshot,
         )
 
     def dismiss(self, operation_id: str) -> OperationRecord:

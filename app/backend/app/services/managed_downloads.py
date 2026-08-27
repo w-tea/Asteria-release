@@ -35,6 +35,30 @@ create table if not exists managed_download_telemetry (
 """
 
 
+def managed_download_snapshot(
+    spec: ManagedArtifactSpec,
+    *,
+    requires_runtime_stop: bool = False,
+) -> dict[str, Any]:
+    """Freeze a server-owned managed artifact identity for the operation queue."""
+    snapshot = {
+        "manifest_version": spec.manifest_version,
+        "component_id": spec.component_id,
+        "source_url": spec.source_url,
+        "destination": str(spec.destination.absolute()),
+        "expected_size": spec.expected_size,
+        "checksum_sha256": spec.checksum_sha256,
+        "kind": spec.kind,
+        "strip_single_root": spec.strip_single_root,
+        "allow_unverified": spec.allow_unverified,
+        "require_https": spec.require_https,
+        "max_size": spec.max_size,
+    }
+    if requires_runtime_stop:
+        snapshot["requires_runtime_stop"] = True
+    return snapshot
+
+
 def create_managed_download_tables(connection: sqlite3.Connection) -> None:
     connection.execute(DOWNLOAD_TELEMETRY_SQL)
 
@@ -126,7 +150,7 @@ def partial_discard_requested(operation_id: str) -> bool:
 
 
 class ManagedDownloadOperationExecutor:
-    version = "managed-download-v1.1"
+    version = "managed-download-v1.2"
 
     def __init__(
         self,
@@ -135,12 +159,14 @@ class ManagedDownloadOperationExecutor:
         db_path: Path,
         disk_reservations: DiskReservationService | None = None,
         service_factory: Callable[..., ManagedArtifactService] = ManagedArtifactService,
+        runtime_stopper: Callable[[], object] | None = None,
         monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
         self.temp_root = temp_root
         self.telemetry = ManagedDownloadTelemetryRepository(db_path)
         self.disk_reservations = disk_reservations or DiskReservationService()
         self.service_factory = service_factory
+        self.runtime_stopper = runtime_stopper
         self.monotonic = monotonic
 
     def resource_claims(self, _snapshot: dict[str, Any]) -> tuple[str, ...]:
@@ -148,6 +174,12 @@ class ManagedDownloadOperationExecutor:
 
     def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
         spec = self._spec(context.request_snapshot)
+        requires_runtime_stop = context.request_snapshot.get("requires_runtime_stop") is True
+        if requires_runtime_stop and self.runtime_stopper is None:
+            raise OperationExecutionError(
+                "managed_download_runtime_stop_unavailable",
+                retryable=True,
+            )
         started = self.monotonic()
         last_time = started
         last_bytes = 0
@@ -174,19 +206,22 @@ class ManagedDownloadOperationExecutor:
             self.temp_root,
             progress_callback=progress,
             cancel_requested=lambda: context.cancel_requested,
+            before_publish=self.runtime_stopper if requires_runtime_stop else None,
         )
         partial_ref = (f"download-partial:{spec.component_id}",)
+        bounded_size = spec.expected_size or spec.size_limit
         try:
             with self.disk_reservations.reserve(
                 spec.destination.parent,
-                spec.expected_size,
+                bounded_size,
                 owner_id=context.operation.operation_id,
             ):
                 result = service.acquire(spec)
+            completed_size = result.downloaded_bytes or spec.expected_size or bounded_size
             self.telemetry.update(
                 context.operation.operation_id,
-                downloaded=spec.expected_size,
-                total=spec.expected_size,
+                downloaded=completed_size,
+                total=completed_size,
                 speed=None,
                 eta=0,
                 state="completed",
@@ -202,7 +237,7 @@ class ManagedDownloadOperationExecutor:
             self.telemetry.update(
                 context.operation.operation_id,
                 downloaded=self._partial_size(service, spec),
-                total=spec.expected_size,
+                total=bounded_size,
                 speed=None,
                 eta=None,
                 state="cancelled",
@@ -215,7 +250,7 @@ class ManagedDownloadOperationExecutor:
             self.telemetry.update(
                 context.operation.operation_id,
                 downloaded=0,
-                total=spec.expected_size,
+                total=bounded_size,
                 speed=None,
                 eta=None,
                 state="failed",
@@ -226,7 +261,7 @@ class ManagedDownloadOperationExecutor:
             self.telemetry.update(
                 context.operation.operation_id,
                 downloaded=self._partial_size(service, spec),
-                total=spec.expected_size,
+                total=bounded_size,
                 speed=None,
                 eta=None,
                 state="failed",
@@ -245,10 +280,25 @@ class ManagedDownloadOperationExecutor:
             component_id=str(snapshot["component_id"]),
             source_url=str(snapshot["source_url"]),
             destination=Path(str(snapshot["destination"])),
-            expected_size=int(snapshot["expected_size"]),
-            checksum_sha256=str(snapshot["checksum_sha256"]),
+            expected_size=(
+                int(snapshot["expected_size"])
+                if snapshot.get("expected_size") is not None
+                else None
+            ),
+            checksum_sha256=(
+                str(snapshot["checksum_sha256"])
+                if snapshot.get("checksum_sha256") is not None
+                else None
+            ),
             kind=str(snapshot["kind"]),
             strip_single_root=bool(snapshot.get("strip_single_root", False)),
+            allow_unverified=bool(snapshot.get("allow_unverified", False)),
+            require_https=bool(snapshot.get("require_https", False)),
+            max_size=(
+                int(snapshot["max_size"])
+                if snapshot.get("max_size") is not None
+                else None
+            ),
         )
 
     @staticmethod

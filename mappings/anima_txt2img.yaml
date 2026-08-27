@@ -11,6 +11,7 @@ nodes:
   latent: "5"
   negative_conditioning: "6"
   sampler_tail_start: "7"
+  qwen35_loader: "7"
   merge_source_b: "900"
   merge_source_c: "901"
   merge_runtime: "902"
@@ -19,8 +20,13 @@ class_types:
   text_encoder_loader: CLIPLoader
   vae_loader: VAELoader
   conditioning: TextEncodeQwenImageEdit
+  qwen35_loader: AnimaQwen35Loader
+  qwen35_unified_prompt: AnimaQwen35UnifiedPrompt
+  native_text_encode: CLIPTextEncode
+  anima_3_8b_latent: EmptySD3LatentImage
   latent: EmptyQwenImageLayeredLatentImage
   lora_loader: LoraLoader
+  anima_lora_remap: AsteriaAnimaLoraRemap
   random_noise: RandomNoise
   basic_guider: BasicGuider
   cfg_guider: CFGGuider

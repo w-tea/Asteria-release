@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from PIL import Image
 
+from app.services.media_artifacts import MediaFinalizationResult, finalize_media_artifact
 from app.services.user_settings import safe_segment
 
 
@@ -12,6 +13,19 @@ _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 
 class OutputFinalizationError(Exception):
     pass
+
+
+def finalize_non_image_output(
+    *,
+    generation_id: int,
+    source_path: Path,
+    poster_root: Path,
+) -> MediaFinalizationResult:
+    return finalize_media_artifact(
+        generation_id=generation_id,
+        source_path=source_path,
+        poster_root=poster_root,
+    )
 
 
 def apply_output_image_format(output_paths: list[str], image_format: str) -> list[str]:

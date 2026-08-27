@@ -19,16 +19,29 @@ import scipy.ndimage
 import torch
 
 from app.services.merge_calculation_modes import (
+    ASTERIA_CALCULATION_MODES,
     CALCULATION_CONTRACT_VERSION,
     CALCULATION_IMPLEMENTATION_REVISION,
     CALCULATION_PARAMETER_SCHEMA_VERSION,
-    V11_CALCULATION_MODES,
     CalculationModeError,
+    calculation_implementation_revision_supported,
+    calculation_mode_contract,
     merge_weight_sum_tensor,
     normalize_calculation_parameters,
 )
 from app.services.model_fingerprints import ModelFingerprintService
-from app.services.merge_presets import BLOCK_SCHEMAS, is_flux_schema, migrate_legacy_flux2_weight_text
+from app.schemas.model_architecture import (
+    AnimaArchitectureComponent,
+    ArchitectureDetectionStatus,
+)
+from app.services.media_model_catalog import read_safetensors_header
+from app.services.model_architecture_inspector import AnimaArchitectureInspector
+from app.services.merge_presets import (
+    BLOCK_SCHEMAS,
+    is_anima_schema,
+    is_flux_schema,
+    migrate_legacy_flux2_weight_text,
+)
 
 if TYPE_CHECKING:
     from app.services.merge_runtime_contract import MergeRuntimeRecipeContract
@@ -75,6 +88,9 @@ CALCULATION_MODES = {
     "slerp": "Global spherical interpolation over the flattened tensor",
     "nuslerp": "Vector-wise spherical interpolation with stable linear fallback",
     "nearswap": "Element-wise interpolation weighted toward similar parameters",
+    "moment_weave": "Row-wise moment and normalized-shape interpolation",
+    "log_weave": "Row-wise signed-log interpolation with a shared scale",
+    "dual_residual": "Shared-direction interpolation with source residual preservation",
 }
 
 CALCULATION_MODE_COMPATIBILITY = {
@@ -89,6 +105,9 @@ CALCULATION_MODE_COMPATIBILITY = {
         "slerp",
         "nuslerp",
         "nearswap",
+        "moment_weave",
+        "log_weave",
+        "dual_residual",
     ],
     "add_difference": ["normal", "trainDifference", "smoothAdd", "smoothAdd MT", "extract", "tensor", "tensor2", "plus random"],
     "triple_sum": ["normal", "cosineA", "cosineB", "tensor", "tensor2"],
@@ -142,6 +161,13 @@ class MergeRecipe(BaseModel):
     calculation_parameters: dict[str, object] = Field(default_factory=dict)
     calculation_implementation_revision: str = CALCULATION_IMPLEMENTATION_REVISION
     source_fingerprints: list[dict[str, object]] = Field(default_factory=list)
+    architecture_variant: str = ""
+    block_schema_revision: int = Field(default=1, ge=1)
+    key_layout_signature: str = ""
+    source_architecture_descriptors: list[dict[str, object]] = Field(
+        default_factory=list
+    )
+    ordered_mergeable_block_count: int = Field(default=0, ge=0)
     dice_mode: str = ""
     dice_seed: int | None = None
     dice_ranges: dict[str, str] = Field(default_factory=dict)
@@ -188,28 +214,29 @@ class MergeRecipe(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def normalize_v11_calculation_contract(self) -> MergeRecipe:
+    def normalize_asteria_calculation_contract(self) -> MergeRecipe:
         mode = self.normalized_calc_mode()
-        if mode not in V11_CALCULATION_MODES:
+        if mode not in ASTERIA_CALCULATION_MODES:
             return self
+        contract = calculation_mode_contract(mode)
         if self.merge_type != "checkpoint":
-            raise ValueError("V1.1 calculation modes require checkpoint merge type")
+            raise ValueError("Asteria calculation modes require checkpoint merge type")
         if self.model_family not in {"sdxl", "anima"}:
-            raise ValueError("V1.1 calculation modes require SDXL or Anima model family")
+            raise ValueError("Asteria calculation modes require SDXL or Anima model family")
         if self.normalized_merge_mode() != "weight_sum":
-            raise ValueError("V1.1 calculation modes require weight_sum")
+            raise ValueError("Asteria calculation modes require weight_sum")
         if not 0.0 <= self.alpha <= 1.0:
             raise ValueError(f"{mode} alpha must be between 0 and 1")
-        if self.calculation_contract_version != CALCULATION_CONTRACT_VERSION:
+        if self.calculation_contract_version != contract["contract_version"]:
             raise ValueError("incompatible calculation contract version")
         if (
             self.calculation_parameter_schema_version
-            != CALCULATION_PARAMETER_SCHEMA_VERSION
+            != contract["parameter_schema_version"]
         ):
             raise ValueError("incompatible calculation parameter schema version")
-        if (
-            self.calculation_implementation_revision
-            != CALCULATION_IMPLEMENTATION_REVISION
+        if not calculation_implementation_revision_supported(
+            mode,
+            self.calculation_implementation_revision,
         ):
             raise ValueError("incompatible calculation implementation revision")
         try:
@@ -240,7 +267,7 @@ class MergeRecipe(BaseModel):
 
     def resolved_calculation_parameters(self) -> dict[str, object]:
         mode = self.normalized_calc_mode()
-        if mode not in V11_CALCULATION_MODES:
+        if mode not in ASTERIA_CALCULATION_MODES:
             return dict(self.calculation_parameters)
         try:
             return normalize_calculation_parameters(
@@ -760,15 +787,15 @@ def _block_id_for_key(key: str, schema: str) -> str:
         tail = lowered.split("llm_adapter.blocks.", 1)[1]
         digits = "".join(ch for ch in tail[:5] if ch.isdigit())
         return f"LLM{int(digits):03d}" if digits else "BASE"
-    if ".blocks." in lowered and schema == "anima":
+    if ".blocks." in lowered and is_anima_schema(schema):
         tail = lowered.split(".blocks.", 1)[1]
         digits = "".join(ch for ch in tail[:5] if ch.isdigit())
         return f"B{int(digits):03d}" if digits else "BASE"
-    if lowered.startswith("net.blocks.") and schema == "anima":
+    if lowered.startswith("net.blocks.") and is_anima_schema(schema):
         tail = lowered.split("net.blocks.", 1)[1]
         digits = "".join(ch for ch in tail[:5] if ch.isdigit())
         return f"B{int(digits):03d}" if digits else "BASE"
-    if "final_layer" in lowered and (schema == "anima" or is_flux_schema(schema)):
+    if "final_layer" in lowered and (is_anima_schema(schema) or is_flux_schema(schema)):
         return "OUT"
     if schema == "sd15_sd2" and "cond_stage_model" in lowered:
         return "BASE"
@@ -833,6 +860,93 @@ def _block_id_for_key(key: str, schema: str) -> str:
     if "middle_block" in lowered or ".mid." in lowered:
         return "M00" if schema == "sdxl" else "MID"
     return "BASE"
+
+
+def _merge_schema_for_anima_variant(variant_id: str) -> str:
+    if variant_id == "anima_base_28":
+        return "anima"
+    return variant_id
+
+
+def preflight_anima_merge_architecture(
+    recipe: MergeRecipe,
+    sources: dict[str, Path],
+) -> list[dict[str, object]]:
+    if recipe.model_family != "anima" or recipe.merge_type != "checkpoint":
+        return []
+    descriptors: list[dict[str, object]] = []
+    inspector = AnimaArchitectureInspector()
+    for role, path in sorted(sources.items()):
+        try:
+            descriptor = inspector.inspect(read_safetensors_header(path))
+        except (OSError, ValueError) as exc:
+            raise MergeExecutionError(
+                f"Anima source {role} architecture header is unavailable"
+            ) from exc
+        if (
+            descriptor.status != ArchitectureDetectionStatus.SUPPORTED
+            or descriptor.component != AnimaArchitectureComponent.DIFFUSION_MODEL
+            or descriptor.variant_id is None
+            or not descriptor.key_layout_signature
+        ):
+            reason = descriptor.unsupported_reason or "layout_unverified"
+            raise MergeExecutionError(
+                f"Anima source {role} architecture is unsupported: {reason}"
+            )
+        payload = descriptor.model_dump(mode="json")
+        payload["role"] = role
+        descriptors.append(payload)
+
+    variants = {str(item["variant_id"]) for item in descriptors}
+    signatures = {str(item["key_layout_signature"]) for item in descriptors}
+    if len(variants) != 1 or len(signatures) != 1:
+        summary = ", ".join(
+            f"{item['role']}={item['variant_id']}"
+            for item in descriptors
+        )
+        raise MergeExecutionError(
+            f"Anima source architectures do not match: {summary}"
+        )
+    variant_id = next(iter(variants))
+    required_schema = _merge_schema_for_anima_variant(variant_id)
+    if recipe.block_schema != required_schema:
+        raise MergeExecutionError(
+            f"Anima architecture {variant_id} requires block schema {required_schema}"
+        )
+    if recipe.architecture_variant and recipe.architecture_variant != variant_id:
+        raise MergeExecutionError("Anima architecture changed after recipe creation")
+    signature = next(iter(signatures))
+    if recipe.key_layout_signature and recipe.key_layout_signature != signature:
+        raise MergeExecutionError("Anima key layout changed after recipe creation")
+
+    recipe.architecture_variant = variant_id
+    recipe.block_schema_revision = 1
+    recipe.key_layout_signature = signature
+    recipe.source_architecture_descriptors = descriptors
+    recipe.ordered_mergeable_block_count = len(BLOCK_SCHEMAS[required_schema])
+    return descriptors
+
+
+def preflight_anima_merge_recipe(
+    recipe: MergeRecipe,
+) -> list[dict[str, object]]:
+    if recipe.model_family != "anima" or recipe.merge_type != "checkpoint":
+        return []
+    source_a = _source(recipe, "A")
+    source_b = _source(recipe, "B")
+    source_c = (
+        _source(recipe, "C")
+        if MERGE_MODES.get(recipe.normalized_merge_mode(), {}).get("requires_c")
+        else None
+    )
+    return preflight_anima_merge_architecture(
+        recipe,
+        {
+            "A": source_a,
+            "B": source_b,
+            **({"C": source_c} if source_c is not None else {}),
+        },
+    )
 
 
 ElementalRatio = float | str
@@ -1143,14 +1257,19 @@ def _attention_similarities(tensors_a: dict[str, torch.Tensor], tensors_b: dict[
 def analyze_merge_recipe(recipe: MergeRecipe) -> MergeAnalysis:
     source_a = _source(recipe, "A")
     source_b = _source(recipe, "B")
+    source_c = (
+        _source(recipe, "C")
+        if MERGE_MODES.get(recipe.normalized_merge_mode(), {}).get("requires_c")
+        else None
+    )
+    preflight_anima_merge_recipe(recipe)
     tensors_a = _load_safetensors(source_a, "A")
     tensors_b = _load_safetensors(source_b, "B")
     sources = [
         MergeAnalysisSource(role="A", path=str(source_a), tensor_count=len(tensors_a), block_counts=_source_block_counts(tensors_a, recipe.block_schema)),
         MergeAnalysisSource(role="B", path=str(source_b), tensor_count=len(tensors_b), block_counts=_source_block_counts(tensors_b, recipe.block_schema)),
     ]
-    if MERGE_MODES.get(recipe.normalized_merge_mode(), {}).get("requires_c"):
-        source_c = _source(recipe, "C")
+    if source_c is not None:
         tensors_c = _load_safetensors(source_c, "C")
         sources.append(MergeAnalysisSource(role="C", path=str(source_c), tensor_count=len(tensors_c), block_counts=_source_block_counts(tensors_c, recipe.block_schema)))
 
@@ -1717,7 +1836,7 @@ def _merge_tensor(
     alpha = _block_weight_for_key(recipe, key, recipe.block_weights_alpha or recipe.block_weights, recipe.alpha, tensor_index)
     beta = _block_weight_for_key(recipe, key, recipe.block_weights_beta, recipe.beta, tensor_index)
     calc_mode = recipe.normalized_calc_mode()
-    if calc_mode in V11_CALCULATION_MODES:
+    if calc_mode in ASTERIA_CALCULATION_MODES:
         try:
             value = merge_weight_sum_tensor(
                 calc_mode,
@@ -1725,6 +1844,7 @@ def _merge_tensor(
                 b.float(),
                 alpha,
                 recipe.resolved_calculation_parameters(),
+                implementation_revision=recipe.calculation_implementation_revision,
             )
         except CalculationModeError as exc:
             raise MergeExecutionError(f"{key}: {exc}") from exc
@@ -2012,7 +2132,7 @@ def _lora_target_id(prefix: str) -> str:
 
 def _lora_prefix_for_key(key: str, schema: str = "sdxl") -> str:
     lowered = key.lower()
-    if schema == "anima" and lowered.startswith("net.") and lowered.endswith(".weight"):
+    if is_anima_schema(schema) and lowered.startswith("net.") and lowered.endswith(".weight"):
         return f"diffusion_model.{key[len('net.'):-len('.weight')]}"
     if schema in {"flux1", "flux2"}:
         canonical = _canonical_checkpoint_diffusion_key(key)
@@ -2033,7 +2153,7 @@ def _is_lora_extractable_checkpoint_key(key: str, tensor: torch.Tensor, schema: 
         return False
     if lowered.startswith("first_stage_model.") or ".first_stage_model." in lowered:
         return False
-    if schema == "anima":
+    if is_anima_schema(schema):
         return lowered.startswith("net.") and lowered.endswith(".weight")
     if schema in {"flux1", "flux2"}:
         canonical = _canonical_checkpoint_diffusion_key(key).lower()
@@ -2168,7 +2288,7 @@ def _extract_lora_from_difference(
             delta,
             rank,
             conv_rank,
-            clamp_quantile=None if recipe.block_schema in {"anima", "flux1", "flux2"} else LORA_SVD_CLAMP_QUANTILE,
+            clamp_quantile=None if is_anima_schema(recipe.block_schema) or recipe.block_schema in {"flux1", "flux2"} else LORA_SVD_CLAMP_QUANTILE,
             prefer_truncated=recipe.block_schema in {"flux1", "flux2"},
         )
         if pair is None:
@@ -2177,7 +2297,7 @@ def _extract_lora_from_difference(
         up, down = pair
         prefix = _lora_prefix_for_key(key, recipe.block_schema)
         dtype = torch.float16 if recipe.fp16 else torch.float32
-        if recipe.block_schema in {"anima", "flux1", "flux2"}:
+        if is_anima_schema(recipe.block_schema) or recipe.block_schema in {"flux1", "flux2"}:
             extracted[f"{prefix}.lora_B.weight"] = up.to(dtype=dtype).contiguous()
             extracted[f"{prefix}.lora_A.weight"] = down.to(dtype=dtype).contiguous()
         else:
@@ -2382,7 +2502,7 @@ def _checkpoint_lora_module_pairs(
         target_spec: tuple[str, str | None] | None = None
         if prefix.startswith("diffusion_model."):
             module = prefix.removeprefix("diffusion_model.")
-            if recipe.block_schema == "anima":
+            if is_anima_schema(recipe.block_schema):
                 target_spec = (f"net.{module}.weight", None)
             elif recipe.block_schema in {"flux1", "flux2"}:
                 target_spec = (f"{module}.weight", None)
@@ -2776,6 +2896,7 @@ def execute_merge_recipe(
     ):
         raise MergeExecutionError("merge source changed after enqueue")
     recipe.source_fingerprints = resolved_source_fingerprints
+    preflight_anima_merge_architecture(recipe, sources)
     logs = [f"loading A: {source_a}", f"loading B: {source_b}"]
     merge_device = _merge_device(recipe, logs)
     stream_flux_extract = recipe.merge_type == "extract_lora" and recipe.block_schema in {"flux1", "flux2"}
@@ -3073,7 +3194,7 @@ def execute_merge_recipe(
             }
         )
     elif recipe.merge_type == "extract_lora":
-        if recipe.block_schema == "anima" and any(key.endswith(".lora_A.weight") for key in merged):
+        if is_anima_schema(recipe.block_schema) and any(key.endswith(".lora_A.weight") for key in merged):
             extracted_lora_format = "anima_ab"
         elif recipe.block_schema in {"flux1", "flux2"} and any(
             key.endswith(".lora_A.weight") for key in merged

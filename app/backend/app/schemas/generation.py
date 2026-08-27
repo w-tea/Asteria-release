@@ -1,9 +1,12 @@
+import hashlib
+import json
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.common import LoraSelection
 from app.schemas.image_edit import ImageEditLineage
+from app.schemas.media import MediaArtifact, MediaKind
 from app.schemas.remaster import PrimaryOutput, RemasterResponse, RemasterSettingsInput
 from app.services.controlnet_mode import ControlNetMode
 
@@ -76,6 +79,105 @@ class DetailerUnit(BaseModel):
     scheduler: str = ""
 
 
+PromptSyntaxFeature = Literal[
+    "token_weight",
+    "scheduled_switch",
+    "alternating_switch",
+    "conditioning_and",
+    "conditioning_break",
+]
+PromptSyntaxOperation = Literal[
+    "identity",
+    "token_weight",
+    "scheduled_switch",
+    "alternating_switch",
+    "conditioning_and",
+    "conditioning_break",
+]
+
+
+class PromptSyntaxSegmentRecord(BaseModel):
+    text: str
+    weight: str = "1"
+    start: str | None = None
+    end: str | None = None
+    assignment: Literal["A", "B"] | None = None
+
+
+class PromptSyntaxPlanRecord(BaseModel):
+    schema_version: Literal["asteria.prompt-plan.v1"]
+    parser_generation: Literal["asteria-prompt-v1"]
+    profile_id: str
+    operation: PromptSyntaxOperation
+    enabled_features: list[PromptSyntaxFeature] = Field(default_factory=list)
+    segments: list[PromptSyntaxSegmentRecord] = Field(min_length=1, max_length=8)
+
+
+class PromptSyntaxPassPlanRecord(BaseModel):
+    schema_version: Literal["asteria.prompt-pass.v1"]
+    node_contract_revision: Literal["asteria.prompt.step-schedule.v1"]
+    profile_id: str
+    pass_id: Literal["base", "hires"]
+    steps: int = Field(ge=1, le=150)
+    sampler: str
+    scheduler: str
+    denoise: float = Field(ge=0, le=1)
+    positive_plan_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    negative_plan_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    alternating_assignments: dict[
+        Literal["positive", "negative"],
+        list[Literal["A", "B"]],
+    ] = Field(default_factory=dict)
+
+
+class PromptSyntaxGenerationRecord(BaseModel):
+    schema_version: Literal["asteria.prompt-generation.v1"]
+    parser_generation: Literal["asteria-prompt-v1"]
+    profile_id: str
+    raw_prompt: str
+    raw_negative_prompt: str
+    expanded_prompt: str
+    expanded_negative_prompt: str
+    semantic_plans: dict[
+        Literal["positive", "negative", "hires_positive", "hires_negative"],
+        PromptSyntaxPlanRecord,
+    ]
+    semantic_hashes: dict[
+        Literal["positive", "negative", "hires_positive", "hires_negative"],
+        str,
+    ]
+    pass_plans: dict[Literal["base", "hires"], PromptSyntaxPassPlanRecord]
+    pass_plan_hashes: dict[Literal["base", "hires"], str]
+
+    @model_validator(mode="after")
+    def validate_prompt_syntax_record(self):
+        if set(self.semantic_hashes) != set(self.semantic_plans):
+            raise ValueError("prompt syntax semantic hashes must match semantic plans")
+        if set(self.pass_plan_hashes) != set(self.pass_plans):
+            raise ValueError("prompt syntax pass hashes must match pass plans")
+        if any(plan.profile_id != self.profile_id for plan in self.semantic_plans.values()):
+            raise ValueError("prompt syntax semantic plan profile must match the generation profile")
+        if any(plan.profile_id != self.profile_id for plan in self.pass_plans.values()):
+            raise ValueError("prompt syntax pass profile must match the generation profile")
+        for key, plan in self.semantic_plans.items():
+            if self.semantic_hashes[key] != _prompt_record_sha256(plan.model_dump(mode="json")):
+                raise ValueError("prompt syntax semantic hash does not match its plan")
+        for key, plan in self.pass_plans.items():
+            if self.pass_plan_hashes[key] != _prompt_record_sha256(plan.model_dump(mode="json")):
+                raise ValueError("prompt syntax pass hash does not match its plan")
+        return self
+
+
+def _prompt_record_sha256(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 class Txt2ImgRequest(BaseModel):
     profile: str = "sdxl"
     runtime: str | None = None
@@ -132,6 +234,8 @@ class Txt2ImgRequest(BaseModel):
     loras: list[LoraSelection] = Field(default_factory=list)
     controlnet_units: list[ControlNetUnit] = Field(default_factory=list)
     anima_lllite_units: list[AnimaLLLiteUnit] = Field(default_factory=list)
+    anima_qwen35_adapter_strength: float = Field(default=1.0, ge=0, le=2)
+    anima_qwen35_negative_adapter_strength: float = Field(default=0.0, ge=0, le=2)
     detailer_units: list[DetailerUnit] = Field(default_factory=list)
     model_slot_overrides: dict[str, str] = Field(default_factory=dict)
     remaster: RemasterSettingsInput = Field(default_factory=RemasterSettingsInput)
@@ -178,6 +282,8 @@ class GenerationResponse(BaseModel):
     loras: list[LoraSelection]
     embeddings: list[str]
     output_paths: list[str]
+    media_kind: MediaKind = "image"
+    artifacts: list[MediaArtifact] = Field(default_factory=list)
     primary_outputs: list[PrimaryOutput] = Field(default_factory=list)
     remasters: list[RemasterResponse] = Field(default_factory=list)
 
@@ -227,6 +333,44 @@ class XYZPlotResponse(BaseModel):
     output_paths: list[str]
 
 
+class VideoSequenceHistorySegment(BaseModel):
+    segment_id: str
+    ordinal: int = Field(ge=0)
+    accepted_revision: int | None = Field(default=None, ge=1)
+    generation_id: int = Field(ge=1)
+    artifact_id: str
+    prompt: str
+    context_method: Literal["direct_context", "reference_continuation"] | None = None
+    available: bool = False
+
+
+class VideoSequenceHistoryArtifact(VideoSequenceHistorySegment):
+    state: Literal["history", "invalidated"]
+
+
+class VideoSequenceHistoryDetails(BaseModel):
+    schema_version: Literal["asteria.video.sequence.history.v1"] = "asteria.video.sequence.history.v1"
+    sequence_id: str
+    sequence_revision: int = Field(ge=1)
+    active_chain_revision: int = Field(ge=1)
+    assembly_revision: int = Field(ge=0)
+    status: Literal[
+        "draft",
+        "generating",
+        "review",
+        "ready_to_continue",
+        "assembling",
+        "completed",
+        "failed",
+        "interrupted",
+    ]
+    assembled_generation_id: int = Field(ge=1)
+    assembled_artifact_id: str | None = None
+    sidecar_artifact_ids: list[str] = Field(default_factory=list)
+    accepted_segments: list[VideoSequenceHistorySegment] = Field(default_factory=list)
+    historical_artifacts: list[VideoSequenceHistoryArtifact] = Field(default_factory=list)
+
+
 class GenerationHistoryItem(BaseModel):
     id: int
     status: str
@@ -239,6 +383,9 @@ class GenerationHistoryItem(BaseModel):
     loras: list[LoraSelection]
     embeddings: list[str]
     output_paths: list[str]
+    media_kind: MediaKind = "image"
+    artifacts: list[MediaArtifact] = Field(default_factory=list)
+    video_sequence: VideoSequenceHistoryDetails | None = None
     rating: int = 0
     favorite: bool = False
     tags: list[str] = Field(default_factory=list)

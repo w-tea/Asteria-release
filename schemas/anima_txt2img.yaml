@@ -25,6 +25,8 @@ fields:
   text_encoder: {type: model, model_type: text_encoder, required: false, backend_key: text_encoder}
   vae: {type: string, required: false, backend_key: vae, default: "Automatic"}
   clip_skip: {type: integer, required: false, backend_key: clip_skip, min: 1, max: 12, default: 1}
+  anima_qwen35_adapter_strength: {type: number, required: false, backend_key: anima_qwen35_adapter_strength, min: 0, max: 2, default: 1}
+  anima_qwen35_negative_adapter_strength: {type: number, required: false, backend_key: anima_qwen35_negative_adapter_strength, min: 0, max: 2, default: 0}
   refiner_enabled: {type: boolean, required: false, backend_key: refiner_enabled, default: false}
   refiner_checkpoint: {type: string, required: false, backend_key: refiner_checkpoint, default: ""}
   refiner_switch_at: {type: number, required: false, backend_key: refiner_switch_at, min: 0, max: 1, default: 0.8}

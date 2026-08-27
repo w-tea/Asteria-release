@@ -123,6 +123,7 @@ def comfy_model_name(
     model_dir_name: str,
     *,
     model_root: str | os.PathLike[str] | None = None,
+    external_roots: Iterable[ExternalModelRoot] = (),
 ) -> str:
     normalized = value.replace("\\", "/")
     relative = _relative_to_model_root(normalized, model_root)
@@ -135,6 +136,13 @@ def comfy_model_name(
         return _strip_leading_alias(normalized, aliases).replace("/", "\\")
     if model_root is not None:
         if relative is None:
+            external_name = _relative_to_external_model_root(
+                normalized,
+                model_dir_name,
+                external_roots,
+            )
+            if external_name is not None:
+                return external_name.replace("/", "\\")
             anchored = _relative_to_standard_models_anchor(normalized, aliases)
             if anchored is not None:
                 return anchored.replace("/", "\\")
@@ -154,6 +162,37 @@ def comfy_model_name(
         if index >= 0:
             return normalized[index + len(marker) :].replace("/", "\\")
     return normalized.replace("/", "\\")
+
+
+def _relative_to_external_model_root(
+    normalized_value: str,
+    model_dir_name: str,
+    external_roots: Iterable[ExternalModelRoot],
+) -> str | None:
+    model_types = tuple(
+        model_type
+        for model_type, comfy_keys in _EXTERNAL_COMFY_KEYS.items()
+        if model_dir_name in comfy_keys
+    )
+    for root in external_roots:
+        if not root.enabled or not root.path:
+            continue
+        relative = _relative_to_model_root(normalized_value, root.path)
+        if relative is None:
+            continue
+        directories = sorted(
+            {
+                directory
+                for model_type in model_types
+                for directory in root.mappings.get(model_type, ())
+            },
+            key=len,
+            reverse=True,
+        )
+        stripped = _strip_leading_alias(relative, directories)
+        if stripped != relative:
+            return stripped
+    return None
 
 
 def _relative_to_model_root(

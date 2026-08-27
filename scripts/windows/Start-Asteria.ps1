@@ -8,11 +8,11 @@ param(
     [string]$NodePath = "",
     [string]$DataRoot = "",
     [string]$ModelRoot = "",
-    [string]$OutputRoot = "",
     [string]$LogsRoot = "",
     [string]$TempRoot = "",
     [string]$ComfyRoot = "",
     [ValidateRange(1, 600)][int]$HealthTimeoutSeconds = 120,
+    [switch]$SafeMode,
     [switch]$NoOpen,
     [switch]$Json
 )
@@ -42,7 +42,7 @@ function Test-SamePath {
 }
 
 if (-not (Test-AsteriaFullyQualifiedPath $AppRoot)) { Complete-Start "invalid" "launcher_path_not_absolute" 64 "The application folder must be absolute." }
-foreach ($explicitPath in @($PythonPath, $NodePath, $DataRoot, $ModelRoot, $OutputRoot, $LogsRoot, $TempRoot, $ComfyRoot)) {
+foreach ($explicitPath in @($PythonPath, $NodePath, $DataRoot, $ModelRoot, $LogsRoot, $TempRoot, $ComfyRoot)) {
     if ($explicitPath -and -not (Test-AsteriaFullyQualifiedPath $explicitPath)) { Complete-Start "invalid" "launcher_path_not_absolute" 64 "Every explicit launcher path must be absolute." }
 }
 $resolvedAppRoot = [System.IO.Path]::GetFullPath($AppRoot)
@@ -67,7 +67,6 @@ try {
     $packageComfy = Resolve-AsteriaPackagePath $resolvedAppRoot (Get-AsteriaReleaseLayoutValue $layoutPath "package" "comfy_root")
     $packageData = Resolve-AsteriaPackagePath $resolvedAppRoot (Get-AsteriaReleaseLayoutValue $layoutPath "writable_roots" "data")
     $packageModels = Resolve-AsteriaPackagePath $resolvedAppRoot (Get-AsteriaReleaseLayoutValue $layoutPath "writable_roots" "models")
-    $packageOutputs = Resolve-AsteriaPackagePath $resolvedAppRoot (Get-AsteriaReleaseLayoutValue $layoutPath "writable_roots" "outputs")
     $packageLogs = Resolve-AsteriaPackagePath $resolvedAppRoot (Get-AsteriaReleaseLayoutValue $layoutPath "writable_roots" "logs")
     $packageTemp = Resolve-AsteriaPackagePath $resolvedAppRoot (Get-AsteriaReleaseLayoutValue $layoutPath "writable_roots" "temp")
 }
@@ -91,14 +90,14 @@ else {
 }
 $resolvedDataRoot = if ($DataRoot) { [System.IO.Path]::GetFullPath($DataRoot) } else { $packageData }
 $resolvedModelRoot = if ($ModelRoot) { [System.IO.Path]::GetFullPath($ModelRoot) } else { $packageModels }
-$resolvedOutputRoot = if ($OutputRoot) { [System.IO.Path]::GetFullPath($OutputRoot) } else { $packageOutputs }
+$defaultOutputRoot = [System.IO.Path]::Combine($resolvedDataRoot, "outputs")
 $resolvedLogsRoot = if ($LogsRoot) { [System.IO.Path]::GetFullPath($LogsRoot) } else { $packageLogs }
 $resolvedTempRoot = if ($TempRoot) { [System.IO.Path]::GetFullPath($TempRoot) } else { $packageTemp }
 $resolvedComfyRoot = if ($ComfyRoot) { [System.IO.Path]::GetFullPath($ComfyRoot) } else { $packageComfy }
 
 if ($TargetMode -eq "packaged") {
-    $actualPaths = @($resolvedPython, $resolvedNode, $resolvedComfyRoot, $resolvedDataRoot, $resolvedModelRoot, $resolvedOutputRoot, $resolvedLogsRoot, $resolvedTempRoot)
-    $packagePaths = @($packagePython, $packageNode, $packageComfy, $packageData, $packageModels, $packageOutputs, $packageLogs, $packageTemp)
+    $actualPaths = @($resolvedPython, $resolvedNode, $resolvedComfyRoot, $resolvedDataRoot, $resolvedModelRoot, $resolvedLogsRoot, $resolvedTempRoot)
+    $packagePaths = @($packagePython, $packageNode, $packageComfy, $packageData, $packageModels, $packageLogs, $packageTemp)
     for ($index = 0; $index -lt $actualPaths.Count; $index++) {
         if (-not (Test-SamePath $actualPaths[$index] $packagePaths[$index])) {
             Complete-Start "invalid" "launcher_packaged_path_override" 65 "Packaged launches must use paths contained by the application folder."
@@ -132,8 +131,21 @@ if (-not (Test-Path -LiteralPath $resolvedPython -PathType Leaf) -or
     -not (Test-Path -LiteralPath $frontendEntry -PathType Leaf)) {
     Complete-Start "blocked" "launcher_runtime_missing" 67 "A required packaged runtime or application file is missing."
 }
-foreach ($path in @($resolvedDataRoot, $resolvedModelRoot, $resolvedOutputRoot, $resolvedLogsRoot, $resolvedTempRoot)) {
+foreach ($path in @($resolvedDataRoot, $resolvedModelRoot, $defaultOutputRoot, $resolvedLogsRoot, $resolvedTempRoot)) {
     [System.IO.Directory]::CreateDirectory($path) | Out-Null
+}
+
+$extensionStartupJournal = [System.IO.Path]::Combine($resolvedDataRoot, "extensions", "startup-journal.json")
+if (-not $SafeMode -and (Test-Path -LiteralPath $extensionStartupJournal -PathType Leaf)) {
+    try {
+        $extensionStartupState = Get-Content -LiteralPath $extensionStartupJournal -Raw | ConvertFrom-Json
+        if ($extensionStartupState.status -eq "loading") {
+            Write-Warning "The previous extension load did not finish. Retry normally, or run Start-Asteria.cmd --safe-mode if startup fails again."
+        }
+    }
+    catch {
+        Write-Warning "Extension startup recovery information is unreadable. Use Start-Asteria.cmd --safe-mode if startup fails."
+    }
 }
 
 $preflightPath = Join-Path $PSScriptRoot "Test-AsteriaReadiness.ps1"
@@ -146,7 +158,6 @@ $preflightParameters = @{
     Feature = $enabledFeatures
     DataRoot = $resolvedDataRoot
     ModelRoot = $resolvedModelRoot
-    OutputRoot = $resolvedOutputRoot
     ComfyRoot = $resolvedComfyRoot
     Json = $true
 }
@@ -160,6 +171,10 @@ $statePath = [System.IO.Path]::Combine($processRoot, "launcher-state.json")
 $failurePath = [System.IO.Path]::Combine($logsRoot, "launcher-failure.json")
 [System.IO.Directory]::CreateDirectory($logsRoot) | Out-Null
 [System.IO.Directory]::CreateDirectory($processRoot) | Out-Null
+$launcherPreferences = Get-AsteriaLauncherPreferences -SettingsPath ([System.IO.Path]::Combine($resolvedDataRoot, "user-settings.json"))
+if ($launcherPreferences.ReasonId) {
+    "reason_id=$($launcherPreferences.ReasonId) field=launcher.disable_pinned_memory" | Set-Content -LiteralPath (Join-Path $logsRoot "launcher-memory-settings.log") -Encoding utf8
+}
 $existing = Read-AsteriaLauncherState -Path $statePath
 function Test-AsteriaOptionalProcessRecord {
     param($Record)
@@ -192,7 +207,6 @@ $env:PYTHONPATH = $backendRoot
 $env:ASTERIA_ROOT_DIR = $resolvedAppRoot
 $env:ASTERIA_DATA_DIR = $resolvedDataRoot
 $env:ASTERIA_MODEL_DIR = $resolvedModelRoot
-$env:ASTERIA_OUTPUT_DIR = $resolvedOutputRoot
 $env:ASTERIA_MODEL_SELECTIONS_PATH = [System.IO.Path]::Combine($resolvedDataRoot, "model-selections.json")
 $env:ASTERIA_RELEASE_MANIFEST_PATH = [System.IO.Path]::Combine($resolvedAppRoot, "release-manifest.yaml")
 $env:ASTERIA_DEFAULTS_DIR = [System.IO.Path]::Combine($resolvedAppRoot, "defaults")
@@ -202,6 +216,7 @@ $env:ASTERIA_COMFY_PID_PATH = [System.IO.Path]::Combine($processRoot, "comfyui.p
 $env:ASTERIA_COMFY_OUTPUT_DIR = $comfyOutput
 $env:ASTERIA_AUTO_BOOTSTRAP_MODELS = "0"
 $env:ASTERIA_TARGET_MODE = $TargetMode
+$env:ASTERIA_DISABLE_EXTENSIONS = if ($SafeMode) { "1" } else { "0" }
 $env:NITRO_HOST = "127.0.0.1"
 $env:NITRO_PORT = "3000"
 $env:NUXT_PUBLIC_API_BASE = "http://127.0.0.1:8000"
@@ -229,10 +244,14 @@ $comfyUrl = "http://127.0.0.1:8188/system_stats"
 $backendUrl = "http://127.0.0.1:8000/api/health"
 $frontendUrl = "http://127.0.0.1:3000/"
 $comfyErrorLog = Join-Path $logsRoot "comfyui.err.log"
+$comfyArguments = @("main.py", "--listen", "127.0.0.1", "--port", "8188", "--preview-method", "auto", "--extra-model-paths-config", "`"$extraModels`"", "--input-directory", "`"$comfyInput`"", "--output-directory", "`"$comfyOutput`"", "--user-directory", "`"$comfyUser`"", "--database-url", "`"$comfyDatabaseUrl`"")
+if ($launcherPreferences.DisablePinnedMemory -and ($comfyArguments -notcontains "--disable-pinned-memory")) {
+    $comfyArguments += "--disable-pinned-memory"
+}
 $launchStage = "comfy_start"
 try {
     Write-StartProgress "Starting ComfyUI..."
-    $comfyRecord = Start-AsteriaOwnedProcess -Name "comfyui" -FilePath $resolvedPython -ArgumentList @("main.py", "--listen", "127.0.0.1", "--port", "8188", "--preview-method", "auto", "--extra-model-paths-config", "`"$extraModels`"", "--input-directory", "`"$comfyInput`"", "--output-directory", "`"$comfyOutput`"", "--user-directory", "`"$comfyUser`"", "--database-url", "`"$comfyDatabaseUrl`"") -WorkingDirectory $resolvedComfyRoot -StandardOutputPath (Join-Path $logsRoot "comfyui.out.log") -StandardErrorPath $comfyErrorLog
+    $comfyRecord = Start-AsteriaOwnedProcess -Name "comfyui" -FilePath $resolvedPython -ArgumentList $comfyArguments -WorkingDirectory $resolvedComfyRoot -StandardOutputPath (Join-Path $logsRoot "comfyui.out.log") -StandardErrorPath $comfyErrorLog
     Add-OwnedProcess $comfyRecord
     Set-Content -LiteralPath $env:ASTERIA_COMFY_PID_PATH -Value $comfyRecord.pid -Encoding ascii
     $launchStage = "comfy_health"
@@ -275,7 +294,7 @@ catch {
     Complete-Start "error" "launcher_health_failed" 76 "Asteria did not become ready in time. Started processes were stopped; review the preserved logs."
 }
 
-if (Get-AsteriaRuntimeMonitorPreference -SettingsPath ([System.IO.Path]::Combine($resolvedDataRoot, "user-settings.json"))) {
+if ($launcherPreferences.RuntimeMonitorOnStart) {
     try {
         $monitorScript = Join-Path $PSScriptRoot "Show-AsteriaRuntimeMonitor.ps1"
         $monitorPowerShell = (Get-Command powershell.exe -ErrorAction Stop | Select-Object -First 1).Source

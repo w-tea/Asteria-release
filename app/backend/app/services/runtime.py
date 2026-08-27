@@ -53,6 +53,7 @@ from app.services.sampling_catalog import sampler_runtime_name, scheduler_runtim
 from app.services.seed_resize import seed_resize_active
 from app.services.topaz import TopazSettings, process_topaz_image
 from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
+from app.services.prompt_syntax import PromptSyntaxError, PromptSyntaxPlan, prompt_syntax_plan_from_dict
 from app.services.workflow_mapping import WorkflowMapping, WorkflowMappingRepository
 
 
@@ -223,12 +224,12 @@ class ComfyClient:
     def wait_for_history(
         self,
         prompt_id: str,
-        timeout_seconds: float = 600.0,
+        timeout_seconds: float | None = 600.0,
         interval_seconds: float = 1.0,
         runtime_stop_confirmed=None,
     ) -> dict:
-        deadline = time.monotonic() + timeout_seconds
-        while time.monotonic() < deadline:
+        deadline = None if timeout_seconds is None else time.monotonic() + timeout_seconds
+        while deadline is None or time.monotonic() < deadline:
             if callable(runtime_stop_confirmed) and runtime_stop_confirmed():
                 raise RuntimeCancellationConfirmed(f"ComfyUI prompt stopped: {prompt_id}")
             history = self._request_json("GET", f"history/{prompt_id}")
@@ -248,12 +249,12 @@ class ComfyClient:
                 prompt_ids.append(row[1])
         return prompt_ids
 
-    def download_image(self, image: dict) -> bytes:
+    def download_output(self, output: dict) -> bytes:
         query = urlencode(
             {
-                "filename": image.get("filename", ""),
-                "subfolder": image.get("subfolder", ""),
-                "type": image.get("type", "output"),
+                "filename": output.get("filename", ""),
+                "subfolder": output.get("subfolder", ""),
+                "type": output.get("type", "output"),
             }
         )
         url = urljoin(self.base_url, f"view?{query}")
@@ -261,11 +262,14 @@ class ComfyClient:
             with urlopen(url, timeout=self.timeout_seconds) as response:
                 return response.read()
         except URLError as exc:
-            raise RuntimeErrorResponse(f"Failed to download ComfyUI image: {exc}") from exc
+            raise RuntimeErrorResponse(f"Failed to download ComfyUI output: {exc}") from exc
 
-    def upload_image(self, path: Path) -> str:
+    def download_image(self, image: dict) -> bytes:
+        return self.download_output(image)
+
+    def upload_file(self, path: Path) -> str:
         if not _path_exists_safely(path) or not _path_is_file_safely(path):
-            raise RuntimeErrorResponse(f"Image not found: {path}")
+            raise RuntimeErrorResponse(f"Input file not found: {path}")
         try:
             with httpx.Client(timeout=self.timeout_seconds) as client:
                 with path.open("rb") as file:
@@ -277,12 +281,17 @@ class ComfyClient:
             response.raise_for_status()
             payload = response.json()
         except (OSError, httpx.HTTPError, ValueError) as exc:
-            raise RuntimeErrorResponse(f"Failed to upload image to ComfyUI: {exc}") from exc
+            raise RuntimeErrorResponse(f"Failed to upload input to ComfyUI: {exc}") from exc
         name = payload.get("name")
         if not isinstance(name, str):
             raise RuntimeErrorResponse("ComfyUI upload did not return image name")
         subfolder = payload.get("subfolder")
         return f"{subfolder}/{name}" if subfolder else name
+
+    def upload_image(self, path: Path) -> str:
+        if not _path_exists_safely(path) or not _path_is_file_safely(path):
+            raise RuntimeErrorResponse(f"Image not found: {path}")
+        return self.upload_file(path)
 
     def _request_json(
         self,
@@ -451,6 +460,8 @@ class ComfyTxt2ImgWorkflowBuilder:
     def _build_sdxl(self, request: dict) -> dict:
         mapping = self._mapping("sdxl")
         settings = request["settings"]
+        positive_plan = self._request_prompt_syntax_plan(request, "positive")
+        negative_plan = self._request_prompt_syntax_plan(request, "negative")
         model_slots = request.get("model_slots", {})
         checkpoint = model_slots.get("checkpoint")
         if not checkpoint:
@@ -603,23 +614,52 @@ class ComfyTxt2ImgWorkflowBuilder:
             }
             latent_ref = [latent_node, 0]
 
-        workflow[positive_node] = self._sdxl_conditioning_node(
-            self._comfy_prompt_text(request["expanded_prompt"], request.get("embeddings", [])),
-            clip_ref,
-            mapping,
-            int(settings["width"]),
-            int(settings["height"]),
-        )
-        workflow[negative_node] = self._sdxl_conditioning_node(
-            self._comfy_prompt_text(request["negative_prompt"], request.get("embeddings", [])),
-            clip_ref,
-            mapping,
-            int(settings["width"]),
-            int(settings["height"]),
-        )
-
-        positive_ref: list[str | int] = [positive_node, 0]
-        negative_ref: list[str | int] = [negative_node, 0]
+        if self._identity_prompt_plan(positive_plan) and self._identity_prompt_plan(negative_plan):
+            workflow[positive_node] = self._sdxl_conditioning_node(
+                self._comfy_prompt_text(request["expanded_prompt"], request.get("embeddings", [])),
+                clip_ref,
+                mapping,
+                int(settings["width"]),
+                int(settings["height"]),
+            )
+            workflow[negative_node] = self._sdxl_conditioning_node(
+                self._comfy_prompt_text(request["negative_prompt"], request.get("embeddings", [])),
+                clip_ref,
+                mapping,
+                int(settings["width"]),
+                int(settings["height"]),
+            )
+            positive_ref: list[str | int] = [positive_node, 0]
+            negative_ref: list[str | int] = [negative_node, 0]
+        else:
+            positive_ref, next_id = self._append_sdxl_prompt_conditioning(
+                workflow=workflow,
+                next_id=next_id,
+                preferred_node=positive_node,
+                plan=positive_plan,
+                fallback_text=request["expanded_prompt"],
+                clip_ref=clip_ref,
+                model_ref=model_ref,
+                mapping=mapping,
+                width=int(settings["width"]),
+                height=int(settings["height"]),
+                stage_settings=settings,
+                embeddings=request.get("embeddings", []),
+            )
+            negative_ref, next_id = self._append_sdxl_prompt_conditioning(
+                workflow=workflow,
+                next_id=next_id,
+                preferred_node=negative_node,
+                plan=negative_plan,
+                fallback_text=request["negative_prompt"],
+                clip_ref=clip_ref,
+                model_ref=model_ref,
+                mapping=mapping,
+                width=int(settings["width"]),
+                height=int(settings["height"]),
+                stage_settings=settings,
+                embeddings=request.get("embeddings", []),
+            )
         for unit in settings.get("controlnet_units", []):
             if not unit.get("enabled") or not unit.get("model") or not unit.get("image_path"):
                 continue
@@ -845,25 +885,6 @@ class ComfyTxt2ImgWorkflowBuilder:
             next_id += 2
             hires_prompt = settings.get("hires_prompt") or request["expanded_prompt"]
             hires_negative_prompt = settings.get("hires_negative_prompt") or request["negative_prompt"]
-            workflow[positive_node] = self._sdxl_conditioning_node(
-                self._comfy_prompt_text(hires_prompt, request.get("embeddings", [])),
-                hires_clip_ref,
-                mapping,
-                hires_width,
-                hires_height,
-            )
-            workflow[negative_node] = self._sdxl_conditioning_node(
-                self._comfy_prompt_text(hires_negative_prompt, request.get("embeddings", [])),
-                hires_clip_ref,
-                mapping,
-                hires_width,
-                hires_height,
-            )
-            positive_ref = [positive_node, 0]
-            negative_ref = [negative_node, 0]
-            sample_node = str(next_id)
-            next_id += 1
-            use_inspire_hires = bool(settings.get("use_inspire_ksampler", True))
             hires_stage_settings = settings | {
                 "steps": settings.get("hires_steps") or settings["steps"],
                 "cfg_scale": settings.get("hires_cfg_scale") or settings["cfg_scale"],
@@ -872,6 +893,65 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "denoise": settings.get("hires_denoising_strength", 0.7),
                 "noise_mode": _hires_noise_mode(settings),
             }
+            hires_positive_plan = (
+                self._request_prompt_syntax_plan(request, "hires_positive")
+                if settings.get("hires_prompt")
+                else positive_plan
+            )
+            hires_negative_plan = (
+                self._request_prompt_syntax_plan(request, "hires_negative")
+                if settings.get("hires_negative_prompt")
+                else negative_plan
+            )
+            if self._identity_prompt_plan(hires_positive_plan) and self._identity_prompt_plan(hires_negative_plan):
+                workflow[positive_node] = self._sdxl_conditioning_node(
+                    self._comfy_prompt_text(hires_prompt, request.get("embeddings", [])),
+                    hires_clip_ref,
+                    mapping,
+                    hires_width,
+                    hires_height,
+                )
+                workflow[negative_node] = self._sdxl_conditioning_node(
+                    self._comfy_prompt_text(hires_negative_prompt, request.get("embeddings", [])),
+                    hires_clip_ref,
+                    mapping,
+                    hires_width,
+                    hires_height,
+                )
+                positive_ref = [positive_node, 0]
+                negative_ref = [negative_node, 0]
+            else:
+                positive_ref, next_id = self._append_sdxl_prompt_conditioning(
+                    workflow=workflow,
+                    next_id=next_id,
+                    preferred_node=positive_node,
+                    plan=hires_positive_plan,
+                    fallback_text=hires_prompt,
+                    clip_ref=hires_clip_ref,
+                    model_ref=hires_model_ref,
+                    mapping=mapping,
+                    width=hires_width,
+                    height=hires_height,
+                    stage_settings=hires_stage_settings,
+                    embeddings=request.get("embeddings", []),
+                )
+                negative_ref, next_id = self._append_sdxl_prompt_conditioning(
+                    workflow=workflow,
+                    next_id=next_id,
+                    preferred_node=negative_node,
+                    plan=hires_negative_plan,
+                    fallback_text=hires_negative_prompt,
+                    clip_ref=hires_clip_ref,
+                    model_ref=hires_model_ref,
+                    mapping=mapping,
+                    width=hires_width,
+                    height=hires_height,
+                    stage_settings=hires_stage_settings,
+                    embeddings=request.get("embeddings", []),
+                )
+            sample_node = str(next_id)
+            next_id += 1
+            use_inspire_hires = bool(settings.get("use_inspire_ksampler", True))
             if refiner_checkpoint:
                 workflow[sample_node] = self._ksampler_advanced_node(
                     hires_stage_settings,
@@ -1410,6 +1490,17 @@ class ComfyTxt2ImgWorkflowBuilder:
         diffusion_model = model_slots.get("diffusion_model")
         text_encoder = model_slots.get("text_encoder")
         vae = model_slots.get("vae")
+        bundle = settings.get("anima_generation_bundle")
+        is_anima_3_8b = (
+            isinstance(bundle, dict)
+            and bundle.get("variant_id") == "anima_3_8b_52"
+        )
+        if is_anima_3_8b and settings.get("mode", "txt2img") != "txt2img":
+            raise RuntimeErrorResponse(
+                "The verified Anima 3.8B workflow currently supports txt2img only."
+            )
+        qwen35_text_encoder = model_slots.get("qwen35_text_encoder")
+        progressive_adapter = model_slots.get("progressive_adapter")
         missing = [
             name
             for name, value in {
@@ -1421,6 +1512,10 @@ class ComfyTxt2ImgWorkflowBuilder:
         ]
         if missing:
             raise RuntimeErrorResponse(f"Anima requires model slots before generation: {', '.join(missing)}")
+        if is_anima_3_8b and (not qwen35_text_encoder or not progressive_adapter):
+            raise RuntimeErrorResponse(
+                "Anima 3.8B requires Qwen3.5 4B and its progressive adapter."
+            )
 
         diffusion_node = mapping.node("diffusion_loader", "1")
         text_encoder_node = mapping.node("text_encoder_loader", "2")
@@ -1428,6 +1523,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         conditioning_node = mapping.node("conditioning", "4")
         latent_node = mapping.node("latent", "5")
         negative_conditioning_node = mapping.node("negative_conditioning", "6")
+        qwen35_loader_node = mapping.node("qwen35_loader", "7")
         model_ref: list[str | int] = [diffusion_node, 0]
         clip_ref: list[str | int] = [text_encoder_node, 0]
         workflow: dict[str, dict] = {
@@ -1442,39 +1538,107 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "class_type": mapping.class_type("text_encoder_loader", "CLIPLoader"),
                 "inputs": {
                     "clip_name": self._model_name(text_encoder, "text_encoders"),
-                    "type": "qwen_image",
+                    "type": "stable_diffusion" if is_anima_3_8b else "qwen_image",
                 },
             },
             vae_node: {
                 "class_type": mapping.class_type("vae_loader", "VAELoader"),
                 "inputs": {"vae_name": self._model_name(vae, "vae")},
             },
-            conditioning_node: {
-                "class_type": mapping.class_type("conditioning", "TextEncodeQwenImageEdit"),
+            latent_node: {
+                "class_type": mapping.class_type(
+                    "anima_3_8b_latent" if is_anima_3_8b else "latent",
+                    "EmptySD3LatentImage"
+                    if is_anima_3_8b
+                    else "EmptyQwenImageLayeredLatentImage",
+                ),
+                "inputs": {
+                    "width": settings["width"],
+                    "height": settings["height"],
+                    **({} if is_anima_3_8b else {"layers": 0}),
+                    "batch_size": settings.get("batch_size", 1),
+                },
+            },
+        }
+        if is_anima_3_8b:
+            workflow[qwen35_loader_node] = {
+                "class_type": mapping.class_type(
+                    "qwen35_loader", "AnimaQwen35Loader"
+                ),
+                "inputs": {
+                    "qwen35_model": self._model_name(
+                        qwen35_text_encoder, "text_encoders"
+                    )
+                },
+            }
+            workflow[conditioning_node] = {
+                "class_type": mapping.class_type(
+                    "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                ),
+                "inputs": {
+                    "model": model_ref,
+                    "native_clip": clip_ref,
+                    "qwen35_clip": [qwen35_loader_node, 0],
+                    "adapter_name": self._model_name(
+                        progressive_adapter, "text_encoders"
+                    ),
+                    "prompt": request["expanded_prompt"],
+                    "adapter_strength": settings.get(
+                        "anima_qwen35_adapter_strength", 1.0
+                    ),
+                },
+            }
+            negative_strength = float(
+                settings.get("anima_qwen35_negative_adapter_strength") or 0.0
+            )
+            workflow[negative_conditioning_node] = (
+                {
+                    "class_type": mapping.class_type(
+                        "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                    ),
+                    "inputs": {
+                        "model": model_ref,
+                        "native_clip": clip_ref,
+                        "qwen35_clip": [qwen35_loader_node, 0],
+                        "adapter_name": self._model_name(
+                            progressive_adapter, "text_encoders"
+                        ),
+                        "prompt": request.get("negative_prompt", ""),
+                        "adapter_strength": negative_strength,
+                    },
+                }
+                if negative_strength > 0
+                else {
+                    "class_type": mapping.class_type(
+                        "native_text_encode", "CLIPTextEncode"
+                    ),
+                    "inputs": {
+                        "clip": clip_ref,
+                        "text": request.get("negative_prompt", ""),
+                    },
+                }
+            )
+        else:
+            workflow[conditioning_node] = {
+                "class_type": mapping.class_type(
+                    "conditioning", "TextEncodeQwenImageEdit"
+                ),
                 "inputs": {
                     "clip": clip_ref,
                     "prompt": request["expanded_prompt"],
                     "vae": [vae_node, 0],
                 },
-            },
-            negative_conditioning_node: {
-                "class_type": mapping.class_type("conditioning", "TextEncodeQwenImageEdit"),
+            }
+            workflow[negative_conditioning_node] = {
+                "class_type": mapping.class_type(
+                    "conditioning", "TextEncodeQwenImageEdit"
+                ),
                 "inputs": {
                     "clip": clip_ref,
                     "prompt": request.get("negative_prompt", ""),
                     "vae": [vae_node, 0],
                 },
-            },
-            latent_node: {
-                "class_type": mapping.class_type("latent", "EmptyQwenImageLayeredLatentImage"),
-                "inputs": {
-                    "width": settings["width"],
-                    "height": settings["height"],
-                    "layers": 0,
-                    "batch_size": settings.get("batch_size", 1),
-                },
-            },
-        }
+            }
         merge_context = request.get("_merge_runtime_context")
         if merge_context is not None:
             if not isinstance(merge_context, dict):
@@ -1513,7 +1677,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "inputs": merge_inputs,
             }
             model_ref = [merge_node, 0]
-        next_id = 7
+        next_id = 8 if is_anima_3_8b else 7
         hires_model_ref: list[str | int] | None = None
         hires_checkpoint = _hires_checkpoint_setting(settings) if self._uses_comfy_hires(settings) else None
         if hires_checkpoint:
@@ -1582,22 +1746,43 @@ class ComfyTxt2ImgWorkflowBuilder:
             previous_clip_ref = clip_ref
             node_id = str(next_id)
             next_id += 1
-            workflow[node_id] = self._lora_loader_node(lora, model_ref, clip_ref, mapping, settings)
+            workflow[node_id] = self._anima_lora_loader_node(
+                lora,
+                model_ref,
+                clip_ref,
+                mapping,
+                settings,
+            )
             model_ref = [node_id, 0]
             clip_ref = [node_id, 1]
             if hires_model_ref is not None:
                 hires_node_id = str(next_id)
                 next_id += 1
-                workflow[hires_node_id] = self._lora_loader_node(
+                workflow[hires_node_id] = self._anima_lora_loader_node(
                     lora,
                     hires_model_ref,
                     previous_clip_ref,
                     mapping,
                     settings,
+                    remap_key="hires_anima_remap",
                 )
                 hires_model_ref = [hires_node_id, 0]
-        workflow[conditioning_node]["inputs"]["clip"] = clip_ref
-        workflow[negative_conditioning_node]["inputs"]["clip"] = clip_ref
+        if is_anima_3_8b:
+            workflow[conditioning_node]["inputs"]["model"] = model_ref
+            workflow[conditioning_node]["inputs"]["native_clip"] = clip_ref
+            if (
+                workflow[negative_conditioning_node]["class_type"]
+                == mapping.class_type(
+                    "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                )
+            ):
+                workflow[negative_conditioning_node]["inputs"]["model"] = model_ref
+                workflow[negative_conditioning_node]["inputs"]["native_clip"] = clip_ref
+            else:
+                workflow[negative_conditioning_node]["inputs"]["clip"] = clip_ref
+        else:
+            workflow[conditioning_node]["inputs"]["clip"] = clip_ref
+            workflow[negative_conditioning_node]["inputs"]["clip"] = clip_ref
         regional_prompts: list[tuple[dict, dict, list[str | int]]] = []
         for unit in settings.get("anima_lllite_units", []):
             if not unit.get("enabled") or not unit.get("model") or not unit.get("image_path"):
@@ -1710,6 +1895,14 @@ class ComfyTxt2ImgWorkflowBuilder:
             model_ref=model_ref,
             conditioning_ref=[conditioning_node, 0],
             negative_ref=[negative_conditioning_node, 0],
+            hires_conditioning_ref=(
+                [conditioning_node, 1] if is_anima_3_8b else None
+            ),
+            hires_negative_ref=(
+                [negative_conditioning_node, 1]
+                if is_anima_3_8b and negative_strength > 0
+                else None
+            ),
             latent_ref=latent_ref,
             vae_ref=[vae_node, 0],
             mapping=mapping,
@@ -1785,6 +1978,8 @@ class ComfyTxt2ImgWorkflowBuilder:
         negative_ref: list[str | int] | None = None,
         scheduler_kind: str = "basic",
         hires_model_ref: list[str | int] | None = None,
+        hires_conditioning_ref: list[str | int] | None = None,
+        hires_negative_ref: list[str | int] | None = None,
     ) -> dict:
         next_id = max(int(node_id) for node_id in workflow) + 1
         sample_node = self._append_custom_sample(
@@ -1874,10 +2069,10 @@ class ComfyTxt2ImgWorkflowBuilder:
                     ),
                 },
                 hires_model_ref or model_ref,
-                conditioning_ref,
+                hires_conditioning_ref or conditioning_ref,
                 hires_latent_ref,
                 mapping,
-                negative_ref=negative_ref,
+                negative_ref=hires_negative_ref or negative_ref,
                 scheduler_kind=scheduler_kind,
             )
             next_id += self._custom_sample_node_count(
@@ -2077,6 +2272,167 @@ class ComfyTxt2ImgWorkflowBuilder:
             return max(0, steps)
         switch_at = float(settings.get("refiner_switch_at") or 0.8)
         return max(1, min(steps - 1, int(round(steps * switch_at))))
+
+    def _request_prompt_syntax_plan(
+        self,
+        request: dict,
+        key: str,
+    ) -> PromptSyntaxPlan | None:
+        namespace = request.get("prompt_syntax")
+        if not isinstance(namespace, dict) or namespace.get(key) is None:
+            return None
+        try:
+            plan = prompt_syntax_plan_from_dict(namespace[key])
+        except PromptSyntaxError as exc:
+            raise RuntimeErrorResponse(f"Prompt syntax plan is invalid: {exc.code}") from exc
+        if plan.profile_id != request.get("profile"):
+            raise RuntimeErrorResponse("Prompt syntax profile does not match the runtime profile.")
+        return plan
+
+    @staticmethod
+    def _identity_prompt_plan(plan: PromptSyntaxPlan | None) -> bool:
+        return plan is None or plan.operation == "identity"
+
+    @staticmethod
+    def _allocate_prompt_node_id(workflow: dict[str, dict], next_id: int) -> tuple[str, int]:
+        while str(next_id) in workflow:
+            next_id += 1
+        return str(next_id), next_id + 1
+
+    def _append_sdxl_prompt_conditioning(
+        self,
+        *,
+        workflow: dict[str, dict],
+        next_id: int,
+        preferred_node: str,
+        plan: PromptSyntaxPlan | None,
+        fallback_text: str,
+        clip_ref: list[str | int],
+        model_ref: list[str | int],
+        mapping: WorkflowMapping,
+        width: int,
+        height: int,
+        stage_settings: dict,
+        embeddings: list[str],
+    ) -> tuple[list[str | int], int]:
+        if plan is None or plan.operation == "identity":
+            workflow[preferred_node] = self._sdxl_conditioning_node(
+                self._comfy_prompt_text(fallback_text, embeddings),
+                clip_ref,
+                mapping,
+                width,
+                height,
+            )
+            return [preferred_node, 0], next_id
+
+        encoded_refs: list[list[str | int]] = []
+        for index, segment in enumerate(plan.segments):
+            if index == 0:
+                node_id = preferred_node
+            else:
+                node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node_id] = self._sdxl_conditioning_node(
+                self._comfy_prompt_text(segment.text, embeddings),
+                clip_ref,
+                mapping,
+                width,
+                height,
+            )
+            encoded_refs.append([node_id, 0])
+
+        if plan.operation == "token_weight":
+            return encoded_refs[0], next_id
+        if plan.operation == "scheduled_switch":
+            ranged_refs: list[list[str | int]] = []
+            for encoded_ref, segment in zip(encoded_refs, plan.segments, strict=True):
+                node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[node_id] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_time_range", "ConditioningSetTimestepRange"
+                    ),
+                    "inputs": {
+                        "conditioning": encoded_ref,
+                        "start": float(segment.start or 0),
+                        "end": float(segment.end or 1),
+                    },
+                }
+                ranged_refs.append([node_id, 0])
+            node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node_id] = {
+                "class_type": mapping.class_type(
+                    "conditioning_combine", "ConditioningCombine"
+                ),
+                "inputs": {
+                    "conditioning_1": ranged_refs[0],
+                    "conditioning_2": ranged_refs[1],
+                },
+            }
+            return [node_id, 0], next_id
+        if plan.operation == "alternating_switch":
+            node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node_id] = {
+                "class_type": mapping.class_type(
+                    "prompt_step_schedule", "AsteriaPromptStepSchedule"
+                ),
+                "inputs": {
+                    "model": model_ref,
+                    "conditioning_a": encoded_refs[0],
+                    "conditioning_b": encoded_refs[1],
+                    "steps": int(stage_settings["steps"]),
+                    "sampler_name": self._sampler_name(
+                        stage_settings.get("sampler", "Euler a")
+                    ),
+                    "scheduler": self._scheduler_name(
+                        stage_settings.get("scheduler", "Automatic")
+                    ),
+                    "denoise": float(stage_settings.get("denoise", 1.0)),
+                },
+            }
+            return [node_id, 0], next_id
+        if plan.operation == "conditioning_and":
+            weighted_refs: list[list[str | int]] = []
+            for encoded_ref, segment in zip(encoded_refs, plan.segments, strict=True):
+                node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[node_id] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_multiply", "ConditioningMultiply"
+                    ),
+                    "inputs": {
+                        "conditioning": encoded_ref,
+                        "multiplier": float(segment.weight),
+                    },
+                }
+                weighted_refs.append([node_id, 0])
+            combined_ref = weighted_refs[0]
+            for weighted_ref in weighted_refs[1:]:
+                node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[node_id] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_combine", "ConditioningCombine"
+                    ),
+                    "inputs": {
+                        "conditioning_1": combined_ref,
+                        "conditioning_2": weighted_ref,
+                    },
+                }
+                combined_ref = [node_id, 0]
+            return combined_ref, next_id
+        if plan.operation == "conditioning_break":
+            concatenated_ref = encoded_refs[0]
+            for encoded_ref in encoded_refs[1:]:
+                node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[node_id] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_concat", "ConditioningConcat"
+                    ),
+                    "inputs": {
+                        "conditioning_to": concatenated_ref,
+                        "conditioning_from": encoded_ref,
+                    },
+                }
+                concatenated_ref = [node_id, 0]
+            return concatenated_ref, next_id
+        raise RuntimeErrorResponse(f"Unsupported prompt syntax operation: {plan.operation}")
 
     def _sdxl_conditioning_node(
         self,
@@ -2494,6 +2850,57 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "model": model_ref,
                 "clip": clip_ref,
                 "lora_name": self._model_name(lora["name"], "loras"),
+                "strength_model": strength_model,
+                "strength_clip": strength_clip,
+            },
+        }
+
+    def _anima_lora_loader_node(
+        self,
+        lora: dict,
+        model_ref: list[str | int],
+        clip_ref: list[str | int],
+        mapping: WorkflowMapping,
+        settings: dict,
+        *,
+        remap_key: str = "anima_remap",
+    ) -> dict:
+        remap = lora.get(remap_key)
+        if (
+            remap_key == "hires_anima_remap"
+            and not isinstance(remap, dict)
+            and isinstance(lora.get("anima_remap"), dict)
+        ):
+            raise RuntimeErrorResponse(
+                "A verified Anima LoRA remap receipt is required for the Hires target model."
+            )
+        if not isinstance(remap, dict):
+            return self._lora_loader_node(
+                lora,
+                model_ref,
+                clip_ref,
+                mapping,
+                settings,
+            )
+        strength_model = lora.get("weight", 1.0)
+        strength_clip = lora.get("clip_weight")
+        if strength_clip is None:
+            strength_clip = strength_model
+        return {
+            "class_type": mapping.class_type(
+                "anima_lora_remap",
+                "AsteriaAnimaLoraRemap",
+            ),
+            "inputs": {
+                "model": model_ref,
+                "clip": clip_ref,
+                "lora_name": self._model_name(lora["name"], "loras"),
+                "expected_lora_sha256": str(remap.get("source_sha256") or ""),
+                "source_layout_id": str(remap.get("source_layout_id") or ""),
+                "target_layout_id": str(remap.get("target_layout_id") or ""),
+                "mode": str(remap.get("mode") or "preserve"),
+                "mapping_revision": int(remap.get("mapping_revision") or 0),
+                "mapping_hash": str(remap.get("mapping_hash") or ""),
                 "strength_model": strength_model,
                 "strength_clip": strength_clip,
             },

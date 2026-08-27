@@ -7,7 +7,7 @@ signing_policy:
   required_from_application_version: 1.1.0
 product:
   id: asteria
-  version: 1.1.1
+  version: 1.2.0
 platform:
   os: windows
   arch: x86_64
@@ -78,20 +78,20 @@ artifacts:
     label: ComfyUI core
     kind: archive
     ownership: mandatory-runtime
-    version: 0.28.0
+    version: 0.33.1
     source:
       provider: https
-      url: https://github.com/Comfy-Org/ComfyUI/archive/refs/tags/v0.28.0.zip
-      revision: 700821e
-      verified_at: "2026-07-20"
-      provenance_url: https://github.com/Comfy-Org/ComfyUI/releases/tag/v0.28.0
+      url: https://github.com/Comfy-Org/ComfyUI/archive/refs/tags/v0.33.1.zip
+      revision: 72865f4f27eaf5396f8f36370e0a2be3a9a090ee
+      verified_at: "2026-08-18"
+      provenance_url: https://github.com/Comfy-Org/ComfyUI/releases/tag/v0.33.1
     target:
       relative_path: runtime/ComfyUI
-    size_bytes: 12087850
-    checksum_sha256: fd133a3f17194f0cd8067b994e720739a4508e0dee2e57532da3729237d60268
+    size_bytes: 12300317
+    checksum_sha256: fafd49b1653558156d479f55d6e0822f43356dc7a4107d85ec4ad0ea0e0d4dad
     license:
       id: gpl-3.0
-      url: https://github.com/Comfy-Org/ComfyUI/blob/v0.28.0/LICENSE
+      url: https://github.com/Comfy-Org/ComfyUI/blob/v0.33.1/LICENSE
     repair_policy: replace-managed-component
 
 python_package_sets:

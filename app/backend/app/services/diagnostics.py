@@ -12,6 +12,10 @@ from uuid import uuid4
 import psutil
 
 from app.core.config import AppConfig
+from app.schemas.extensions import validate_extension_id, validate_semver
+from app.services.extension_catalog import ExtensionCatalogService
+from app.services.extension_registry import ExtensionRegistryRepository
+from app.services.extension_repository import ExtensionRepository
 from app.schemas.operations import ACTIVE_OPERATION_STATUSES
 from app.services.log_rotation import OwnedLogRotator
 from app.services.operation_coordinator import OperationCoordinator
@@ -31,6 +35,21 @@ EXPORT_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
 EXPORT_NAME_PATTERN = re.compile(r"^diagnostics-([0-9a-f]{32})\.json$")
 EXPORT_MAX_COUNT = 20
 EXPORT_MAX_AGE = timedelta(days=30)
+_SAFE_EXTENSION_LOAD_CODES = frozenset(
+    {
+        "extension_disabled",
+        "extension_entrypoint_invalid",
+        "extension_import_failed",
+        "extension_install_missing",
+        "extension_manifest_mismatch",
+        "extension_registration_failed",
+        "extension_registration_invalid",
+        "extension_registry_invalid",
+        "extension_return_invalid",
+        "extension_uninstall_finalize_failed",
+        "extension_uninstalled",
+    }
+)
 
 
 class DiagnosticsError(RuntimeError):
@@ -138,12 +157,14 @@ class DiagnosticsService:
                     "reason_code": restart_reason,
                 },
             },
+            "extensions": self._sanitized_extensions(),
         }
 
     def export(self) -> dict[str, Any]:
         export_id = uuid4().hex
         now = self._now()
         resources = self._sanitized_resources(self.observer.snapshot())
+        resources["extensions"] = self._sanitized_extensions()
         report = {
             "schema_version": 1,
             "generated_at": now.isoformat(),
@@ -345,6 +366,92 @@ class DiagnosticsService:
                 "disks": disks[:3],
             },
         }
+
+    def _sanitized_extensions(self) -> dict[str, Any]:
+        journal = self._read_extension_startup_journal()
+        loaded_by_id = {
+            item["extension_id"]: item
+            for item in journal["records"]
+        }
+        try:
+            repository = ExtensionRepository(self.config.extension_root)
+            registry = ExtensionRegistryRepository(repository.registry_path).load()
+        except ValueError:
+            registry = None
+
+        items: list[dict[str, Any]] = []
+        if registry is not None:
+            for record in registry.records:
+                loaded = loaded_by_id.get(record.extension_id)
+                error_code = record.error_code
+                if loaded is not None and loaded["error_code"] is not None:
+                    error_code = loaded["error_code"]
+                items.append(
+                    {
+                        "extension_id": record.extension_id,
+                        "version": record.active_version,
+                        "enabled": bool(record.enabled) if record.enabled is not None else False,
+                        "load_status": loaded["status"] if loaded is not None else "not_loaded",
+                        "error_code": error_code,
+                    }
+                )
+
+        catalog_age = ExtensionCatalogService(
+            self.config.extension_catalog_cache_dir,
+            catalog_url=self.config.extension_catalog_url,
+            asteria_version=ExtensionRepository(
+                self.config.extension_root
+            ).asteria_version,
+        ).snapshot().cache_age_seconds
+        return {
+            "safe_mode": journal["safe_mode"],
+            "items": items,
+            "catalog_cache_age_seconds": catalog_age,
+        }
+
+    def _read_extension_startup_journal(self) -> dict[str, Any]:
+        empty = {"safe_mode": None, "records": []}
+        path = self.config.extension_root / "startup-journal.json"
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            return empty
+        if (
+            not isinstance(payload, dict)
+            or payload.get("schema_version") != "asteria.extension.startup.v1"
+            or payload.get("status") != "ready"
+            or not isinstance(payload.get("safe_mode"), bool)
+            or not isinstance(payload.get("records"), list)
+        ):
+            return empty
+
+        records: list[dict[str, Any]] = []
+        for source in payload["records"]:
+            if not isinstance(source, dict):
+                continue
+            try:
+                extension_id = validate_extension_id(source.get("extension_id"))
+                version = source.get("version")
+                if version is not None:
+                    version = validate_semver(version)
+            except (TypeError, ValueError):
+                continue
+            status = source.get("status")
+            if status not in {"loaded", "failed", "skipped"}:
+                continue
+            raw_error = source.get("error_code")
+            error_code = raw_error if raw_error in _SAFE_EXTENSION_LOAD_CODES else None
+            if status == "failed" and error_code is None:
+                error_code = "extension_registry_invalid"
+            records.append(
+                {
+                    "extension_id": extension_id,
+                    "version": version,
+                    "status": status,
+                    "error_code": error_code,
+                }
+            )
+        return {"safe_mode": payload["safe_mode"], "records": records}
 
     def _load_runtime_ownership(self) -> RuntimeOwnership:
         state_path = self.config.data_dir / "temp" / "launcher" / "launcher-state.json"

@@ -92,14 +92,30 @@ class TopazOperationExecutor:
     def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
         request = TopazProcessRequest.model_validate(context.request_snapshot["request"])
         try:
-            output_root = AppConfig().output_dir
+            current_output_root = _output_dir().resolve()
+            input_path = _output_path(
+                request.filename,
+                request.generation_id,
+                output_dir=current_output_root,
+            )
+            output_root = _registered_output_root(
+                input_path,
+                request.generation_id,
+                current_output_root,
+            )
+            output_directory = input_path.parent.resolve()
             estimate = 64 * 1024 * 1024
             with disk_reservations.reserve(
-                output_root,
+                output_directory,
                 estimate,
                 owner_id=context.operation.operation_id,
             ):
-                result = _execute_topaz_process(request)
+                result = _execute_topaz_process(
+                    request,
+                    input_path=input_path,
+                    output_root=output_root,
+                    output_directory=output_directory,
+                )
         except DiskReservationError as exc:
             raise OperationExecutionError("disk_space_insufficient", retryable=True) from exc
         except HTTPException as exc:
@@ -311,9 +327,15 @@ def _register_topaz_success(
     metadata_path: str | None,
     output_artifact: dict[str, Any],
     event: dict[str, Any],
+    output_root: Path | None = None,
+    output_directory: Path | None = None,
 ) -> None:
     def register(item: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
         settings = dict(item.get("settings") or {})
+        if output_root is not None:
+            settings["output_root"] = str(output_root)
+        if output_directory is not None:
+            settings["output_directory"] = str(output_directory)
         derived = _topaz_derived_output(
             item,
             source_path=source_path,
@@ -417,9 +439,14 @@ def _image_artifact(path: Path) -> dict[str, Any]:
     }
 
 
-def _output_path(filename: str, generation_id: int | None = None) -> Path:
+def _output_path(
+    filename: str,
+    generation_id: int | None = None,
+    *,
+    output_dir: Path | None = None,
+) -> Path:
     try:
-        output_dir = _output_dir().resolve()
+        output_dir = Path(output_dir).resolve() if output_dir is not None else _output_dir().resolve()
         if Path(filename).is_absolute():
             path = Path(filename).resolve()
         else:
@@ -452,6 +479,35 @@ def _output_path(filename: str, generation_id: int | None = None) -> Path:
     return path
 
 
+def _registered_output_root(
+    path: Path,
+    generation_id: int | None,
+    current_output_root: Path,
+) -> Path:
+    # `_output_path` and the operation snapshot already resolved these values.
+    # Avoid resolving the artifact again after validation: registered media may
+    # become temporarily unresolvable while still remaining readable by path.
+    resolved_path = path
+    current = current_output_root
+    if resolved_path == current or current in resolved_path.parents:
+        return current
+    if generation_id is not None:
+        item = _history_repository().get(generation_id)
+        settings = item.get("settings") if isinstance(item, dict) else None
+        if isinstance(settings, dict):
+            for key in ("output_root", "output_directory"):
+                value = settings.get(key)
+                if not isinstance(value, str) or not value.strip():
+                    continue
+                try:
+                    candidate = Path(value).resolve()
+                except _PATH_ACCESS_ERRORS:
+                    continue
+                if resolved_path == candidate or candidate in resolved_path.parents:
+                    return candidate
+    return resolved_path.parent
+
+
 def _write_topaz_sidecar(
     generation_id: int,
     input_path: Path,
@@ -462,6 +518,8 @@ def _write_topaz_sidecar(
     output_size: dict[str, int] | None,
     logs: list[str],
     warnings: list[str],
+    output_root: Path,
+    output_directory: Path,
 ) -> tuple[str | None, dict[str, Any]]:
     repository = _history_repository()
     item = repository.get(generation_id)
@@ -480,6 +538,8 @@ def _write_topaz_sidecar(
                 "topaz_manual_process": "completed",
                 "topaz_manual_source_path": str(input_path),
                 "topaz_manual_settings": settings.model_dump(),
+                "output_root": str(output_root),
+                "output_directory": str(output_directory),
             },
             "model_slots": item["model_slots"],
             "loras": item["loras"],
@@ -495,6 +555,8 @@ def _write_topaz_sidecar(
                 "settings": settings.model_dump(),
                 "logs": logs,
                 "warnings": warnings,
+                "output_root": str(output_root),
+                "output_directory": str(output_directory),
             },
         },
         [str(output_path)],
@@ -560,16 +622,22 @@ def process(request: TopazProcessRequest) -> TopazProcessResponse:
 
 
 @artifact_write_operation
-def _execute_topaz_process(request: TopazProcessRequest) -> TopazProcessResponse:
+def _execute_topaz_process(
+    request: TopazProcessRequest,
+    *,
+    input_path: Path,
+    output_root: Path,
+    output_directory: Path,
+) -> TopazProcessResponse:
     executable = _topaz_executable()
-    path = _output_path(request.filename, request.generation_id)
+    path = input_path
     source_artifact = _image_artifact(path)
     repository = _history_repository()
     try:
         result = process_topaz_image(
             executable=executable,
             input_path=path,
-            output_dir=path.parent,
+            output_dir=output_directory,
             settings=request.settings,
         )
     except TopazError as exc:
@@ -584,6 +652,8 @@ def _execute_topaz_process(request: TopazProcessRequest) -> TopazProcessResponse
                     "source_artifact": source_artifact,
                     "error": str(exc),
                     "settings": request.settings.model_dump(),
+                    "output_root": str(output_root),
+                    "output_directory": str(output_directory),
                 },
         )
         raise HTTPException(status_code=400, detail={"code": TOPAZ_PROCESS_FAILED}) from exc
@@ -604,6 +674,8 @@ def _execute_topaz_process(request: TopazProcessRequest) -> TopazProcessResponse
             output_size,
             result_logs,
             result_warnings,
+            output_root,
+            output_directory,
         )
     else:
         metadata_path = None
@@ -630,7 +702,11 @@ def _execute_topaz_process(request: TopazProcessRequest) -> TopazProcessResponse
                     "settings": request.settings.model_dump(),
                     "logs": result_logs,
                     "warnings": result_warnings,
+                    "output_root": str(output_root),
+                    "output_directory": str(output_directory),
                 },
+                output_root=output_root,
+                output_directory=output_directory,
             )
         except (OSError, sqlite3.Error, TypeError, ValueError):
             if TOPAZ_HISTORY_REGISTRATION_FAILED not in result_warnings:

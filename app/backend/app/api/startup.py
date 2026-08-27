@@ -16,6 +16,7 @@ from app.services.model_dependencies import ModelDependencyInstaller
 from app.services.model_profiles import ModelProfileRepository
 from app.services.model_selections import ModelSelectionRepository
 from app.services.model_storage import resolve_model_root
+from app.services.user_settings import resolve_current_output_root
 from app.services.runtime_core import ComfyRuntimeCoreManager
 from app.services.runtime_dependencies import RuntimeDependencyRepository
 from app.services.runtime_dependencies import RuntimeDependencyInstaller
@@ -216,7 +217,11 @@ def _inspect_startup_readiness(
         product_paths=(
             StartupPathRequirement("data_root", "startup.path.data", config.data_dir),
             StartupPathRequirement("model_root", "startup.path.models", model_root),
-            StartupPathRequirement("output_root", "startup.path.outputs", config.output_dir),
+            StartupPathRequirement(
+                "output_root",
+                "startup.path.outputs",
+                resolve_current_output_root(config.data_dir),
+            ),
         ),
         runtime_python_path=config.comfy_python_path,
         core_status_provider=lambda: ComfyRuntimeCoreManager(

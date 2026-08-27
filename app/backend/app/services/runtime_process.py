@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -13,6 +14,11 @@ from app.core.config import AppConfig
 from app.services.comfy_model_paths import render_comfy_extra_model_paths
 from app.services.external_model_libraries import ExternalModelLibraryRepository
 from app.services.runtime import ComfyClient
+from app.services.user_settings import UserSettingsRepository
+
+
+logger = logging.getLogger(__name__)
+DISABLE_PINNED_MEMORY_ARG = "--disable-pinned-memory"
 
 
 class RuntimeStatus(BaseModel):
@@ -66,10 +72,11 @@ class RuntimeProcessManager:
             raise RuntimeProcessError(f"Could not prepare ComfyUI runtime files: {exc}") from exc
         stdout_path = self.config.comfy_dir / "comfy.out.log"
         stderr_path = self.config.comfy_dir / "comfy.err.log"
+        comfy_args = self._resolved_comfy_args()
         try:
             with stdout_path.open("a", encoding="utf-8") as stdout, stderr_path.open("a", encoding="utf-8") as stderr:
                 process = subprocess.Popen(
-                    [str(self.config.comfy_python_path), "main.py", *self.config.comfy_args],
+                    [str(self.config.comfy_python_path), "main.py", *comfy_args],
                     cwd=self.config.comfy_dir,
                     stdout=stdout,
                     stderr=stderr,
@@ -87,6 +94,18 @@ class RuntimeProcessManager:
             status.pid = process.pid
             status.running = True
         return status
+
+    def _resolved_comfy_args(self) -> list[str]:
+        args = list(self.config.comfy_args)
+        result = UserSettingsRepository(self.config.data_dir / "user-settings.json").load_with_diagnostics()
+        if result.reason_id:
+            logger.warning(
+                "ComfyUI startup setting could not be read: reason_id=%s field=launcher.disable_pinned_memory",
+                result.reason_id,
+            )
+        if result.settings.launcher.disable_pinned_memory and DISABLE_PINNED_MEMORY_ARG not in args:
+            args.append(DISABLE_PINNED_MEMORY_ARG)
+        return args
 
     def stop(self) -> RuntimeStatus:
         pid = self._pid_from_base_url() or self._read_pid()

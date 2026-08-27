@@ -285,7 +285,7 @@ class PortableSetupRuntime:
             self.runtime_repository,
             python_path=self.python_path,
             managed_artifact_service=self.artifact_service,
-            constraints_path=self.app_root / "bootstrap" / "locks" / "comfyui-v0.28.0.lock",
+            constraints_path=self.app_root / "bootstrap" / "locks" / "comfyui-v0.33.1.lock",
         )
         self.model_repository = ModelDependencyRepository(
             self.app_root / "model-dependencies.yaml",
@@ -402,7 +402,7 @@ class PortableSetupRuntime:
         if component_id == "asteria-backend-environment":
             return component_id, self.python_path, self.app_root / "app" / "backend" / "requirements-release.lock", None, False
         if component_id == "comfy-python-environment":
-            return component_id, self.python_path, self.app_root / "bootstrap" / "locks" / "comfyui-v0.28.0.lock", None, False
+            return component_id, self.python_path, self.app_root / "bootstrap" / "locks" / "comfyui-v0.33.1.lock", None, False
         if component_id == "pytorch-cu128":
             package_set = next(item for item in self.release.package_sets if item.id == component_id)
             return (

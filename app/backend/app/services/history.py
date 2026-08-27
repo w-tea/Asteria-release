@@ -1,4 +1,5 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 import base64
@@ -7,8 +8,11 @@ from pathlib import Path
 import sqlite3
 import unicodedata
 
+from app.schemas.media import MediaArtifact, MediaKind, legacy_image_artifacts
+from app.schemas.generation import PromptSyntaxGenerationRecord
 from app.services.generation_metadata import metadata_tags
 from app.services.schema_migrations import migrate_history_database_schema
+from app.services.video_sequence_history import is_hidden_sequence_child
 
 
 MAX_USER_TAGS = 160
@@ -75,6 +79,8 @@ create table if not exists generations (
     loras_json text not null,
     embeddings_json text not null default '[]',
     output_paths_json text not null,
+    media_kind text not null default 'image',
+    artifacts_json text not null default '[]',
     rating integer not null default 0,
     favorite integer not null default 0,
     tags_json text not null default '[]',
@@ -97,11 +103,19 @@ create table if not exists history_tag_index (
 """
 
 
+@contextmanager
+def _history_connection(db_path: Path) -> Iterator[sqlite3.Connection]:
+    """Commit or roll back the transaction, then release the Windows file handle."""
+    with closing(sqlite3.connect(db_path)) as connection:
+        with connection:
+            yield connection
+
+
 class HistoryRepository:
     def __init__(self, db_path: Path):
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(db_path) as con:
+        with _history_connection(db_path) as con:
             self._drop_legacy_table(con)
             con.execute(GENERATIONS_TABLE_SQL)
             con.execute(HISTORY_TAG_INDEX_SQL)
@@ -135,12 +149,20 @@ class HistoryRepository:
         loras: list[dict],
         embeddings: list[str],
         output_paths: list[str],
+        media_kind: MediaKind = "image",
+        artifacts: list[dict] | list[MediaArtifact] | None = None,
         tags: list[str] | None = None,
         generated_tags: list[str] | None = None,
     ) -> int:
+        self._validate_prompt_syntax_settings(settings)
         normalized_tags = self._normalize_tags(tags or [])
         normalized_generated_tags = self._normalize_tags(generated_tags or [])
-        with sqlite3.connect(self.db_path) as con:
+        self._validate_media_kind(media_kind)
+        serialized_artifacts = self._serialize_artifacts(
+            media_kind=media_kind,
+            artifacts=artifacts or [],
+        )
+        with _history_connection(self.db_path) as con:
             cur = con.execute(
                 """
                 insert into generations(
@@ -154,9 +176,11 @@ class HistoryRepository:
                     loras_json,
                     embeddings_json,
                     output_paths_json,
+                    media_kind,
+                    artifacts_json,
                     tags_json,
                     generated_tags_json
-                ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     status,
@@ -169,11 +193,19 @@ class HistoryRepository:
                     json.dumps(loras, ensure_ascii=False),
                     json.dumps(embeddings, ensure_ascii=False),
                     json.dumps(output_paths, ensure_ascii=False),
+                    media_kind,
+                    json.dumps(serialized_artifacts, ensure_ascii=False),
                     json.dumps(normalized_tags, ensure_ascii=False),
                     json.dumps(normalized_generated_tags, ensure_ascii=False),
                 ),
             )
             generation_id = int(cur.lastrowid)
+            if artifacts is None and media_kind == "image":
+                serialized_artifacts = self._legacy_artifact_payloads(generation_id, output_paths)
+                con.execute(
+                    "update generations set artifacts_json = ? where id = ?",
+                    (json.dumps(serialized_artifacts, ensure_ascii=False), generation_id),
+                )
             self._replace_tag_index(
                 con,
                 generation_id,
@@ -183,7 +215,7 @@ class HistoryRepository:
             return generation_id
 
     def tag_catalog(self) -> dict[str, list[str]]:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             rows = con.execute(
                 """
                 with latest as (
@@ -219,7 +251,7 @@ class HistoryRepository:
         from app.services.model_reference_migration import migrate_generation_reference_metadata
 
         changed = 0
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             rows = con.execute(
                 "select id, settings_json, model_slots_json, loras_json from generations"
             ).fetchall()
@@ -246,7 +278,7 @@ class HistoryRepository:
 
     def list_recent(self, limit: int = 50, folder: str = "all") -> list[dict]:
         where, params = self._folder_where(folder)
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             rows = con.execute(
                 f"""
@@ -271,11 +303,13 @@ class HistoryRepository:
         favorite: bool = False,
         tag: str = "",
         folder: str = "all",
+        media_kind: str = "all",
     ) -> HistoryPage:
         if limit < 1 or limit > 100:
             raise ValueError("invalid_history_limit")
         query = query.strip().lower()
         tag = tag.strip().lower()
+        self._validate_media_filter(media_kind)
         scanned_id: int | None = None
         pending_id: int | None = None
         if cursor:
@@ -289,12 +323,15 @@ class HistoryRepository:
             params.append(profile)
         if favorite:
             clauses.append("g.favorite != 0")
+        if media_kind != "all":
+            clauses.append("g.media_kind = ?")
+            params.append(media_kind)
         base_where = f"where {' and '.join(clauses)}" if clauses else ""
 
         items: list[dict] = []
         next_pending_id: int | None = None
         scan_before = scanned_id
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             if pending_id is not None:
                 pending = self._page_row(con, pending_id, base_where, params)
@@ -351,7 +388,7 @@ class HistoryRepository:
             return [], None
         where = "where id < ?" if before_id is not None else ""
         params = (before_id, limit) if before_id is not None else (limit,)
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             rows = con.execute(
                 f"""
@@ -375,7 +412,7 @@ class HistoryRepository:
         return items, next_before
 
     def list_all(self) -> list[dict]:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             rows = con.execute(
                 """
@@ -396,9 +433,11 @@ class HistoryRepository:
         favorite: bool = False,
         tag: str = "",
         folder: str = "all",
+        media_kind: str = "all",
     ) -> list[dict]:
         query = query.strip().lower()
         tag = tag.strip().lower()
+        self._validate_media_filter(media_kind)
         if limit <= 0:
             return []
         folder_where, folder_params = self._folder_where(folder)
@@ -407,6 +446,9 @@ class HistoryRepository:
         if profile:
             clauses.append("g.profile = ?")
             params.append(profile)
+        if media_kind != "all":
+            clauses.append("g.media_kind = ?")
+            params.append(media_kind)
         where = f"where {' and '.join(clauses)}" if clauses else ""
         sql = f"""
             select g.*, f.name as folder_name
@@ -420,7 +462,7 @@ class HistoryRepository:
             params.append(limit)
 
         filtered = []
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             for row in con.execute(sql, params):
                 item = self._row_to_dict(row)
@@ -478,6 +520,8 @@ class HistoryRepository:
         return f"where {clause}"
 
     def _matches_page_filters(self, item: dict, *, query: str, tag: str) -> bool:
+        if is_hidden_sequence_child(item):
+            return False
         tags = [str(value).lower() for value in item["tags"]]
         generated_tags = [str(value).lower() for value in item["generated_tags"]]
         if tag and tag not in [*tags, *generated_tags]:
@@ -500,7 +544,7 @@ class HistoryRepository:
         return query in haystack
 
     def get(self, generation_id: int) -> dict | None:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             row = con.execute(
                 """
@@ -514,7 +558,7 @@ class HistoryRepository:
         return self._row_to_dict(row) if row else None
 
     def list_folders(self) -> list[dict]:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             rows = con.execute(
                 """
@@ -545,7 +589,7 @@ class HistoryRepository:
         ]
 
     def referenced_output_paths(self) -> set[str]:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             rows = con.execute("select output_paths_json from generations").fetchall()
         paths: set[str] = set()
         for (raw_paths,) in rows:
@@ -564,7 +608,7 @@ class HistoryRepository:
         normalized = " ".join(name.strip().split())
         if not normalized:
             raise ValueError("folder_name_required")
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             cur = con.execute(
                 "insert into history_folders(name) values (?) on conflict(name) do update set name = excluded.name returning id",
                 (normalized,),
@@ -573,7 +617,7 @@ class HistoryRepository:
         return self.get_folder(folder_id) or {"id": folder_id, "name": normalized, "created_at": "", "item_count": 0}
 
     def get_folder(self, folder_id: int) -> dict | None:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             row = con.execute(
                 """
@@ -595,18 +639,99 @@ class HistoryRepository:
         }
 
     def update_output_paths(self, generation_id: int, output_paths: list[str]) -> None:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
+            row = con.execute(
+                "select media_kind from generations where id = ?", (generation_id,)
+            ).fetchone()
+            artifacts_json = (
+                json.dumps(self._legacy_artifact_payloads(generation_id, output_paths), ensure_ascii=False)
+                if row is not None and row[0] == "image"
+                else None
+            )
             con.execute(
                 """
                 update generations
-                set output_paths_json = ?
+                set output_paths_json = ?,
+                    artifacts_json = coalesce(?, artifacts_json)
                 where id = ?
                 """,
-                (json.dumps(output_paths, ensure_ascii=False), generation_id),
+                (json.dumps(output_paths, ensure_ascii=False), artifacts_json, generation_id),
             )
 
+    def update_media_artifacts(
+        self,
+        generation_id: int,
+        *,
+        media_kind: MediaKind,
+        artifacts: list[dict] | list[MediaArtifact],
+        output_paths: list[str],
+    ) -> None:
+        self._validate_media_kind(media_kind)
+        serialized_artifacts = self._serialize_artifacts(
+            media_kind=media_kind,
+            artifacts=artifacts,
+        )
+        registered_paths = set(output_paths)
+        if any(artifact["path"] not in registered_paths for artifact in serialized_artifacts):
+            raise ValueError("media artifact path must be registered in output paths")
+        with _history_connection(self.db_path) as con:
+            cur = con.execute(
+                """
+                update generations
+                set media_kind = ?, artifacts_json = ?, output_paths_json = ?
+                where id = ?
+                """,
+                (
+                    media_kind,
+                    json.dumps(serialized_artifacts, ensure_ascii=False),
+                    json.dumps(output_paths, ensure_ascii=False),
+                    generation_id,
+                ),
+            )
+            if cur.rowcount != 1:
+                raise ValueError("generation_not_found")
+
+    def complete_media_generation(
+        self,
+        generation_id: int,
+        *,
+        status: str,
+        settings: dict,
+        media_kind: MediaKind,
+        artifacts: list[dict] | list[MediaArtifact],
+        output_paths: list[str],
+    ) -> None:
+        self._validate_media_kind(media_kind)
+        serialized_artifacts = self._serialize_artifacts(
+            media_kind=media_kind,
+            artifacts=artifacts,
+        )
+        registered_paths = set(output_paths)
+        if any(artifact["path"] not in registered_paths for artifact in serialized_artifacts):
+            raise ValueError("media artifact path must be registered in output paths")
+        with _history_connection(self.db_path) as con:
+            cur = con.execute(
+                """
+                update generations
+                set status = ?, settings_json = ?, media_kind = ?,
+                    artifacts_json = ?, output_paths_json = ?
+                where id = ?
+                """,
+                (
+                    status,
+                    json.dumps(settings, ensure_ascii=False),
+                    media_kind,
+                    json.dumps(serialized_artifacts, ensure_ascii=False),
+                    json.dumps(output_paths, ensure_ascii=False),
+                    generation_id,
+                ),
+            )
+            if cur.rowcount != 1:
+                raise ValueError("generation_not_found")
+
     def update_settings(self, generation_id: int, settings: dict) -> None:
-        with sqlite3.connect(self.db_path) as con:
+        self._validate_prompt_syntax_settings(settings)
+        with _history_connection(self.db_path) as con:
             con.execute(
                 """
                 update generations
@@ -615,6 +740,12 @@ class HistoryRepository:
                 """,
                 (json.dumps(settings, ensure_ascii=False), generation_id),
             )
+
+    @staticmethod
+    def _validate_prompt_syntax_settings(settings: dict) -> None:
+        prompt_syntax = settings.get("prompt_syntax")
+        if prompt_syntax is not None:
+            PromptSyntaxGenerationRecord.model_validate(prompt_syntax)
 
     def update_generation(
         self,
@@ -626,14 +757,23 @@ class HistoryRepository:
     ) -> None:
         settings_json = json.dumps(settings, ensure_ascii=False)
         output_paths_json = json.dumps(output_paths, ensure_ascii=False)
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
+            row = con.execute(
+                "select media_kind from generations where id = ?", (generation_id,)
+            ).fetchone()
+            artifacts_json = (
+                json.dumps(self._legacy_artifact_payloads(generation_id, output_paths), ensure_ascii=False)
+                if row is not None and row[0] == "image"
+                else None
+            )
             cur = con.execute(
                 """
                 update generations
-                set status = ?, settings_json = ?, output_paths_json = ?
+                set status = ?, settings_json = ?, output_paths_json = ?,
+                    artifacts_json = coalesce(?, artifacts_json)
                 where id = ?
                 """,
-                (status, settings_json, output_paths_json, generation_id),
+                (status, settings_json, output_paths_json, artifacts_json, generation_id),
             )
             if cur.rowcount != 1:
                 raise ValueError("generation_not_found")
@@ -643,22 +783,29 @@ class HistoryRepository:
         generation_id: int,
         mutation: Callable[[dict], tuple[dict, list[str]]],
     ) -> dict:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             con.execute("begin immediate")
             item = self._get_with_connection(con, generation_id)
             if item is None:
                 raise ValueError("generation_not_found")
             settings, output_paths = mutation(item)
+            artifacts_json = (
+                json.dumps(self._legacy_artifact_payloads(generation_id, output_paths), ensure_ascii=False)
+                if item["media_kind"] == "image"
+                else None
+            )
             cur = con.execute(
                 """
                 update generations
-                set settings_json = ?, output_paths_json = ?
+                set settings_json = ?, output_paths_json = ?,
+                    artifacts_json = coalesce(?, artifacts_json)
                 where id = ?
                 """,
                 (
                     json.dumps(settings, ensure_ascii=False),
                     json.dumps(output_paths, ensure_ascii=False),
+                    artifacts_json,
                     generation_id,
                 ),
             )
@@ -691,14 +838,14 @@ class HistoryRepository:
             raise
 
     def delete(self, generation_id: int) -> bool:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.execute("delete from history_tag_index where generation_id = ?", (generation_id,))
             cur = con.execute("delete from generations where id = ?", (generation_id,))
             return cur.rowcount > 0
 
     def bulk_delete(self, generation_ids: list[int]) -> list[dict]:
         unique_ids = list(dict.fromkeys(int(value) for value in generation_ids))
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             targets = [
                 (generation_id, self._get_with_connection(con, generation_id))
@@ -731,7 +878,7 @@ class HistoryRepository:
         folder_id: int | None = None,
         update_folder: bool = False,
     ) -> dict | None:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             item = self._get_with_connection(con, generation_id)
             if item is None:
@@ -770,7 +917,7 @@ class HistoryRepository:
         normalized_add = self._normalize_bulk_tags(tags_add or [])
         normalized_remove = self._normalize_bulk_tags(tags_remove or [])
         unique_ids = list(dict.fromkeys(int(value) for value in generation_ids))
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             targets = [
                 (generation_id, item)
@@ -905,6 +1052,11 @@ class HistoryRepository:
         return unicodedata.normalize("NFKC", tag).upper()
 
     def _row_to_dict(self, row: sqlite3.Row) -> dict:
+        media_kind = row["media_kind"] if row["media_kind"] in {"image", "video", "audio"} else "image"
+        output_paths = self._json_list(row["output_paths_json"])
+        artifacts = self._deserialize_artifacts(row["artifacts_json"])
+        if media_kind == "image" and not artifacts:
+            artifacts = self._legacy_artifact_payloads(int(row["id"]), output_paths)
         return {
             "id": row["id"],
             "status": row["status"],
@@ -916,7 +1068,9 @@ class HistoryRepository:
             "model_slots": self._json_dict(row["model_slots_json"]),
             "loras": self._json_list(row["loras_json"]),
             "embeddings": self._json_list(row["embeddings_json"]),
-            "output_paths": self._json_list(row["output_paths_json"]),
+            "output_paths": output_paths,
+            "media_kind": media_kind,
+            "artifacts": artifacts,
             "rating": self._bounded_int(row["rating"], default=0, minimum=0, maximum=5),
             "favorite": self._bool_int(row["favorite"]),
             "tags": self._normalize_tags(self._json_list(row["tags_json"])),
@@ -940,6 +1094,56 @@ class HistoryRepository:
         except (TypeError, json.JSONDecodeError):
             return []
         return payload if isinstance(payload, list) else []
+
+    def _validate_media_kind(self, media_kind: str) -> None:
+        if media_kind not in {"image", "video", "audio"}:
+            raise ValueError("invalid_media_kind")
+
+    def _validate_media_filter(self, media_kind: str) -> None:
+        if media_kind not in {"all", "image", "video", "audio"}:
+            raise ValueError("invalid_media_kind")
+
+    def _serialize_artifacts(
+        self,
+        *,
+        media_kind: str,
+        artifacts: list[dict] | list[MediaArtifact],
+    ) -> list[dict]:
+        serialized: list[dict] = []
+        parsed_artifacts: list[MediaArtifact] = []
+        for value in artifacts:
+            artifact = MediaArtifact.model_validate(value)
+            if artifact.role == "primary" and artifact.kind != media_kind:
+                raise ValueError("primary artifact kind must match history media kind")
+            parsed_artifacts.append(artifact)
+            serialized.append(artifact.model_dump(mode="json", exclude={"frame_rate"}))
+        artifact_by_id = {artifact.artifact_id: artifact for artifact in parsed_artifacts}
+        if len(artifact_by_id) != len(parsed_artifacts):
+            raise ValueError("media artifact identifiers must be unique")
+        for artifact in parsed_artifacts:
+            if artifact.poster_artifact_id is None:
+                continue
+            poster = artifact_by_id.get(artifact.poster_artifact_id)
+            if poster is None or poster.kind != "poster" or poster.role != "poster":
+                raise ValueError("video poster reference must resolve to a poster artifact")
+        return serialized
+
+    def _deserialize_artifacts(self, value: str) -> list[dict]:
+        payload = self._json_list(value)
+        artifacts: list[dict] = []
+        for candidate in payload:
+            try:
+                artifact = MediaArtifact.model_validate(candidate)
+            except ValueError:
+                continue
+            artifacts.append(artifact.model_dump(mode="json", exclude={"frame_rate"}))
+        return artifacts
+
+    def _legacy_artifact_payloads(self, generation_id: int, output_paths: list[str]) -> list[dict]:
+        return [
+            artifact.model_dump(mode="json", exclude={"frame_rate"})
+            for artifact in legacy_image_artifacts(generation_id, output_paths)
+        ]
 
     def _bounded_int(self, value: object, *, default: int, minimum: int, maximum: int) -> int:
         try:
@@ -1021,6 +1225,15 @@ class HistoryRepository:
             "folder_id",
             "created_at",
         ]
+        legacy_columns = {
+            str(row[1])
+            for row in con.execute(
+                "pragma table_info(generations_legacy_no_autoincrement)"
+            ).fetchall()
+        }
+        for optional_column in ("media_kind", "artifacts_json"):
+            if optional_column in legacy_columns:
+                columns.append(optional_column)
         column_sql = ", ".join(columns)
         con.execute(
             f"""

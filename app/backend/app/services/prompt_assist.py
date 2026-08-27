@@ -5,10 +5,17 @@ import os
 import re
 import time
 from typing import Literal
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 from pydantic import BaseModel, Field
+
+from app.services.prompt_assist_presets import (
+    PromptAssistPurposePreset,
+    normalize_protected_tokens,
+    prompt_assist_preset_instruction,
+    restore_protected_tokens,
+)
 
 
 PromptAssistLanguage = Literal["en", "ja"]
@@ -29,6 +36,8 @@ class PromptAssistRequestData(BaseModel):
     target: PromptAssistTarget = "enhance"
     language: PromptAssistLanguage = "en"
     extra_instruction: str = ""
+    purpose_preset: PromptAssistPurposePreset = "standard"
+    protected_tokens: list[str] = Field(default_factory=list, max_length=64)
     provider_mode: PromptAssistProviderMode = "prompt_only"
     provider_endpoint: str = ""
     provider_model: str = ""
@@ -41,6 +50,7 @@ class PromptAssistResult(BaseModel):
     provider_mode: PromptAssistProviderMode = "prompt_only"
     language: PromptAssistLanguage
     target: PromptAssistTarget
+    purpose_preset: PromptAssistPurposePreset = "standard"
     system_prompt: str
     user_prompt: str
     suggested_prompt: str
@@ -66,6 +76,17 @@ class PromptAssistProviderTestResult(BaseModel):
     latency_ms: int
 
 
+class PromptAssistProviderModelsRequestData(BaseModel):
+    provider_mode: PromptAssistConnectionProviderMode
+    provider_endpoint: str = ""
+    provider_api_key_env_var: str = ""
+    provider_timeout_seconds: float = Field(default=60.0, ge=1.0, le=300.0)
+
+
+class PromptAssistProviderModelsResult(BaseModel):
+    models: list[str] = Field(default_factory=list)
+
+
 def test_prompt_assist_provider(request: PromptAssistProviderTestRequestData) -> PromptAssistProviderTestResult:
     started_at = time.perf_counter()
     provider_key = _provider_api_key("", request.provider_api_key_env_var)
@@ -85,7 +106,23 @@ def test_prompt_assist_provider(request: PromptAssistProviderTestRequestData) ->
     )
 
 
+def list_prompt_assist_provider_models(
+    request: PromptAssistProviderModelsRequestData,
+) -> PromptAssistProviderModelsResult:
+    if request.provider_mode not in {"openai_compatible", "openai_responses"}:
+        raise ValueError("prompt_assist_provider_models_unsupported")
+    endpoint = derive_openai_models_endpoint(request.provider_endpoint)
+    provider_key = _provider_api_key("", request.provider_api_key_env_var)
+    headers = {"Accept": "application/json"}
+    if provider_key:
+        headers["Authorization"] = f"Bearer {provider_key}"
+    body = _get_provider_models_json(endpoint, headers, request.provider_timeout_seconds)
+    return PromptAssistProviderModelsResult(models=_provider_model_ids(body))
+
+
 def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
+    if request.provider_mode == "prompt_only" and request.purpose_preset != "standard":
+        raise ValueError("prompt_assist_provider_required_for_purpose")
     prompt = _compact(request.prompt)
     negative_prompt = _compact(request.negative_prompt)
     profile = _compact(request.profile).lower() or "sdxl"
@@ -100,7 +137,8 @@ def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
     suggested_prompt = _suggest_prompt(prompt, profile, orientation, request.target)
     suggested_negative = _suggest_negative_prompt(negative_prompt, request.target)
     tags = _suggest_tags(profile, mode, orientation, request.loras, request.embeddings)
-    system_prompt = _system_prompt(request.language)
+    protected_tokens = normalize_protected_tokens(request.protected_tokens)
+    system_prompt = _system_prompt(request.language, request.purpose_preset)
     user_prompt = _user_prompt(
         request=request,
         prompt=prompt,
@@ -110,6 +148,7 @@ def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
         orientation=orientation,
         suggested_prompt=suggested_prompt,
         suggested_negative=suggested_negative,
+        protected_tokens=protected_tokens,
     )
     provider_response = ""
     provider_model = ""
@@ -135,10 +174,14 @@ def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
         suggested_negative = parsed_negative
         tags = parsed_tags
         warnings.extend(parsed_warnings)
+    suggested_prompt, protected_tokens_restored = restore_protected_tokens(suggested_prompt, protected_tokens)
+    if protected_tokens_restored:
+        warnings.append("protected_tokens_restored")
     return PromptAssistResult(
         provider_mode=request.provider_mode,
         language=request.language,
         target=request.target,
+        purpose_preset=request.purpose_preset,
         system_prompt=system_prompt,
         user_prompt=user_prompt,
         suggested_prompt=suggested_prompt,
@@ -204,7 +247,7 @@ def _suggest_tags(profile: str, mode: str, orientation: str, loras: list[str], e
     return tags[:24]
 
 
-def _system_prompt(language: PromptAssistLanguage) -> str:
+def _system_prompt(language: PromptAssistLanguage, purpose_preset: PromptAssistPurposePreset) -> str:
     language_rule = (
         "Explain reasoning in Japanese when needed, but keep generation prompt tokens in English unless the user asks otherwise."
         if language == "ja"
@@ -214,6 +257,7 @@ def _system_prompt(language: PromptAssistLanguage) -> str:
         "You are assisting Asteria image generation prompt drafting. "
         "Preserve the user's subject intent, do not invent unavailable model assets, and keep the result reproducible. "
         "Return compact JSON with prompt, negative_prompt, and notes. "
+        f"Purpose-specific rules: {prompt_assist_preset_instruction(purpose_preset)} "
         f"{language_rule}"
     )
 
@@ -228,6 +272,7 @@ def _user_prompt(
     orientation: str,
     suggested_prompt: str,
     suggested_negative: str,
+    protected_tokens: list[str],
 ) -> str:
     lines = [
         "Asteria generation context:",
@@ -239,6 +284,8 @@ def _user_prompt(
         f"- Current negative prompt: {negative_prompt or '(empty)'}",
         f"- Active LoRAs: {', '.join(request.loras) if request.loras else '(none)'}",
         f"- Active embeddings: {', '.join(request.embeddings) if request.embeddings else '(none)'}",
+        f"- Purpose preset: {request.purpose_preset}",
+        f"- Protected LoRA trigger tokens: {', '.join(protected_tokens) if protected_tokens else '(none)'}",
         f"- Local draft prompt: {suggested_prompt}",
         f"- Local draft negative prompt: {suggested_negative}",
     ]
@@ -448,6 +495,52 @@ def _post_json_and_extract_text(
     if not content.strip():
         raise ValueError("prompt_assist_provider_response_empty")
     return content.strip()
+
+
+def derive_openai_models_endpoint(endpoint: str) -> str:
+    endpoint_value = _validated_provider_endpoint(endpoint)
+    parsed_url = urlparse(endpoint_value)
+    path = parsed_url.path.rstrip("/")
+    suffixes = ("/v1/chat/completions", "/v1/responses", "/v1")
+    matched_suffix = next((suffix for suffix in suffixes if path.endswith(suffix)), None)
+    if matched_suffix is None:
+        raise ValueError("prompt_assist_provider_models_endpoint_unsupported")
+    prefix = path[: -len(matched_suffix)]
+    models_path = f"{prefix}/v1/models"
+    return urlunparse(parsed_url._replace(path=models_path, params="", query="", fragment=""))
+
+
+def _get_provider_models_json(endpoint: str, headers: dict[str, str], timeout_seconds: float) -> object:
+    try:
+        with httpx.Client(timeout=_provider_timeout(timeout_seconds)) as client:
+            response = client.get(endpoint, headers=headers)
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPError as exc:
+        raise ValueError(f"prompt_assist_provider_request_failed: {exc}") from exc
+    except ValueError as exc:
+        raise ValueError(f"prompt_assist_provider_response_invalid: {exc}") from exc
+
+
+def _provider_model_ids(body: object) -> list[str]:
+    if not isinstance(body, dict) or not isinstance(body.get("data"), list):
+        raise ValueError("prompt_assist_provider_response_invalid")
+    embedding_types = {"embedding", "embeddings", "text_embedding", "text-embedding"}
+    models: set[str] = set()
+    for item in body["data"]:
+        if not isinstance(item, dict):
+            continue
+        model_id = item.get("id")
+        if not isinstance(model_id, str):
+            continue
+        model_id = model_id.strip()
+        if not model_id or len(model_id) > 256:
+            continue
+        model_type = item.get("type")
+        if isinstance(model_type, str) and model_type.strip().casefold() in embedding_types:
+            continue
+        models.add(model_id)
+    return sorted(models)
 
 
 def _validated_provider_endpoint(endpoint: str) -> str:

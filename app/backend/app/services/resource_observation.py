@@ -13,11 +13,13 @@ import psutil
 
 from app.core.config import AppConfig
 from app.schemas.operations import ACTIVE_OPERATION_STATUSES, TERMINAL_OPERATION_STATUSES
+from app.schemas.resource_advisory import ResourceByteCapacity, ResourceObservationSnapshot
 from app.services.comfy_admission import comfy_admission
 from app.services.operation_coordinator import OperationCoordinator
 from app.services.resource_lifecycle import resource_admission
 from app.services.runtime import ComfyClient
 from app.services.runtime_process import RuntimeProcessManager
+from app.services.user_settings import resolve_current_output_root
 
 
 class ResourceObserver:
@@ -84,6 +86,26 @@ class ResourceObserver:
                 "disks": self._disk_summary(),
             },
         }
+
+    def advisory_capacity(self) -> ResourceObservationSnapshot:
+        raw_vram = self._verified_vram()
+        raw_ram = self._system_memory()
+        disks = {str(item.get("scope")): item for item in self._disk_summary()}
+        data_disk = disks.get("data", {})
+        output_disk = disks.get("outputs", {})
+        vram = None
+        if raw_vram is not None:
+            vram = ResourceByteCapacity(
+                total_bytes=raw_vram["total_bytes"],
+                available_bytes=raw_vram["free_bytes"],
+            )
+        ram = ResourceByteCapacity.model_validate(raw_ram) if raw_ram is not None else None
+        return ResourceObservationSnapshot(
+            vram=vram,
+            ram=ram,
+            temp_free_bytes=_optional_nonnegative_int(data_disk.get("free_bytes")),
+            output_free_bytes=_optional_nonnegative_int(output_disk.get("free_bytes")),
+        )
 
     def _runtime_status(self) -> dict[str, Any]:
         try:
@@ -190,6 +212,26 @@ class ResourceObserver:
         except Exception:
             return None
 
+    @staticmethod
+    def _system_memory() -> dict[str, int] | None:
+        try:
+            memory = psutil.virtual_memory()
+            total = memory.total
+            available = memory.available
+            if (
+                isinstance(total, bool)
+                or isinstance(available, bool)
+                or not isinstance(total, int)
+                or not isinstance(available, int)
+                or total < 0
+                or available < 0
+                or available > total
+            ):
+                return None
+            return {"total_bytes": total, "available_bytes": available}
+        except (psutil.Error, OSError, RuntimeError, ValueError):
+            return None
+
     def _runtime_log_bytes(self) -> int | None:
         total = 0
         found = False
@@ -206,7 +248,9 @@ class ResourceObserver:
         return total if found else 0
 
     def _owned_preview_summary(self) -> tuple[int, int]:
-        return self._tree_summary(self.config.output_dir / "_previews")
+        return self._tree_summary(
+            resolve_current_output_root(self.config.data_dir) / "_previews"
+        )
 
     @staticmethod
     def _tree_summary(root: Path, *, limit: int = 10_000) -> tuple[int, int]:
@@ -236,7 +280,7 @@ class ResourceObserver:
         for scope, path in (
             ("data", self.config.data_dir),
             ("models", self.config.model_dir),
-            ("outputs", self.config.output_dir),
+            ("outputs", resolve_current_output_root(self.config.data_dir)),
         ):
             try:
                 anchor = path
@@ -261,3 +305,9 @@ class ResourceObserver:
                     }
                 )
         return summaries
+
+
+def _optional_nonnegative_int(value: object) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value

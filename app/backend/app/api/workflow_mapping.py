@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Any
 
@@ -75,6 +76,9 @@ def validate_mapping() -> MappingValidationResponse:
     profiles: dict[str, dict[str, Any]] = {}
     model_profiles = _model_profiles(config.model_profiles_path, issues)
     profile_ids = {profile.id for profile in model_profiles}
+    dependency_profile_ids = profile_ids | _supplemental_dependency_profile_ids(
+        config.model_profiles_path.parent / "profiles"
+    )
     profiles_by_id = {profile.id: profile for profile in model_profiles}
     profile_setting_groups = {profile.id: set(profile.setting_groups) for profile in model_profiles}
     dependency_contracts = _dependency_contracts(config.model_dependencies_path, issues)
@@ -282,7 +286,11 @@ def validate_mapping() -> MappingValidationResponse:
     for dependency in dependency_contracts:
         dependency_id = str(dependency.get("id") or "<missing id>")
         dependency_profile = str(dependency.get("profile") or "")
-        if dependency_profile and dependency_profile != "shared" and dependency_profile not in profile_ids:
+        if (
+            dependency_profile
+            and dependency_profile != "shared"
+            and dependency_profile not in dependency_profile_ids
+        ):
             issues.append(
                 MappingValidationIssue(
                     file=str(config.model_dependencies_path),
@@ -527,6 +535,27 @@ def _dependency_contracts(path: Path, issues: list[MappingValidationIssue]) -> l
             }
         )
     return contracts
+
+
+def _supplemental_dependency_profile_ids(profiles_root: Path) -> set[str]:
+    """Recognize non-image model profiles without folding them into txt2img validation."""
+    try:
+        paths = sorted(profiles_root.glob("*/*.json"))
+    except OSError:
+        return set()
+    profile_ids: set[str] = set()
+    for path in paths:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        for field in ("profile_id", "runtime_profile_id"):
+            value = payload.get(field)
+            if isinstance(value, str) and value:
+                profile_ids.add(value)
+    return profile_ids
 
 
 def _model_profiles(path: Path, issues: list[MappingValidationIssue]) -> list[ModelProfile]:

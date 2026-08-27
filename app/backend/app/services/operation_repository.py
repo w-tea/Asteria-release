@@ -155,6 +155,7 @@ class OperationRepository:
         parent_operation_id: str | None = None,
         root_operation_id: str | None = None,
         executor_version: str,
+        operation_id: str | None = None,
     ) -> OperationRecord:
         snapshot_json = canonical_operation_json(request_snapshot)
         with self._connect() as connection:
@@ -173,6 +174,7 @@ class OperationRepository:
                 parent_operation_id=parent_operation_id,
                 root_operation_id=root_operation_id,
                 executor_version=executor_version,
+                operation_id=operation_id,
             )
 
     def create_with_discord_receipt(
@@ -226,6 +228,7 @@ class OperationRepository:
                 parent_operation_id=None,
                 root_operation_id=None,
                 executor_version=executor_version,
+                operation_id=None,
             )
             connection.execute(
                 """
@@ -264,6 +267,7 @@ class OperationRepository:
         parent_operation_id: str | None,
         root_operation_id: str | None,
         executor_version: str,
+        operation_id: str | None,
     ) -> OperationRecord:
         if idempotency_key is not None:
             existing = connection.execute(
@@ -289,7 +293,7 @@ class OperationRepository:
 
         now = self.clock()
         record = OperationRecord(
-            operation_id=uuid4().hex,
+            operation_id=operation_id or uuid4().hex,
             kind=kind,
             status="queued",
             created_at=now,
@@ -528,6 +532,7 @@ class OperationRepository:
         *,
         source_actor: str,
         idempotency_key: str | None = None,
+        request_snapshot: dict[str, Any] | None = None,
     ) -> OperationRecord:
         original = self.get(operation_id)
         if original.status not in {"failed", "cancelled", "interrupted"} or not original.retryable:
@@ -535,7 +540,11 @@ class OperationRepository:
         return self.create(
             kind=original.kind,
             source_actor=source_actor,
-            request_snapshot=original.request_snapshot,
+            request_snapshot=(
+                original.request_snapshot
+                if request_snapshot is None
+                else request_snapshot
+            ),
             idempotency_key=idempotency_key,
             request_contract_version=original.request_contract_version,
             progress_total=original.progress_total,

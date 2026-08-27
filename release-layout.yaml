@@ -1,4 +1,4 @@
-version: 2
+version: 3
 package:
   backend_root: app/backend
   backend_app: app/backend/app
@@ -9,6 +9,5 @@ package:
 writable_roots:
   data: data
   models: models
-  outputs: outputs
   logs: logs
   temp: temp

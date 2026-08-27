@@ -30,6 +30,26 @@ ANIMA_BLOCKS = [
     "OUT",
 ]
 
+ANIMA_2_9B_40_BLOCKS = [
+    "BASE",
+    *[f"B{x:03d}" for x in range(40)],
+    *[f"LLM{x:03d}" for x in range(6)],
+    "OUT",
+]
+
+ANIMA_3_8B_52_BLOCKS = [
+    "BASE",
+    *[f"B{x:03d}" for x in range(52)],
+    *[f"LLM{x:03d}" for x in range(6)],
+    "OUT",
+]
+
+ANIMA_SCHEMA_IDS = (
+    "anima",
+    "anima_2_9b_40",
+    "anima_3_8b_52",
+)
+
 FLUX1_BLOCKS = [
     "CLIP",
     "T5",
@@ -55,10 +75,22 @@ BLOCK_SCHEMAS = {
     "sd15_sd2": SD15_BLOCKS,
     "sdxl": SDXL_BLOCKS,
     "anima": ANIMA_BLOCKS,
+    "anima_2_9b_40": ANIMA_2_9B_40_BLOCKS,
+    "anima_3_8b_52": ANIMA_3_8B_52_BLOCKS,
     "flux1": FLUX1_BLOCKS,
     "flux2": FLUX2_BLOCKS,
     LEGACY_FLUX_SCHEMA_ID: FLUX1_BLOCKS,
 }
+
+
+def is_anima_schema(schema: str) -> bool:
+    return schema in ANIMA_SCHEMA_IDS
+
+
+def merge_schema_family(schema: str) -> str:
+    if is_anima_schema(schema):
+        return "anima"
+    return canonical_merge_schema(schema)
 
 
 def is_flux_schema(schema: str) -> bool:
@@ -146,13 +178,13 @@ def _sdxl_from_sd15(weights: list[float]) -> list[float]:
     ]
 
 
-def _anima_from_sd15(weights: list[float]) -> list[float]:
+def _anima_from_sd15(weights: list[float], *, diffusion_blocks: int = 28) -> list[float]:
     base, input_blocks, middle, output_blocks = _sd15_groups(weights)
     diffusion_curve = [*input_blocks, middle, *output_blocks]
     text_curve = _resample([base, *input_blocks[:3], middle], 6)
     return [
         base,
-        *_resample(diffusion_curve, 28),
+        *_resample(diffusion_curve, diffusion_blocks),
         *text_curve,
         output_blocks[-1],
     ]
@@ -257,18 +289,26 @@ def _presets_from_mbwpresets(source_label: str) -> list[MergeBlockPreset]:
                         compatible_schemas=["sdxl"],
                     )
                 )
-                presets.append(
-                    MergeBlockPreset(
-                        id=f"anima:{name}",
-                        name=name,
-                        family="anima",
-                        weights=_anima_from_sd15(weights),
-                        source=source_label,
-                        derived_from=preset_id,
-                        description="Projected from the SD1/2 SuperMerger preset into the Anima diffusion and LLM schema.",
-                        compatible_schemas=["anima"],
+                for anima_schema in ANIMA_SCHEMA_IDS:
+                    schema = BLOCK_SCHEMAS[anima_schema]
+                    diffusion_blocks = sum(block.startswith("B") and block != "BASE" for block in schema)
+                    label = {
+                        "anima": "Anima",
+                        "anima_2_9b_40": "Anima 2.9B 40-block",
+                        "anima_3_8b_52": "Anima 3.8B 52-block",
+                    }[anima_schema]
+                    presets.append(
+                        MergeBlockPreset(
+                            id=f"{anima_schema}:{name}",
+                            name=name,
+                            family=anima_schema,
+                            weights=_anima_from_sd15(weights, diffusion_blocks=diffusion_blocks),
+                            source=source_label,
+                            derived_from=preset_id,
+                            description=f"Projected from the SD1/2 SuperMerger preset into the {label} diffusion and LLM schema.",
+                            compatible_schemas=[anima_schema],
+                        )
                     )
-                )
                 for flux_family in FLUX_SCHEMA_IDS:
                     label = "Flux.1" if flux_family == "flux1" else "Flux.2"
                     schema = BLOCK_SCHEMAS[flux_family]

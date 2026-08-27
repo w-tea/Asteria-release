@@ -22,11 +22,22 @@ from app.services.data_contracts import (
     validate_owned_paths,
 )
 from app.services.maintenance_journal import MaintenanceJournalRepository
+from app.services.extension_backup import (
+    ExtensionBackupError,
+    ExtensionBackupService,
+    ExtensionRestoreTransaction,
+)
 from app.services.schema_versions import CURRENT_SCHEMA_VERSIONS
 
 
 _BACKUP_ID = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 _MINIMUM_BACKUP_HEADROOM = 16 * 1024 * 1024
+_CATALOG_CACHE_METADATA = PurePosixPath("cache/extensions/catalog-cache-v1.json")
+_WINDOWS_RESERVED_FILENAME_RE = re.compile(
+    r"^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$",
+    re.IGNORECASE,
+)
+_WINDOWS_UNSAFE_PATH_CHARS = frozenset('<>:"\\|?*')
 
 
 class MaintenanceBackupError(RuntimeError):
@@ -63,6 +74,7 @@ class MaintenanceBackupService:
         self.backup_root = backup_root.absolute()
         self.data_contract = data_contract or current_data_contract()
         self.journal = MaintenanceJournalRepository(self.backup_root / "maintenance-journal.json")
+        self.extension_backup = ExtensionBackupService(self.data_dir / "extensions")
         self._restore_failure_injector: Callable[[str, int], None] | None = None
 
     def create_backup(self) -> MaintenanceBackupSummary:
@@ -175,7 +187,14 @@ class MaintenanceBackupService:
         operation_id = f"restore-{uuid4().hex}"
         rollback = self.backup_root / f".{operation_id}.tmp"
         records = list(manifest["files"])
+        extension_records = [
+            item for item in records
+            if self._safe_relative_path(item["relative_path"]).parts[0].casefold() == "extensions"
+        ]
+        generic_records = [item for item in records if item not in extension_records]
         snapshots: dict[str, bool] = {}
+        attempted_restores: list[str] = []
+        extension_transaction: ExtensionRestoreTransaction | None = None
         self.journal.record(
             operation_id=operation_id,
             kind="restore",
@@ -184,9 +203,13 @@ class MaintenanceBackupService:
             detail_code="restore_started",
         )
         try:
-            for item in records:
+            if extension_records:
+                extension_transaction = self.extension_backup.prepare_restore(
+                    backup_dir / "files" / "extensions"
+                )
+            for item in generic_records:
                 relative_path = self._safe_relative_path(item["relative_path"])
-                destination = self.data_dir / relative_path
+                destination = self._restore_destination(relative_path)
                 snapshots[relative_path.as_posix()] = destination.exists()
                 if destination.exists():
                     snapshot = rollback / relative_path
@@ -194,16 +217,17 @@ class MaintenanceBackupService:
                     self._copy_regular_file(destination, snapshot)
 
             restored_count = 0
-            for item in records:
+            for item in generic_records:
                 relative_path = self._safe_relative_path(item["relative_path"])
                 source = backup_dir / "files" / relative_path
-                destination = self.data_dir / relative_path
-                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination = self._restore_destination(relative_path, create_parent=True)
+                attempted_restores.append(relative_path.as_posix())
                 self._replace_file(source, destination)
                 restored_count += 1
                 if self._restore_failure_injector is not None:
                     self._restore_failure_injector(relative_path.as_posix(), restored_count)
-            self._remove_staging(rollback)
+            if extension_transaction is not None:
+                self.extension_backup.apply_restore(extension_transaction)
             self.journal.record(
                 operation_id=operation_id,
                 kind="restore",
@@ -211,13 +235,30 @@ class MaintenanceBackupService:
                 status="completed",
                 detail_code="restore_completed",
             )
+            if extension_transaction is not None:
+                self.extension_backup.commit_restore(extension_transaction)
+            self._remove_staging(rollback)
             return summary
         except Exception as exc:
+            rollback_error: Exception | None = None
+            if extension_transaction is not None:
+                try:
+                    self.extension_backup.rollback_restore(extension_transaction)
+                except Exception as extension_rollback_exc:
+                    rollback_error = extension_rollback_exc
             try:
-                self._rollback_restore(rollback, snapshots)
+                self._rollback_restore(
+                    rollback,
+                    {
+                        relative_path: snapshots[relative_path]
+                        for relative_path in attempted_restores
+                    },
+                )
             except Exception as rollback_exc:
+                rollback_error = rollback_error or rollback_exc
+            if rollback_error is not None:
                 self._record_failure(operation_id, "restore_rollback_failed", kind="restore")
-                raise MaintenanceBackupError("restore_rollback_failed") from rollback_exc
+                raise MaintenanceBackupError("restore_rollback_failed") from rollback_error
             self._record_failure(operation_id, "restore_failed", kind="restore")
             raise MaintenanceBackupError("restore_failed") from exc
 
@@ -229,6 +270,12 @@ class MaintenanceBackupService:
         sources: list[Path] = []
         for owned_path in owned:
             if owned_path.entry.storage_class is not StorageClass.DURABLE:
+                continue
+            if owned_path.entry.id == "extensions":
+                try:
+                    sources.extend(self.extension_backup.backup_sources())
+                except ExtensionBackupError as exc:
+                    raise MaintenanceBackupError(str(exc)) from exc
                 continue
             path = owned_path.path
             if not path.exists():
@@ -250,6 +297,18 @@ class MaintenanceBackupService:
                     if self._is_link(file_path) or not file_path.is_file():
                         raise MaintenanceBackupError("backup_ownership_invalid")
                     sources.append(file_path)
+        catalog_cache = self.data_dir / _CATALOG_CACHE_METADATA
+        if catalog_cache.exists():
+            for path in (
+                self.data_dir / "cache",
+                self.data_dir / "cache" / "extensions",
+                catalog_cache,
+            ):
+                if self._is_link(path):
+                    raise MaintenanceBackupError("backup_ownership_invalid")
+            if not catalog_cache.is_file():
+                raise MaintenanceBackupError("backup_ownership_invalid")
+            sources.append(catalog_cache)
         return sorted(sources, key=lambda path: path.relative_to(self.data_dir).as_posix().casefold())
 
     def _validate_backup_directory(self, backup_dir: Path) -> dict:
@@ -262,6 +321,7 @@ class MaintenanceBackupService:
             if not isinstance(item, dict):
                 raise MaintenanceBackupError("backup_manifest_invalid")
             relative = self._safe_relative_path(item.get("relative_path"))
+            self._validate_manifest_ownership(relative)
             key = relative.as_posix().casefold()
             if key in seen:
                 raise MaintenanceBackupError("backup_manifest_invalid")
@@ -273,7 +333,46 @@ class MaintenanceBackupService:
                 raise MaintenanceBackupError("backup_hash_mismatch")
             if relative.as_posix().casefold() == "asteria.db":
                 self._verify_sqlite(source)
+        files_root = backup_dir / "files"
+        extension_files_root = files_root / "extensions"
+        actual_extensions: set[str] = set()
+        expected_extensions = {
+            path for path in seen if path.startswith("extensions/") or path == "extensions"
+        }
+        if extension_files_root.exists():
+            for root, directories, filenames in os.walk(extension_files_root, followlinks=False):
+                root_path = Path(root)
+                if any(self._is_link(root_path / name) for name in directories):
+                    raise MaintenanceBackupError("backup_manifest_invalid")
+                for filename in filenames:
+                    path = root_path / filename
+                    if self._is_link(path):
+                        raise MaintenanceBackupError("backup_manifest_invalid")
+                    actual_extensions.add(path.relative_to(files_root).as_posix().casefold())
+        if actual_extensions != expected_extensions:
+            raise MaintenanceBackupError("backup_manifest_invalid")
+        if expected_extensions:
+            try:
+                self.extension_backup.validate_backup_tree(files_root / "extensions")
+            except ExtensionBackupError as exc:
+                raise MaintenanceBackupError(str(exc)) from exc
         return manifest
+
+    def _validate_manifest_ownership(self, relative: PurePosixPath) -> None:
+        key = relative.as_posix().casefold()
+        if key == _CATALOG_CACHE_METADATA.as_posix().casefold():
+            return
+        for entry in self.data_contract.entries:
+            if entry.storage_class is not StorageClass.DURABLE:
+                continue
+            root = entry.relative_root.as_posix().casefold()
+            if entry.path_kind is PathKind.FILE:
+                if key == root:
+                    return
+                continue
+            if key == root or key.startswith(f"{root}/"):
+                return
+        raise MaintenanceBackupError("backup_manifest_invalid")
 
     def _read_manifest(self, backup_dir: Path) -> dict:
         try:
@@ -306,13 +405,46 @@ class MaintenanceBackupService:
     def _rollback_restore(self, rollback: Path, snapshots: dict[str, bool]) -> None:
         for relative_text, existed in snapshots.items():
             relative = PurePosixPath(relative_text)
-            destination = self.data_dir / relative
+            destination = self._restore_destination(relative, create_parent=existed)
             snapshot = rollback / relative
             if existed:
                 self._replace_file(snapshot, destination)
             else:
                 destination.unlink(missing_ok=True)
         self._remove_staging(rollback)
+
+    def _restore_destination(
+        self,
+        relative: PurePosixPath,
+        *,
+        create_parent: bool = False,
+    ) -> Path:
+        root = Path(os.path.abspath(self.data_dir))
+        destination = Path(os.path.abspath(self.data_dir / relative))
+        try:
+            destination.relative_to(root)
+        except ValueError as exc:
+            raise MaintenanceBackupError("restore_destination_invalid") from exc
+        self._validate_restore_path(root, destination)
+        if create_parent:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            self._validate_restore_path(root, destination)
+        return destination
+
+    def _validate_restore_path(self, root: Path, destination: Path) -> None:
+        if not root.is_dir() or self._is_link(root):
+            raise MaintenanceBackupError("restore_destination_invalid")
+        current = root
+        for part in destination.relative_to(root).parts:
+            current = current / part
+            if not os.path.lexists(current):
+                continue
+            if self._is_link(current):
+                raise MaintenanceBackupError("restore_destination_invalid")
+            if current != destination and not current.is_dir():
+                raise MaintenanceBackupError("restore_destination_invalid")
+            if current == destination and not current.is_file():
+                raise MaintenanceBackupError("restore_destination_invalid")
 
     def _copy_sqlite(self, source: Path, destination: Path) -> None:
         with closing(sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True)) as source_connection:
@@ -367,11 +499,22 @@ class MaintenanceBackupService:
     def _safe_relative_path(self, value: object) -> PurePosixPath:
         if not isinstance(value, str):
             raise MaintenanceBackupError("backup_manifest_invalid")
-        relative = PurePosixPath(value.replace("\\", "/"))
+        relative = PurePosixPath(value)
+        parts = value.split("/")
         if (
             relative.is_absolute()
             or value == ""
-            or any(part in {"", ".", ".."} for part in relative.parts)
+            or "\\" in value
+            or any(part in {"", ".", ".."} for part in parts)
+            or any(
+                any(
+                    character in _WINDOWS_UNSAFE_PATH_CHARS or ord(character) < 32
+                    for character in part
+                )
+                or part.endswith((" ", "."))
+                or _WINDOWS_RESERVED_FILENAME_RE.fullmatch(part)
+                for part in parts
+            )
         ):
             raise MaintenanceBackupError("backup_manifest_invalid")
         return relative
@@ -379,7 +522,11 @@ class MaintenanceBackupService:
     def _is_link(self, path: Path) -> bool:
         try:
             is_junction = getattr(os.path, "isjunction", None)
-            return path.is_symlink() or bool(is_junction is not None and is_junction(path))
+            return (
+                path.is_symlink()
+                or bool(is_junction is not None and is_junction(path))
+                or bool(getattr(path.lstat(), "st_file_attributes", 0) & 0x400)
+            )
         except OSError as exc:
             raise MaintenanceBackupError("backup_ownership_invalid") from exc
 

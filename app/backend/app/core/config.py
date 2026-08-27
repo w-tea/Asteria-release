@@ -124,6 +124,16 @@ class AppConfig(BaseModel):
         )
     )
     auto_bootstrap_models: bool = Field(default_factory=lambda: os.environ.get("ASTERIA_AUTO_BOOTSTRAP_MODELS", "1") not in {"0", "false", "False"})
+    disable_extensions: bool = Field(
+        default_factory=lambda: os.environ.get("ASTERIA_DISABLE_EXTENSIONS", "0") == "1"
+    )
+    extension_catalog_url: str = Field(
+        default_factory=lambda: os.environ.get(
+            "ASTERIA_EXTENSION_CATALOG_URL",
+            "https://raw.githubusercontent.com/"
+            "w-tea/Asteria-extensions-catalog/main/catalog-v1.json",
+        )
+    )
     engine_command: str = Field(default_factory=lambda: os.environ.get("ASTERIA_ENGINE_COMMAND", ""))
     eagle_base_url: str = Field(default_factory=lambda: os.environ.get("ASTERIA_EAGLE_BASE_URL", "http://localhost:41595"))
     topaz_executable: Path = Field(
@@ -170,7 +180,6 @@ class AppConfig(BaseModel):
     comfy_output_dir: Path | None = Field(
         default_factory=lambda: _optional_path_environment("ASTERIA_COMFY_OUTPUT_DIR")
     )
-    output_dir: Path = Field(default_factory=lambda: Path(os.environ.get("ASTERIA_OUTPUT_DIR", _default_root() / "outputs")))
     remaster_max_final_pixels: int = Field(
         default_factory=lambda: int(os.environ.get("ASTERIA_REMASTER_MAX_FINAL_PIXELS", "16777216")),
         ge=1,
@@ -179,6 +188,14 @@ class AppConfig(BaseModel):
         default_factory=lambda: int(os.environ.get("ASTERIA_REMASTER_MAX_ANCHOR_PIXELS", "33554432")),
         ge=1,
     )
+
+    @property
+    def extension_root(self) -> Path:
+        return self.data_dir / "extensions"
+
+    @property
+    def extension_catalog_cache_dir(self) -> Path:
+        return self.data_dir / "cache" / "extensions"
 
     @property
     def comfy_base_url(self) -> str:

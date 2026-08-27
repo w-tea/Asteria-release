@@ -5,10 +5,10 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.services.merge_calculation_modes import (
+    ASTERIA_CALCULATION_MODES,
     CALCULATION_CONTRACT_VERSION,
     CALCULATION_IMPLEMENTATION_REVISION,
     CALCULATION_PARAMETER_SCHEMA_VERSION,
-    V11_CALCULATION_MODES,
 )
 from app.services.merge_recipes import (
     CALCULATION_MODE_COMPATIBILITY,
@@ -16,6 +16,7 @@ from app.services.merge_recipes import (
     MergeRecipe,
     expand_dice_recipe,
 )
+from app.services.merge_presets import merge_schema_family
 
 
 MERGE_RUNTIME_CONTRACT_VERSION = "asteria.merge.runtime.v1"
@@ -56,7 +57,19 @@ class MergeRuntimeRecipeContract(BaseModel):
     dtype_policy: str
     key_policy: dict[str, object]
     source_fingerprints: list[dict[str, object]] = Field(default_factory=list)
-    block_schema: Literal["sdxl", "anima"]
+    block_schema: Literal[
+        "sdxl",
+        "anima",
+        "anima_2_9b_40",
+        "anima_3_8b_52",
+    ]
+    architecture_variant: str = ""
+    block_schema_revision: int = 1
+    key_layout_signature: str = ""
+    source_architecture_descriptors: list[dict[str, object]] = Field(
+        default_factory=list
+    )
+    ordered_mergeable_block_count: int = 0
     alpha: float
     beta: float
     block_weights: str
@@ -81,7 +94,7 @@ def normalize_merge_runtime_recipe(recipe: MergeRecipe) -> MergeRuntimeRecipeCon
         raise MergeRuntimeContractError("merge_type must be checkpoint for in-memory runtime")
     if recipe.model_family not in {"sdxl", "anima"}:
         raise MergeRuntimeContractError("model_family is not supported by in-memory runtime")
-    if recipe.block_schema != recipe.model_family:
+    if merge_schema_family(recipe.block_schema) != recipe.model_family:
         raise MergeRuntimeContractError("block_schema must match model_family")
     if recipe.reset_clip_ids:
         raise MergeRuntimeContractError("reset_clip_ids is not implemented by in-memory runtime")
@@ -101,9 +114,9 @@ def normalize_merge_runtime_recipe(recipe: MergeRecipe) -> MergeRuntimeRecipeCon
         "smoothAdd MT",
         "extract",
     }
-    if calculation_mode in V11_CALCULATION_MODES and merge_mode != "weight_sum":
+    if calculation_mode in ASTERIA_CALCULATION_MODES and merge_mode != "weight_sum":
         raise MergeRuntimeContractError(
-            "V1.1 calculation modes require weight_sum"
+            "Asteria calculation modes require weight_sum"
         )
     try:
         calculation_parameters = expanded.resolved_calculation_parameters()
@@ -118,10 +131,10 @@ def normalize_merge_runtime_recipe(recipe: MergeRecipe) -> MergeRuntimeRecipeCon
         calculation_mode=calculation_mode,
         calculation_mode_id=calculation_mode,
         calculation_option=expanded.calculation_option,
-        calculation_contract_version=CALCULATION_CONTRACT_VERSION,
-        calculation_parameter_schema_version=CALCULATION_PARAMETER_SCHEMA_VERSION,
+        calculation_contract_version=expanded.calculation_contract_version,
+        calculation_parameter_schema_version=expanded.calculation_parameter_schema_version,
         calculation_parameters=calculation_parameters,
-        calculation_implementation_revision=CALCULATION_IMPLEMENTATION_REVISION,
+        calculation_implementation_revision=expanded.calculation_implementation_revision,
         dtype_policy="float32_arithmetic_then_requested_output_dtype",
         key_policy={
             "include": list(expanded.include_blocks),
@@ -132,6 +145,13 @@ def normalize_merge_runtime_recipe(recipe: MergeRecipe) -> MergeRuntimeRecipeCon
             dict(item) for item in expanded.source_fingerprints
         ],
         block_schema=expanded.block_schema,
+        architecture_variant=expanded.architecture_variant,
+        block_schema_revision=expanded.block_schema_revision,
+        key_layout_signature=expanded.key_layout_signature,
+        source_architecture_descriptors=[
+            dict(item) for item in expanded.source_architecture_descriptors
+        ],
+        ordered_mergeable_block_count=expanded.ordered_mergeable_block_count,
         alpha=expanded.alpha,
         beta=expanded.beta,
         block_weights=expanded.block_weights,

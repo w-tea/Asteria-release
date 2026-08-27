@@ -25,7 +25,7 @@ from app.services.remaster_comparison import (
 from app.services.runtime import RuntimeCancellationConfirmed, RuntimeErrorResponse
 from app.services.runtime_adapters import RuntimeAdapterError
 from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
-from app.services.user_settings import UserSettingsRepository
+from app.services.user_settings import UserSettingsRepository, resolve_current_output_root
 
 
 REMASTER_REQUIRED_NODES = {
@@ -111,12 +111,14 @@ class RemasterOrchestrator:
     ) -> RemasterResponse:
         validate_remaster_scheduler_contract(request)
         request_snapshot = request.model_dump(mode="json")
+        output_root = resolve_current_output_root(self.config.data_dir).resolve()
         settings: dict = {
             "mode": "remaster",
             "remaster_request_snapshot": request_snapshot,
             "source_generation_id": request.source_generation_id,
             "source_output_index": request.source_output_index,
             "source_image_path": request.source_image_path,
+            "output_root": str(output_root),
         }
         remaster_id = self.history.add(
             status="queued",
@@ -181,7 +183,7 @@ class RemasterOrchestrator:
             output_paths=[],
         )
 
-        working_dir = self.config.output_dir / ".remaster-working" / str(remaster_id)
+        working_dir = output_root / ".remaster-working" / str(remaster_id)
         runtime_result: dict = {}
         persisted_paths: list[str] = []
         try:
@@ -199,7 +201,13 @@ class RemasterOrchestrator:
             if not _is_file(runtime_path):
                 raise RemasterExecutionError(remaster_id, "remaster_primary_output_invalid")
 
-            final_path = self._finalize_runtime_output(remaster_id, request, validation, runtime_path)
+            final_path = self._finalize_runtime_output(
+                remaster_id,
+                request,
+                validation,
+                runtime_path,
+                output_root,
+            )
             persisted_paths.append(str(final_path))
             if callable(cancel_requested) and cancel_requested():
                 self._persist_cancelled(remaster_id, settings, persisted_paths, runtime_result)
@@ -331,8 +339,9 @@ class RemasterOrchestrator:
         request: RemasterRequest,
         validation: RemasterValidationResult,
         runtime_path: Path,
+        output_root: Path,
     ) -> Path:
-        final_dir = self.config.output_dir / request.profile
+        final_dir = output_root / request.profile
         final_dir.mkdir(parents=True, exist_ok=True)
         staged_path = unique_output_path(final_dir / runtime_path.name)
         runtime_path.replace(staged_path)

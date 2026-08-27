@@ -1,8 +1,9 @@
 from pathlib import Path, PurePosixPath
 from dataclasses import replace
 import threading
+from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -29,13 +30,25 @@ from app.services.model_dependencies import (
     ModelDependencyStatus,
 )
 from app.services.model_fingerprints import ModelFingerprintService
+from app.schemas.media_model_catalog import (
+    MediaModelCatalogResponse,
+    MediaModelDomain,
+)
+from app.services.media_model_catalog import MediaModelCatalogService
 from app.services.model_library import ModelLibraryItem, ModelLinkHealth
 from app.services.model_library_cache import (
     clear_model_library_cache,
     get_model_library,
     refresh_model_library,
 )
-from app.services.model_profiles import ModelProfile, ModelProfileRepository, ModelSlot
+from app.services.model_profiles import (
+    ManagedModelBundle,
+    ModelProfile,
+    ModelProfileRepository,
+    ModelSlot,
+    PromptSyntaxCapability,
+    PromptSyntaxFeature,
+)
 from app.services.model_selections import ModelSelection, ModelSelectionRepository
 from app.services.model_storage import (
     ModelStorageSettings,
@@ -43,6 +56,8 @@ from app.services.model_storage import (
     external_model_root_enabled,
     resolve_model_root,
 )
+from app.services.video_model_resolver import registered_video_model_library
+from app.services.music_model_registry import registered_music_model_library
 
 router = APIRouter(prefix="/api/models", tags=["models"])
 _bootstrap_lock = threading.Lock()
@@ -101,7 +116,9 @@ class ModelProfileResponse(BaseModel):
     label: str
     dependency_ids: list[str]
     model_slots: list["ModelSlotResponse"]
+    managed_model_bundles: list["ManagedModelBundleResponse"]
     setting_groups: list[str]
+    prompt_syntax: "PromptSyntaxCapabilityResponse"
 
 
 class ModelProfileListResponse(BaseModel):
@@ -113,6 +130,17 @@ class ModelSlotResponse(BaseModel):
     label: str
     type: str
     required: bool
+
+
+class ManagedModelBundleResponse(BaseModel):
+    id: str
+    variant: str
+    components: dict[str, str]
+
+
+class PromptSyntaxCapabilityResponse(BaseModel):
+    grammar: Literal["asteria-prompt-v1"] | None
+    features: list[PromptSyntaxFeature]
 
 
 class ModelSelectionRequest(BaseModel):
@@ -278,12 +306,32 @@ def profile_to_response(profile: ModelProfile) -> ModelProfileResponse:
         label=profile.label,
         dependency_ids=profile.dependency_ids,
         model_slots=[slot_to_response(slot) for slot in profile.model_slots],
+        managed_model_bundles=[
+            managed_bundle_to_response(bundle)
+            for bundle in profile.managed_model_bundles
+        ],
         setting_groups=profile.setting_groups,
+        prompt_syntax=prompt_syntax_to_response(profile.prompt_syntax),
     )
 
 
 def slot_to_response(slot: ModelSlot) -> ModelSlotResponse:
     return ModelSlotResponse(**slot.__dict__)
+
+
+def managed_bundle_to_response(
+    bundle: ManagedModelBundle,
+) -> ManagedModelBundleResponse:
+    return ManagedModelBundleResponse(**bundle.__dict__)
+
+
+def prompt_syntax_to_response(
+    capability: PromptSyntaxCapability,
+) -> PromptSyntaxCapabilityResponse:
+    return PromptSyntaxCapabilityResponse(
+        grammar=capability.grammar,
+        features=list(capability.features),
+    )
 
 
 def library_item_to_response(item: ModelLibraryItem) -> ModelLibraryItemResponse:
@@ -378,6 +426,32 @@ def list_library(type: str | None = None) -> ModelLibraryResponse:
         items=[library_item_to_response(item) for item in items],
         link_health=link_health_to_response(library.link_health),
     )
+
+
+@router.get("/media-catalog", response_model=MediaModelCatalogResponse)
+def list_media_catalog(request: Request, domain: MediaModelDomain) -> MediaModelCatalogResponse:
+    config = request.app.state.config
+    if domain == MediaModelDomain.VIDEO:
+        library = registered_video_model_library(config)
+    elif domain == MediaModelDomain.MUSIC:
+        library = registered_music_model_library(config)
+    else:
+        library = get_model_library(get_model_root())
+    items = MediaModelCatalogService().classify_library(library, domain=domain)
+    return MediaModelCatalogResponse(domain=domain, items=tuple(items))
+
+
+@router.post("/media-catalog/refresh", response_model=MediaModelCatalogResponse)
+def refresh_media_catalog(request: Request, domain: MediaModelDomain) -> MediaModelCatalogResponse:
+    config = request.app.state.config
+    if domain == MediaModelDomain.VIDEO:
+        library = registered_video_model_library(config, refresh=True)
+    elif domain == MediaModelDomain.MUSIC:
+        library = registered_music_model_library(config, refresh=True)
+    else:
+        library = refresh_model_library(get_model_root())
+    items = MediaModelCatalogService().classify_library(library, domain=domain)
+    return MediaModelCatalogResponse(domain=domain, items=tuple(items))
 
 
 @router.post("/library/refresh", response_model=ModelLibraryRefreshResponse)

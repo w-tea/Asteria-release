@@ -10,12 +10,13 @@ import sqlite3
 import threading
 import time
 import unicodedata
-from typing import Any
+from typing import Any, Literal
+from urllib.parse import quote
 from uuid import uuid4
 import zipfile
 
-from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from PIL import Image
 from pydantic import BaseModel, Field, field_validator
 
@@ -28,6 +29,7 @@ from app.schemas.generation import (
     GenerationResponse,
     Img2ImgRequest,
     InpaintRequest,
+    PromptSyntaxGenerationRecord,
     Txt2ImgRequest,
     XYZAxis,
     XYZCellResult,
@@ -35,9 +37,12 @@ from app.schemas.generation import (
     XYZPlotResponse,
 )
 from app.schemas.common import LoraSelection
+from app.schemas.media import MediaArtifact
 from app.schemas.remaster import RemasterRequest, RemasterResponse
 from app.schemas.operations import OperationChildSummary, OperationRecord
 from app.services.history import HistoryBulkDeleteConflictError, HistoryRepository, HistoryTagLimitExceededError
+from app.services.media_artifacts import MediaArtifactAccessError, resolve_registered_media_artifact
+from app.services.video_sequence_history import VideoSequenceHistoryProjector
 from app.services.artifact_lifecycle import (
     artifact_write_operation as _artifact_write_operation,
     begin_orphan_cleanup as _begin_orphan_cleanup,
@@ -47,6 +52,11 @@ from app.services.image_validation import InvalidImageContentError, validate_ima
 from app.services.library_thumbnails import LibraryThumbnailError, LibraryThumbnailService
 from app.services.inpaint_region import InpaintRegionError, validate_only_masked_inputs
 from app.services.external_settings import ExternalIntegrationSettingsRepository
+from app.services.external_model_libraries import (
+    ExternalModelLibraryError,
+    ExternalModelLibraryRepository,
+    ExternalModelRoot,
+)
 from app.services.generation_schema import GenerationSchema, GenerationSchemaNotFound, GenerationSchemaRepository
 from app.services import api_errors
 from app.services.comfy_model_paths import comfy_model_name
@@ -83,7 +93,16 @@ from app.services.reference_mutation import (
     reference_mutation_coordinator,
 )
 from app.services.model_library_cache import get_model_library
+from app.services.model_library import ModelLibrary
 from app.services.model_fingerprints import ModelFingerprintService
+from app.services.anima_lora_remap import (
+    AnimaLoraRemapRegistryError,
+    prepare_anima_lora_runtime_entries,
+)
+from app.services.anima_generation_bundle import (
+    AnimaGenerationBundleError,
+    prepare_anima_generation_bundle,
+)
 from app.services.model_profiles import ModelProfileRepository
 from app.services.model_selections import ModelSelectionRepository
 from app.services.model_storage import resolve_model_root
@@ -103,6 +122,12 @@ from app.services.operation_retention import OperationRetentionService
 from app.services.preview_registry import PreviewRegistry
 from app.services.parameter_mapper import ParameterMapper
 from app.services.prompt_pipeline import expand_dynamic_prompt, extract_embeddings, extract_loras, list_wildcards
+from app.services.prompt_syntax import (
+    PROMPT_PARSER_GENERATION,
+    PromptSyntaxError,
+    PromptSyntaxPlan,
+    parse_prompt_syntax,
+)
 from app.services.runtime import (
     ComfyClient,
     ComfyGenerationRuntime,
@@ -124,7 +149,7 @@ from app.services.topaz import TopazError, TopazSettings, process_topaz_image
 from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
 from app.services.user_settings import UserSettingsRepository, resolve_output_root, safe_segment
 from app.services.xyz_grid import XYZGridAxis, XYZGridCell, create_xyz_contact_sheet_streaming
-from app.services.workflow_mapping import WorkflowMappingRepository
+from app.services.workflow_mapping import WorkflowMappingNotFound, WorkflowMappingRepository
 from app.services.schema_versions import CURRENT_SCHEMA_VERSIONS
 
 logger = logging.getLogger(__name__)
@@ -731,6 +756,20 @@ def _validate_runtime_feature_requirements(
             raise HTTPException(
                 status_code=409,
                 detail={"code": api_errors.MISSING_RUNTIME_MODEL, "missing": missing_runtime_models},
+            )
+        missing_anima_bundle_models = _missing_anima_bundle_runtime_models(
+            object_info,
+            settings,
+            model_slots or {},
+            model_root=config.model_dir,
+        )
+        if missing_anima_bundle_models:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": api_errors.MISSING_RUNTIME_MODEL,
+                    "missing": missing_anima_bundle_models,
+                },
             )
         missing_hires_checkpoint = _missing_hires_checkpoint_model(
             object_info,
@@ -1394,9 +1433,15 @@ def _missing_lora_models(
 ) -> list[dict[str, Any]]:
     missing: list[dict[str, Any]] = []
     lora_loader_present = "LoraLoader" in object_info
+    anima_remap_loader_present = "AsteriaAnimaLoraRemap" in object_info
     block_loader_present = LORA_BLOCK_WEIGHT_CLASS in object_info
     lora_loader_values = _node_model_input_values(object_info, "LoraLoader", "lora_name")
     block_loader_values = _node_model_input_values(object_info, LORA_BLOCK_WEIGHT_CLASS, "lora_name")
+    anima_remap_loader_values = _node_model_input_values(
+        object_info,
+        "AsteriaAnimaLoraRemap",
+        "lora_name",
+    )
     for index, lora in enumerate(loras):
         if not isinstance(lora, dict):
             continue
@@ -1406,8 +1451,21 @@ def _missing_lora_models(
         model_name = comfy_model_name(name, "loras", model_root=model_root)
         block_vector = str(lora.get("block_weight") or lora.get("block_weight_preset") or "").strip()
         uses_block_loader = bool(block_vector and lora.get("hierarchy_mode") != "disabled")
-        loader_present = block_loader_present if uses_block_loader else lora_loader_present
-        available = block_loader_values if uses_block_loader else lora_loader_values
+        uses_anima_remap = isinstance(lora.get("anima_remap"), dict)
+        loader_present = (
+            anima_remap_loader_present
+            if uses_anima_remap
+            else block_loader_present
+            if uses_block_loader
+            else lora_loader_present
+        )
+        available = (
+            anima_remap_loader_values
+            if uses_anima_remap
+            else block_loader_values
+            if uses_block_loader
+            else lora_loader_values
+        )
         if loader_present and model_name not in available:
             missing.append({"index": index, "name": name, "model_name": model_name})
     return missing
@@ -1552,13 +1610,96 @@ def _runtime_model_slot_checks(profile: str) -> tuple[tuple[str, str, str, str],
     return ()
 
 
+def _runtime_model_slots_for_request(
+    profile: str,
+    model_slots: dict[str, str],
+    *,
+    model_root: Path,
+    external_roots: tuple[ExternalModelRoot, ...] = (),
+) -> dict[str, str]:
+    model_directories = {
+        slot: model_dir_name
+        for slot, model_dir_name, _node_name, _input_name in _runtime_model_slot_checks(profile)
+    }
+    if profile == "anima":
+        model_directories.update(
+            {
+                "qwen35_text_encoder": "text_encoders",
+                "progressive_adapter": "text_encoders",
+            }
+        )
+    projected = dict(model_slots)
+    for slot, model_dir_name in model_directories.items():
+        value = str(projected.get(slot) or "").strip()
+        if value:
+            projected[slot] = comfy_model_name(
+                value,
+                model_dir_name,
+                model_root=model_root,
+                external_roots=external_roots,
+            )
+    return projected
+
+
+def _registered_external_model_roots(config: AppConfig) -> tuple[ExternalModelRoot, ...]:
+    try:
+        return tuple(
+            ExternalModelLibraryRepository(
+                config.data_dir / "config" / "external-model-libraries.json"
+            ).list()
+        )
+    except ExternalModelLibraryError:
+        return ()
+
+
+def _missing_anima_bundle_runtime_models(
+    object_info: dict,
+    settings: dict,
+    model_slots: dict[str, str],
+    *,
+    model_root: Path | None = None,
+) -> list[dict[str, str]]:
+    bundle = settings.get("anima_generation_bundle")
+    if not isinstance(bundle, dict) or bundle.get("variant_id") != "anima_3_8b_52":
+        return []
+    checks = (
+        (
+            "qwen35_text_encoder",
+            "AnimaQwen35Loader",
+            "qwen35_model",
+        ),
+        (
+            "progressive_adapter",
+            "AnimaQwen35UnifiedPrompt",
+            "adapter_name",
+        ),
+    )
+    missing: list[dict[str, str]] = []
+    for slot, node, input_name in checks:
+        value = str(model_slots.get(slot) or "").strip()
+        if not value or node not in object_info:
+            continue
+        model_name = comfy_model_name(
+            value,
+            "text_encoders",
+            model_root=model_root,
+        )
+        if model_name not in _node_model_input_values(object_info, node, input_name):
+            missing.append({"slot": slot, "model_name": model_name})
+    return missing
+
+
 def _profile_base_required_nodes(profile: str, settings: dict, *, requires_lora: bool = False) -> set[str]:
     if profile == "anima":
+        bundle = settings.get("anima_generation_bundle")
+        is_anima_3_8b = (
+            isinstance(bundle, dict)
+            and bundle.get("variant_id") == "anima_3_8b_52"
+        )
         required = {
             "UNETLoader",
             "CLIPLoader",
             "VAELoader",
-            "TextEncodeQwenImageEdit",
             "RandomNoise",
             "CFGGuider",
             "KSamplerSelect",
@@ -1567,15 +1708,29 @@ def _profile_base_required_nodes(profile: str, settings: dict, *, requires_lora:
             "VAEDecode",
             "SaveImage",
         }
+        if is_anima_3_8b:
+            required.update(
+                {
+                    "AnimaQwen35Loader",
+                    "AnimaQwen35UnifiedPrompt",
+                    "CLIPTextEncode",
+                    "EmptySD3LatentImage",
+                }
+            )
+        else:
+            required.add("TextEncodeQwenImageEdit")
         mode = str(settings.get("mode") or "txt2img")
         if mode == "inpaint":
             required.update({"LoadImage", "VAEEncodeForInpaint"})
         elif mode == "img2img":
             required.update({"LoadImage", "VAEEncode"})
-        else:
+        elif not is_anima_3_8b:
             required.add("EmptyQwenImageLayeredLatentImage")
         if requires_lora:
-            required.add("LoraLoader")
+            if int(settings.get("anima_remap_lora_count") or 0) > 0:
+                required.add("AsteriaAnimaLoraRemap")
+            if int(settings.get("anima_standard_lora_count") or 0) > 0:
+                required.add("LoraLoader")
         return required
     if profile == "flux1":
         required = {
@@ -1917,6 +2072,44 @@ def _model_root(config: AppConfig) -> Path:
     return resolve_model_root(data_dir=config.data_dir, fallback=config.model_dir)
 
 
+def _resolve_anima_hires_diffusion_path(
+    settings: dict[str, Any],
+    *,
+    model_root: Path,
+    library: ModelLibrary,
+) -> Path | None:
+    if not settings.get("hires_enabled"):
+        return None
+    value = str(settings.get("hires_checkpoint") or "").strip()
+    if not value or value == "Use same checkpoint":
+        return None
+    direct = Path(value)
+    if direct.is_absolute() and _path_is_file_safely(str(direct)):
+        return direct
+    expected_name = comfy_model_name(
+        value,
+        "diffusion_models",
+        model_root=model_root,
+    )
+    matches = [
+        item.path
+        for item in library.by_type("checkpoint")
+        if comfy_model_name(
+            str(item.path),
+            "diffusion_models",
+            model_root=model_root,
+        ).casefold()
+        == expected_name.casefold()
+    ]
+    if len(matches) != 1:
+        raise AnimaLoraRemapRegistryError(
+            "anima_hires_target_model_ambiguous"
+            if matches
+            else "anima_hires_target_model_unresolved"
+        )
+    return matches[0]
+
+
 def _resolve_discord_model_slots(model_references: dict[str, str]) -> dict[str, str]:
     config = AppConfig()
     library = get_model_library(_model_root(config))
@@ -2073,6 +2266,8 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
             "loras",
             "controlnet_units",
             "anima_lllite_units",
+            "anima_qwen35_adapter_strength",
+            "anima_qwen35_negative_adapter_strength",
             "detailer_units",
             "model_slot_overrides",
             "remaster",
@@ -2119,6 +2314,13 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
     if anima_lllite_units:
         mapped["anima_lllite_units"] = anima_lllite_units
         mapped["anima_lllite_runtime"] = "not_implemented"
+    if request.profile == "anima":
+        mapped["anima_qwen35_adapter_strength"] = (
+            request.anima_qwen35_adapter_strength
+        )
+        mapped["anima_qwen35_negative_adapter_strength"] = (
+            request.anima_qwen35_negative_adapter_strength
+        )
     if detailer_units:
         mapped["detailer_units"] = detailer_units
         mapped["detailer_runtime"] = "not_implemented"
@@ -2349,6 +2551,221 @@ def _preflight_profile_prompt_request(request: Txt2ImgRequest) -> None:
             request.hires_scheduler = "Use same scheduler"
         if request.remaster.enabled:
             request.remaster.scheduler = "Flux2"
+
+
+_PROMPT_SYNTAX_CONTRACTS = {
+    "scheduled_switch": {"conditioning_time_range", "conditioning_combine"},
+    "alternating_switch": {"prompt_step_schedule"},
+    "conditioning_and": {"conditioning_multiply", "conditioning_combine"},
+    "conditioning_break": {"conditioning_concat"},
+}
+
+
+def _prompt_payload_sha256(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _prompt_syntax_http_error(exc: PromptSyntaxError) -> HTTPException:
+    return HTTPException(
+        status_code=400,
+        detail={
+            "code": api_errors.PROMPT_SYNTAX_INVALID,
+            "reason": exc.code,
+            "message": exc.message,
+            "recovery": exc.recovery,
+        },
+    )
+
+
+def _prompt_syntax_assignments(plan: PromptSyntaxPlan) -> list[Literal["A", "B"]]:
+    return [
+        segment.assignment
+        for segment in plan.segments
+        if segment.assignment in {"A", "B"}
+    ]
+
+
+def _prompt_syntax_pass_plan(
+    *,
+    pass_id: Literal["base", "hires"],
+    profile_id: str,
+    steps: int,
+    sampler: str,
+    scheduler: str,
+    denoise: float,
+    positive_plan: PromptSyntaxPlan,
+    negative_plan: PromptSyntaxPlan,
+) -> dict[str, Any]:
+    assignments = {
+        key: values
+        for key, plan in (("positive", positive_plan), ("negative", negative_plan))
+        if (values := _prompt_syntax_assignments(plan))
+    }
+    return {
+        "schema_version": "asteria.prompt-pass.v1",
+        "node_contract_revision": "asteria.prompt.step-schedule.v1",
+        "profile_id": profile_id,
+        "pass_id": pass_id,
+        "steps": steps,
+        "sampler": sampler_runtime_name(sampler),
+        "scheduler": scheduler_runtime_name(scheduler),
+        "denoise": denoise,
+        "positive_plan_hash": positive_plan.sha256,
+        "negative_plan_hash": negative_plan.sha256,
+        "alternating_assignments": assignments,
+    }
+
+
+def _prepare_prompt_syntax_record(
+    *,
+    request: Txt2ImgRequest,
+    config: AppConfig,
+    settings: dict[str, Any],
+    expanded_prompt: str,
+    expanded_negative_prompt: str,
+    selected_runtime: str,
+) -> dict[str, Any]:
+    try:
+        positive_plan = parse_prompt_syntax(expanded_prompt, profile_id=request.profile)
+        negative_plan = parse_prompt_syntax(expanded_negative_prompt, profile_id=request.profile)
+        semantic_plans: dict[str, PromptSyntaxPlan] = {
+            "positive": positive_plan,
+            "negative": negative_plan,
+        }
+        hires_positive_plan = positive_plan
+        hires_negative_plan = negative_plan
+        if settings.get("hires_enabled") and settings.get("hires_prompt"):
+            hires_positive_plan = parse_prompt_syntax(
+                str(settings["hires_prompt"]),
+                profile_id=request.profile,
+            )
+            semantic_plans["hires_positive"] = hires_positive_plan
+        if settings.get("hires_enabled") and settings.get("hires_negative_prompt"):
+            hires_negative_plan = parse_prompt_syntax(
+                str(settings["hires_negative_prompt"]),
+                profile_id=request.profile,
+            )
+            semantic_plans["hires_negative"] = hires_negative_plan
+    except PromptSyntaxError as exc:
+        raise _prompt_syntax_http_error(exc) from exc
+
+    enabled_features = {
+        feature
+        for plan in semantic_plans.values()
+        for feature in plan.enabled_features
+    }
+    if enabled_features:
+        profiles = ModelProfileRepository(config.model_profiles_path).list()
+        active_profile = next((item for item in profiles if item.id == request.profile), None)
+        if active_profile is None:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": api_errors.MODEL_PROFILE_NOT_FOUND, "profile": request.profile},
+            )
+        unsupported = sorted(enabled_features - set(active_profile.prompt_syntax.features))
+        if (
+            active_profile.prompt_syntax.grammar != PROMPT_PARSER_GENERATION
+            or unsupported
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": api_errors.PROMPT_SYNTAX_PROFILE_UNSUPPORTED,
+                    "profile": request.profile,
+                    "features": unsupported or sorted(enabled_features),
+                },
+            )
+        if selected_runtime != "comfy_workflow":
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": api_errors.PROMPT_SYNTAX_RUNTIME_UNSUPPORTED,
+                    "runtime": selected_runtime,
+                },
+            )
+        try:
+            mapping = WorkflowMappingRepository(config.mapping_dir).get_txt2img(request.profile)
+        except WorkflowMappingNotFound as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": api_errors.PROMPT_SYNTAX_MAPPING_UNAVAILABLE},
+            ) from exc
+        required_contracts = {
+            contract
+            for plan in semantic_plans.values()
+            for contract in _PROMPT_SYNTAX_CONTRACTS.get(plan.operation, set())
+        }
+        missing_contracts = sorted(required_contracts - set(mapping.node_contracts))
+        if missing_contracts:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": api_errors.PROMPT_SYNTAX_MAPPING_UNAVAILABLE,
+                    "contracts": missing_contracts,
+                },
+            )
+
+    semantic_payloads = {
+        key: plan.to_dict()
+        for key, plan in semantic_plans.items()
+    }
+    pass_plans = {
+        "base": _prompt_syntax_pass_plan(
+            pass_id="base",
+            profile_id=request.profile,
+            steps=int(settings["steps"]),
+            sampler=str(settings.get("sampler", "Euler a")),
+            scheduler=str(settings.get("scheduler", "Automatic")),
+            denoise=float(settings.get("denoise", 1.0)),
+            positive_plan=positive_plan,
+            negative_plan=negative_plan,
+        )
+    }
+    if settings.get("hires_enabled"):
+        pass_plans["hires"] = _prompt_syntax_pass_plan(
+            pass_id="hires",
+            profile_id=request.profile,
+            steps=int(settings.get("hires_steps") or settings["steps"]),
+            sampler=str(
+                settings.get("sampler")
+                if settings.get("hires_sampler") in {None, "", "Use same sampler"}
+                else settings["hires_sampler"]
+            ),
+            scheduler=str(
+                settings.get("scheduler")
+                if settings.get("hires_scheduler") in {None, "", "Use same scheduler"}
+                else settings["hires_scheduler"]
+            ),
+            denoise=float(settings.get("hires_denoising_strength", 0.7)),
+            positive_plan=hires_positive_plan,
+            negative_plan=hires_negative_plan,
+        )
+    payload = {
+        "schema_version": "asteria.prompt-generation.v1",
+        "parser_generation": PROMPT_PARSER_GENERATION,
+        "profile_id": request.profile,
+        "raw_prompt": request.prompt,
+        "raw_negative_prompt": request.negative_prompt,
+        "expanded_prompt": expanded_prompt,
+        "expanded_negative_prompt": expanded_negative_prompt,
+        "semantic_plans": semantic_payloads,
+        "semantic_hashes": {
+            key: plan.sha256
+            for key, plan in semantic_plans.items()
+        },
+        "pass_plans": pass_plans,
+        "pass_plan_hashes": {
+            key: _prompt_payload_sha256(plan)
+            for key, plan in pass_plans.items()
+        },
+    }
+    return PromptSyntaxGenerationRecord.model_validate(payload).model_dump(mode="json")
 
 
 def _known_embedding_names(config: AppConfig) -> list[str]:
@@ -2651,6 +3068,12 @@ def _generate(
     model_slots = _model_slots_for_request(request, config)
     _validate_required_model_slots(request.profile, model_slots, config)
     external_model_snapshots = _external_model_reference_snapshots(model_slots, config)
+    runtime_model_slots = _runtime_model_slots_for_request(
+        request.profile,
+        model_slots,
+        model_root=_model_root(config),
+        external_roots=_registered_external_model_roots(config),
+    )
     styled_prompt, styled_negative_prompt = _compose_with_advanced_styles(
         request.prompt,
         request.negative_prompt,
@@ -2662,6 +3085,91 @@ def _generate(
         wildcard_dir=config.wildcard_dir,
     )
     settings, negative_prompt = _settings_from_request(request, config, mode)
+    if request.profile == "anima":
+        try:
+            anima_bundle = prepare_anima_generation_bundle(
+                model_slots,
+                adapter_strength=request.anima_qwen35_adapter_strength,
+                negative_adapter_strength=(
+                    request.anima_qwen35_negative_adapter_strength
+                ),
+            )
+        except AnimaGenerationBundleError as exc:
+            code, _, slots = exc.reason_code.partition(":")
+            detail: dict[str, Any] = {"code": code}
+            if slots:
+                detail["slots"] = slots.split(",")
+            raise HTTPException(status_code=409, detail=detail) from exc
+        settings["anima_generation_bundle"] = anima_bundle.model_dump(
+            mode="json",
+            exclude_none=True,
+        )
+        try:
+            hires_checkpoint_value = str(
+                settings.get("hires_checkpoint") or ""
+            ).strip()
+            anima_hires_target = None
+            if (
+                settings.get("hires_enabled")
+                and hires_checkpoint_value
+                and hires_checkpoint_value != "Use same checkpoint"
+            ):
+                anima_hires_library = get_model_library(
+                    _model_root(config),
+                    config=config,
+                )
+                anima_hires_target = _resolve_anima_hires_diffusion_path(
+                    settings,
+                    model_root=_model_root(config),
+                    library=anima_hires_library,
+                )
+            if anima_hires_target is not None:
+                anima_hires_bundle = prepare_anima_generation_bundle(
+                    {
+                        **model_slots,
+                        "diffusion_model": str(anima_hires_target),
+                    },
+                    adapter_strength=request.anima_qwen35_adapter_strength,
+                    negative_adapter_strength=(
+                        request.anima_qwen35_negative_adapter_strength
+                    ),
+                )
+                if (
+                    "anima_3_8b_52"
+                    in {
+                        anima_bundle.variant_id.value,
+                        anima_hires_bundle.variant_id.value,
+                    }
+                    and anima_bundle.variant_id != anima_hires_bundle.variant_id
+                ):
+                    raise AnimaGenerationBundleError(
+                        "anima_3_8b_hires_variant_mismatch"
+                    )
+                settings["anima_hires_generation_bundle"] = (
+                    anima_hires_bundle.model_dump(
+                        mode="json",
+                        exclude_none=True,
+                    )
+                )
+        except AnimaLoraRemapRegistryError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.reason_code},
+            ) from exc
+        except AnimaGenerationBundleError as exc:
+            code, _, slots = exc.reason_code.partition(":")
+            detail = {"code": code}
+            if slots:
+                detail["slots"] = slots.split(",")
+            raise HTTPException(status_code=409, detail=detail) from exc
+        if (
+            anima_bundle.variant_id.value == "anima_3_8b_52"
+            and mode != "txt2img"
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "anima_3_8b_txt2img_only"},
+            )
     if external_model_snapshots:
         settings["model_reference_snapshots"] = [
             {key: value for key, value in snapshot.items() if key != "execution_path"}
@@ -2675,8 +3183,61 @@ def _generate(
         settings["advanced_styles"] = [style.model_dump() for style in request.advanced_styles]
     loras = _merge_loras(
         extract_loras(prompt_expansion.expanded),
-        [lora.model_dump() for lora in request.loras],
+        [lora.model_dump(exclude_none=True) for lora in request.loras],
     )
+    if request.profile == "anima" and loras:
+        try:
+            anima_library = get_model_library(_model_root(config), config=config)
+            anima_fingerprints = ModelFingerprintService(
+                config.data_dir / "config" / "model-fingerprints.json"
+            )
+            loras, anima_lora_receipts = prepare_anima_lora_runtime_entries(
+                loras,
+                target_diffusion_path=Path(model_slots["diffusion_model"]),
+                library=anima_library,
+                fingerprints=anima_fingerprints,
+            )
+            hires_target = _resolve_anima_hires_diffusion_path(
+                settings,
+                model_root=_model_root(config),
+                library=anima_library,
+            )
+            anima_hires_lora_receipts: list[dict[str, Any]] = []
+            if hires_target is not None:
+                hires_loras, anima_hires_lora_receipts = (
+                    prepare_anima_lora_runtime_entries(
+                        loras,
+                        target_diffusion_path=hires_target,
+                        library=anima_library,
+                        fingerprints=anima_fingerprints,
+                    )
+                )
+                for runtime_lora, hires_lora in zip(loras, hires_loras, strict=True):
+                    hires_receipt = hires_lora.get("anima_remap")
+                    if isinstance(hires_receipt, dict):
+                        runtime_lora["hires_anima_remap"] = hires_receipt
+        except (AnimaLoraRemapRegistryError, KeyError) as exc:
+            reason_code = (
+                exc.reason_code
+                if isinstance(exc, AnimaLoraRemapRegistryError)
+                else "anima_target_model_slot_missing"
+            )
+            raise HTTPException(
+                status_code=409,
+                detail={"code": reason_code},
+            ) from exc
+        if anima_lora_receipts:
+            settings["anima_lora_remap_receipts"] = anima_lora_receipts
+        if anima_hires_lora_receipts:
+            settings["anima_hires_lora_remap_receipts"] = (
+                anima_hires_lora_receipts
+            )
+        settings["anima_remap_lora_count"] = sum(
+            1 for lora in loras if isinstance(lora.get("anima_remap"), dict)
+        )
+        settings["anima_standard_lora_count"] = (
+            len(loras) - int(settings["anima_remap_lora_count"])
+        )
     has_lora_runtime_extensions = any(
         lora.get("block_weight")
         or lora.get("block_weight_preset")
@@ -2688,7 +3249,23 @@ def _generate(
     known_embeddings = _known_embedding_names(config)
     embeddings = sorted(set(extract_embeddings(prompt_expansion.expanded, known_embeddings) + extract_embeddings(negative_prompt, known_embeddings)))
     selected_runtime = _selected_runtime_id(config, request.runtime)
-    _validate_runtime_feature_requirements(config, selected_runtime, request.profile, settings, loras, model_slots)
+    prompt_syntax_record = _prepare_prompt_syntax_record(
+        request=request,
+        config=config,
+        settings=settings,
+        expanded_prompt=prompt_expansion.expanded,
+        expanded_negative_prompt=negative_prompt,
+        selected_runtime=selected_runtime,
+    )
+    settings["prompt_syntax"] = prompt_syntax_record
+    _validate_runtime_feature_requirements(
+        config,
+        selected_runtime,
+        request.profile,
+        settings,
+        loras,
+        runtime_model_slots,
+    )
     _record_hires_runtime(settings, selected_runtime, request.profile)
     _record_hires_checkpoint_runtime(settings, selected_runtime, request.profile)
     _record_refiner_runtime(settings, selected_runtime, request.profile)
@@ -2699,9 +3276,10 @@ def _generate(
         "prompt_expansion_selections": prompt_expansion.selections,
         "negative_prompt": negative_prompt,
         "settings": settings,
-        "model_slots": model_slots,
+        "model_slots": runtime_model_slots,
         "loras": loras,
         "embeddings": embeddings,
+        "prompt_syntax": prompt_syntax_record["semantic_plans"],
         "topaz_settings": _topaz_settings_from_request(request).model_dump(),
     }
     if merge_runtime_context is not None:
@@ -2938,6 +3516,7 @@ def _generate(
             },
             [str(primary["path"]) for primary in primary_outputs],
         )
+    history_item = history.get(generation_id)
     return GenerationResponse(
         id=generation_id,
         status=result["status"],
@@ -2950,6 +3529,8 @@ def _generate(
         loras=loras,
         embeddings=embeddings,
         output_paths=output_paths,
+        media_kind=history_item["media_kind"] if history_item is not None else "image",
+        artifacts=history_item["artifacts"] if history_item is not None else [],
         primary_outputs=primary_outputs,
         remasters=remasters,
     )
@@ -3067,6 +3648,24 @@ def _known_output_roots(data_dir: Path, items: list[dict] | None = None) -> set[
                     roots.add(Path(str(value)).resolve())
                 except _PATH_ACCESS_ERRORS:
                     continue
+    return roots
+
+
+def _media_artifact_roots(
+    data_dir: Path,
+    item: dict,
+    artifact_id: str,
+) -> set[Path]:
+    roots = _known_output_roots(data_dir, [item])
+    for raw in item.get("artifacts", []):
+        try:
+            artifact = MediaArtifact.model_validate(raw)
+        except ValueError:
+            continue
+        if artifact.artifact_id == artifact_id:
+            if artifact.kind == "poster":
+                roots.add(data_dir / "cache" / "media-posters")
+            break
     return roots
 
 
@@ -3271,7 +3870,7 @@ def _record_xyz_history(
         prompt=request.base.prompt,
         model_slots=model_slots,
         embeddings=[],
-        loras=[lora.model_dump() for lora in request.base.loras],
+        loras=[lora.model_dump(exclude_none=True) for lora in request.base.loras],
     )
     xyz_tags = [*generated_tags, "xyz plot"]
     if contact_sheet_path:
@@ -3293,7 +3892,7 @@ def _record_xyz_history(
         negative_prompt=request.base.negative_prompt,
         settings=settings,
         model_slots=model_slots,
-        loras=[lora.model_dump() for lora in request.base.loras],
+        loras=[lora.model_dump(exclude_none=True) for lora in request.base.loras],
         embeddings=[],
         output_paths=output_paths,
         generated_tags=xyz_tags,
@@ -3308,7 +3907,7 @@ def _record_xyz_history(
             "negative_prompt": request.base.negative_prompt,
             "settings": settings,
             "model_slots": model_slots,
-            "loras": [lora.model_dump() for lora in request.base.loras],
+            "loras": [lora.model_dump(exclude_none=True) for lora in request.base.loras],
             "embeddings": [],
             "metadata_tags": xyz_tags,
         },
@@ -3949,6 +4548,7 @@ def history(
     favorite: bool = False,
     tag: str = "",
     folder: str = "all",
+    media_kind: Literal["all", "image", "video", "audio"] = "all",
 ) -> GenerationHistoryResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
     try:
@@ -3960,16 +4560,179 @@ def history(
             favorite=favorite,
             tag=tag,
             folder=folder,
+            media_kind=media_kind,
         )
     except ValueError as error:
         if str(error) == "invalid_history_cursor":
             raise HTTPException(status_code=400, detail={"code": "invalid_history_cursor"}) from error
         raise
+    history_items = repository.list_all()
+    items = VideoSequenceHistoryProjector(
+        repository.db_path,
+        accepted_roots=_known_output_roots(_data_dir(), history_items),
+    ).project_items(
+        page.items,
+        history_items=history_items,
+    )
     return GenerationHistoryResponse(
-        items=page.items,
+        items=items,
         next_cursor=page.next_cursor,
         has_more=page.has_more,
     )
+
+
+@router.api_route(
+    "/history/{generation_id}/artifacts/{artifact_id}",
+    methods=["GET", "HEAD"],
+)
+def history_media_artifact(
+    generation_id: int,
+    artifact_id: str,
+    request: Request,
+) -> Response:
+    data_dir = _data_dir()
+    item = HistoryRepository(data_dir / "asteria.db").get(generation_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail={"code": "media_artifact_not_found"})
+    try:
+        artifact, path = resolve_registered_media_artifact(
+            item,
+            artifact_id,
+            accepted_roots=_media_artifact_roots(data_dir, item, artifact_id),
+            allowed_kinds={"video", "audio", "poster"},
+        )
+    except MediaArtifactAccessError as error:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "media_artifact_not_found"},
+        ) from error
+    try:
+        path_details = path.stat()
+        size = path_details.st_size
+    except OSError as error:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "media_artifact_not_found"},
+        ) from error
+    byte_range = _single_byte_range(request.headers.get("range", ""), size)
+    start, end = byte_range if byte_range is not None else (0, size - 1)
+    length = end - start + 1
+    status_code = 206 if byte_range is not None else 200
+    headers = {
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(length),
+        "Content-Disposition": f"inline; filename*=UTF-8''{quote(path.name, safe='')}",
+        "X-Content-Type-Options": "nosniff",
+        "Access-Control-Allow-Origin": "*",
+    }
+    if byte_range is not None:
+        headers["Content-Range"] = f"bytes {start}-{end}/{size}"
+    if request.method == "HEAD":
+        return Response(
+            status_code=status_code,
+            media_type=artifact.mime_type,
+            headers=headers,
+        )
+    try:
+        source = path.open("rb")
+        opened_details = os.fstat(source.fileno())
+    except OSError as error:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "media_artifact_not_found"},
+        ) from error
+    if (
+        opened_details.st_size != size
+        or opened_details.st_dev != path_details.st_dev
+        or opened_details.st_ino != path_details.st_ino
+    ):
+        source.close()
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "media_artifact_not_found"},
+        )
+    return StreamingResponse(
+        _stream_file_range(source, start=start, length=length),
+        status_code=status_code,
+        media_type=artifact.mime_type,
+        headers=headers,
+    )
+
+
+def _open_containing_folder(path: Path) -> None:
+    if os.name != "nt" or not hasattr(os, "startfile"):
+        raise OSError("folder reveal is unavailable")
+    os.startfile(str(path.parent))
+
+
+@router.post("/history/{generation_id}/artifacts/{artifact_id}/reveal")
+def reveal_history_audio_artifact(
+    generation_id: int,
+    artifact_id: str,
+) -> dict[str, str]:
+    data_dir = _data_dir()
+    item = HistoryRepository(data_dir / "asteria.db").get(generation_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail={"code": "media_artifact_not_found"})
+    try:
+        _artifact, path = resolve_registered_media_artifact(
+            item,
+            artifact_id,
+            accepted_roots=_known_output_roots(data_dir, [item]),
+            allowed_kinds={"audio"},
+        )
+    except MediaArtifactAccessError as error:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "media_artifact_not_found"},
+        ) from error
+    try:
+        _open_containing_folder(path)
+    except OSError as error:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "media_artifact_reveal_failed"},
+        ) from error
+    return {"status": "opened"}
+
+
+def _single_byte_range(header: str, size: int) -> tuple[int, int] | None:
+    if not header:
+        return None
+    invalid_headers = {"Content-Range": f"bytes */{size}", "Accept-Ranges": "bytes"}
+    if size <= 0 or not header.startswith("bytes=") or "," in header:
+        raise HTTPException(status_code=416, headers=invalid_headers)
+    value = header.removeprefix("bytes=").strip()
+    if value.count("-") != 1:
+        raise HTTPException(status_code=416, headers=invalid_headers)
+    start_text, end_text = (part.strip() for part in value.split("-", 1))
+    try:
+        if not start_text:
+            suffix_length = int(end_text)
+            if suffix_length <= 0:
+                raise ValueError
+            start = max(0, size - suffix_length)
+            end = size - 1
+        else:
+            start = int(start_text)
+            end = size - 1 if not end_text else min(int(end_text), size - 1)
+            if start < 0 or start >= size or end < start:
+                raise ValueError
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=416, headers=invalid_headers) from None
+    return start, end
+
+
+def _stream_file_range(source, *, start: int, length: int):
+    remaining = length
+    with source:
+        source.seek(start)
+        while remaining > 0:
+            chunk = source.read(min(1024 * 1024, remaining))
+            if not chunk:
+                break
+            remaining -= len(chunk)
+            yield chunk
 
 
 @router.get("/history/tags", response_model=GenerationTagCatalogResponse)
@@ -3991,6 +4754,7 @@ def history_thumbnail(generation_id: int) -> FileResponse:
             data_dir / "init_images",
             data_dir / "mask_images",
             data_dir / "control_images",
+            data_dir / "cache" / "media-posters",
         }
     )
     try:

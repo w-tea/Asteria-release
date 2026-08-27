@@ -128,6 +128,7 @@ class AppearanceSettings(BaseModel):
 
 class LauncherSettings(BaseModel):
     runtime_monitor_on_start: bool = False
+    disable_pinned_memory: bool = False
 
 
 class UserSettings(BaseModel):
@@ -140,14 +141,23 @@ class UserSettings(BaseModel):
     launcher: LauncherSettings = Field(default_factory=LauncherSettings)
 
 
+@dataclass(frozen=True)
+class UserSettingsLoadResult:
+    settings: UserSettings
+    reason_id: Literal["json_invalid", "access_denied", "field_type_invalid"] | None = None
+
+
 class UserSettingsRepository:
     def __init__(self, path: Path) -> None:
         self.path = path
 
     def load(self) -> UserSettings:
+        return self.load_with_diagnostics().settings
+
+    def load_with_diagnostics(self) -> UserSettingsLoadResult:
         try:
             if not self.path.exists():
-                return UserSettings()
+                return UserSettingsLoadResult(UserSettings())
             payload = json.loads(self.path.read_text(encoding="utf-8"))
             if (
                 isinstance(payload, dict)
@@ -155,11 +165,19 @@ class UserSettingsRepository:
                 and payload["schema_version"] > CURRENT_SCHEMA_VERSIONS.settings
             ):
                 raise SettingsSchemaTooNewError("user settings schema is newer than this application")
-            return UserSettings.model_validate(payload)
+            payload, repaired = self._repair_disable_pinned_memory(payload)
+            return UserSettingsLoadResult(
+                UserSettings.model_validate(payload),
+                "field_type_invalid" if repaired else None,
+            )
         except SettingsSchemaTooNewError:
             raise
-        except (OSError, json.JSONDecodeError, ValidationError):
-            return UserSettings()
+        except json.JSONDecodeError:
+            return UserSettingsLoadResult(UserSettings(), "json_invalid")
+        except OSError:
+            return UserSettingsLoadResult(UserSettings(), "access_denied")
+        except ValidationError:
+            return UserSettingsLoadResult(UserSettings(), "json_invalid")
 
     def save(self, settings: UserSettings) -> UserSettings:
         self._ensure_existing_file_is_readable()
@@ -170,9 +188,25 @@ class UserSettingsRepository:
         if self.path.exists():
             try:
                 payload = json.loads(self.path.read_text(encoding="utf-8"))
+                payload, _ = self._repair_disable_pinned_memory(payload)
                 UserSettings.model_validate(payload)
             except (json.JSONDecodeError, ValidationError) as exc:
                 raise OSError(f"user settings file could not be parsed: {exc}") from exc
+
+    @staticmethod
+    def _repair_disable_pinned_memory(payload: object) -> tuple[object, bool]:
+        if not isinstance(payload, dict):
+            return payload, False
+        launcher = payload.get("launcher")
+        if not isinstance(launcher, dict) or "disable_pinned_memory" not in launcher:
+            return payload, False
+        if isinstance(launcher["disable_pinned_memory"], bool):
+            return payload, False
+        repaired_payload = dict(payload)
+        repaired_launcher = dict(launcher)
+        repaired_launcher["disable_pinned_memory"] = False
+        repaired_payload["launcher"] = repaired_launcher
+        return repaired_payload, True
 
 
 @dataclass(frozen=True)
@@ -222,6 +256,11 @@ def resolve_output_root(data_dir: Path, settings: OutputSettings) -> Path:
     if not path.is_absolute():
         path = data_dir / path
     return path
+
+
+def resolve_current_output_root(data_dir: Path) -> Path:
+    settings = UserSettingsRepository(data_dir / "user-settings.json").load().output
+    return resolve_output_root(data_dir, settings)
 
 
 def resolve_merge_preset_dir(data_dir: Path, settings: StorageSettings, default_dir: Path) -> Path:
