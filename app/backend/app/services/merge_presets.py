@@ -8,6 +8,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, ValidationError
 
+from app.core.config import AppConfig
 
 SD15_BLOCKS = [
     "BASE",
@@ -129,10 +130,6 @@ class MergeBlockPreset(BaseModel):
     compatible_schemas: list[str] = Field(default_factory=list)
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[3]
-
-
 def _parse_weights(value: str) -> list[float]:
     weights: list[float] = []
     for item in value.replace("\n", ",").split(","):
@@ -250,7 +247,12 @@ def _path_exists(path: Path) -> bool:
 
 
 def _defaults_root() -> Path:
-    return Path(os.environ.get("ASTERIA_DEFAULTS_DIR", _repo_root() / "defaults"))
+    return Path(
+        os.environ.get(
+            "ASTERIA_DEFAULTS_DIR",
+            AppConfig().root_dir / "defaults",
+        )
+    )
 
 
 def _presets_from_mbwpresets(source_label: str) -> list[MergeBlockPreset]:

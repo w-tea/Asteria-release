@@ -1,0 +1,72 @@
+{
+  "schema_version": "asteria.video.workflow.v1",
+  "workflow_id": "asteria_minimax_h3_first_last.v1",
+  "mode": "first_last",
+  "minimum_comfyui_version": "0.30.0",
+  "required_nodes": ["LoadImage", "UNETLoader", "CLIPLoader", "VAELoader", "MiniMaxH3ImageToVideo", "MiniMaxH3MotionContextSaveLatent", "MiniMaxH3SigmaShift", "SamplerCustomAdvanced", "VAEDecode", "VAEDecodeAudio", "CreateVideo", "SaveVideo"],
+  "required_node_inputs": {
+    "MiniMaxH3MotionContextSaveLatent": ["latent", "filename_prefix", "clip_index"]
+  },
+  "workflow": {
+    "5": {"class_type": "LoadImage", "inputs": {"image": "${first_frame_filename}"}},
+    "6": {"class_type": "LoadImage", "inputs": {"image": "${last_frame_filename}"}},
+    "10": {"class_type": "UNETLoader", "inputs": {"unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors", "weight_dtype": "default"}},
+    "20": {"class_type": "CLIPLoader", "inputs": {"clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors", "type": "minimax", "device": "default"}},
+    "30": {"class_type": "VAELoader", "inputs": {"vae_name": "minimax_h3_video_vae_fp16.safetensors"}},
+    "31": {"class_type": "VAELoader", "inputs": {"vae_name": "minimax_h3_audio_vae_fp32.safetensors"}},
+    "40": {"class_type": "MiniMaxH3ImageToVideo", "inputs": {"clip": ["20", 0], "vae": ["30", 0], "first_frame": ["5", 0], "last_frame": ["6", 0], "prompt": "${prompt}", "width": "${width}", "height": "${height}", "length": "${frame_count}"}},
+    "50": {"class_type": "MiniMaxH3SigmaShift", "inputs": {"model": ["10", 0], "shift_video": 12.0, "shift_audio": 3.0}},
+    "60": {"class_type": "BasicGuider", "inputs": {"model": ["50", 0], "conditioning": ["40", 0]}},
+    "61": {"class_type": "RandomNoise", "inputs": {"noise_seed": "${seed}"}},
+    "62": {"class_type": "BasicScheduler", "inputs": {"model": ["50", 0], "scheduler": "beta", "steps": 50, "denoise": 1.0}},
+    "63": {"class_type": "KSamplerSelect", "inputs": {"sampler_name": "res_multistep"}},
+    "70": {"class_type": "SamplerCustomAdvanced", "inputs": {"noise": ["61", 0], "guider": ["60", 0], "sampler": ["63", 0], "sigmas": ["62", 0], "latent_image": ["40", 1]}},
+    "80": {"class_type": "VAEDecode", "inputs": {"samples": ["70", 0], "vae": ["30", 0]}},
+    "81": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["70", 0], "vae": ["31", 0]}},
+    "90": {"class_type": "CreateVideo", "inputs": {"images": ["80", 0], "audio": ["81", 0], "fps": 24, "bit_depth": 8}},
+    "91": {"class_type": "SaveVideo", "inputs": {"video": ["90", 0], "filename_prefix": "${output_prefix}", "format": "auto", "codec": "auto"}},
+    "92": {"class_type": "MiniMaxH3MotionContextSaveLatent", "inputs": {"latent": ["70", 0], "filename_prefix": "${working_output_prefix}", "clip_index": 1}}
+  },
+  "bindings": {
+    "first_frame_filename": "5.inputs.image",
+    "last_frame_filename": "6.inputs.image",
+    "prompt": "40.inputs.prompt",
+    "width": "40.inputs.width",
+    "height": "40.inputs.height",
+    "frame_count": "40.inputs.length",
+    "fps": "90.inputs.fps",
+    "seed": "61.inputs.noise_seed",
+    "diffusion_model_name": "10.inputs.unet_name",
+    "text_encoder_name": "20.inputs.clip_name",
+    "video_vae_name": "30.inputs.vae_name",
+    "audio_vae_name": "31.inputs.vae_name",
+    "video_shift": "50.inputs.shift_video",
+    "audio_shift": "50.inputs.shift_audio",
+    "steps": "62.inputs.steps",
+    "scheduler": "62.inputs.scheduler",
+    "sampler": "63.inputs.sampler_name",
+    "output_prefix": "91.inputs.filename_prefix",
+    "working_output_prefix": "92.inputs.filename_prefix"
+  },
+  "working_outputs": [
+    {
+      "kind": "av_latent",
+      "node_id": "92",
+      "path_input": "filename_prefix",
+      "index_input": "clip_index",
+      "suffix": ".safetensors"
+    }
+  ],
+  "dynamic_bindings": {
+    "loras": {
+      "class_type": "LoraLoaderModelOnly",
+      "source_node_id": "10",
+      "target_node_id": "50",
+      "target_input": "model",
+      "model_input": "model",
+      "lora_name_input": "lora_name",
+      "strength_input": "strength_model",
+      "output_index": 0
+    }
+  }
+}

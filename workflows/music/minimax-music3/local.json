@@ -1,0 +1,51 @@
+{
+  "schema_version": "asteria.music.workflow.v1",
+  "workflow_id": "music_minimax_music3_local.v1",
+  "minimum_comfyui_version": "0.33.0",
+  "source_revision": "206c7854dc67408d1a571bc59bce8598d7f7e93b",
+  "required_nodes": [
+    "UNETLoader",
+    "CLIPLoader",
+    "VAELoader",
+    "MiniMaxMusic3TextEncode",
+    "ConditioningZeroOut",
+    "EmptyMiniMaxMusic3LatentAudio",
+    "KSampler",
+    "VAEDecodeAudio",
+    "VAEDecodeAudioTiled",
+    "ComfySwitchNode",
+    "SaveAudioAdvanced"
+  ],
+  "workflow": {
+    "10": {"class_type": "UNETLoader", "inputs": {"unet_name": "${unet_name}", "weight_dtype": "default"}},
+    "20": {"class_type": "CLIPLoader", "inputs": {"clip_name": "${clip_name}", "type": "minimax", "device": "default"}},
+    "30": {"class_type": "VAELoader", "inputs": {"vae_name": "${vae_name}"}},
+    "40": {"class_type": "MiniMaxMusic3TextEncode", "inputs": {"clip": ["20", 0], "caption": "${caption}", "lyrics": "${lyrics}", "seed": "${seed}", "max_duration": "${max_duration}", "cfg_scale": "${cfg_scale}", "top_k": "${top_k}"}},
+    "50": {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["40", 0]}},
+    "60": {"class_type": "EmptyMiniMaxMusic3LatentAudio", "inputs": {"seconds": ["40", 1], "batch_size": 1}},
+    "70": {"class_type": "KSampler", "inputs": {"model": ["10", 0], "positive": ["40", 0], "negative": ["50", 0], "latent_image": ["60", 0], "seed": "${seed}", "steps": 30, "cfg": 1.7, "sampler_name": "euler", "scheduler": "simple", "denoise": 1.0}},
+    "80": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["70", 0], "vae": ["30", 0]}},
+    "81": {"class_type": "VAEDecodeAudioTiled", "inputs": {"samples": ["70", 0], "vae": ["30", 0], "tile_size": 1536, "overlap": 64}},
+    "82": {"class_type": "ComfySwitchNode", "inputs": {"on_false": ["80", 0], "on_true": ["81", 0], "switch": "${tiled_decode}"}},
+    "90": {"class_type": "SaveAudioAdvanced", "inputs": {"audio": ["82", 0], "filename_prefix": "${output_prefix}", "format": "flac"}}
+  },
+  "bindings": {
+    "unet_name": "10.inputs.unet_name",
+    "clip_name": "20.inputs.clip_name",
+    "vae_name": "30.inputs.vae_name",
+    "caption": "40.inputs.caption",
+    "lyrics": "40.inputs.lyrics",
+    "seed": "40.inputs.seed",
+    "max_duration": "40.inputs.max_duration",
+    "text_guidance": "40.inputs.cfg_scale",
+    "top_k": "40.inputs.top_k",
+    "sampler_seed": "70.inputs.seed",
+    "steps": "70.inputs.steps",
+    "ksampler_cfg": "70.inputs.cfg",
+    "sampler": "70.inputs.sampler_name",
+    "scheduler": "70.inputs.scheduler",
+    "denoise": "70.inputs.denoise",
+    "tiled_decode": "82.inputs.switch",
+    "output_prefix": "90.inputs.filename_prefix"
+  }
+}

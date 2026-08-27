@@ -85,7 +85,7 @@ def configure_video_upscale_operation_coordinator(
         model_resolver = production_video_model_resolver(active_config)
         base_adapter = LocalH3VideoExecutionAdapter(
             client=ComfyClient(active_config.comfy_base_url),
-            workflow_root=Path(__file__).resolve().parents[3]
+            workflow_root=active_config.root_dir
             / "workflows"
             / "video"
             / "minimax-h3",

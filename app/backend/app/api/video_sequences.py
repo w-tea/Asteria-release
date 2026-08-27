@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Callable, Literal
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response, status
@@ -122,7 +121,7 @@ def configure_video_sequence_operation_coordinator(
     if executor is None:
         local_adapter = LocalH3VideoExecutionAdapter(
             client=comfy_client,
-            workflow_root=Path(__file__).resolve().parents[3]
+            workflow_root=active_config.root_dir
             / "workflows"
             / "video"
             / "minimax-h3",
@@ -156,7 +155,7 @@ def configure_video_sequence_operation_coordinator(
                 latent_adapter=ComfyH3LatentAssemblyAdapter(
                     client=comfy_client,
                     workflow_path=(
-                        Path(__file__).resolve().parents[3]
+                        active_config.root_dir
                         / "workflows"
                         / "video"
                         / "minimax-h3"

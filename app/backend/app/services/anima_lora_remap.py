@@ -8,6 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
+from app.core.config import AppConfig
 from app.services.media_model_catalog import SafetensorsHeader
 from app.services.media_model_catalog import read_safetensors_header
 from app.schemas.model_architecture import (
@@ -198,10 +199,7 @@ def load_anima_lora_remap_registry(
     path: Path | None = None,
 ) -> AnimaLoraRemapRegistry:
     registry_path = path or (
-        Path(__file__).resolve().parents[3]
-        / "mappings"
-        / "anima"
-        / "lora-block-remap.v1.json"
+        AppConfig().mapping_dir / "anima" / "lora-block-remap.v1.json"
     )
     try:
         raw = registry_path.read_bytes()

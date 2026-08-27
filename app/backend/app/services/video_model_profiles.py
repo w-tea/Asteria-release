@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.core.config import AppConfig
 from app.services.managed_artifacts import ManagedArtifactSpec
 
 
@@ -220,7 +221,7 @@ class VideoModelProfileRepository:
 
 @lru_cache(maxsize=1)
 def load_default_video_model_profile() -> VideoModelProfile:
-    project_root = Path(__file__).resolve().parents[3]
+    project_root = AppConfig().root_dir
     return VideoModelProfileRepository(
         project_root / "profiles" / "video" / "minimax-h3-local.v1.json",
         workflow_root=project_root / "workflows" / "video" / "minimax-h3",

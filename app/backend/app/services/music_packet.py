@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
 
+from app.core.config import AppConfig
 from app.schemas.music import MusicRequest, contains_secret_key
 from app.schemas.provider_capabilities import ProviderCapabilityDescriptor
 from app.services.music_runtime_adapters import MusicAdapterError, MusicRuntimeAdapter
@@ -18,7 +19,6 @@ from app.services.music_runtime_adapters import MusicAdapterError, MusicRuntimeA
 
 MUSIC_MAPPING_SCHEMA_VERSION = "asteria.music.mapping.v1"
 MUSIC_PACKET_VERSION = "asteria.music.submission.v1"
-_ROOT = Path(__file__).resolve().parents[3] / "mappings" / "music"
 _MAPPING_IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$")
 
 
@@ -120,7 +120,11 @@ class MusicMapping(BaseModel):
 
 class MusicMappingRepository:
     def __init__(self, root: Path | None = None) -> None:
-        self.root = Path(root) if root is not None else _ROOT
+        self.root = (
+            Path(root)
+            if root is not None
+            else AppConfig().mapping_dir / "music"
+        )
 
     def load(self, mapping_id: str) -> MusicMapping:
         if not mapping_id or any(char not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-" for char in mapping_id):

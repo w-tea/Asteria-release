@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Callable, Literal
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -119,12 +118,12 @@ def configure_music_operation_coordinator(
             history=active_history,
             local_adapter=LocalMusic3ExecutionAdapter(
                 client=ComfyClient(active_config.comfy_base_url),
-                workflow_root=Path(__file__).resolve().parents[3]
+                workflow_root=active_config.root_dir
                 / "workflows"
                 / "music"
                 / "minimax-music3",
                 output_root=lambda: resolve_current_output_root(active_config.data_dir),
-                model_profile_path=Path(__file__).resolve().parents[3]
+                model_profile_path=active_config.root_dir
                 / "profiles"
                 / "music"
                 / "minimax-music3-local.v1.json",

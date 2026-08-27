@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
 
+from app.core.config import AppConfig
 from app.schemas.provider_capabilities import ProviderCapabilityDescriptor
 from app.schemas.video import VideoRequest, contains_secret_key, is_secret_field_name
 from app.services.video_runtime_adapters import VideoAdapterError, VideoRuntimeAdapter
@@ -18,7 +19,6 @@ from app.services.video_sequence_context import VideoSequenceContextReceipt
 
 VIDEO_MAPPING_SCHEMA_VERSION = "asteria.video.mapping.v1"
 VIDEO_PACKET_VERSION = "asteria.video.submission.v1"
-_DEFAULT_MAPPING_ROOT = Path(__file__).resolve().parents[3] / "mappings" / "video"
 
 
 class VideoPacketError(ValueError):
@@ -93,7 +93,11 @@ class VideoMapping(BaseModel):
 
 class VideoMappingRepository:
     def __init__(self, root: Path | None = None) -> None:
-        self.root = Path(root) if root is not None else _DEFAULT_MAPPING_ROOT
+        self.root = (
+            Path(root)
+            if root is not None
+            else AppConfig().mapping_dir / "video"
+        )
 
     def load(self, mapping_id: str) -> VideoMapping:
         if not mapping_id or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-" for character in mapping_id):

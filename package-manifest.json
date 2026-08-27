@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "8553cc6b21dbcfac696e0ad55f1d67544743a185",
-  "build_timestamp_utc": "2026-08-27T10:53:46Z",
+  "source_commit": "e3342ca13868e440e88ca7fa0f80bff6ad9d6487",
+  "build_timestamp_utc": "2026-08-27T11:13:55Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -128,8 +128,8 @@
     },
     {
       "path": "app/backend/app/api/music.py",
-      "size_bytes": 12717,
-      "sha256": "1f290e33f0283d372aba2c7cac0d8a0c41b4f4b0097043926ce2451e152bc794"
+      "size_bytes": 12660,
+      "sha256": "98c4ed00715b2466945e313844c6ed0fc21ee9ba2be73fcd9e368ef27cdbc845"
     },
     {
       "path": "app/backend/app/api/music_setup.py",
@@ -193,13 +193,13 @@
     },
     {
       "path": "app/backend/app/api/video.py",
-      "size_bytes": 16818,
-      "sha256": "021094faddc9fcc8185658274c66e4073b29e0b7fc05ddb49fe1473a995fd0e1"
+      "size_bytes": 16801,
+      "sha256": "b513a072caf1c43c4fe6a9fd33bd6edfb1e5b1a14ccdba4b25a9ee7d6304a64d"
     },
     {
       "path": "app/backend/app/api/video_sequences.py",
-      "size_bytes": 22875,
-      "sha256": "5ed49d46c9f71203bd91b24830165af95781351154c6e0329f8349f4987b5f88"
+      "size_bytes": 22819,
+      "sha256": "d8bc5b90b8fa0e5a8845e0b51e2e74e1b22ff53e31bc1b2a086e24e889bf8470"
     },
     {
       "path": "app/backend/app/api/video_setup.py",
@@ -208,8 +208,8 @@
     },
     {
       "path": "app/backend/app/api/video_upscale.py",
-      "size_bytes": 12650,
-      "sha256": "e4d65087839026f0d5e41461af3b893df4e121fdc8325a27dfc22204e871ab1b"
+      "size_bytes": 12637,
+      "sha256": "ae90e9a3b96ebc88e8d6c5948cc2f4faf3cd9aa32bdf1fa432d39fc1eef8db8b"
     },
     {
       "path": "app/backend/app/api/workflow_mapping.py",
@@ -418,8 +418,8 @@
     },
     {
       "path": "app/backend/app/services/anima_lora_remap.py",
-      "size_bytes": 21130,
-      "sha256": "123824694176ade720402f88b8d00bd29a927eb2fc1f9fb9469648ce269a0826"
+      "size_bytes": 21119,
+      "sha256": "64be1b7fb41b24daa22a01881b444fe8bb94e1121b77ee79e6ab4cd1c3d339d7"
     },
     {
       "path": "app/backend/app/services/anima_model_classifier.py",
@@ -733,8 +733,8 @@
     },
     {
       "path": "app/backend/app/services/merge_presets.py",
-      "size_bytes": 14965,
-      "sha256": "12ecc41533c6d82a86ec2db59fbd4f1703b9310fd42112fe21e731b6548a3be6"
+      "size_bytes": 14976,
+      "sha256": "631c4b66aba26fcdb393bf02718196e93ed96cee4ef68cf0f4df9d62e166cd66"
     },
     {
       "path": "app/backend/app/services/merge_recipes.py",
@@ -833,8 +833,8 @@
     },
     {
       "path": "app/backend/app/services/music_packet.py",
-      "size_bytes": 13350,
-      "sha256": "f7604609a264cb5337b57101b685b50854d2aff4490c31cedd385c9dd8898244"
+      "size_bytes": 13389,
+      "sha256": "e5812455c5da3618aad6a8628be06d734080bccda661e90b3cfc37892f5e9a94"
     },
     {
       "path": "app/backend/app/services/music_runtime_adapters.py",
@@ -1068,8 +1068,8 @@
     },
     {
       "path": "app/backend/app/services/video_model_profiles.py",
-      "size_bytes": 10151,
-      "sha256": "bfce3ff34f8bfec25aca45fe6f1b9b59809c7a2563c9f6dddd18e2335f08cb62"
+      "size_bytes": 10171,
+      "sha256": "342c15cc430a71af8a82d369db55688f62c09019ace73d5545fc1683950035bb"
     },
     {
       "path": "app/backend/app/services/video_model_resolver.py",
@@ -1078,8 +1078,8 @@
     },
     {
       "path": "app/backend/app/services/video_packet.py",
-      "size_bytes": 19327,
-      "sha256": "fdc55bd9a43f6f865264c1cfe053732b42d9881d0d5a7e9640beb24111d709c8"
+      "size_bytes": 19335,
+      "sha256": "bca88a7949b73a116c7c60a9423ebe715edfcb050c65bef6dd20ac31a17956f0"
     },
     {
       "path": "app/backend/app/services/video_runtime_adapters.py",
@@ -2785,6 +2785,56 @@
       "path": "wildcards/color.txt",
       "size_bytes": 15,
       "sha256": "c0d816ab9e5168e8a44b960b4d8727dba3832b594111f034b9a9f777665a1540"
+    },
+    {
+      "path": "workflows/music/minimax-music3/local.json",
+      "size_bytes": 2720,
+      "sha256": "09231ed462a55ca2feb84024c6c93de6ae2b93c9d2c81e88e61d9939f60ea66a"
+    },
+    {
+      "path": "workflows/video/minimax-h3/README.md",
+      "size_bytes": 1251,
+      "sha256": "b9c883f4db52dba6cf3c9ac5db8909b6403ed9734ffd832e7eaf3d11077bc0c5"
+    },
+    {
+      "path": "workflows/video/minimax-h3/first-last-frame.json",
+      "size_bytes": 4123,
+      "sha256": "d582779b9b81f9eed0eae1c757d968e771f64239807526103782c0aba71a4c73"
+    },
+    {
+      "path": "workflows/video/minimax-h3/image-to-video.json",
+      "size_bytes": 3950,
+      "sha256": "07f6878d7f8c0096f3dbab8ddd875ff2edee50d32d6cafc00c603ab1944a3a1e"
+    },
+    {
+      "path": "workflows/video/minimax-h3/reference-video-edit.json",
+      "size_bytes": 5191,
+      "sha256": "55d0b561feb82a8c1c795557d0dd2ebd4f12df91e155ded5d5e506a227bbef63"
+    },
+    {
+      "path": "workflows/video/minimax-h3/sequence-initial.json",
+      "size_bytes": 3797,
+      "sha256": "26ef03bfcf562c4c18263f8cb3cf3da645eb2f5c02811ae150e2d0695178b569"
+    },
+    {
+      "path": "workflows/video/minimax-h3/sequence-latent-assembly.json",
+      "size_bytes": 1322,
+      "sha256": "1d62a778817523fc0cf38177852569bca9d067f29c2a9c2a1c4965cc71de219b"
+    },
+    {
+      "path": "workflows/video/minimax-h3/sequence-motion-context.json",
+      "size_bytes": 5052,
+      "sha256": "d70d9d5d59eab0744b7ac069d8b369a39964c065396bcebf2b9ddaa0cea50c15"
+    },
+    {
+      "path": "workflows/video/minimax-h3/sequence-reference-continuation.json",
+      "size_bytes": 3791,
+      "sha256": "6c5d3d23cfc33360fe8c8abb86a98a197d38a2231d68ec50801792f2385e792a"
+    },
+    {
+      "path": "workflows/video/minimax-h3/text-to-video.json",
+      "size_bytes": 3777,
+      "sha256": "40a549918d8f584ffce2238b2ffc7838255d5f8b23e69ed0359a2f63f13ccf6a"
     }
   ]
 }
