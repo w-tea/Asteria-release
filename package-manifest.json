@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "687462b26145da19a8586dfdc15b1cbadbe2fafd",
-  "build_timestamp_utc": "2026-08-27T12:12:46Z",
+  "source_commit": "2fe2d0794ecb6dd15bbc58fdab92732970c2903c",
+  "build_timestamp_utc": "2026-08-27T12:47:58Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 47454,
-      "sha256": "ebe73b11c67b2dda25a323571d77df5ebcca8c0163d4f31dcafa5e1c16b71b7a"
+      "size_bytes": 47414,
+      "sha256": "beb5d8b52ce2074651c2607e72acb010f250bacc44a6fb9ffe555cbc8f3a4f7e"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -1179,12 +1179,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "ef738dde07224b4338700fc50d9deb64c3935c32cba1c5e2358ab9c4987bc337"
+      "sha256": "0877f752f05b1111bd859c7d1b8b2399312fcc6d793f7aa76f74d1c8ba13d063"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/bc74aff2-0410-47d2-960e-2780287fb6d7.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/a6edc500-b026-49d7-94fd-5707f287a8a1.json",
       "size_bytes": 88,
-      "sha256": "e8410a1f9970bb0af8913c77277b059998e620d48636c544e833bb1663546b38"
+      "sha256": "572fbb24a96904f48acfccdb9a7e888c768f57970c86e81e43ad49bfaf1174ac"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.rFaJqONq.css",
@@ -1229,7 +1229,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "651cd6d38ba310da2ce7fc4b0bf5f9eacb808b260695ec199a45fc967d63e13a"
+      "sha256": "89d7053d2dcd3a4c35fd66c2106e294cef5af39ab728318819ead66860844d96"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.NLK6jfRQ.mjs",
@@ -1919,7 +1919,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 17958,
-      "sha256": "9b3ed7a2eb8dc63ebbb68f84a6fd1e10f50a659316812e9e354fbad9441f946e"
+      "sha256": "674a1b57641246da75cb3b17fdee796642e003d4deb796436d88d4c169f59d61"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -2455,6 +2455,36 @@
       "path": "defaults/prompt-presets/presets.json",
       "size_bytes": 4,
       "sha256": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f"
+    },
+    {
+      "path": "guides/EXTENSIONS.md",
+      "size_bytes": 5453,
+      "sha256": "cf2fcdcdc6229c2af1088de1158189e455f2d1e06b93d77e4bc2efa69427178e"
+    },
+    {
+      "path": "guides/MEDIA_LIBRARY.md",
+      "size_bytes": 3509,
+      "sha256": "6a04962b469677a5925312479711a8d51160a599bc73141719b1e9af52152dd8"
+    },
+    {
+      "path": "guides/MUSIC_STUDIO.md",
+      "size_bytes": 3450,
+      "sha256": "9e814ea48cb2482f111007faf51a35e1fe775cb05c92fe7a63853370b09f18b9"
+    },
+    {
+      "path": "guides/VIDEO_STUDIO.md",
+      "size_bytes": 5212,
+      "sha256": "7e1cc7a23a14655c8fd7afb4b8a3224d9b089467505551a5fde243fd808c468e"
+    },
+    {
+      "path": "guides/extensions/DEVELOPER_GUIDE.ja.md",
+      "size_bytes": 18099,
+      "sha256": "abaa72d79b27ef4df1afab630c1d14487c063d348a3e751a22adf77519cfa651"
+    },
+    {
+      "path": "guides/extensions/DEVELOPER_GUIDE.md",
+      "size_bytes": 14020,
+      "sha256": "f879cd2614b2aa40072df5616cbb4306fa3b0ab65f98d76821b43856585a8262"
     },
     {
       "path": "mappings/anima/lora-block-remap.v1.json",

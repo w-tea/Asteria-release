@@ -51,7 +51,7 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - 旧28ブロックAnima向けLoRAは、Anima 2.9Bで使えるように再配置できます。Anima 3.8Bでは結果をまだ確認できないため、自動変換しません。
 - AnimaではQwen2D-Anime VAEも選べます。必要な読み込み機能はAsteriaに含まれるため、別の拡張機能を追加する必要はありません。
 - Merge StudioではMoment Weave、Log Weave、Dual Residualを、Weight sumでモデルを組み合わせる際の計算方法として選べます。MBWの部位別設定やMerge XYZの比較にも使えます。
-- 詳しい操作方法は[Extensions](docs/guides/EXTENSIONS.md)、[Video Studio](docs/guides/VIDEO_STUDIO.md)、[Music Studio](docs/guides/MUSIC_STUDIO.md)、[Media Library](docs/guides/MEDIA_LIBRARY.md)を参照してください。
+- 詳しい操作方法は[Extensions](guides/EXTENSIONS.md)、[Video Studio](guides/VIDEO_STUDIO.md)、[Music Studio](guides/MUSIC_STUDIO.md)、[Media Library](guides/MEDIA_LIBRARY.md)を参照してください。
 
 #### V1.1.1
 
@@ -286,7 +286,7 @@ Asteria is a Windows application for local AI creation. It combines image genera
 - Legacy 28-block Anima LoRAs can be remapped for use with Anima 2.9B. Asteria does not automatically convert them for Anima 3.8B because the result has not yet been confirmed.
 - Added Qwen2D-Anime VAE support for Anima without requiring a separate extension.
 - Added the Asteria-native Moment Weave, Log Weave, and Dual Residual Calculation Modes for Weight sum, MBW, and Merge XYZ.
-- See the guides for [Extensions](docs/guides/EXTENSIONS.md), [Video Studio](docs/guides/VIDEO_STUDIO.md), [Music Studio](docs/guides/MUSIC_STUDIO.md), and [Media Library](docs/guides/MEDIA_LIBRARY.md).
+- See the guides for [Extensions](guides/EXTENSIONS.md), [Video Studio](guides/VIDEO_STUDIO.md), [Music Studio](guides/MUSIC_STUDIO.md), and [Media Library](guides/MEDIA_LIBRARY.md).
 
 #### V1.1.1
 
