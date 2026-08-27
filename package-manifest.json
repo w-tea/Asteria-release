@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "2fe2d0794ecb6dd15bbc58fdab92732970c2903c",
-  "build_timestamp_utc": "2026-08-27T12:47:58Z",
+  "source_commit": "81800014bc8788bf55c270393345b918625886ec",
+  "build_timestamp_utc": "2026-08-27T13:02:15Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -1179,12 +1179,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "0877f752f05b1111bd859c7d1b8b2399312fcc6d793f7aa76f74d1c8ba13d063"
+      "sha256": "d21d74ca0fadc07000cca8d025396c20863fecd1ea7c24adcf07190ed2d7cf49"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/a6edc500-b026-49d7-94fd-5707f287a8a1.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/85bc4941-2d50-4986-a4e4-d43219ef5c43.json",
       "size_bytes": 88,
-      "sha256": "572fbb24a96904f48acfccdb9a7e888c768f57970c86e81e43ad49bfaf1174ac"
+      "sha256": "6aee3251ef3255771aac7a15117692cdfe5e1ba6a01e547e2a387ab879e8c761"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.rFaJqONq.css",
@@ -1229,7 +1229,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "89d7053d2dcd3a4c35fd66c2106e294cef5af39ab728318819ead66860844d96"
+      "sha256": "ecc62a329ed783d9d32a49d300190a1f14d24e36b6576804fc9b4927d7c54546"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.NLK6jfRQ.mjs",
@@ -1919,7 +1919,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 17958,
-      "sha256": "674a1b57641246da75cb3b17fdee796642e003d4deb796436d88d4c169f59d61"
+      "sha256": "48ab2cace1c5acc7a4417fe12323c3ab9deb43e570c812a9a7006d0207e7b245"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
