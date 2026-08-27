@@ -326,6 +326,20 @@ function Get-AsteriaRuntimeMonitorPreference {
     return [bool](Get-AsteriaLauncherPreferences -SettingsPath $SettingsPath).RuntimeMonitorOnStart
 }
 
+function ConvertTo-AsteriaRuntimeMonitorLine {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Line
+    )
+
+    if ($Line -match '^\[ERROR\]\s+\[Inspire Pack\]\s+IPAdapterPlus is not installed\.\s*$') {
+        return "[INFO] [Asteria] Inspire Pack's optional IPAdapter integration is not installed. Asteria does not use this feature."
+    }
+    return $Line
+}
+
 function Get-AsteriaOwnedProcessState {
     [CmdletBinding()]
     param([Parameter(Mandatory = $true)]$Record)
@@ -453,4 +467,4 @@ function Read-AsteriaLauncherState {
     catch { throw "The launcher ownership state is invalid." }
 }
 
-Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Write-AsteriaExtraModelPaths, Start-AsteriaOwnedProcess, Get-AsteriaLauncherPreferences, Get-AsteriaRuntimeMonitorPreference, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState
+Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Write-AsteriaExtraModelPaths, Start-AsteriaOwnedProcess, Get-AsteriaLauncherPreferences, Get-AsteriaRuntimeMonitorPreference, ConvertTo-AsteriaRuntimeMonitorLine, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState
