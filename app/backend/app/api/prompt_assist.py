@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from app.schemas.prompt_input import PromptInput, PromptSectionId
 
 from app.services.prompt_assist import (
     PromptAssistConnectionProviderMode,
@@ -17,6 +19,7 @@ from app.services.prompt_assist import (
     build_prompt_assist,
     list_prompt_assist_provider_models,
     test_prompt_assist_provider,
+    validate_prompt_assist_section_contract,
 )
 from app.services.prompt_assist_presets import PromptAssistPurposePreset
 
@@ -26,6 +29,9 @@ router = APIRouter(prefix="/api/prompt-assist", tags=["prompt-assist"])
 
 class PromptAssistRequest(BaseModel):
     prompt: str = ""
+    prompt_input: PromptInput | None = None
+    active_section_id: PromptSectionId | None = None
+    active_section_text: str | None = None
     negative_prompt: str = ""
     profile: str = "sdxl"
     mode: str = "txt2img"
@@ -44,6 +50,17 @@ class PromptAssistRequest(BaseModel):
     provider_api_key: str = ""
     provider_api_key_env_var: str = ""
     provider_timeout_seconds: float = Field(default=60.0, ge=1.0, le=300.0)
+
+    @model_validator(mode="after")
+    def validate_prompt_sections(self) -> "PromptAssistRequest":
+        validate_prompt_assist_section_contract(
+            prompt=self.prompt,
+            prompt_input=self.prompt_input,
+            target=self.target,
+            active_section_id=self.active_section_id,
+            active_section_text=self.active_section_text,
+        )
+        return self
 
 
 class PromptAssistProviderTestRequest(BaseModel):

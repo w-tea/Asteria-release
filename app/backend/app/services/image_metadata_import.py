@@ -21,6 +21,7 @@ from app.schemas.image_metadata import (
     RefinerCheckpointReference,
     ResourceReference,
 )
+from app.schemas.prompt_input import PromptInput
 from app.services.image_metadata_text import (
     first_generation_parameters_text,
     metadata_value_to_text,
@@ -28,6 +29,7 @@ from app.services.image_metadata_text import (
 )
 from app.services.metadata import parse_generation_parameters_text
 from app.services.model_library import ModelLibrary, ModelLibraryItem
+from app.services.prompt_input import PromptInputWarningCode, recover_saved_prompt_input
 
 
 MAX_SIDECAR_BYTES = 4 * 1024 * 1024
@@ -96,6 +98,15 @@ def build_image_metadata_preview(
             unsupported.append("comfy_graph_unrecognized")
 
     merged = _merge_sources(sources)
+    positive_selection = _select_positive_prompt_state(sources)
+    if positive_selection is None:
+        merged.pop("prompt", None)
+        prompt_input = None
+    else:
+        selected_prompt, prompt_input, prompt_warning = positive_selection
+        merged["prompt"] = selected_prompt
+        if prompt_warning:
+            warnings.append(prompt_warning)
     settings, setting_warnings = _compatible_settings(merged)
     warnings.extend(setting_warnings)
     resources = resolve_resource_references(
@@ -130,6 +141,7 @@ def build_image_metadata_preview(
         source_family=family,
         status=status,
         positive_prompt=positive,
+        prompt_input=prompt_input,
         negative_prompt=negative,
         settings=settings,
         seed=seed,
@@ -288,6 +300,20 @@ def _merge_sources(sources: list[tuple[str, dict[str, Any]]]) -> dict[str, Any]:
             if key not in merged:
                 merged[key] = value
     return merged
+
+
+def _select_positive_prompt_state(
+    sources: list[tuple[str, dict[str, Any]]],
+) -> tuple[str, PromptInput | None, PromptInputWarningCode | None] | None:
+    for _family, payload in sources:
+        prompt = payload.get("prompt")
+        if not isinstance(prompt, str):
+            continue
+        settings = payload.get("settings")
+        raw_prompt_input = settings.get("prompt_input") if isinstance(settings, dict) else None
+        recovery = recover_saved_prompt_input(prompt, raw_prompt_input)
+        return prompt, recovery.prompt_input, recovery.warning_code
+    return None
 
 
 def _compatible_settings(payload: dict[str, Any]) -> tuple[CompatibleTxt2ImgSettings, list[str]]:

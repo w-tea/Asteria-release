@@ -1607,6 +1607,9 @@ const messages = {
   "imageMetadata.unsupportedHelp": { en: "You can still use the image as an img2img input.", ja: "画像はimg2imgの入力画像として使用できます。" },
   "imageMetadata.prompts": { en: "Prompts", ja: "プロンプト" },
   "imageMetadata.promptsHelp": { en: "Missing prompts keep the current text unchanged.", ja: "見つからないプロンプトは現在の内容を変更しません。" },
+  "imageMetadata.promptSectionsAvailable": { en: "Sectioned prompt data is available and will be restored with the prompt.", ja: "項目別の入力情報も再利用できます。" },
+  "imageMetadata.promptSectionsInvalid": { en: "The sectioned prompt data could not be read. The full prompt will be restored to the single prompt field.", ja: "項目別の入力情報を読み込めませんでした。プロンプト全文を「まとめて入力」へ戻します。" },
+  "imageMetadata.promptSectionsMismatch": { en: "The sectioned prompt data does not match the full prompt. The full prompt will be restored to the single prompt field.", ja: "項目別の入力情報と全文が一致しませんでした。プロンプト全文を「まとめて入力」へ戻します。" },
   "imageMetadata.positivePrompt": { en: "Positive prompt", ja: "プロンプト" },
   "imageMetadata.negativePrompt": { en: "Negative prompt", ja: "ネガティブプロンプト" },
   "imageMetadata.notFound": { en: "Not found", ja: "見つかりません" },
@@ -2798,6 +2801,20 @@ const messages = {
   "prompt.prompt": { en: "Prompt", ja: "プロンプト" },
   "prompt.negative": { en: "Negative Prompt", ja: "ネガティブプロンプト" },
   "prompt.negativeFluxGuidance": { en: "FLUX uses positive descriptions instead of negative prompts.", ja: "FLUXではネガティブプロンプトの代わりに、望む内容をポジティブに記述します。" },
+  "prompt.inputMode.label": { en: "Prompt input", ja: "入力方法" },
+  "prompt.inputMode.single": { en: "Single prompt", ja: "まとめて入力" },
+  "prompt.inputMode.sections": { en: "Prompt sections", ja: "項目別に入力" },
+  "prompt.sections.base": { en: "Base prompt", ja: "ベースプロンプト" },
+  "prompt.sections.character": { en: "Character prompt", ja: "キャラクタープロンプト" },
+  "prompt.sections.detail": { en: "Detail prompt", ja: "詳細プロンプト" },
+  "prompt.sections.moveUp": { en: "Move up", ja: "一つ上へ" },
+  "prompt.sections.moveDown": { en: "Move down", ja: "一つ下へ" },
+  "prompt.sections.combined": { en: "Combined prompt", ja: "結合結果" },
+  "prompt.sections.positionAria": { en: "{label}, {position} of {total}", ja: "{label}、{position} / {total}" },
+  "prompt.sections.movedToBase": { en: "Moved the edited single prompt to the base prompt.", ja: "まとめて編集した内容をベースプロンプトへ移しました。" },
+  "prompt.sections.invalidFallback": { en: "The sectioned prompt data could not be read. The full prompt was restored to the single prompt field.", ja: "項目別の入力情報を読み込めませんでした。プロンプト全文を「まとめて入力」へ戻しました。" },
+  "prompt.sections.mismatchFallback": { en: "The sectioned prompt data did not match the full prompt. The full prompt was restored to the single prompt field.", ja: "項目別の入力情報と全文が一致しませんでした。プロンプト全文を「まとめて入力」へ戻しました。" },
+  "prompt.sections.allEmpty": { en: "The prompt is empty. Enter text in at least one section.", ja: "プロンプトが空です。いずれかの欄へ入力してください。" },
   "prompt.notation.open": { en: "Notation", ja: "記法" },
   "prompt.notation.menuAria": { en: "Prompt notation tools", ja: "プロンプト記法" },
   "prompt.notation.stronger": { en: "Increase weight", ja: "強くする" },
@@ -2882,7 +2899,7 @@ const messages = {
   "prompt.assist.stateEmpty": { en: "Run Prompt Assist to create a result.", ja: "AIプロンプト支援を実行して結果を作成してください。" },
   "prompt.assist.stateLoading": { en: "Creating a new result…", ja: "新しい結果を作成しています…" },
   "prompt.assist.stateCurrent": { en: "Result current", ja: "結果は最新です" },
-  "prompt.assist.stateStale": { en: "Inputs changed — run again before applying.", ja: "入力が変更されました。適用前に再実行してください。" },
+  "prompt.assist.stateStale": { en: "The prompt input or target field changed. Run Prompt Assist again before applying the result.", ja: "入力内容または対象欄が変わりました。反映前にAIプロンプト支援をもう一度実行してください。" },
   "prompt.assist.stateFailed": { en: "Run failed — review the request details and try again.", ja: "実行に失敗しました。リクエスト内容を確認して再実行してください。" },
   "prompt.assist.negativeUnavailable": { en: "Negative prompt unavailable for this result", ja: "この結果ではネガティブプロンプトを利用できません" },
   "prompt.assist.requestContext": { en: "Request context", ja: "リクエスト内容" },
@@ -6387,7 +6404,7 @@ const useAsteriaI18n = () => {
     vocabularyTerm
   };
 };
-const _sfc_main$27 = /* @__PURE__ */ defineComponent({
+const _sfc_main$28 = /* @__PURE__ */ defineComponent({
   __name: "AssetRefreshIndicator",
   __ssrInlineRender: true,
   props: {
@@ -6445,14 +6462,14 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const _sfc_setup$27 = _sfc_main$27.setup;
-_sfc_main$27.setup = (props, ctx) => {
+const _sfc_setup$28 = _sfc_main$28.setup;
+_sfc_main$28.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AssetRefreshIndicator.vue");
-  return _sfc_setup$27 ? _sfc_setup$27(props, ctx) : void 0;
+  return _sfc_setup$28 ? _sfc_setup$28(props, ctx) : void 0;
 };
-const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$27, [["__scopeId", "data-v-413654a5"]]), { __name: "StudioAssetRefreshIndicator" });
-const _sfc_main$26 = /* @__PURE__ */ defineComponent({
+const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$28, [["__scopeId", "data-v-413654a5"]]), { __name: "StudioAssetRefreshIndicator" });
+const _sfc_main$27 = /* @__PURE__ */ defineComponent({
   __name: "GenerateActionStrip",
   __ssrInlineRender: true,
   props: {
@@ -6527,13 +6544,13 @@ const _sfc_main$26 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$26 = _sfc_main$26.setup;
-_sfc_main$26.setup = (props, ctx) => {
+const _sfc_setup$27 = _sfc_main$27.setup;
+_sfc_main$27.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerateActionStrip.vue");
-  return _sfc_setup$26 ? _sfc_setup$26(props, ctx) : void 0;
+  return _sfc_setup$27 ? _sfc_setup$27(props, ctx) : void 0;
 };
-const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$26, [["__scopeId", "data-v-08bbfd23"]]), { __name: "StudioGenerateActionStrip" });
+const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$27, [["__scopeId", "data-v-08bbfd23"]]), { __name: "StudioGenerateActionStrip" });
 const ACTIVE_GENERATION_JOB_STATUSES = /* @__PURE__ */ new Set(["queued", "preparing", "running", "cancelling"]);
 const SUCCESSFUL_GENERATION_JOB_STATUSES = /* @__PURE__ */ new Set(["completed", "completed_with_warnings"]);
 const generationJobIsActive = (status) => ACTIVE_GENERATION_JOB_STATUSES.has(status);
@@ -6658,15 +6675,15 @@ const generationModeFields = (mode, source) => {
   }
   return {};
 };
-const isRecord = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+const isRecord$1 = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 const isArtifact = (value) => {
-  if (!isRecord(value)) {
+  if (!isRecord$1(value)) {
     return false;
   }
   return typeof value.path === "string" && typeof value.filename === "string" && typeof value.size_bytes === "number" && typeof value.sha256 === "string" && /^[0-9a-f]{64}$/.test(value.sha256) && typeof value.width === "number" && typeof value.height === "number";
 };
 const restoreImageEditLineage = (value) => {
-  if (!isRecord(value) || value.version !== 1 || !isArtifact(value.root) || !isArtifact(value.current) || !Array.isArray(value.operations)) {
+  if (!isRecord$1(value) || value.version !== 1 || !isArtifact(value.root) || !isArtifact(value.current) || !Array.isArray(value.operations)) {
     return null;
   }
   const operations = value.operations;
@@ -6675,13 +6692,13 @@ const restoreImageEditLineage = (value) => {
   }
   let previous = value.root;
   for (const candidate of operations) {
-    if (!isRecord(candidate) || candidate.type !== "crop" || !isArtifact(candidate.source) || !isArtifact(candidate.output)) {
+    if (!isRecord$1(candidate) || candidate.type !== "crop" || !isArtifact(candidate.source) || !isArtifact(candidate.output)) {
       return null;
     }
     if (candidate.source.path !== previous.path || candidate.source.sha256 !== previous.sha256) {
       return null;
     }
-    if (!isRecord(candidate.rect_pixels) || !isRecord(candidate.rect_percent)) {
+    if (!isRecord$1(candidate.rect_pixels) || !isRecord$1(candidate.rect_percent)) {
       return null;
     }
     previous = candidate.output;
@@ -6690,6 +6707,186 @@ const restoreImageEditLineage = (value) => {
     return null;
   }
   return value;
+};
+const PROMPT_INPUT_SCHEMA_VERSION = "asteria.prompt-input.v1";
+const PROMPT_EDGE_CHARACTERS = /^[ \t\n]+|[ \t\n]+$/g;
+const PROMPT_SECTION_IDS = ["base", "character", "detail"];
+const PROMPT_SECTION_ORDERS = [0, 1, 2];
+const DEFAULT_PROMPT_SECTION_LABELS = {
+  base: "ベースプロンプト",
+  character: "キャラクタープロンプト",
+  detail: "詳細プロンプト"
+};
+const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
+const isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
+const hasOnlyKeys = (value, allowed) => Object.keys(value).every((key) => allowed.includes(key));
+const isPromptSectionId = (value) => typeof value === "string" && PROMPT_SECTION_IDS.includes(value);
+const isStrictPromptSectionOrder = (value) => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 2;
+const clonePromptSections = (sections) => sections.map((section) => ({ ...section }));
+const cloneTransition = (transition) => transition ? {
+  sections: clonePromptSections(transition.sections),
+  sourceCombinedPrompt: transition.sourceCombinedPrompt,
+  revision: transition.revision
+} : null;
+const cloneEditorState = (state) => ({
+  mode: state.mode,
+  prompt: state.prompt,
+  sections: clonePromptSections(state.sections),
+  transition: cloneTransition(state.transition),
+  transitionRevision: state.transitionRevision,
+  notice: state.notice
+});
+const labelLength = (value) => Array.from(value).length;
+const parsePromptSection = (value) => {
+  if (!isRecord(value) || !hasOnlyKeys(value, ["id", "label", "text", "order"])) {
+    return null;
+  }
+  if (!hasOwn(value, "id") || !isPromptSectionId(value.id)) {
+    return null;
+  }
+  if (!hasOwn(value, "label") || typeof value.label !== "string") {
+    return null;
+  }
+  if (hasOwn(value, "text") && typeof value.text !== "string") {
+    return null;
+  }
+  if (!hasOwn(value, "order") || !isStrictPromptSectionOrder(value.order)) {
+    return null;
+  }
+  const label = normalizePromptSectionText(value.label);
+  if (labelLength(label) < 1 || labelLength(label) > 40) {
+    return null;
+  }
+  return {
+    id: value.id,
+    label,
+    text: hasOwn(value, "text") ? value.text : "",
+    order: value.order
+  };
+};
+const parsePromptInput = (value) => {
+  if (!isRecord(value) || !hasOnlyKeys(value, ["schema_version", "mode", "sections"])) {
+    return null;
+  }
+  if (!hasOwn(value, "schema_version") || value.schema_version !== PROMPT_INPUT_SCHEMA_VERSION) {
+    return null;
+  }
+  if (!hasOwn(value, "mode") || value.mode !== "single" && value.mode !== "sections") {
+    return null;
+  }
+  if (value.mode === "single") {
+    return value.sections === void 0 || value.sections === null ? { mode: "single" } : null;
+  }
+  if (!Array.isArray(value.sections) || value.sections.length !== 3) {
+    return null;
+  }
+  const sections = value.sections.map(parsePromptSection);
+  if (sections.some((section) => section === null)) {
+    return null;
+  }
+  const parsedSections = sections;
+  const ids = new Set(parsedSections.map((section) => section.id));
+  const orders = new Set(parsedSections.map((section) => section.order));
+  if (ids.size !== 3 || PROMPT_SECTION_IDS.some((id) => !ids.has(id))) {
+    return null;
+  }
+  if (orders.size !== 3 || !PROMPT_SECTION_ORDERS.every((order) => orders.has(order))) {
+    return null;
+  }
+  if (!parsedSections.some((section) => normalizePromptSectionText(section.text))) {
+    return null;
+  }
+  return { mode: "sections", sections: clonePromptSections(parsedSections) };
+};
+const normalizePromptSectionText = (value) => value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(PROMPT_EDGE_CHARACTERS, "");
+const combinePromptSections = (sections) => [...sections].sort((left, right) => left.order - right.order).map((section) => normalizePromptSectionText(section.text)).filter(Boolean).join("\n");
+const createDefaultPromptSections = (prompt, labels = {}) => [
+  { id: "base", label: labels.base ?? DEFAULT_PROMPT_SECTION_LABELS.base, text: prompt, order: 0 },
+  { id: "character", label: labels.character ?? DEFAULT_PROMPT_SECTION_LABELS.character, text: "", order: 1 },
+  { id: "detail", label: labels.detail ?? DEFAULT_PROMPT_SECTION_LABELS.detail, text: "", order: 2 }
+];
+const enterSingleMode = (state) => {
+  if (state.mode === "single") {
+    return cloneEditorState(state);
+  }
+  const sections = clonePromptSections(state.sections);
+  const prompt = combinePromptSections(sections);
+  const revision = state.transitionRevision + 1;
+  return {
+    mode: "single",
+    prompt,
+    sections: clonePromptSections(sections),
+    transition: {
+      sections: clonePromptSections(sections),
+      sourceCombinedPrompt: prompt,
+      revision
+    },
+    transitionRevision: revision,
+    notice: ""
+  };
+};
+const enterSectionsMode = (state) => {
+  if (state.mode === "sections") {
+    return cloneEditorState(state);
+  }
+  const revision = state.transitionRevision + 1;
+  const transition = state.transition;
+  const hasUnchangedTransition = Boolean(
+    transition && transition.revision === state.transitionRevision && transition.sourceCombinedPrompt === state.prompt
+  );
+  if (hasUnchangedTransition && transition) {
+    const sections = clonePromptSections(transition.sections);
+    return {
+      mode: "sections",
+      prompt: combinePromptSections(sections),
+      sections,
+      transition: null,
+      transitionRevision: revision,
+      notice: ""
+    };
+  }
+  const textChangedSinceTransition = Boolean(
+    transition && transition.sourceCombinedPrompt !== state.prompt
+  );
+  return {
+    mode: "sections",
+    prompt: state.prompt,
+    sections: createDefaultPromptSections(state.prompt),
+    transition: null,
+    transitionRevision: revision,
+    notice: textChangedSinceTransition ? "prompt_sections_single_edit_moved_to_base" : ""
+  };
+};
+const restorePromptInputState = (prompt, rawPromptInput, transitionRevision = 0) => {
+  const fallback = (notice) => ({
+    mode: "single",
+    prompt,
+    sections: createDefaultPromptSections(prompt),
+    transition: null,
+    transitionRevision,
+    notice
+  });
+  if (rawPromptInput === void 0 || rawPromptInput === null) {
+    return fallback("");
+  }
+  const promptInput = parsePromptInput(rawPromptInput);
+  if (!promptInput) {
+    return fallback("prompt_input_invalid_fallback");
+  }
+  if (promptInput.mode === "single") {
+    return fallback("");
+  }
+  if (combinePromptSections(promptInput.sections) !== prompt) {
+    return fallback("prompt_input_mismatch_fallback");
+  }
+  return {
+    mode: "sections",
+    prompt,
+    sections: clonePromptSections(promptInput.sections),
+    transition: null,
+    transitionRevision,
+    notice: ""
+  };
 };
 const compatibleSettingBindings = {
   profile: "profile",
@@ -6733,10 +6930,65 @@ const compatibleSettingBindings = {
   topaz_png_compression: "topazPngCompression"
 };
 const cloneValue$2 = (value) => structuredClone(value);
-const applyImportedPrompts = (current, preview) => ({
-  prompt: preview.positive_prompt.presence === "present" ? preview.positive_prompt.value : current.prompt,
-  negativePrompt: preview.negative_prompt.presence === "present" ? preview.negative_prompt.value : current.negativePrompt
-});
+const clonePromptTransition = (transition) => transition ? {
+  ...transition,
+  sections: transition.sections.map((section) => ({ ...section }))
+} : null;
+const applyImportedPromptState = (current, preview) => {
+  const negativePrompt = preview.negative_prompt.presence === "present" ? preview.negative_prompt.value : current.negativePrompt;
+  if (preview.positive_prompt.presence === "absent") {
+    return {
+      ...current,
+      negativePrompt,
+      promptSections: current.promptSections.map((section) => ({ ...section })),
+      promptTransition: clonePromptTransition(current.promptTransition)
+    };
+  }
+  const restored = restorePromptInputState(
+    preview.positive_prompt.value,
+    preview.prompt_input,
+    current.promptTransitionRevision + 1
+  );
+  if (!restored.notice) {
+    const serverNotice = preview.warning_codes.find((code) => code === "prompt_input_invalid_fallback" || code === "prompt_input_mismatch_fallback");
+    if (serverNotice) restored.notice = serverNotice;
+  }
+  return {
+    prompt: restored.prompt,
+    negativePrompt,
+    promptInputMode: restored.mode,
+    promptSections: restored.sections.map((section) => ({ ...section })),
+    promptTransition: clonePromptTransition(restored.transition),
+    promptTransitionRevision: restored.transitionRevision,
+    promptInputNotice: restored.notice,
+    activePromptSectionId: "base"
+  };
+};
+const currentImportedPromptState = (current) => {
+  const transitionRevision = current.promptTransitionRevision ?? 0;
+  if (current.promptInputMode && Array.isArray(current.promptSections)) {
+    return {
+      prompt: current.prompt,
+      negativePrompt: current.negativePrompt,
+      promptInputMode: current.promptInputMode,
+      promptSections: current.promptSections.map((section) => ({ ...section })),
+      promptTransition: clonePromptTransition(current.promptTransition ?? null),
+      promptTransitionRevision: transitionRevision,
+      promptInputNotice: current.promptInputNotice ?? "",
+      activePromptSectionId: current.activePromptSectionId ?? "base"
+    };
+  }
+  return {
+    prompt: current.prompt,
+    negativePrompt: current.negativePrompt,
+    promptInputMode: "single",
+    promptSections: createDefaultPromptSections(current.prompt),
+    promptTransition: null,
+    promptTransitionRevision: transitionRevision,
+    promptInputNotice: "",
+    activePromptSectionId: "base"
+  };
+};
 const projectCompatibleTxt2ImgSettings = (settings) => {
   const projection = {};
   for (const [sourceKey, stateKey] of Object.entries(compatibleSettingBindings)) {
@@ -6749,7 +7001,7 @@ const projectCompatibleTxt2ImgSettings = (settings) => {
 };
 const buildImportedGenerationPlan = (current, preview) => {
   const compatibleSettings = projectCompatibleTxt2ImgSettings(preview.settings);
-  const prompts = applyImportedPrompts(current, preview);
+  const promptState = applyImportedPromptState(currentImportedPromptState(current), preview);
   const profile = typeof compatibleSettings.profile === "string" ? compatibleSettings.profile : current.profile || "";
   const modelSlots = {};
   const loras = [];
@@ -6791,11 +7043,11 @@ const buildImportedGenerationPlan = (current, preview) => {
     advancedStyleIds: advancedStyles.map((style) => style.id),
     generation: {
       ...compatibleSettings,
-      ...prompts,
+      ...promptState,
       ...refinerCheckpoint ? { refinerCheckpoint } : {},
       ...hiresCheckpoint ? { hiresCheckpoint } : {},
       loras: orderedLoras,
-      seed: current.seed,
+      seed: current.seed ?? -1,
       mode: "txt2img",
       initImagePath: "",
       maskImagePath: "",
@@ -8283,7 +8535,6 @@ const controlNetModelSearchTerms = (preprocessor) => {
 const isImageOutput = (path) => /\.(png|jpe?g|webp)$/i.test(path);
 const firstImageOutput = (paths) => paths.find(isImageOutput) ?? "";
 const defaultBindings = {
-  prompt: "prompt",
   negative_prompt: "negativePrompt",
   steps: "steps",
   cfg_scale: "cfgScale",
@@ -8464,6 +8715,12 @@ const useGenerationStore = defineStore("generation", {
     mode: "txt2img",
     profile: "sdxl",
     prompt: "",
+    promptInputMode: "single",
+    promptSections: createDefaultPromptSections(""),
+    activePromptSectionId: "base",
+    promptTransition: null,
+    promptTransitionRevision: 0,
+    promptInputNotice: "",
     negativePrompt: "",
     initImagePath: "",
     imageEditLineage: null,
@@ -8559,6 +8816,102 @@ const useGenerationStore = defineStore("generation", {
     remasterError: ""
   }),
   actions: {
+    promptEditorState() {
+      return {
+        mode: this.promptInputMode,
+        prompt: this.prompt,
+        sections: this.promptSections.map((section) => ({ ...section })),
+        transition: this.promptTransition ? {
+          ...this.promptTransition,
+          sections: this.promptTransition.sections.map((section) => ({ ...section }))
+        } : null,
+        transitionRevision: this.promptTransitionRevision,
+        notice: this.promptInputNotice
+      };
+    },
+    applyPromptEditorState(state) {
+      this.promptInputMode = state.mode;
+      this.prompt = state.prompt;
+      this.promptSections = state.sections.map((section) => ({ ...section }));
+      this.promptTransition = state.transition ? {
+        ...state.transition,
+        sections: state.transition.sections.map((section) => ({ ...section }))
+      } : null;
+      this.promptTransitionRevision = state.transitionRevision;
+      this.promptInputNotice = state.notice;
+    },
+    promptRequestSnapshot() {
+      if (this.promptInputMode === "single") {
+        return {
+          prompt: this.prompt,
+          prompt_input: {
+            schema_version: "asteria.prompt-input.v1",
+            mode: "single"
+          }
+        };
+      }
+      const sections = [...this.promptSections].sort((left, right) => left.order - right.order).map((section) => ({ ...section }));
+      const prompt = combinePromptSections(sections);
+      return {
+        prompt,
+        prompt_input: {
+          schema_version: "asteria.prompt-input.v1",
+          mode: "sections",
+          sections
+        }
+      };
+    },
+    setPromptInputMode(mode) {
+      if (mode === this.promptInputMode) return;
+      const current = this.promptEditorState();
+      this.applyPromptEditorState(
+        mode === "sections" ? enterSectionsMode(current) : enterSingleMode(current)
+      );
+    },
+    setPromptSectionText(id, text) {
+      const section = this.promptSections.find((item) => item.id === id);
+      if (!section) return;
+      section.text = text;
+      this.promptInputNotice = "";
+      if (this.promptInputMode === "sections") {
+        this.prompt = combinePromptSections(this.promptSections);
+      }
+    },
+    setPromptSectionLabel(id, label) {
+      const section = this.promptSections.find((item) => item.id === id);
+      if (!section) return;
+      section.label = label;
+      this.promptInputNotice = "";
+    },
+    movePromptSection(id, direction) {
+      const ordered = [...this.promptSections].sort((left, right) => left.order - right.order);
+      const currentIndex = ordered.findIndex((section) => section.id === id);
+      const targetIndex = currentIndex + direction;
+      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= ordered.length) return;
+      const current = ordered[currentIndex];
+      const target = ordered[targetIndex];
+      const currentOrder = current.order;
+      current.order = target.order;
+      target.order = currentOrder;
+      this.promptSections = ordered.sort((left, right) => left.order - right.order);
+      this.prompt = combinePromptSections(this.promptSections);
+      this.promptInputNotice = "";
+    },
+    applyPromptState(prompt, rawPromptInput, warningCodes = []) {
+      const restored = restorePromptInputState(
+        prompt,
+        rawPromptInput,
+        this.promptTransitionRevision + 1
+      );
+      if (!restored.notice) {
+        const serverNotice = warningCodes.find((code) => code === "prompt_input_invalid_fallback" || code === "prompt_input_mismatch_fallback");
+        if (serverNotice) {
+          restored.notice = serverNotice;
+        }
+      }
+      this.applyPromptEditorState(restored);
+      this.activePromptSectionId = "base";
+    },
     async applyProfileSchema(profile, previousProfile) {
       const previousHiresCheckpoint = this.hiresCheckpoint;
       this.schemaLoading = true;
@@ -8618,6 +8971,7 @@ const useGenerationStore = defineStore("generation", {
       try {
         assertControlNetModeSubmission(this.controlNetUnits);
         assertSeedResizeSubmission(this);
+        const promptSnapshot = this.promptRequestSnapshot();
         const schedulers = normalizeGenerationSchedulers(this.profile, this.scheduler, this.hiresScheduler);
         const endpoint = this.mode === "img2img" ? "/api/generations/jobs/img2img" : this.mode === "inpaint" ? "/api/generations/jobs/inpaint" : "/api/generations/jobs/txt2img";
         const sessionModelSlotOverrides = sessionModelSlotOverridesForRequest(this.profile);
@@ -8625,7 +8979,7 @@ const useGenerationStore = defineStore("generation", {
           baseURL: useApiBase(),
           method: "POST",
           body: {
-            prompt: this.prompt,
+            ...promptSnapshot,
             runtime: this.runtime,
             ...generationModeFields(this.mode, {
               initImagePath: this.initImagePath,
@@ -8744,10 +9098,11 @@ const useGenerationStore = defineStore("generation", {
     generationRequestBody() {
       assertControlNetModeSubmission(this.controlNetUnits);
       assertSeedResizeSubmission(this);
+      const promptSnapshot = this.promptRequestSnapshot();
       const schedulers = normalizeGenerationSchedulers(this.profile, this.scheduler, this.hiresScheduler);
       const sessionModelSlotOverrides = sessionModelSlotOverridesForRequest(this.profile);
       return {
-        prompt: this.prompt,
+        ...promptSnapshot,
         runtime: this.runtime,
         ...generationModeFields(this.mode, {
           initImagePath: this.initImagePath,
@@ -9492,12 +9847,14 @@ const useGenerationStore = defineStore("generation", {
     },
     async savePromptPreset() {
       try {
+        const promptSnapshot = this.promptRequestSnapshot();
         const response = await $fetch("/api/prompt-presets", {
           baseURL: useApiBase(),
           method: "POST",
           body: {
-            name: this.promptPresetName || this.prompt.slice(0, 40) || "Untitled preset",
-            prompt: this.prompt,
+            name: this.promptPresetName || promptSnapshot.prompt.slice(0, 40) || "Untitled preset",
+            prompt: promptSnapshot.prompt,
+            prompt_input: promptSnapshot.prompt_input,
             negative_prompt: this.negativePrompt,
             tags: []
           }
@@ -9520,17 +9877,18 @@ const useGenerationStore = defineStore("generation", {
       }
     },
     applyPromptPreset(preset) {
-      this.prompt = preset.prompt;
+      this.applyPromptState(preset.prompt, preset.prompt_input, preset.warning_codes);
       this.negativePrompt = preset.negative_prompt;
     },
     snapshotSettings() {
       const modelDependencies = useModelDependenciesStore();
+      const promptSnapshot = this.promptRequestSnapshot();
       const schedulers = normalizeGenerationSchedulers(this.profile, this.scheduler, this.hiresScheduler);
       return {
         mode: this.mode,
         profile: this.profile,
         runtime_adapter: this.runtime,
-        prompt: this.prompt,
+        ...promptSnapshot,
         negative_prompt: this.negativePrompt,
         model_slots: { ...modelDependencies.selections },
         steps: this.steps,
@@ -9684,7 +10042,15 @@ const useGenerationStore = defineStore("generation", {
     },
     async applyStudioPreset(preset) {
       try {
-        this.applySettings(preset.data);
+        const {
+          prompt,
+          prompt_input: promptInput,
+          ...remainingSettings
+        } = preset.data;
+        if (preset.kind === "generation" && typeof prompt === "string") {
+          this.applyPromptState(prompt, promptInput);
+        }
+        this.applySettings(remainingSettings);
         if (preset.data.model_slots && typeof preset.data.model_slots === "object" && !Array.isArray(preset.data.model_slots)) {
           await nextTick();
           const modelDependencies = useModelDependenciesStore();
@@ -9736,9 +10102,17 @@ const useGenerationStore = defineStore("generation", {
       return true;
     },
     applyImportedImagePrompts(preview) {
-      const prompts = applyImportedPrompts(this, preview);
-      this.prompt = prompts.prompt;
-      this.negativePrompt = prompts.negativePrompt;
+      const promptState = applyImportedPromptState({
+        prompt: this.prompt,
+        negativePrompt: this.negativePrompt,
+        promptInputMode: this.promptInputMode,
+        promptSections: this.promptSections,
+        promptTransition: this.promptTransition,
+        promptTransitionRevision: this.promptTransitionRevision,
+        promptInputNotice: this.promptInputNotice,
+        activePromptSectionId: this.activePromptSectionId
+      }, preview);
+      this.$patch(promptState);
       return { ok: true, code: "image_metadata_prompts_applied" };
     },
     applyImportedGenerationSettings(preview) {
@@ -9812,7 +10186,7 @@ const useGenerationStore = defineStore("generation", {
     selectHistoryItem(item) {
       this.result = item;
       this.profile = item.profile;
-      this.prompt = item.prompt;
+      this.applyPromptState(item.prompt, item.settings.prompt_input);
       this.negativePrompt = item.negative_prompt;
       this.loras = item.loras.map((lora) => ({
         ...lora,
@@ -9836,7 +10210,7 @@ const useGenerationStore = defineStore("generation", {
     }
   }
 });
-const _sfc_main$25 = /* @__PURE__ */ defineComponent({
+const _sfc_main$26 = /* @__PURE__ */ defineComponent({
   __name: "GenerationPresetBar",
   __ssrInlineRender: true,
   setup(__props) {
@@ -9879,13 +10253,13 @@ const _sfc_main$25 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$25 = _sfc_main$25.setup;
-_sfc_main$25.setup = (props, ctx) => {
+const _sfc_setup$26 = _sfc_main$26.setup;
+_sfc_main$26.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationPresetBar.vue");
-  return _sfc_setup$25 ? _sfc_setup$25(props, ctx) : void 0;
+  return _sfc_setup$26 ? _sfc_setup$26(props, ctx) : void 0;
 };
-const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$25, [["__scopeId", "data-v-f1409f74"]]), { __name: "StudioGenerateGenerationPresetBar" });
+const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$26, [["__scopeId", "data-v-f1409f74"]]), { __name: "StudioGenerateGenerationPresetBar" });
 const dependencyNeedsAttention = (dependency, selections) => {
   if (dependency.status === "installed") {
     return false;
@@ -9965,7 +10339,7 @@ const useMediaModelCatalog = (domain) => {
     refresh
   };
 };
-const _sfc_main$24 = /* @__PURE__ */ defineComponent({
+const _sfc_main$25 = /* @__PURE__ */ defineComponent({
   __name: "ModelSettingsPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -10143,16 +10517,22 @@ const _sfc_main$24 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$24 = _sfc_main$24.setup;
-_sfc_main$24.setup = (props, ctx) => {
+const _sfc_setup$25 = _sfc_main$25.setup;
+_sfc_main$25.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ModelSettingsPanel.vue");
-  return _sfc_setup$24 ? _sfc_setup$24(props, ctx) : void 0;
+  return _sfc_setup$25 ? _sfc_setup$25(props, ctx) : void 0;
 };
-const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$24, [["__scopeId", "data-v-7f7cfe10"]]), { __name: "StudioModelSettingsPanel" });
+const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$25, [["__scopeId", "data-v-7f7cfe10"]]), { __name: "StudioModelSettingsPanel" });
 const promptAssistRequestSignature = (snapshot2) => {
   return JSON.stringify({
     prompt: snapshot2.prompt,
+    promptInput: {
+      ...snapshot2.promptInput,
+      sections: snapshot2.promptInput.sections?.map((section) => ({ ...section }))
+    },
+    activeSectionId: snapshot2.activeSectionId,
+    activeSectionText: snapshot2.activeSectionText,
     negativePrompt: snapshot2.negativePrompt,
     profile: snapshot2.profile,
     mode: snapshot2.mode,
@@ -10193,7 +10573,10 @@ const projectPromptAssistResultState = (input) => {
   if (!selectedCurrentResult) {
     return disabledResultState("stale");
   }
-  const canApplyPrompt = Boolean(input.suggestedPrompt.trim());
+  if (input.currentActiveSectionId !== input.responseActiveSectionId) {
+    return disabledResultState("stale");
+  }
+  const canApplyPrompt = input.target !== "negative" && Boolean(input.suggestedPrompt.trim());
   const canApplyNegative = input.supportsNegativePrompt && Boolean(input.suggestedNegativePrompt.trim());
   if (!canApplyNegative) {
     return {
@@ -10330,7 +10713,95 @@ const resolveActiveLoraProtectedTokens = (selections, assets) => {
   });
   return normalizePromptAssistProtectedTokens(tokens);
 };
-const _sfc_main$23 = /* @__PURE__ */ defineComponent({
+const protectedSpans = (value) => {
+  const spans = [];
+  for (const pattern of [/<lora:[^>]*>/g, /\bembedding:[^\s,]+/g]) {
+    for (const match of value.matchAll(pattern)) {
+      const start = match.index ?? 0;
+      spans.push({ start, end: start + match[0].length });
+    }
+  }
+  return spans;
+};
+const intersects = (span, start, end) => start === end ? start > span.start && start < span.end : start < span.end && end > span.start;
+const enclosingWeightSpan = (value, start, end) => {
+  const candidates = [];
+  for (const pattern of [/\([^()]+\)/g, /\[[^[\]]+\]/g]) {
+    for (const match of value.matchAll(pattern)) {
+      const candidateStart = match.index ?? 0;
+      const candidate = { start: candidateStart, end: candidateStart + match[0].length };
+      if (candidate.start <= start && candidate.end >= end) {
+        candidates.push(candidate);
+      }
+    }
+  }
+  return candidates.sort((left, right) => left.end - left.start - (right.end - right.start))[0] ?? null;
+};
+const editableSpan = (value, selectionStart, selectionEnd) => {
+  const start = Math.max(0, Math.min(selectionStart, value.length));
+  const end = Math.max(start, Math.min(selectionEnd, value.length));
+  const enclosing = enclosingWeightSpan(value, start, end);
+  if (enclosing) {
+    return enclosing;
+  }
+  if (start !== end) {
+    let trimmedStart = start;
+    let trimmedEnd = end;
+    while (trimmedStart < trimmedEnd && /\s/.test(value[trimmedStart])) trimmedStart += 1;
+    while (trimmedEnd > trimmedStart && /\s/.test(value[trimmedEnd - 1])) trimmedEnd -= 1;
+    return trimmedStart < trimmedEnd ? { start: trimmedStart, end: trimmedEnd } : null;
+  }
+  const lineStart = value.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+  const nextLine = value.indexOf("\n", start);
+  const lineEnd = nextLine < 0 ? value.length : nextLine;
+  const previousComma = value.lastIndexOf(",", Math.max(lineStart, start - 1));
+  const nextComma = value.indexOf(",", start);
+  let targetStart = Math.max(lineStart, previousComma + 1);
+  let targetEnd = nextComma < 0 || nextComma > lineEnd ? lineEnd : nextComma;
+  while (targetStart < targetEnd && /\s/.test(value[targetStart])) targetStart += 1;
+  while (targetEnd > targetStart && /\s/.test(value[targetEnd - 1])) targetEnd -= 1;
+  if (targetStart < targetEnd) {
+    return { start: targetStart, end: targetEnd };
+  }
+  const left = value.slice(lineStart, start).match(/[\p{L}\p{N}_-]+$/u)?.[0] ?? "";
+  const right = value.slice(start, lineEnd).match(/^[\p{L}\p{N}_-]+/u)?.[0] ?? "";
+  return left || right ? { start: start - left.length, end: start + right.length } : null;
+};
+const formatWeight = (value, precision) => {
+  const fixed = value.toFixed(Math.max(1, Math.min(4, precision)));
+  return fixed.includes(".") ? fixed.replace(/0+$/, "").replace(/\.$/, "") : fixed;
+};
+const decimalPlaces = (value) => value.includes(".") ? value.split(".")[1].length : 1;
+const replacePromptSelection = (value, selectionStart, selectionEnd, replacement) => ({
+  value: `${value.slice(0, selectionStart)}${replacement}${value.slice(selectionEnd)}`,
+  selectionStart,
+  selectionEnd: selectionStart + replacement.length,
+  changed: value.slice(selectionStart, selectionEnd) !== replacement
+});
+const adjustPromptWeight = (value, selectionStart, selectionEnd, direction) => {
+  const original = { value, selectionStart, selectionEnd, changed: false };
+  const span = editableSpan(value, selectionStart, selectionEnd);
+  if (!span || protectedSpans(value).some((candidate) => intersects(candidate, span.start, span.end))) {
+    return original;
+  }
+  const target = value.slice(span.start, span.end);
+  const explicit = target.match(/^\(([\s\S]+):(-?\d+(?:\.\d{1,4})?)\)$/);
+  let replacement;
+  if (explicit) {
+    const current = Number(explicit[2]);
+    const next = Number((current + direction * 0.1).toFixed(4));
+    replacement = Math.abs(next - 1) < 5e-5 ? explicit[1] : `(${explicit[1]}:${formatWeight(next, decimalPlaces(explicit[2]))})`;
+  } else if (/^\[[\s\S]+\]$/.test(target)) {
+    replacement = direction > 0 ? target.slice(1, -1) : `[${target}]`;
+  } else if (/^\([^()]+\)$/.test(target)) {
+    const inner = target.slice(1, -1);
+    replacement = direction > 0 ? `(${inner}:1.2)` : inner;
+  } else {
+    replacement = `(${target}:${direction > 0 ? "1.1" : "0.9"})`;
+  }
+  return replacePromptSelection(value, span.start, span.end, replacement);
+};
+const _sfc_main$24 = /* @__PURE__ */ defineComponent({
   __name: "StyleChain",
   __ssrInlineRender: true,
   props: {
@@ -10391,14 +10862,14 @@ const _sfc_main$23 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$23 = _sfc_main$23.setup;
-_sfc_main$23.setup = (props, ctx) => {
+const _sfc_setup$24 = _sfc_main$24.setup;
+_sfc_main$24.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StyleChain.vue");
-  return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
+  return _sfc_setup$24 ? _sfc_setup$24(props, ctx) : void 0;
 };
-const StyleChain = Object.assign(_sfc_main$23, { __name: "StudioStyleChain" });
-const _sfc_main$22 = /* @__PURE__ */ defineComponent({
+const StyleChain = Object.assign(_sfc_main$24, { __name: "StudioStyleChain" });
+const _sfc_main$23 = /* @__PURE__ */ defineComponent({
   __name: "AdvancedStylesPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -10500,14 +10971,14 @@ const _sfc_main$22 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$22 = _sfc_main$22.setup;
-_sfc_main$22.setup = (props, ctx) => {
+const _sfc_setup$23 = _sfc_main$23.setup;
+_sfc_main$23.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AdvancedStylesPanel.vue");
-  return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
+  return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
 };
-const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-e1544cfa"]]), { __name: "StudioAdvancedStylesPanel" });
-const _sfc_main$21 = /* @__PURE__ */ defineComponent({
+const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-e1544cfa"]]), { __name: "StudioAdvancedStylesPanel" });
+const _sfc_main$22 = /* @__PURE__ */ defineComponent({
   __name: "SelectedLoRAStack",
   __ssrInlineRender: true,
   props: {
@@ -10653,14 +11124,14 @@ const _sfc_main$21 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$21 = _sfc_main$21.setup;
-_sfc_main$21.setup = (props, ctx) => {
+const _sfc_setup$22 = _sfc_main$22.setup;
+_sfc_main$22.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/SelectedLoRAStack.vue");
-  return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
+  return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
 };
-const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-3d9c2022"]]), { __name: "StudioSelectedLoRAStack" });
-const _sfc_main$20 = /* @__PURE__ */ defineComponent({
+const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-3d9c2022"]]), { __name: "StudioSelectedLoRAStack" });
+const _sfc_main$21 = /* @__PURE__ */ defineComponent({
   __name: "LoRABrowser",
   __ssrInlineRender: true,
   props: {
@@ -10787,14 +11258,14 @@ const _sfc_main$20 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$20 = _sfc_main$20.setup;
-_sfc_main$20.setup = (props, ctx) => {
+const _sfc_setup$21 = _sfc_main$21.setup;
+_sfc_main$21.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/LoRABrowser.vue");
-  return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
+  return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
 };
-const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-9c8a83d5"]]), { __name: "StudioLoRABrowser" });
-const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
+const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-9c8a83d5"]]), { __name: "StudioLoRABrowser" });
+const _sfc_main$20 = /* @__PURE__ */ defineComponent({
   __name: "PromptAssetsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -10838,13 +11309,62 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const _sfc_setup$20 = _sfc_main$20.setup;
+_sfc_main$20.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptAssetsDrawer.vue");
+  return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
+};
+const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-609af68f"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
+const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
+  __name: "PromptSectionsEditor",
+  __ssrInlineRender: true,
+  props: {
+    sections: {},
+    combinedPrompt: {},
+    activeSectionId: {}
+  },
+  emits: ["update-text", "update-label", "move", "focus-section"],
+  setup(__props, { expose: __expose, emit: __emit }) {
+    const props = __props;
+    const { t } = useAsteriaI18n();
+    const editors = /* @__PURE__ */ new Map();
+    const orderedSections = computed(() => [...props.sections].sort((left, right) => left.order - right.order));
+    const combinedSummary = computed(() => {
+      const compact = props.combinedPrompt.replace(/\s+/g, " ").trim();
+      return Array.from(compact).length > 72 ? `${Array.from(compact).slice(0, 72).join("")}…` : compact;
+    });
+    const labelInputId = (section) => `prompt-section-${section.id}-label`;
+    const textInputId = (section) => `prompt-section-${section.id}-text`;
+    const positionLabel = (section, index) => t("prompt.sections.positionAria", {
+      label: section.label,
+      position: index + 1,
+      total: orderedSections.value.length
+    });
+    const editorFor = (id) => editors.get(id) ?? null;
+    __expose({ editorFor });
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "prompt-sections-editor" }, _attrs))} data-v-95a3c52e><div class="prompt-sections-editor__list" data-v-95a3c52e><!--[-->`);
+      ssrRenderList(unref(orderedSections), (section, index) => {
+        _push(`<section class="${ssrRenderClass([{ "prompt-section--active": section.id === __props.activeSectionId }, "prompt-section"])}"${ssrRenderAttr("data-prompt-section-id", section.id)} data-v-95a3c52e><div class="prompt-section__rail" aria-hidden="true" data-v-95a3c52e><span data-v-95a3c52e>${ssrInterpolate(index + 1)}</span></div><div class="prompt-section__body" data-v-95a3c52e><div class="prompt-section__header" data-v-95a3c52e><label class="prompt-section__label"${ssrRenderAttr("for", labelInputId(section))} data-v-95a3c52e><span class="visually-hidden" data-v-95a3c52e>${ssrInterpolate(positionLabel(section, index))}</span><input${ssrRenderAttr("id", labelInputId(section))}${ssrRenderAttr("value", section.label)}${ssrRenderAttr("aria-label", positionLabel(section, index))} data-v-95a3c52e></label><div class="prompt-section__move-actions" data-v-95a3c52e><button type="button"${ssrIncludeBooleanAttr(index === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", `${section.label}：${unref(t)("prompt.sections.moveUp")}`)} data-v-95a3c52e> ↑ </button><button type="button"${ssrIncludeBooleanAttr(index === unref(orderedSections).length - 1) ? " disabled" : ""}${ssrRenderAttr("aria-label", `${section.label}：${unref(t)("prompt.sections.moveDown")}`)} data-v-95a3c52e> ↓ </button></div></div><textarea${ssrRenderAttr("id", textInputId(section))}${ssrRenderAttr("aria-label", positionLabel(section, index))} rows="4" data-v-95a3c52e>${ssrInterpolate(section.text)}</textarea></div></section>`);
+      });
+      _push(`<!--]--></div><details class="prompt-sections-editor__combined" data-v-95a3c52e><summary data-v-95a3c52e><span data-v-95a3c52e>${ssrInterpolate(unref(t)("prompt.sections.combined"))}</span>`);
+      if (unref(combinedSummary)) {
+        _push(`<small data-v-95a3c52e>${ssrInterpolate(unref(combinedSummary))}</small>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</summary><label class="visually-hidden" for="prompt-sections-combined" data-v-95a3c52e>${ssrInterpolate(unref(t)("prompt.sections.combined"))}</label><textarea id="prompt-sections-combined"${ssrRenderAttr("aria-label", unref(t)("prompt.sections.combined"))} rows="4" readonly data-v-95a3c52e>${ssrInterpolate(__props.combinedPrompt)}</textarea></details></div>`);
+    };
+  }
+});
 const _sfc_setup$1$ = _sfc_main$1$.setup;
 _sfc_main$1$.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptAssetsDrawer.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptSectionsEditor.vue");
   return _sfc_setup$1$ ? _sfc_setup$1$(props, ctx) : void 0;
 };
-const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-609af68f"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
+const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-95a3c52e"]]), { __name: "StudioGeneratePromptSectionsEditor" });
 const useAppSettingsStore = defineStore("appSettings", {
   state: () => ({
     outputRoot: "",
@@ -11033,8 +11553,9 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
     const promptAssistRequestContext = ref("");
     const promptAssistOneTimeKeyRevision = ref(0);
     const promptAssistRequestExecutor = createLatestPromptAssistRequestExecutor();
-    ref(null);
-    ref(null);
+    const promptTextarea = ref(null);
+    const promptSectionsEditor = ref(null);
+    const negativePromptTextarea = ref(null);
     const notationMenuTarget = ref(null);
     const notationMessage = ref("");
     const notationDialog = ref(null);
@@ -11046,6 +11567,25 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
     const promptSyntaxFeatures = computed(() => modelDependencies.promptSyntaxFeatures(generation.profile));
     const loraOptions = computed(() => modelDependencies.libraryByType("lora"));
     computed(() => loraOptions.value.find((item) => item.relative_path === selectedQuickLoraPath.value || item.path === selectedQuickLoraPath.value) ?? null);
+    const activePositiveEditorTarget = computed(() => {
+      if (generation.promptInputMode === "single") {
+        return "single";
+      }
+      return generation.promptSections.some((section) => section.id === generation.activePromptSectionId) ? generation.activePromptSectionId : "base";
+    });
+    const promptInputNoticeText = computed(() => {
+      switch (generation.promptInputNotice) {
+        case "prompt_sections_single_edit_moved_to_base":
+          return t("prompt.sections.movedToBase");
+        case "prompt_input_invalid_fallback":
+          return t("prompt.sections.invalidFallback");
+        case "prompt_input_mismatch_fallback":
+          return t("prompt.sections.mismatchFallback");
+        default:
+          return "";
+      }
+    });
+    const promptSectionsEmptyText = computed(() => generation.promptInputMode === "sections" && generation.promptSections.every((section) => !section.text.trim()) ? t("prompt.sections.allEmpty") : "");
     const notationFeature = (action) => ({
       stronger: "token_weight",
       weaker: "token_weight",
@@ -11078,6 +11618,75 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
     const notationDraftValid = computed(() => {
       return notationDialog.value === "weight" && Boolean(notationDraft.text.trim()) && finiteInRange(notationDraft.value, -10, 10);
     });
+    const editorFor = (target) => {
+      if (target === "negative") return negativePromptTextarea.value;
+      if (target === "single") return promptTextarea.value;
+      return promptSectionsEditor.value?.editorFor(target) ?? null;
+    };
+    const editorValue = (target) => {
+      if (target === "negative") return generation.negativePrompt;
+      if (target === "single") return generation.prompt;
+      return generation.promptSections.find((section) => section.id === target)?.text ?? "";
+    };
+    const writeEditorValue = (target, value) => {
+      if (target === "negative") {
+        generation.negativePrompt = negativePromptValueForWrite(
+          generation.profile,
+          generation.negativePrompt,
+          value
+        );
+      } else if (target === "single") {
+        generation.prompt = value;
+      } else {
+        generation.setPromptSectionText(target, value);
+      }
+    };
+    const editorTargetLabel = (target) => {
+      if (target === "negative") return t("prompt.negative");
+      if (target === "single") return t("prompt.prompt");
+      return generation.promptSections.find((section) => section.id === target)?.label ?? t(`prompt.sections.${target}`);
+    };
+    const setActivePromptSection = (id) => {
+      generation.activePromptSectionId = id;
+    };
+    const applyPromptEdit = async (target, result) => {
+      if (!result.changed) {
+        return;
+      }
+      writeEditorValue(target, result.value);
+      await nextTick();
+      const editor = editorFor(target);
+      editor?.focus();
+      editor?.setSelectionRange(result.selectionStart, result.selectionEnd);
+    };
+    const handlePromptWeightShortcut = async (event, target) => {
+      if (event.isComposing || !event.ctrlKey && !event.metaKey || !["ArrowUp", "ArrowDown"].includes(event.key)) {
+        return;
+      }
+      if (!(event.target instanceof HTMLTextAreaElement)) {
+        return;
+      }
+      const editor = event.target;
+      if (editorFor(target) !== editor) {
+        return;
+      }
+      if (target === "negative" && !supportsNegativePrompt.value) return;
+      if (!promptSyntaxFeatures.value.has("token_weight")) {
+        notationMenuTarget.value = target;
+        notationMessage.value = t("prompt.notation.unsupported");
+        return;
+      }
+      event.preventDefault();
+      await applyPromptEdit(
+        target,
+        adjustPromptWeight(
+          editor.value,
+          editor.selectionStart,
+          editor.selectionEnd,
+          event.key === "ArrowUp" ? 1 : -1
+        )
+      );
+    };
     const openPromptAssets = (tab) => {
       promptAssetsTab.value = tab;
       promptAssetsOpen.value = true;
@@ -11149,7 +11758,9 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
       return generation.loras.filter((lora) => lora.enabled !== false).map((lora) => lora.name).filter(Boolean);
     });
     const activePromptAssistProtectedTokens = computed(() => {
-      return resolveActiveLoraProtectedTokens(generation.loras, loraOptions.value);
+      const targetText = promptAssistTarget.value === "negative" ? generation.negativePrompt : editorValue(activePositiveEditorTarget.value);
+      const normalizedTargetText = targetText.toLocaleLowerCase("en-US");
+      return resolveActiveLoraProtectedTokens(generation.loras, loraOptions.value).filter((token) => normalizedTargetText.includes(token.toLocaleLowerCase("en-US")));
     });
     const activeEmbeddingNames = computed(() => {
       const names = /* @__PURE__ */ new Set();
@@ -11225,28 +11836,36 @@ ${generation.negativePrompt}`;
       selectDefaultPromptAssistProvider,
       { immediate: true, deep: true }
     );
-    const currentPromptAssistSnapshot = computed(() => ({
-      prompt: generation.prompt,
-      negativePrompt: generation.negativePrompt,
-      profile: generation.profile,
-      mode: generation.mode,
-      width: generation.width,
-      height: generation.height,
-      loras: activeLoraNames.value,
-      embeddings: activeEmbeddingNames.value,
-      target: promptAssistTarget.value,
-      language: promptAssistLanguage.value,
-      instruction: promptAssistInstruction.value,
-      providerMode: promptAssistProviderMode.value,
-      purposePreset: promptAssistPurposePreset.value,
-      protectedTokens: activePromptAssistProtectedTokens.value,
-      providerPresetId: promptAssistProviderPresetId.value,
-      providerEndpoint: promptAssistEndpointValue.value,
-      providerModel: promptAssistModelValue.value,
-      providerApiKeyEnvVar: promptAssistApiKeyEnvVarValue.value,
-      providerTimeoutSeconds: promptAssistTimeoutValue.value,
-      oneTimeKeyRevision: promptAssistOneTimeKeyRevision.value
-    }));
+    const currentPromptAssistSnapshot = computed(() => {
+      const promptSnapshot = generation.promptRequestSnapshot();
+      const activeSectionId = promptAssistTarget.value === "negative" ? null : promptSnapshot.prompt_input.mode === "sections" ? generation.activePromptSectionId : null;
+      const activeSectionText = activeSectionId ? promptSnapshot.prompt_input.sections?.find((section) => section.id === activeSectionId)?.text ?? null : null;
+      return {
+        prompt: promptSnapshot.prompt,
+        promptInput: promptSnapshot.prompt_input,
+        activeSectionId,
+        activeSectionText,
+        negativePrompt: generation.negativePrompt,
+        profile: generation.profile,
+        mode: generation.mode,
+        width: generation.width,
+        height: generation.height,
+        loras: activeLoraNames.value,
+        embeddings: activeEmbeddingNames.value,
+        target: promptAssistTarget.value,
+        language: promptAssistLanguage.value,
+        instruction: promptAssistInstruction.value,
+        providerMode: promptAssistProviderMode.value,
+        purposePreset: promptAssistPurposePreset.value,
+        protectedTokens: activePromptAssistProtectedTokens.value,
+        providerPresetId: promptAssistProviderPresetId.value,
+        providerEndpoint: promptAssistEndpointValue.value,
+        providerModel: promptAssistModelValue.value,
+        providerApiKeyEnvVar: promptAssistApiKeyEnvVarValue.value,
+        providerTimeoutSeconds: promptAssistTimeoutValue.value,
+        oneTimeKeyRevision: promptAssistOneTimeKeyRevision.value
+      };
+    });
     const currentPromptAssistSignature = computed(() => promptAssistRequestSignature(currentPromptAssistSnapshot.value));
     const promptAssistResultState = computed(() => projectPromptAssistResultState({
       loading: promptAssistLoading.value,
@@ -11257,7 +11876,10 @@ ${generation.negativePrompt}`;
       currentSignature: currentPromptAssistSignature.value,
       suggestedPrompt: promptAssist.value?.suggested_prompt ?? "",
       suggestedNegativePrompt: promptAssist.value?.suggested_negative_prompt ?? "",
-      supportsNegativePrompt: supportsNegativePrompt.value
+      supportsNegativePrompt: supportsNegativePrompt.value,
+      target: promptAssist.value?.target ?? promptAssistTarget.value,
+      currentActiveSectionId: currentPromptAssistSnapshot.value.activeSectionId,
+      responseActiveSectionId: promptAssist.value?.active_section_id ?? null
     }));
     const promptAssistStateMessage = computed(() => {
       const labels = {
@@ -11285,24 +11907,17 @@ ${generation.negativePrompt}`;
       if (target === "negative" && !supportsNegativePrompt.value) {
         return;
       }
-      if (target === "negative") {
-        const current2 = generation.negativePrompt.trim();
-        const nextValue = current2 ? `${current2}, ${token}` : token;
-        generation.negativePrompt = negativePromptValueForWrite(
-          generation.profile,
-          generation.negativePrompt,
-          nextValue
-        );
-        return;
-      }
-      const current = generation.prompt.trim();
-      generation.prompt = current ? `${current}, ${token}` : token;
+      const current = editorValue(target).trim();
+      writeEditorValue(target, current ? `${current}, ${token}` : token);
     };
     const insertEmbedding = (target) => {
       if (!selectedEmbeddingPath.value) {
         return;
       }
-      appendPromptToken(target, embeddingToken(selectedEmbeddingPath.value));
+      appendPromptToken(
+        target === "negative" ? "negative" : activePositiveEditorTarget.value,
+        embeddingToken(selectedEmbeddingPath.value)
+      );
     };
     const fetchWildcards = async () => {
       wildcardError.value = "";
@@ -11319,7 +11934,7 @@ ${generation.negativePrompt}`;
       if (!selectedWildcard.value) {
         return;
       }
-      appendPromptToken("prompt", `__${selectedWildcard.value}__`);
+      appendPromptToken(activePositiveEditorTarget.value, `__${selectedWildcard.value}__`);
     };
     const buildPromptAssist = async () => {
       const requestSnapshot = currentPromptAssistSnapshot.value;
@@ -11339,6 +11954,9 @@ ${generation.negativePrompt}`;
           method: "POST",
           body: {
             prompt: requestSnapshot.prompt,
+            prompt_input: requestSnapshot.promptInput,
+            active_section_id: requestSnapshot.activeSectionId,
+            active_section_text: requestSnapshot.activeSectionText,
             negative_prompt: requestSnapshot.negativePrompt,
             profile: requestSnapshot.profile,
             mode: requestSnapshot.mode,
@@ -11379,7 +11997,17 @@ ${generation.negativePrompt}`;
       if (!promptAssistResultState.value.canApplyPrompt || !promptAssist.value) {
         return;
       }
-      generation.prompt = promptAssist.value.suggested_prompt;
+      if (promptAssist.value.target === "negative") {
+        return;
+      }
+      if (generation.promptInputMode === "sections") {
+        if (!promptAssist.value.active_section_id) {
+          return;
+        }
+        generation.setPromptSectionText(promptAssist.value.active_section_id, promptAssist.value.suggested_prompt);
+      } else {
+        generation.prompt = promptAssist.value.suggested_prompt;
+      }
     };
     const applyPromptAssistNegative = () => {
       if (!promptAssistResultState.value.canApplyNegative || !promptAssist.value) {
@@ -11396,21 +12024,56 @@ ${generation.negativePrompt}`;
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "pane pane-left prompt-composer",
         "aria-label": unref(t)("prompt.editorAria")
-      }, _attrs))} data-v-176d2faf><div class="pane-title" data-v-176d2faf><span data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.title"))}</span><div class="prompt-pane-title-actions" data-v-176d2faf><small data-v-176d2faf>${ssrInterpolate(unref(generation).mode)}</small><button data-image-metadata-picker type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("imageMetadata.chooseImage"))}</button></div></div><div class="field prompt-primary-editor" data-v-176d2faf><div class="prompt-editor-heading" data-v-176d2faf><label for="generation-prompt" data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.prompt"))}</label><button type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.prompt"))} rows="6" data-v-176d2faf>${ssrInterpolate(unref(generation).prompt)}</textarea></div><div class="field prompt-negative-editor" data-v-176d2faf><div class="prompt-editor-heading" data-v-176d2faf><label for="generation-negative-prompt" data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.negative"))}</label><button type="button"${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-negative-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.negative"))}${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} rows="4" data-v-176d2faf>${ssrInterpolate(unref(generation).negativePrompt)}</textarea>`);
+      }, _attrs))} data-v-4a922fb0><div class="pane-title" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.title"))}</span><div class="prompt-pane-title-actions" data-v-4a922fb0><small data-v-4a922fb0>${ssrInterpolate(unref(generation).mode)}</small><button data-image-metadata-picker type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("imageMetadata.chooseImage"))}</button></div></div><div class="prompt-input-mode" role="group"${ssrRenderAttr("aria-label", unref(t)("prompt.inputMode.label"))} data-v-4a922fb0><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "single" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "single")} data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.inputMode.single"))}</button><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "sections" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "sections")} data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.inputMode.sections"))}</button></div>`);
+      if (unref(promptInputNoticeText)) {
+        _push(`<small class="prompt-input-notice" aria-live="polite" data-v-4a922fb0>${ssrInterpolate(unref(promptInputNoticeText))}</small>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(generation).promptInputMode === "single") {
+        _push(`<div class="field prompt-primary-editor" data-v-4a922fb0><div class="prompt-editor-heading" data-v-4a922fb0><label for="generation-prompt" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.prompt"))}</label><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.prompt"))} rows="6" data-v-4a922fb0>${ssrInterpolate(unref(generation).prompt)}</textarea></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(generation).promptInputMode === "sections") {
+        _push(`<div class="prompt-primary-editor prompt-primary-editor--sections" data-v-4a922fb0>`);
+        if (unref(promptSectionsEmptyText)) {
+          _push(`<small class="prompt-input-notice" aria-live="polite" data-v-4a922fb0>${ssrInterpolate(unref(promptSectionsEmptyText))}</small>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`<div class="prompt-editor-heading" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.prompt"))}</span><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div>`);
+        _push(ssrRenderComponent(PromptSectionsEditor, {
+          ref_key: "promptSectionsEditor",
+          ref: promptSectionsEditor,
+          sections: unref(generation).promptSections,
+          "combined-prompt": unref(generation).prompt,
+          "active-section-id": unref(generation).activePromptSectionId,
+          onUpdateText: unref(generation).setPromptSectionText,
+          onUpdateLabel: unref(generation).setPromptSectionLabel,
+          onMove: unref(generation).movePromptSection,
+          onFocusSection: setActivePromptSection,
+          onKeydown: ($event) => handlePromptWeightShortcut($event, unref(activePositiveEditorTarget))
+        }, null, _parent));
+        _push(`</div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<div class="field prompt-negative-editor" data-v-4a922fb0><div class="prompt-editor-heading" data-v-4a922fb0><label for="generation-negative-prompt" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.negative"))}</label><button type="button"${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-negative-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.negative"))}${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} rows="4" data-v-4a922fb0>${ssrInterpolate(unref(generation).negativePrompt)}</textarea>`);
       if (!unref(supportsNegativePrompt)) {
-        _push(`<small class="field-hint" data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.negativeFluxGuidance"))}</small>`);
+        _push(`<small class="field-hint" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.negativeFluxGuidance"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</div>`);
       if (unref(notationMenuTarget)) {
-        _push(`<section class="prompt-notation-menu"${ssrRenderAttr("aria-label", unref(t)("prompt.notation.menuAria"))} data-v-176d2faf><div class="prompt-notation-menu__header" data-v-176d2faf><strong data-v-176d2faf>${ssrInterpolate(unref(notationMenuTarget) === "prompt" ? unref(t)("prompt.prompt") : unref(t)("prompt.negative"))}</strong><button type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("common.close"))}</button></div><div class="prompt-notation-menu__actions" data-v-176d2faf><!--[-->`);
+        _push(`<section class="prompt-notation-menu"${ssrRenderAttr("aria-label", unref(t)("prompt.notation.menuAria"))} data-v-4a922fb0><div class="prompt-notation-menu__header" data-v-4a922fb0><strong data-v-4a922fb0>${ssrInterpolate(editorTargetLabel(unref(notationMenuTarget)))}</strong><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("common.close"))}</button></div><div class="prompt-notation-menu__actions" data-v-4a922fb0><!--[-->`);
         ssrRenderList(unref(notationActions), (action) => {
-          _push(`<button type="button" class="${ssrRenderClass({ "prompt-notation-menu__action--unsupported": !notationSupported(action.id) })}"${ssrRenderAttr("aria-disabled", !notationSupported(action.id))} data-v-176d2faf>${ssrInterpolate(action.label)}</button>`);
+          _push(`<button type="button" class="${ssrRenderClass({ "prompt-notation-menu__action--unsupported": !notationSupported(action.id) })}"${ssrRenderAttr("aria-disabled", !notationSupported(action.id))} data-v-4a922fb0>${ssrInterpolate(action.label)}</button>`);
         });
-        _push(`<!--]--></div><small data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.notation.shortcut"))}</small>`);
+        _push(`<!--]--></div><small data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.shortcut"))}</small>`);
         if (unref(notationMessage)) {
-          _push(`<small class="prompt-notation-menu__message" aria-live="polite" data-v-176d2faf>${ssrInterpolate(unref(notationMessage))}</small>`);
+          _push(`<small class="prompt-notation-menu__message" aria-live="polite" data-v-4a922fb0>${ssrInterpolate(unref(notationMessage))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -11419,51 +12082,51 @@ ${generation.negativePrompt}`;
         _push(`<!---->`);
       }
       if (unref(notationDialog)) {
-        _push(`<div class="prompt-notation-dialog-backdrop" role="presentation" data-v-176d2faf><section class="prompt-notation-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)(`prompt.notation.${unref(notationDialog)}`))} data-v-176d2faf><strong data-v-176d2faf>${ssrInterpolate(unref(t)(`prompt.notation.${unref(notationDialog)}`))}</strong>`);
+        _push(`<div class="prompt-notation-dialog-backdrop" role="presentation" data-v-4a922fb0><section class="prompt-notation-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)(`prompt.notation.${unref(notationDialog)}`))} data-v-4a922fb0><strong data-v-4a922fb0>${ssrInterpolate(unref(t)(`prompt.notation.${unref(notationDialog)}`))}</strong>`);
         if (unref(notationDialog) === "weight") {
-          _push(`<label class="field" data-v-176d2faf><span data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.notation.targetText"))}</span><input${ssrRenderAttr("value", unref(notationDraft).text)} data-v-176d2faf></label>`);
+          _push(`<label class="field" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.targetText"))}</span><input${ssrRenderAttr("value", unref(notationDraft).text)} data-v-4a922fb0></label>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(notationDialog) === "weight") {
-          _push(`<label class="field" data-v-176d2faf><span data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.notation.weightValue"))}</span><input${ssrRenderAttr("value", unref(notationDraft).value)} type="number" min="-10" max="10" step="0.1" data-v-176d2faf></label>`);
+          _push(`<label class="field" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.weightValue"))}</span><input${ssrRenderAttr("value", unref(notationDraft).value)} type="number" min="-10" max="10" step="0.1" data-v-4a922fb0></label>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="prompt-notation-dialog__actions" data-v-176d2faf><button type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("common.cancel"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(notationDraftValid)) ? " disabled" : ""} data-v-176d2faf>${ssrInterpolate(unref(t)("common.apply"))}</button></div></section></div>`);
+        _push(`<div class="prompt-notation-dialog__actions" data-v-4a922fb0><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("common.cancel"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(notationDraftValid)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("common.apply"))}</button></div></section></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<section class="prompt-asset-quick prompt-asset-quick--wildcards"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-176d2faf><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-176d2faf><option value="" data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
+      _push(`<section class="prompt-asset-quick prompt-asset-quick--wildcards"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-4a922fb0><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-4a922fb0><option value="" data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
       ssrRenderList(unref(wildcards), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.name)} data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
+        _push(`<option${ssrRenderAttr("value", item.name)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
       });
-      _push(`<!--]--></select><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-176d2faf>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button><button type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("promptAssets.open"))}</button>`);
+      _push(`<!--]--></select><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.open"))}</button>`);
       if (unref(wildcardError)) {
-        _push(`<small class="error prompt-asset-quick__message" aria-live="assertive" data-v-176d2faf>${ssrInterpolate(unref(wildcardError))}</small>`);
+        _push(`<small class="error prompt-asset-quick__message" aria-live="assertive" data-v-4a922fb0>${ssrInterpolate(unref(wildcardError))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--styles"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.aria"))} data-v-176d2faf><div class="asset-panel__header" data-v-176d2faf><span data-v-176d2faf>${ssrInterpolate(unref(t)("advancedStyles.title"))}</span><button type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("promptAssets.openStyleGallery"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-176d2faf><input${ssrRenderAttr("value", unref(advancedStyles).query)}${ssrRenderAttr("aria-label", unref(t)("advancedStyles.searchStyles"))}${ssrRenderAttr("placeholder", unref(t)("advancedStyles.searchStylesPlaceholder"))} data-v-176d2faf><button type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("promptAssets.open"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).filteredStyles.length) ? " disabled" : ""} data-v-176d2faf>${ssrInterpolate(unref(t)("advancedStyles.random"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading) ? " disabled" : ""} data-v-176d2faf>${ssrInterpolate(unref(t)("advancedStyles.reload"))}</button></div>`);
+      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--styles"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.aria"))} data-v-4a922fb0><div class="asset-panel__header" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("advancedStyles.title"))}</span><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.openStyleGallery"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-4a922fb0><input${ssrRenderAttr("value", unref(advancedStyles).query)}${ssrRenderAttr("aria-label", unref(t)("advancedStyles.searchStyles"))}${ssrRenderAttr("placeholder", unref(t)("advancedStyles.searchStylesPlaceholder"))} data-v-4a922fb0><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.open"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).filteredStyles.length) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("advancedStyles.random"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("advancedStyles.reload"))}</button></div>`);
       _push(ssrRenderComponent(StyleChain, {
         compact: "",
         onOpenDetails: ($event) => openPromptAssets("advanced-styles")
       }, null, _parent));
-      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--lora"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.aria"))} data-v-176d2faf><div class="asset-panel__header" data-v-176d2faf><span data-v-176d2faf>LoRA <small data-v-176d2faf>${ssrInterpolate(unref(loraOptions).length)}</small></span><button type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("promptAssets.openLoraBrowser"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-176d2faf><input${ssrRenderAttr("value", unref(selectedQuickLoraPath))} list="prompt-quick-lora-options"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectLora"))}${ssrRenderAttr("placeholder", unref(t)("loraBrowser.selectLora"))} data-v-176d2faf><datalist id="prompt-quick-lora-options" data-v-176d2faf><!--[-->`);
+      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--lora"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.aria"))} data-v-4a922fb0><div class="asset-panel__header" data-v-4a922fb0><span data-v-4a922fb0>LoRA <small data-v-4a922fb0>${ssrInterpolate(unref(loraOptions).length)}</small></span><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.openLoraBrowser"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-4a922fb0><input${ssrRenderAttr("value", unref(selectedQuickLoraPath))} list="prompt-quick-lora-options"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectLora"))}${ssrRenderAttr("placeholder", unref(t)("loraBrowser.selectLora"))} data-v-4a922fb0><datalist id="prompt-quick-lora-options" data-v-4a922fb0><!--[-->`);
       ssrRenderList(unref(loraOptions), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-176d2faf></option>`);
+        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-4a922fb0></option>`);
       });
-      _push(`<!--]--></datalist><button type="button"${ssrIncludeBooleanAttr(!unref(selectedQuickLoraPath)) ? " disabled" : ""} data-v-176d2faf>${ssrInterpolate(unref(t)("loraBrowser.add"))}</button></div>`);
+      _push(`<!--]--></datalist><button type="button"${ssrIncludeBooleanAttr(!unref(selectedQuickLoraPath)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("loraBrowser.add"))}</button></div>`);
       _push(ssrRenderComponent(SelectedLoRAStack, { compact: "" }, null, _parent));
-      _push(`</section><section class="prompt-asset-quick prompt-asset-quick--assist"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-176d2faf><span data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-176d2faf><!--[-->`);
+      _push(`</section><section class="prompt-asset-quick prompt-asset-quick--assist"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-4a922fb0><!--[-->`);
       ssrRenderList(unref(promptAssistProviderModeOptions), (option) => {
-        _push(`<option${ssrRenderAttr("value", option.id)} data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}>${ssrInterpolate(option.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", option.id)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}>${ssrInterpolate(option.label)}</option>`);
       });
-      _push(`<!--]--></select><button type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section><section class="prompt-asset-quick prompt-asset-quick--embeddings"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-176d2faf><div class="prompt-asset-embedding__header" data-v-176d2faf><span data-v-176d2faf>${ssrInterpolate(unref(t)("prompt.embedding.title"))}</span></div><div class="prompt-asset-embedding__content" data-v-176d2faf><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-176d2faf><option value="" data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
+      _push(`<!--]--></select><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section><section class="prompt-asset-quick prompt-asset-quick--embeddings"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-4a922fb0><div class="prompt-asset-embedding__header" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.embedding.title"))}</span></div><div class="prompt-asset-embedding__content" data-v-4a922fb0><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-4a922fb0><option value="" data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
       ssrRenderList(unref(embeddingOptions), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
+        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
       });
-      _push(`<!--]--></select></div><div class="asset-actions prompt-asset-embedding__actions" data-v-176d2faf><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-176d2faf>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-176d2faf>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div><button type="button" data-v-176d2faf>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section>`);
+      _push(`<!--]--></select></div><div class="asset-actions prompt-asset-embedding__actions" data-v-4a922fb0><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section>`);
       _push(ssrRenderComponent(PromptAssetsDrawer, {
         open: unref(promptAssetsOpen),
         "active-tab": unref(promptAssetsTab),
@@ -11472,58 +12135,58 @@ ${generation.negativePrompt}`;
       }, {
         "prompt-assist": withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel prompt-assist-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-176d2faf${_scopeId}><div class="asset-panel__header" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><div class="prompt-assist-header-actions" data-v-176d2faf${_scopeId}><small data-v-176d2faf${_scopeId}>${ssrInterpolate(promptAssistTargetLabel(unref(promptAssist)?.target ?? unref(promptAssistTarget)))}</small><button class="prompt-assist-guide-link" type="button" data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.guide"))}</button></div></div><div class="prompt-assist-provider-draft" data-v-176d2faf${_scopeId}><label class="field" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.purpose"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.purpose"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider)) ? " disabled" : ""} data-v-176d2faf${_scopeId}><!--[-->`);
+            _push2(`<section class="asset-panel prompt-assist-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-4a922fb0${_scopeId}><div class="asset-panel__header" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><div class="prompt-assist-header-actions" data-v-4a922fb0${_scopeId}><small data-v-4a922fb0${_scopeId}>${ssrInterpolate(promptAssistTargetLabel(unref(promptAssist)?.target ?? unref(promptAssistTarget)))}</small><button class="prompt-assist-guide-link" type="button" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.guide"))}</button></div></div><div class="prompt-assist-provider-draft" data-v-4a922fb0${_scopeId}><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.purpose"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.purpose"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider)) ? " disabled" : ""} data-v-4a922fb0${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistPurposeOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistPurposePreset)) ? ssrLooseContain(unref(promptAssistPurposePreset), option.id) : ssrLooseEqual(unref(promptAssistPurposePreset), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistPurposePreset)) ? ssrLooseContain(unref(promptAssistPurposePreset), option.id) : ssrLooseEqual(unref(promptAssistPurposePreset), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select><small class="field-hint" data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(promptAssistPurposeHelp))}</small></label><div class="field-grid" data-v-176d2faf${_scopeId}><label class="field" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.target"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.target"))} data-v-176d2faf${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select><small class="field-hint" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssistPurposeHelp))}</small></label><div class="field-grid" data-v-4a922fb0${_scopeId}><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.target"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.target"))} data-v-4a922fb0${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistTargetOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)}${ssrIncludeBooleanAttr(option.id === "negative" && !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistTarget)) ? ssrLooseContain(unref(promptAssistTarget), option.id) : ssrLooseEqual(unref(promptAssistTarget), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)}${ssrIncludeBooleanAttr(option.id === "negative" && !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistTarget)) ? ssrLooseContain(unref(promptAssistTarget), option.id) : ssrLooseEqual(unref(promptAssistTarget), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label><label class="field" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.language"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.language"))} data-v-176d2faf${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select></label><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.language"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.language"))} data-v-4a922fb0${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistLanguageOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistLanguage)) ? ssrLooseContain(unref(promptAssistLanguage), option.id) : ssrLooseEqual(unref(promptAssistLanguage), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistLanguage)) ? ssrLooseContain(unref(promptAssistLanguage), option.id) : ssrLooseEqual(unref(promptAssistLanguage), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label></div><div class="field-grid" data-v-176d2faf${_scopeId}><label class="field" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.provider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-176d2faf${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select></label></div><div class="field-grid" data-v-4a922fb0${_scopeId}><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.provider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-4a922fb0${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistProviderModeOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label><label class="${ssrRenderClass([{ "field--disabled": !unref(promptAssistUsesProvider) }, "field"])}" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.model"))}</span><input${ssrRenderAttr("value", unref(promptAssistModelInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.model"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.modelPlaceholder"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider) || Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-176d2faf${_scopeId}></label></div>`);
+            _push2(`<!--]--></select></label><label class="${ssrRenderClass([{ "field--disabled": !unref(promptAssistUsesProvider) }, "field"])}" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.model"))}</span><input${ssrRenderAttr("value", unref(promptAssistModelInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.model"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.modelPlaceholder"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider) || Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-4a922fb0${_scopeId}></label></div>`);
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-176d2faf${_scopeId}><label class="field" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.savedProvider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.savedProvider"))} data-v-176d2faf${_scopeId}><option value="" data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), "") : ssrLooseEqual(unref(promptAssistProviderPresetId), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.manualPerRequest"))}</option><!--[-->`);
+              _push2(`<div class="field-grid" data-v-4a922fb0${_scopeId}><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.savedProvider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.savedProvider"))} data-v-4a922fb0${_scopeId}><option value="" data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), "") : ssrLooseEqual(unref(promptAssistProviderPresetId), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.manualPerRequest"))}</option><!--[-->`);
               ssrRenderList(unref(promptAssistProviders), (provider) => {
-                _push2(`<option${ssrRenderAttr("value", provider.id)} data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), provider.id) : ssrLooseEqual(unref(promptAssistProviderPresetId), provider.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(provider.name)} / ${ssrInterpolate(provider.model)}</option>`);
+                _push2(`<option${ssrRenderAttr("value", provider.id)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), provider.id) : ssrLooseEqual(unref(promptAssistProviderPresetId), provider.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(provider.name)} / ${ssrInterpolate(provider.model)}</option>`);
               });
-              _push2(`<!--]--></select></label><label class="field" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKey"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKey))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKey"))} type="password"${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyPlaceholder"))} autocomplete="off" data-v-176d2faf${_scopeId}></label></div>`);
+              _push2(`<!--]--></select></label><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKey"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKey))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKey"))} type="password"${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyPlaceholder"))} autocomplete="off" data-v-4a922fb0${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-176d2faf${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKeyEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVar))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKeyEnvVar"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyEnvVarPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-176d2faf${_scopeId}></label><label class="field field--disabled" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVarValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEnvVar"))} disabled data-v-176d2faf${_scopeId}></label></div>`);
+              _push2(`<div class="field-grid" data-v-4a922fb0${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKeyEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVar))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKeyEnvVar"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyEnvVarPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-4a922fb0${_scopeId}></label><label class="field field--disabled" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVarValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEnvVar"))} disabled data-v-4a922fb0${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-176d2faf${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.endpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpoint))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.endpoint"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.endpointPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-176d2faf${_scopeId}></label><label class="field" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.timeout"))}</span><input${ssrRenderAttr("value", unref(promptAssistTimeoutInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.timeout"))} type="number" min="1" max="300"${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-176d2faf${_scopeId}></label></div>`);
+              _push2(`<div class="field-grid" data-v-4a922fb0${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.endpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpoint))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.endpoint"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.endpointPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-4a922fb0${_scopeId}></label><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.timeout"))}</span><input${ssrRenderAttr("value", unref(promptAssistTimeoutInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.timeout"))} type="number" min="1" max="300"${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-4a922fb0${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<label class="field field--disabled" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEndpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpointValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEndpoint"))} disabled data-v-176d2faf${_scopeId}></label>`);
+              _push2(`<label class="field field--disabled" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEndpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpointValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEndpoint"))} disabled data-v-4a922fb0${_scopeId}></label>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<label class="field" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.extraInstruction"))}</span><textarea${ssrRenderAttr("aria-label", unref(t)("prompt.assist.extraInstruction"))} rows="2" data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(promptAssistInstruction))}</textarea></label></div><div class="asset-actions" data-v-176d2faf${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promptAssistLoading)) ? " disabled" : ""} data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(promptAssistActionLabel))}</button></div>`);
+            _push2(`<label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.extraInstruction"))}</span><textarea${ssrRenderAttr("aria-label", unref(t)("prompt.assist.extraInstruction"))} rows="2" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssistInstruction))}</textarea></label></div><div class="asset-actions" data-v-4a922fb0${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promptAssistLoading)) ? " disabled" : ""} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssistActionLabel))}</button></div>`);
             if (unref(promptAssist)) {
-              _push2(`<div class="prompt-assist-output" data-v-176d2faf${_scopeId}><div class="runtime-log" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedPrompt"))}</span><pre data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_prompt)}</pre></div><div class="runtime-log" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedNegative"))}</span><pre data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_negative_prompt || unref(t)("prompt.assist.negativeUnavailable"))}</pre></div><div class="tag-suggestion-list" data-v-176d2faf${_scopeId}><!--[-->`);
+              _push2(`<div class="prompt-assist-output" data-v-4a922fb0${_scopeId}><div class="runtime-log" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedPrompt"))}</span><pre data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_prompt)}</pre></div><div class="runtime-log" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedNegative"))}</span><pre data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_negative_prompt || unref(t)("prompt.assist.negativeUnavailable"))}</pre></div><div class="tag-suggestion-list" data-v-4a922fb0${_scopeId}><!--[-->`);
               ssrRenderList(unref(promptAssist).suggested_tags, (tag) => {
-                _push2(`<small data-v-176d2faf${_scopeId}>${ssrInterpolate(tag)}</small>`);
+                _push2(`<small data-v-4a922fb0${_scopeId}>${ssrInterpolate(tag)}</small>`);
               });
               _push2(`<!--]--></div>`);
               if (unref(promptAssistWarningMessages).length) {
-                _push2(`<div class="tag-suggestion-list tag-suggestion-list--warning" data-v-176d2faf${_scopeId}><!--[-->`);
+                _push2(`<div class="tag-suggestion-list tag-suggestion-list--warning" data-v-4a922fb0${_scopeId}><!--[-->`);
                 ssrRenderList(unref(promptAssistWarningMessages), (warning) => {
-                  _push2(`<small data-v-176d2faf${_scopeId}>${ssrInterpolate(warning)}</small>`);
+                  _push2(`<small data-v-4a922fb0${_scopeId}>${ssrInterpolate(warning)}</small>`);
                 });
                 _push2(`<!--]--></div>`);
               } else {
@@ -11533,17 +12196,17 @@ ${generation.negativePrompt}`;
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<div class="asset-actions prompt-assist-apply-actions" data-v-176d2faf${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(promptAssistResultState).canApplyPrompt) ? " disabled" : ""} data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyPrompt"))}</button><button${ssrRenderAttrs(mergeProps({
+            _push2(`<div class="asset-actions prompt-assist-apply-actions" data-v-4a922fb0${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(promptAssistResultState).canApplyPrompt) ? " disabled" : ""} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyPrompt"))}</button><button${ssrRenderAttrs(mergeProps({
               type: "button",
               disabled: !unref(promptAssistResultState).canApplyNegative
-            }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(promptAssistResultState).canApplyNegative ? "" : unref(promptAssistStateMessage))))} data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyNegative"))}</button></div><div class="${ssrRenderClass([`prompt-assist-state--${unref(promptAssistResultState).id}`, "prompt-assist-state"])}"${ssrRenderAttr("aria-live", unref(promptAssistError) ? "assertive" : "polite")} data-v-176d2faf${_scopeId}><strong data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(promptAssistStateMessage))}</strong>`);
+            }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(promptAssistResultState).canApplyNegative ? "" : unref(promptAssistStateMessage))))} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyNegative"))}</button></div><div class="${ssrRenderClass([`prompt-assist-state--${unref(promptAssistResultState).id}`, "prompt-assist-state"])}"${ssrRenderAttr("aria-live", unref(promptAssistError) ? "assertive" : "polite")} data-v-4a922fb0${_scopeId}><strong data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssistStateMessage))}</strong>`);
             if (unref(promptAssistError)) {
-              _push2(`<small class="error" data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(promptAssistError))}</small>`);
+              _push2(`<small class="error" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssistError))}</small>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistError) && unref(promptAssistRequestContext)) {
-              _push2(`<small data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.requestContext"))}: ${ssrInterpolate(unref(promptAssistRequestContext))}</small>`);
+              _push2(`<small data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.requestContext"))}: ${ssrInterpolate(unref(promptAssistRequestContext))}</small>`);
             } else {
               _push2(`<!---->`);
             }
@@ -11853,19 +12516,19 @@ ${generation.negativePrompt}`;
         }),
         embeddings: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-176d2faf${_scopeId}><div class="asset-panel__header prompt-asset-embedding__header" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.title"))} <small data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(embeddingOptions).length)}</small></span></div><div class="prompt-asset-embedding__content" data-v-176d2faf${_scopeId}><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-176d2faf${_scopeId}><option value="" data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
+            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-4a922fb0${_scopeId}><div class="asset-panel__header prompt-asset-embedding__header" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.title"))} <small data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(embeddingOptions).length)}</small></span></div><div class="prompt-asset-embedding__content" data-v-4a922fb0${_scopeId}><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-4a922fb0${_scopeId}><option value="" data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
             ssrRenderList(unref(embeddingOptions), (item) => {
-              _push2(`<option${ssrRenderAttr("value", item.relative_path)} data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.relative_path)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", item.relative_path)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.relative_path)}</option>`);
             });
-            _push2(`<!--]--></select><div class="embedding-browser"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.browserAria"))} data-v-176d2faf${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select><div class="embedding-browser"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.browserAria"))} data-v-4a922fb0${_scopeId}><!--[-->`);
             ssrRenderList(unref(embeddingOptions), (item) => {
               _push2(`<button${ssrRenderAttrs(mergeProps({
                 key: item.path,
                 class: "embedding-row",
                 type: "button"
-              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.relative_path)))} data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(embeddingToken(String(item.relative_path)))}</span><small data-v-176d2faf${_scopeId}>${ssrInterpolate(item.relative_path)}</small></button>`);
+              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.relative_path)))} data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(embeddingToken(String(item.relative_path)))}</span><small data-v-4a922fb0${_scopeId}>${ssrInterpolate(item.relative_path)}</small></button>`);
             });
-            _push2(`<!--]--></div></div><div class="asset-actions prompt-asset-embedding__actions" data-v-176d2faf${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div></section>`);
+            _push2(`<!--]--></div></div><div class="asset-actions prompt-asset-embedding__actions" data-v-4a922fb0${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div></section>`);
           } else {
             return [
               createVNode("section", {
@@ -11930,13 +12593,13 @@ ${generation.negativePrompt}`;
         }),
         wildcards: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-176d2faf${_scopeId}><div class="asset-panel__header" data-v-176d2faf${_scopeId}><span data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.title"))}</span></div><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-176d2faf${_scopeId}><option value="" data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
+            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-4a922fb0${_scopeId}><div class="asset-panel__header" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.title"))}</span></div><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-4a922fb0${_scopeId}><option value="" data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
             ssrRenderList(unref(wildcards), (item) => {
-              _push2(`<option${ssrRenderAttr("value", item.name)} data-v-176d2faf${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
+              _push2(`<option${ssrRenderAttr("value", item.name)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
             });
-            _push2(`<!--]--></select><div class="asset-actions" data-v-176d2faf${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button></div>`);
+            _push2(`<!--]--></select><div class="asset-actions" data-v-4a922fb0${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button></div>`);
             if (unref(wildcardError)) {
-              _push2(`<small class="error" aria-live="assertive" data-v-176d2faf${_scopeId}>${ssrInterpolate(unref(wildcardError))}</small>`);
+              _push2(`<small class="error" aria-live="assertive" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(wildcardError))}</small>`);
             } else {
               _push2(`<!---->`);
             }
@@ -11996,7 +12659,7 @@ _sfc_main$1_.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptPane.vue");
   return _sfc_setup$1_ ? _sfc_setup$1_(props, ctx) : void 0;
 };
-const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-176d2faf"]]), { __name: "StudioPromptPane" });
+const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-4a922fb0"]]), { __name: "StudioPromptPane" });
 const normalizeEagleFolderSelection = (folders, selectedId) => selectedId && folders.some((folder) => folder.id === selectedId) ? selectedId : "";
 const errorMessage$2 = (error) => {
   return userFacingErrorMessage(error, "common.error.external");
@@ -18729,6 +19392,19 @@ const _sfc_main$1o = /* @__PURE__ */ defineComponent({
     const canUseSeed = computed(() => props.preview.status !== "unsupported" && Number.isInteger(props.preview.seed));
     const unavailableResources = computed(() => props.preview.resources.filter((resource) => resource.status !== "available"));
     const availableResources = computed(() => props.preview.resources.filter((resource) => resource.status === "available"));
+    const promptInputMessageKey = computed(() => {
+      if (props.preview.warning_codes.includes("prompt_input_invalid_fallback")) {
+        return "imageMetadata.promptSectionsInvalid";
+      }
+      if (props.preview.warning_codes.includes("prompt_input_mismatch_fallback")) {
+        return "imageMetadata.promptSectionsMismatch";
+      }
+      if (props.preview.prompt_input?.mode === "sections") {
+        return "imageMetadata.promptSectionsAvailable";
+      }
+      return "";
+    });
+    const promptInputRecovered = computed(() => props.preview.warning_codes.includes("prompt_input_invalid_fallback") || props.preview.warning_codes.includes("prompt_input_mismatch_fallback"));
     const promptText = (value) => {
       if (value.presence === "absent") return t("imageMetadata.notFound");
       return value.value || t("imageMetadata.explicitEmpty");
@@ -18737,55 +19413,61 @@ const _sfc_main$1o = /* @__PURE__ */ defineComponent({
       _push(`<div${ssrRenderAttrs(mergeProps({
         class: "image-metadata-backdrop",
         role: "presentation"
-      }, _attrs))} data-v-397a3585><section class="image-metadata-dialog" role="dialog" aria-modal="true" aria-labelledby="image-metadata-title" tabindex="-1" data-v-397a3585><header class="image-metadata-dialog__header" data-v-397a3585><div data-v-397a3585><p data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.eyebrow"))}</p><h2 id="image-metadata-title" data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.title"))}</h2><small data-v-397a3585>${ssrInterpolate(__props.preview.source.filename)} · ${ssrInterpolate(__props.preview.source.width)}×${ssrInterpolate(__props.preview.source.height)} · ${ssrInterpolate(__props.preview.source.format.toUpperCase())}</small></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("imageMetadata.close"))}${ssrIncludeBooleanAttr(__props.applying) ? " disabled" : ""} data-v-397a3585> × </button></header><div class="image-metadata-dialog__summary"${ssrRenderAttr("data-status", __props.preview.status)} data-v-397a3585><strong data-v-397a3585>${ssrInterpolate(unref(t)(`imageMetadata.status.${__props.preview.status}`))}</strong><span data-v-397a3585>${ssrInterpolate(unref(t)(`imageMetadata.family.${__props.preview.source_family}`))}</span>`);
+      }, _attrs))} data-v-1ddeab9f><section class="image-metadata-dialog" role="dialog" aria-modal="true" aria-labelledby="image-metadata-title" tabindex="-1" data-v-1ddeab9f><header class="image-metadata-dialog__header" data-v-1ddeab9f><div data-v-1ddeab9f><p data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.eyebrow"))}</p><h2 id="image-metadata-title" data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.title"))}</h2><small data-v-1ddeab9f>${ssrInterpolate(__props.preview.source.filename)} · ${ssrInterpolate(__props.preview.source.width)}×${ssrInterpolate(__props.preview.source.height)} · ${ssrInterpolate(__props.preview.source.format.toUpperCase())}</small></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("imageMetadata.close"))}${ssrIncludeBooleanAttr(__props.applying) ? " disabled" : ""} data-v-1ddeab9f> × </button></header><div class="image-metadata-dialog__summary"${ssrRenderAttr("data-status", __props.preview.status)} data-v-1ddeab9f><strong data-v-1ddeab9f>${ssrInterpolate(unref(t)(`imageMetadata.status.${__props.preview.status}`))}</strong><span data-v-1ddeab9f>${ssrInterpolate(unref(t)(`imageMetadata.family.${__props.preview.source_family}`))}</span>`);
       if (__props.preview.status === "unsupported") {
-        _push(`<small data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.unsupportedHelp"))}</small>`);
+        _push(`<small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.unsupportedHelp"))}</small>`);
       } else if (__props.preview.status === "partial") {
-        _push(`<small data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.partialHelp"))}</small>`);
+        _push(`<small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.partialHelp"))}</small>`);
       } else {
-        _push(`<small data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.completeHelp"))}</small>`);
+        _push(`<small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.completeHelp"))}</small>`);
       }
-      _push(`</div><div class="image-metadata-dialog__content" data-v-397a3585><section class="image-metadata-section image-metadata-section--prompts" data-v-397a3585><header data-v-397a3585><h3 data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.prompts"))}</h3><small data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.promptsHelp"))}</small></header><dl data-v-397a3585><div data-v-397a3585><dt data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.positivePrompt"))}</dt><dd data-v-397a3585>${ssrInterpolate(promptText(__props.preview.positive_prompt))}</dd></div><div data-v-397a3585><dt data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.negativePrompt"))}</dt><dd data-v-397a3585>${ssrInterpolate(promptText(__props.preview.negative_prompt))}</dd></div></dl></section><section class="image-metadata-section" data-v-397a3585><header data-v-397a3585><h3 data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.settings"))}</h3><small data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.settingsHelp"))}</small></header>`);
+      _push(`</div><div class="image-metadata-dialog__content" data-v-1ddeab9f><section class="image-metadata-section image-metadata-section--prompts" data-v-1ddeab9f><header data-v-1ddeab9f><h3 data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.prompts"))}</h3><small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.promptsHelp"))}</small></header><dl data-v-1ddeab9f><div data-v-1ddeab9f><dt data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.positivePrompt"))}</dt><dd data-v-1ddeab9f>${ssrInterpolate(promptText(__props.preview.positive_prompt))}</dd></div><div data-v-1ddeab9f><dt data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.negativePrompt"))}</dt><dd data-v-1ddeab9f>${ssrInterpolate(promptText(__props.preview.negative_prompt))}</dd></div></dl>`);
+      if (unref(promptInputMessageKey)) {
+        _push(`<p class="image-metadata-prompt-state"${ssrRenderAttr("data-recovered", unref(promptInputRecovered))} data-v-1ddeab9f>${ssrInterpolate(unref(t)(unref(promptInputMessageKey)))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</section><section class="image-metadata-section" data-v-1ddeab9f><header data-v-1ddeab9f><h3 data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.settings"))}</h3><small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.settingsHelp"))}</small></header>`);
       if (unref(settingEntries).length) {
-        _push(`<dl class="image-metadata-settings" data-v-397a3585><!--[-->`);
+        _push(`<dl class="image-metadata-settings" data-v-1ddeab9f><!--[-->`);
         ssrRenderList(unref(settingEntries), (entry2) => {
-          _push(`<div data-v-397a3585><dt data-v-397a3585>${ssrInterpolate(entry2.label)}</dt><dd data-v-397a3585>${ssrInterpolate(entry2.value)}</dd></div>`);
+          _push(`<div data-v-1ddeab9f><dt data-v-1ddeab9f>${ssrInterpolate(entry2.label)}</dt><dd data-v-1ddeab9f>${ssrInterpolate(entry2.value)}</dd></div>`);
         });
         _push(`<!--]--></dl>`);
       } else {
-        _push(`<p class="image-metadata-empty" data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.noSettings"))}</p>`);
+        _push(`<p class="image-metadata-empty" data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.noSettings"))}</p>`);
       }
-      _push(`<div class="image-metadata-seed" data-v-397a3585><span data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.foundSeed"))}</span><strong data-v-397a3585>${ssrInterpolate(__props.preview.seed ?? unref(t)("imageMetadata.notFound"))}</strong><small data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.seedPreservedHelp"))}</small></div></section><section class="image-metadata-section" data-v-397a3585><header data-v-397a3585><h3 data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.resources"))}</h3><small data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.resourcesHelp"))}</small></header>`);
+      _push(`<div class="image-metadata-seed" data-v-1ddeab9f><span data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.foundSeed"))}</span><strong data-v-1ddeab9f>${ssrInterpolate(__props.preview.seed ?? unref(t)("imageMetadata.notFound"))}</strong><small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.seedPreservedHelp"))}</small></div></section><section class="image-metadata-section" data-v-1ddeab9f><header data-v-1ddeab9f><h3 data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.resources"))}</h3><small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.resourcesHelp"))}</small></header>`);
       if (__props.preview.resources.length) {
-        _push(`<ul class="image-metadata-resources" data-v-397a3585><!--[-->`);
+        _push(`<ul class="image-metadata-resources" data-v-1ddeab9f><!--[-->`);
         ssrRenderList(unref(availableResources), (resource) => {
-          _push(`<li data-v-397a3585><span data-v-397a3585>${ssrInterpolate(resource.source_name)}</span><strong data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.resource.available"))}</strong></li>`);
+          _push(`<li data-v-1ddeab9f><span data-v-1ddeab9f>${ssrInterpolate(resource.source_name)}</span><strong data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.resource.available"))}</strong></li>`);
         });
         _push(`<!--]--><!--[-->`);
         ssrRenderList(unref(unavailableResources), (resource) => {
-          _push(`<li class="image-metadata-resource--warning" data-v-397a3585><span data-v-397a3585>${ssrInterpolate(resource.source_name)}</span><strong data-v-397a3585>${ssrInterpolate(unref(t)(`imageMetadata.resource.${resource.status}`))}</strong></li>`);
+          _push(`<li class="image-metadata-resource--warning" data-v-1ddeab9f><span data-v-1ddeab9f>${ssrInterpolate(resource.source_name)}</span><strong data-v-1ddeab9f>${ssrInterpolate(unref(t)(`imageMetadata.resource.${resource.status}`))}</strong></li>`);
         });
         _push(`<!--]--></ul>`);
       } else {
-        _push(`<p class="image-metadata-empty" data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.noResources"))}</p>`);
+        _push(`<p class="image-metadata-empty" data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.noResources"))}</p>`);
       }
       if (unref(unavailableResources).length) {
-        _push(`<p class="image-metadata-warning" data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.missingResourceHelp"))}</p>`);
+        _push(`<p class="image-metadata-warning" data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.missingResourceHelp"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.preview.warning_codes.length || __props.preview.unsupported_codes.length) {
-        _push(`<p class="image-metadata-warning" data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.metadataWarning"))}</p>`);
+        _push(`<p class="image-metadata-warning" data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.metadataWarning"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</section></div>`);
       if (__props.error) {
-        _push(`<p class="image-metadata-error" aria-live="assertive" data-v-397a3585>${ssrInterpolate(__props.error)}</p>`);
+        _push(`<p class="image-metadata-error" aria-live="assertive" data-v-1ddeab9f>${ssrInterpolate(__props.error)}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<footer class="image-metadata-dialog__actions" data-v-397a3585><button data-image-metadata-action="prompts" type="button"${ssrIncludeBooleanAttr(!unref(canReusePrompts) || __props.applying) ? " disabled" : ""} data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.usePrompts"))}</button><button data-image-metadata-action="settings" class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canReuseSettings) || __props.applying) ? " disabled" : ""} data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.reuseSettings"))}</button><button data-image-metadata-action="image-input" type="button"${ssrIncludeBooleanAttr(!unref(canUseImageInput) || __props.applying) ? " disabled" : ""} data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.useImageInput"))}</button><button data-image-metadata-action="seed" type="button"${ssrIncludeBooleanAttr(!unref(canUseSeed) || __props.applying) ? " disabled" : ""} data-v-397a3585>${ssrInterpolate(unref(t)("imageMetadata.useSeed"))}</button></footer></section></div>`);
+      _push(`<footer class="image-metadata-dialog__actions" data-v-1ddeab9f><button data-image-metadata-action="prompts" type="button"${ssrIncludeBooleanAttr(!unref(canReusePrompts) || __props.applying) ? " disabled" : ""} data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.usePrompts"))}</button><button data-image-metadata-action="settings" class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canReuseSettings) || __props.applying) ? " disabled" : ""} data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.reuseSettings"))}</button><button data-image-metadata-action="image-input" type="button"${ssrIncludeBooleanAttr(!unref(canUseImageInput) || __props.applying) ? " disabled" : ""} data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.useImageInput"))}</button><button data-image-metadata-action="seed" type="button"${ssrIncludeBooleanAttr(!unref(canUseSeed) || __props.applying) ? " disabled" : ""} data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.useSeed"))}</button></footer></section></div>`);
     };
   }
 });
@@ -18795,7 +19477,7 @@ _sfc_main$1o.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageMetadataImportDialog.vue");
   return _sfc_setup$1o ? _sfc_setup$1o(props, ctx) : void 0;
 };
-const ImageMetadataImportDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1o, [["__scopeId", "data-v-397a3585"]]), { __name: "StudioImageMetadataImportDialog" });
+const ImageMetadataImportDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1o, [["__scopeId", "data-v-1ddeab9f"]]), { __name: "StudioImageMetadataImportDialog" });
 const _sfc_main$1n = /* @__PURE__ */ defineComponent({
   __name: "ImageMetadataImportFlow",
   __ssrInlineRender: true,

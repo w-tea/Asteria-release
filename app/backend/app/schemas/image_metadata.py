@@ -5,6 +5,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.prompt_input import PromptInput
+
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -149,6 +151,7 @@ class ImageMetadataPreview(StrictModel):
     source_family: Literal["asteria", "a1111_forge", "comfyui", "unknown"]
     status: Literal["complete", "partial", "unsupported"]
     positive_prompt: MetadataTextValue
+    prompt_input: PromptInput | None = None
     negative_prompt: MetadataTextValue
     settings: CompatibleTxt2ImgSettings = Field(default_factory=CompatibleTxt2ImgSettings)
     seed: int | None = None

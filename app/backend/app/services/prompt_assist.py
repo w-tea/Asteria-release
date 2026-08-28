@@ -8,7 +8,10 @@ from typing import Literal
 from urllib.parse import urlparse, urlunparse
 
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from app.schemas.prompt_input import PromptInput, PromptSection, PromptSectionId
+from app.services.prompt_input import validate_prompt_input_pair
 
 from app.services.prompt_assist_presets import (
     PromptAssistPurposePreset,
@@ -26,6 +29,9 @@ PromptAssistConnectionProviderMode = Literal["openai_compatible", "openai_respon
 
 class PromptAssistRequestData(BaseModel):
     prompt: str = ""
+    prompt_input: PromptInput | None = None
+    active_section_id: PromptSectionId | None = None
+    active_section_text: str | None = None
     negative_prompt: str = ""
     profile: str = "sdxl"
     mode: str = "txt2img"
@@ -45,11 +51,23 @@ class PromptAssistRequestData(BaseModel):
     provider_api_key_env_var: str = ""
     provider_timeout_seconds: float = Field(default=60.0, ge=1.0, le=300.0)
 
+    @model_validator(mode="after")
+    def validate_prompt_sections(self) -> "PromptAssistRequestData":
+        validate_prompt_assist_section_contract(
+            prompt=self.prompt,
+            prompt_input=self.prompt_input,
+            target=self.target,
+            active_section_id=self.active_section_id,
+            active_section_text=self.active_section_text,
+        )
+        return self
+
 
 class PromptAssistResult(BaseModel):
     provider_mode: PromptAssistProviderMode = "prompt_only"
     language: PromptAssistLanguage
     target: PromptAssistTarget
+    active_section_id: PromptSectionId | None = None
     purpose_preset: PromptAssistPurposePreset = "standard"
     system_prompt: str
     user_prompt: str
@@ -85,6 +103,43 @@ class PromptAssistProviderModelsRequestData(BaseModel):
 
 class PromptAssistProviderModelsResult(BaseModel):
     models: list[str] = Field(default_factory=list)
+
+
+def validate_prompt_assist_section_contract(
+    *,
+    prompt: str,
+    prompt_input: PromptInput | None,
+    target: PromptAssistTarget,
+    active_section_id: PromptSectionId | None,
+    active_section_text: str | None,
+) -> None:
+    if prompt_input is None:
+        if active_section_id is not None or active_section_text is not None:
+            raise ValueError("active prompt section requires prompt_input")
+        return
+
+    validate_prompt_input_pair(prompt, prompt_input)
+    if prompt_input.mode == "single":
+        if active_section_id is not None or active_section_text is not None:
+            raise ValueError("single prompt input must not contain an active section")
+        return
+
+    requires_active_section = target != "negative"
+    if active_section_id is None or active_section_text is None:
+        if requires_active_section or active_section_id is not None or active_section_text is not None:
+            raise ValueError("section prompt assist requires a complete active section")
+        return
+
+    section = next(
+        (
+            item
+            for item in prompt_input.sections or ()
+            if item.id == active_section_id
+        ),
+        None,
+    )
+    if section is None or section.text != active_section_text:
+        raise ValueError("active prompt section does not match prompt_input")
 
 
 def test_prompt_assist_provider(request: PromptAssistProviderTestRequestData) -> PromptAssistProviderTestResult:
@@ -124,6 +179,12 @@ def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
     if request.provider_mode == "prompt_only" and request.purpose_preset != "standard":
         raise ValueError("prompt_assist_provider_required_for_purpose")
     prompt = _compact(request.prompt)
+    active_section = _active_prompt_section(request)
+    prompt_edit_target = (
+        _compact(active_section.text)
+        if active_section is not None and request.target != "negative"
+        else prompt
+    )
     negative_prompt = _compact(request.negative_prompt)
     profile = _compact(request.profile).lower() or "sdxl"
     mode = _compact(request.mode).lower() or "txt2img"
@@ -134,7 +195,7 @@ def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
     if request.width < 256 or request.height < 256:
         warnings.append("small_canvas")
 
-    suggested_prompt = _suggest_prompt(prompt, profile, orientation, request.target)
+    suggested_prompt = _suggest_prompt(prompt_edit_target, profile, orientation, request.target)
     suggested_negative = _suggest_negative_prompt(negative_prompt, request.target)
     tags = _suggest_tags(profile, mode, orientation, request.loras, request.embeddings)
     protected_tokens = normalize_protected_tokens(request.protected_tokens)
@@ -174,13 +235,27 @@ def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
         suggested_negative = parsed_negative
         tags = parsed_tags
         warnings.extend(parsed_warnings)
-    suggested_prompt, protected_tokens_restored = restore_protected_tokens(suggested_prompt, protected_tokens)
+    if request.target == "negative":
+        suggested_negative, protected_tokens_restored = restore_protected_tokens(
+            suggested_negative,
+            protected_tokens,
+        )
+    else:
+        suggested_prompt, protected_tokens_restored = restore_protected_tokens(
+            suggested_prompt,
+            protected_tokens,
+        )
     if protected_tokens_restored:
         warnings.append("protected_tokens_restored")
     return PromptAssistResult(
         provider_mode=request.provider_mode,
         language=request.language,
         target=request.target,
+        active_section_id=(
+            active_section.id
+            if active_section is not None and request.target != "negative"
+            else None
+        ),
         purpose_preset=request.purpose_preset,
         system_prompt=system_prompt,
         user_prompt=user_prompt,
@@ -190,6 +265,23 @@ def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
         provider_model=provider_model,
         provider_response=provider_response,
         warnings=warnings,
+    )
+
+
+def _active_prompt_section(request: PromptAssistRequestData) -> PromptSection | None:
+    if (
+        request.prompt_input is None
+        or request.prompt_input.mode != "sections"
+        or request.active_section_id is None
+    ):
+        return None
+    return next(
+        (
+            section
+            for section in request.prompt_input.sections or ()
+            if section.id == request.active_section_id
+        ),
+        None,
     )
 
 
@@ -274,13 +366,19 @@ def _user_prompt(
     suggested_negative: str,
     protected_tokens: list[str],
 ) -> str:
+    active_section = _active_prompt_section(request)
+    prompt_label = (
+        "Current combined prompt"
+        if active_section is not None and request.target != "negative"
+        else "Current prompt"
+    )
     lines = [
         "Asteria generation context:",
         f"- Profile: {profile}",
         f"- Mode: {mode}",
         f"- Canvas: {request.width}x{request.height} ({orientation})",
         f"- Assist target: {request.target}",
-        f"- Current prompt: {prompt or '(empty)'}",
+        f"- {prompt_label}: {prompt or '(empty)'}",
         f"- Current negative prompt: {negative_prompt or '(empty)'}",
         f"- Active LoRAs: {', '.join(request.loras) if request.loras else '(none)'}",
         f"- Active embeddings: {', '.join(request.embeddings) if request.embeddings else '(none)'}",
@@ -289,6 +387,30 @@ def _user_prompt(
         f"- Local draft prompt: {suggested_prompt}",
         f"- Local draft negative prompt: {suggested_negative}",
     ]
+    if active_section is not None and request.target != "negative":
+        lines.extend(
+            [
+                "Prompt section editing rules:",
+                (
+                    f"- Active section (the only section you may rewrite) "
+                    f"[{active_section.id}] {active_section.label}: "
+                    f"{_compact(active_section.text) or '(empty)'}"
+                ),
+            ]
+        )
+        for section in sorted(
+            request.prompt_input.sections or (),
+            key=lambda item: item.order,
+        ):
+            if section.id == active_section.id:
+                continue
+            lines.append(
+                f"- Reference section (do not rewrite) "
+                f"[{section.id}] {section.label}: {_compact(section.text) or '(empty)'}"
+            )
+        lines.append(
+            "- Return only the replacement text for the active section in the JSON prompt field."
+        )
     if request.extra_instruction.strip():
         lines.append(f"- Extra instruction: {request.extra_instruction.strip()}")
     lines.extend(

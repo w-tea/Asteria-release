@@ -7,8 +7,10 @@ from pydantic import BaseModel, Field, model_validator
 from app.schemas.common import LoraSelection
 from app.schemas.image_edit import ImageEditLineage
 from app.schemas.media import MediaArtifact, MediaKind
+from app.schemas.prompt_input import PromptInput
 from app.schemas.remaster import PrimaryOutput, RemasterResponse, RemasterSettingsInput
 from app.services.controlnet_mode import ControlNetMode
+from app.services.prompt_input import validate_prompt_input_pair
 
 
 class AdvancedStyleSelection(BaseModel):
@@ -182,6 +184,7 @@ class Txt2ImgRequest(BaseModel):
     profile: str = "sdxl"
     runtime: str | None = None
     prompt: str = Field(min_length=1)
+    prompt_input: PromptInput | None = None
     negative_prompt: str = ""
     steps: int = Field(default=30, ge=1, le=150)
     cfg_scale: float = Field(default=6.5, ge=1, le=30)
@@ -248,6 +251,12 @@ class Txt2ImgRequest(BaseModel):
         if data.get("profile", "sdxl") == "flux2" and "scheduler" not in data:
             return {**data, "scheduler": "Flux2"}
         return data
+
+    @model_validator(mode="after")
+    def validate_prompt_input_contract(self):
+        if self.prompt_input is not None:
+            validate_prompt_input_pair(self.prompt, self.prompt_input)
+        return self
 
 
 class Img2ImgRequest(Txt2ImgRequest):

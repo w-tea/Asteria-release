@@ -2263,6 +2263,7 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
         exclude={
             "profile",
             "runtime",
+            "prompt_input",
             "loras",
             "controlnet_units",
             "anima_lllite_units",
@@ -2327,6 +2328,11 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
     if request.model_slot_overrides:
         mapped["model_slot_overrides"] = dict(request.model_slot_overrides)
     mapped["remaster"] = request.remaster.model_dump()
+    if request.prompt_input is not None:
+        mapped["prompt_input"] = request.prompt_input.model_dump(
+            mode="json",
+            exclude_none=True,
+        )
     if request.remaster.enabled:
         mapped["requested_batch_size"] = request.batch_size
         mapped["requested_batch_count"] = request.batch_count
@@ -3269,13 +3275,15 @@ def _generate(
     _record_hires_runtime(settings, selected_runtime, request.profile)
     _record_hires_checkpoint_runtime(settings, selected_runtime, request.profile)
     _record_refiner_runtime(settings, selected_runtime, request.profile)
+    runtime_settings = dict(settings)
+    runtime_settings.pop("prompt_input", None)
     runtime_request = {
         "profile": request.profile,
         "prompt": request.prompt,
         "expanded_prompt": prompt_expansion.expanded,
         "prompt_expansion_selections": prompt_expansion.selections,
         "negative_prompt": negative_prompt,
-        "settings": settings,
+        "settings": runtime_settings,
         "model_slots": runtime_model_slots,
         "loras": loras,
         "embeddings": embeddings,
@@ -3351,6 +3359,15 @@ def _generate(
         raise OperationCancelled() from exc
     except (RuntimeErrorResponse, RuntimeAdapterError, TopazError) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    runtime_settings_after_execution = runtime_request.get("settings")
+    if isinstance(runtime_settings_after_execution, dict):
+        settings.update(
+            {
+                key: value
+                for key, value in runtime_settings_after_execution.items()
+                if key != "prompt_input"
+            }
+        )
     if result.get("runtime_adapter"):
         settings["runtime_adapter"] = result["runtime_adapter"]
         if settings.get("controlnet_units") and request.profile == "sdxl" and result["runtime_adapter"] == "comfy_workflow":
