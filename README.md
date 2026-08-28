@@ -4,7 +4,7 @@
 
 ## 更新履歴 / Release history
 
-- **V1.2.0** — MiniMax H3のVideo Studio、MiniMax-Music3のMusic Studio、動画・音声に対応したMedia Library、標準／フルアクセス拡張、Anima 2.9B／3.8BとQwen2D-Anime VAE、Asteria独自の3つのMerge計算方法、プロンプト記法とAI支援、生成時のRAM使用量設定を追加。 / Added MiniMax H3 Video Studio, MiniMax-Music3 Music Studio, video/audio Media Library support, Standard and Full-access Extensions, Anima 2.9B/3.8B and Qwen2D-Anime VAE support, three Asteria-native Merge calculation modes, prompt tools and AI assistance, and a Reduce RAM use during generation setting.
+- **V1.2.0** — MiniMax H3のVideo Studio、MiniMax-Music3のMusic Studio、動画・音声に対応したMedia Library、標準／フルアクセス拡張、Anima 2.9B／3.8BとQwen2D-Anime VAE、Asteria独自の3つのMerge計算方法、項目別プロンプト入力、プロンプト記法とAI支援、生成時のRAM使用量設定を追加。 / Added MiniMax H3 Video Studio, MiniMax-Music3 Music Studio, video/audio Media Library support, Standard and Full-access Extensions, Anima 2.9B/3.8B and Qwen2D-Anime VAE support, three Asteria-native Merge calculation modes, sectioned positive-prompt input, prompt tools and AI assistance, and a Reduce RAM use during generation setting.
 - **V1.1.1** — 空白を含むフォルダーへAsteriaを配置すると起動できない問題を修正。 / Fixed Asteria failing to start when installed in a folder whose path contains spaces.
 - **V1.1.0** — 中断後も再開できる処理、更新・復旧時の保護、外部モデルライブラリ、追加のMerge方式、全画面のテーマ刷新、画像メタデータの再利用、Discord生成、診断を追加。 / Added resumable long-running work, safer update and recovery, external model libraries, new Merge modes, a full visual refresh, image-metadata reuse, Discord generation, and diagnostics.
 - **V1.0.4** — Runtime Monitor、生成時間、Seed単独適用、LoRAサムネイルと生成出力を改善。 / Added Runtime Monitor and generation time, seed-only reuse, LoRA thumbnails, and generation-output fixes.
@@ -28,6 +28,7 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - **Video Studioで動画を仕上げる**: MiniMax H3のText、Image、First / Last Frame、Reference / Video Edit、Sequenceを使い分けられます。Sequenceでは各クリップを確認してから続行または連結するため、採用した部分を保ったまま完成させられます。
 - **Music Studioで曲を作る**: MiniMax-Music3でVocalまたはInstrumentalを選び、用途に合う新しい曲を生成できます。
 - **設定を再利用する**: スタイル、ワイルドカード、Embedding、LoRA、生成プリセットを組み合わせ、PNG／JPEG／WebPからプロンプトや対応する生成設定を読み込んで次の生成に使えます。
+- **プロンプトを分けて入力する**: ポジティブプロンプトをベース、キャラクター、詳細の三つに分け、表示名と並び順を用途に合わせて変更できます。生成時は指定した順に一つのプロンプトへまとめ、履歴や生成プリセットからも同じ構成を復元できます。
 - **プロンプトを整える**: 選択した文字の重みをCtrl＋↑／↓で調整し、記法メニューから強調、弱化、数値指定、候補、段階切り替え、交互切り替え、AND、BREAKを入力できます。AIプロンプト支援では、用途に合わせて標準、Anima、Illustrious、Danbooruタグへ変換を選べます。
 - **LoRAを学習する**: 学習画像とキャプションを用意して学習を実行し、完成したモデルをモデル一覧から選べる状態にします。
 - **モデルを組み合わせる**: Merge StudioでCheckpointやLoRAの条件を比べ、Weight sum、MBW、Merge XYZから方式を選択できます。Moment Weave、Log Weave、Dual Residualは違いを見ながら合成するためのAsteria独自方式です。
@@ -42,6 +43,7 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 
 - Video Studioでは、Text、Image、First / Last Frame、Reference / Video Edit、Sequenceの5タスクから目的に合う動画作成を選べます。使用するモデルや構成、Steps、Sampler、Schedulerなどを選び、生成後に結果を確認してからアップスケールできます。Sequenceではクリップをプレビューし、**このクリップを再試行**、**採用して次へ**、**採用して完成**から次の操作を選びます。最後の連結だけ失敗したときは、採用済みクリップを作り直さず再試行できます。
 - Music Studioでは、VocalとInstrumentalを別々に下書きし、モデル構成、Steps、Sampler、Scheduler、曲の長さ、Seedなどを選べます。MiniMax-Music3の処理が失敗しても有料APIへ切り替わりません。
+- Generateでは、ポジティブプロンプトを「まとめて入力」と「項目別に入力」から選べます。項目別入力では、ベース、キャラクター、詳細の表示名と並び順を変更できます。生成時は指定した順に一つのプロンプトへまとめ、履歴、生成プリセット、画像のメタデータからも同じ構成を復元できます。
 - Generateでは、選択した文字の重みをCtrl＋↑／↓で0.1ずつ調整できます。記法メニューから強調、弱化、数値指定、候補、段階切り替え、交互切り替え、AND、BREAKを入力できます。
 - AIプロンプト支援では、用途に合わせて標準、Anima、Illustrious、Danbooruタグへ変換を選べます。OpenAI互換の接続先では、利用できるモデルの一覧を取得して選べます。
 - Settingsに「生成時のRAM使用量を抑える」を追加しました。大きな動画や連続生成でRAMが不足する場合に選べます。単発生成は遅くなる場合があり、変更はAsteriaの次回起動時に反映されます。
@@ -262,6 +264,7 @@ Asteria is a Windows application for local AI creation. It combines image genera
 - **Video Studio**: Use five MiniMax H3 tasks, including a Sequence flow that pauses for review after every clip.
 - **Music Studio**: Generate new Vocal or Instrumental music locally with MiniMax-Music3.
 - **Reusable prompts and settings**: Reuse styles, wildcards, embeddings, LoRAs, generation presets, and compatible prompts or settings found in PNG, JPEG, and WebP images.
+- **Sectioned prompt input**: Split the positive prompt into Base, Character, and Details sections, then rename or reorder them for the current workflow. Asteria combines the sections in that order and restores the same structure from history and generation presets.
 - **Prompt tools**: Use Ctrl + Up/Down to adjust prompt weight, insert common prompt notation from a menu, and ask AI Prompt Assist for Standard, Anima, Illustrious, or Convert to Danbooru tags output.
 - **LoRA training**: Prepare training images and captions, run training from Asteria, and register the result in the model list.
 - **Merge Studio**: Compare checkpoint or LoRA settings and use the Asteria-native Moment Weave, Log Weave, and Dual Residual modes with Weight sum, MBW, and Merge XYZ.
@@ -277,6 +280,7 @@ Asteria is a Windows application for local AI creation. It combines image genera
 - Added MiniMax H3 Video Studio with Text, Image, First / Last Frame, Reference / Video Edit, and Sequence tasks. You can choose the model configuration, Steps, Sampler, Scheduler, and other generation settings, then review the result before upscaling it.
 - Added per-clip Sequence review with Retry, Accept and continue, and Accept and finish. If only the final joining step fails, you can retry it without regenerating accepted clips.
 - Added MiniMax-Music3 Music Studio for new Vocal and Instrumental generation, with selectable model configuration, Steps, Sampler, Scheduler, duration, and Seed. A failed local run never falls back to a paid API.
+- Generate now lets you switch between one positive-prompt field and three editable sections. You can rename and reorder Base, Character, and Details. Asteria combines them in the selected order and restores the section structure from history, generation presets, and image metadata.
 - Added Ctrl + Up/Down prompt-weight adjustment and a notation menu for emphasis, de-emphasis, numeric weight, prompt alternatives, scheduled switching, alternating prompts, AND, and BREAK.
 - Added explicit Standard, Anima, Illustrious, or Convert to Danbooru tags output in AI Prompt Assist. OpenAI-compatible connections can load their available model list for selection.
 - Added **Reduce RAM use during generation** under Settings. It can help when large video or repeated generation runs exhaust system RAM, may slow single jobs, and applies after restarting Asteria.
