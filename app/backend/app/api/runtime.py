@@ -16,6 +16,12 @@ from app.services.api_errors import (
     RUNTIME_START_FAILED,
 )
 from app.services.controlnet_preprocessor import COMFY_CONTROLNET_PREPROCESSOR_NODES
+from app.services.anima_lllite_runtime import (
+    ANIMA_LLLITE_CURRENT_REQUIRED_NODES,
+    anima_lllite_missing_nodes,
+    anima_lllite_model_values,
+    is_standard_controlnet_model_name,
+)
 from app.services.controlnet_mode import (
     CONTROLNET_MODE_LABELS,
     controlnet_mode_contract_status,
@@ -24,6 +30,12 @@ from app.services.controlnet_mode import (
 from app.services.runtime import ComfyClient, RuntimeErrorResponse
 from app.services.runtime import INSPIRE_KSAMPLER_CLASS, LORA_BLOCK_WEIGHT_CLASS
 from app.services.seed_resize import resolve_seed_resize_contract, seed_resize_contract_status
+from app.services.spatial_runtime_contract import (
+    SPATIAL_PROMPT_CONTRACT_VERSION,
+    SPATIAL_PROMPT_PACK_VERSION,
+    SPATIAL_PROMPT_PROFILE_COVERAGE,
+    spatial_runtime_contract_status,
+)
 from app.services.model_dependencies import ModelDependencyRepository
 from app.services.sampling_catalog import SAMPLERS, SCHEDULERS
 from app.services.upscaler_catalog import UPSCALERS
@@ -103,6 +115,14 @@ class RuntimeDependencyStatusResponse(BaseModel):
     install_script: str | None
     pip_packages: list[str]
     auto_install: bool
+    release_class: str
+    size_bytes: int | None
+    checksum_sha256: str | None
+    license_id: str | None
+    license_url: str | None
+    repair_policy: str | None
+    source_verified_at: str | None
+    source_provenance_url: str | None
 
 
 class RuntimeDependencyListResponse(BaseModel):
@@ -138,15 +158,7 @@ CONTROLNET_REQUIRED_NODES = {
     "ControlNetLoader",
     "ControlNetApplyAdvanced",
 }
-ANIMA_LLLITE_REQUIRED_NODES = {
-    "LoadImage",
-    "AnimaLLLiteApply",
-}
-ANIMA_REGIONAL_REQUIRED_NODES = {
-    "AttentionCouplePPM",
-    "ImageColorToMask",
-    "SolidMask",
-}
+ANIMA_LLLITE_REQUIRED_NODES = {"LoadImage", "AnimaLLLiteApply"}
 DETAILER_REQUIRED_NODES = {"FaceDetailer", "UltralyticsDetectorProvider"}
 LORA_BLOCK_WEIGHT_REQUIRED_NODES = {LORA_BLOCK_WEIGHT_CLASS}
 HIRES_FIX_REQUIRED_NODES = {
@@ -274,7 +286,11 @@ def _all_required_capability(name: str, nodes: set[str], required: set[str]) -> 
 def _controlnet_capability(object_info: dict, nodes: set[str]) -> dict[str, Any]:
     missing = sorted(CONTROLNET_REQUIRED_NODES - nodes)
     controlnet_models = (
-        sorted(_node_input_values(object_info, "ControlNetLoader", "control_net_name"))
+        sorted(
+            value
+            for value in _node_input_values(object_info, "ControlNetLoader", "control_net_name")
+            if is_standard_controlnet_model_name(value)
+        )
         if not missing
         else []
     )
@@ -316,7 +332,10 @@ def _controlnet_capability(object_info: dict, nodes: set[str]) -> dict[str, Any]
 
 
 def _anima_lllite_capability(object_info: dict, nodes: set[str]) -> dict[str, Any]:
-    missing = sorted(ANIMA_LLLITE_REQUIRED_NODES - nodes)
+    missing = sorted(
+        set(ANIMA_LLLITE_REQUIRED_NODES - nodes)
+        | set(anima_lllite_missing_nodes(object_info, nodes))
+    )
     lllite_models = (
         sorted(_anima_lllite_model_values(object_info))
         if not missing
@@ -334,12 +353,7 @@ def _anima_lllite_capability(object_info: dict, nodes: set[str]) -> dict[str, An
 
 
 def _anima_lllite_model_values(object_info: dict) -> set[str]:
-    values = _node_input_values(object_info, "AnimaLLLiteApply", "lllite_name")
-    return {
-        value
-        for value in values
-        if "lllite" in value.lower() or "anima" in value.lower()
-    }
+    return anima_lllite_model_values(object_info)
 
 
 def _detailer_capability(object_info: dict, nodes: set[str]) -> dict[str, Any]:
@@ -484,6 +498,21 @@ def _merge_runtime_capability(object_info: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _spatial_prompt_capability(object_info: dict[str, Any]) -> dict[str, Any]:
+    status = spatial_runtime_contract_status(object_info)
+    return {
+        "available": status.available,
+        "runtime": "comfy_workflow",
+        "contract_version": SPATIAL_PROMPT_CONTRACT_VERSION,
+        "pack_version": SPATIAL_PROMPT_PACK_VERSION,
+        "missing_components": list(status.missing_components),
+        "profile_coverage": dict(SPATIAL_PROMPT_PROFILE_COVERAGE),
+        "message": "Spatial prompt layout ready"
+        if status.available
+        else "Spatial prompt layout runtime is missing or incompatible",
+    }
+
+
 def _unreachable_capabilities(base_url: str, message: str) -> RuntimeCapabilitiesResponse:
     return RuntimeCapabilitiesResponse(
         base_url=base_url,
@@ -510,16 +539,14 @@ def _unreachable_capabilities(base_url: str, message: str) -> RuntimeCapabilitie
             "anima_lllite": {
                 "available": False,
                 "runtime": "comfy_workflow",
-                "missing_nodes": sorted(ANIMA_LLLITE_REQUIRED_NODES),
+                "missing_nodes": sorted(ANIMA_LLLITE_CURRENT_REQUIRED_NODES),
                 "message": message,
                 "lllite_models": [],
             },
-            "anima_regional_prompting": RuntimeFeatureCapability(
-                available=False,
-                runtime="comfy_workflow",
-                missing_nodes=sorted(ANIMA_REGIONAL_REQUIRED_NODES),
-                message=message,
-            ),
+            "spatial_prompt_layout": {
+                **_spatial_prompt_capability({}),
+                "message": message,
+            },
             "lora_block_weight": RuntimeFeatureCapability(
                 available=False,
                 runtime="comfy_workflow",
@@ -574,11 +601,7 @@ def capabilities() -> RuntimeCapabilitiesResponse:
         features={
             "controlnet": _controlnet_capability(object_info, nodes),
             "anima_lllite": _anima_lllite_capability(object_info, nodes),
-            "anima_regional_prompting": _all_required_capability(
-                "Anima regional prompting",
-                nodes,
-                ANIMA_REGIONAL_REQUIRED_NODES,
-            ),
+            "spatial_prompt_layout": _spatial_prompt_capability(object_info),
             "detailer": _detailer_capability(object_info, nodes),
             "controlnet_preprocessors": _controlnet_preprocessor_capability(nodes),
             "lora_block_weight": _all_required_capability(

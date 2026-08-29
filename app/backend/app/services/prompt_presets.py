@@ -7,10 +7,11 @@ from pathlib import Path
 from uuid import uuid4
 
 from app.schemas.prompt_input import PromptInput
-from app.services.prompt_input import (
-    PromptInputWarningCode,
-    recover_saved_prompt_input,
-    validate_prompt_input_pair,
+from app.schemas.prompt_layout import PromptLayout
+from app.services.spatial_prompt_contract import (
+    SpatialPromptRecoveryStatus,
+    recover_saved_spatial_prompt_contract,
+    validate_spatial_prompt_contract,
 )
 
 
@@ -22,8 +23,10 @@ class PromptPreset:
     negative_prompt: str = ""
     tags: tuple[str, ...] = ()
     prompt_input: PromptInput | None = None
-    warning_codes: tuple[PromptInputWarningCode, ...] = ()
-    recovered_raw_prompt_input: object | None = field(
+    prompt_layout: PromptLayout | None = None
+    spatial_recovery_status: SpatialPromptRecoveryStatus = "ready"
+    warning_codes: tuple[str, ...] = ()
+    persisted_raw_spatial_contract: dict[str, object] | None = field(
         default=None,
         repr=False,
         compare=False,
@@ -44,9 +47,14 @@ class PromptPresetRepository:
         negative_prompt: str = "",
         tags: list[str] | None = None,
         prompt_input: PromptInput | None = None,
+        prompt_layout: PromptLayout | None = None,
     ) -> PromptPreset:
-        if prompt_input is not None:
-            validate_prompt_input_pair(prompt, prompt_input)
+        validate_spatial_prompt_contract(
+            prompt,
+            prompt_input,
+            prompt_layout,
+            "txt2img",
+        )
         items = self._read(strict=True)
         item = PromptPreset(
             id=uuid4().hex,
@@ -55,6 +63,7 @@ class PromptPresetRepository:
             negative_prompt=negative_prompt,
             tags=tuple(self._normalize_tags(tags or [])),
             prompt_input=prompt_input,
+            prompt_layout=prompt_layout,
         )
         items.insert(0, item)
         self._write(items)
@@ -92,7 +101,12 @@ class PromptPresetRepository:
                     raise OSError("prompt preset file contains an invalid item")
                 continue
             prompt = str(item["prompt"])
-            recovery = recover_saved_prompt_input(prompt, item.get("prompt_input"))
+            recovery = recover_saved_spatial_prompt_contract(
+                prompt,
+                item.get("prompt_input"),
+                item.get("prompt_layout"),
+                "txt2img",
+            )
             items.append(
                 PromptPreset(
                     id=str(item["id"]),
@@ -104,11 +118,18 @@ class PromptPresetRepository:
                             item.get("tags") if isinstance(item.get("tags"), list) else []
                         )
                     ),
-                    prompt_input=recovery.prompt_input,
-                    warning_codes=(recovery.warning_code,) if recovery.warning_code else (),
-                    recovered_raw_prompt_input=(
-                        deepcopy(item.get("prompt_input")) if recovery.warning_code else None
+                    prompt_input=recovery.snapshot.prompt_input,
+                    prompt_layout=recovery.snapshot.prompt_layout,
+                    spatial_recovery_status=recovery.status,
+                    warning_codes=(
+                        (recovery.warning_code,) if recovery.warning_code else ()
                     ),
+                    persisted_raw_spatial_contract={
+                        key: deepcopy(item[key])
+                        for key in ("prompt_input", "prompt_layout")
+                        if key in item
+                    }
+                    or None,
                 )
             )
         return items
@@ -124,10 +145,14 @@ class PromptPresetRepository:
                 "negative_prompt": item.negative_prompt,
                 "tags": list(item.tags),
             }
-            if item.prompt_input is not None:
-                serialized["prompt_input"] = item.prompt_input.model_dump(mode="json")
-            elif item.warning_codes and item.recovered_raw_prompt_input is not None:
-                serialized["prompt_input"] = deepcopy(item.recovered_raw_prompt_input)
+            if item.persisted_raw_spatial_contract is not None:
+                for key, value in item.persisted_raw_spatial_contract.items():
+                    serialized[key] = deepcopy(value)
+            else:
+                if item.prompt_input is not None:
+                    serialized["prompt_input"] = item.prompt_input.model_dump(mode="json")
+                if item.prompt_layout is not None:
+                    serialized["prompt_layout"] = item.prompt_layout.model_dump(mode="json")
             payload.append(serialized)
         self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 

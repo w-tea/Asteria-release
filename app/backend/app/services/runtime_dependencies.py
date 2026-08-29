@@ -4,6 +4,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 import json
+import os
+import stat
 import subprocess
 import shutil
 import hashlib
@@ -123,17 +125,24 @@ class RuntimeDependencyRepository:
         raise RuntimeDependencyNotFound(dependency_id)
 
     def path_for(self, dependency: RuntimeDependency) -> Path:
-        return (self.runtime_root / dependency.relative_path).resolve()
+        path = self._logical_path_for(dependency)
+        self._assert_managed_path(path)
+        return path
 
     def _status_for(self, dependency: RuntimeDependency) -> RuntimeDependencyStatus:
-        path = self.path_for(dependency)
+        path = self._logical_path_for(dependency)
         status = "missing"
-        if self._path_is_dir_safely(path):
-            status = "installed"
-            if self._requires_post_install(dependency) and not self._post_install_marker_is_current(
-                dependency
-            ):
-                status = "post_install_pending"
+        try:
+            self._assert_managed_path(path)
+        except RuntimeDependencyError:
+            status = "unsafe_path"
+        else:
+            if self._path_is_dir_safely(path):
+                status = "installed"
+                if self._requires_post_install(
+                    dependency
+                ) and not self._post_install_marker_is_current(dependency):
+                    status = "post_install_pending"
         return RuntimeDependencyStatus(
             id=dependency.id,
             label=dependency.label,
@@ -157,6 +166,40 @@ class RuntimeDependencyRepository:
             source_verified_at=dependency.source_verified_at,
             source_provenance_url=dependency.source_provenance_url,
         )
+
+    def _logical_path_for(self, dependency: RuntimeDependency) -> Path:
+        return Path(os.path.abspath(os.fspath(self.runtime_root / dependency.relative_path)))
+
+    def _assert_managed_path(self, candidate: Path) -> None:
+        logical = Path(os.path.abspath(os.fspath(candidate)))
+        try:
+            relative = logical.relative_to(self.runtime_root)
+        except ValueError as exc:
+            raise RuntimeDependencyError(
+                "Runtime dependency target is outside the runtime root"
+            ) from exc
+        if (
+            len(relative.parts) < 2
+            or relative.parts[0].casefold() != "custom_nodes"
+        ):
+            raise RuntimeDependencyError(
+                "Runtime dependency target must use a dedicated directory below custom_nodes"
+            )
+        current = self.runtime_root
+        for part in relative.parts:
+            current /= part
+            try:
+                details = os.lstat(current)
+            except FileNotFoundError:
+                continue
+            except OSError as exc:
+                raise RuntimeDependencyError(
+                    "Runtime dependency target could not be inspected safely"
+                ) from exc
+            if _is_reparse_point(current, details):
+                raise RuntimeDependencyError(
+                    "Runtime dependency target crosses a filesystem link or reparse point"
+                )
 
     def post_install_marker_for(self, dependency: RuntimeDependency) -> Path:
         return self.path_for(dependency) / ".asteria-postinstall-ok"
@@ -323,7 +366,12 @@ class RuntimeDependencyRepository:
 
     def _parse_relative_path(self, value: str) -> Path:
         path = Path(value)
-        if path.is_absolute() or ".." in path.parts:
+        if (
+            path.is_absolute()
+            or ".." in path.parts
+            or len(path.parts) < 2
+            or path.parts[0].casefold() != "custom_nodes"
+        ):
             raise ValueError("runtime dependency target must stay within runtime root")
         return path
 
@@ -515,7 +563,9 @@ class RuntimeDependencyInstaller:
 
     def _prepare_target_parent(self, target: Path, dependency_id: str) -> None:
         try:
+            self.repository._assert_managed_path(target)
             target.parent.mkdir(parents=True, exist_ok=True)
+            self.repository._assert_managed_path(target)
         except OSError as exc:
             message = str(exc) or f"Failed to prepare runtime dependency target directory: {dependency_id}"
             raise RuntimeDependencyError(message) from exc
@@ -599,3 +649,20 @@ class RuntimeDependencyInstaller:
         except OSError as exc:
             message = str(exc) or f"Failed to run runtime dependency command: {dependency_id}"
             raise RuntimeDependencyError(message) from exc
+
+
+def _is_reparse_point(path: Path, details: os.stat_result | None = None) -> bool:
+    try:
+        current = details or os.lstat(path)
+        junction_check = getattr(os.path, "isjunction", None)
+        is_junction = bool(junction_check(path)) if junction_check is not None else False
+    except OSError as exc:
+        raise RuntimeDependencyError(
+            "Runtime dependency target could not be inspected safely"
+        ) from exc
+    attributes = getattr(current, "st_file_attributes", 0)
+    return bool(
+        stat.S_ISLNK(current.st_mode)
+        or is_junction
+        or attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    )

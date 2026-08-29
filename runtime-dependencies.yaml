@@ -54,6 +54,29 @@ dependencies:
     repair_policy: replace-managed-component
     auto_install: true
 
+  - id: asteria-spatial-prompt
+    label: Asteria Spatial Prompt
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - spatial_prompt_layout
+      - spatial_prompt_profiles
+    source:
+      provider: bundled
+      url: runtime-components/comfyui/Asteria-Spatial-Prompt
+      ref: asteria.spatial-prompt.node.v1
+      verified_at: "2026-08-29"
+      provenance_url: bundled://asteria/spatial-prompt/v1.2
+    target:
+      relative_path: custom_nodes/Asteria-Spatial-Prompt
+    size_bytes: 31367
+    checksum_sha256: 326e27df8b7c8fa99e1deaa4fe2ea2daf09eb04f8304f77f53f779fa567b4785
+    license:
+      id: mit
+      url: bundled://asteria/license
+    repair_policy: replace-managed-component
+    auto_install: true
+
   - id: asteria-merge-runtime
     label: Asteria Merge Runtime
     type: comfy_custom_node
@@ -283,60 +306,6 @@ dependencies:
     license:
       id: gpl-3.0
       url: https://github.com/Kosinkadink/ComfyUI-Advanced-ControlNet/blob/9e60d8a9c8016c5315063aa7af66b321a0444df7/LICENSE
-    repair_policy: replace-managed-component
-    auto_install: true
-
-  - id: comfyui-anima-lllite
-    label: ComfyUI Anima LLLite
-    type: comfy_custom_node
-    release_class: mandatory-feature
-    features:
-      - anima
-      - anima_lllite
-      - controlnet
-    source:
-      provider: archive
-      url: https://codeload.github.com/kohya-ss/ComfyUI-Anima-LLLite/zip/6701c8d6fc3bf1b2ed966b87c95ce609c52cebea
-      ref: 6701c8d6fc3bf1b2ed966b87c95ce609c52cebea
-      verified_at: "2026-07-20"
-      provenance_url: https://github.com/kohya-ss/ComfyUI-Anima-LLLite/commit/6701c8d6fc3bf1b2ed966b87c95ce609c52cebea
-    target:
-      relative_path: custom_nodes/ComfyUI-Anima-LLLite
-    post_install:
-      requirements_file:
-      install_script:
-    size_bytes: 19560
-    checksum_sha256: 0874ff38e948b86392d9f5b8e0beecf6441d551702a085d7d0a192a73c1bfba3
-    license:
-      id: apache-2.0
-      url: https://github.com/kohya-ss/ComfyUI-Anima-LLLite/blob/6701c8d6fc3bf1b2ed966b87c95ce609c52cebea/LICENSE
-    repair_policy: replace-managed-component
-    auto_install: true
-
-  - id: comfyui-ppm
-    label: ComfyUI PPM
-    type: comfy_custom_node
-    release_class: mandatory-feature
-    features:
-      - anima
-      - anima_regional_prompting
-      - attention_couple
-    source:
-      provider: archive
-      url: https://codeload.github.com/pamparamm/ComfyUI-ppm/zip/cb4a46ba9b0ebdb1f9a228a901bb958bfc8ed3ba
-      ref: cb4a46ba9b0ebdb1f9a228a901bb958bfc8ed3ba
-      verified_at: "2026-07-20"
-      provenance_url: https://github.com/pamparamm/ComfyUI-ppm/commit/cb4a46ba9b0ebdb1f9a228a901bb958bfc8ed3ba
-    target:
-      relative_path: custom_nodes/ComfyUI-ppm
-    post_install:
-      requirements_file:
-      install_script:
-    size_bytes: 552673
-    checksum_sha256: bb3e9d3692d6d875d5dcdf4c0a26a08b3f43163636dbe1c6140b330b8078ba1a
-    license:
-      id: agpl-3.0
-      url: https://github.com/pamparamm/ComfyUI-ppm/blob/cb4a46ba9b0ebdb1f9a228a901bb958bfc8ed3ba/LICENSE
     repair_policy: replace-managed-component
     auto_install: true
 

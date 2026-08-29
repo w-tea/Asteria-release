@@ -5,6 +5,7 @@ from pathlib import Path
 import asyncio
 from datetime import UTC, datetime
 import hashlib
+import secrets
 from itertools import product
 import sqlite3
 import threading
@@ -17,7 +18,7 @@ import zipfile
 
 from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, Response, StreamingResponse
-from PIL import Image
+from PIL import Image, ImageOps
 from pydantic import BaseModel, Field, field_validator
 
 from app.core.config import AppConfig
@@ -61,6 +62,13 @@ from app.services.generation_schema import GenerationSchema, GenerationSchemaNot
 from app.services import api_errors
 from app.services.comfy_model_paths import comfy_model_name
 from app.services.controlnet_preprocessor import SUPPORTED_PREPROCESSORS
+from app.services.anima_lllite_runtime import (
+    anima_lllite_missing_nodes,
+    anima_lllite_model_directory,
+    anima_lllite_model_values,
+    anima_lllite_runtime_contract,
+    is_standard_controlnet_model_name,
+)
 from app.services.controlnet_mode import (
     controlnet_mode_contract_status,
     enabled_priority_controlnet_units,
@@ -143,6 +151,29 @@ from app.services.seed_resize import (
     seed_resize_requested,
     seed_resize_request_issues,
 )
+from app.services.spatial_runtime_contract import (
+    SPATIAL_PROMPT_CONTRACT_VERSION,
+    spatial_runtime_contract_status,
+    uses_spatial_prompt_layout,
+)
+from app.services.spatial_prompt_contract import validate_spatial_prompt_contract
+from app.services.spatial_generation_context import (
+    PreparedSpatialGenerationContext,
+    SpatialGenerationContextError,
+    SpatialStagePreparation,
+    prepare_spatial_generation_context,
+)
+from app.services.spatial_mask_compiler import SpatialMaskCompilerError
+from app.services.spatial_profile_resolver import (
+    SpatialModelEvidence,
+    sdxl_spatial_model_evidence,
+)
+from app.services.media_model_catalog import (
+    SafetensorsHeaderError,
+    read_safetensors_header,
+)
+from app.services.anima_model_classifier import AnimaModelClassifier
+from app.services.model_library import ModelLibraryItem
 from app.services.runtime_adapters import AsteriaGenerationRuntime, AsteriaNativeEngineAdapter, ExternalProcessRuntimeAdapter, RuntimeAdapterError
 from app.services.sampling_catalog import sampler_runtime_name, scheduler_runtime_name
 from app.services.topaz import TopazError, TopazSettings, process_topaz_image
@@ -289,6 +320,7 @@ class GenerationJobResponse(BaseModel):
     preview_path: str = ""
     preview_paths: list[str] = []
     error: str = ""
+    error_target_ids: list[str] = Field(default_factory=list)
     cancelled: bool = False
 
 
@@ -490,7 +522,18 @@ def _execute_generation_operation(
                     and 0 < len(value) <= 128
                     and all(character.isalnum() or character in "_.:-" for character in value)
                 )
-            _set_job(job_id, error=":".join(dict.fromkeys(safe_parts)))
+            target_ids = detail.get("target_ids")
+            safe_target_ids = [
+                value for value in target_ids
+                if isinstance(value, str)
+                and 0 < len(value) <= 128
+                and all(character.isalnum() or character in "_-" for character in value)
+            ] if isinstance(target_ids, list) else []
+            _set_job(
+                job_id,
+                error=":".join(dict.fromkeys(safe_parts)),
+                error_target_ids=list(dict.fromkeys(safe_target_ids)),
+            )
             raise OperationExecutionError(code, retryable=False) from exc
         finally:
             try:
@@ -580,6 +623,7 @@ def _new_job_cache(mode: str, request: Txt2ImgRequest | RemasterRequest) -> dict
         "runtime_job_id": "",
         "runtime_stop_confirmed": False,
         "cancel_warnings": [],
+        "error_target_ids": [],
         "cancelled": False,
     }
 
@@ -601,6 +645,7 @@ def _runtime(config: AppConfig, runtime_id: str | None = None):
         return ComfyGenerationRuntime(
             ComfyClient(config.comfy_base_url),
             model_root=config.model_dir,
+            external_roots=_registered_external_model_roots(config),
             comfy_output_dir=config.comfy_output_dir,
             topaz_executable=_topaz_executable(config),
         )
@@ -667,6 +712,25 @@ def _preflight_controlnet_mode_request(request: Txt2ImgRequest, mode: str = "txt
     _validate_controlnet_mode_object_info(config, object_info, settings)
 
 
+def _validate_spatial_prompt_runtime_contract(
+    object_info: dict[str, Any],
+    *,
+    required: bool,
+) -> None:
+    if not required:
+        return
+    status = spatial_runtime_contract_status(object_info)
+    if not status.available:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": api_errors.MISSING_SPATIAL_PROMPT_RUNTIME_CONTRACT,
+                "missing_components": list(status.missing_components),
+                "contract_version": SPATIAL_PROMPT_CONTRACT_VERSION,
+            },
+        )
+
+
 def _validate_runtime_feature_requirements(
     config: AppConfig,
     selected_runtime: str,
@@ -675,6 +739,7 @@ def _validate_runtime_feature_requirements(
     loras: list[dict] | None = None,
     model_slots: dict[str, str] | None = None,
 ) -> None:
+    requires_spatial_prompt = uses_spatial_prompt_layout(settings)
     remaster_settings = settings.get("remaster", {})
     requires_remaster = isinstance(remaster_settings, dict) and bool(remaster_settings.get("enabled"))
     if requires_remaster and selected_runtime != "comfy_workflow":
@@ -691,6 +756,36 @@ def _validate_runtime_feature_requirements(
                     {
                         "field": "seed_resize",
                         "reason": "seed_resize_requires_comfy_workflow",
+                    }
+                ],
+            },
+        )
+    if requires_spatial_prompt and selected_runtime != "comfy_workflow":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING,
+                "unsupported": [
+                    {
+                        "field": "prompt_layout",
+                        "reason": "spatial_prompt_requires_comfy_workflow",
+                    }
+                ],
+            },
+        )
+    if (
+        requires_spatial_prompt
+        and settings.get("hires_enabled")
+        and settings.get("hires_upscaler") == "Topaz Photo AI"
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING,
+                "unsupported": [
+                    {
+                        "field": "hires_upscaler",
+                        "reason": "spatial_prompt_topaz_hires_not_supported",
                     }
                 ],
             },
@@ -740,6 +835,7 @@ def _validate_runtime_feature_requirements(
             and not requires_anima_lllite
             and not requires_remaster
             and not requires_detailer
+            and not requires_spatial_prompt
         ):
             return
         try:
@@ -783,6 +879,10 @@ def _validate_runtime_feature_requirements(
                 detail={"code": api_errors.MISSING_RUNTIME_MODEL, "missing": [missing_hires_checkpoint]},
             )
         nodes = {key for key, value in object_info.items() if isinstance(key, str) and isinstance(value, dict)}
+        _validate_spatial_prompt_runtime_contract(
+            object_info,
+            required=requires_spatial_prompt,
+        )
         unsupported_seed_variation = _unsupported_seed_variation_runtime_settings(profile, nodes, settings)
         if unsupported_seed_variation:
             raise HTTPException(
@@ -829,12 +929,25 @@ def _validate_runtime_feature_requirements(
                     },
                 )
         if requires_anima_lllite:
-            missing = sorted(ANIMA_LLLITE_REQUIRED_NODES - nodes)
+            missing = sorted(
+                set(ANIMA_LLLITE_REQUIRED_NODES - nodes)
+                | set(anima_lllite_missing_nodes(object_info, nodes))
+            )
             if missing:
                 raise HTTPException(
                     status_code=409,
                     detail={"code": api_errors.MISSING_ANIMA_LLLITE_RUNTIME_NODES, "missing_nodes": missing},
                 )
+            lllite_contract = anima_lllite_runtime_contract(object_info)
+            if lllite_contract is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": api_errors.MISSING_ANIMA_LLLITE_RUNTIME_NODES,
+                        "missing_nodes": ["AnimaLLLiteApply"],
+                    },
+                )
+            settings["anima_lllite_runtime_contract"] = lllite_contract
             if requires_anima_regional:
                 missing = sorted(ANIMA_REGIONAL_REQUIRED_NODES - nodes)
                 if missing:
@@ -846,6 +959,7 @@ def _validate_runtime_feature_requirements(
                 object_info,
                 settings,
                 model_root=config.model_dir,
+                external_roots=_registered_external_model_roots(config),
             )
             if missing_lllite_models:
                 raise HTTPException(
@@ -900,6 +1014,10 @@ def _validate_runtime_feature_requirements(
     except RuntimeErrorResponse as exc:
         raise HTTPException(status_code=502, detail={"code": api_errors.GENERATION_RUNTIME_UNREACHABLE}) from exc
     nodes = {key for key, value in object_info.items() if isinstance(key, str) and isinstance(value, dict)}
+    _validate_spatial_prompt_runtime_contract(
+        object_info,
+        required=requires_spatial_prompt,
+    )
     _validate_seed_resize_object_info(config, object_info, settings)
     unsupported_seed_variation = _unsupported_seed_variation_runtime_settings(profile, nodes, settings)
     if unsupported_seed_variation:
@@ -960,6 +1078,7 @@ def _validate_runtime_feature_requirements(
             object_info,
             settings,
             model_root=config.model_dir,
+            external_roots=_registered_external_model_roots(config),
         )
         if missing_controlnet_models:
             raise HTTPException(
@@ -1353,11 +1472,16 @@ def _missing_controlnet_models(
     settings: dict,
     *,
     model_root: Path | None = None,
+    external_roots: tuple[ExternalModelRoot, ...] = (),
 ) -> list[dict[str, Any]]:
     units = settings.get("controlnet_units")
     if not isinstance(units, list) or "ControlNetLoader" not in object_info:
         return []
-    model_values = _node_input_values(object_info, "ControlNetLoader", "control_net_name")
+    model_values = {
+        value
+        for value in _node_input_values(object_info, "ControlNetLoader", "control_net_name")
+        if is_standard_controlnet_model_name(value)
+    }
     missing: list[dict[str, Any]] = []
     for index, unit in enumerate(units):
         if not isinstance(unit, dict) or not unit.get("enabled", True):
@@ -1365,7 +1489,12 @@ def _missing_controlnet_models(
         model = str(unit.get("model") or "").strip()
         if not model:
             continue
-        model_name = comfy_model_name(model, "controlnet", model_root=model_root)
+        model_name = comfy_model_name(
+            model,
+            "controlnet",
+            model_root=model_root,
+            external_roots=external_roots,
+        )
         if model_name not in model_values:
             missing.append({"index": index, "model": model, "model_name": model_name})
     return missing
@@ -1376,9 +1505,11 @@ def _missing_anima_lllite_models(
     settings: dict,
     *,
     model_root: Path | None = None,
+    external_roots: tuple[ExternalModelRoot, ...] = (),
 ) -> list[dict[str, Any]]:
     units = settings.get("anima_lllite_units")
-    if not isinstance(units, list) or "AnimaLLLiteApply" not in object_info:
+    contract = anima_lllite_runtime_contract(object_info)
+    if not isinstance(units, list) or contract is None:
         return []
     model_values = _anima_lllite_model_values(object_info)
     missing: list[dict[str, Any]] = []
@@ -1389,19 +1520,19 @@ def _missing_anima_lllite_models(
         if not model:
             missing.append({"index": index, "model": model, "reason": "model_required"})
             continue
-        model_name = comfy_model_name(model, "controlnet", model_root=model_root)
+        model_name = comfy_model_name(
+            model,
+            anima_lllite_model_directory(contract),
+            model_root=model_root,
+            external_roots=external_roots,
+        )
         if model_name not in model_values:
             missing.append({"index": index, "model": model, "model_name": model_name})
     return missing
 
 
 def _anima_lllite_model_values(object_info: dict) -> set[str]:
-    values = _node_input_values(object_info, "AnimaLLLiteApply", "lllite_name")
-    return {
-        value
-        for value in values
-        if "lllite" in value.lower() or "anima" in value.lower()
-    }
+    return anima_lllite_model_values(object_info)
 
 
 def _missing_detailer_detector_models(object_info: dict, settings: dict) -> list[dict[str, Any]]:
@@ -2264,6 +2395,7 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
             "profile",
             "runtime",
             "prompt_input",
+            "prompt_layout",
             "loras",
             "controlnet_units",
             "anima_lllite_units",
@@ -2333,12 +2465,396 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
             mode="json",
             exclude_none=True,
         )
+    if request.prompt_layout is not None:
+        mapped["prompt_layout"] = request.prompt_layout.model_dump(
+            mode="json",
+            exclude_none=True,
+        )
     if request.remaster.enabled:
         mapped["requested_batch_size"] = request.batch_size
         mapped["requested_batch_count"] = request.batch_count
         mapped["batch_size"] = 1
         mapped["batch_count"] = request.batch_size * request.batch_count
     return mapped, negative_prompt
+
+
+def _spatial_request_enabled(request: Txt2ImgRequest) -> bool:
+    return request.prompt_layout is not None and request.prompt_layout.mode == "enabled"
+
+
+def _freeze_spatial_request_seed(request: Txt2ImgRequest) -> Txt2ImgRequest:
+    if not _spatial_request_enabled(request) or request.seed >= 0:
+        return request
+    return request.model_copy(update={"seed": secrets.randbelow(2**32)}, deep=True)
+
+
+def _resolve_spatial_model_path(
+    value: str,
+    *,
+    model_root: Path,
+    model_directory: str,
+    library: ModelLibrary,
+) -> Path:
+    normalized = str(value or "").strip()
+    direct = Path(normalized)
+    if direct.is_absolute() and _path_is_file_safely(direct):
+        return direct
+    rooted = model_root / model_directory / normalized
+    if _path_is_file_safely(rooted):
+        return rooted
+    expected = comfy_model_name(
+        normalized,
+        model_directory,
+        model_root=model_root,
+    ).casefold()
+    matches = [
+        item.path
+        for item in library.by_type("checkpoint")
+        if comfy_model_name(
+            str(item.path),
+            model_directory,
+            model_root=model_root,
+        ).casefold()
+        == expected
+    ]
+    if len(matches) != 1:
+        raise SpatialGenerationContextError(
+            "spatial_model_ambiguous" if matches else "spatial_model_unavailable"
+        )
+    return matches[0]
+
+
+def _spatial_model_evidence(
+    *,
+    profile: str,
+    path: Path,
+    stage: str,
+    anima_variant: str | None = None,
+    manual_profile_id: str | None = None,
+) -> SpatialModelEvidence:
+    try:
+        header = read_safetensors_header(path)
+    except SafetensorsHeaderError as exc:
+        raise SpatialGenerationContextError(exc.reason_code) from exc
+    slot_id = f"model:{stage}:{path.name}"
+    if profile == "sdxl":
+        return sdxl_spatial_model_evidence(
+            header,
+            model_slot_id=slot_id,
+            variant=(
+                "illustrious"
+                if manual_profile_id == "illustrious.attention.v1"
+                else "sdxl"
+            ),
+        )
+    if profile != "anima":
+        raise SpatialGenerationContextError("spatial_profile_unsupported")
+    encoder_kind = (
+        "qwen35_progressive"
+        if anima_variant == "anima_3_8b_52"
+        else "native_qwen"
+    )
+    item = ModelLibraryItem(
+        type="checkpoint",
+        name=path.name,
+        path=path,
+        relative_path=Path(path.name),
+        size_bytes=path.stat().st_size,
+        metadata={},
+    )
+    evidence = AnimaModelClassifier().spatial_model_evidence(
+        item,
+        header,
+        model_slot_id=slot_id,
+        encoder_kind=encoder_kind,
+    )
+    if evidence is None:
+        raise SpatialGenerationContextError("spatial_model_structure_unverified")
+    return evidence
+
+
+def _positive_inpaint_mask(path: str | Path, size: tuple[int, int]) -> Image.Image:
+    try:
+        with Image.open(path) as source:
+            source.load()
+            if source.mode == "RGBA":
+                alpha = source.getchannel("A")
+                luminance = ImageOps.grayscale(source.convert("RGB"))
+                mask = (
+                    luminance
+                    if alpha.getextrema() == (255, 255)
+                    else Image.composite(luminance, alpha, alpha)
+                )
+            else:
+                mask = ImageOps.grayscale(source.convert("RGB"))
+            if mask.size != size:
+                mask = mask.resize(size, Image.Resampling.NEAREST)
+            return mask.copy()
+    except OSError as exc:
+        raise SpatialGenerationContextError("spatial_inpaint_mask_unavailable") from exc
+
+
+def _spatial_base_geometry(
+    request: Txt2ImgRequest,
+) -> tuple[int, int, Image.Image | None, tuple[int, int, int, int] | None]:
+    if not isinstance(request, Img2ImgRequest):
+        return request.width, request.height, None, None
+    if isinstance(request, InpaintRequest) and request.inpaint_area.strip().lower() == "only_masked":
+        try:
+            analysis = validate_only_masked_inputs(
+                request.init_image_path,
+                request.mask_image_path,
+                mask_blur=request.mask_blur,
+                requested_size=(request.width, request.height),
+            )
+        except InpaintRegionError as exc:
+            raise SpatialGenerationContextError(exc.code) from exc
+        with analysis.open_positive_mask() as image:
+            mask = image.convert("L").copy()
+        return (*analysis.canvas_size, mask, analysis.region.rect)
+    try:
+        with Image.open(request.init_image_path) as source:
+            source_width, source_height = source.size
+    except OSError as exc:
+        raise SpatialGenerationContextError("spatial_source_image_unavailable") from exc
+    width = source_width // 8 * 8
+    height = source_height // 8 * 8
+    inpaint_mask = None
+    if isinstance(request, InpaintRequest):
+        inpaint_mask = _positive_inpaint_mask(
+            request.mask_image_path,
+            (width, height),
+        )
+    return width, height, inpaint_mask, None
+
+
+def _prepare_spatial_generation(
+    *,
+    request: Txt2ImgRequest,
+    settings: dict[str, Any],
+    config: AppConfig,
+    model_slots: dict[str, str],
+    known_embeddings: list[str],
+    output_dir: Path,
+) -> PreparedSpatialGenerationContext | None:
+    if not _spatial_request_enabled(request):
+        return None
+    if request.profile not in {"sdxl", "anima"}:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "spatial_profile_unsupported", "profile": request.profile},
+        )
+    snapshot = validate_spatial_prompt_contract(
+        request.prompt,
+        request.prompt_input,
+        request.prompt_layout,
+        request._spatial_generation_mode,
+    )
+    model_root = _model_root(config)
+    library = get_model_library(model_root, config=config)
+    base_slot = "checkpoint" if request.profile == "sdxl" else "diffusion_model"
+    model_directory = "checkpoints" if request.profile == "sdxl" else "diffusion_models"
+    base_path = _resolve_spatial_model_path(
+        model_slots[base_slot],
+        model_root=model_root,
+        model_directory=model_directory,
+        library=library,
+    )
+    anima_bundle = settings.get("anima_generation_bundle")
+    anima_variant = (
+        str(anima_bundle.get("variant_id"))
+        if isinstance(anima_bundle, dict)
+        else None
+    )
+    profile_selection = request.prompt_layout.model_profile_selection
+    base_manual_profile = (
+        profile_selection.base if profile_selection is not None else None
+    )
+    if request.profile == "sdxl" and base_manual_profile is None:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "spatial_profile_selection_required",
+                "stage": "base",
+                "profile_options": [
+                    "sdxl.attention.v1",
+                    "illustrious.attention.v1",
+                ],
+            },
+        )
+    base_width, base_height, inpaint_mask, crop_rect = _spatial_base_geometry(request)
+    stage_inputs: list[SpatialStagePreparation] = [
+        SpatialStagePreparation(
+            stage="base",
+            layout=request.prompt_layout,
+            width=base_width,
+            height=base_height,
+            evidence=_spatial_model_evidence(
+                profile=request.profile,
+                path=base_path,
+                stage="base",
+                anima_variant=anima_variant,
+                manual_profile_id=base_manual_profile,
+            ),
+            inpaint_mask=inpaint_mask,
+            crop_rect=crop_rect,
+            manual_profile_id=base_manual_profile,
+        )
+    ]
+    hires_size = (
+        _hires_target_size(settings)
+        if settings.get("hires_upscaler") != "Topaz Photo AI"
+        else None
+    )
+    if hires_size is not None:
+        hires_value = str(settings.get("hires_checkpoint") or "").strip()
+        hires_path = base_path
+        if hires_value and hires_value != "Use same checkpoint":
+            hires_path = _resolve_spatial_model_path(
+                hires_value,
+                model_root=model_root,
+                model_directory=model_directory,
+                library=library,
+            )
+        hires_manual_profile = (
+            profile_selection.hires if profile_selection is not None else None
+        )
+        if hires_manual_profile is None and hires_path == base_path:
+            hires_manual_profile = base_manual_profile
+        if request.profile == "sdxl" and hires_manual_profile is None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "spatial_profile_selection_required",
+                    "stage": "hires",
+                    "profile_options": [
+                        "sdxl.attention.v1",
+                        "illustrious.attention.v1",
+                    ],
+                },
+            )
+        hires_mask = (
+            inpaint_mask.resize(hires_size, Image.Resampling.NEAREST)
+            if inpaint_mask is not None and crop_rect is None
+            else None
+        )
+        stage_inputs.append(
+            SpatialStagePreparation(
+                stage="hires",
+                layout=request.prompt_layout,
+                width=hires_size[0],
+                height=hires_size[1],
+                evidence=_spatial_model_evidence(
+                    profile=request.profile,
+                    path=hires_path,
+                    stage="hires",
+                    anima_variant=(
+                        str(settings.get("anima_hires_generation_bundle", {}).get("variant_id"))
+                        if isinstance(settings.get("anima_hires_generation_bundle"), dict)
+                        else anima_variant
+                    ),
+                    manual_profile_id=hires_manual_profile,
+                ),
+                inpaint_mask=hires_mask,
+                manual_profile_id=hires_manual_profile,
+            )
+        )
+    if request.profile == "sdxl" and _uses_refiner(settings):
+        refiner_path = _resolve_spatial_model_path(
+            str(settings["refiner_checkpoint"]),
+            model_root=model_root,
+            model_directory="checkpoints",
+            library=library,
+        )
+        refiner_size = hires_size or (base_width, base_height)
+        refiner_manual_profile = (
+            profile_selection.refiner if profile_selection is not None else None
+        )
+        if refiner_manual_profile is None:
+            if refiner_path == base_path:
+                refiner_manual_profile = base_manual_profile
+            elif hires_size is not None and refiner_path == hires_path:
+                refiner_manual_profile = hires_manual_profile
+        if refiner_manual_profile is None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "spatial_profile_selection_required",
+                    "stage": "refiner",
+                    "profile_options": [
+                        "sdxl.attention.v1",
+                        "illustrious.attention.v1",
+                    ],
+                },
+            )
+        refiner_mask = (
+            inpaint_mask.resize(refiner_size, Image.Resampling.NEAREST)
+            if inpaint_mask is not None and crop_rect is None
+            else inpaint_mask
+        )
+        stage_inputs.append(
+            SpatialStagePreparation(
+                stage="refiner",
+                layout=request.prompt_layout,
+                width=refiner_size[0],
+                height=refiner_size[1],
+                evidence=_spatial_model_evidence(
+                    profile="sdxl",
+                    path=refiner_path,
+                    stage="refiner",
+                    manual_profile_id=refiner_manual_profile,
+                ),
+                inpaint_mask=refiner_mask,
+                crop_rect=crop_rect if hires_size is None else None,
+                manual_profile_id=refiner_manual_profile,
+            )
+        )
+    try:
+        return prepare_spatial_generation_context(
+            snapshot,
+            profile_id=request.profile,
+            generation_seed=request.seed,
+            stages=stage_inputs,
+            profiles_path=config.mapping_dir / "spatial-model-profiles.yaml",
+            working_directory=output_dir / "_spatial" / uuid4().hex,
+            advanced_styles=request.advanced_styles,
+            hires_prompt=str(settings.get("hires_prompt") or ""),
+            wildcard_dir=config.wildcard_dir,
+            known_embedding_names=known_embeddings,
+            data_dir=config.data_dir,
+        )
+    except SpatialMaskCompilerError as exc:
+        detail: dict[str, Any] = {"code": exc.code}
+        if exc.target_ids:
+            detail["target_ids"] = list(exc.target_ids)
+        raise HTTPException(status_code=409, detail=detail) from exc
+    except SpatialGenerationContextError as exc:
+        detail = {"code": exc.code}
+        if exc.target_ids:
+            detail["target_ids"] = list(exc.target_ids)
+        if exc.stage is not None:
+            detail["stage"] = exc.stage
+        if exc.profile_ids:
+            detail["profile_options"] = list(exc.profile_ids)
+        raise HTTPException(status_code=409, detail=detail) from exc
+
+
+def _spatial_prompt_selections(plan) -> list[dict[str, object]]:
+    records: list[dict[str, object]] = []
+    stages = [plan.base]
+    if plan.hires is not None and plan.hires.reused_from_stage is None:
+        stages.append(plan.hires)
+    for stage in stages:
+        for fragment in (stage.global_fragment, *stage.target_fragments):
+            for selection in fragment.selections:
+                records.append(
+                    {
+                        "fragment_id": fragment.fragment_id,
+                        "stage": fragment.stage,
+                        **selection.model_dump(mode="json"),
+                    }
+                )
+    return records
 
 
 def _topaz_settings_from_request(request: Txt2ImgRequest) -> TopazSettings:
@@ -3068,9 +3584,11 @@ def _generate(
     merge_xyz_metadata: dict[str, Any] | None = None,
 ) -> GenerationResponse:
     generation_started = time.perf_counter()
+    request = _freeze_spatial_request_seed(request)
     _preflight_profile_prompt_request(request)
     data_dir = _data_dir()
     config = AppConfig()
+    output_dir = _output_dir_for(data_dir, request.profile)
     model_slots = _model_slots_for_request(request, config)
     _validate_required_model_slots(request.profile, model_slots, config)
     external_model_snapshots = _external_model_reference_snapshots(model_slots, config)
@@ -3085,10 +3603,14 @@ def _generate(
         request.negative_prompt,
         request.advanced_styles,
     )
-    prompt_expansion = expand_dynamic_prompt(
-        styled_prompt,
-        seed=request.seed if request.seed >= 0 else None,
-        wildcard_dir=config.wildcard_dir,
+    prompt_expansion = (
+        None
+        if _spatial_request_enabled(request)
+        else expand_dynamic_prompt(
+            styled_prompt,
+            seed=request.seed if request.seed >= 0 else None,
+            wildcard_dir=config.wildcard_dir,
+        )
     )
     settings, negative_prompt = _settings_from_request(request, config, mode)
     if request.profile == "anima":
@@ -3170,11 +3692,11 @@ def _generate(
             raise HTTPException(status_code=409, detail=detail) from exc
         if (
             anima_bundle.variant_id.value == "anima_3_8b_52"
-            and mode != "txt2img"
+            and mode not in {"txt2img", "img2img", "inpaint"}
         ):
             raise HTTPException(
                 status_code=409,
-                detail={"code": "anima_3_8b_txt2img_only"},
+                detail={"code": "anima_3_8b_unsupported_generation_mode"},
             )
     if external_model_snapshots:
         settings["model_reference_snapshots"] = [
@@ -3187,8 +3709,43 @@ def _generate(
         settings["raw_prompt"] = request.prompt
         settings["raw_negative_prompt"] = request.negative_prompt
         settings["advanced_styles"] = [style.model_dump() for style in request.advanced_styles]
+    known_embeddings = _known_embedding_names(config)
+    selected_runtime = _selected_runtime_id(config, request.runtime)
+    if _spatial_request_enabled(request) and selected_runtime != "comfy_workflow":
+        _validate_runtime_feature_requirements(
+            config,
+            selected_runtime,
+            request.profile,
+            settings,
+            [],
+            runtime_model_slots,
+        )
+    spatial_context = _prepare_spatial_generation(
+        request=request,
+        settings=settings,
+        config=config,
+        model_slots=model_slots,
+        known_embeddings=known_embeddings,
+        output_dir=output_dir,
+    )
+    expanded_prompt = ""
+    expansion_selections: list[object] = []
+    spatial_loras: list[dict[str, Any]] | None = None
+    if spatial_context is not None:
+        settings["spatial_generation"] = spatial_context.history_record
+        expanded_prompt = spatial_context.prompt_plan.base.combined_expanded_prompt
+        expansion_selections = _spatial_prompt_selections(spatial_context.prompt_plan)
+        spatial_loras = [
+            item.model_dump(mode="json", exclude_none=True)
+            for item in spatial_context.prompt_plan.loras
+        ]
+    else:
+        if prompt_expansion is None:
+            raise RuntimeError("prompt expansion was not prepared")
+        expanded_prompt = prompt_expansion.expanded
+        expansion_selections = list(prompt_expansion.selections)
     loras = _merge_loras(
-        extract_loras(prompt_expansion.expanded),
+        spatial_loras if spatial_loras is not None else extract_loras(expanded_prompt),
         [lora.model_dump(exclude_none=True) for lora in request.loras],
     )
     if request.profile == "anima" and loras:
@@ -3252,14 +3809,21 @@ def _generate(
     )
     if has_lora_runtime_extensions:
         settings["lora_block_weight_runtime"] = "requested"
-    known_embeddings = _known_embedding_names(config)
-    embeddings = sorted(set(extract_embeddings(prompt_expansion.expanded, known_embeddings) + extract_embeddings(negative_prompt, known_embeddings)))
-    selected_runtime = _selected_runtime_id(config, request.runtime)
+    embeddings = sorted(
+        set(
+            (
+                list(spatial_context.prompt_plan.embeddings)
+                if spatial_context is not None
+                else extract_embeddings(expanded_prompt, known_embeddings)
+            )
+            + extract_embeddings(negative_prompt, known_embeddings)
+        )
+    )
     prompt_syntax_record = _prepare_prompt_syntax_record(
         request=request,
         config=config,
         settings=settings,
-        expanded_prompt=prompt_expansion.expanded,
+        expanded_prompt=expanded_prompt,
         expanded_negative_prompt=negative_prompt,
         selected_runtime=selected_runtime,
     )
@@ -3277,11 +3841,13 @@ def _generate(
     _record_refiner_runtime(settings, selected_runtime, request.profile)
     runtime_settings = dict(settings)
     runtime_settings.pop("prompt_input", None)
+    runtime_settings.pop("prompt_layout", None)
+    runtime_settings.pop("spatial_generation", None)
     runtime_request = {
         "profile": request.profile,
         "prompt": request.prompt,
-        "expanded_prompt": prompt_expansion.expanded,
-        "prompt_expansion_selections": prompt_expansion.selections,
+        "expanded_prompt": expanded_prompt,
+        "prompt_expansion_selections": expansion_selections,
         "negative_prompt": negative_prompt,
         "settings": runtime_settings,
         "model_slots": runtime_model_slots,
@@ -3290,6 +3856,8 @@ def _generate(
         "prompt_syntax": prompt_syntax_record["semantic_plans"],
         "topaz_settings": _topaz_settings_from_request(request).model_dump(),
     }
+    if spatial_context is not None:
+        runtime_request["_spatial_runtime_context"] = spatial_context.runtime_context
     if merge_runtime_context is not None:
         runtime_request["_merge_runtime_context"] = dict(merge_runtime_context)
     if comfy_admission_lease_token:
@@ -3350,11 +3918,11 @@ def _generate(
     _revalidate_external_model_reference_snapshots(external_model_snapshots, config)
     try:
         if mode == "img2img":
-            result = runtime.generate_img2img(runtime_request, _output_dir_for(data_dir, request.profile))
+            result = runtime.generate_img2img(runtime_request, output_dir)
         elif mode == "inpaint":
-            result = runtime.generate_inpaint(runtime_request, _output_dir_for(data_dir, request.profile))
+            result = runtime.generate_inpaint(runtime_request, output_dir)
         else:
-            result = runtime.generate_txt2img(runtime_request, _output_dir_for(data_dir, request.profile))
+            result = runtime.generate_txt2img(runtime_request, output_dir)
     except RuntimeCancellationConfirmed as exc:
         raise OperationCancelled() from exc
     except (RuntimeErrorResponse, RuntimeAdapterError, TopazError) as exc:
@@ -3365,7 +3933,7 @@ def _generate(
             {
                 key: value
                 for key, value in runtime_settings_after_execution.items()
-                if key != "prompt_input"
+                if key not in {"prompt_input", "prompt_layout", "spatial_generation"}
             }
         )
     if result.get("runtime_adapter"):
@@ -3402,7 +3970,7 @@ def _generate(
     if result.get("generated_seeds"):
         settings["generated_seeds"] = result["generated_seeds"]
     output_settings = UserSettingsRepository(data_dir / "user-settings.json").load().output
-    settings["output_directory"] = str(_output_dir_for(data_dir, request.profile))
+    settings["output_directory"] = str(output_dir)
     settings["output_root"] = str(resolve_output_root(data_dir, output_settings))
     settings["filename_template"] = output_settings.filename_template
     settings["output_image_format"] = output_settings.image_format
@@ -3418,7 +3986,7 @@ def _generate(
         settings,
         request,
         config,
-        _output_dir_for(data_dir, request.profile),
+        output_dir,
     )
     primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
     if not manifest_mapped:
@@ -3437,7 +4005,7 @@ def _generate(
     )
     generated_tags = metadata_tags(
         profile=request.profile,
-        prompt=prompt_expansion.expanded or request.prompt,
+        prompt=expanded_prompt or request.prompt,
         model_slots=model_slots,
         embeddings=embeddings,
         loras=loras,
@@ -3447,7 +4015,7 @@ def _generate(
         status=result["status"],
         profile=request.profile,
         prompt=request.prompt,
-        expanded_prompt=prompt_expansion.expanded,
+        expanded_prompt=expanded_prompt,
         negative_prompt=negative_prompt,
         settings=settings,
         model_slots=model_slots,
@@ -3473,7 +4041,7 @@ def _generate(
         config=config,
         primary_outputs=primary_outputs,
         generated_tags=generated_tags,
-        prompt=prompt_expansion.expanded or request.prompt,
+        prompt=expanded_prompt or request.prompt,
         negative_prompt=negative_prompt,
         settings=settings,
     )
@@ -3485,9 +4053,9 @@ def _generate(
             "status": result["status"],
             "profile": request.profile,
             "prompt": request.prompt,
-            "expanded_prompt": prompt_expansion.expanded,
+            "expanded_prompt": expanded_prompt,
             "negative_prompt": negative_prompt,
-            "prompt_expansion_selections": prompt_expansion.selections,
+            "prompt_expansion_selections": expansion_selections,
             "settings": settings,
             "model_slots": model_slots,
             "loras": loras,
@@ -3522,9 +4090,9 @@ def _generate(
                 "status": result["status"],
                 "profile": request.profile,
                 "prompt": request.prompt,
-                "expanded_prompt": prompt_expansion.expanded,
+                "expanded_prompt": expanded_prompt,
                 "negative_prompt": negative_prompt,
-                "prompt_expansion_selections": prompt_expansion.selections,
+                "prompt_expansion_selections": expansion_selections,
                 "settings": settings,
                 "model_slots": model_slots,
                 "loras": loras,
@@ -3539,7 +4107,7 @@ def _generate(
         status=result["status"],
         profile=request.profile,
         prompt=request.prompt,
-        expanded_prompt=prompt_expansion.expanded,
+        expanded_prompt=expanded_prompt,
         negative_prompt=negative_prompt,
         settings=settings,
         model_slots=model_slots,
@@ -3944,6 +4512,24 @@ def txt2img(request: Txt2ImgRequest) -> GenerationResponse:
 
 @_artifact_write_operation
 def _generate_xyz_plot(request: XYZPlotRequest) -> XYZPlotResponse:
+    if _spatial_request_enabled(request.base):
+        conflicting_axis = next(
+            (
+                axis
+                for axis in request.axes
+                if axis.target.strip().lower() == "prompt_replace"
+            ),
+            None,
+        )
+        if conflicting_axis is not None:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": api_errors.XYZ_AXIS_UNSUPPORTED,
+                    "target": conflicting_axis.target,
+                    "reason": "prompt_replace_conflicts_with_prompt_layout",
+                },
+            )
     if request.mode == "img2img":
         _ensure_supported_img2img_profile(request.base.profile)
     elif request.mode == "inpaint":
@@ -4161,6 +4747,7 @@ def _job_response(job_id: str, job: dict, operation=None) -> GenerationJobRespon
             if operation is not None
             else str(job.get("error", ""))
         ),
+        error_target_ids=list(job.get("error_target_ids", [])),
         cancelled=bool(job.get("cancelled", False)) or status in {"cancelling", "cancelled"},
     )
 
@@ -4228,6 +4815,8 @@ def _fail_scheduled_operation(job_id: str) -> None:
 
 
 def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest) -> GenerationJobResponse:
+    if isinstance(request, Txt2ImgRequest):
+        request = _freeze_spatial_request_seed(request)
     coordinator = _generation_operation_coordinator()
     publisher_lease = reference_mutation_coordinator.acquire_publisher()
     registered = False
@@ -4284,6 +4873,7 @@ def enqueue_discord_txt2img(
 ):
     from app.services.discord_receipts import DiscordOperationClaim
 
+    request = _freeze_spatial_request_seed(request)
     _preflight_controlnet_mode_request(request, "txt2img")
     coordinator = _generation_operation_coordinator()
     publisher_lease = reference_mutation_coordinator.acquire_publisher()

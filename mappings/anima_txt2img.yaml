@@ -44,16 +44,58 @@ class_types:
   vae_encode: VAEEncode
   vae_encode_inpaint: VAEEncodeForInpaint
   load_image: LoadImage
-  image_color_to_mask: ImageColorToMask
-  solid_mask: SolidMask
-  attention_couple: AttentionCouplePPM
+  model_patch_loader: ModelPatchLoader
+  anima_lllite_apply: AnimaLLLiteApply
   detailer_detector: UltralyticsDetectorProvider
   face_detailer: FaceDetailer
   merge_runtime: AsteriaAnimaMergeRuntime
+  spatial_mask_collector: AsteriaSpatialMaskCollector
+  spatial_prompt_binder: AsteriaSpatialPromptBinder
+  spatial_model_adapter: AsteriaSpatialModelAdapter
+node_contracts:
+  spatial_mask_collector:
+    required_inputs:
+      - mask
+      - target_id
+      - depth_index
+      - overlap_weight
+      - strength
+      - blending
+      - mask_sha256
+      - contract_version
+    accepted_inputs:
+      - previous
+    outputs_by_index:
+      0: ASTERIA_SPATIAL_MASK_BUNDLE
+      1: STRING
+  spatial_prompt_binder:
+    required_inputs:
+      - conditioning
+      - target_id
+      - contract_version
+    accepted_inputs:
+      - previous
+    outputs_by_index:
+      0: ASTERIA_SPATIAL_CONDITIONING
+      1: STRING
+  spatial_model_adapter:
+    required_inputs:
+      - model
+      - global_positive
+      - negative
+      - conditions
+      - masks
+      - profile_json
+      - stage
+      - contract_version
+    outputs_by_index:
+      0: MODEL
+      1: CONDITIONING
+      2: CONDITIONING
+      3: STRING
 dynamic_sections:
   - hires_fix
   - img2img
   - inpaint
-  - regional_prompting
   - detailer_units
   - remaster

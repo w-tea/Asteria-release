@@ -1,8 +1,0 @@
-const GenerateBaseControlsPanel_vue_vue_type_style_index_0_scoped_5c843437_lang = ".generation-detail-group[data-v-5c843437]{display:grid;gap:18px}.generation-detail-group__section[data-v-5c843437]{display:grid;gap:12px}.generation-detail-group__section--size[data-v-5c843437]{padding-top:16px;border-top:1px solid var(--asteria-border-soft)}.generation-detail-group__heading[data-v-5c843437],.generation-detail-group__subheading[data-v-5c843437]{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.generation-detail-group__heading h2[data-v-5c843437],.generation-detail-group__subheading h3[data-v-5c843437]{margin:0;color:var(--asteria-text);font-size:12px}.generation-detail-group__heading small[data-v-5c843437]{min-width:0;overflow:hidden;color:var(--asteria-muted);font-size:10px;text-overflow:ellipsis;white-space:nowrap}.generation-detail-group__subheading[data-v-5c843437]{margin-top:4px;padding-top:12px;border-top:1px solid var(--asteria-border-soft)}.capability-warning[data-v-5c843437]{margin:0;padding:8px 10px;border:1px solid var(--asteria-warning);border-radius:6px;background:color-mix(in srgb,var(--asteria-warning) 12%,var(--asteria-surface-raised));color:var(--asteria-warning-text);font-size:11px;line-height:1.45}.capability-warning span+span[data-v-5c843437]{display:block;margin-top:4px}.field--disabled[data-v-5c843437]{opacity:.6}";
-
-const GenerateBaseControlsPanelStyles_CACsUa4Y = [
-  GenerateBaseControlsPanel_vue_vue_type_style_index_0_scoped_5c843437_lang
-];
-
-export { GenerateBaseControlsPanelStyles_CACsUa4Y as default };
-//# sourceMappingURL=GenerateBaseControlsPanel-styles.CACsUa4Y.mjs.map

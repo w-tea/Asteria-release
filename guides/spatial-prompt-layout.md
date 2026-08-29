@@ -1,0 +1,85 @@
+# 項目別プロンプトの配置
+
+項目別入力では、ポジティブプロンプトを「ベース」「キャラクター」「詳細」などに分けて管理できます。さらに、必要な項目だけを画像内の配置対象にして、対象ごとの範囲と条件を設定できます。
+
+## 基本の使い方
+
+配置を設定しない項目は、これまでどおり画像全体へ反映します。配置を使わない生成では、配置用の追加処理は行いません。
+
+配置したい項目で「配置を設定」を押すと、専用画面が開きます。初回は、その項目の入力内容が対象1へ入ります。文章の内容から人物や物体を自動で分けることはありません。対象1の内容を確認し、必要なら対象を追加して各欄へ入力してください。
+
+対象数に固定の上限はありません。対象を増やすほど処理時間とメモリ使用量が増えるため、4件目以降は注意が表示されます。注意が出ても、利用者が実行を選べば生成できます。
+
+## 範囲と形
+
+対象ごとに楕円または長方形を選べます。範囲は中央のキャンバスで移動・拡大縮小し、配置の強さと境界のなじみを自動または手動で調整します。設定値は画像の基準キャンバスに対する相対値として保存されるため、画面上のピクセル座標そのものは保存しません。
+
+旧Animaのデータに自由な形の範囲指定が含まれる場合は、旧形式の範囲として読み込みます。移動と拡大縮小はできますが、楕円や長方形へ変更するまで元の輪郭を保ちます。旧設定を読み込んだ場合も、通常のプロンプトは失われません。
+
+配置の強さを上げると指定範囲へ結び付きやすくなりますが、構図や画質へ影響する場合があります。境界のなじみを上げると周囲へ滑らかにつながります。どちらも結果を保証する値ではありません。
+
+対象が重なる場合は、前後関係を自動または手動で選べます。これは生成中に特徴をどちらへ寄せるかの手掛かりであり、後処理で画像を重ねる機能でも、完全な遮蔽順を保証する機能でもありません。
+
+## 背景画像、Hires、モデル系統
+
+img2imgやinpaintでは、入力画像を背景としてキャンバスに表示し、その上で配置を設定できます。Hires.fixやRefinerを使う場合は、選択したモデル系統に対応する設定が適用されます。SDXL／Illustrious系とAnima系では利用できる処理が異なるため、モデルを自動で決められない場合は画面の選択肢から明示的に選んでください。未確認の派生モデルで、同じ結果になるとは限りません。
+
+Anima 2.9B／3.8Bでは、LLLiteが生成結果に作用することを確認しています。ただし、現在の位置や構図の制御は実験段階です。狙った位置や構図を保証するものではないため、強さと範囲を調整しながら結果を確認してください。
+
+## 画像サイズを変えたとき
+
+生成サイズを大きくした場合、配置の中心と範囲を保ったまま基準キャンバスを更新します。小さくした場合や縦横比を変えた場合、範囲がキャンバスの外へ出る可能性があるため、実行前に確認が表示されます。画面の案内に従って範囲を調整するか、配置を維持するか、変更を中止してください。
+
+## 失敗したとき
+
+範囲の重なりが成立しないinpaintでは、対象の位置を調整する、今回だけ対象を外す、配置を無効にして生成する、操作を中止する、のいずれかを選べます。モデルや依存機能が不足している場合は、画面の案内に従って設定を直すか、配置なしで生成してください。配置を無効にしても、保存した対象と範囲は削除されません。
+
+配置は、対象が指定位置に現れやすくなるよう生成を誘導する機能です。モデル、Seed、プロンプト、LoRA、ControlNet、画像サイズなどによって結果は変わり、位置、人数、遮蔽、輪郭を保証するものではありません。NovelAIと同じ精度や挙動を意味する機能ではありません。
+
+## 過去データの移行
+
+旧Animaの領域別プロンプトを含む画像や履歴は、読み込み時に移行できる場合があります。元の色分け画像が必要なデータでは、画像を選び直してから配置を確認してください。移行できない場合でも、通常のプロンプトは再利用できます。保存後の新規生成は、Asteriaの配置形式で処理します。
+
+---
+
+## English
+
+Sectioned prompt input can keep the positive prompt in separate sections such as Base, Character, and Details. You can also place selected sections within the image and configure a separate area for each target.
+
+### Basic workflow
+
+Sections without placement continue to affect the whole image. A generation without placement does not use the additional spatial processing path.
+
+Select **Set placement** for a section to open the placement editor. The first section you place becomes Target 1. Asteria does not automatically split people or objects from the prompt text. Review Target 1, then add and edit more targets when needed.
+
+There is no fixed target limit. More targets require additional processing time and memory, so Asteria shows an advisory from the fourth target onward. The advisory does not disable generation.
+
+### Area and shape
+
+Each target can use an ellipse or rectangle. Move and resize the area on the canvas, then leave strength, edge blending, and front-to-back priority on Auto or adjust them manually. Asteria stores the placement relative to the reference canvas instead of saving screen pixel coordinates.
+
+When imported legacy Anima data contains a free-form area, Asteria keeps that outline until you replace it with an ellipse or rectangle. Importing legacy placement does not discard the regular prompt.
+
+Strength influences how closely a section is associated with its target area, but higher values can affect composition and image quality. Edge blending controls how smoothly the target connects to its surroundings. Neither value guarantees a particular result.
+
+Overlapping targets can use automatic or manual front-to-back priority. This priority guides conditioning during generation. It is not post-processing compositing and does not guarantee complete occlusion.
+
+### Source images, Hires.fix, and model families
+
+For img2img and inpaint, the source image appears behind the placement canvas. Hires.fix and Refiner use the model-family configuration selected for their stages. SDXL/Illustrious and Anima use different execution paths, so choose the family explicitly when Asteria cannot determine it. Unverified fine-tunes may behave differently.
+
+LLLite has a confirmed effect on outputs from Anima 2.9B and 3.8B. Its current position and composition control remains experimental and does not guarantee the intended layout. Adjust the strength and area while reviewing the results.
+
+### Changing image size
+
+When you enlarge the generation size, Asteria keeps the relative center and extent of each target. Reducing the size or changing the aspect ratio may move part of a target outside the canvas. Asteria then asks whether to adjust the placement, keep it as-is, or cancel the size change.
+
+### Recovery
+
+If an inpaint target does not overlap the editable area, you can adjust placement, exclude that target for the current run, disable placement, or cancel. If a selected model or required component is unavailable, follow the displayed recovery guidance or generate without placement. Disabling placement does not delete the saved targets.
+
+Spatial prompt placement guides the model toward the selected areas. Results still depend on the model, Seed, prompt, LoRAs, ControlNet, and image size. It does not guarantee position, subject count, occlusion, or outlines, and it does not claim NovelAI-equivalent behavior.
+
+### Importing older data
+
+Asteria can migrate some images and history entries that contain the earlier Anima regional-prompt format. If the original color map is required, select it again and review the imported placement. Even when placement cannot be migrated, the regular prompt remains available. New generations are saved with Asteria's placement format.

@@ -1,0 +1,82 @@
+schema_version: asteria.spatial-model-profiles.v1
+profiles:
+  - profile_id: sdxl.attention.v1
+    revision: "1"
+    model_family: sdxl
+    architectures: [sdxl]
+    variants: [sdxl]
+    encoder_kinds: [clip]
+    verified_structure_ids: [sdxl_unet_v1]
+    layout_fingerprints: [69bf36b3dd32fcdf15f04b43e9654d862a88c6c2321f9b4915c5f43f03816db9]
+    diffusion_block_counts: [24]
+    automatic_status: supported
+    manual_selectable: true
+    coefficients:
+      early_guidance_end: 0.35
+      isolation_start: 0.15
+      isolation_end: 0.85
+      late_blending_start: 0.65
+  - profile_id: illustrious.attention.v1
+    revision: "1"
+    model_family: illustrious
+    architectures: [sdxl]
+    variants: [illustrious]
+    encoder_kinds: [clip]
+    verified_structure_ids: [sdxl_unet_v1]
+    layout_fingerprints: [69bf36b3dd32fcdf15f04b43e9654d862a88c6c2321f9b4915c5f43f03816db9]
+    diffusion_block_counts: [24]
+    automatic_status: supported
+    manual_selectable: true
+    coefficients:
+      early_guidance_end: 0.35
+      isolation_start: 0.15
+      isolation_end: 0.85
+      late_blending_start: 0.65
+  - profile_id: anima.28.attention.v1
+    revision: "1"
+    model_family: anima
+    architectures: [anima]
+    variants: [anima_base_28]
+    encoder_kinds: [native_qwen]
+    verified_structure_ids: [anima_base_28]
+    layout_fingerprints: [f8d20d9fc69b04dc4b137a51727498143cc8304748245a48e94f3998d850ddd0]
+    diffusion_block_counts: [28]
+    automatic_status: supported
+    manual_selectable: true
+    coefficients:
+      early_guidance_end: 0.32
+      isolation_start: 0.12
+      isolation_end: 0.82
+      late_blending_start: 0.68
+  - profile_id: anima.40.attention.v1
+    revision: "1"
+    model_family: anima
+    architectures: [anima]
+    variants: [anima_2_9b_40]
+    encoder_kinds: [native_qwen]
+    verified_structure_ids: [anima_2_9b_40]
+    layout_fingerprints: [e5191b87d9cfeeff7046de3cb2e9eda335f2523215ae06e0d20476ea3f458518]
+    diffusion_block_counts: [40]
+    automatic_status: supported
+    manual_selectable: true
+    coefficients:
+      early_guidance_end: 0.32
+      isolation_start: 0.12
+      isolation_end: 0.82
+      late_blending_start: 0.68
+  - profile_id: anima.52.attention.experimental.v1
+    revision: "1"
+    model_family: anima
+    architectures: [anima]
+    variants: [anima_3_8b_52]
+    encoder_kinds: [qwen35_progressive]
+    verified_structure_ids: [anima_3_8b_52]
+    layout_fingerprints: [2ad87dae9a23485c1ce5b5fa51a79e5d2649cb63cb115101afeeb11c27a40e8c]
+    diffusion_block_counts: [52]
+    automatic_status: selection_required
+    manual_selectable: true
+    coefficients:
+      early_guidance_end: 0.30
+      isolation_start: 0.10
+      isolation_end: 0.80
+      late_blending_start: 0.70

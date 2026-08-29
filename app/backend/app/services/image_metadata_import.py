@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from dataclasses import dataclass
 from datetime import datetime
 import json
 from math import isfinite
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import ValidationError
 
@@ -22,6 +24,7 @@ from app.schemas.image_metadata import (
     ResourceReference,
 )
 from app.schemas.prompt_input import PromptInput
+from app.schemas.prompt_layout import PromptLayout
 from app.services.image_metadata_text import (
     first_generation_parameters_text,
     metadata_value_to_text,
@@ -29,7 +32,12 @@ from app.services.image_metadata_text import (
 )
 from app.services.metadata import parse_generation_parameters_text
 from app.services.model_library import ModelLibrary, ModelLibraryItem
-from app.services.prompt_input import PromptInputWarningCode, recover_saved_prompt_input
+from app.services.spatial_asset_resolver import (
+    SpatialAssetResolutionError,
+    resolve_spatial_mask_source,
+)
+from app.services.spatial_layout_import import import_legacy_anima_layout
+from app.services.spatial_prompt_contract import recover_saved_spatial_prompt_contract
 
 
 MAX_SIDECAR_BYTES = 4 * 1024 * 1024
@@ -37,6 +45,16 @@ MAX_EMBEDDED_METADATA_BYTES = 4 * 1024 * 1024
 MAX_JSON_DEPTH = 32
 MAX_JSON_MEMBERS = 10_000
 SUPPORTED_ASTERIA_SCHEMAS = {"asteria.generation.v1"}
+
+
+@dataclass(frozen=True, slots=True)
+class _SpatialPromptPreviewState:
+    prompt: str
+    prompt_input: PromptInput | None
+    prompt_layout: PromptLayout | None
+    status: Literal["ready", "partial", "legacy", "unsupported"] = "ready"
+    warning_code: str | None = None
+    legacy_snapshot: dict[str, Any] | None = None
 
 
 def build_image_metadata_preview(
@@ -50,6 +68,7 @@ def build_image_metadata_preview(
     available_preset_ids: set[str] | None = None,
     available_workflow_ids: set[str] | None = None,
     sidecar_path: Path | None = None,
+    data_dir: Path | None = None,
 ) -> ImageMetadataPreview:
     image_info, metadata_values, image_format, width, height = read_image_metadata_values(path)
     warnings: list[str] = []
@@ -98,15 +117,23 @@ def build_image_metadata_preview(
             unsupported.append("comfy_graph_unrecognized")
 
     merged = _merge_sources(sources)
-    positive_selection = _select_positive_prompt_state(sources)
+    positive_selection = _select_positive_prompt_state(sources, data_dir=data_dir)
     if positive_selection is None:
         merged.pop("prompt", None)
         prompt_input = None
+        prompt_layout = None
+        spatial_prompt_status = "ready"
+        spatial_prompt_warning = None
+        spatial_prompt_legacy_snapshot = None
     else:
-        selected_prompt, prompt_input, prompt_warning = positive_selection
-        merged["prompt"] = selected_prompt
-        if prompt_warning:
-            warnings.append(prompt_warning)
+        merged["prompt"] = positive_selection.prompt
+        prompt_input = positive_selection.prompt_input
+        prompt_layout = positive_selection.prompt_layout
+        spatial_prompt_status = positive_selection.status
+        spatial_prompt_warning = positive_selection.warning_code
+        spatial_prompt_legacy_snapshot = positive_selection.legacy_snapshot
+        if spatial_prompt_warning:
+            warnings.append(spatial_prompt_warning)
     settings, setting_warnings = _compatible_settings(merged)
     warnings.extend(setting_warnings)
     resources = resolve_resource_references(
@@ -119,7 +146,14 @@ def build_image_metadata_preview(
     positive = _metadata_text(merged, "prompt")
     negative = _metadata_text(merged, "negative_prompt")
     seed = _integer_value(merged.get("seed"))
-    recognized = _recognized_codes(positive, negative, settings, seed, resources)
+    recognized = _recognized_codes(
+        positive,
+        negative,
+        settings,
+        seed,
+        resources,
+        has_prompt_layout=prompt_layout is not None,
+    )
 
     family = sources[0][0] if sources else "unknown"
     if not recognized:
@@ -142,6 +176,10 @@ def build_image_metadata_preview(
         status=status,
         positive_prompt=positive,
         prompt_input=prompt_input,
+        prompt_layout=prompt_layout,
+        spatial_prompt_status=spatial_prompt_status,
+        spatial_prompt_warning_code=spatial_prompt_warning,
+        spatial_prompt_legacy_snapshot=spatial_prompt_legacy_snapshot,
         negative_prompt=negative,
         settings=settings,
         seed=seed,
@@ -304,15 +342,89 @@ def _merge_sources(sources: list[tuple[str, dict[str, Any]]]) -> dict[str, Any]:
 
 def _select_positive_prompt_state(
     sources: list[tuple[str, dict[str, Any]]],
-) -> tuple[str, PromptInput | None, PromptInputWarningCode | None] | None:
+    *,
+    data_dir: Path | None,
+) -> _SpatialPromptPreviewState | None:
     for _family, payload in sources:
         prompt = payload.get("prompt")
         if not isinstance(prompt, str):
             continue
         settings = payload.get("settings")
-        raw_prompt_input = settings.get("prompt_input") if isinstance(settings, dict) else None
-        recovery = recover_saved_prompt_input(prompt, raw_prompt_input)
-        return prompt, recovery.prompt_input, recovery.warning_code
+        source_settings = settings if isinstance(settings, dict) else {}
+        raw_prompt_input = source_settings.get("prompt_input")
+        raw_prompt_layout = source_settings.get("prompt_layout")
+        mode = source_settings.get("mode")
+        generation_mode = mode if mode in {"txt2img", "img2img", "inpaint"} else "txt2img"
+        recovery = recover_saved_spatial_prompt_contract(
+            prompt,
+            raw_prompt_input,
+            raw_prompt_layout,
+            generation_mode,
+        )
+        if recovery.status == "fallback":
+            return _SpatialPromptPreviewState(
+                prompt=prompt,
+                prompt_input=recovery.snapshot.prompt_input,
+                prompt_layout=None,
+                status="partial",
+                warning_code=recovery.warning_code,
+                legacy_snapshot=recovery.legacy_snapshot,
+            )
+
+        layout = recovery.snapshot.prompt_layout
+        if layout is not None and data_dir is not None:
+            try:
+                for target in layout.targets:
+                    if target.mask_source is not None:
+                        resolve_spatial_mask_source(target.mask_source, data_dir)
+            except (SpatialAssetResolutionError, OSError, ValueError):
+                fallback = recover_saved_spatial_prompt_contract(
+                    prompt,
+                    raw_prompt_input,
+                    {"schema_version": "asteria.prompt-layout.invalid"},
+                    generation_mode,
+                )
+                return _SpatialPromptPreviewState(
+                    prompt=prompt,
+                    prompt_input=fallback.snapshot.prompt_input,
+                    prompt_layout=None,
+                    status="partial",
+                    warning_code="spatial_prompt_invalid_fallback",
+                    legacy_snapshot={
+                        "prompt_input": deepcopy(raw_prompt_input),
+                        "prompt_layout": deepcopy(raw_prompt_layout),
+                    },
+                )
+
+        if raw_prompt_input is None and raw_prompt_layout is None:
+            legacy_units = source_settings.get("anima_lllite_units")
+            if isinstance(legacy_units, list):
+                for unit_index, unit in enumerate(legacy_units):
+                    if not isinstance(unit, dict) or "regional_prompts" not in unit:
+                        continue
+                    legacy = import_legacy_anima_layout(
+                        unit,
+                        source_identity=f"metadata:{_family}",
+                        unit_index=unit_index,
+                    )
+                    return _SpatialPromptPreviewState(
+                        prompt=prompt,
+                        prompt_input=legacy.prompt_input,
+                        prompt_layout=legacy.prompt_layout,
+                        status="ready" if legacy.status == "ready" else (
+                            "unsupported" if legacy.status == "unsupported" else "legacy"
+                        ),
+                        warning_code=legacy.reason,
+                        legacy_snapshot={
+                            "anima_lllite_units": deepcopy(legacy_units),
+                        },
+                    )
+
+        return _SpatialPromptPreviewState(
+            prompt=prompt,
+            prompt_input=recovery.snapshot.prompt_input,
+            prompt_layout=layout,
+        )
     return None
 
 
@@ -600,6 +712,8 @@ def _recognized_codes(
     settings: CompatibleTxt2ImgSettings,
     seed: int | None,
     resources: list[ResourceReference],
+    *,
+    has_prompt_layout: bool = False,
 ) -> list[str]:
     codes: list[str] = []
     if positive.presence == "present":
@@ -611,6 +725,8 @@ def _recognized_codes(
         codes.append("seed")
     if resources:
         codes.append("resources")
+    if has_prompt_layout:
+        codes.append("prompt_layout")
     return codes
 
 

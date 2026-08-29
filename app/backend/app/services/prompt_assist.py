@@ -4,14 +4,28 @@ import json
 import os
 import re
 import time
-from typing import Literal
 from urllib.parse import urlparse, urlunparse
 
 import httpx
-from pydantic import BaseModel, Field, model_validator
-
-from app.schemas.prompt_input import PromptInput, PromptSection, PromptSectionId
-from app.services.prompt_input import validate_prompt_input_pair
+from app.schemas.prompt_assist import (
+    PromptAssistConnectionProviderMode,
+    PromptAssistLanguage,
+    PromptAssistProviderMode,
+    PromptAssistProviderModelsRequestData,
+    PromptAssistProviderModelsResult,
+    PromptAssistProviderTestRequestData,
+    PromptAssistProviderTestResult,
+    PromptAssistRequestData,
+    PromptAssistResult,
+    PromptAssistTarget,
+    validate_prompt_assist_section_contract,
+)
+from app.schemas.prompt_input import (
+    PromptSection,
+    PromptSectionV2,
+    PromptTarget,
+    TargetPromptContent,
+)
 
 from app.services.prompt_assist_presets import (
     PromptAssistPurposePreset,
@@ -19,127 +33,6 @@ from app.services.prompt_assist_presets import (
     prompt_assist_preset_instruction,
     restore_protected_tokens,
 )
-
-
-PromptAssistLanguage = Literal["en", "ja"]
-PromptAssistTarget = Literal["enhance", "variations", "negative"]
-PromptAssistProviderMode = Literal["prompt_only", "openai_compatible", "openai_responses", "anthropic", "gemini"]
-PromptAssistConnectionProviderMode = Literal["openai_compatible", "openai_responses", "anthropic", "gemini"]
-
-
-class PromptAssistRequestData(BaseModel):
-    prompt: str = ""
-    prompt_input: PromptInput | None = None
-    active_section_id: PromptSectionId | None = None
-    active_section_text: str | None = None
-    negative_prompt: str = ""
-    profile: str = "sdxl"
-    mode: str = "txt2img"
-    width: int = Field(default=832, ge=64, le=8192)
-    height: int = Field(default=1216, ge=64, le=8192)
-    loras: list[str] = Field(default_factory=list)
-    embeddings: list[str] = Field(default_factory=list)
-    target: PromptAssistTarget = "enhance"
-    language: PromptAssistLanguage = "en"
-    extra_instruction: str = ""
-    purpose_preset: PromptAssistPurposePreset = "standard"
-    protected_tokens: list[str] = Field(default_factory=list, max_length=64)
-    provider_mode: PromptAssistProviderMode = "prompt_only"
-    provider_endpoint: str = ""
-    provider_model: str = ""
-    provider_api_key: str = ""
-    provider_api_key_env_var: str = ""
-    provider_timeout_seconds: float = Field(default=60.0, ge=1.0, le=300.0)
-
-    @model_validator(mode="after")
-    def validate_prompt_sections(self) -> "PromptAssistRequestData":
-        validate_prompt_assist_section_contract(
-            prompt=self.prompt,
-            prompt_input=self.prompt_input,
-            target=self.target,
-            active_section_id=self.active_section_id,
-            active_section_text=self.active_section_text,
-        )
-        return self
-
-
-class PromptAssistResult(BaseModel):
-    provider_mode: PromptAssistProviderMode = "prompt_only"
-    language: PromptAssistLanguage
-    target: PromptAssistTarget
-    active_section_id: PromptSectionId | None = None
-    purpose_preset: PromptAssistPurposePreset = "standard"
-    system_prompt: str
-    user_prompt: str
-    suggested_prompt: str
-    suggested_negative_prompt: str
-    suggested_tags: list[str] = Field(default_factory=list)
-    provider_model: str = ""
-    provider_response: str = ""
-    warnings: list[str] = Field(default_factory=list)
-
-
-class PromptAssistProviderTestRequestData(BaseModel):
-    provider_mode: PromptAssistConnectionProviderMode
-    provider_endpoint: str = ""
-    provider_model: str = ""
-    provider_api_key_env_var: str = ""
-    provider_timeout_seconds: float = Field(default=60.0, ge=1.0, le=300.0)
-
-
-class PromptAssistProviderTestResult(BaseModel):
-    status: Literal["connected"] = "connected"
-    provider_mode: PromptAssistConnectionProviderMode
-    provider_model: str = ""
-    latency_ms: int
-
-
-class PromptAssistProviderModelsRequestData(BaseModel):
-    provider_mode: PromptAssistConnectionProviderMode
-    provider_endpoint: str = ""
-    provider_api_key_env_var: str = ""
-    provider_timeout_seconds: float = Field(default=60.0, ge=1.0, le=300.0)
-
-
-class PromptAssistProviderModelsResult(BaseModel):
-    models: list[str] = Field(default_factory=list)
-
-
-def validate_prompt_assist_section_contract(
-    *,
-    prompt: str,
-    prompt_input: PromptInput | None,
-    target: PromptAssistTarget,
-    active_section_id: PromptSectionId | None,
-    active_section_text: str | None,
-) -> None:
-    if prompt_input is None:
-        if active_section_id is not None or active_section_text is not None:
-            raise ValueError("active prompt section requires prompt_input")
-        return
-
-    validate_prompt_input_pair(prompt, prompt_input)
-    if prompt_input.mode == "single":
-        if active_section_id is not None or active_section_text is not None:
-            raise ValueError("single prompt input must not contain an active section")
-        return
-
-    requires_active_section = target != "negative"
-    if active_section_id is None or active_section_text is None:
-        if requires_active_section or active_section_id is not None or active_section_text is not None:
-            raise ValueError("section prompt assist requires a complete active section")
-        return
-
-    section = next(
-        (
-            item
-            for item in prompt_input.sections or ()
-            if item.id == active_section_id
-        ),
-        None,
-    )
-    if section is None or section.text != active_section_text:
-        raise ValueError("active prompt section does not match prompt_input")
 
 
 def test_prompt_assist_provider(request: PromptAssistProviderTestRequestData) -> PromptAssistProviderTestResult:
@@ -180,11 +73,15 @@ def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
         raise ValueError("prompt_assist_provider_required_for_purpose")
     prompt = _compact(request.prompt)
     active_section = _active_prompt_section(request)
-    prompt_edit_target = (
-        _compact(active_section.text)
-        if active_section is not None and request.target != "negative"
-        else prompt
-    )
+    active_target = _active_prompt_target(request)
+    if request.target == "negative":
+        prompt_edit_target = prompt
+    elif active_target is not None:
+        prompt_edit_target = _compact(active_target.text)
+    elif active_section is not None:
+        prompt_edit_target = _compact(active_section.text)
+    else:
+        prompt_edit_target = prompt
     negative_prompt = _compact(request.negative_prompt)
     profile = _compact(request.profile).lower() or "sdxl"
     mode = _compact(request.mode).lower() or "txt2img"
@@ -256,6 +153,13 @@ def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
             if active_section is not None and request.target != "negative"
             else None
         ),
+        active_target_id=(
+            active_target.id
+            if active_target is not None and request.target != "negative"
+            else None
+        ),
+        prompt_structure_revision=request.prompt_structure_revision,
+        prompt_structure_signature=request.prompt_structure_signature,
         purpose_preset=request.purpose_preset,
         system_prompt=system_prompt,
         user_prompt=user_prompt,
@@ -268,7 +172,9 @@ def build_prompt_assist(request: PromptAssistRequestData) -> PromptAssistResult:
     )
 
 
-def _active_prompt_section(request: PromptAssistRequestData) -> PromptSection | None:
+def _active_prompt_section(
+    request: PromptAssistRequestData,
+) -> PromptSection | PromptSectionV2 | None:
     if (
         request.prompt_input is None
         or request.prompt_input.mode != "sections"
@@ -280,6 +186,24 @@ def _active_prompt_section(request: PromptAssistRequestData) -> PromptSection | 
             section
             for section in request.prompt_input.sections or ()
             if section.id == request.active_section_id
+        ),
+        None,
+    )
+
+
+def _active_prompt_target(request: PromptAssistRequestData) -> PromptTarget | None:
+    section = _active_prompt_section(request)
+    if (
+        not isinstance(section, PromptSectionV2)
+        or not isinstance(section.content, TargetPromptContent)
+        or request.active_target_id is None
+    ):
+        return None
+    return next(
+        (
+            target
+            for target in section.content.targets
+            if target.id == request.active_target_id
         ),
         None,
     )
@@ -367,6 +291,7 @@ def _user_prompt(
     protected_tokens: list[str],
 ) -> str:
     active_section = _active_prompt_section(request)
+    active_target = _active_prompt_target(request)
     prompt_label = (
         "Current combined prompt"
         if active_section is not None and request.target != "negative"
@@ -387,7 +312,41 @@ def _user_prompt(
         f"- Local draft prompt: {suggested_prompt}",
         f"- Local draft negative prompt: {suggested_negative}",
     ]
-    if active_section is not None and request.target != "negative":
+    if active_target is not None and active_section is not None and request.target != "negative":
+        lines.extend(
+            [
+                "Prompt target editing rules:",
+                (
+                    f"- Active target (the only target you may rewrite) "
+                    f"[{active_target.id}] {active_target.name}: "
+                    f"{_compact(active_target.text)}"
+                ),
+            ]
+        )
+        for section in sorted(
+            request.prompt_input.sections or (),
+            key=lambda item: item.order,
+        ):
+            if isinstance(section, PromptSectionV2) and isinstance(
+                section.content,
+                TargetPromptContent,
+            ):
+                for target in sorted(section.content.targets, key=lambda item: item.order):
+                    if target.id == active_target.id:
+                        continue
+                    lines.append(
+                        f"- Reference target (do not rewrite) "
+                        f"[{target.id}] {target.name}: {_compact(target.text)}"
+                    )
+            else:
+                lines.append(
+                    f"- Reference section (do not rewrite) "
+                    f"[{section.id}] {section.label}: {_compact(section.text) or '(empty)'}"
+                )
+        lines.append(
+            "- Return only the replacement text for the active target in the JSON prompt field."
+        )
+    elif active_section is not None and request.target != "negative":
         lines.extend(
             [
                 "Prompt section editing rules:",

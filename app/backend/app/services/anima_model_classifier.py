@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from app.schemas.media_model_catalog import (
     MediaModelClassification,
     MediaModelCompatibility,
@@ -15,6 +17,9 @@ from app.services.media_model_catalog import SafetensorsHeader
 from app.services.model_architecture_inspector import AnimaArchitectureInspector
 from app.services.model_library import ModelLibraryItem
 
+if TYPE_CHECKING:
+    from app.services.spatial_profile_resolver import SpatialModelEvidence
+
 
 _DTYPE_NAMES = {
     "BF16": "bf16",
@@ -25,6 +30,9 @@ _DTYPE_NAMES = {
     "F8_E5M2": "fp8_e5m2",
     "I8": "int8",
 }
+_SPATIAL_WEIGHT_DTYPES = frozenset(
+    {"BF16", "F16", "F32", "F64", "F8_E4M3", "F8_E5M2", "I8"}
+)
 
 
 class AnimaModelClassifier:
@@ -125,6 +133,85 @@ class AnimaModelClassifier:
             compatibility=compatibility,
             reason_code=descriptor.unsupported_reason
             or "anima_component_role_not_supported",
+        )
+
+    def spatial_model_evidence(
+        self,
+        item: ModelLibraryItem,
+        header: SafetensorsHeader | None,
+        *,
+        model_slot_id: str,
+        encoder_kind: str,
+    ) -> SpatialModelEvidence | None:
+        """Return structural evidence only for a verified Anima diffusion model.
+
+        The local import keeps the media catalog independent from the spatial
+        execution package while still using the classifier's inspected result.
+        """
+        if header is None or item.type != "checkpoint":
+            return None
+        descriptor = self._inspector.inspect(header)
+        if (
+            descriptor.status != ArchitectureDetectionStatus.SUPPORTED
+            or descriptor.component != AnimaArchitectureComponent.DIFFUSION_MODEL
+            or descriptor.variant_id is None
+            or descriptor.diffusion_block_count is None
+            or descriptor.merge_schema_id is None
+            or not self._has_verified_spatial_shapes(
+                header,
+                descriptor.diffusion_block_count,
+            )
+        ):
+            return None
+        from app.services.spatial_profile_resolver import (
+            SpatialModelEvidence,
+            spatial_layout_fingerprint,
+            spatial_structure_fingerprint,
+        )
+
+        return SpatialModelEvidence(
+            model_slot_id=model_slot_id,
+            architecture="anima",
+            variant=descriptor.variant_id.value,
+            encoder_kind=encoder_kind,
+            verified_structure_id=descriptor.merge_schema_id,
+            layout_fingerprint=spatial_layout_fingerprint(
+                header,
+                architecture="anima",
+            ),
+            structure_fingerprint=spatial_structure_fingerprint(header),
+            diffusion_block_count=descriptor.diffusion_block_count,
+        )
+
+    @staticmethod
+    def _has_verified_spatial_shapes(
+        header: SafetensorsHeader,
+        diffusion_block_count: int,
+    ) -> bool:
+        expected: dict[str, tuple[int, ...]] = {
+            "net.x_embedder.proj.1.weight": (2048, 68),
+            "net.final_layer.linear.weight": (64, 2048),
+        }
+        for ordinal in range(diffusion_block_count):
+            expected.update(
+                {
+                    f"net.blocks.{ordinal}.cross_attn.k_proj.weight": (2048, 1024),
+                    f"net.blocks.{ordinal}.self_attn.q_proj.weight": (2048, 2048),
+                    f"net.blocks.{ordinal}.mlp.layer1.weight": (8192, 2048),
+                }
+            )
+        for ordinal in range(6):
+            expected.update(
+                {
+                    f"net.llm_adapter.blocks.{ordinal}.cross_attn.k_proj.weight": (1024, 1024),
+                    f"net.llm_adapter.blocks.{ordinal}.self_attn.q_proj.weight": (1024, 1024),
+                }
+            )
+        return all(
+            (tensor := header.tensors.get(name)) is not None
+            and tensor.shape == shape
+            and tensor.dtype in _SPATIAL_WEIGHT_DTYPES
+            for name, shape in expected.items()
         )
 
     @staticmethod

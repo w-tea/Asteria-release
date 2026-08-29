@@ -28,6 +28,21 @@ class PreparedPrompt:
     syntax: PromptSyntaxPlan
 
 
+@dataclass(frozen=True)
+class PromptFragmentSelection:
+    occurrence: int
+    source_token: str
+    selected_value: str
+    selection_kind: str
+
+
+@dataclass(frozen=True)
+class PromptFragmentExpansion:
+    raw: str
+    expanded: str
+    selections: tuple[PromptFragmentSelection, ...]
+
+
 def _wildcard_path(wildcard_dir: Path, name: str) -> Path:
     safe_name = name.replace("\\", "/").strip("/")
     return wildcard_dir.joinpath(*safe_name.split("/")).with_suffix(".txt")
@@ -112,6 +127,65 @@ def expand_dynamic_prompt(prompt: str, seed: int | None = None, wildcard_dir: Pa
 
     expanded = re.sub(r"\{([^{}]+)\}", replace, prompt)
     return PromptExpansion(raw=prompt, expanded=expanded, selections=selections)
+
+
+def expand_prompt_fragment(
+    prompt: str,
+    *,
+    seed: int,
+    wildcard_dir: Path | None = None,
+) -> PromptFragmentExpansion:
+    """Expand one spatial fragment with a private RNG and reproducible receipts.
+
+    The existing ``expand_dynamic_prompt`` function intentionally remains unchanged:
+    unpositioned generation relies on its historical RNG order and selection format.
+    """
+    rng = random.Random(seed)
+    selections: list[PromptFragmentSelection] = []
+
+    def expand_wildcards(text: str, depth: int = 0) -> str:
+        if wildcard_dir is None or depth > 8:
+            return text
+
+        def replace_wildcard(match: re.Match[str]) -> str:
+            name = match.group(1)
+            options = _read_wildcard_options(wildcard_dir, name)
+            if not options:
+                return match.group(0)
+            selected = rng.choice(options)
+            selections.append(
+                PromptFragmentSelection(
+                    occurrence=len(selections),
+                    source_token=match.group(0),
+                    selected_value=selected,
+                    selection_kind="wildcard",
+                )
+            )
+            return expand_wildcards(selected, depth + 1)
+
+        return re.sub(r"__([A-Za-z0-9_./-]+)__", replace_wildcard, text)
+
+    wildcard_expanded = expand_wildcards(prompt)
+
+    def replace_choice(match: re.Match[str]) -> str:
+        options = [part.strip() for part in match.group(1).split("|")]
+        selected = rng.choice(options)
+        selections.append(
+            PromptFragmentSelection(
+                occurrence=len(selections),
+                source_token=match.group(0),
+                selected_value=selected,
+                selection_kind="choice",
+            )
+        )
+        return selected
+
+    expanded = re.sub(r"\{([^{}]+)\}", replace_choice, wildcard_expanded)
+    return PromptFragmentExpansion(
+        raw=prompt,
+        expanded=expanded,
+        selections=tuple(selections),
+    )
 
 
 def extract_loras(prompt: str) -> list[dict[str, float | str]]:

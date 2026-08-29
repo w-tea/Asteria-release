@@ -117,22 +117,29 @@ class AsteriaGenerationRuntime:
         self.adapter = adapter or PacketFileRuntimeAdapter()
 
     def generate_txt2img(self, request: dict, output_dir: Path) -> dict:
+        self._reject_spatial_prompt(request)
         request.setdefault("settings", {})["mode"] = "txt2img"
         packet = self.packet_builder.build(request)
         packet_path = self._write_packet(packet, output_dir)
         return self.adapter.execute_txt2img(packet, packet_path, output_dir)
 
     def generate_img2img(self, request: dict, output_dir: Path) -> dict:
+        self._reject_spatial_prompt(request)
         request.setdefault("settings", {})["mode"] = "img2img"
         packet = self.packet_builder.build(request)
         packet_path = self._write_packet(packet, output_dir)
         return self.adapter.execute_txt2img(packet, packet_path, output_dir)
 
     def generate_inpaint(self, request: dict, output_dir: Path) -> dict:
+        self._reject_spatial_prompt(request)
         request.setdefault("settings", {})["mode"] = "inpaint"
         packet = self.packet_builder.build(request)
         packet_path = self._write_packet(packet, output_dir)
         return self.adapter.execute_txt2img(packet, packet_path, output_dir)
+
+    def _reject_spatial_prompt(self, request: dict) -> None:
+        if request.get("_spatial_runtime_context") is not None:
+            raise RuntimeAdapterError("spatial_prompt_requires_comfy_workflow")
 
     def _write_packet(self, packet: dict, output_dir: Path) -> Path:
         try:

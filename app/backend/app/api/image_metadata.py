@@ -58,6 +58,7 @@ def _preview_from_receipt(
         model_library=library,
         available_style_ids=style_ids,
         sidecar_path=sidecar_path,
+        data_dir=AppConfig().data_dir,
     )
 
 

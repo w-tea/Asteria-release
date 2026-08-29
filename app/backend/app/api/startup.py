@@ -21,6 +21,8 @@ from app.services.runtime_core import ComfyRuntimeCoreManager
 from app.services.runtime_dependencies import RuntimeDependencyRepository
 from app.services.runtime_dependencies import RuntimeDependencyInstaller
 from app.services.release_manifest import ReleaseManifestRepository
+from app.services.anima_lllite_runtime import anima_lllite_runtime_contract
+from app.services.runtime import ComfyClient, RuntimeErrorResponse
 from app.services.api_errors import (
     STARTUP_SETUP_CONSENT_REQUIRED,
     STARTUP_SETUP_BUSY,
@@ -70,8 +72,8 @@ RUNTIME_FEATURE_POLICY = (
     RuntimeFeatureRequirement("lora_block_weight", ("comfyui-inspire-pack",), "all"),
     RuntimeFeatureRequirement("seed_variation", ("comfyui-inspire-pack",), "all"),
     RuntimeFeatureRequirement("seed_resize", ("comfyui-inspire-pack",), "all"),
-    RuntimeFeatureRequirement("anima_lllite", ("comfyui-anima-lllite",), "all"),
-    RuntimeFeatureRequirement("anima_regional_prompting", ("comfyui-ppm",), "all"),
+    RuntimeFeatureRequirement("anima_lllite", (), "core"),
+    RuntimeFeatureRequirement("spatial_prompt_layout", ("asteria-spatial-prompt",), "all"),
 )
 
 
@@ -231,6 +233,10 @@ def _inspect_startup_readiness(
             ref=config.comfy_repo_ref,
         ).status(),
         runtime_dependency_status_provider=runtime_dependencies.list_status,
+        core_feature_status_provider=lambda feature_id: _core_runtime_feature_available(
+            config,
+            feature_id,
+        ),
         model_dependency_status_provider=model_dependencies.list_status,
         profile_provider=profiles_by_id.get,
         selection_provider=model_selections.get,
@@ -246,6 +252,16 @@ def _inspect_startup_readiness(
             enabled_feature_ids=tuple(feature),
         )
     )
+
+
+def _core_runtime_feature_available(config: AppConfig, feature_id: str) -> bool:
+    if feature_id != "anima_lllite":
+        return False
+    try:
+        object_info = ComfyClient(config.comfy_base_url).object_info()
+    except (OSError, RuntimeErrorResponse):
+        return False
+    return "LoadImage" in object_info and anima_lllite_runtime_contract(object_info) is not None
 
 
 def _windows_hardware_status(config: AppConfig) -> WindowsHardwareStatus:

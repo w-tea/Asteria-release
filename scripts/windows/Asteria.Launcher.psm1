@@ -130,6 +130,9 @@ function Write-AsteriaExtraModelPaths {
         "  controlnet: |-"
         "    controlnet"
         "    controlnets"
+        "  model_patches: |-"
+        "    controlnet"
+        "    controlnets"
         "  ultralytics_bbox: |-"
         "    adetailer"
         "    bbox"
@@ -154,7 +157,7 @@ function Write-AsteriaExtraModelPaths {
                 tokenizer = @("tokenizers", "tokenizer")
                 lora = @("loras")
                 embedding = @("embeddings")
-                controlnet = @("controlnet")
+                controlnet = @("controlnet", "model_patches")
                 upscaler = @("upscale_models")
             }
             foreach ($root in @($registry.roots | Sort-Object @{ Expression = "priority"; Descending = $true }, display_name)) {

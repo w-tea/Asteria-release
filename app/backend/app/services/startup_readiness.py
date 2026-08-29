@@ -31,7 +31,7 @@ class StartupReadinessRequest:
 class RuntimeFeatureRequirement:
     feature_id: str
     dependency_ids: tuple[str, ...]
-    mode: Literal["all", "any"] = "all"
+    mode: Literal["all", "any", "core"] = "all"
 
 
 @dataclass(frozen=True)
@@ -128,6 +128,7 @@ class StartupReadinessService:
         runtime_python_path: Path,
         core_status_provider: Callable[[], ComfyRuntimeCoreStatus],
         runtime_dependency_status_provider: Callable[[], list[RuntimeDependencyStatus]],
+        core_feature_status_provider: Callable[[str], bool],
         model_dependency_status_provider: Callable[[], list[ModelDependencyStatus]],
         profile_provider: Callable[[str], ModelProfile | None],
         selection_provider: Callable[[str], ModelSelection | None],
@@ -141,6 +142,7 @@ class StartupReadinessService:
         self.runtime_python_path = runtime_python_path
         self.core_status_provider = core_status_provider
         self.runtime_dependency_status_provider = runtime_dependency_status_provider
+        self.core_feature_status_provider = core_feature_status_provider
         self.model_dependency_status_provider = model_dependency_status_provider
         self.profile_provider = profile_provider
         self.selection_provider = selection_provider
@@ -427,6 +429,21 @@ class StartupReadinessService:
                         feature_ids=(feature_id,),
                     )
                 )
+                continue
+            if requirement.mode == "core":
+                if not self.core_feature_status_provider(feature_id):
+                    synthetic.append(
+                        self._item(
+                            code="runtime_core_feature_unavailable",
+                            summary_key="startup.runtime.featureRequirementUnmet",
+                            summary_params=(("feature_id", feature_id),),
+                            phase="runtime_packages",
+                            severity="blocker",
+                            blocks=("generation",),
+                            action="repair_runtime_core",
+                            feature_ids=(feature_id,),
+                        )
+                    )
                 continue
             if not requirement.dependency_ids:
                 synthetic.append(

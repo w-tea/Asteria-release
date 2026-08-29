@@ -1587,6 +1587,7 @@ const messages = {
   "common.cancel": { en: "Cancel", ja: "キャンセル" },
   "common.close": { en: "Close", ja: "閉じる" },
   "common.apply": { en: "Apply", ja: "適用" },
+  "common.undo": { en: "Undo", ja: "元に戻す" },
   "imageMetadata.eyebrow": { en: "Image metadata", ja: "画像メタデータ" },
   "imageMetadata.title": { en: "Reuse settings from this image", ja: "この画像の設定を再利用" },
   "imageMetadata.close": { en: "Close", ja: "閉じる" },
@@ -1610,6 +1611,11 @@ const messages = {
   "imageMetadata.promptSectionsAvailable": { en: "Sectioned prompt data is available and will be restored with the prompt.", ja: "項目別の入力情報も再利用できます。" },
   "imageMetadata.promptSectionsInvalid": { en: "The sectioned prompt data could not be read. The full prompt will be restored to the single prompt field.", ja: "項目別の入力情報を読み込めませんでした。プロンプト全文を「まとめて入力」へ戻します。" },
   "imageMetadata.promptSectionsMismatch": { en: "The sectioned prompt data does not match the full prompt. The full prompt will be restored to the single prompt field.", ja: "項目別の入力情報と全文が一致しませんでした。プロンプト全文を「まとめて入力」へ戻します。" },
+  "imageMetadata.spatialReady": { en: "Prompt placement is ready to reuse.", ja: "位置指定も再利用できます。" },
+  "imageMetadata.spatialPartial": { en: "Some placement data could not be read. The regular prompt is still available; review the placement before generating.", ja: "位置指定の一部を読み込めませんでした。通常のプロンプトはそのまま使えます。生成前に配置を確認してください。" },
+  "imageMetadata.spatialLegacy": { en: "Placement data was restored from an earlier color-based format. Review it before generating.", ja: "以前の色分け設定から位置指定を読み込みました。生成前に内容を確認してください。" },
+  "imageMetadata.spatialNeedsSource": { en: "The original color map is needed to restore this placement. Choose the source image again, then set the placement.", ja: "この位置指定を復元するには、元の色分け画像が必要です。画像を選び直してから、配置を設定してください。" },
+  "imageMetadata.spatialUnsupported": { en: "This placement cannot be reused. The regular prompt is still available; set the placement again if needed.", ja: "この位置指定は再利用できません。通常のプロンプトはそのまま使えます。必要に応じて配置を設定し直してください。" },
   "imageMetadata.positivePrompt": { en: "Positive prompt", ja: "プロンプト" },
   "imageMetadata.negativePrompt": { en: "Negative prompt", ja: "ネガティブプロンプト" },
   "imageMetadata.notFound": { en: "Not found", ja: "見つかりません" },
@@ -2771,12 +2777,18 @@ const messages = {
   "generation.error.unsupportedControlNetPreprocessor": { en: "The selected ControlNet preprocessor is not available. Choose another preprocessor and try again.", ja: "選択中のControlNet前処理は使えません。別の前処理を選んで再試行してください。" },
   "generation.error.missingAnimaLLLiteRuntime": { en: "Install the Anima LLLite runtime node, restart the generation setup, then try again.", ja: "Anima LLLiteの実行ノードをインストールし、生成環境を再起動してから再試行してください。" },
   "generation.error.missingAnimaRegionalRuntime": { en: "Install the Anima regional prompting runtime node, restart the generation setup, then try again.", ja: "Anima Regional Promptingの実行ノードをインストールし、生成環境を再起動してから再試行してください。" },
+  "generation.error.spatialRuntimeUnavailable": { en: "Prompt placement is not ready in the current generation setup. Update the generation setup in Settings, restart it, and try again.", ja: "現在の生成環境ではプロンプト配置を使えません。Settingsで生成環境を更新し、再起動してから再試行してください。" },
+  "generation.error.spatialProfileSelectionRequired": { en: "Asteria could not determine the model family for prompt placement. Open the placement screen and choose the family the model was based on.", ja: "プロンプト配置に使うモデルの系統を判定できませんでした。配置画面を開き、モデルの元になった系統を選んでください。" },
+  "generation.error.spatialProfileMismatch": { en: "The selected model family does not match the model structure. Choose the correct base family in the placement screen.", ja: "選択したモデルの系統と実際の構造が一致しません。配置画面で、モデルの元になった系統を選び直してください。" },
+  "generation.error.spatialProfileUnsupported": { en: "Prompt placement cannot be used with the selected model. Turn off placement or choose a supported SDXL, Illustrious, or Anima model.", ja: "選択中のモデルではプロンプト配置を使えません。位置指定をオフにするか、対応するSDXL・Illustrious・Animaモデルを選んでください。" },
+  "generation.error.spatialInpaintNoOverlap": { en: "Some placement areas do not overlap the inpaint mask. Adjust or exclude those areas before retrying.", ja: "一部の配置範囲がインペイント用マスクと重なっていません。配置を調整するか、対象から外してから再試行してください。" },
+  "generation.error.spatialNoActiveTargets": { en: "Every placement target is excluded. Turn off placement or include at least one target.", ja: "すべての配置対象が外れています。位置指定をオフにするか、少なくとも1件を対象に戻してください。" },
   "generation.error.missingAnimaLLLiteImage": { en: "Choose an Anima LLLite control image or turn off the unit, then try again.", ja: "Anima LLLiteの制御画像を選ぶか、ユニットをオフにしてから再試行してください。" },
   "generation.error.missingAnimaLLLiteModel": { en: "Choose an installed Anima LLLite model or refresh generation assets, then try again.", ja: "インストール済みのAnima LLLiteモデルを選ぶか、生成アセットを更新してから再試行してください。" },
   "generation.error.anima38BundleRequired": { en: "Anima 3.8B also needs its Qwen3.5 text encoder and progressive adapter. Select both under additional model components, then try again.", ja: "Anima 3.8Bの実行には、対応するQwen3.5テキストエンコーダーとProgressive Adapterも必要です。「追加のモデル構成」から両方を選んで再試行してください。" },
   "generation.error.anima38BundleInvalid": { en: "The selected Anima 3.8B companion model could not be verified. Refresh the model list and choose the matching Qwen3.5 encoder and progressive adapter again.", ja: "選択したAnima 3.8B用の構成ファイルを確認できませんでした。モデル一覧を更新し、対応するQwen3.5エンコーダーとProgressive Adapterを選び直してください。" },
   "generation.error.anima38BundleMismatch": { en: "Qwen3.5 companion components can be used only with an Anima 3.8B model. Review the selected model components.", ja: "Qwen3.5用の構成ファイルはAnima 3.8Bと組み合わせる必要があります。選択中のモデル構成を確認してください。" },
-  "generation.error.anima38Txt2ImgOnly": { en: "The verified Anima 3.8B workflow currently supports text-to-image generation only.", ja: "現在確認済みのAnima 3.8Bワークフローは、テキストからの画像生成にのみ対応しています。" },
+  "generation.error.anima38UnsupportedGenerationMode": { en: "The selected generation mode is not available with Anima 3.8B. Choose text to image, image to image, or inpaint.", ja: "選択した生成方式はAnima 3.8Bに対応していません。テキストから生成、画像から生成、またはインペイントを選んでください。" },
   "generation.error.anima38HiresMismatch": { en: "Anima 3.8B cannot be mixed with an older Anima model between the first and Hires passes. Choose the same Anima generation for both passes.", ja: "Anima 3.8Bと旧世代のAnimaモデルを、1回目とHires処理で混在させることはできません。両方に同じ世代のAnimaモデルを選んでください。" },
   "generation.error.animaModelUnverified": { en: "The layer layout of the selected Anima model could not be verified. Refresh the model list or choose another model.", ja: "選択したAnimaモデルの層構成を確認できませんでした。モデル一覧を更新するか、別のモデルを選んでください。" },
   "generation.error.animaLoraRefreshRequired": { en: "The selected Anima LoRA changed or could not be matched to the Model Library. Refresh the model list and add the LoRA again.", ja: "選択したAnima LoRAが更新されたか、モデルライブラリの登録情報と一致しません。モデル一覧を更新し、LoRAを追加し直してください。" },
@@ -2815,6 +2827,68 @@ const messages = {
   "prompt.sections.invalidFallback": { en: "The sectioned prompt data could not be read. The full prompt was restored to the single prompt field.", ja: "項目別の入力情報を読み込めませんでした。プロンプト全文を「まとめて入力」へ戻しました。" },
   "prompt.sections.mismatchFallback": { en: "The sectioned prompt data did not match the full prompt. The full prompt was restored to the single prompt field.", ja: "項目別の入力情報と全文が一致しませんでした。プロンプト全文を「まとめて入力」へ戻しました。" },
   "prompt.sections.allEmpty": { en: "The prompt is empty. Enter text in at least one section.", ja: "プロンプトが空です。いずれかの欄へ入力してください。" },
+  "prompt.sections.targetEditing": { en: "Edit each target and its position in the placement screen.", ja: "対象ごとの文章と位置は、配置画面で編集します。" },
+  "prompt.placement.open": { en: "Set placement", ja: "配置を設定" },
+  "prompt.placement.change": { en: "Edit placement", ja: "配置を変更" },
+  "prompt.placement.summary": { en: "{count} targets placed", ja: "対象{count}件を配置" },
+  "prompt.placement.disabledSummary": { en: "{count} targets saved · not used in generation", ja: "対象{count}件を保存・生成には使用しない" },
+  "prompt.placement.title": { en: "Prompt placement", ja: "プロンプトの配置" },
+  "prompt.placement.help": { en: "Place each subject where you want it to appear. Drag an area to move it and use the handles to resize it.", ja: "描きたい位置へ対象を配置します。範囲はドラッグで移動し、周囲のハンドルで大きさを変えられます。" },
+  "prompt.placement.canvas": { en: "Placement canvas", ja: "配置キャンバス" },
+  "prompt.placement.enabled": { en: "Use this placement in generation", ja: "この配置で生成する" },
+  "prompt.placement.centerAll": { en: "Space evenly", ja: "等間隔に並べる" },
+  "prompt.placement.memoryNote": { en: "Four or more targets can use substantially more memory. Reduce the target count if generation becomes unstable.", ja: "対象を4件以上にすると、使用メモリが大きく増えることがあります。生成が不安定な場合は対象数を減らしてください。" },
+  "prompt.placement.targetName": { en: "Target {number}", ja: "対象{number}" },
+  "prompt.placement.addTarget": { en: "Add target", ja: "対象を追加" },
+  "prompt.placement.name": { en: "Name", ja: "名前" },
+  "prompt.placement.prompt": { en: "Prompt", ja: "プロンプト" },
+  "prompt.placement.shape": { en: "Area shape", ja: "範囲の形" },
+  "prompt.placement.legacyShape": { en: "Imported area", ja: "読み込んだ範囲" },
+  "prompt.placement.ellipse": { en: "Ellipse", ja: "楕円" },
+  "prompt.placement.rectangle": { en: "Rectangle", ja: "長方形" },
+  "prompt.placement.convertEllipse": { en: "Convert to ellipse", ja: "楕円へ変更" },
+  "prompt.placement.convertRectangle": { en: "Convert to rectangle", ja: "長方形へ変更" },
+  "prompt.placement.size": { en: "Area size", ja: "範囲の大きさ" },
+  "prompt.placement.sizeAuto": { en: "Auto", ja: "自動" },
+  "prompt.placement.sizeSmall": { en: "Small", ja: "狭い" },
+  "prompt.placement.sizeStandard": { en: "Standard", ja: "標準" },
+  "prompt.placement.sizeLarge": { en: "Large", ja: "広い" },
+  "prompt.placement.sizeCustom": { en: "Adjusted", ja: "調整済み" },
+  "prompt.placement.strength": { en: "Effect strength", ja: "効き具合" },
+  "prompt.placement.blending": { en: "Edge blending", ja: "境界のなじませ方" },
+  "prompt.placement.auto": { en: "Auto", ja: "自動" },
+  "prompt.placement.manual": { en: "Adjust", ja: "調整する" },
+  "prompt.placement.depth": { en: "Overlap order", ja: "重なり順" },
+  "prompt.placement.depthAuto": { en: "Auto", ja: "自動" },
+  "prompt.placement.depthManual": { en: "Choose order", ja: "順番を指定" },
+  "prompt.placement.deleteTarget": { en: "Delete target", ja: "対象を削除" },
+  "prompt.placement.required": { en: "Enter a name and prompt for every target before applying.", ja: "適用するには、すべての対象へ名前とプロンプトを入力してください。" },
+  "prompt.placement.remove": { en: "Remove placement", ja: "配置を解除" },
+  "prompt.placement.save": { en: "Save placement", ja: "配置を保存" },
+  "prompt.placement.bulkTitle": { en: "All targets", ja: "すべての対象" },
+  "prompt.placement.bulkApply": { en: "Apply to all", ja: "すべてに適用" },
+  "prompt.placement.bulkConfirm": { en: "Apply these settings to all {count} targets?", ja: "対象{count}件へ同じ設定を適用しますか？" },
+  "prompt.placement.discardConfirm": { en: "Discard changes made in this screen?", ja: "この画面で変更した内容を破棄しますか？" },
+  "prompt.placement.invalidFallback": { en: "The placement could not be read. The full prompt was restored to the single prompt field and placement was turned off.", ja: "位置指定を読み込めませんでした。プロンプト全文を「まとめて入力」へ戻し、配置を解除しました。" },
+  "prompt.placement.modelFamily": { en: "Model family", ja: "モデルの系統" },
+  "prompt.placement.modelFamilyHelp": { en: "Choose the family the selected model was based on. Custom and merged models should use their original base family.", ja: "選択中のモデルがどの系統を元にしているか選びます。追加学習モデルやマージモデルは、元にした系統を選んでください。" },
+  "prompt.placement.modelFamilyRequired": { en: "Choose the model family before saving the placement.", ja: "配置を保存する前に、モデルの系統を選んでください。" },
+  "prompt.placement.modelAuto": { en: "Detect automatically", ja: "自動判定" },
+  "prompt.placement.modelSdxl": { en: "SDXL", ja: "SDXL" },
+  "prompt.placement.modelIllustrious": { en: "Illustrious", ja: "Illustrious" },
+  "prompt.placement.modelAnima28": { en: "Anima (28 layers)", ja: "Anima（28層）" },
+  "prompt.placement.modelAnima40": { en: "Anima 2.9B (40 layers)", ja: "Anima 2.9B（40層）" },
+  "prompt.placement.modelAnima52": { en: "Anima 3.8B (52 layers, experimental)", ja: "Anima 3.8B（52層・実験対応）" },
+  "prompt.placement.hiresModelFamily": { en: "Hires model family", ja: "Hiresで使うモデルの系統" },
+  "prompt.placement.refinerModelFamily": { en: "Refiner model family", ja: "Refinerで使うモデルの系統" },
+  "prompt.placement.inheritBase": { en: "Same as the first pass", ja: "1回目と同じ" },
+  "prompt.placement.canvasLarger": { en: "The image size was increased. The saved placement was kept.", ja: "画像サイズを大きくしました。保存済みの配置はそのまま保持しています。" },
+  "prompt.placement.canvasOutside": { en: "{count} placement area(s) may extend outside the new image. Adjust them, keep them as-is, or cancel the size change.", ja: "新しい画像サイズでは、配置範囲{count}件が画像の外へはみ出す可能性があります。配置を調整するか、そのまま保持するか、サイズ変更を取り消してください。" },
+  "prompt.placement.adjustNow": { en: "Adjust placement", ja: "配置を調整" },
+  "prompt.placement.keepAsIs": { en: "Keep as-is", ja: "そのまま保持" },
+  "prompt.placement.inpaintNoOverlap": { en: "Some placement areas do not overlap the inpaint mask. Adjust those areas, exclude them from this run, or turn off placement.", ja: "一部の配置範囲がインペイント用マスクと重なっていません。配置を調整するか、この生成だけ対象から外すか、位置指定をオフにしてください。" },
+  "prompt.placement.excludeThisRun": { en: "Exclude from this run", ja: "この生成だけ外す" },
+  "prompt.placement.disable": { en: "Turn off placement", ja: "位置指定をオフ" },
   "prompt.notation.open": { en: "Notation", ja: "記法" },
   "prompt.notation.menuAria": { en: "Prompt notation tools", ja: "プロンプト記法" },
   "prompt.notation.stronger": { en: "Increase weight", ja: "強くする" },
@@ -3514,6 +3588,9 @@ const messages = {
   "animaLLLite.regionalReady": { en: "coupling ready", ja: "対応付け可" },
   "animaLLLite.regionalUnavailable": { en: "coupling unavailable", ja: "対応付け未準備" },
   "animaLLLite.regionalSetupUnavailableHelp": { en: "Install ComfyUI PPM and restart generation.", ja: "ComfyUI PPMをインストールし、生成環境を再起動してください。" },
+  "animaLLLite.regionalMigrationTitle": { en: "Use prompt placement for color-based areas", ja: "色分け範囲はプロンプト配置へ移行" },
+  "animaLLLite.regionalMigrationHelp": { en: "New generations use Asteria prompt placement. The control image remains available here; edit the area prompts from the prompt placement screen.", ja: "新しい生成ではAsteriaのプロンプト配置を使います。制御画像はこのまま利用できます。範囲ごとのプロンプトは配置画面で編集してください。" },
+  "animaLLLite.regionalMigrationCount": { en: "{count} earlier color prompt(s) are available for reference when this setting is restored.", ja: "以前の色別プロンプ{count}件を復元用に保持しています。" },
   "animaLLLite.addRegion": { en: "Add color", ja: "色を追加" },
   "animaLLLite.regionColor": { en: "Mask color", ja: "マスク色" },
   "animaLLLite.regionColorAria": { en: "Region {index} mask color", ja: "領域 {index} のマスク色" },
@@ -6404,7 +6481,7 @@ const useAsteriaI18n = () => {
     vocabularyTerm
   };
 };
-const _sfc_main$28 = /* @__PURE__ */ defineComponent({
+const _sfc_main$2a = /* @__PURE__ */ defineComponent({
   __name: "AssetRefreshIndicator",
   __ssrInlineRender: true,
   props: {
@@ -6462,14 +6539,14 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const _sfc_setup$28 = _sfc_main$28.setup;
-_sfc_main$28.setup = (props, ctx) => {
+const _sfc_setup$2a = _sfc_main$2a.setup;
+_sfc_main$2a.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AssetRefreshIndicator.vue");
-  return _sfc_setup$28 ? _sfc_setup$28(props, ctx) : void 0;
+  return _sfc_setup$2a ? _sfc_setup$2a(props, ctx) : void 0;
 };
-const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$28, [["__scopeId", "data-v-413654a5"]]), { __name: "StudioAssetRefreshIndicator" });
-const _sfc_main$27 = /* @__PURE__ */ defineComponent({
+const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2a, [["__scopeId", "data-v-413654a5"]]), { __name: "StudioAssetRefreshIndicator" });
+const _sfc_main$29 = /* @__PURE__ */ defineComponent({
   __name: "GenerateActionStrip",
   __ssrInlineRender: true,
   props: {
@@ -6544,17 +6621,28 @@ const _sfc_main$27 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$27 = _sfc_main$27.setup;
-_sfc_main$27.setup = (props, ctx) => {
+const _sfc_setup$29 = _sfc_main$29.setup;
+_sfc_main$29.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerateActionStrip.vue");
-  return _sfc_setup$27 ? _sfc_setup$27(props, ctx) : void 0;
+  return _sfc_setup$29 ? _sfc_setup$29(props, ctx) : void 0;
 };
-const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$27, [["__scopeId", "data-v-08bbfd23"]]), { __name: "StudioGenerateActionStrip" });
+const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$29, [["__scopeId", "data-v-08bbfd23"]]), { __name: "StudioGenerateActionStrip" });
+const cloneJsonValue = (value) => JSON.parse(JSON.stringify(value));
 const ACTIVE_GENERATION_JOB_STATUSES = /* @__PURE__ */ new Set(["queued", "preparing", "running", "cancelling"]);
 const SUCCESSFUL_GENERATION_JOB_STATUSES = /* @__PURE__ */ new Set(["completed", "completed_with_warnings"]);
 const generationJobIsActive = (status) => ACTIVE_GENERATION_JOB_STATUSES.has(status);
 const generationJobIsSuccessful = (status) => SUCCESSFUL_GENERATION_JOB_STATUSES.has(status);
+const isAnimaLLLiteModelReference = (value) => {
+  const normalized = String(value ?? "").toLowerCase().replaceAll("\\", "/");
+  return normalized.includes("lllite") || normalized.split("/").includes("anima");
+};
+const standardControlNetModelReferences = (values2) => values2.filter((value) => !isAnimaLLLiteModelReference(value));
+const spatialPromptRequestFields = (prompt, promptInput, promptLayout) => ({
+  prompt,
+  prompt_input: cloneJsonValue(promptInput),
+  ...promptLayout ? { prompt_layout: cloneJsonValue(promptLayout) } : {}
+});
 const normalizeGenerationSchedulers = (profile, scheduler, hiresScheduler) => profile === "flux2" ? { scheduler: "Flux2", hiresScheduler: "Use same scheduler" } : { scheduler, hiresScheduler };
 const schedulerOptionsForProfile = (profile, runtimeOptions) => {
   if (profile === "flux2") {
@@ -6675,15 +6763,15 @@ const generationModeFields = (mode, source) => {
   }
   return {};
 };
-const isRecord$1 = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+const isRecord$2 = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 const isArtifact = (value) => {
-  if (!isRecord$1(value)) {
+  if (!isRecord$2(value)) {
     return false;
   }
   return typeof value.path === "string" && typeof value.filename === "string" && typeof value.size_bytes === "number" && typeof value.sha256 === "string" && /^[0-9a-f]{64}$/.test(value.sha256) && typeof value.width === "number" && typeof value.height === "number";
 };
 const restoreImageEditLineage = (value) => {
-  if (!isRecord$1(value) || value.version !== 1 || !isArtifact(value.root) || !isArtifact(value.current) || !Array.isArray(value.operations)) {
+  if (!isRecord$2(value) || value.version !== 1 || !isArtifact(value.root) || !isArtifact(value.current) || !Array.isArray(value.operations)) {
     return null;
   }
   const operations = value.operations;
@@ -6692,13 +6780,13 @@ const restoreImageEditLineage = (value) => {
   }
   let previous = value.root;
   for (const candidate of operations) {
-    if (!isRecord$1(candidate) || candidate.type !== "crop" || !isArtifact(candidate.source) || !isArtifact(candidate.output)) {
+    if (!isRecord$2(candidate) || candidate.type !== "crop" || !isArtifact(candidate.source) || !isArtifact(candidate.output)) {
       return null;
     }
     if (candidate.source.path !== previous.path || candidate.source.sha256 !== previous.sha256) {
       return null;
     }
-    if (!isRecord$1(candidate.rect_pixels) || !isRecord$1(candidate.rect_percent)) {
+    if (!isRecord$2(candidate.rect_pixels) || !isRecord$2(candidate.rect_percent)) {
       return null;
     }
     previous = candidate.output;
@@ -6708,7 +6796,9 @@ const restoreImageEditLineage = (value) => {
   }
   return value;
 };
-const PROMPT_INPUT_SCHEMA_VERSION = "asteria.prompt-input.v1";
+const PROMPT_INPUT_V1_SCHEMA_VERSION = "asteria.prompt-input.v1";
+const PROMPT_INPUT_V2_SCHEMA_VERSION = "asteria.prompt-input.v2";
+const TARGET_ID_PATTERN$1 = /^target_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const PROMPT_EDGE_CHARACTERS = /^[ \t\n]+|[ \t\n]+$/g;
 const PROMPT_SECTION_IDS = ["base", "character", "detail"];
 const PROMPT_SECTION_ORDERS = [0, 1, 2];
@@ -6718,11 +6808,20 @@ const DEFAULT_PROMPT_SECTION_LABELS = {
   detail: "詳細プロンプト"
 };
 const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
-const isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
+const isRecord$1 = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
 const hasOnlyKeys = (value, allowed) => Object.keys(value).every((key) => allowed.includes(key));
 const isPromptSectionId = (value) => typeof value === "string" && PROMPT_SECTION_IDS.includes(value);
 const isStrictPromptSectionOrder = (value) => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 2;
 const clonePromptSections = (sections) => sections.map((section) => ({ ...section }));
+const clonePromptInput = (promptInput) => cloneJsonValue(promptInput);
+const promptSectionV2Text = (section) => section.content.mode === "global" ? section.content.text : [...section.content.targets].sort((left, right) => left.order - right.order).map((target) => normalizePromptSectionText(target.text)).filter(Boolean).join("\n");
+const combinePromptInputV2 = (sections) => [...sections].sort((left, right) => left.order - right.order).map(promptSectionV2Text).map(normalizePromptSectionText).filter(Boolean).join("\n");
+const promptInputV2EditorSections = (sections) => sections.map((section) => ({
+  id: section.id,
+  label: section.label,
+  order: section.order,
+  text: promptSectionV2Text(section)
+}));
 const cloneTransition = (transition) => transition ? {
   sections: clonePromptSections(transition.sections),
   sourceCombinedPrompt: transition.sourceCombinedPrompt,
@@ -6738,7 +6837,7 @@ const cloneEditorState = (state) => ({
 });
 const labelLength = (value) => Array.from(value).length;
 const parsePromptSection = (value) => {
-  if (!isRecord(value) || !hasOnlyKeys(value, ["id", "label", "text", "order"])) {
+  if (!isRecord$1(value) || !hasOnlyKeys(value, ["id", "label", "text", "order"])) {
     return null;
   }
   if (!hasOwn(value, "id") || !isPromptSectionId(value.id)) {
@@ -6764,23 +6863,64 @@ const parsePromptSection = (value) => {
     order: value.order
   };
 };
+const parsePromptTarget = (value) => {
+  if (!isRecord$1(value) || !hasOnlyKeys(value, ["id", "name", "text", "order"])) return null;
+  if (typeof value.id !== "string" || !TARGET_ID_PATTERN$1.test(value.id)) return null;
+  if (typeof value.name !== "string" || typeof value.text !== "string") return null;
+  const name = normalizePromptSectionText(value.name);
+  const text = normalizePromptSectionText(value.text);
+  if (labelLength(name) < 1 || labelLength(name) > 40 || !text) return null;
+  if (typeof value.order !== "number" || !Number.isInteger(value.order) || value.order < 0) return null;
+  return { id: value.id, name, text, order: value.order };
+};
+const parsePromptSectionV2 = (value) => {
+  if (!isRecord$1(value) || !hasOnlyKeys(value, ["id", "label", "order", "content"])) return null;
+  if (!isPromptSectionId(value.id) || !isStrictPromptSectionOrder(value.order)) return null;
+  if (typeof value.label !== "string" || !isRecord$1(value.content)) return null;
+  const label = normalizePromptSectionText(value.label);
+  if (labelLength(label) < 1 || labelLength(label) > 40) return null;
+  if (value.content.mode === "global") {
+    if (!hasOnlyKeys(value.content, ["mode", "text"]) || typeof value.content.text !== "string") return null;
+    return {
+      id: value.id,
+      label,
+      order: value.order,
+      content: { mode: "global", text: normalizePromptSectionText(value.content.text) }
+    };
+  }
+  if (value.content.mode !== "targets" || !hasOnlyKeys(value.content, ["mode", "targets"])) return null;
+  if (!Array.isArray(value.content.targets) || value.content.targets.length < 1) return null;
+  const targets = value.content.targets.map(parsePromptTarget);
+  if (targets.some((target) => target === null)) return null;
+  const parsedTargets = targets;
+  const orders = new Set(parsedTargets.map((target) => target.order));
+  if (orders.size !== parsedTargets.length || !parsedTargets.every((_, index) => orders.has(index))) return null;
+  return {
+    id: value.id,
+    label,
+    order: value.order,
+    content: { mode: "targets", targets: parsedTargets.map((target) => ({ ...target })) }
+  };
+};
 const parsePromptInput = (value) => {
-  if (!isRecord(value) || !hasOnlyKeys(value, ["schema_version", "mode", "sections"])) {
+  if (!isRecord$1(value) || !hasOnlyKeys(value, ["schema_version", "mode", "sections"])) {
     return null;
   }
-  if (!hasOwn(value, "schema_version") || value.schema_version !== PROMPT_INPUT_SCHEMA_VERSION) {
+  if (value.schema_version !== PROMPT_INPUT_V1_SCHEMA_VERSION && value.schema_version !== PROMPT_INPUT_V2_SCHEMA_VERSION) {
     return null;
   }
   if (!hasOwn(value, "mode") || value.mode !== "single" && value.mode !== "sections") {
     return null;
   }
   if (value.mode === "single") {
-    return value.sections === void 0 || value.sections === null ? { mode: "single" } : null;
+    if (value.sections !== void 0 && value.sections !== null) return null;
+    return value.schema_version === PROMPT_INPUT_V1_SCHEMA_VERSION ? { schema_version: PROMPT_INPUT_V1_SCHEMA_VERSION, mode: "single" } : { schema_version: PROMPT_INPUT_V2_SCHEMA_VERSION, mode: "single", sections: null };
   }
   if (!Array.isArray(value.sections) || value.sections.length !== 3) {
     return null;
   }
-  const sections = value.sections.map(parsePromptSection);
+  const isV2 = value.schema_version === PROMPT_INPUT_V2_SCHEMA_VERSION;
+  const sections = value.sections.map(isV2 ? parsePromptSectionV2 : parsePromptSection);
   if (sections.some((section) => section === null)) {
     return null;
   }
@@ -6793,10 +6933,25 @@ const parsePromptInput = (value) => {
   if (orders.size !== 3 || !PROMPT_SECTION_ORDERS.every((order) => orders.has(order))) {
     return null;
   }
-  if (!parsedSections.some((section) => normalizePromptSectionText(section.text))) {
+  const textFor = (section) => "content" in section ? promptSectionV2Text(section) : section.text;
+  if (!parsedSections.some((section) => normalizePromptSectionText(textFor(section)))) {
     return null;
   }
-  return { mode: "sections", sections: clonePromptSections(parsedSections) };
+  if (isV2) {
+    const v2Sections = parsedSections;
+    const targetIds = v2Sections.flatMap((section) => section.content.mode === "targets" ? section.content.targets.map((target) => target.id) : []);
+    if (new Set(targetIds).size !== targetIds.length) return null;
+    return {
+      schema_version: PROMPT_INPUT_V2_SCHEMA_VERSION,
+      mode: "sections",
+      sections: cloneJsonValue(v2Sections)
+    };
+  }
+  return {
+    schema_version: PROMPT_INPUT_V1_SCHEMA_VERSION,
+    mode: "sections",
+    sections: clonePromptSections(parsedSections)
+  };
 };
 const normalizePromptSectionText = (value) => value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(PROMPT_EDGE_CHARACTERS, "");
 const combinePromptSections = (sections) => [...sections].sort((left, right) => left.order - right.order).map((section) => normalizePromptSectionText(section.text)).filter(Boolean).join("\n");
@@ -6805,6 +6960,52 @@ const createDefaultPromptSections = (prompt, labels = {}) => [
   { id: "character", label: labels.character ?? DEFAULT_PROMPT_SECTION_LABELS.character, text: "", order: 1 },
   { id: "detail", label: labels.detail ?? DEFAULT_PROMPT_SECTION_LABELS.detail, text: "", order: 2 }
 ];
+const promptSectionsToV2 = (sections) => [...sections].sort((left, right) => left.order - right.order).map((section) => ({
+  id: section.id,
+  label: normalizePromptSectionText(section.label),
+  order: section.order,
+  content: {
+    mode: "global",
+    text: normalizePromptSectionText(section.text)
+  }
+}));
+const upgradePromptInputToV2 = (promptInput) => {
+  if (promptInput.schema_version === PROMPT_INPUT_V2_SCHEMA_VERSION) {
+    return clonePromptInput(promptInput);
+  }
+  if (promptInput.mode === "single") {
+    return {
+      schema_version: PROMPT_INPUT_V2_SCHEMA_VERSION,
+      mode: "single",
+      sections: null
+    };
+  }
+  return {
+    schema_version: PROMPT_INPUT_V2_SCHEMA_VERSION,
+    mode: "sections",
+    sections: promptSectionsToV2(promptInput.sections ?? [])
+  };
+};
+const sectionWithFirstTarget = (promptInput, sectionId, target) => {
+  if (promptInput.mode !== "sections" || !promptInput.sections) return clonePromptInput(promptInput);
+  const next = clonePromptInput(promptInput);
+  const section = next.sections?.find((item) => item.id === sectionId);
+  if (!section || section.content.mode !== "global") return next;
+  const text = normalizePromptSectionText(section.content.text);
+  section.content = {
+    mode: "targets",
+    targets: [{ ...target, text, order: 0 }]
+  };
+  return next;
+};
+const sectionTargetsToGlobal = (promptInput, sectionId) => {
+  const next = clonePromptInput(promptInput);
+  const section = next.sections?.find((item) => item.id === sectionId);
+  if (!section || section.content.mode !== "targets") return next;
+  const text = section.content.targets.sort((left, right) => left.order - right.order).map((target) => normalizePromptSectionText(target.text)).filter(Boolean).join("\n");
+  section.content = { mode: "global", text };
+  return next;
+};
 const enterSingleMode = (state) => {
   if (state.mode === "single") {
     return cloneEditorState(state);
@@ -6876,17 +7077,344 @@ const restorePromptInputState = (prompt, rawPromptInput, transitionRevision = 0)
   if (promptInput.mode === "single") {
     return fallback("");
   }
-  if (combinePromptSections(promptInput.sections) !== prompt) {
+  const editorSections = promptInput.schema_version === PROMPT_INPUT_V2_SCHEMA_VERSION ? promptInputV2EditorSections(promptInput.sections ?? []) : clonePromptSections(promptInput.sections ?? []);
+  if (combinePromptSections(editorSections) !== prompt) {
     return fallback("prompt_input_mismatch_fallback");
   }
   return {
     mode: "sections",
     prompt,
-    sections: clonePromptSections(promptInput.sections),
+    sections: editorSections,
     transition: null,
     transitionRevision,
     notice: ""
   };
+};
+const TARGET_ID_PATTERN = /^target_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const SHA256_PATTERN = /^[0-9a-f]{64}$/;
+const PROFILE_PATTERN = /^[a-z0-9][a-z0-9._-]{0,127}$/;
+const isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
+const onlyKeys = (value, keys) => Object.keys(value).every((key) => keys.includes(key));
+const integer = (value, minimum, maximum) => typeof value === "number" && Number.isInteger(value) && value >= minimum && value <= maximum;
+const finite = (value) => typeof value === "number" && Number.isFinite(value);
+const percentage = (value) => integer(value, 0, 100);
+const clone = (value) => cloneJsonValue(value);
+const parseRect = (value) => {
+  if (!isRecord(value) || !onlyKeys(value, ["x", "y", "width", "height"])) return null;
+  if (!integer(value.x, 0, Number.MAX_SAFE_INTEGER) || !integer(value.y, 0, Number.MAX_SAFE_INTEGER)) return null;
+  if (!integer(value.width, 1, Number.MAX_SAFE_INTEGER) || !integer(value.height, 1, Number.MAX_SAFE_INTEGER)) return null;
+  return { x: value.x, y: value.y, width: value.width, height: value.height };
+};
+const parseAsset = (value) => {
+  if (!isRecord(value) || !onlyKeys(value, [
+    "asset_id",
+    "storage_kind",
+    "relative_path",
+    "sha256",
+    "bytes",
+    "width",
+    "height",
+    "mime_type"
+  ])) return null;
+  if (typeof value.sha256 !== "string" || !SHA256_PATTERN.test(value.sha256)) return null;
+  if (value.asset_id !== `control-image:sha256:${value.sha256}` || value.storage_kind !== "control_image") return null;
+  if (typeof value.relative_path !== "string" || !value.relative_path.startsWith("control_images/")) return null;
+  if (!integer(value.bytes, 1, Number.MAX_SAFE_INTEGER)) return null;
+  if (!integer(value.width, 1, 8192) || !integer(value.height, 1, 8192)) return null;
+  if (!["image/png", "image/jpeg", "image/webp"].includes(String(value.mime_type))) return null;
+  return clone(value);
+};
+const parseMaskSource = (value) => {
+  if (!isRecord(value) || !onlyKeys(value, [
+    "asset",
+    "source_color",
+    "source_rect_px",
+    "source_bounds_px",
+    "binary_mask_sha256",
+    "normalization_version"
+  ])) return null;
+  const asset = parseAsset(value.asset);
+  const sourceRect = parseRect(value.source_rect_px);
+  const sourceBounds = parseRect(value.source_bounds_px);
+  if (!asset || !sourceRect || !sourceBounds) return null;
+  if (typeof value.source_color !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value.source_color)) return null;
+  if (typeof value.binary_mask_sha256 !== "string" || !SHA256_PATTERN.test(value.binary_mask_sha256)) return null;
+  if (value.normalization_version !== "asteria.spatial-mask.v1") return null;
+  if (sourceRect.x + sourceRect.width > asset.width || sourceRect.y + sourceRect.height > asset.height || sourceBounds.x < sourceRect.x || sourceBounds.y < sourceRect.y || sourceBounds.x + sourceBounds.width > sourceRect.x + sourceRect.width || sourceBounds.y + sourceBounds.height > sourceRect.y + sourceRect.height) return null;
+  return {
+    asset,
+    source_color: value.source_color.toUpperCase(),
+    source_rect_px: sourceRect,
+    source_bounds_px: sourceBounds,
+    binary_mask_sha256: value.binary_mask_sha256,
+    normalization_version: "asteria.spatial-mask.v1"
+  };
+};
+const parseTarget = (value) => {
+  if (!isRecord(value) || !onlyKeys(value, [
+    "target_id",
+    "shape",
+    "center_x",
+    "center_y",
+    "width",
+    "height",
+    "size_mode",
+    "strength_mode",
+    "strength",
+    "blending_mode",
+    "blending",
+    "mask_source"
+  ])) return null;
+  if (typeof value.target_id !== "string" || !TARGET_ID_PATTERN.test(value.target_id)) return null;
+  if (!["ellipse", "rectangle", "mask"].includes(String(value.shape))) return null;
+  if (![value.center_x, value.center_y, value.width, value.height].every(finite)) return null;
+  if (value.width <= 0 || value.width > 16 || value.height <= 0 || value.height > 16) return null;
+  const left = value.center_x - value.width / 2;
+  const right = value.center_x + value.width / 2;
+  const top = value.center_y - value.height / 2;
+  const bottom = value.center_y + value.height / 2;
+  if (right <= 0 || bottom <= 0 || left >= 1 || top >= 1) return null;
+  if (!["auto", "small", "standard", "large", "custom"].includes(String(value.size_mode))) return null;
+  if (!["auto", "manual"].includes(String(value.strength_mode))) return null;
+  if (!["auto", "manual"].includes(String(value.blending_mode))) return null;
+  if (value.strength_mode === "auto" !== (value.strength === null || value.strength === void 0)) return null;
+  if (value.blending_mode === "auto" !== (value.blending === null || value.blending === void 0)) return null;
+  if (value.strength_mode === "manual" && !percentage(value.strength)) return null;
+  if (value.blending_mode === "manual" && !percentage(value.blending)) return null;
+  const maskSource = value.mask_source == null ? null : parseMaskSource(value.mask_source);
+  if (value.shape === "mask" !== Boolean(maskSource)) return null;
+  return clone({
+    ...value,
+    strength: value.strength ?? null,
+    blending: value.blending ?? null,
+    ...maskSource ? { mask_source: maskSource } : {}
+  });
+};
+const parsePromptLayout = (value) => {
+  if (!isRecord(value) || !onlyKeys(value, [
+    "schema_version",
+    "mode",
+    "reference_canvas",
+    "depth_mode",
+    "depth_order",
+    "excluded_target_ids",
+    "targets",
+    "model_profile_selection"
+  ])) return null;
+  if (value.schema_version !== "asteria.prompt-layout.v1") return null;
+  if (value.mode !== "enabled" && value.mode !== "disabled") return null;
+  if (!isRecord(value.reference_canvas) || !onlyKeys(value.reference_canvas, ["width", "height"])) return null;
+  if (!integer(value.reference_canvas.width, 1, 8192) || !integer(value.reference_canvas.height, 1, 8192)) return null;
+  if (value.depth_mode !== "auto" && value.depth_mode !== "manual") return null;
+  if (!Array.isArray(value.depth_order) || !value.depth_order.every((id) => typeof id === "string" && TARGET_ID_PATTERN.test(id))) return null;
+  if (!Array.isArray(value.excluded_target_ids) || !value.excluded_target_ids.every((id) => typeof id === "string" && TARGET_ID_PATTERN.test(id))) return null;
+  if (!Array.isArray(value.targets) || value.targets.length < 1) return null;
+  const targets = value.targets.map(parseTarget);
+  if (targets.some((target) => target === null)) return null;
+  const parsedTargets = targets;
+  const targetIds = parsedTargets.map((target) => target.target_id);
+  if (new Set(targetIds).size !== targetIds.length) return null;
+  if (new Set(value.depth_order).size !== value.depth_order.length) return null;
+  if (new Set(value.excluded_target_ids).size !== value.excluded_target_ids.length) return null;
+  if (!value.excluded_target_ids.every((id) => targetIds.includes(id))) return null;
+  if (value.depth_mode === "auto" && value.depth_order.length) return null;
+  if (value.depth_mode === "manual" && (value.depth_order.length !== targetIds.length || !targetIds.every((id) => value.depth_order.includes(id)))) return null;
+  if (value.mode === "enabled" && value.excluded_target_ids.length === targetIds.length) return null;
+  let modelProfileSelection;
+  if (value.model_profile_selection !== void 0 && value.model_profile_selection !== null) {
+    if (!isRecord(value.model_profile_selection) || !onlyKeys(value.model_profile_selection, ["base", "hires", "refiner"])) return null;
+    modelProfileSelection = {};
+    for (const stage of ["base", "hires", "refiner"]) {
+      const profile = value.model_profile_selection[stage];
+      if (profile !== void 0 && profile !== null) {
+        if (typeof profile !== "string" || !PROFILE_PATTERN.test(profile)) return null;
+        modelProfileSelection[stage] = profile;
+      }
+    }
+    if (!modelProfileSelection.base && !modelProfileSelection.hires && !modelProfileSelection.refiner) return null;
+  } else {
+    modelProfileSelection = value.model_profile_selection;
+  }
+  return {
+    schema_version: "asteria.prompt-layout.v1",
+    mode: value.mode,
+    reference_canvas: clone(value.reference_canvas),
+    depth_mode: value.depth_mode,
+    depth_order: [...value.depth_order],
+    excluded_target_ids: [...value.excluded_target_ids],
+    targets: clone(parsedTargets),
+    ...value.model_profile_selection === void 0 ? {} : { model_profile_selection: modelProfileSelection ?? null }
+  };
+};
+const createSpatialTargetId = (now = Date.now()) => {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let timestamp = BigInt(Math.max(0, Math.trunc(now)));
+  for (let index = 5; index >= 0; index -= 1) {
+    bytes[index] = Number(timestamp & 0xffn);
+    timestamp >>= 8n;
+  }
+  bytes[6] = bytes[6] & 15 | 112;
+  bytes[8] = bytes[8] & 63 | 128;
+  const hex = [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
+  return `target_${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
+const createPlacementDraft = (options) => {
+  if (options.promptLayout) {
+    const existingInput = clone(options.promptInput);
+    const existingLayout = clone(options.promptLayout);
+    const section = existingInput.sections?.find((item) => item.id === options.sectionId);
+    if (!section || section.content.mode === "targets") {
+      return { promptInput: existingInput, promptLayout: existingLayout };
+    }
+    const targetId2 = options.targetId ?? createSpatialTargetId();
+    const promptInput2 = sectionWithFirstTarget(existingInput, options.sectionId, {
+      id: targetId2,
+      name: options.targetName ?? `対象${existingLayout.targets.length + 1}`
+    });
+    existingLayout.targets.push(defaultSpatialLayoutTarget(targetId2, existingLayout.targets.length));
+    return { promptInput: promptInput2, promptLayout: existingLayout };
+  }
+  const targetId = options.targetId ?? createSpatialTargetId();
+  const promptInput = sectionWithFirstTarget(options.promptInput, options.sectionId, {
+    id: targetId,
+    name: options.targetName ?? "対象1"
+  });
+  return {
+    promptInput,
+    promptLayout: {
+      schema_version: "asteria.prompt-layout.v1",
+      mode: "enabled",
+      reference_canvas: clone(options.canvas),
+      depth_mode: "auto",
+      depth_order: [],
+      excluded_target_ids: [],
+      targets: [defaultSpatialLayoutTarget(targetId)]
+    }
+  };
+};
+const defaultSpatialLayoutTarget = (targetId, positionIndex = 0) => {
+  const positions = [
+    { center_x: 0.5, center_y: 0.5 },
+    { center_x: 0.25, center_y: 0.5 },
+    { center_x: 0.75, center_y: 0.5 },
+    { center_x: 0.5, center_y: 0.25 },
+    { center_x: 0.5, center_y: 0.75 },
+    { center_x: 0.25, center_y: 0.25 },
+    { center_x: 0.75, center_y: 0.25 },
+    { center_x: 0.25, center_y: 0.75 },
+    { center_x: 0.75, center_y: 0.75 }
+  ];
+  const position = positions[positionIndex % positions.length];
+  return {
+    target_id: targetId,
+    shape: "ellipse",
+    ...position,
+    width: 0.4,
+    height: 0.7,
+    size_mode: "auto",
+    strength_mode: "auto",
+    strength: null,
+    blending_mode: "auto",
+    blending: null
+  };
+};
+const spatialTargetBounds = (target) => ({
+  left: target.center_x - target.width / 2,
+  top: target.center_y - target.height / 2,
+  right: target.center_x + target.width / 2,
+  bottom: target.center_y + target.height / 2
+});
+const projectPromptLayoutToCanvas = (layout, canvas) => {
+  const previous = layout.reference_canvas;
+  if (previous.width === canvas.width && previous.height === canvas.height) {
+    return {
+      layout: clone(layout),
+      direction: "unchanged",
+      outsideTargetIds: [],
+      fullyOutsideTargetIds: []
+    };
+  }
+  const scale = Math.min(canvas.width, canvas.height) / Math.min(previous.width, previous.height);
+  const targets = layout.targets.map((target) => ({
+    ...clone(target),
+    center_x: (canvas.width / 2 + (target.center_x * previous.width - previous.width / 2) * scale) / canvas.width,
+    center_y: (canvas.height / 2 + (target.center_y * previous.height - previous.height / 2) * scale) / canvas.height,
+    width: target.width * previous.width * scale / canvas.width,
+    height: target.height * previous.height * scale / canvas.height
+  }));
+  const outsideTargetIds = [];
+  const fullyOutsideTargetIds = [];
+  for (const target of targets) {
+    const bounds = spatialTargetBounds(target);
+    if (bounds.left < 0 || bounds.top < 0 || bounds.right > 1 || bounds.bottom > 1) {
+      outsideTargetIds.push(target.target_id);
+    }
+    if (bounds.right <= 0 || bounds.bottom <= 0 || bounds.left >= 1 || bounds.top >= 1) {
+      fullyOutsideTargetIds.push(target.target_id);
+    }
+  }
+  const grows = canvas.width >= previous.width && canvas.height >= previous.height;
+  const shrinks = canvas.width <= previous.width && canvas.height <= previous.height;
+  return {
+    layout: { ...clone(layout), reference_canvas: clone(canvas), targets },
+    direction: grows ? "larger" : shrinks ? "smaller" : "mixed",
+    outsideTargetIds,
+    fullyOutsideTargetIds
+  };
+};
+const recoverSpatialPromptState = (prompt, rawPromptInput, rawPromptLayout) => {
+  const fallback = () => ({
+    status: "fallback",
+    prompt,
+    promptInput: {
+      schema_version: "asteria.prompt-input.v2",
+      mode: "single",
+      sections: null
+    },
+    promptLayout: null,
+    warningCode: "spatial_prompt_invalid_fallback",
+    legacySnapshot: {
+      prompt_input: clone(rawPromptInput),
+      prompt_layout: clone(rawPromptLayout)
+    }
+  });
+  const parsedInput = parsePromptInput(rawPromptInput);
+  if (!parsedInput) return fallback();
+  const promptInput = upgradePromptInputToV2(parsedInput);
+  if (promptInput.mode === "single") {
+    return rawPromptLayout == null ? { status: "ready", prompt, promptInput, promptLayout: null, warningCode: "", legacySnapshot: null } : fallback();
+  }
+  if (combinePromptInputV2(promptInput.sections ?? []) !== prompt) return fallback();
+  const targetIds = (promptInput.sections ?? []).flatMap((section) => section.content.mode === "targets" ? section.content.targets.map((target) => target.id) : []);
+  if (!targetIds.length) {
+    return rawPromptLayout == null ? { status: "ready", prompt, promptInput, promptLayout: null, warningCode: "", legacySnapshot: null } : fallback();
+  }
+  const promptLayout = parsePromptLayout(rawPromptLayout);
+  if (!promptLayout) return fallback();
+  const layoutIds = promptLayout.targets.map((target) => target.target_id);
+  if (targetIds.length !== layoutIds.length || !targetIds.every((targetId) => layoutIds.includes(targetId))) return fallback();
+  return {
+    status: "ready",
+    prompt,
+    promptInput,
+    promptLayout,
+    warningCode: "",
+    legacySnapshot: null
+  };
+};
+const recoverOptionalSpatialPromptState = (prompt, rawPromptInput, rawPromptLayout) => {
+  if (rawPromptInput == null && rawPromptLayout == null) {
+    return {
+      status: "ready",
+      prompt,
+      promptInput: { schema_version: "asteria.prompt-input.v2", mode: "single", sections: null },
+      promptLayout: null,
+      warningCode: "",
+      legacySnapshot: null
+    };
+  }
+  return recoverSpatialPromptState(prompt, rawPromptInput, rawPromptLayout);
 };
 const compatibleSettingBindings = {
   profile: "profile",
@@ -6941,7 +7469,9 @@ const applyImportedPromptState = (current, preview) => {
       ...current,
       negativePrompt,
       promptSections: current.promptSections.map((section) => ({ ...section })),
-      promptTransition: clonePromptTransition(current.promptTransition)
+      promptTransition: clonePromptTransition(current.promptTransition),
+      spatialPromptInput: current.spatialPromptInput ? cloneValue$2(current.spatialPromptInput) : null,
+      promptLayout: current.promptLayout ? cloneValue$2(current.promptLayout) : null
     };
   }
   const restored = restorePromptInputState(
@@ -6949,9 +7479,17 @@ const applyImportedPromptState = (current, preview) => {
     preview.prompt_input,
     current.promptTransitionRevision + 1
   );
+  const spatial = recoverOptionalSpatialPromptState(
+    preview.positive_prompt.value,
+    preview.prompt_input,
+    preview.prompt_layout
+  );
   if (!restored.notice) {
-    const serverNotice = preview.warning_codes.find((code) => code === "prompt_input_invalid_fallback" || code === "prompt_input_mismatch_fallback");
+    const serverNotice = preview.warning_codes.find((code) => code === "prompt_input_invalid_fallback" || code === "prompt_input_mismatch_fallback" || code === "spatial_prompt_invalid_fallback");
     if (serverNotice) restored.notice = serverNotice;
+  }
+  if (preview.spatial_prompt_status !== "ready" || preview.spatial_prompt_warning_code === "spatial_prompt_invalid_fallback" || spatial.status !== "ready") {
+    restored.notice = preview.spatial_prompt_warning_code === "spatial_prompt_invalid_fallback" ? "spatial_prompt_invalid_fallback" : restored.notice;
   }
   return {
     prompt: restored.prompt,
@@ -6961,7 +7499,11 @@ const applyImportedPromptState = (current, preview) => {
     promptTransition: clonePromptTransition(restored.transition),
     promptTransitionRevision: restored.transitionRevision,
     promptInputNotice: restored.notice,
-    activePromptSectionId: "base"
+    activePromptSectionId: "base",
+    activePromptTargetId: spatial.status === "ready" && preview.spatial_prompt_status === "ready" ? spatial.promptInput.sections?.flatMap((section) => section.content.mode === "targets" ? section.content.targets : [])[0]?.id ?? null : null,
+    spatialPromptInput: spatial.status === "ready" && preview.spatial_prompt_status === "ready" && preview.prompt_input != null ? cloneValue$2(spatial.promptInput) : null,
+    promptLayout: spatial.status === "ready" && preview.spatial_prompt_status === "ready" ? spatial.promptLayout ? cloneValue$2(spatial.promptLayout) : null : null,
+    promptStructureRevision: (current.promptStructureRevision ?? 0) + 1
   };
 };
 const currentImportedPromptState = (current) => {
@@ -6975,7 +7517,11 @@ const currentImportedPromptState = (current) => {
       promptTransition: clonePromptTransition(current.promptTransition ?? null),
       promptTransitionRevision: transitionRevision,
       promptInputNotice: current.promptInputNotice ?? "",
-      activePromptSectionId: current.activePromptSectionId ?? "base"
+      activePromptSectionId: current.activePromptSectionId ?? "base",
+      activePromptTargetId: current.activePromptTargetId ?? null,
+      spatialPromptInput: current.spatialPromptInput ? cloneValue$2(current.spatialPromptInput) : null,
+      promptLayout: current.promptLayout ? cloneValue$2(current.promptLayout) : null,
+      promptStructureRevision: current.promptStructureRevision ?? 0
     };
   }
   return {
@@ -6986,7 +7532,11 @@ const currentImportedPromptState = (current) => {
     promptTransition: null,
     promptTransitionRevision: transitionRevision,
     promptInputNotice: "",
-    activePromptSectionId: "base"
+    activePromptSectionId: "base",
+    activePromptTargetId: null,
+    spatialPromptInput: null,
+    promptLayout: null,
+    promptStructureRevision: current.promptStructureRevision ?? 0
   };
 };
 const projectCompatibleTxt2ImgSettings = (settings) => {
@@ -7308,6 +7858,20 @@ const knownErrorCodeKeys = {
   unsupported_controlnet_preprocessor: "generation.error.unsupportedControlNetPreprocessor",
   missing_anima_lllite_runtime_nodes: "generation.error.missingAnimaLLLiteRuntime",
   missing_anima_regional_runtime_nodes: "generation.error.missingAnimaRegionalRuntime",
+  missing_spatial_prompt_runtime_contract: "generation.error.spatialRuntimeUnavailable",
+  spatial_prompt_requires_comfy_workflow: "generation.error.spatialRuntimeUnavailable",
+  spatial_profile_selection_required: "generation.error.spatialProfileSelectionRequired",
+  spatial_profile_manual_selection_required: "generation.error.spatialProfileSelectionRequired",
+  spatial_profile_ambiguous: "generation.error.spatialProfileSelectionRequired",
+  spatial_profile_not_found: "generation.error.spatialProfileSelectionRequired",
+  spatial_profile_unknown: "generation.error.spatialProfileSelectionRequired",
+  spatial_profile_evidence_mismatch: "generation.error.spatialProfileMismatch",
+  spatial_profile_unsupported: "generation.error.spatialProfileUnsupported",
+  spatial_model_structure_unverified: "generation.error.spatialProfileMismatch",
+  spatial_model_unavailable: "generation.error.missingRuntimeModel",
+  spatial_model_ambiguous: "generation.error.spatialProfileSelectionRequired",
+  spatial_prompt_inpaint_no_overlap: "generation.error.spatialInpaintNoOverlap",
+  spatial_prompt_no_active_targets: "generation.error.spatialNoActiveTargets",
   missing_anima_lllite_image: "generation.error.missingAnimaLLLiteImage",
   missing_anima_lllite_model: "generation.error.missingAnimaLLLiteModel",
   anima_3_8b_components_required: "generation.error.anima38BundleRequired",
@@ -7316,7 +7880,7 @@ const knownErrorCodeKeys = {
   anima_progressive_adapter_header_unavailable: "generation.error.anima38BundleInvalid",
   anima_progressive_adapter_layout_unverified: "generation.error.anima38BundleInvalid",
   anima_3_8b_components_require_52_block_model: "generation.error.anima38BundleMismatch",
-  anima_3_8b_txt2img_only: "generation.error.anima38Txt2ImgOnly",
+  anima_3_8b_unsupported_generation_mode: "generation.error.anima38UnsupportedGenerationMode",
   anima_3_8b_hires_variant_mismatch: "generation.error.anima38HiresMismatch",
   anima_diffusion_model_header_unavailable: "generation.error.animaModelUnverified",
   anima_diffusion_model_layout_unverified: "generation.error.animaModelUnverified",
@@ -8710,6 +9274,18 @@ const assertSeedResizeSubmission = (generation) => {
     };
   }
 };
+const spatialProfileSelectionForGenerationProfile = (profile, selection) => {
+  if (selection == null) return selection;
+  const allowedPrefixes = profile === "sdxl" ? ["sdxl.", "illustrious."] : profile === "anima" ? ["anima."] : [];
+  const normalized = {};
+  for (const stage of ["base", "hires", "refiner"]) {
+    const selectedProfile = selection[stage];
+    if (typeof selectedProfile === "string" && allowedPrefixes.some((prefix) => selectedProfile.startsWith(prefix))) {
+      normalized[stage] = selectedProfile;
+    }
+  }
+  return Object.keys(normalized).length ? normalized : null;
+};
 const useGenerationStore = defineStore("generation", {
   state: () => ({
     mode: "txt2img",
@@ -8718,9 +9294,16 @@ const useGenerationStore = defineStore("generation", {
     promptInputMode: "single",
     promptSections: createDefaultPromptSections(""),
     activePromptSectionId: "base",
+    activePromptTargetId: null,
     promptTransition: null,
     promptTransitionRevision: 0,
     promptInputNotice: "",
+    spatialPromptInput: null,
+    promptLayout: null,
+    promptStructureRevision: 0,
+    placementReviewRevision: 0,
+    placementReviewTargetId: null,
+    spatialCanvasNotice: "",
     negativePrompt: "",
     initImagePath: "",
     imageEditLineage: null,
@@ -8842,24 +9425,27 @@ const useGenerationStore = defineStore("generation", {
     },
     promptRequestSnapshot() {
       if (this.promptInputMode === "single") {
-        return {
-          prompt: this.prompt,
-          prompt_input: {
-            schema_version: "asteria.prompt-input.v1",
-            mode: "single"
-          }
-        };
+        return spatialPromptRequestFields(this.prompt, {
+          schema_version: "asteria.prompt-input.v1",
+          mode: "single"
+        }, null);
+      }
+      if (this.spatialPromptInput?.mode === "sections" && this.spatialPromptInput.sections) {
+        const promptInput = cloneStoreState(this.spatialPromptInput);
+        const prompt2 = combinePromptInputV2(promptInput.sections);
+        return spatialPromptRequestFields(
+          prompt2,
+          promptInput,
+          this.promptLayout ? cloneStoreState(this.promptLayout) : null
+        );
       }
       const sections = [...this.promptSections].sort((left, right) => left.order - right.order).map((section) => ({ ...section }));
       const prompt = combinePromptSections(sections);
-      return {
-        prompt,
-        prompt_input: {
-          schema_version: "asteria.prompt-input.v1",
-          mode: "sections",
-          sections
-        }
-      };
+      return spatialPromptRequestFields(prompt, {
+        schema_version: "asteria.prompt-input.v1",
+        mode: "sections",
+        sections
+      }, null);
     },
     setPromptInputMode(mode) {
       if (mode === this.promptInputMode) return;
@@ -8867,21 +9453,50 @@ const useGenerationStore = defineStore("generation", {
       this.applyPromptEditorState(
         mode === "sections" ? enterSectionsMode(current) : enterSingleMode(current)
       );
+      if (mode === "sections" && this.promptInputNotice) {
+        this.spatialPromptInput = null;
+        this.promptLayout = null;
+      }
+      this.promptStructureRevision += 1;
     },
     setPromptSectionText(id, text) {
       const section = this.promptSections.find((item) => item.id === id);
       if (!section) return;
       section.text = text;
+      const spatialSection = this.spatialPromptInput?.sections?.find((item) => item.id === id);
+      if (spatialSection?.content.mode === "global") {
+        spatialSection.content.text = text;
+      }
       this.promptInputNotice = "";
       if (this.promptInputMode === "sections") {
         this.prompt = combinePromptSections(this.promptSections);
       }
+      this.promptStructureRevision += 1;
+    },
+    setActivePromptTarget(id) {
+      const exists = this.spatialPromptInput?.sections?.some((section) => section.content.mode === "targets" && section.content.targets.some((target) => target.id === id));
+      this.activePromptTargetId = exists ? id : null;
+    },
+    setPromptTargetText(sectionId, targetId, text) {
+      const section = this.spatialPromptInput?.sections?.find((item) => item.id === sectionId);
+      if (!section || section.content.mode !== "targets") return false;
+      const target = section.content.targets.find((item) => item.id === targetId);
+      if (!target) return false;
+      target.text = text;
+      this.prompt = combinePromptInputV2(this.spatialPromptInput?.sections ?? []);
+      this.promptSections = promptInputV2EditorSections(this.spatialPromptInput?.sections ?? []);
+      this.promptInputNotice = "";
+      this.promptStructureRevision += 1;
+      return true;
     },
     setPromptSectionLabel(id, label) {
       const section = this.promptSections.find((item) => item.id === id);
       if (!section) return;
       section.label = label;
+      const spatialSection = this.spatialPromptInput?.sections?.find((item) => item.id === id);
+      if (spatialSection) spatialSection.label = label;
       this.promptInputNotice = "";
+      this.promptStructureRevision += 1;
     },
     movePromptSection(id, direction) {
       const ordered = [...this.promptSections].sort((left, right) => left.order - right.order);
@@ -8896,8 +9511,122 @@ const useGenerationStore = defineStore("generation", {
       this.promptSections = ordered.sort((left, right) => left.order - right.order);
       this.prompt = combinePromptSections(this.promptSections);
       this.promptInputNotice = "";
+      if (this.spatialPromptInput?.sections) {
+        const orderById = new Map(this.promptSections.map((section) => [section.id, section.order]));
+        this.spatialPromptInput.sections = this.spatialPromptInput.sections.map((section) => ({ ...section, order: orderById.get(section.id) ?? section.order })).sort((left, right) => left.order - right.order);
+      }
+      this.promptStructureRevision += 1;
     },
-    applyPromptState(prompt, rawPromptInput, warningCodes = []) {
+    setGenerationMode(mode) {
+      this.mode = mode;
+      if (mode !== "inpaint" && this.promptLayout?.excluded_target_ids.length) {
+        this.promptLayout.excluded_target_ids = [];
+      }
+    },
+    setGenerationProfile(profile) {
+      this.profile = profile;
+      if (!this.promptLayout || this.promptLayout.model_profile_selection == null) return;
+      this.promptLayout.model_profile_selection = spatialProfileSelectionForGenerationProfile(
+        profile,
+        this.promptLayout.model_profile_selection
+      );
+    },
+    previewGenerationCanvas(width, height) {
+      return this.promptLayout ? projectPromptLayoutToCanvas(toRaw(this.promptLayout), { width, height }) : null;
+    },
+    applyGenerationCanvas(width, height, reviewPlacement = false) {
+      const projected = this.previewGenerationCanvas(width, height);
+      this.width = width;
+      this.height = height;
+      if (projected) {
+        this.promptLayout = structuredClone(projected.layout);
+        this.spatialCanvasNotice = projected.outsideTargetIds.length ? "kept-outside" : projected.direction === "larger" ? "larger" : "";
+        if (reviewPlacement) this.requestPromptPlacementReview(projected.outsideTargetIds[0] ?? null);
+      } else {
+        this.spatialCanvasNotice = "";
+      }
+      return projected;
+    },
+    requestPromptPlacementReview(targetId = null) {
+      this.placementReviewTargetId = targetId;
+      this.placementReviewRevision += 1;
+    },
+    excludePromptPlacementTargets(targetIds) {
+      if (!this.promptLayout || this.mode !== "inpaint") return false;
+      const known = new Set(this.promptLayout.targets.map((target) => target.target_id));
+      const excluded = new Set(this.promptLayout.excluded_target_ids);
+      for (const targetId of targetIds) {
+        if (known.has(targetId)) excluded.add(targetId);
+      }
+      if (excluded.size >= known.size) return false;
+      this.promptLayout.excluded_target_ids = [...excluded];
+      return true;
+    },
+    disablePromptPlacement() {
+      if (!this.promptLayout) return;
+      this.promptLayout.mode = "disabled";
+      this.promptLayout.excluded_target_ids = [];
+    },
+    createPromptPlacementDraft(sectionId) {
+      const promptInput = this.spatialPromptInput?.mode === "sections" ? cloneStoreState(this.spatialPromptInput) : {
+        schema_version: "asteria.prompt-input.v2",
+        mode: "sections",
+        sections: promptSectionsToV2(this.promptSections)
+      };
+      return createPlacementDraft({
+        promptInput,
+        promptLayout: this.promptLayout ? cloneStoreState(this.promptLayout) : null,
+        sectionId,
+        canvas: { width: this.width, height: this.height }
+      });
+    },
+    applyPromptPlacement(promptInput, promptLayout) {
+      const prompt = combinePromptInputV2(promptInput.sections ?? []);
+      const recovered = recoverOptionalSpatialPromptState(prompt, promptInput, promptLayout);
+      if (recovered.status !== "ready" || !recovered.promptLayout) return false;
+      const previousPromptInput = this.spatialPromptInput ? JSON.stringify(toRaw(this.spatialPromptInput)) : null;
+      const nextPromptInput = JSON.stringify(recovered.promptInput);
+      this.spatialPromptInput = structuredClone(recovered.promptInput);
+      this.promptLayout = structuredClone(recovered.promptLayout);
+      this.promptInputMode = "sections";
+      this.prompt = prompt;
+      this.promptSections = promptInputV2EditorSections(recovered.promptInput.sections ?? []);
+      this.promptInputNotice = "";
+      const activeStillExists = recovered.promptInput.sections?.some((section) => section.content.mode === "targets" && section.content.targets.some((target) => target.id === this.activePromptTargetId));
+      this.activePromptTargetId = activeStillExists ? this.activePromptTargetId : recovered.promptInput.sections?.flatMap((section) => section.content.mode === "targets" ? section.content.targets : [])[0]?.id ?? null;
+      if (previousPromptInput === null) {
+        this.promptStructureRevision = 0;
+      } else if (previousPromptInput !== nextPromptInput) {
+        this.promptStructureRevision += 1;
+      }
+      return true;
+    },
+    clearPromptPlacement() {
+      if (!this.spatialPromptInput?.sections) {
+        this.promptLayout = null;
+        this.activePromptTargetId = null;
+        return;
+      }
+      let promptInput = cloneStoreState(this.spatialPromptInput);
+      for (const section of promptInput.sections ?? []) {
+        if (section.content.mode === "targets") {
+          promptInput = sectionTargetsToGlobal(promptInput, section.id);
+        }
+      }
+      this.spatialPromptInput = promptInput;
+      this.promptLayout = null;
+      this.prompt = combinePromptInputV2(promptInput.sections ?? []);
+      this.promptSections = promptInputV2EditorSections(promptInput.sections ?? []);
+      this.activePromptTargetId = null;
+      this.promptInputNotice = "";
+      this.promptStructureRevision += 1;
+    },
+    applyPromptState(prompt, rawPromptInput, warningCodes = [], rawPromptLayout = null) {
+      const spatialRecovery = recoverOptionalSpatialPromptState(
+        prompt,
+        rawPromptInput,
+        rawPromptLayout
+      );
       const restored = restorePromptInputState(
         prompt,
         rawPromptInput,
@@ -8910,7 +9639,19 @@ const useGenerationStore = defineStore("generation", {
         }
       }
       this.applyPromptEditorState(restored);
+      if (spatialRecovery.status === "ready" && rawPromptInput != null) {
+        this.spatialPromptInput = structuredClone(spatialRecovery.promptInput);
+        this.promptLayout = spatialRecovery.promptLayout ? structuredClone(spatialRecovery.promptLayout) : null;
+      } else {
+        this.spatialPromptInput = null;
+        this.promptLayout = null;
+      }
+      if (spatialRecovery.warningCode) {
+        this.promptInputNotice ||= spatialRecovery.warningCode;
+      }
+      this.promptStructureRevision = spatialRecovery.status === "ready" && spatialRecovery.promptInput.schema_version === "asteria.prompt-input.v2" ? 0 : this.promptStructureRevision + 1;
       this.activePromptSectionId = "base";
+      this.activePromptTargetId = spatialRecovery.status === "ready" ? spatialRecovery.promptInput.sections?.flatMap((section) => section.content.mode === "targets" ? section.content.targets : [])[0]?.id ?? null : null;
     },
     async applyProfileSchema(profile, previousProfile) {
       const previousHiresCheckpoint = this.hiresCheckpoint;
@@ -9059,8 +9800,7 @@ const useGenerationStore = defineStore("generation", {
               strength: unit.strength,
               guidance_start: unit.guidanceStart,
               guidance_end: unit.guidanceEnd,
-              preserve_wrapper: unit.preserveWrapper,
-              regional_prompts: unit.regionalPrompts.map((region) => ({ ...region }))
+              preserve_wrapper: unit.preserveWrapper
             })),
             detailer_units: this.detailerUnits.map((unit) => ({
               enabled: unit.enabled,
@@ -9182,8 +9922,7 @@ const useGenerationStore = defineStore("generation", {
           strength: unit.strength,
           guidance_start: unit.guidanceStart,
           guidance_end: unit.guidanceEnd,
-          preserve_wrapper: unit.preserveWrapper,
-          regional_prompts: unit.regionalPrompts.map((region) => ({ ...region }))
+          preserve_wrapper: unit.preserveWrapper
         })),
         detailer_units: this.detailerUnits.map((unit) => ({
           enabled: unit.enabled,
@@ -9541,12 +10280,12 @@ const useGenerationStore = defineStore("generation", {
         return "";
       }
       const runtime = useRuntimeStore();
-      const runtimeModels = runtime.capabilities?.features.controlnet?.controlnet_models ?? [];
+      const runtimeModels = (runtime.capabilities?.features.controlnet?.controlnet_models ?? []).filter((model) => !isAnimaLLLiteModelReference(model));
       if (runtimeModels.length) {
         return terms.map((term) => runtimeModels.find((model) => model.toLowerCase().includes(term))).find((model) => Boolean(model)) ?? "";
       }
       const modelDependencies = useModelDependenciesStore();
-      const models = modelDependencies.libraryByType("controlnet");
+      const models = modelDependencies.libraryByType("controlnet").filter((item) => !isAnimaLLLiteModelReference(item.relative_path));
       for (const term of terms) {
         const model = models.find((item) => String(item.relative_path).toLowerCase().includes(term));
         if (model) {
@@ -9561,12 +10300,14 @@ const useGenerationStore = defineStore("generation", {
         return matched;
       }
       const runtime = useRuntimeStore();
-      const runtimeModels = runtime.capabilities?.features.controlnet?.controlnet_models ?? [];
+      const runtimeModels = (runtime.capabilities?.features.controlnet?.controlnet_models ?? []).filter((model) => !isAnimaLLLiteModelReference(model));
       if (runtimeModels.length) {
         return runtimeModels[0];
       }
       const modelDependencies = useModelDependenciesStore();
-      return String(modelDependencies.libraryByType("controlnet")[0]?.relative_path ?? "");
+      return String(
+        modelDependencies.libraryByType("controlnet").find((item) => !isAnimaLLLiteModelReference(item.relative_path))?.relative_path ?? ""
+      );
     },
     defaultAnimaLLLiteModel() {
       const runtime = useRuntimeStore();
@@ -9855,6 +10596,7 @@ const useGenerationStore = defineStore("generation", {
             name: this.promptPresetName || promptSnapshot.prompt.slice(0, 40) || "Untitled preset",
             prompt: promptSnapshot.prompt,
             prompt_input: promptSnapshot.prompt_input,
+            ...promptSnapshot.prompt_layout ? { prompt_layout: promptSnapshot.prompt_layout } : {},
             negative_prompt: this.negativePrompt,
             tags: []
           }
@@ -9877,7 +10619,12 @@ const useGenerationStore = defineStore("generation", {
       }
     },
     applyPromptPreset(preset) {
-      this.applyPromptState(preset.prompt, preset.prompt_input, preset.warning_codes);
+      this.applyPromptState(
+        preset.prompt,
+        preset.prompt_input,
+        preset.warning_codes,
+        preset.prompt_layout
+      );
       this.negativePrompt = preset.negative_prompt;
     },
     snapshotSettings() {
@@ -10045,10 +10792,11 @@ const useGenerationStore = defineStore("generation", {
         const {
           prompt,
           prompt_input: promptInput,
+          prompt_layout: promptLayout,
           ...remainingSettings
         } = preset.data;
         if (preset.kind === "generation" && typeof prompt === "string") {
-          this.applyPromptState(prompt, promptInput);
+          this.applyPromptState(prompt, promptInput, [], promptLayout);
         }
         this.applySettings(remainingSettings);
         if (preset.data.model_slots && typeof preset.data.model_slots === "object" && !Array.isArray(preset.data.model_slots)) {
@@ -10110,7 +10858,11 @@ const useGenerationStore = defineStore("generation", {
         promptTransition: this.promptTransition,
         promptTransitionRevision: this.promptTransitionRevision,
         promptInputNotice: this.promptInputNotice,
-        activePromptSectionId: this.activePromptSectionId
+        activePromptSectionId: this.activePromptSectionId,
+        activePromptTargetId: this.activePromptTargetId,
+        spatialPromptInput: this.spatialPromptInput ? cloneStoreState(this.spatialPromptInput) : null,
+        promptLayout: this.promptLayout ? cloneStoreState(this.promptLayout) : null,
+        promptStructureRevision: this.promptStructureRevision
       }, preview);
       this.$patch(promptState);
       return { ok: true, code: "image_metadata_prompts_applied" };
@@ -10186,7 +10938,12 @@ const useGenerationStore = defineStore("generation", {
     selectHistoryItem(item) {
       this.result = item;
       this.profile = item.profile;
-      this.applyPromptState(item.prompt, item.settings.prompt_input);
+      this.applyPromptState(
+        item.prompt,
+        item.settings.prompt_input,
+        [],
+        item.settings.prompt_layout
+      );
       this.negativePrompt = item.negative_prompt;
       this.loras = item.loras.map((lora) => ({
         ...lora,
@@ -10210,7 +10967,7 @@ const useGenerationStore = defineStore("generation", {
     }
   }
 });
-const _sfc_main$26 = /* @__PURE__ */ defineComponent({
+const _sfc_main$28 = /* @__PURE__ */ defineComponent({
   __name: "GenerationPresetBar",
   __ssrInlineRender: true,
   setup(__props) {
@@ -10253,13 +11010,13 @@ const _sfc_main$26 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$26 = _sfc_main$26.setup;
-_sfc_main$26.setup = (props, ctx) => {
+const _sfc_setup$28 = _sfc_main$28.setup;
+_sfc_main$28.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationPresetBar.vue");
-  return _sfc_setup$26 ? _sfc_setup$26(props, ctx) : void 0;
+  return _sfc_setup$28 ? _sfc_setup$28(props, ctx) : void 0;
 };
-const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$26, [["__scopeId", "data-v-f1409f74"]]), { __name: "StudioGenerateGenerationPresetBar" });
+const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$28, [["__scopeId", "data-v-f1409f74"]]), { __name: "StudioGenerateGenerationPresetBar" });
 const dependencyNeedsAttention = (dependency, selections) => {
   if (dependency.status === "installed") {
     return false;
@@ -10339,7 +11096,7 @@ const useMediaModelCatalog = (domain) => {
     refresh
   };
 };
-const _sfc_main$25 = /* @__PURE__ */ defineComponent({
+const _sfc_main$27 = /* @__PURE__ */ defineComponent({
   __name: "ModelSettingsPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -10437,74 +11194,74 @@ const _sfc_main$25 = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "model-bar",
         "aria-label": unref(t)("modelSettings.aria")
-      }, _attrs))} data-v-7f7cfe10><div class="model-bar__primary" data-v-7f7cfe10><label class="field slot-field model-bar__field model-bar__profile" data-v-7f7cfe10><span data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select${ssrRenderAttr("value", unref(generation).profile)} data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-7f7cfe10><!--[-->`);
+      }, _attrs))} data-v-4f959059><div class="model-bar__primary" data-v-4f959059><label class="field slot-field model-bar__field model-bar__profile" data-v-4f959059><span data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select${ssrRenderAttr("value", unref(generation).profile)} data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-4f959059><!--[-->`);
       ssrRenderList(unref(modelDependencies).profiles, (profile) => {
-        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-7f7cfe10>${ssrInterpolate(profile.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-4f959059>${ssrInterpolate(profile.label)}</option>`);
       });
       _push(`<!--]--></select></label><!--[-->`);
       ssrRenderList(unref(primaryModelSlots), (slot) => {
-        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-7f7cfe10><span data-v-7f7cfe10>${ssrInterpolate(slot.label)}</span>`);
+        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-4f959059><span data-v-4f959059>${ssrInterpolate(slot.label)}</span>`);
         if (usesModelSelect(slot)) {
-          _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || unref(generation).profile === "anima" && slot.id === "diffusion_model" && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-7f7cfe10><option value="" data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+          _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || unref(generation).profile === "anima" && slot.id === "diffusion_model" && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-4f959059><option value="" data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
           ssrRenderList(slotOptions(slot), (item) => {
-            _push(`<option${ssrRenderAttr("value", item.path)} data-v-7f7cfe10>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
+            _push(`<option${ssrRenderAttr("value", item.path)} data-v-4f959059>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
           });
           _push(`<!--]--></select>`);
         } else {
-          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-7f7cfe10>`);
+          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-4f959059>`);
         }
         _push(`</label>`);
       });
-      _push(`<!--]--><div class="model-bar__slot-status" data-v-7f7cfe10><span data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-7f7cfe10>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div><div class="model-bar__actions" data-v-7f7cfe10><button${ssrRenderAttrs(mergeProps({
+      _push(`<!--]--><div class="model-bar__slot-status" data-v-4f959059><span data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-4f959059>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div><div class="model-bar__actions" data-v-4f959059><button${ssrRenderAttrs(mergeProps({
         type: "button",
         disabled: unref(refreshingModelAssets) || unref(modelDependencies).loading || unref(runtime).loading
-      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("modelSettings.refreshHelp"))))} data-v-7f7cfe10>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
+      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("modelSettings.refreshHelp"))))} data-v-4f959059>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
       if (!unref(activeProfile)) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-7f7cfe10><strong data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-7f7cfe10>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
+        _push(`<div class="model-bar__recovery" role="status" data-v-4f959059><strong data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-4f959059>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(modelAssetError)) {
-        _push(`<div class="model-bar__message-row" data-v-7f7cfe10><p class="error" aria-live="assertive" data-v-7f7cfe10>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
+        _push(`<div class="model-bar__message-row" data-v-4f959059><p class="error" aria-live="assertive" data-v-4f959059>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).profile === "anima" && unref(imageModelCatalog).error.value) {
-        _push(`<div class="model-bar__message-row" data-v-7f7cfe10><p class="error" aria-live="assertive" data-v-7f7cfe10>${ssrInterpolate(unref(imageModelCatalog).error.value)}</p></div>`);
+        _push(`<div class="model-bar__message-row" data-v-4f959059><p class="error" aria-live="assertive" data-v-4f959059>${ssrInterpolate(unref(imageModelCatalog).error.value)}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(selectedAnimaDiffusion)) {
-        _push(`<div class="model-bar__message-row" role="status" data-v-7f7cfe10><p class="muted" data-v-7f7cfe10>${ssrInterpolate(animaVariantLabel(unref(selectedAnimaDiffusion).variant))}</p></div>`);
+        _push(`<div class="model-bar__message-row" role="status" data-v-4f959059><p class="muted" data-v-4f959059>${ssrInterpolate(animaVariantLabel(unref(selectedAnimaDiffusion).variant))}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(anima38MissingComponentLabels).length) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-7f7cfe10><strong data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsRequired"))}</strong><small data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsHelp", { components: unref(anima38MissingComponentLabels).join(" / ") }))}</small></div>`);
+        _push(`<div class="model-bar__recovery" role="status" data-v-4f959059><strong data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsRequired"))}</strong><small data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsHelp", { components: unref(anima38MissingComponentLabels).join(" / ") }))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(missingProfileDependencies).length) {
-        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-7f7cfe10><div data-v-7f7cfe10><strong data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-7f7cfe10><!--[-->`);
+        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-4f959059><div data-v-4f959059><strong data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-4f959059><!--[-->`);
         ssrRenderList(unref(missingProfileDependencies), (dependency) => {
-          _push(`<li data-v-7f7cfe10><span data-v-7f7cfe10><strong data-v-7f7cfe10>${ssrInterpolate(dependency.label)}</strong></span></li>`);
+          _push(`<li data-v-4f959059><span data-v-4f959059><strong data-v-4f959059>${ssrInterpolate(dependency.label)}</strong></span></li>`);
         });
         _push(`<!--]--></ul></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(secondaryModelSlots).length) {
-        _push(`<details class="model-bar__extra" data-v-7f7cfe10><summary data-v-7f7cfe10><span data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-7f7cfe10>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-7f7cfe10><!--[-->`);
+        _push(`<details class="model-bar__extra" data-v-4f959059><summary data-v-4f959059><span data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-4f959059>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-4f959059><!--[-->`);
         ssrRenderList(unref(secondaryModelSlots), (slot) => {
-          _push(`<label class="field slot-field model-bar__field" data-v-7f7cfe10><span data-v-7f7cfe10>${ssrInterpolate(slot.label)}</span>`);
+          _push(`<label class="field slot-field model-bar__field" data-v-4f959059><span data-v-4f959059>${ssrInterpolate(slot.label)}</span>`);
           if (usesModelSelect(slot)) {
-            _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-7f7cfe10><option value="" data-v-7f7cfe10>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+            _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-4f959059><option value="" data-v-4f959059>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
             ssrRenderList(slotOptions(slot), (item) => {
-              _push(`<option${ssrRenderAttr("value", item.path)} data-v-7f7cfe10>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
+              _push(`<option${ssrRenderAttr("value", item.path)} data-v-4f959059>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
             });
             _push(`<!--]--></select>`);
           } else {
-            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-7f7cfe10>`);
+            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-4f959059>`);
           }
           _push(`</label>`);
         });
@@ -10517,13 +11274,63 @@ const _sfc_main$25 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$25 = _sfc_main$25.setup;
-_sfc_main$25.setup = (props, ctx) => {
+const _sfc_setup$27 = _sfc_main$27.setup;
+_sfc_main$27.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ModelSettingsPanel.vue");
-  return _sfc_setup$25 ? _sfc_setup$25(props, ctx) : void 0;
+  return _sfc_setup$27 ? _sfc_setup$27(props, ctx) : void 0;
 };
-const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$25, [["__scopeId", "data-v-7f7cfe10"]]), { __name: "StudioModelSettingsPanel" });
+const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$27, [["__scopeId", "data-v-4f959059"]]), { __name: "StudioModelSettingsPanel" });
+const promptAssistStructurePayload = (snapshot2) => ({
+  prompt: snapshot2.prompt,
+  prompt_input: structuredClone(snapshot2.promptInput),
+  active_section_id: snapshot2.activeSectionId,
+  active_section_text: snapshot2.activeSectionText,
+  active_target_id: snapshot2.activeTargetId,
+  active_target_text: snapshot2.activeTargetText,
+  negative_prompt: snapshot2.negativePrompt,
+  profile: snapshot2.profile,
+  mode: snapshot2.mode,
+  width: snapshot2.width,
+  height: snapshot2.height,
+  loras: [...snapshot2.loras],
+  embeddings: [...snapshot2.embeddings],
+  target: snapshot2.target,
+  language: snapshot2.language,
+  extra_instruction: snapshot2.instruction,
+  purpose_preset: snapshot2.purposePreset,
+  protected_tokens: [...snapshot2.protectedTokens],
+  provider_mode: snapshot2.providerMode,
+  provider_endpoint: snapshot2.providerEndpoint,
+  provider_model: snapshot2.providerModel,
+  provider_api_key_env_var: snapshot2.providerApiKeyEnvVar,
+  provider_timeout_seconds: snapshot2.providerTimeoutSeconds
+});
+const canonicalSignatureValue = (value) => {
+  if (typeof value === "string") return value.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  if (Array.isArray(value)) return value.map(canonicalSignatureValue);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new Error("prompt assist signature requires finite numbers");
+    return Number.isInteger(value) ? Math.trunc(value) : value;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).sort(([left], [right]) => left.localeCompare(right, "en")).map(([key, item]) => [key, canonicalSignatureValue(item)])
+    );
+  }
+  return value;
+};
+const canonicalPromptAssistStructureJson = (snapshot2) => JSON.stringify(canonicalSignatureValue(promptAssistStructurePayload(snapshot2)));
+const promptAssistStructureSignature = async (snapshot2) => {
+  if (snapshot2.promptInput.schema_version !== "asteria.prompt-input.v2" || snapshot2.promptInput.mode !== "sections") {
+    return null;
+  }
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(canonicalPromptAssistStructureJson(snapshot2))
+  );
+  return [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join("");
+};
 const promptAssistRequestSignature = (snapshot2) => {
   return JSON.stringify({
     prompt: snapshot2.prompt,
@@ -10533,6 +11340,9 @@ const promptAssistRequestSignature = (snapshot2) => {
     },
     activeSectionId: snapshot2.activeSectionId,
     activeSectionText: snapshot2.activeSectionText,
+    activeTargetId: snapshot2.activeTargetId,
+    activeTargetText: snapshot2.activeTargetText,
+    promptStructureRevision: snapshot2.promptStructureRevision,
     negativePrompt: snapshot2.negativePrompt,
     profile: snapshot2.profile,
     mode: snapshot2.mode,
@@ -10574,6 +11384,12 @@ const projectPromptAssistResultState = (input) => {
     return disabledResultState("stale");
   }
   if (input.currentActiveSectionId !== input.responseActiveSectionId) {
+    return disabledResultState("stale");
+  }
+  if (input.currentActiveTargetId !== input.responseActiveTargetId) {
+    return disabledResultState("stale");
+  }
+  if (input.expectedPromptStructureRevision !== input.responsePromptStructureRevision || input.expectedPromptStructureSignature !== input.responsePromptStructureSignature) {
     return disabledResultState("stale");
   }
   const canApplyPrompt = input.target !== "negative" && Boolean(input.suggestedPrompt.trim());
@@ -10801,7 +11617,7 @@ const adjustPromptWeight = (value, selectionStart, selectionEnd, direction) => {
   }
   return replacePromptSelection(value, span.start, span.end, replacement);
 };
-const _sfc_main$24 = /* @__PURE__ */ defineComponent({
+const _sfc_main$26 = /* @__PURE__ */ defineComponent({
   __name: "StyleChain",
   __ssrInlineRender: true,
   props: {
@@ -10862,14 +11678,14 @@ const _sfc_main$24 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$24 = _sfc_main$24.setup;
-_sfc_main$24.setup = (props, ctx) => {
+const _sfc_setup$26 = _sfc_main$26.setup;
+_sfc_main$26.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StyleChain.vue");
-  return _sfc_setup$24 ? _sfc_setup$24(props, ctx) : void 0;
+  return _sfc_setup$26 ? _sfc_setup$26(props, ctx) : void 0;
 };
-const StyleChain = Object.assign(_sfc_main$24, { __name: "StudioStyleChain" });
-const _sfc_main$23 = /* @__PURE__ */ defineComponent({
+const StyleChain = Object.assign(_sfc_main$26, { __name: "StudioStyleChain" });
+const _sfc_main$25 = /* @__PURE__ */ defineComponent({
   __name: "AdvancedStylesPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -10971,14 +11787,14 @@ const _sfc_main$23 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$23 = _sfc_main$23.setup;
-_sfc_main$23.setup = (props, ctx) => {
+const _sfc_setup$25 = _sfc_main$25.setup;
+_sfc_main$25.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AdvancedStylesPanel.vue");
-  return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
+  return _sfc_setup$25 ? _sfc_setup$25(props, ctx) : void 0;
 };
-const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-e1544cfa"]]), { __name: "StudioAdvancedStylesPanel" });
-const _sfc_main$22 = /* @__PURE__ */ defineComponent({
+const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$25, [["__scopeId", "data-v-e1544cfa"]]), { __name: "StudioAdvancedStylesPanel" });
+const _sfc_main$24 = /* @__PURE__ */ defineComponent({
   __name: "SelectedLoRAStack",
   __ssrInlineRender: true,
   props: {
@@ -11124,14 +11940,14 @@ const _sfc_main$22 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$22 = _sfc_main$22.setup;
-_sfc_main$22.setup = (props, ctx) => {
+const _sfc_setup$24 = _sfc_main$24.setup;
+_sfc_main$24.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/SelectedLoRAStack.vue");
-  return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
+  return _sfc_setup$24 ? _sfc_setup$24(props, ctx) : void 0;
 };
-const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-3d9c2022"]]), { __name: "StudioSelectedLoRAStack" });
-const _sfc_main$21 = /* @__PURE__ */ defineComponent({
+const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$24, [["__scopeId", "data-v-3d9c2022"]]), { __name: "StudioSelectedLoRAStack" });
+const _sfc_main$23 = /* @__PURE__ */ defineComponent({
   __name: "LoRABrowser",
   __ssrInlineRender: true,
   props: {
@@ -11258,14 +12074,14 @@ const _sfc_main$21 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$21 = _sfc_main$21.setup;
-_sfc_main$21.setup = (props, ctx) => {
+const _sfc_setup$23 = _sfc_main$23.setup;
+_sfc_main$23.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/LoRABrowser.vue");
-  return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
+  return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
 };
-const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-9c8a83d5"]]), { __name: "StudioLoRABrowser" });
-const _sfc_main$20 = /* @__PURE__ */ defineComponent({
+const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-9c8a83d5"]]), { __name: "StudioLoRABrowser" });
+const _sfc_main$22 = /* @__PURE__ */ defineComponent({
   __name: "PromptAssetsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -11309,22 +12125,24 @@ const _sfc_main$20 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$20 = _sfc_main$20.setup;
-_sfc_main$20.setup = (props, ctx) => {
+const _sfc_setup$22 = _sfc_main$22.setup;
+_sfc_main$22.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptAssetsDrawer.vue");
-  return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
+  return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
 };
-const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-609af68f"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
-const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
+const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-609af68f"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
+const _sfc_main$21 = /* @__PURE__ */ defineComponent({
   __name: "PromptSectionsEditor",
   __ssrInlineRender: true,
   props: {
     sections: {},
     combinedPrompt: {},
-    activeSectionId: {}
+    activeSectionId: {},
+    placementTargetCounts: {},
+    placementEnabled: { type: Boolean }
   },
-  emits: ["update-text", "update-label", "move", "focus-section"],
+  emits: ["update-text", "update-label", "move", "focus-section", "configure-placement"],
   setup(__props, { expose: __expose, emit: __emit }) {
     const props = __props;
     const { t } = useAsteriaI18n();
@@ -11336,6 +12154,7 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
     });
     const labelInputId = (section) => `prompt-section-${section.id}-label`;
     const textInputId = (section) => `prompt-section-${section.id}-text`;
+    const placementCount = (id) => props.placementTargetCounts?.[id] ?? 0;
     const positionLabel = (section, index) => t("prompt.sections.positionAria", {
       label: section.label,
       position: index + 1,
@@ -11344,27 +12163,308 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
     const editorFor = (id) => editors.get(id) ?? null;
     __expose({ editorFor });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "prompt-sections-editor" }, _attrs))} data-v-95a3c52e><div class="prompt-sections-editor__list" data-v-95a3c52e><!--[-->`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "prompt-sections-editor" }, _attrs))} data-v-93191c1e><div class="prompt-sections-editor__list" data-v-93191c1e><!--[-->`);
       ssrRenderList(unref(orderedSections), (section, index) => {
-        _push(`<section class="${ssrRenderClass([{ "prompt-section--active": section.id === __props.activeSectionId }, "prompt-section"])}"${ssrRenderAttr("data-prompt-section-id", section.id)} data-v-95a3c52e><div class="prompt-section__rail" aria-hidden="true" data-v-95a3c52e><span data-v-95a3c52e>${ssrInterpolate(index + 1)}</span></div><div class="prompt-section__body" data-v-95a3c52e><div class="prompt-section__header" data-v-95a3c52e><label class="prompt-section__label"${ssrRenderAttr("for", labelInputId(section))} data-v-95a3c52e><span class="visually-hidden" data-v-95a3c52e>${ssrInterpolate(positionLabel(section, index))}</span><input${ssrRenderAttr("id", labelInputId(section))}${ssrRenderAttr("value", section.label)}${ssrRenderAttr("aria-label", positionLabel(section, index))} data-v-95a3c52e></label><div class="prompt-section__move-actions" data-v-95a3c52e><button type="button"${ssrIncludeBooleanAttr(index === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", `${section.label}：${unref(t)("prompt.sections.moveUp")}`)} data-v-95a3c52e> ↑ </button><button type="button"${ssrIncludeBooleanAttr(index === unref(orderedSections).length - 1) ? " disabled" : ""}${ssrRenderAttr("aria-label", `${section.label}：${unref(t)("prompt.sections.moveDown")}`)} data-v-95a3c52e> ↓ </button></div></div><textarea${ssrRenderAttr("id", textInputId(section))}${ssrRenderAttr("aria-label", positionLabel(section, index))} rows="4" data-v-95a3c52e>${ssrInterpolate(section.text)}</textarea></div></section>`);
+        _push(`<section class="${ssrRenderClass([{ "prompt-section--active": section.id === __props.activeSectionId }, "prompt-section"])}"${ssrRenderAttr("data-prompt-section-id", section.id)} data-v-93191c1e><div class="prompt-section__rail" aria-hidden="true" data-v-93191c1e><span data-v-93191c1e>${ssrInterpolate(index + 1)}</span></div><div class="prompt-section__body" data-v-93191c1e><div class="prompt-section__header" data-v-93191c1e><label class="prompt-section__label"${ssrRenderAttr("for", labelInputId(section))} data-v-93191c1e><span class="visually-hidden" data-v-93191c1e>${ssrInterpolate(positionLabel(section, index))}</span><input${ssrRenderAttr("id", labelInputId(section))}${ssrRenderAttr("value", section.label)}${ssrRenderAttr("aria-label", positionLabel(section, index))} data-v-93191c1e></label><div class="prompt-section__move-actions" data-v-93191c1e><button class="prompt-section__placement-action" type="button"${ssrRenderAttr("data-placement-section", section.id)} data-v-93191c1e>${ssrInterpolate(placementCount(section.id) ? unref(t)("prompt.placement.change") : unref(t)("prompt.placement.open"))}</button><button type="button"${ssrIncludeBooleanAttr(index === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", `${section.label}：${unref(t)("prompt.sections.moveUp")}`)} data-v-93191c1e> ↑ </button><button type="button"${ssrIncludeBooleanAttr(index === unref(orderedSections).length - 1) ? " disabled" : ""}${ssrRenderAttr("aria-label", `${section.label}：${unref(t)("prompt.sections.moveDown")}`)} data-v-93191c1e> ↓ </button></div></div><textarea${ssrRenderAttr("id", textInputId(section))}${ssrRenderAttr("aria-label", positionLabel(section, index))}${ssrIncludeBooleanAttr(placementCount(section.id) > 0) ? " readonly" : ""} rows="4" data-v-93191c1e>${ssrInterpolate(section.text)}</textarea>`);
+        if (placementCount(section.id)) {
+          _push(`<small class="prompt-section__placement-summary" data-v-93191c1e>${ssrInterpolate(__props.placementEnabled ? unref(t)("prompt.placement.summary", { count: placementCount(section.id) }) : unref(t)("prompt.placement.disabledSummary", { count: placementCount(section.id) }))} · ${ssrInterpolate(unref(t)("prompt.sections.targetEditing"))}</small>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</div></section>`);
       });
-      _push(`<!--]--></div><details class="prompt-sections-editor__combined" data-v-95a3c52e><summary data-v-95a3c52e><span data-v-95a3c52e>${ssrInterpolate(unref(t)("prompt.sections.combined"))}</span>`);
+      _push(`<!--]--></div><details class="prompt-sections-editor__combined" data-v-93191c1e><summary data-v-93191c1e><span data-v-93191c1e>${ssrInterpolate(unref(t)("prompt.sections.combined"))}</span>`);
       if (unref(combinedSummary)) {
-        _push(`<small data-v-95a3c52e>${ssrInterpolate(unref(combinedSummary))}</small>`);
+        _push(`<small data-v-93191c1e>${ssrInterpolate(unref(combinedSummary))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</summary><label class="visually-hidden" for="prompt-sections-combined" data-v-95a3c52e>${ssrInterpolate(unref(t)("prompt.sections.combined"))}</label><textarea id="prompt-sections-combined"${ssrRenderAttr("aria-label", unref(t)("prompt.sections.combined"))} rows="4" readonly data-v-95a3c52e>${ssrInterpolate(__props.combinedPrompt)}</textarea></details></div>`);
+      _push(`</summary><label class="visually-hidden" for="prompt-sections-combined" data-v-93191c1e>${ssrInterpolate(unref(t)("prompt.sections.combined"))}</label><textarea id="prompt-sections-combined"${ssrRenderAttr("aria-label", unref(t)("prompt.sections.combined"))} rows="4" readonly data-v-93191c1e>${ssrInterpolate(__props.combinedPrompt)}</textarea></details></div>`);
+    };
+  }
+});
+const _sfc_setup$21 = _sfc_main$21.setup;
+_sfc_main$21.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptSectionsEditor.vue");
+  return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
+};
+const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-93191c1e"]]), { __name: "StudioGeneratePromptSectionsEditor" });
+const _sfc_main$20 = /* @__PURE__ */ defineComponent({
+  __name: "PromptPlacementCanvas",
+  __ssrInlineRender: true,
+  props: {
+    canvasWidth: {},
+    canvasHeight: {},
+    targets: {},
+    selectedTargetId: {},
+    depthOrder: {},
+    backgroundUrl: {},
+    ariaLabel: {}
+  },
+  emits: ["select", "update-target"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    ref(null);
+    ref(null);
+    const orderedTargets = computed(() => {
+      if (!props.depthOrder.length) return props.targets;
+      const rank = new Map(props.depthOrder.map((id, index) => [id, index]));
+      return [...props.targets].sort((left, right) => (rank.get(left.target_id) ?? props.targets.indexOf(left)) - (rank.get(right.target_id) ?? props.targets.indexOf(right)));
+    });
+    const legacyMaskUrl = (target) => {
+      const path = target.mask_source?.asset.relative_path ?? "";
+      const filename2 = path.split(/[\\/]/).pop() ?? "";
+      return filename2 ? useApiUrl(`/api/assets/control_images/${encodeURIComponent(filename2)}`) : "";
+    };
+    const handles = (target) => {
+      const left = (target.center_x - target.width / 2) * 1e3;
+      const right = (target.center_x + target.width / 2) * 1e3;
+      const top = (target.center_y - target.height / 2) * 1e3;
+      const bottom = (target.center_y + target.height / 2) * 1e3;
+      const centerX = target.center_x * 1e3;
+      const centerY = target.center_y * 1e3;
+      return [
+        { id: "nw", x: left, y: top },
+        { id: "n", x: centerX, y: top },
+        { id: "ne", x: right, y: top },
+        { id: "e", x: right, y: centerY },
+        { id: "se", x: right, y: bottom },
+        { id: "s", x: centerX, y: bottom },
+        { id: "sw", x: left, y: bottom },
+        { id: "w", x: left, y: centerY }
+      ];
+    };
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<div${ssrRenderAttrs(mergeProps({
+        class: "placement-canvas",
+        style: { aspectRatio: `${__props.canvasWidth} / ${__props.canvasHeight}` }
+      }, _attrs))} data-v-eea6509f><svg viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img"${ssrRenderAttr("aria-label", __props.ariaLabel)} data-v-eea6509f>`);
+      if (__props.backgroundUrl) {
+        _push(`<image${ssrRenderAttr("href", __props.backgroundUrl)} x="0" y="0" width="1000" height="1000" preserveAspectRatio="none" data-v-eea6509f></image>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<!--[-->`);
+      ssrRenderList(unref(orderedTargets), (target, index) => {
+        _push(`<g class="${ssrRenderClass([{ "placement-target--selected": target.target_id === __props.selectedTargetId, "placement-target--legacy": target.shape === "mask" }, "placement-target"])}" data-v-eea6509f>`);
+        if (target.shape === "ellipse") {
+          _push(`<ellipse${ssrRenderAttr("cx", target.center_x * 1e3)}${ssrRenderAttr("cy", target.center_y * 1e3)}${ssrRenderAttr("rx", target.width * 500)}${ssrRenderAttr("ry", target.height * 500)} data-v-eea6509f></ellipse>`);
+        } else {
+          _push(`<rect${ssrRenderAttr("x", (target.center_x - target.width / 2) * 1e3)}${ssrRenderAttr("y", (target.center_y - target.height / 2) * 1e3)}${ssrRenderAttr("width", target.width * 1e3)}${ssrRenderAttr("height", target.height * 1e3)}${ssrRenderAttr("rx", target.shape === "mask" ? 16 : 4)} data-v-eea6509f></rect>`);
+        }
+        if (target.shape === "mask" && target.mask_source) {
+          _push(`<image class="placement-target__legacy-preview"${ssrRenderAttr("href", legacyMaskUrl(target))}${ssrRenderAttr("x", (target.center_x - target.width / 2) * 1e3)}${ssrRenderAttr("y", (target.center_y - target.height / 2) * 1e3)}${ssrRenderAttr("width", target.width * 1e3)}${ssrRenderAttr("height", target.height * 1e3)} preserveAspectRatio="none" data-v-eea6509f></image>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`<text${ssrRenderAttr("x", target.center_x * 1e3)}${ssrRenderAttr("y", target.center_y * 1e3)} data-v-eea6509f>${ssrInterpolate(index + 1)}</text>`);
+        if (target.target_id === __props.selectedTargetId) {
+          _push(`<g class="placement-target__handles" data-v-eea6509f><!--[-->`);
+          ssrRenderList(handles(target), (handle) => {
+            _push(`<circle${ssrRenderAttr("cx", handle.x)}${ssrRenderAttr("cy", handle.y)} r="12" data-v-eea6509f></circle>`);
+          });
+          _push(`<!--]--></g>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</g>`);
+      });
+      _push(`<!--]--></svg></div>`);
+    };
+  }
+});
+const _sfc_setup$20 = _sfc_main$20.setup;
+_sfc_main$20.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptPlacementCanvas.vue");
+  return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
+};
+const PromptPlacementCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-eea6509f"]]), { __name: "StudioGeneratePromptPlacementCanvas" });
+const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
+  __name: "PromptPlacementDialog",
+  __ssrInlineRender: true,
+  props: {
+    promptInput: {},
+    promptLayout: {},
+    sectionId: {},
+    canvasWidth: {},
+    canvasHeight: {},
+    backgroundUrl: {},
+    generationProfile: {},
+    hiresEnabled: { type: Boolean },
+    refinerEnabled: { type: Boolean }
+  },
+  emits: ["apply", "cancel", "remove"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const { t } = useAsteriaI18n();
+    ref(null);
+    const promptInputDraft = ref(cloneJsonValue(props.promptInput));
+    const promptLayoutDraft = ref(cloneJsonValue(props.promptLayout));
+    const selectedTargetId = ref(promptLayoutDraft.value.targets[0]?.target_id ?? null);
+    const bulkUndo = ref(null);
+    const bulkSettings = reactive({
+      strengthMode: "auto",
+      strength: 70,
+      blendingMode: "auto",
+      blending: 25
+    });
+    const initialSnapshot = JSON.stringify({ promptInput: props.promptInput, promptLayout: props.promptLayout });
+    computed(() => JSON.stringify({
+      promptInput: promptInputDraft.value,
+      promptLayout: promptLayoutDraft.value
+    }) !== initialSnapshot);
+    const targetRecords = computed(() => (promptInputDraft.value.sections ?? []).flatMap((section) => section.content.mode === "targets" ? section.content.targets.map((target) => ({ sectionId: section.id, target })) : []));
+    const selectedRecord = computed(() => targetRecords.value.find(({ target }) => target.id === selectedTargetId.value) ?? null);
+    const selectedLayoutTarget = computed(() => promptLayoutDraft.value.targets.find((target) => target.target_id === selectedTargetId.value) ?? null);
+    const spatialProfileOptions = computed(() => props.generationProfile === "anima" ? [
+      { value: "", label: t("prompt.placement.modelAuto") },
+      { value: "anima.28.attention.v1", label: t("prompt.placement.modelAnima28") },
+      { value: "anima.40.attention.v1", label: t("prompt.placement.modelAnima40") },
+      { value: "anima.52.attention.experimental.v1", label: t("prompt.placement.modelAnima52") }
+    ] : [
+      { value: "", label: t("prompt.placement.modelAuto") },
+      { value: "sdxl.attention.v1", label: t("prompt.placement.modelSdxl") },
+      { value: "illustrious.attention.v1", label: t("prompt.placement.modelIllustrious") }
+    ]);
+    const selectedBaseProfile = computed(() => promptLayoutDraft.value.model_profile_selection?.base ?? "");
+    const selectedHiresProfile = computed(() => promptLayoutDraft.value.model_profile_selection?.hires ?? "");
+    const selectedRefinerProfile = computed(() => promptLayoutDraft.value.model_profile_selection?.refiner ?? "");
+    const canApply = computed(() => targetRecords.value.length > 0 && targetRecords.value.every(({ target }) => target.name.trim() && target.text.trim()) && (props.generationProfile !== "sdxl" || Boolean(selectedBaseProfile.value)) && parsePromptLayout(promptLayoutDraft.value) !== null);
+    const updateLayoutTarget = (target) => {
+      const index = promptLayoutDraft.value.targets.findIndex((item) => item.target_id === target.target_id);
+      if (index >= 0) promptLayoutDraft.value.targets[index] = cloneJsonValue(target);
+    };
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<div${ssrRenderAttrs(mergeProps({
+        class: "placement-dialog-backdrop",
+        role: "presentation"
+      }, _attrs))} data-v-2416820e><section class="placement-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "prompt-placement-title")} tabindex="-1" data-v-2416820e><header class="placement-dialog__header" data-v-2416820e><div data-v-2416820e><h2 id="prompt-placement-title" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.title"))}</h2><p data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.help"))}</p></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("common.close"))} data-v-2416820e>×</button></header><div class="placement-dialog__workspace" data-v-2416820e><section class="placement-dialog__stage"${ssrRenderAttr("aria-label", unref(t)("prompt.placement.canvas"))} data-v-2416820e>`);
+      _push(ssrRenderComponent(PromptPlacementCanvas, {
+        "canvas-width": __props.canvasWidth,
+        "canvas-height": __props.canvasHeight,
+        targets: unref(promptLayoutDraft).targets,
+        "selected-target-id": unref(selectedTargetId),
+        "depth-order": unref(promptLayoutDraft).depth_order,
+        "background-url": __props.backgroundUrl,
+        "aria-label": unref(t)("prompt.placement.canvas"),
+        onSelect: ($event) => selectedTargetId.value = $event,
+        onUpdateTarget: updateLayoutTarget
+      }, null, _parent));
+      _push(`<div class="placement-dialog__stage-actions" data-v-2416820e><label class="toggle-row" data-v-2416820e><input${ssrIncludeBooleanAttr(ssrLooseEqual(unref(promptLayoutDraft).mode, "enabled")) ? " checked" : ""} type="checkbox" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.enabled"))}</span></label><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.centerAll"))}</button></div><section class="placement-profile"${ssrRenderAttr("aria-label", unref(t)("prompt.placement.modelFamily"))} data-v-2416820e><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.modelFamily"))}</span><select${ssrRenderAttr("value", unref(selectedBaseProfile))} data-v-2416820e><!--[-->`);
+      ssrRenderList(unref(spatialProfileOptions), (option) => {
+        _push(`<option${ssrRenderAttr("value", option.value)} data-v-2416820e>${ssrInterpolate(option.label)}</option>`);
+      });
+      _push(`<!--]--></select></label><p data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.modelFamilyHelp"))}</p>`);
+      if (__props.hiresEnabled || __props.refinerEnabled) {
+        _push(`<div class="field-grid" data-v-2416820e>`);
+        if (__props.hiresEnabled) {
+          _push(`<label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.hiresModelFamily"))}</span><select${ssrRenderAttr("value", unref(selectedHiresProfile))} data-v-2416820e><option value="" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.inheritBase"))}</option><!--[-->`);
+          ssrRenderList(unref(spatialProfileOptions).filter((item) => item.value), (option) => {
+            _push(`<option${ssrRenderAttr("value", option.value)} data-v-2416820e>${ssrInterpolate(option.label)}</option>`);
+          });
+          _push(`<!--]--></select></label>`);
+        } else {
+          _push(`<!---->`);
+        }
+        if (__props.refinerEnabled && __props.generationProfile === "sdxl") {
+          _push(`<label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.refinerModelFamily"))}</span><select${ssrRenderAttr("value", unref(selectedRefinerProfile))} data-v-2416820e><option value="" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.inheritBase"))}</option><!--[-->`);
+          ssrRenderList(unref(spatialProfileOptions).filter((item) => item.value), (option) => {
+            _push(`<option${ssrRenderAttr("value", option.value)} data-v-2416820e>${ssrInterpolate(option.label)}</option>`);
+          });
+          _push(`<!--]--></select></label>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (__props.generationProfile === "sdxl" && !unref(selectedBaseProfile)) {
+        _push(`<p class="placement-dialog__validation" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.modelFamilyRequired"))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</section>`);
+      if (unref(targetRecords).length >= 4) {
+        _push(`<p class="placement-dialog__memory-note" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.memoryNote"))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<details class="placement-bulk-settings" data-v-2416820e><summary data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.bulkTitle"))}</summary><div class="field-grid" data-v-2416820e><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.strength"))}</span><select data-v-2416820e><option value="auto" data-v-2416820e${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).strengthMode) ? ssrLooseContain(unref(bulkSettings).strengthMode, "auto") : ssrLooseEqual(unref(bulkSettings).strengthMode, "auto")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-2416820e${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).strengthMode) ? ssrLooseContain(unref(bulkSettings).strengthMode, "manual") : ssrLooseEqual(unref(bulkSettings).strengthMode, "manual")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+      if (unref(bulkSettings).strengthMode === "manual") {
+        _push(`<input${ssrRenderAttr("value", unref(bulkSettings).strength)} type="range" min="0" max="100" data-v-2416820e>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</label><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.blending"))}</span><select data-v-2416820e><option value="auto" data-v-2416820e${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).blendingMode) ? ssrLooseContain(unref(bulkSettings).blendingMode, "auto") : ssrLooseEqual(unref(bulkSettings).blendingMode, "auto")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-2416820e${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).blendingMode) ? ssrLooseContain(unref(bulkSettings).blendingMode, "manual") : ssrLooseEqual(unref(bulkSettings).blendingMode, "manual")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+      if (unref(bulkSettings).blendingMode === "manual") {
+        _push(`<input${ssrRenderAttr("value", unref(bulkSettings).blending)} type="range" min="0" max="100" data-v-2416820e>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</label></div><div class="placement-bulk-settings__actions" data-v-2416820e><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.bulkApply"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(bulkUndo)) ? " disabled" : ""} data-v-2416820e>${ssrInterpolate(unref(t)("common.undo"))}</button></div></details></section><aside class="placement-dialog__editor" data-v-2416820e><div class="placement-target-list" data-v-2416820e><!--[-->`);
+      ssrRenderList(unref(targetRecords), (record, index) => {
+        _push(`<button type="button" class="${ssrRenderClass({ "is-active": record.target.id === unref(selectedTargetId) })}" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(index + 1)}</span><strong data-v-2416820e>${ssrInterpolate(record.target.name)}</strong></button>`);
+      });
+      _push(`<!--]--><button type="button" class="placement-target-list__add" data-v-2416820e>＋ ${ssrInterpolate(unref(t)("prompt.placement.addTarget"))}</button></div>`);
+      if (unref(selectedRecord) && unref(selectedLayoutTarget)) {
+        _push(`<!--[--><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.name"))}</span><input${ssrRenderAttr("value", unref(selectedRecord).target.name)} maxlength="40" data-v-2416820e></label><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.prompt"))}</span><textarea rows="4" data-v-2416820e>${ssrInterpolate(unref(selectedRecord).target.text)}</textarea></label><div class="field-grid" data-v-2416820e><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.shape"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).shape === "mask" ? "mask" : unref(selectedLayoutTarget).shape)} data-v-2416820e>`);
+        if (unref(selectedLayoutTarget).shape === "mask") {
+          _push(`<option value="mask" disabled data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.legacyShape"))}</option>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`<option value="ellipse" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.ellipse"))}</option><option value="rectangle" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.rectangle"))}</option></select></label><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.size"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).size_mode)} data-v-2416820e><option value="auto" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.sizeAuto"))}</option><option value="small" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.sizeSmall"))}</option><option value="standard" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.sizeStandard"))}</option><option value="large" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.sizeLarge"))}</option><option value="custom" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.sizeCustom"))}</option></select></label></div>`);
+        if (unref(selectedLayoutTarget).shape === "mask") {
+          _push(`<div class="placement-legacy-actions" data-v-2416820e><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.convertEllipse"))}</button><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.convertRectangle"))}</button></div>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`<div class="field-grid" data-v-2416820e><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.strength"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).strength_mode)} data-v-2416820e><option value="auto" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+        if (unref(selectedLayoutTarget).strength_mode === "manual") {
+          _push(`<input${ssrRenderAttr("value", unref(selectedLayoutTarget).strength ?? 70)} type="range" min="0" max="100" data-v-2416820e>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</label><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.blending"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).blending_mode)} data-v-2416820e><option value="auto" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+        if (unref(selectedLayoutTarget).blending_mode === "manual") {
+          _push(`<input${ssrRenderAttr("value", unref(selectedLayoutTarget).blending ?? 25)} type="range" min="0" max="100" data-v-2416820e>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</label></div><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.depth"))}</span><select${ssrRenderAttr("value", unref(promptLayoutDraft).depth_mode)} data-v-2416820e><option value="auto" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.depthAuto"))}</option><option value="manual" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.depthManual"))}</option></select></label>`);
+        if (unref(promptLayoutDraft).depth_mode === "manual") {
+          _push(`<div class="placement-depth-list" data-v-2416820e><!--[-->`);
+          ssrRenderList(unref(promptLayoutDraft).depth_order, (targetId, index) => {
+            _push(`<div data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(targetRecords).find((record) => record.target.id === targetId)?.target.name)}</span><button type="button"${ssrIncludeBooleanAttr(index === 0) ? " disabled" : ""} data-v-2416820e>↑</button><button type="button"${ssrIncludeBooleanAttr(index === unref(promptLayoutDraft).depth_order.length - 1) ? " disabled" : ""} data-v-2416820e>↓</button></div>`);
+          });
+          _push(`<!--]--></div>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`<button type="button" class="danger-button"${ssrIncludeBooleanAttr(unref(targetRecords).length <= 1) ? " disabled" : ""} data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.deleteTarget"))}</button><!--]-->`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</aside></div>`);
+      if (!unref(canApply)) {
+        _push(`<p class="placement-dialog__validation" aria-live="polite" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.required"))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<footer class="placement-dialog__footer" data-v-2416820e><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.remove"))}</button><span data-v-2416820e></span><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("common.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canApply)) ? " disabled" : ""} data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.save"))}</button></footer></section></div>`);
     };
   }
 });
 const _sfc_setup$1$ = _sfc_main$1$.setup;
 _sfc_main$1$.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptSectionsEditor.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptPlacementDialog.vue");
   return _sfc_setup$1$ ? _sfc_setup$1$(props, ctx) : void 0;
 };
-const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-95a3c52e"]]), { __name: "StudioGeneratePromptSectionsEditor" });
+const PromptPlacementDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-2416820e"]]), { __name: "StudioGeneratePromptPlacementDialog" });
 const useAppSettingsStore = defineStore("appSettings", {
   state: () => ({
     outputRoot: "",
@@ -11550,11 +12650,16 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
     const promptAssistError = ref("");
     const promptAssistResultSignature = ref("");
     const promptAssistSelectedResultSignature = ref("");
+    const promptAssistExpectedStructureRevision = ref(null);
+    const promptAssistExpectedStructureSignature = ref(null);
     const promptAssistRequestContext = ref("");
     const promptAssistOneTimeKeyRevision = ref(0);
     const promptAssistRequestExecutor = createLatestPromptAssistRequestExecutor();
     const promptTextarea = ref(null);
     const promptSectionsEditor = ref(null);
+    const placementDialogDraft = ref(null);
+    const placementDialogSectionId = ref("character");
+    const placementDialogTrigger = ref(null);
     const negativePromptTextarea = ref(null);
     const notationMenuTarget = ref(null);
     const notationMessage = ref("");
@@ -11581,10 +12686,21 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
           return t("prompt.sections.invalidFallback");
         case "prompt_input_mismatch_fallback":
           return t("prompt.sections.mismatchFallback");
+        case "spatial_prompt_invalid_fallback":
+          return t("prompt.placement.invalidFallback");
         default:
           return "";
       }
     });
+    const placementTargetCounts = computed(() => {
+      const counts = {};
+      for (const section of generation.spatialPromptInput?.sections ?? []) {
+        if (section.content.mode === "targets") counts[section.id] = section.content.targets.length;
+      }
+      return counts;
+    });
+    const activeSectionHasPlacement = computed(() => (placementTargetCounts.value[generation.activePromptSectionId] ?? 0) > 0);
+    const placementBackgroundUrl = computed(() => generation.mode !== "txt2img" && generation.initImagePath ? assetUrl(generation.initImagePath) : void 0);
     const promptSectionsEmptyText = computed(() => generation.promptInputMode === "sections" && generation.promptSections.every((section) => !section.text.trim()) ? t("prompt.sections.allEmpty") : "");
     const notationFeature = (action) => ({
       stronger: "token_weight",
@@ -11648,6 +12764,37 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
     };
     const setActivePromptSection = (id) => {
       generation.activePromptSectionId = id;
+    };
+    const openPromptPlacement = (id, trigger) => {
+      const draft = generation.createPromptPlacementDraft(id);
+      placementDialogSectionId.value = id;
+      placementDialogTrigger.value = trigger ?? null;
+      placementDialogDraft.value = cloneJsonValue(draft);
+      generation.activePromptSectionId = id;
+      const firstTarget = draft.promptInput.sections?.find((section) => section.id === id)?.content;
+      generation.setActivePromptTarget(firstTarget?.mode === "targets" ? firstTarget.targets[0]?.id ?? null : null);
+    };
+    watch(
+      () => generation.placementReviewRevision,
+      () => {
+        if (placementDialogDraft.value) return;
+        const requestedTarget = generation.placementReviewTargetId;
+        const targetSection = generation.spatialPromptInput?.sections?.find((section) => section.content.mode === "targets" && (!requestedTarget || section.content.targets.some((target) => target.id === requestedTarget)));
+        openPromptPlacement(targetSection?.id ?? generation.activePromptSectionId);
+      }
+    );
+    const closePromptPlacement = async () => {
+      placementDialogDraft.value = null;
+      await nextTick();
+      placementDialogTrigger.value?.focus();
+    };
+    const applyPromptPlacement = async (promptInput, promptLayout) => {
+      if (!generation.applyPromptPlacement(promptInput, promptLayout)) return;
+      await closePromptPlacement();
+    };
+    const removePromptPlacement = async () => {
+      generation.clearPromptPlacement();
+      await closePromptPlacement();
     };
     const applyPromptEdit = async (target, result) => {
       if (!result.changed) {
@@ -11839,12 +12986,17 @@ ${generation.negativePrompt}`;
     const currentPromptAssistSnapshot = computed(() => {
       const promptSnapshot = generation.promptRequestSnapshot();
       const activeSectionId = promptAssistTarget.value === "negative" ? null : promptSnapshot.prompt_input.mode === "sections" ? generation.activePromptSectionId : null;
-      const activeSectionText = activeSectionId ? promptSnapshot.prompt_input.sections?.find((section) => section.id === activeSectionId)?.text ?? null : null;
+      const activeSection = activeSectionId ? promptSnapshot.prompt_input.sections?.find((section) => section.id === activeSectionId) : null;
+      const activeTarget = activeSection && "content" in activeSection && activeSection.content.mode === "targets" ? activeSection.content.targets.find((target) => target.id === generation.activePromptTargetId) ?? activeSection.content.targets[0] ?? null : null;
+      const activeSectionText = activeSection ? "content" in activeSection ? activeSection.content.mode === "global" ? activeSection.content.text : null : activeSection.text : null;
       return {
         prompt: promptSnapshot.prompt,
         promptInput: promptSnapshot.prompt_input,
         activeSectionId,
         activeSectionText,
+        activeTargetId: activeTarget?.id ?? null,
+        activeTargetText: activeTarget?.text ?? null,
+        promptStructureRevision: promptSnapshot.prompt_input.schema_version === "asteria.prompt-input.v2" && promptSnapshot.prompt_input.mode === "sections" ? generation.promptStructureRevision : null,
         negativePrompt: generation.negativePrompt,
         profile: generation.profile,
         mode: generation.mode,
@@ -11879,7 +13031,13 @@ ${generation.negativePrompt}`;
       supportsNegativePrompt: supportsNegativePrompt.value,
       target: promptAssist.value?.target ?? promptAssistTarget.value,
       currentActiveSectionId: currentPromptAssistSnapshot.value.activeSectionId,
-      responseActiveSectionId: promptAssist.value?.active_section_id ?? null
+      responseActiveSectionId: promptAssist.value?.active_section_id ?? null,
+      currentActiveTargetId: currentPromptAssistSnapshot.value.activeTargetId,
+      responseActiveTargetId: promptAssist.value?.active_target_id ?? null,
+      expectedPromptStructureRevision: promptAssistExpectedStructureRevision.value,
+      responsePromptStructureRevision: promptAssist.value?.prompt_structure_revision ?? null,
+      expectedPromptStructureSignature: promptAssistExpectedStructureSignature.value,
+      responsePromptStructureSignature: promptAssist.value?.prompt_structure_signature ?? null
     }));
     const promptAssistStateMessage = computed(() => {
       const labels = {
@@ -11939,6 +13097,8 @@ ${generation.negativePrompt}`;
     const buildPromptAssist = async () => {
       const requestSnapshot = currentPromptAssistSnapshot.value;
       const requestSignature = promptAssistRequestSignature(requestSnapshot);
+      const structureSignature = await promptAssistStructureSignature(requestSnapshot);
+      const structureRevision = structureSignature === null ? null : requestSnapshot.promptStructureRevision;
       const requestApiKey = promptAssistApiKey.value;
       await promptAssistRequestExecutor.run({
         onStart: () => {
@@ -11947,6 +13107,8 @@ ${generation.negativePrompt}`;
           promptAssist.value = null;
           promptAssistResultSignature.value = "";
           promptAssistSelectedResultSignature.value = "";
+          promptAssistExpectedStructureRevision.value = structureRevision;
+          promptAssistExpectedStructureSignature.value = structureSignature;
           promptAssistRequestContext.value = buildPromptAssistRequestContext(requestSnapshot);
         },
         execute: () => $fetch("/api/prompt-assist", {
@@ -11957,6 +13119,10 @@ ${generation.negativePrompt}`;
             prompt_input: requestSnapshot.promptInput,
             active_section_id: requestSnapshot.activeSectionId,
             active_section_text: requestSnapshot.activeSectionText,
+            active_target_id: requestSnapshot.activeTargetId,
+            active_target_text: requestSnapshot.activeTargetText,
+            prompt_structure_revision: structureRevision,
+            prompt_structure_signature: structureSignature,
             negative_prompt: requestSnapshot.negativePrompt,
             profile: requestSnapshot.profile,
             mode: requestSnapshot.mode,
@@ -11986,6 +13152,8 @@ ${generation.negativePrompt}`;
           promptAssist.value = null;
           promptAssistResultSignature.value = "";
           promptAssistSelectedResultSignature.value = "";
+          promptAssistExpectedStructureRevision.value = null;
+          promptAssistExpectedStructureSignature.value = null;
           promptAssistError.value = t("common.error.promptAssist");
         },
         onSettled: () => {
@@ -12004,7 +13172,15 @@ ${generation.negativePrompt}`;
         if (!promptAssist.value.active_section_id) {
           return;
         }
-        generation.setPromptSectionText(promptAssist.value.active_section_id, promptAssist.value.suggested_prompt);
+        if (promptAssist.value.active_target_id) {
+          generation.setPromptTargetText(
+            promptAssist.value.active_section_id,
+            promptAssist.value.active_target_id,
+            promptAssist.value.suggested_prompt
+          );
+        } else {
+          generation.setPromptSectionText(promptAssist.value.active_section_id, promptAssist.value.suggested_prompt);
+        }
       } else {
         generation.prompt = promptAssist.value.suggested_prompt;
       }
@@ -12024,56 +13200,77 @@ ${generation.negativePrompt}`;
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "pane pane-left prompt-composer",
         "aria-label": unref(t)("prompt.editorAria")
-      }, _attrs))} data-v-4a922fb0><div class="pane-title" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.title"))}</span><div class="prompt-pane-title-actions" data-v-4a922fb0><small data-v-4a922fb0>${ssrInterpolate(unref(generation).mode)}</small><button data-image-metadata-picker type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("imageMetadata.chooseImage"))}</button></div></div><div class="prompt-input-mode" role="group"${ssrRenderAttr("aria-label", unref(t)("prompt.inputMode.label"))} data-v-4a922fb0><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "single" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "single")} data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.inputMode.single"))}</button><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "sections" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "sections")} data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.inputMode.sections"))}</button></div>`);
+      }, _attrs))} data-v-74250af2><div class="pane-title" data-v-74250af2><span data-v-74250af2>${ssrInterpolate(unref(t)("prompt.title"))}</span><div class="prompt-pane-title-actions" data-v-74250af2><small data-v-74250af2>${ssrInterpolate(unref(generation).mode)}</small><button data-image-metadata-picker type="button" data-v-74250af2>${ssrInterpolate(unref(t)("imageMetadata.chooseImage"))}</button></div></div><div class="prompt-input-mode" role="group"${ssrRenderAttr("aria-label", unref(t)("prompt.inputMode.label"))} data-v-74250af2><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "single" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "single")} data-v-74250af2>${ssrInterpolate(unref(t)("prompt.inputMode.single"))}</button><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "sections" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "sections")} data-v-74250af2>${ssrInterpolate(unref(t)("prompt.inputMode.sections"))}</button></div>`);
       if (unref(promptInputNoticeText)) {
-        _push(`<small class="prompt-input-notice" aria-live="polite" data-v-4a922fb0>${ssrInterpolate(unref(promptInputNoticeText))}</small>`);
+        _push(`<small class="prompt-input-notice" aria-live="polite" data-v-74250af2>${ssrInterpolate(unref(promptInputNoticeText))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).promptInputMode === "single") {
-        _push(`<div class="field prompt-primary-editor" data-v-4a922fb0><div class="prompt-editor-heading" data-v-4a922fb0><label for="generation-prompt" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.prompt"))}</label><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.prompt"))} rows="6" data-v-4a922fb0>${ssrInterpolate(unref(generation).prompt)}</textarea></div>`);
+        _push(`<div class="field prompt-primary-editor" data-v-74250af2><div class="prompt-editor-heading" data-v-74250af2><label for="generation-prompt" data-v-74250af2>${ssrInterpolate(unref(t)("prompt.prompt"))}</label><button type="button" data-v-74250af2>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.prompt"))} rows="6" data-v-74250af2>${ssrInterpolate(unref(generation).prompt)}</textarea></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).promptInputMode === "sections") {
-        _push(`<div class="prompt-primary-editor prompt-primary-editor--sections" data-v-4a922fb0>`);
+        _push(`<div class="prompt-primary-editor prompt-primary-editor--sections" data-v-74250af2>`);
         if (unref(promptSectionsEmptyText)) {
-          _push(`<small class="prompt-input-notice" aria-live="polite" data-v-4a922fb0>${ssrInterpolate(unref(promptSectionsEmptyText))}</small>`);
+          _push(`<small class="prompt-input-notice" aria-live="polite" data-v-74250af2>${ssrInterpolate(unref(promptSectionsEmptyText))}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="prompt-editor-heading" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.prompt"))}</span><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div>`);
+        _push(`<div class="prompt-editor-heading" data-v-74250af2><span data-v-74250af2>${ssrInterpolate(unref(t)("prompt.prompt"))}</span><button type="button"${ssrIncludeBooleanAttr(unref(activeSectionHasPlacement)) ? " disabled" : ""} data-v-74250af2>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div>`);
         _push(ssrRenderComponent(PromptSectionsEditor, {
           ref_key: "promptSectionsEditor",
           ref: promptSectionsEditor,
           sections: unref(generation).promptSections,
           "combined-prompt": unref(generation).prompt,
           "active-section-id": unref(generation).activePromptSectionId,
+          "placement-target-counts": unref(placementTargetCounts),
+          "placement-enabled": unref(generation).promptLayout?.mode === "enabled",
           onUpdateText: unref(generation).setPromptSectionText,
           onUpdateLabel: unref(generation).setPromptSectionLabel,
           onMove: unref(generation).movePromptSection,
           onFocusSection: setActivePromptSection,
+          onConfigurePlacement: openPromptPlacement,
           onKeydown: ($event) => handlePromptWeightShortcut($event, unref(activePositiveEditorTarget))
         }, null, _parent));
         _push(`</div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="field prompt-negative-editor" data-v-4a922fb0><div class="prompt-editor-heading" data-v-4a922fb0><label for="generation-negative-prompt" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.negative"))}</label><button type="button"${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-negative-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.negative"))}${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} rows="4" data-v-4a922fb0>${ssrInterpolate(unref(generation).negativePrompt)}</textarea>`);
+      if (unref(placementDialogDraft)) {
+        _push(ssrRenderComponent(PromptPlacementDialog, {
+          "prompt-input": unref(placementDialogDraft).promptInput,
+          "prompt-layout": unref(placementDialogDraft).promptLayout,
+          "section-id": unref(placementDialogSectionId),
+          "canvas-width": unref(generation).width,
+          "canvas-height": unref(generation).height,
+          "background-url": unref(placementBackgroundUrl),
+          "generation-profile": unref(generation).profile,
+          "hires-enabled": unref(generation).hiresEnabled,
+          "refiner-enabled": unref(generation).refinerEnabled,
+          onApply: applyPromptPlacement,
+          onCancel: closePromptPlacement,
+          onRemove: removePromptPlacement
+        }, null, _parent));
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<div class="field prompt-negative-editor" data-v-74250af2><div class="prompt-editor-heading" data-v-74250af2><label for="generation-negative-prompt" data-v-74250af2>${ssrInterpolate(unref(t)("prompt.negative"))}</label><button type="button"${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-74250af2>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-negative-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.negative"))}${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} rows="4" data-v-74250af2>${ssrInterpolate(unref(generation).negativePrompt)}</textarea>`);
       if (!unref(supportsNegativePrompt)) {
-        _push(`<small class="field-hint" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.negativeFluxGuidance"))}</small>`);
+        _push(`<small class="field-hint" data-v-74250af2>${ssrInterpolate(unref(t)("prompt.negativeFluxGuidance"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</div>`);
       if (unref(notationMenuTarget)) {
-        _push(`<section class="prompt-notation-menu"${ssrRenderAttr("aria-label", unref(t)("prompt.notation.menuAria"))} data-v-4a922fb0><div class="prompt-notation-menu__header" data-v-4a922fb0><strong data-v-4a922fb0>${ssrInterpolate(editorTargetLabel(unref(notationMenuTarget)))}</strong><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("common.close"))}</button></div><div class="prompt-notation-menu__actions" data-v-4a922fb0><!--[-->`);
+        _push(`<section class="prompt-notation-menu"${ssrRenderAttr("aria-label", unref(t)("prompt.notation.menuAria"))} data-v-74250af2><div class="prompt-notation-menu__header" data-v-74250af2><strong data-v-74250af2>${ssrInterpolate(editorTargetLabel(unref(notationMenuTarget)))}</strong><button type="button" data-v-74250af2>${ssrInterpolate(unref(t)("common.close"))}</button></div><div class="prompt-notation-menu__actions" data-v-74250af2><!--[-->`);
         ssrRenderList(unref(notationActions), (action) => {
-          _push(`<button type="button" class="${ssrRenderClass({ "prompt-notation-menu__action--unsupported": !notationSupported(action.id) })}"${ssrRenderAttr("aria-disabled", !notationSupported(action.id))} data-v-4a922fb0>${ssrInterpolate(action.label)}</button>`);
+          _push(`<button type="button" class="${ssrRenderClass({ "prompt-notation-menu__action--unsupported": !notationSupported(action.id) })}"${ssrRenderAttr("aria-disabled", !notationSupported(action.id))} data-v-74250af2>${ssrInterpolate(action.label)}</button>`);
         });
-        _push(`<!--]--></div><small data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.shortcut"))}</small>`);
+        _push(`<!--]--></div><small data-v-74250af2>${ssrInterpolate(unref(t)("prompt.notation.shortcut"))}</small>`);
         if (unref(notationMessage)) {
-          _push(`<small class="prompt-notation-menu__message" aria-live="polite" data-v-4a922fb0>${ssrInterpolate(unref(notationMessage))}</small>`);
+          _push(`<small class="prompt-notation-menu__message" aria-live="polite" data-v-74250af2>${ssrInterpolate(unref(notationMessage))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -12082,51 +13279,51 @@ ${generation.negativePrompt}`;
         _push(`<!---->`);
       }
       if (unref(notationDialog)) {
-        _push(`<div class="prompt-notation-dialog-backdrop" role="presentation" data-v-4a922fb0><section class="prompt-notation-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)(`prompt.notation.${unref(notationDialog)}`))} data-v-4a922fb0><strong data-v-4a922fb0>${ssrInterpolate(unref(t)(`prompt.notation.${unref(notationDialog)}`))}</strong>`);
+        _push(`<div class="prompt-notation-dialog-backdrop" role="presentation" data-v-74250af2><section class="prompt-notation-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)(`prompt.notation.${unref(notationDialog)}`))} data-v-74250af2><strong data-v-74250af2>${ssrInterpolate(unref(t)(`prompt.notation.${unref(notationDialog)}`))}</strong>`);
         if (unref(notationDialog) === "weight") {
-          _push(`<label class="field" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.targetText"))}</span><input${ssrRenderAttr("value", unref(notationDraft).text)} data-v-4a922fb0></label>`);
+          _push(`<label class="field" data-v-74250af2><span data-v-74250af2>${ssrInterpolate(unref(t)("prompt.notation.targetText"))}</span><input${ssrRenderAttr("value", unref(notationDraft).text)} data-v-74250af2></label>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(notationDialog) === "weight") {
-          _push(`<label class="field" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.notation.weightValue"))}</span><input${ssrRenderAttr("value", unref(notationDraft).value)} type="number" min="-10" max="10" step="0.1" data-v-4a922fb0></label>`);
+          _push(`<label class="field" data-v-74250af2><span data-v-74250af2>${ssrInterpolate(unref(t)("prompt.notation.weightValue"))}</span><input${ssrRenderAttr("value", unref(notationDraft).value)} type="number" min="-10" max="10" step="0.1" data-v-74250af2></label>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="prompt-notation-dialog__actions" data-v-4a922fb0><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("common.cancel"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(notationDraftValid)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("common.apply"))}</button></div></section></div>`);
+        _push(`<div class="prompt-notation-dialog__actions" data-v-74250af2><button type="button" data-v-74250af2>${ssrInterpolate(unref(t)("common.cancel"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(notationDraftValid)) ? " disabled" : ""} data-v-74250af2>${ssrInterpolate(unref(t)("common.apply"))}</button></div></section></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<section class="prompt-asset-quick prompt-asset-quick--wildcards"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-4a922fb0><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-4a922fb0><option value="" data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
+      _push(`<section class="prompt-asset-quick prompt-asset-quick--wildcards"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-74250af2><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-74250af2><option value="" data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
       ssrRenderList(unref(wildcards), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.name)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
+        _push(`<option${ssrRenderAttr("value", item.name)} data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
       });
-      _push(`<!--]--></select><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.open"))}</button>`);
+      _push(`<!--]--></select><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-74250af2>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-74250af2>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button><button type="button" data-v-74250af2>${ssrInterpolate(unref(t)("promptAssets.open"))}</button>`);
       if (unref(wildcardError)) {
-        _push(`<small class="error prompt-asset-quick__message" aria-live="assertive" data-v-4a922fb0>${ssrInterpolate(unref(wildcardError))}</small>`);
+        _push(`<small class="error prompt-asset-quick__message" aria-live="assertive" data-v-74250af2>${ssrInterpolate(unref(wildcardError))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--styles"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.aria"))} data-v-4a922fb0><div class="asset-panel__header" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("advancedStyles.title"))}</span><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.openStyleGallery"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-4a922fb0><input${ssrRenderAttr("value", unref(advancedStyles).query)}${ssrRenderAttr("aria-label", unref(t)("advancedStyles.searchStyles"))}${ssrRenderAttr("placeholder", unref(t)("advancedStyles.searchStylesPlaceholder"))} data-v-4a922fb0><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.open"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).filteredStyles.length) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("advancedStyles.random"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("advancedStyles.reload"))}</button></div>`);
+      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--styles"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.aria"))} data-v-74250af2><div class="asset-panel__header" data-v-74250af2><span data-v-74250af2>${ssrInterpolate(unref(t)("advancedStyles.title"))}</span><button type="button" data-v-74250af2>${ssrInterpolate(unref(t)("promptAssets.openStyleGallery"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-74250af2><input${ssrRenderAttr("value", unref(advancedStyles).query)}${ssrRenderAttr("aria-label", unref(t)("advancedStyles.searchStyles"))}${ssrRenderAttr("placeholder", unref(t)("advancedStyles.searchStylesPlaceholder"))} data-v-74250af2><button type="button" data-v-74250af2>${ssrInterpolate(unref(t)("promptAssets.open"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).filteredStyles.length) ? " disabled" : ""} data-v-74250af2>${ssrInterpolate(unref(t)("advancedStyles.random"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading) ? " disabled" : ""} data-v-74250af2>${ssrInterpolate(unref(t)("advancedStyles.reload"))}</button></div>`);
       _push(ssrRenderComponent(StyleChain, {
         compact: "",
         onOpenDetails: ($event) => openPromptAssets("advanced-styles")
       }, null, _parent));
-      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--lora"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.aria"))} data-v-4a922fb0><div class="asset-panel__header" data-v-4a922fb0><span data-v-4a922fb0>LoRA <small data-v-4a922fb0>${ssrInterpolate(unref(loraOptions).length)}</small></span><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.openLoraBrowser"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-4a922fb0><input${ssrRenderAttr("value", unref(selectedQuickLoraPath))} list="prompt-quick-lora-options"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectLora"))}${ssrRenderAttr("placeholder", unref(t)("loraBrowser.selectLora"))} data-v-4a922fb0><datalist id="prompt-quick-lora-options" data-v-4a922fb0><!--[-->`);
+      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--lora"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.aria"))} data-v-74250af2><div class="asset-panel__header" data-v-74250af2><span data-v-74250af2>LoRA <small data-v-74250af2>${ssrInterpolate(unref(loraOptions).length)}</small></span><button type="button" data-v-74250af2>${ssrInterpolate(unref(t)("promptAssets.openLoraBrowser"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-74250af2><input${ssrRenderAttr("value", unref(selectedQuickLoraPath))} list="prompt-quick-lora-options"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectLora"))}${ssrRenderAttr("placeholder", unref(t)("loraBrowser.selectLora"))} data-v-74250af2><datalist id="prompt-quick-lora-options" data-v-74250af2><!--[-->`);
       ssrRenderList(unref(loraOptions), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-4a922fb0></option>`);
+        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-74250af2></option>`);
       });
-      _push(`<!--]--></datalist><button type="button"${ssrIncludeBooleanAttr(!unref(selectedQuickLoraPath)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("loraBrowser.add"))}</button></div>`);
+      _push(`<!--]--></datalist><button type="button"${ssrIncludeBooleanAttr(!unref(selectedQuickLoraPath)) ? " disabled" : ""} data-v-74250af2>${ssrInterpolate(unref(t)("loraBrowser.add"))}</button></div>`);
       _push(ssrRenderComponent(SelectedLoRAStack, { compact: "" }, null, _parent));
-      _push(`</section><section class="prompt-asset-quick prompt-asset-quick--assist"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-4a922fb0><!--[-->`);
+      _push(`</section><section class="prompt-asset-quick prompt-asset-quick--assist"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-74250af2><span data-v-74250af2>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-74250af2><!--[-->`);
       ssrRenderList(unref(promptAssistProviderModeOptions), (option) => {
-        _push(`<option${ssrRenderAttr("value", option.id)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}>${ssrInterpolate(option.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", option.id)} data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}>${ssrInterpolate(option.label)}</option>`);
       });
-      _push(`<!--]--></select><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section><section class="prompt-asset-quick prompt-asset-quick--embeddings"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-4a922fb0><div class="prompt-asset-embedding__header" data-v-4a922fb0><span data-v-4a922fb0>${ssrInterpolate(unref(t)("prompt.embedding.title"))}</span></div><div class="prompt-asset-embedding__content" data-v-4a922fb0><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-4a922fb0><option value="" data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
+      _push(`<!--]--></select><button type="button" data-v-74250af2>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section><section class="prompt-asset-quick prompt-asset-quick--embeddings"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-74250af2><div class="prompt-asset-embedding__header" data-v-74250af2><span data-v-74250af2>${ssrInterpolate(unref(t)("prompt.embedding.title"))}</span></div><div class="prompt-asset-embedding__content" data-v-74250af2><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-74250af2><option value="" data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
       ssrRenderList(unref(embeddingOptions), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
+        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
       });
-      _push(`<!--]--></select></div><div class="asset-actions prompt-asset-embedding__actions" data-v-4a922fb0><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div><button type="button" data-v-4a922fb0>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section>`);
+      _push(`<!--]--></select></div><div class="asset-actions prompt-asset-embedding__actions" data-v-74250af2><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-74250af2>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-74250af2>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div><button type="button" data-v-74250af2>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section>`);
       _push(ssrRenderComponent(PromptAssetsDrawer, {
         open: unref(promptAssetsOpen),
         "active-tab": unref(promptAssetsTab),
@@ -12135,58 +13332,58 @@ ${generation.negativePrompt}`;
       }, {
         "prompt-assist": withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel prompt-assist-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-4a922fb0${_scopeId}><div class="asset-panel__header" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><div class="prompt-assist-header-actions" data-v-4a922fb0${_scopeId}><small data-v-4a922fb0${_scopeId}>${ssrInterpolate(promptAssistTargetLabel(unref(promptAssist)?.target ?? unref(promptAssistTarget)))}</small><button class="prompt-assist-guide-link" type="button" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.guide"))}</button></div></div><div class="prompt-assist-provider-draft" data-v-4a922fb0${_scopeId}><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.purpose"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.purpose"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider)) ? " disabled" : ""} data-v-4a922fb0${_scopeId}><!--[-->`);
+            _push2(`<section class="asset-panel prompt-assist-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-74250af2${_scopeId}><div class="asset-panel__header" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><div class="prompt-assist-header-actions" data-v-74250af2${_scopeId}><small data-v-74250af2${_scopeId}>${ssrInterpolate(promptAssistTargetLabel(unref(promptAssist)?.target ?? unref(promptAssistTarget)))}</small><button class="prompt-assist-guide-link" type="button" data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.guide"))}</button></div></div><div class="prompt-assist-provider-draft" data-v-74250af2${_scopeId}><label class="field" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.purpose"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.purpose"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider)) ? " disabled" : ""} data-v-74250af2${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistPurposeOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistPurposePreset)) ? ssrLooseContain(unref(promptAssistPurposePreset), option.id) : ssrLooseEqual(unref(promptAssistPurposePreset), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistPurposePreset)) ? ssrLooseContain(unref(promptAssistPurposePreset), option.id) : ssrLooseEqual(unref(promptAssistPurposePreset), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select><small class="field-hint" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssistPurposeHelp))}</small></label><div class="field-grid" data-v-4a922fb0${_scopeId}><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.target"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.target"))} data-v-4a922fb0${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select><small class="field-hint" data-v-74250af2${_scopeId}>${ssrInterpolate(unref(promptAssistPurposeHelp))}</small></label><div class="field-grid" data-v-74250af2${_scopeId}><label class="field" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.target"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.target"))} data-v-74250af2${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistTargetOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)}${ssrIncludeBooleanAttr(option.id === "negative" && !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistTarget)) ? ssrLooseContain(unref(promptAssistTarget), option.id) : ssrLooseEqual(unref(promptAssistTarget), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)}${ssrIncludeBooleanAttr(option.id === "negative" && !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistTarget)) ? ssrLooseContain(unref(promptAssistTarget), option.id) : ssrLooseEqual(unref(promptAssistTarget), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.language"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.language"))} data-v-4a922fb0${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select></label><label class="field" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.language"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.language"))} data-v-74250af2${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistLanguageOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistLanguage)) ? ssrLooseContain(unref(promptAssistLanguage), option.id) : ssrLooseEqual(unref(promptAssistLanguage), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistLanguage)) ? ssrLooseContain(unref(promptAssistLanguage), option.id) : ssrLooseEqual(unref(promptAssistLanguage), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label></div><div class="field-grid" data-v-4a922fb0${_scopeId}><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.provider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-4a922fb0${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select></label></div><div class="field-grid" data-v-74250af2${_scopeId}><label class="field" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.provider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-74250af2${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistProviderModeOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label><label class="${ssrRenderClass([{ "field--disabled": !unref(promptAssistUsesProvider) }, "field"])}" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.model"))}</span><input${ssrRenderAttr("value", unref(promptAssistModelInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.model"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.modelPlaceholder"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider) || Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-4a922fb0${_scopeId}></label></div>`);
+            _push2(`<!--]--></select></label><label class="${ssrRenderClass([{ "field--disabled": !unref(promptAssistUsesProvider) }, "field"])}" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.model"))}</span><input${ssrRenderAttr("value", unref(promptAssistModelInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.model"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.modelPlaceholder"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider) || Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-74250af2${_scopeId}></label></div>`);
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-4a922fb0${_scopeId}><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.savedProvider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.savedProvider"))} data-v-4a922fb0${_scopeId}><option value="" data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), "") : ssrLooseEqual(unref(promptAssistProviderPresetId), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.manualPerRequest"))}</option><!--[-->`);
+              _push2(`<div class="field-grid" data-v-74250af2${_scopeId}><label class="field" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.savedProvider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.savedProvider"))} data-v-74250af2${_scopeId}><option value="" data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), "") : ssrLooseEqual(unref(promptAssistProviderPresetId), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.manualPerRequest"))}</option><!--[-->`);
               ssrRenderList(unref(promptAssistProviders), (provider) => {
-                _push2(`<option${ssrRenderAttr("value", provider.id)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), provider.id) : ssrLooseEqual(unref(promptAssistProviderPresetId), provider.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(provider.name)} / ${ssrInterpolate(provider.model)}</option>`);
+                _push2(`<option${ssrRenderAttr("value", provider.id)} data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), provider.id) : ssrLooseEqual(unref(promptAssistProviderPresetId), provider.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(provider.name)} / ${ssrInterpolate(provider.model)}</option>`);
               });
-              _push2(`<!--]--></select></label><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKey"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKey))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKey"))} type="password"${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyPlaceholder"))} autocomplete="off" data-v-4a922fb0${_scopeId}></label></div>`);
+              _push2(`<!--]--></select></label><label class="field" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKey"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKey))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKey"))} type="password"${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyPlaceholder"))} autocomplete="off" data-v-74250af2${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-4a922fb0${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKeyEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVar))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKeyEnvVar"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyEnvVarPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-4a922fb0${_scopeId}></label><label class="field field--disabled" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVarValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEnvVar"))} disabled data-v-4a922fb0${_scopeId}></label></div>`);
+              _push2(`<div class="field-grid" data-v-74250af2${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKeyEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVar))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKeyEnvVar"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyEnvVarPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-74250af2${_scopeId}></label><label class="field field--disabled" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVarValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEnvVar"))} disabled data-v-74250af2${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-4a922fb0${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.endpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpoint))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.endpoint"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.endpointPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-4a922fb0${_scopeId}></label><label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.timeout"))}</span><input${ssrRenderAttr("value", unref(promptAssistTimeoutInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.timeout"))} type="number" min="1" max="300"${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-4a922fb0${_scopeId}></label></div>`);
+              _push2(`<div class="field-grid" data-v-74250af2${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.endpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpoint))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.endpoint"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.endpointPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-74250af2${_scopeId}></label><label class="field" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.timeout"))}</span><input${ssrRenderAttr("value", unref(promptAssistTimeoutInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.timeout"))} type="number" min="1" max="300"${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-74250af2${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<label class="field field--disabled" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEndpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpointValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEndpoint"))} disabled data-v-4a922fb0${_scopeId}></label>`);
+              _push2(`<label class="field field--disabled" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEndpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpointValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEndpoint"))} disabled data-v-74250af2${_scopeId}></label>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<label class="field" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.extraInstruction"))}</span><textarea${ssrRenderAttr("aria-label", unref(t)("prompt.assist.extraInstruction"))} rows="2" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssistInstruction))}</textarea></label></div><div class="asset-actions" data-v-4a922fb0${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promptAssistLoading)) ? " disabled" : ""} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssistActionLabel))}</button></div>`);
+            _push2(`<label class="field" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.extraInstruction"))}</span><textarea${ssrRenderAttr("aria-label", unref(t)("prompt.assist.extraInstruction"))} rows="2" data-v-74250af2${_scopeId}>${ssrInterpolate(unref(promptAssistInstruction))}</textarea></label></div><div class="asset-actions" data-v-74250af2${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promptAssistLoading)) ? " disabled" : ""} data-v-74250af2${_scopeId}>${ssrInterpolate(unref(promptAssistActionLabel))}</button></div>`);
             if (unref(promptAssist)) {
-              _push2(`<div class="prompt-assist-output" data-v-4a922fb0${_scopeId}><div class="runtime-log" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedPrompt"))}</span><pre data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_prompt)}</pre></div><div class="runtime-log" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedNegative"))}</span><pre data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_negative_prompt || unref(t)("prompt.assist.negativeUnavailable"))}</pre></div><div class="tag-suggestion-list" data-v-4a922fb0${_scopeId}><!--[-->`);
+              _push2(`<div class="prompt-assist-output" data-v-74250af2${_scopeId}><div class="runtime-log" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedPrompt"))}</span><pre data-v-74250af2${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_prompt)}</pre></div><div class="runtime-log" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedNegative"))}</span><pre data-v-74250af2${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_negative_prompt || unref(t)("prompt.assist.negativeUnavailable"))}</pre></div><div class="tag-suggestion-list" data-v-74250af2${_scopeId}><!--[-->`);
               ssrRenderList(unref(promptAssist).suggested_tags, (tag) => {
-                _push2(`<small data-v-4a922fb0${_scopeId}>${ssrInterpolate(tag)}</small>`);
+                _push2(`<small data-v-74250af2${_scopeId}>${ssrInterpolate(tag)}</small>`);
               });
               _push2(`<!--]--></div>`);
               if (unref(promptAssistWarningMessages).length) {
-                _push2(`<div class="tag-suggestion-list tag-suggestion-list--warning" data-v-4a922fb0${_scopeId}><!--[-->`);
+                _push2(`<div class="tag-suggestion-list tag-suggestion-list--warning" data-v-74250af2${_scopeId}><!--[-->`);
                 ssrRenderList(unref(promptAssistWarningMessages), (warning) => {
-                  _push2(`<small data-v-4a922fb0${_scopeId}>${ssrInterpolate(warning)}</small>`);
+                  _push2(`<small data-v-74250af2${_scopeId}>${ssrInterpolate(warning)}</small>`);
                 });
                 _push2(`<!--]--></div>`);
               } else {
@@ -12196,17 +13393,17 @@ ${generation.negativePrompt}`;
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<div class="asset-actions prompt-assist-apply-actions" data-v-4a922fb0${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(promptAssistResultState).canApplyPrompt) ? " disabled" : ""} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyPrompt"))}</button><button${ssrRenderAttrs(mergeProps({
+            _push2(`<div class="asset-actions prompt-assist-apply-actions" data-v-74250af2${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(promptAssistResultState).canApplyPrompt) ? " disabled" : ""} data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyPrompt"))}</button><button${ssrRenderAttrs(mergeProps({
               type: "button",
               disabled: !unref(promptAssistResultState).canApplyNegative
-            }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(promptAssistResultState).canApplyNegative ? "" : unref(promptAssistStateMessage))))} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyNegative"))}</button></div><div class="${ssrRenderClass([`prompt-assist-state--${unref(promptAssistResultState).id}`, "prompt-assist-state"])}"${ssrRenderAttr("aria-live", unref(promptAssistError) ? "assertive" : "polite")} data-v-4a922fb0${_scopeId}><strong data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssistStateMessage))}</strong>`);
+            }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(promptAssistResultState).canApplyNegative ? "" : unref(promptAssistStateMessage))))} data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyNegative"))}</button></div><div class="${ssrRenderClass([`prompt-assist-state--${unref(promptAssistResultState).id}`, "prompt-assist-state"])}"${ssrRenderAttr("aria-live", unref(promptAssistError) ? "assertive" : "polite")} data-v-74250af2${_scopeId}><strong data-v-74250af2${_scopeId}>${ssrInterpolate(unref(promptAssistStateMessage))}</strong>`);
             if (unref(promptAssistError)) {
-              _push2(`<small class="error" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(promptAssistError))}</small>`);
+              _push2(`<small class="error" data-v-74250af2${_scopeId}>${ssrInterpolate(unref(promptAssistError))}</small>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistError) && unref(promptAssistRequestContext)) {
-              _push2(`<small data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.requestContext"))}: ${ssrInterpolate(unref(promptAssistRequestContext))}</small>`);
+              _push2(`<small data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.requestContext"))}: ${ssrInterpolate(unref(promptAssistRequestContext))}</small>`);
             } else {
               _push2(`<!---->`);
             }
@@ -12516,19 +13713,19 @@ ${generation.negativePrompt}`;
         }),
         embeddings: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-4a922fb0${_scopeId}><div class="asset-panel__header prompt-asset-embedding__header" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.title"))} <small data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(embeddingOptions).length)}</small></span></div><div class="prompt-asset-embedding__content" data-v-4a922fb0${_scopeId}><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-4a922fb0${_scopeId}><option value="" data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
+            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-74250af2${_scopeId}><div class="asset-panel__header prompt-asset-embedding__header" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.title"))} <small data-v-74250af2${_scopeId}>${ssrInterpolate(unref(embeddingOptions).length)}</small></span></div><div class="prompt-asset-embedding__content" data-v-74250af2${_scopeId}><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-74250af2${_scopeId}><option value="" data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
             ssrRenderList(unref(embeddingOptions), (item) => {
-              _push2(`<option${ssrRenderAttr("value", item.relative_path)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.relative_path)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", item.relative_path)} data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.relative_path)}</option>`);
             });
-            _push2(`<!--]--></select><div class="embedding-browser"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.browserAria"))} data-v-4a922fb0${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select><div class="embedding-browser"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.browserAria"))} data-v-74250af2${_scopeId}><!--[-->`);
             ssrRenderList(unref(embeddingOptions), (item) => {
               _push2(`<button${ssrRenderAttrs(mergeProps({
                 key: item.path,
                 class: "embedding-row",
                 type: "button"
-              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.relative_path)))} data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(embeddingToken(String(item.relative_path)))}</span><small data-v-4a922fb0${_scopeId}>${ssrInterpolate(item.relative_path)}</small></button>`);
+              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.relative_path)))} data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(embeddingToken(String(item.relative_path)))}</span><small data-v-74250af2${_scopeId}>${ssrInterpolate(item.relative_path)}</small></button>`);
             });
-            _push2(`<!--]--></div></div><div class="asset-actions prompt-asset-embedding__actions" data-v-4a922fb0${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div></section>`);
+            _push2(`<!--]--></div></div><div class="asset-actions prompt-asset-embedding__actions" data-v-74250af2${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div></section>`);
           } else {
             return [
               createVNode("section", {
@@ -12593,13 +13790,13 @@ ${generation.negativePrompt}`;
         }),
         wildcards: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-4a922fb0${_scopeId}><div class="asset-panel__header" data-v-4a922fb0${_scopeId}><span data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.title"))}</span></div><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-4a922fb0${_scopeId}><option value="" data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
+            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-74250af2${_scopeId}><div class="asset-panel__header" data-v-74250af2${_scopeId}><span data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.title"))}</span></div><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-74250af2${_scopeId}><option value="" data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
             ssrRenderList(unref(wildcards), (item) => {
-              _push2(`<option${ssrRenderAttr("value", item.name)} data-v-4a922fb0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
+              _push2(`<option${ssrRenderAttr("value", item.name)} data-v-74250af2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
             });
-            _push2(`<!--]--></select><div class="asset-actions" data-v-4a922fb0${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button></div>`);
+            _push2(`<!--]--></select><div class="asset-actions" data-v-74250af2${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-74250af2${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button></div>`);
             if (unref(wildcardError)) {
-              _push2(`<small class="error" aria-live="assertive" data-v-4a922fb0${_scopeId}>${ssrInterpolate(unref(wildcardError))}</small>`);
+              _push2(`<small class="error" aria-live="assertive" data-v-74250af2${_scopeId}>${ssrInterpolate(unref(wildcardError))}</small>`);
             } else {
               _push2(`<!---->`);
             }
@@ -12659,7 +13856,7 @@ _sfc_main$1_.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptPane.vue");
   return _sfc_setup$1_ ? _sfc_setup$1_(props, ctx) : void 0;
 };
-const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-4a922fb0"]]), { __name: "StudioPromptPane" });
+const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-74250af2"]]), { __name: "StudioPromptPane" });
 const normalizeEagleFolderSelection = (folders, selectedId) => selectedId && folders.some((folder) => folder.id === selectedId) ? selectedId : "";
 const errorMessage$2 = (error) => {
   return userFacingErrorMessage(error, "common.error.external");
@@ -13039,7 +14236,7 @@ const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
     const { t } = useAsteriaI18n();
     const outputFilename = (path) => path.split(/[\\/]/).pop() ?? path;
     const outputUrl = (path) => useApiUrl(`/api/generations/output-by-path?path=${encodeURIComponent(path)}`);
-    const assetUrl = (path) => {
+    const assetUrl2 = (path) => {
       const normalized = path.replace(/\\/g, "/");
       const filename2 = encodeURIComponent(outputFilename(path));
       if (normalized.includes("/init_images/")) {
@@ -13180,7 +14377,7 @@ const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
         if (controlNetArtifactImages(item).length) {
           _push(`<div class="history-artifacts" data-v-2b180b59><!--[-->`);
           ssrRenderList(controlNetArtifactImages(item), (path) => {
-            _push(`<img${ssrRenderAttr("src", assetUrl(path))}${ssrRenderAttr("alt", outputFilename(path))} data-v-2b180b59>`);
+            _push(`<img${ssrRenderAttr("src", assetUrl2(path))}${ssrRenderAttr("alt", outputFilename(path))} data-v-2b180b59>`);
           });
           _push(`<!--]--></div>`);
         } else {
@@ -13254,7 +14451,7 @@ const _sfc_main$1X = /* @__PURE__ */ defineComponent({
     });
     const outputFilename = (path) => path.split(/[\\/]/).pop() ?? path;
     const outputUrl = (path) => useApiUrl(`/api/generations/output-by-path?path=${encodeURIComponent(path)}`);
-    const assetUrl = (path) => {
+    const assetUrl2 = (path) => {
       const normalized = path.replace(/\\/g, "/");
       const filename2 = encodeURIComponent(outputFilename(path));
       if (normalized.includes("/init_images/")) return useApiUrl(`/api/assets/init_images/${filename2}`);
@@ -13434,7 +14631,7 @@ const _sfc_main$1X = /* @__PURE__ */ defineComponent({
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="remaster-result__images" data-v-71110784><img${ssrRenderAttr("src", assetUrl(unref(displayedRemasterResult).source_image_path))}${ssrRenderAttr("alt", unref(t)("remaster.source"))} data-v-71110784>`);
+        _push(`<div class="remaster-result__images" data-v-71110784><img${ssrRenderAttr("src", assetUrl2(unref(displayedRemasterResult).source_image_path))}${ssrRenderAttr("alt", unref(t)("remaster.source"))} data-v-71110784>`);
         if (unref(displayedRemasterResult).output_path) {
           _push(`<img${ssrRenderAttr("src", outputUrl(unref(displayedRemasterResult).output_path))}${ssrRenderAttr("alt", unref(t)("remaster.result"))} data-v-71110784>`);
         } else {
@@ -13530,7 +14727,6 @@ const _sfc_main$1W = /* @__PURE__ */ defineComponent({
     const { t } = useAsteriaI18n();
     const panelError = ref("");
     const capability = computed(() => runtime.capabilities?.features.anima_lllite);
-    const regionalCapability = computed(() => runtime.capabilities?.features.anima_regional_prompting);
     const isAnimaLLLiteModel = (value) => {
       const normalized = value.toLowerCase();
       return normalized.includes("anima") || normalized.includes("lllite");
@@ -13538,7 +14734,7 @@ const _sfc_main$1W = /* @__PURE__ */ defineComponent({
     const isRegionalModel = (value) => value.toLowerCase().includes("regional");
     const outputFilename = (path) => path.split(/[\\/]/).pop() ?? path;
     const isUploadedControlImage = (path) => path.replace(/\\/g, "/").includes("/control_images/");
-    const assetUrl = (path) => {
+    const assetUrl2 = (path) => {
       const filename2 = encodeURIComponent(outputFilename(path));
       return useApiUrl(`/api/assets/control_images/${filename2}`);
     };
@@ -13561,46 +14757,42 @@ const _sfc_main$1W = /* @__PURE__ */ defineComponent({
         _push(`<section${ssrRenderAttrs(mergeProps({
           class: "asset-panel",
           "aria-label": unref(t)("animaLLLite.unitsAria")
-        }, _attrs))} data-v-12475aa0><div class="asset-panel__header" data-v-12475aa0><span data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.title"))}</span><span class="${ssrRenderClass(["status-pill", unref(capability)?.available ? "status-pill--installed" : "status-pill--missing"])}" data-v-12475aa0>${ssrInterpolate(unref(capability)?.available ? unref(t)("animaLLLite.ready") : unref(t)("animaLLLite.unavailable"))}</span><button type="button" data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.add"))}</button></div>`);
+        }, _attrs))} data-v-348069be><div class="asset-panel__header" data-v-348069be><span data-v-348069be>${ssrInterpolate(unref(t)("animaLLLite.title"))}</span><span class="${ssrRenderClass(["status-pill", unref(capability)?.available ? "status-pill--installed" : "status-pill--missing"])}" data-v-348069be>${ssrInterpolate(unref(capability)?.available ? unref(t)("animaLLLite.ready") : unref(t)("animaLLLite.unavailable"))}</span><button type="button" data-v-348069be>${ssrInterpolate(unref(t)("animaLLLite.add"))}</button></div>`);
         if (unref(capability) && !unref(capability).available) {
-          _push(`<small class="muted" data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.setupUnavailableHelp"))}</small>`);
+          _push(`<small class="muted" data-v-348069be>${ssrInterpolate(unref(t)("animaLLLite.setupUnavailableHelp"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(panelError)) {
-          _push(`<p class="error" aria-live="assertive" data-v-12475aa0>${ssrInterpolate(unref(panelError))}</p>`);
+          _push(`<p class="error" aria-live="assertive" data-v-348069be>${ssrInterpolate(unref(panelError))}</p>`);
         } else {
           _push(`<!---->`);
         }
         _push(`<!--[-->`);
         ssrRenderList(unref(generation).animaLLLiteUnits, (unit, index) => {
-          _push(`<div class="lora-item anima-lllite-unit" data-v-12475aa0><div class="anima-lllite-unit__header" data-v-12475aa0><div data-v-12475aa0><strong data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.unitTitle", { index: index + 1 }))}</strong><small data-v-12475aa0>${ssrInterpolate(unit.model || unref(t)("animaLLLite.modelNotSelected"))}</small></div><label class="check-field anima-lllite-unit__toggle" data-v-12475aa0><input${ssrIncludeBooleanAttr(Array.isArray(unit.enabled) ? ssrLooseContain(unit.enabled, null) : unit.enabled) ? " checked" : ""} type="checkbox" data-v-12475aa0><span data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.enable"))}</span></label></div><select${ssrRenderAttr("aria-label", unref(t)("animaLLLite.model"))} data-v-12475aa0><option value="" data-v-12475aa0${ssrIncludeBooleanAttr(Array.isArray(unit.model) ? ssrLooseContain(unit.model, "") : ssrLooseEqual(unit.model, "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("animaLLLite.selectModel"))}</option><!--[-->`);
+          _push(`<div class="lora-item anima-lllite-unit" data-v-348069be><div class="anima-lllite-unit__header" data-v-348069be><div data-v-348069be><strong data-v-348069be>${ssrInterpolate(unref(t)("animaLLLite.unitTitle", { index: index + 1 }))}</strong><small data-v-348069be>${ssrInterpolate(unit.model || unref(t)("animaLLLite.modelNotSelected"))}</small></div><label class="check-field anima-lllite-unit__toggle" data-v-348069be><input${ssrIncludeBooleanAttr(Array.isArray(unit.enabled) ? ssrLooseContain(unit.enabled, null) : unit.enabled) ? " checked" : ""} type="checkbox" data-v-348069be><span data-v-348069be>${ssrInterpolate(unref(t)("animaLLLite.enable"))}</span></label></div><select${ssrRenderAttr("aria-label", unref(t)("animaLLLite.model"))} data-v-348069be><option value="" data-v-348069be${ssrIncludeBooleanAttr(Array.isArray(unit.model) ? ssrLooseContain(unit.model, "") : ssrLooseEqual(unit.model, "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("animaLLLite.selectModel"))}</option><!--[-->`);
           ssrRenderList(unref(modelOptions), (item) => {
-            _push(`<option${ssrRenderAttr("value", item.value)} data-v-12475aa0${ssrIncludeBooleanAttr(Array.isArray(unit.model) ? ssrLooseContain(unit.model, item.value) : ssrLooseEqual(unit.model, item.value)) ? " selected" : ""}>${ssrInterpolate(item.label)}</option>`);
+            _push(`<option${ssrRenderAttr("value", item.value)} data-v-348069be${ssrIncludeBooleanAttr(Array.isArray(unit.model) ? ssrLooseContain(unit.model, item.value) : ssrLooseEqual(unit.model, item.value)) ? " selected" : ""}>${ssrInterpolate(item.label)}</option>`);
           });
-          _push(`<!--]--></select><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", isRegionalModel(unit.model) ? unref(t)("animaLLLite.uploadColorMap") : unref(t)("animaLLLite.uploadImage"))} data-v-12475aa0><input${ssrRenderAttr("value", unit.imagePath)}${ssrRenderAttr("aria-label", isRegionalModel(unit.model) ? unref(t)("animaLLLite.colorMapPath") : unref(t)("animaLLLite.imagePath"))}${ssrRenderAttr("placeholder", isRegionalModel(unit.model) ? unref(t)("animaLLLite.colorMapPathPlaceholder") : unref(t)("animaLLLite.imagePathPlaceholder"))} data-v-12475aa0>`);
+          _push(`<!--]--></select><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", isRegionalModel(unit.model) ? unref(t)("animaLLLite.uploadColorMap") : unref(t)("animaLLLite.uploadImage"))} data-v-348069be><input${ssrRenderAttr("value", unit.imagePath)}${ssrRenderAttr("aria-label", isRegionalModel(unit.model) ? unref(t)("animaLLLite.colorMapPath") : unref(t)("animaLLLite.imagePath"))}${ssrRenderAttr("placeholder", isRegionalModel(unit.model) ? unref(t)("animaLLLite.colorMapPathPlaceholder") : unref(t)("animaLLLite.imagePathPlaceholder"))} data-v-348069be>`);
           if (isRegionalModel(unit.model) && isUploadedControlImage(unit.imagePath)) {
-            _push(`<img class="anima-lllite-unit__color-map"${ssrRenderAttr("src", assetUrl(unit.imagePath))}${ssrRenderAttr("alt", unref(t)("animaLLLite.colorMapPreview"))} data-v-12475aa0>`);
+            _push(`<img class="anima-lllite-unit__color-map"${ssrRenderAttr("src", assetUrl2(unit.imagePath))}${ssrRenderAttr("alt", unref(t)("animaLLLite.colorMapPreview"))} data-v-348069be>`);
           } else {
             _push(`<!---->`);
           }
-          _push(`<input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("animaLLLite.uploadMask"))} data-v-12475aa0><input${ssrRenderAttr("value", unit.maskImagePath)}${ssrRenderAttr("aria-label", unref(t)("animaLLLite.maskPath"))}${ssrRenderAttr("placeholder", unref(t)("animaLLLite.maskPathPlaceholder"))} data-v-12475aa0><div class="field-grid" data-v-12475aa0><input${ssrRenderAttr("value", unit.strength)}${ssrRenderAttr("aria-label", unref(t)("animaLLLite.strength"))} type="number" min="-10" max="10" step="0.05" data-v-12475aa0><input${ssrRenderAttr("value", unit.guidanceEnd)}${ssrRenderAttr("aria-label", unref(t)("animaLLLite.guidanceEnd"))} type="number" min="0" max="1" step="0.01" data-v-12475aa0></div><div class="field-grid" data-v-12475aa0><input${ssrRenderAttr("value", unit.guidanceStart)}${ssrRenderAttr("aria-label", unref(t)("animaLLLite.guidanceStart"))} type="number" min="0" max="1" step="0.01" data-v-12475aa0><label class="check-field" data-v-12475aa0><input${ssrIncludeBooleanAttr(Array.isArray(unit.preserveWrapper) ? ssrLooseContain(unit.preserveWrapper, null) : unit.preserveWrapper) ? " checked" : ""} type="checkbox" data-v-12475aa0><span data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.preserveWrapper"))}</span></label></div>`);
-          if (isRegionalModel(unit.model)) {
-            _push(`<section class="regional-prompts"${ssrRenderAttr("aria-label", unref(t)("animaLLLite.regionalPromptsAria"))} data-v-12475aa0><div class="regional-prompts__header" data-v-12475aa0><span data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.regionalPrompts"))}</span><span class="${ssrRenderClass(["status-pill", unref(regionalCapability)?.available ? "status-pill--installed" : "status-pill--missing"])}" data-v-12475aa0>${ssrInterpolate(unref(regionalCapability)?.available ? unref(t)("animaLLLite.regionalReady") : unref(t)("animaLLLite.regionalUnavailable"))}</span><button class="icon-button--compact" type="button"${ssrIncludeBooleanAttr(unit.regionalPrompts.length >= 8) ? " disabled" : ""} data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.addRegion"))}</button></div>`);
-            if (unref(regionalCapability) && !unref(regionalCapability).available) {
-              _push(`<small class="muted" data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.regionalSetupUnavailableHelp"))}</small>`);
+          _push(`<input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("animaLLLite.uploadMask"))} data-v-348069be><input${ssrRenderAttr("value", unit.maskImagePath)}${ssrRenderAttr("aria-label", unref(t)("animaLLLite.maskPath"))}${ssrRenderAttr("placeholder", unref(t)("animaLLLite.maskPathPlaceholder"))} data-v-348069be><div class="field-grid" data-v-348069be><input${ssrRenderAttr("value", unit.strength)}${ssrRenderAttr("aria-label", unref(t)("animaLLLite.strength"))} type="number" min="-10" max="10" step="0.05" data-v-348069be><input${ssrRenderAttr("value", unit.guidanceEnd)}${ssrRenderAttr("aria-label", unref(t)("animaLLLite.guidanceEnd"))} type="number" min="0" max="1" step="0.01" data-v-348069be></div><div class="field-grid" data-v-348069be><input${ssrRenderAttr("value", unit.guidanceStart)}${ssrRenderAttr("aria-label", unref(t)("animaLLLite.guidanceStart"))} type="number" min="0" max="1" step="0.01" data-v-348069be><label class="check-field" data-v-348069be><input${ssrIncludeBooleanAttr(Array.isArray(unit.preserveWrapper) ? ssrLooseContain(unit.preserveWrapper, null) : unit.preserveWrapper) ? " checked" : ""} type="checkbox" data-v-348069be><span data-v-348069be>${ssrInterpolate(unref(t)("animaLLLite.preserveWrapper"))}</span></label></div>`);
+          if (isRegionalModel(unit.model) || unit.regionalPrompts.length) {
+            _push(`<section class="regional-prompts"${ssrRenderAttr("aria-label", unref(t)("animaLLLite.regionalPromptsAria"))} data-v-348069be><strong data-v-348069be>${ssrInterpolate(unref(t)("animaLLLite.regionalMigrationTitle"))}</strong><p data-v-348069be>${ssrInterpolate(unref(t)("animaLLLite.regionalMigrationHelp"))}</p>`);
+            if (unit.regionalPrompts.length) {
+              _push(`<small data-v-348069be>${ssrInterpolate(unref(t)("animaLLLite.regionalMigrationCount", { count: unit.regionalPrompts.length }))}</small>`);
             } else {
               _push(`<!---->`);
             }
-            _push(`<!--[-->`);
-            ssrRenderList(unit.regionalPrompts, (region, regionIndex) => {
-              _push(`<div class="regional-prompt-row" data-v-12475aa0><label class="regional-prompt-row__color" data-v-12475aa0><span data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.regionColor"))}</span><input${ssrRenderAttr("value", region.color)} type="color"${ssrRenderAttr("aria-label", unref(t)("animaLLLite.regionColorAria", { index: regionIndex + 1 }))} data-v-12475aa0><code data-v-12475aa0>${ssrInterpolate(region.color.toUpperCase())}</code></label><textarea rows="3"${ssrRenderAttr("aria-label", unref(t)("animaLLLite.regionPromptAria", { index: regionIndex + 1 }))}${ssrRenderAttr("placeholder", unref(t)("animaLLLite.regionPromptPlaceholder"))} data-v-12475aa0>${ssrInterpolate(region.prompt)}</textarea><button class="destructive-button icon-button--compact" type="button" data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.removeRegion"))}</button></div>`);
-            });
-            _push(`<!--]--></section>`);
+            _push(`<button type="button" data-v-348069be>${ssrInterpolate(unref(t)("prompt.placement.open"))}</button></section>`);
           } else {
             _push(`<!---->`);
           }
-          _push(`<button class="destructive-button" type="button" data-v-12475aa0>${ssrInterpolate(unref(t)("animaLLLite.remove"))}</button></div>`);
+          _push(`<button class="destructive-button" type="button" data-v-348069be>${ssrInterpolate(unref(t)("animaLLLite.remove"))}</button></div>`);
         });
         _push(`<!--]--></section>`);
       } else {
@@ -13615,7 +14807,7 @@ _sfc_main$1W.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AnimaLLLitePanel.vue");
   return _sfc_setup$1W ? _sfc_setup$1W(props, ctx) : void 0;
 };
-const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-12475aa0"]]), { __name: "StudioAnimaLLLitePanel" });
+const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-348069be"]]), { __name: "StudioAnimaLLLitePanel" });
 const _sfc_main$1V = /* @__PURE__ */ defineComponent({
   __name: "ControlNetPanel",
   __ssrInlineRender: true,
@@ -13626,13 +14818,15 @@ const _sfc_main$1V = /* @__PURE__ */ defineComponent({
     const { t } = useAsteriaI18n();
     const controlNetError = ref("");
     const controlNetOptions = computed(() => {
-      const runtimeModels = runtime.capabilities?.features.controlnet?.controlnet_models ?? [];
+      const runtimeModels = standardControlNetModelReferences(
+        runtime.capabilities?.features.controlnet?.controlnet_models ?? []
+      );
       const runtimeOptions = runtimeModels.map((model) => ({
         value: model,
         label: model.replace(/^.*[\\/]/, ""),
         path: model
       }));
-      const scanned = modelDependencies.libraryByType("controlnet").map((item) => ({
+      const scanned = modelDependencies.libraryByType("controlnet").filter((item) => standardControlNetModelReferences([String(item.relative_path)]).length > 0).map((item) => ({
         value: String(item.relative_path),
         label: String(item.relative_path),
         path: String(item.relative_path)
@@ -13683,45 +14877,45 @@ const _sfc_main$1V = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "asset-panel",
         "aria-label": unref(t)("controlNet.unitsAria")
-      }, _attrs))} data-v-0627bcd8><div class="asset-panel__header" data-v-0627bcd8><span data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.title"))}</span><span class="${ssrRenderClass(["status-pill", unref(controlNetCapability)?.available ? "status-pill--installed" : "status-pill--missing"])}" data-v-0627bcd8>${ssrInterpolate(unref(controlNetCapability)?.available ? unref(t)("controlNet.ready") : unref(t)("controlNet.unavailable"))}</span><button type="button"${ssrIncludeBooleanAttr(unref(blocksControlNet) || unref(runtime).loading) ? " disabled" : ""} data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.add"))}</button></div>`);
+      }, _attrs))} data-v-88e158f4><div class="asset-panel__header" data-v-88e158f4><span data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.title"))}</span><span class="${ssrRenderClass(["status-pill", unref(controlNetCapability)?.available ? "status-pill--installed" : "status-pill--missing"])}" data-v-88e158f4>${ssrInterpolate(unref(controlNetCapability)?.available ? unref(t)("controlNet.ready") : unref(t)("controlNet.unavailable"))}</span><button type="button"${ssrIncludeBooleanAttr(unref(blocksControlNet) || unref(runtime).loading) ? " disabled" : ""} data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.add"))}</button></div>`);
       if (unref(generation).profile !== "sdxl") {
-        _push(`<p class="capability-warning" data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.profileBlocked"))}</p>`);
+        _push(`<p class="capability-warning" data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.profileBlocked"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(controlNetCapability) && !unref(controlNetCapability).available) {
-        _push(`<small class="muted" data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.setupUnavailableHelp"))}</small>`);
+        _push(`<small class="muted" data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.setupUnavailableHelp"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(controlNetError)) {
-        _push(`<p class="error" aria-live="assertive" data-v-0627bcd8>${ssrInterpolate(unref(controlNetError))}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-88e158f4>${ssrInterpolate(unref(controlNetError))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="tool-preset-panel"${ssrRenderAttr("aria-label", unref(t)("controlNet.presetsAria"))} data-v-0627bcd8><div class="tool-preset-panel__header" data-v-0627bcd8><span data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.presets"))}</span><button class="icon-button--compact" type="button" data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.reloadPresets"))}</button></div><label class="field" data-v-0627bcd8><span data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.presetName"))}</span><input${ssrRenderAttr("value", unref(controlNetPresetName))}${ssrRenderAttr("aria-label", unref(t)("controlNet.presetNameAria"))}${ssrRenderAttr("placeholder", unref(t)("controlNet.presetNamePlaceholder"))} data-v-0627bcd8></label><button type="button" data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.savePreset"))}</button><div class="tool-preset-list" data-v-0627bcd8><!--[-->`);
+      _push(`<div class="tool-preset-panel"${ssrRenderAttr("aria-label", unref(t)("controlNet.presetsAria"))} data-v-88e158f4><div class="tool-preset-panel__header" data-v-88e158f4><span data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.presets"))}</span><button class="icon-button--compact" type="button" data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.reloadPresets"))}</button></div><label class="field" data-v-88e158f4><span data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.presetName"))}</span><input${ssrRenderAttr("value", unref(controlNetPresetName))}${ssrRenderAttr("aria-label", unref(t)("controlNet.presetNameAria"))}${ssrRenderAttr("placeholder", unref(t)("controlNet.presetNamePlaceholder"))} data-v-88e158f4></label><button type="button" data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.savePreset"))}</button><div class="tool-preset-list" data-v-88e158f4><!--[-->`);
       ssrRenderList(unref(controlNetPresets), (preset) => {
-        _push(`<div class="tool-preset-item" data-v-0627bcd8><button class="tool-preset-item__main" type="button" data-v-0627bcd8><span data-v-0627bcd8>${ssrInterpolate(preset.name)}</span><small data-v-0627bcd8>${ssrInterpolate(controlNetPresetSummary(preset))}</small></button><button class="destructive-button icon-button--compact" type="button" data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.deletePreset"))}</button></div>`);
+        _push(`<div class="tool-preset-item" data-v-88e158f4><button class="tool-preset-item__main" type="button" data-v-88e158f4><span data-v-88e158f4>${ssrInterpolate(preset.name)}</span><small data-v-88e158f4>${ssrInterpolate(controlNetPresetSummary(preset))}</small></button><button class="destructive-button icon-button--compact" type="button" data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.deletePreset"))}</button></div>`);
       });
       _push(`<!--]-->`);
       if (unref(controlNetPresets).length === 0) {
-        _push(`<small class="muted" data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.noPresets"))}</small>`);
+        _push(`<small class="muted" data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.noPresets"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</div></div><!--[-->`);
       ssrRenderList(unref(generation).controlNetUnits, (unit, index) => {
-        _push(`<div class="lora-item control-unit" data-v-0627bcd8><div class="control-unit__header" data-v-0627bcd8><div data-v-0627bcd8><strong data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.unitTitle", { index: index + 1 }))}</strong><small data-v-0627bcd8>${ssrInterpolate(unit.model || unref(t)("controlNet.modelNotSelected"))}</small></div><label class="check-field control-unit__toggle" data-v-0627bcd8><input${ssrIncludeBooleanAttr(Array.isArray(unit.enabled) ? ssrLooseContain(unit.enabled, null) : unit.enabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksControlNet) || unref(runtime).loading) ? " disabled" : ""} data-v-0627bcd8><span data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.enable"))}</span></label></div><select${ssrRenderAttr("aria-label", unref(t)("controlNet.model"))} data-v-0627bcd8><option value="" data-v-0627bcd8${ssrIncludeBooleanAttr(Array.isArray(unit.model) ? ssrLooseContain(unit.model, "") : ssrLooseEqual(unit.model, "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.selectModel"))}</option><!--[-->`);
+        _push(`<div class="lora-item control-unit" data-v-88e158f4><div class="control-unit__header" data-v-88e158f4><div data-v-88e158f4><strong data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.unitTitle", { index: index + 1 }))}</strong><small data-v-88e158f4>${ssrInterpolate(unit.model || unref(t)("controlNet.modelNotSelected"))}</small></div><label class="check-field control-unit__toggle" data-v-88e158f4><input${ssrIncludeBooleanAttr(Array.isArray(unit.enabled) ? ssrLooseContain(unit.enabled, null) : unit.enabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksControlNet) || unref(runtime).loading) ? " disabled" : ""} data-v-88e158f4><span data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.enable"))}</span></label></div><select${ssrRenderAttr("aria-label", unref(t)("controlNet.model"))} data-v-88e158f4><option value="" data-v-88e158f4${ssrIncludeBooleanAttr(Array.isArray(unit.model) ? ssrLooseContain(unit.model, "") : ssrLooseEqual(unit.model, "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.selectModel"))}</option><!--[-->`);
         ssrRenderList(unref(controlNetOptions), (item) => {
-          _push(`<option${ssrRenderAttr("value", item.value)} data-v-0627bcd8${ssrIncludeBooleanAttr(Array.isArray(unit.model) ? ssrLooseContain(unit.model, item.value) : ssrLooseEqual(unit.model, item.value)) ? " selected" : ""}>${ssrInterpolate(item.label)}</option>`);
+          _push(`<option${ssrRenderAttr("value", item.value)} data-v-88e158f4${ssrIncludeBooleanAttr(Array.isArray(unit.model) ? ssrLooseContain(unit.model, item.value) : ssrLooseEqual(unit.model, item.value)) ? " selected" : ""}>${ssrInterpolate(item.label)}</option>`);
         });
-        _push(`<!--]--></select><select${ssrRenderAttr("value", unit.preprocessor)}${ssrRenderAttr("aria-label", unref(t)("controlNet.preprocessor"))} data-v-0627bcd8><option value="none" data-v-0627bcd8>none</option><option value="canny" data-v-0627bcd8>canny</option><option value="lineart" data-v-0627bcd8>lineart</option><option value="scribble" data-v-0627bcd8>scribble</option><option value="depth" data-v-0627bcd8>depth</option><option value="tile" data-v-0627bcd8>tile</option><option value="softedge" data-v-0627bcd8>softedge</option><option value="normal" data-v-0627bcd8>normal</option><option value="openpose" data-v-0627bcd8>openpose</option></select><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("controlNet.uploadImage"))} data-v-0627bcd8><input${ssrRenderAttr("value", unit.imagePath)}${ssrRenderAttr("aria-label", unref(t)("controlNet.imagePath"))}${ssrRenderAttr("placeholder", unref(t)("controlNet.imagePathPlaceholder"))} data-v-0627bcd8><input${ssrRenderAttr("value", unit.weight)}${ssrRenderAttr("aria-label", unref(t)("controlNet.weight"))} type="number" min="0" max="2" step="0.05" data-v-0627bcd8><div class="field-grid" data-v-0627bcd8><input${ssrRenderAttr("value", unit.guidanceStart)}${ssrRenderAttr("aria-label", unref(t)("controlNet.guidanceStart"))} type="number" min="0" max="1" step="0.01" data-v-0627bcd8><input${ssrRenderAttr("value", unit.guidanceEnd)}${ssrRenderAttr("aria-label", unref(t)("controlNet.guidanceEnd"))} type="number" min="0" max="1" step="0.01" data-v-0627bcd8></div><div class="field-grid" data-v-0627bcd8><select${ssrRenderAttr("aria-label", unref(t)("controlNet.controlMode"))} data-v-0627bcd8><option value="Balanced"${ssrIncludeBooleanAttr(controlNetModeStatus("Balanced") !== "available") ? " disabled" : ""} data-v-0627bcd8${ssrIncludeBooleanAttr(Array.isArray(unit.controlMode) ? ssrLooseContain(unit.controlMode, "Balanced") : ssrLooseEqual(unit.controlMode, "Balanced")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.modeBalanced"))}</option><option value="My prompt is more important"${ssrIncludeBooleanAttr(controlNetModeStatus("My prompt is more important") !== "available") ? " disabled" : ""} data-v-0627bcd8${ssrIncludeBooleanAttr(Array.isArray(unit.controlMode) ? ssrLooseContain(unit.controlMode, "My prompt is more important") : ssrLooseEqual(unit.controlMode, "My prompt is more important")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.modePrompt"))}</option><option value="ControlNet is more important"${ssrIncludeBooleanAttr(controlNetModeStatus("ControlNet is more important") !== "available") ? " disabled" : ""} data-v-0627bcd8${ssrIncludeBooleanAttr(Array.isArray(unit.controlMode) ? ssrLooseContain(unit.controlMode, "ControlNet is more important") : ssrLooseEqual(unit.controlMode, "ControlNet is more important")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.modeControlNet"))}</option></select><select${ssrRenderAttr("aria-label", unref(t)("controlNet.resizeMode"))} data-v-0627bcd8><option value="Crop and Resize" data-v-0627bcd8${ssrIncludeBooleanAttr(Array.isArray(unit.resizeMode) ? ssrLooseContain(unit.resizeMode, "Crop and Resize") : ssrLooseEqual(unit.resizeMode, "Crop and Resize")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.resizeCropAndResize"))}</option><option value="Just Resize" data-v-0627bcd8${ssrIncludeBooleanAttr(Array.isArray(unit.resizeMode) ? ssrLooseContain(unit.resizeMode, "Just Resize") : ssrLooseEqual(unit.resizeMode, "Just Resize")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.resizeJustResize"))}</option><option value="Resize and Fill" data-v-0627bcd8${ssrIncludeBooleanAttr(Array.isArray(unit.resizeMode) ? ssrLooseContain(unit.resizeMode, "Resize and Fill") : ssrLooseEqual(unit.resizeMode, "Resize and Fill")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.resizeAndFill"))}</option></select></div>`);
+        _push(`<!--]--></select><select${ssrRenderAttr("value", unit.preprocessor)}${ssrRenderAttr("aria-label", unref(t)("controlNet.preprocessor"))} data-v-88e158f4><option value="none" data-v-88e158f4>none</option><option value="canny" data-v-88e158f4>canny</option><option value="lineart" data-v-88e158f4>lineart</option><option value="scribble" data-v-88e158f4>scribble</option><option value="depth" data-v-88e158f4>depth</option><option value="tile" data-v-88e158f4>tile</option><option value="softedge" data-v-88e158f4>softedge</option><option value="normal" data-v-88e158f4>normal</option><option value="openpose" data-v-88e158f4>openpose</option></select><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("controlNet.uploadImage"))} data-v-88e158f4><input${ssrRenderAttr("value", unit.imagePath)}${ssrRenderAttr("aria-label", unref(t)("controlNet.imagePath"))}${ssrRenderAttr("placeholder", unref(t)("controlNet.imagePathPlaceholder"))} data-v-88e158f4><input${ssrRenderAttr("value", unit.weight)}${ssrRenderAttr("aria-label", unref(t)("controlNet.weight"))} type="number" min="0" max="2" step="0.05" data-v-88e158f4><div class="field-grid" data-v-88e158f4><input${ssrRenderAttr("value", unit.guidanceStart)}${ssrRenderAttr("aria-label", unref(t)("controlNet.guidanceStart"))} type="number" min="0" max="1" step="0.01" data-v-88e158f4><input${ssrRenderAttr("value", unit.guidanceEnd)}${ssrRenderAttr("aria-label", unref(t)("controlNet.guidanceEnd"))} type="number" min="0" max="1" step="0.01" data-v-88e158f4></div><div class="field-grid" data-v-88e158f4><select${ssrRenderAttr("aria-label", unref(t)("controlNet.controlMode"))} data-v-88e158f4><option value="Balanced"${ssrIncludeBooleanAttr(controlNetModeStatus("Balanced") !== "available") ? " disabled" : ""} data-v-88e158f4${ssrIncludeBooleanAttr(Array.isArray(unit.controlMode) ? ssrLooseContain(unit.controlMode, "Balanced") : ssrLooseEqual(unit.controlMode, "Balanced")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.modeBalanced"))}</option><option value="My prompt is more important"${ssrIncludeBooleanAttr(controlNetModeStatus("My prompt is more important") !== "available") ? " disabled" : ""} data-v-88e158f4${ssrIncludeBooleanAttr(Array.isArray(unit.controlMode) ? ssrLooseContain(unit.controlMode, "My prompt is more important") : ssrLooseEqual(unit.controlMode, "My prompt is more important")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.modePrompt"))}</option><option value="ControlNet is more important"${ssrIncludeBooleanAttr(controlNetModeStatus("ControlNet is more important") !== "available") ? " disabled" : ""} data-v-88e158f4${ssrIncludeBooleanAttr(Array.isArray(unit.controlMode) ? ssrLooseContain(unit.controlMode, "ControlNet is more important") : ssrLooseEqual(unit.controlMode, "ControlNet is more important")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.modeControlNet"))}</option></select><select${ssrRenderAttr("aria-label", unref(t)("controlNet.resizeMode"))} data-v-88e158f4><option value="Crop and Resize" data-v-88e158f4${ssrIncludeBooleanAttr(Array.isArray(unit.resizeMode) ? ssrLooseContain(unit.resizeMode, "Crop and Resize") : ssrLooseEqual(unit.resizeMode, "Crop and Resize")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.resizeCropAndResize"))}</option><option value="Just Resize" data-v-88e158f4${ssrIncludeBooleanAttr(Array.isArray(unit.resizeMode) ? ssrLooseContain(unit.resizeMode, "Just Resize") : ssrLooseEqual(unit.resizeMode, "Just Resize")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.resizeJustResize"))}</option><option value="Resize and Fill" data-v-88e158f4${ssrIncludeBooleanAttr(Array.isArray(unit.resizeMode) ? ssrLooseContain(unit.resizeMode, "Resize and Fill") : ssrLooseEqual(unit.resizeMode, "Resize and Fill")) ? " selected" : ""}>${ssrInterpolate(unref(t)("controlNet.resizeAndFill"))}</option></select></div>`);
         if (controlNetModeNeedsRecovery(unit)) {
-          _push(`<small class="capability-warning control-unit__mode-note" data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.controlModeUnavailableHelp"))}</small>`);
+          _push(`<small class="capability-warning control-unit__mode-note" data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.controlModeUnavailableHelp"))}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<label class="check-field" data-v-0627bcd8><input${ssrIncludeBooleanAttr(Array.isArray(unit.pixelPerfect) ? ssrLooseContain(unit.pixelPerfect, null) : unit.pixelPerfect) ? " checked" : ""} type="checkbox" data-v-0627bcd8><span data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.pixelPerfect"))}</span></label><button class="destructive-button" type="button" data-v-0627bcd8>${ssrInterpolate(unref(t)("controlNet.remove"))}</button></div>`);
+        _push(`<label class="check-field" data-v-88e158f4><input${ssrIncludeBooleanAttr(Array.isArray(unit.pixelPerfect) ? ssrLooseContain(unit.pixelPerfect, null) : unit.pixelPerfect) ? " checked" : ""} type="checkbox" data-v-88e158f4><span data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.pixelPerfect"))}</span></label><button class="destructive-button" type="button" data-v-88e158f4>${ssrInterpolate(unref(t)("controlNet.remove"))}</button></div>`);
       });
       _push(`<!--]--></section>`);
     };
@@ -13733,7 +14927,7 @@ _sfc_main$1V.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ControlNetPanel.vue");
   return _sfc_setup$1V ? _sfc_setup$1V(props, ctx) : void 0;
 };
-const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1V, [["__scopeId", "data-v-0627bcd8"]]), { __name: "StudioControlNetPanel" });
+const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1V, [["__scopeId", "data-v-88e158f4"]]), { __name: "StudioControlNetPanel" });
 const _sfc_main$1U = /* @__PURE__ */ defineComponent({
   __name: "DetailerPanel",
   __ssrInlineRender: true,
@@ -14173,47 +15367,58 @@ const _sfc_main$1P = /* @__PURE__ */ defineComponent({
   setup(__props) {
     const generation = useGenerationStore();
     const { t } = useAsteriaI18n();
+    const widthDraft = ref(generation.width);
+    const heightDraft = ref(generation.height);
+    const pendingCanvasSize = ref(null);
+    watch(
+      () => [generation.width, generation.height],
+      ([width, height]) => {
+        if (pendingCanvasSize.value) return;
+        widthDraft.value = width;
+        heightDraft.value = height;
+      }
+    );
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "generation-detail-group",
         "aria-label": unref(t)("generationInspector.baseSettings")
       }, _attrs, {
         style: __props.activeSection === "base-settings" ? null : { display: "none" }
-      }))} data-v-5c843437><div class="generation-detail-group__section" data-v-5c843437><div class="generation-detail-group__heading" data-v-5c843437><h2 data-v-5c843437>${ssrInterpolate(unref(t)("generationInspector.sampling"))}</h2><small data-v-5c843437>${ssrInterpolate(unref(generation).sampler)}</small></div><div class="field-grid" data-v-5c843437><label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.samplingSteps"))}</span><input${ssrRenderAttr("value", unref(generation).steps)} type="number" min="1" max="150" data-v-5c843437></label><label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.cfgScale"))}</span><input${ssrRenderAttr("value", unref(generation).cfgScale)} type="number" min="1" max="30" step="0.5" data-v-5c843437></label></div>`);
+      }))} data-v-e02aa502><div class="generation-detail-group__section" data-v-e02aa502><div class="generation-detail-group__heading" data-v-e02aa502><h2 data-v-e02aa502>${ssrInterpolate(unref(t)("generationInspector.sampling"))}</h2><small data-v-e02aa502>${ssrInterpolate(unref(generation).sampler)}</small></div><div class="field-grid" data-v-e02aa502><label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.samplingSteps"))}</span><input${ssrRenderAttr("value", unref(generation).steps)} type="number" min="1" max="150" data-v-e02aa502></label><label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.cfgScale"))}</span><input${ssrRenderAttr("value", unref(generation).cfgScale)} type="number" min="1" max="30" step="0.5" data-v-e02aa502></label></div>`);
       if (__props.usesDistilledCfg) {
-        _push(`<label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.distilledCfg"))}</span><input${ssrRenderAttr("value", unref(generation).distilledCfgScale)} type="number" min="0" max="30" step="0.5" data-v-5c843437></label>`);
+        _push(`<label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.distilledCfg"))}</span><input${ssrRenderAttr("value", unref(generation).distilledCfgScale)} type="number" min="0" max="30" step="0.5" data-v-e02aa502></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.samplingMethod"))}</span><select data-v-5c843437><!--[-->`);
+      _push(`<label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.samplingMethod"))}</span><select data-v-e02aa502><!--[-->`);
       ssrRenderList(__props.samplerOptions, (option) => {
-        _push(`<option data-v-5c843437${ssrIncludeBooleanAttr(Array.isArray(unref(generation).sampler) ? ssrLooseContain(unref(generation).sampler, null) : ssrLooseEqual(unref(generation).sampler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-e02aa502${ssrIncludeBooleanAttr(Array.isArray(unref(generation).sampler) ? ssrLooseContain(unref(generation).sampler, null) : ssrLooseEqual(unref(generation).sampler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.scheduleType"))}</span><select${ssrIncludeBooleanAttr(__props.schedulerIsFixed) ? " disabled" : ""} data-v-5c843437><!--[-->`);
+      _push(`<!--]--></select></label><label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.scheduleType"))}</span><select${ssrIncludeBooleanAttr(__props.schedulerIsFixed) ? " disabled" : ""} data-v-e02aa502><!--[-->`);
       ssrRenderList(__props.schedulerOptions, (option) => {
-        _push(`<option data-v-5c843437${ssrIncludeBooleanAttr(Array.isArray(unref(generation).scheduler) ? ssrLooseContain(unref(generation).scheduler, null) : ssrLooseEqual(unref(generation).scheduler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-e02aa502${ssrIncludeBooleanAttr(Array.isArray(unref(generation).scheduler) ? ssrLooseContain(unref(generation).scheduler, null) : ssrLooseEqual(unref(generation).scheduler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
       });
       _push(`<!--]--></select></label>`);
       if (__props.schedulerIsFixed) {
-        _push(`<small class="muted" data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
+        _push(`<small class="muted" data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).profile === "anima") {
-        _push(`<div class="generation-detail-group__subsection" data-v-5c843437><div class="generation-detail-group__subheading" data-v-5c843437><h3 data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.anima38Conditioning"))}</h3></div><p class="muted" data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.anima38ConditioningHelp"))}</p><div class="field-grid" data-v-5c843437><label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.anima38PositiveStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35AdapterStrength)} type="number" min="0" max="2" step="0.05" data-v-5c843437></label><label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.anima38NegativeStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35NegativeAdapterStrength)} type="number" min="0" max="2" step="0.05" data-v-5c843437></label></div></div>`);
+        _push(`<div class="generation-detail-group__subsection" data-v-e02aa502><div class="generation-detail-group__subheading" data-v-e02aa502><h3 data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.anima38Conditioning"))}</h3></div><p class="muted" data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.anima38ConditioningHelp"))}</p><div class="field-grid" data-v-e02aa502><label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.anima38PositiveStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35AdapterStrength)} type="number" min="0" max="2" step="0.05" data-v-e02aa502></label><label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.anima38NegativeStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35NegativeAdapterStrength)} type="number" min="0" max="2" step="0.05" data-v-e02aa502></label></div></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="generation-detail-group__subheading" data-v-5c843437><h3 data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.seed"))}</h3></div>`);
+      _push(`<div class="generation-detail-group__subheading" data-v-e02aa502><h3 data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.seed"))}</h3></div>`);
       if (__props.blocksSeedVariation || __props.blocksSeedResize) {
-        _push(`<p class="capability-warning" data-v-5c843437>`);
+        _push(`<p class="capability-warning" data-v-e02aa502>`);
         if (__props.blocksSeedVariation) {
-          _push(`<span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.seedVariationBlocked"))}</span>`);
+          _push(`<span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.seedVariationBlocked"))}</span>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.blocksSeedResize) {
-          _push(`<span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.seedResizeBlocked"))}</span>`);
+          _push(`<span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.seedResizeBlocked"))}</span>`);
         } else {
           _push(`<!---->`);
         }
@@ -14222,11 +15427,19 @@ const _sfc_main$1P = /* @__PURE__ */ defineComponent({
         _push(`<!---->`);
       }
       if (__props.seedResizeReason === "variation_conflict") {
-        _push(`<p class="capability-warning" data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.seedResizeVariationConflict"))}</p>`);
+        _push(`<p class="capability-warning" data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.seedResizeVariationConflict"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.seed"))}</span><input${ssrRenderAttr("value", unref(generation).seed)} type="number" data-v-5c843437></label><div class="field-grid" data-v-5c843437><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedVariation }])}" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.subseed"))}</span><input${ssrRenderAttr("value", unref(generation).subseed)} type="number"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-5c843437></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedVariation }])}" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.variation"))}</span><input${ssrRenderAttr("value", unref(generation).subseedStrength)} type="number" min="0" max="1" step="0.01"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-5c843437></label></div><div class="field-grid" data-v-5c843437><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedResize }])}" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.resizeW"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromW)} type="number" min="0" max="4096" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-5c843437></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedResize }])}" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.resizeH"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromH)} type="number" min="0" max="4096" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-5c843437></label></div></div><div class="generation-detail-group__section generation-detail-group__section--size" data-v-5c843437><div class="generation-detail-group__heading" data-v-5c843437><h2 data-v-5c843437>${ssrInterpolate(unref(t)("generationInspector.size"))}</h2><small data-v-5c843437>${ssrInterpolate(unref(generation).width)} × ${ssrInterpolate(unref(generation).height)}</small></div><div class="field-grid" data-v-5c843437><label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.width"))}</span><input${ssrRenderAttr("value", unref(generation).width)} type="number" min="256" max="4096" step="8" data-v-5c843437></label><label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.height"))}</span><input${ssrRenderAttr("value", unref(generation).height)} type="number" min="256" max="4096" step="8" data-v-5c843437></label></div><div class="field-grid" data-v-5c843437><label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.batchSize"))}</span><input${ssrRenderAttr("value", unref(generation).batchSize)} type="number" min="1" max="16" data-v-5c843437></label><label class="field" data-v-5c843437><span data-v-5c843437>${ssrInterpolate(unref(t)("runtimePane.batchCount"))}</span><input${ssrRenderAttr("value", unref(generation).batchCount)} type="number" min="1" max="100" data-v-5c843437></label></div></div></section>`);
+      _push(`<label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.seed"))}</span><input${ssrRenderAttr("value", unref(generation).seed)} type="number" data-v-e02aa502></label><div class="field-grid" data-v-e02aa502><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedVariation }])}" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.subseed"))}</span><input${ssrRenderAttr("value", unref(generation).subseed)} type="number"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-e02aa502></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedVariation }])}" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.variation"))}</span><input${ssrRenderAttr("value", unref(generation).subseedStrength)} type="number" min="0" max="1" step="0.01"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-e02aa502></label></div><div class="field-grid" data-v-e02aa502><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedResize }])}" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.resizeW"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromW)} type="number" min="0" max="4096" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-e02aa502></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedResize }])}" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.resizeH"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromH)} type="number" min="0" max="4096" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-e02aa502></label></div></div><div class="generation-detail-group__section generation-detail-group__section--size" data-v-e02aa502><div class="generation-detail-group__heading" data-v-e02aa502><h2 data-v-e02aa502>${ssrInterpolate(unref(t)("generationInspector.size"))}</h2><small data-v-e02aa502>${ssrInterpolate(unref(generation).width)} × ${ssrInterpolate(unref(generation).height)}</small></div><div class="field-grid" data-v-e02aa502><label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.width"))}</span><input${ssrRenderAttr("value", unref(widthDraft))} type="number" min="256" max="4096" step="8" data-v-e02aa502></label><label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.height"))}</span><input${ssrRenderAttr("value", unref(heightDraft))} type="number" min="256" max="4096" step="8" data-v-e02aa502></label></div>`);
+      if (unref(pendingCanvasSize)) {
+        _push(`<section class="canvas-size-confirmation" role="dialog"${ssrRenderAttr("aria-label", unref(t)("generationInspector.size"))} data-v-e02aa502><p data-v-e02aa502>${ssrInterpolate(unref(t)("prompt.placement.canvasOutside", { count: unref(pendingCanvasSize).outsideCount }))}</p><div data-v-e02aa502><button type="button" data-v-e02aa502>${ssrInterpolate(unref(t)("prompt.placement.adjustNow"))}</button><button type="button" data-v-e02aa502>${ssrInterpolate(unref(t)("prompt.placement.keepAsIs"))}</button><button type="button" data-v-e02aa502>${ssrInterpolate(unref(t)("common.cancel"))}</button></div></section>`);
+      } else if (unref(generation).spatialCanvasNotice === "larger") {
+        _push(`<p class="muted" aria-live="polite" data-v-e02aa502>${ssrInterpolate(unref(t)("prompt.placement.canvasLarger"))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<div class="field-grid" data-v-e02aa502><label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.batchSize"))}</span><input${ssrRenderAttr("value", unref(generation).batchSize)} type="number" min="1" max="16" data-v-e02aa502></label><label class="field" data-v-e02aa502><span data-v-e02aa502>${ssrInterpolate(unref(t)("runtimePane.batchCount"))}</span><input${ssrRenderAttr("value", unref(generation).batchCount)} type="number" min="1" max="100" data-v-e02aa502></label></div></div></section>`);
     };
   }
 });
@@ -14236,7 +15449,7 @@ _sfc_main$1P.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateBaseControlsPanel.vue");
   return _sfc_setup$1P ? _sfc_setup$1P(props, ctx) : void 0;
 };
-const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1P, [["__scopeId", "data-v-5c843437"]]), { __name: "StudioGenerateBaseControlsPanel" });
+const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1P, [["__scopeId", "data-v-e02aa502"]]), { __name: "StudioGenerateBaseControlsPanel" });
 const modeSourceState = (mode, initImagePath, maskImagePath) => {
   if (mode === "txt2img") {
     return "not-required";
@@ -14292,7 +15505,7 @@ const _sfc_main$1O = /* @__PURE__ */ defineComponent({
       }
     });
     const filename2 = (path) => path.split(/[\\/]/).pop() ?? path;
-    const assetUrl = (path) => {
+    const assetUrl2 = (path) => {
       const normalized = path.replace(/\\/g, "/");
       const encodedFilename = encodeURIComponent(filename2(path));
       if (normalized.includes("/init_images/")) {
@@ -14303,39 +15516,39 @@ const _sfc_main$1O = /* @__PURE__ */ defineComponent({
       }
       return useApiUrl(`/api/generations/output-by-path?path=${encodeURIComponent(path)}`);
     };
-    const sourcePreviewUrl = computed(() => generation.initImagePath ? assetUrl(generation.initImagePath) : "");
-    const maskPreviewUrl = computed(() => generation.maskImagePath ? assetUrl(generation.maskImagePath) : "");
+    const sourcePreviewUrl = computed(() => generation.initImagePath ? assetUrl2(generation.initImagePath) : "");
+    const maskPreviewUrl = computed(() => generation.maskImagePath ? assetUrl2(generation.maskImagePath) : "");
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "mode-source-panel",
         "aria-label": unref(t)("generationInspector.modeSource")
-      }, _attrs))} data-v-f40ab056><div class="mode-source-panel__heading" data-v-f40ab056><h2 data-v-f40ab056>${ssrInterpolate(unref(t)("generationInspector.modeSource"))}</h2><span class="${ssrRenderClass(["mode-source-panel__status", { "mode-source-panel__status--ready": unref(readinessIsReady) }])}" data-v-f40ab056>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(readinessLabel))}</span></div><div class="mode-source-panel__modes"${ssrRenderAttr("aria-label", unref(t)("prompt.source.generationMode"))} data-v-f40ab056><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "txt2img")} data-v-f40ab056>txt2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "img2img")} data-v-f40ab056>img2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "inpaint")} data-v-f40ab056>inpaint</button></div>`);
+      }, _attrs))} data-v-0b5addd3><div class="mode-source-panel__heading" data-v-0b5addd3><h2 data-v-0b5addd3>${ssrInterpolate(unref(t)("generationInspector.modeSource"))}</h2><span class="${ssrRenderClass(["mode-source-panel__status", { "mode-source-panel__status--ready": unref(readinessIsReady) }])}" data-v-0b5addd3>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(readinessLabel))}</span></div><div class="mode-source-panel__modes"${ssrRenderAttr("aria-label", unref(t)("prompt.source.generationMode"))} data-v-0b5addd3><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "txt2img")} data-v-0b5addd3>txt2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "img2img")} data-v-0b5addd3>img2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "inpaint")} data-v-0b5addd3>inpaint</button></div>`);
       if (unref(sourceImageError)) {
-        _push(`<p class="error" aria-live="assertive" data-v-f40ab056>${ssrInterpolate(unref(sourceImageError))}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-0b5addd3>${ssrInterpolate(unref(sourceImageError))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).mode === "txt2img") {
-        _push(`<p class="mode-source-panel__empty" data-v-f40ab056>${ssrInterpolate(unref(t)("modeSource.txt2imgHelp"))}</p>`);
+        _push(`<p class="mode-source-panel__empty" data-v-0b5addd3>${ssrInterpolate(unref(t)("modeSource.txt2imgHelp"))}</p>`);
       } else {
-        _push(`<!--[--><section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.sourceImage"))}${ssrRenderAttr("aria-busy", unref(sourceUploading))} data-v-f40ab056><div class="mode-source-asset__heading" data-v-f40ab056><span data-v-f40ab056>${ssrInterpolate(unref(t)("modeSource.sourceImage"))}</span><small data-v-f40ab056>${ssrInterpolate(unref(generation).initImagePath ? filename2(unref(generation).initImagePath) : unref(t)("modeSource.sourceRequired"))}</small></div>`);
+        _push(`<!--[--><section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.sourceImage"))}${ssrRenderAttr("aria-busy", unref(sourceUploading))} data-v-0b5addd3><div class="mode-source-asset__heading" data-v-0b5addd3><span data-v-0b5addd3>${ssrInterpolate(unref(t)("modeSource.sourceImage"))}</span><small data-v-0b5addd3>${ssrInterpolate(unref(generation).initImagePath ? filename2(unref(generation).initImagePath) : unref(t)("modeSource.sourceRequired"))}</small></div>`);
         if (unref(sourcePreviewUrl)) {
-          _push(`<img class="mode-source-asset__preview"${ssrRenderAttr("src", unref(sourcePreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.sourceImage"))} data-v-f40ab056>`);
+          _push(`<img class="mode-source-asset__preview"${ssrRenderAttr("src", unref(sourcePreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.sourceImage"))} data-v-0b5addd3>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="mode-source-asset__inputs" data-v-f40ab056><label class="mode-source-file" data-v-f40ab056><span data-v-f40ab056>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(generation).initImagePath ? unref(t)("modeSource.changeImage") : unref(t)("modeSource.chooseImage"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseImage"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-f40ab056></label></div></section><label class="field" data-v-f40ab056><span data-v-f40ab056>${ssrInterpolate(unref(t)("advancedStyles.denoisingStrength"))}</span><input${ssrRenderAttr("value", unref(generation).img2imgDenoisingStrength)} type="number" min="0" max="1" step="0.01" data-v-f40ab056></label><!--]-->`);
+        _push(`<div class="mode-source-asset__inputs" data-v-0b5addd3><label class="mode-source-file" data-v-0b5addd3><span data-v-0b5addd3>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(generation).initImagePath ? unref(t)("modeSource.changeImage") : unref(t)("modeSource.chooseImage"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseImage"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-0b5addd3></label></div></section><label class="field" data-v-0b5addd3><span data-v-0b5addd3>${ssrInterpolate(unref(t)("advancedStyles.denoisingStrength"))}</span><input${ssrRenderAttr("value", unref(generation).img2imgDenoisingStrength)} type="number" min="0" max="1" step="0.01" data-v-0b5addd3></label><!--]-->`);
       }
       if (unref(generation).mode === "inpaint") {
-        _push(`<section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.maskImage"))}${ssrRenderAttr("aria-busy", unref(maskUploading))} data-v-f40ab056><div class="mode-source-asset__heading" data-v-f40ab056><span data-v-f40ab056>${ssrInterpolate(unref(t)("modeSource.maskImage"))}</span><small data-v-f40ab056>${ssrInterpolate(unref(generation).maskImagePath ? filename2(unref(generation).maskImagePath) : unref(t)("modeSource.maskRequired"))}</small></div>`);
+        _push(`<section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.maskImage"))}${ssrRenderAttr("aria-busy", unref(maskUploading))} data-v-0b5addd3><div class="mode-source-asset__heading" data-v-0b5addd3><span data-v-0b5addd3>${ssrInterpolate(unref(t)("modeSource.maskImage"))}</span><small data-v-0b5addd3>${ssrInterpolate(unref(generation).maskImagePath ? filename2(unref(generation).maskImagePath) : unref(t)("modeSource.maskRequired"))}</small></div>`);
         if (unref(maskPreviewUrl)) {
-          _push(`<img class="mode-source-asset__preview mode-source-asset__preview--mask"${ssrRenderAttr("src", unref(maskPreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.maskImage"))} data-v-f40ab056>`);
+          _push(`<img class="mode-source-asset__preview mode-source-asset__preview--mask"${ssrRenderAttr("src", unref(maskPreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.maskImage"))} data-v-0b5addd3>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="mode-source-asset__inputs" data-v-f40ab056><label class="mode-source-file" data-v-f40ab056><span data-v-f40ab056>${ssrInterpolate(unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(generation).maskImagePath ? unref(t)("modeSource.changeMask") : unref(t)("modeSource.chooseMask"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseMask"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-f40ab056></label></div><div class="field-grid" data-v-f40ab056><label class="field" data-v-f40ab056><span data-v-f40ab056>${ssrInterpolate(unref(t)("prompt.source.maskBlur"))}</span><input${ssrRenderAttr("value", unref(generation).inpaintMaskBlur)} type="number" min="0" max="64" data-v-f40ab056></label><label class="${ssrRenderClass(["field", { "field--disabled": !unref(maskSettingsSupport).maskedContent }])}" data-v-f40ab056><span data-v-f40ab056>${ssrInterpolate(unref(t)("prompt.source.maskedContent"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).maskedContent) ? " disabled" : ""} data-v-f40ab056><option value="original" data-v-f40ab056${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "original") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "original")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedOriginal"))}</option><option value="fill" data-v-f40ab056${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "fill") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "fill")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedFill"))}</option><option value="latent_noise" data-v-f40ab056${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_noise") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_noise")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNoise"))}</option><option value="latent_nothing" data-v-f40ab056${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_nothing") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_nothing")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNothing"))}</option></select></label></div><label class="${ssrRenderClass(["field", { "field--disabled": !unref(maskSettingsSupport).area }])}" data-v-f40ab056><span data-v-f40ab056>${ssrInterpolate(unref(t)("prompt.source.inpaintArea"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).area) ? " disabled" : ""} data-v-f40ab056><option value="whole_picture" data-v-f40ab056${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "whole_picture") : ssrLooseEqual(unref(generation).inpaintArea, "whole_picture")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.wholePicture"))}</option><option value="only_masked" data-v-f40ab056${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "only_masked") : ssrLooseEqual(unref(generation).inpaintArea, "only_masked")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.onlyMasked"))}</option></select></label>`);
+        _push(`<div class="mode-source-asset__inputs" data-v-0b5addd3><label class="mode-source-file" data-v-0b5addd3><span data-v-0b5addd3>${ssrInterpolate(unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(generation).maskImagePath ? unref(t)("modeSource.changeMask") : unref(t)("modeSource.chooseMask"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseMask"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-0b5addd3></label></div><div class="field-grid" data-v-0b5addd3><label class="field" data-v-0b5addd3><span data-v-0b5addd3>${ssrInterpolate(unref(t)("prompt.source.maskBlur"))}</span><input${ssrRenderAttr("value", unref(generation).inpaintMaskBlur)} type="number" min="0" max="64" data-v-0b5addd3></label><label class="${ssrRenderClass(["field", { "field--disabled": !unref(maskSettingsSupport).maskedContent }])}" data-v-0b5addd3><span data-v-0b5addd3>${ssrInterpolate(unref(t)("prompt.source.maskedContent"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).maskedContent) ? " disabled" : ""} data-v-0b5addd3><option value="original" data-v-0b5addd3${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "original") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "original")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedOriginal"))}</option><option value="fill" data-v-0b5addd3${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "fill") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "fill")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedFill"))}</option><option value="latent_noise" data-v-0b5addd3${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_noise") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_noise")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNoise"))}</option><option value="latent_nothing" data-v-0b5addd3${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_nothing") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_nothing")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNothing"))}</option></select></label></div><label class="${ssrRenderClass(["field", { "field--disabled": !unref(maskSettingsSupport).area }])}" data-v-0b5addd3><span data-v-0b5addd3>${ssrInterpolate(unref(t)("prompt.source.inpaintArea"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).area) ? " disabled" : ""} data-v-0b5addd3><option value="whole_picture" data-v-0b5addd3${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "whole_picture") : ssrLooseEqual(unref(generation).inpaintArea, "whole_picture")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.wholePicture"))}</option><option value="only_masked" data-v-0b5addd3${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "only_masked") : ssrLooseEqual(unref(generation).inpaintArea, "only_masked")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.onlyMasked"))}</option></select></label>`);
         if (!unref(maskSettingsSupport).maskedContent || !unref(maskSettingsSupport).area) {
-          _push(`<small class="muted" data-v-f40ab056>${ssrInterpolate(unref(t)("generation.inpaintMaskSettingsFixed"))}</small>`);
+          _push(`<small class="muted" data-v-0b5addd3>${ssrInterpolate(unref(t)("generation.inpaintMaskSettingsFixed"))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -14353,7 +15566,7 @@ _sfc_main$1O.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateModeSourcePanel.vue");
   return _sfc_setup$1O ? _sfc_setup$1O(props, ctx) : void 0;
 };
-const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1O, [["__scopeId", "data-v-f40ab056"]]), { __name: "StudioGenerateModeSourcePanel" });
+const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1O, [["__scopeId", "data-v-0b5addd3"]]), { __name: "StudioGenerateModeSourcePanel" });
 const HIRES_TARGET_MAX = 8192;
 const HIRES_TARGET_STEP = 8;
 const positiveNumber = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
@@ -17567,7 +18780,7 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
       ["right_knee", "right_foot", "#6a4c93"]
     ];
     const outputFilename = (path) => path.split(/[\\/]/).pop() ?? path;
-    const assetUrl = (path) => {
+    const assetUrl2 = (path) => {
       const normalized = path.replace(/\\/g, "/");
       const filename2 = encodeURIComponent(outputFilename(path));
       if (normalized.includes("/init_images/")) {
@@ -17609,13 +18822,15 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
       }
     });
     const controlNetModelOptions = computed(() => {
-      const runtimeModels = runtime.capabilities?.features.controlnet?.controlnet_models ?? [];
+      const runtimeModels = standardControlNetModelReferences(
+        runtime.capabilities?.features.controlnet?.controlnet_models ?? []
+      );
       const runtimeOptions = runtimeModels.map((model) => ({
         value: model,
         label: model.replace(/^.*[\\/]/, ""),
         path: model
       }));
-      const scanned = modelDependencies.libraryByType("controlnet").map((item) => ({
+      const scanned = modelDependencies.libraryByType("controlnet").filter((item) => standardControlNetModelReferences([String(item.relative_path)]).length > 0).map((item) => ({
         value: String(item.relative_path),
         label: String(item.relative_path),
         path: String(item.relative_path)
@@ -17640,7 +18855,7 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
     const canRetryLiveRemaster = computed(() => Boolean(
       remasterJobMatchesSource.value && generation.currentRemasterJob && ["failed", "cancelled"].includes(generation.currentRemasterJob.status) && !generation.currentRemasterJob.remaster
     ));
-    const activeReferenceImageUrl = computed(() => activeControlUnit.value?.imagePath ? assetUrl(activeControlUnit.value.imagePath) : "");
+    const activeReferenceImageUrl = computed(() => activeControlUnit.value?.imagePath ? assetUrl2(activeControlUnit.value.imagePath) : "");
     const maskStatus = computed(() => {
       if (maskSaving.value) return t("imageEditor.maskSaving");
       if (maskLoading.value) return t("imageEditor.maskLoading");
@@ -17665,34 +18880,34 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
     const sourceReady = computed(() => Boolean(generation.initImagePath && sourceBitmap.value));
     const sourceLoading = computed(() => Boolean(generation.initImagePath && !sourceBitmap.value && !editorError.value));
     const sourceDimensions = computed(() => canvasSize.width > 0 && canvasSize.height > 0 ? `${canvasSize.width} × ${canvasSize.height}` : "");
-    const sourceImageUrl = computed(() => generation.initImagePath ? assetUrl(generation.initImagePath) : "");
+    const sourceImageUrl = computed(() => generation.initImagePath ? assetUrl2(generation.initImagePath) : "");
     const remasterJobStatus = computed(() => remasterJobMatchesSource.value ? generation.currentRemasterJob?.status ?? "" : "");
     const remasterResultStatus = computed(() => imageEditorRemasterResult.value?.status ?? "");
     const remasterWarnings = computed(() => imageEditorRemasterResult.value?.warnings ?? []);
-    const remasterOutputUrl = computed(() => imageEditorRemasterResult.value?.output_path ? assetUrl(imageEditorRemasterResult.value.output_path) : "");
-    const remasterContactSheetUrl = computed(() => imageEditorRemasterResult.value?.contact_sheet_path ? assetUrl(imageEditorRemasterResult.value.contact_sheet_path) : "");
-    const remasterReportUrl = computed(() => imageEditorRemasterResult.value?.report_path ? assetUrl(imageEditorRemasterResult.value.report_path) : "");
+    const remasterOutputUrl = computed(() => imageEditorRemasterResult.value?.output_path ? assetUrl2(imageEditorRemasterResult.value.output_path) : "");
+    const remasterContactSheetUrl = computed(() => imageEditorRemasterResult.value?.contact_sheet_path ? assetUrl2(imageEditorRemasterResult.value.contact_sheet_path) : "");
+    const remasterReportUrl = computed(() => imageEditorRemasterResult.value?.report_path ? assetUrl2(imageEditorRemasterResult.value.report_path) : "");
     const assetSummaryCards = computed(() => [
       {
         id: "source",
         label: t("imageEditor.assetSource"),
         status: !sourceRequired.value ? t("imageEditor.statusOptional") : generation.initImagePath ? t("imageEditor.statusReady") : t("imageEditor.statusNeeded"),
         detail: generation.initImagePath ? outputFilename(generation.initImagePath) : sourceRequired.value ? t("imageEditor.noSource") : t("imageEditor.sourceNotRequired"),
-        imageUrl: generation.initImagePath ? assetUrl(generation.initImagePath) : void 0
+        imageUrl: generation.initImagePath ? assetUrl2(generation.initImagePath) : void 0
       },
       {
         id: "mask",
         label: t("imageEditor.assetMask"),
         status: maskStatus.value,
         detail: maskFilename.value || maskStatus.value,
-        imageUrl: generation.maskImagePath && !maskDirty.value ? assetUrl(generation.maskImagePath) : void 0
+        imageUrl: generation.maskImagePath && !maskDirty.value ? assetUrl2(generation.maskImagePath) : void 0
       },
       {
         id: "reference",
         label: t("imageEditor.assetReference"),
         status: activeControlUnit.value ? activeControlUnit.value.imagePath ? activeControlUnit.value.preprocessor : t("imageEditor.referenceIncomplete") : t("imageEditor.statusOptional"),
         detail: activeControlUnit.value?.imagePath ? outputFilename(activeControlUnit.value.imagePath) : activeControlUnit.value ? t("imageEditor.unitNumber", { index: selectedControlUnit.value + 1 }) : t("imageEditor.noUnit"),
-        imageUrl: activeControlUnit.value?.imagePath ? assetUrl(activeControlUnit.value.imagePath) : void 0
+        imageUrl: activeControlUnit.value?.imagePath ? assetUrl2(activeControlUnit.value.imagePath) : void 0
       }
     ]);
     const inspectorPlacement = computed(() => imageEditInspectorPlacement(activeInspectorSection.value));
@@ -17782,7 +18997,7 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
       context.clearRect(0, 0, canvas.width, canvas.height);
     };
     const fetchBitmap = async (path) => {
-      const response = await fetch(assetUrl(path), { cache: "no-store" });
+      const response = await fetch(assetUrl2(path), { cache: "no-store" });
       if (!response.ok) {
         throw new Error(t("imageEditor.errorLoadStatus", { status: response.status }));
       }
@@ -18730,7 +19945,7 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
       hasPendingDraft
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<!--[--><input hidden type="file" accept="image/*" data-v-fcf83496><input hidden type="file" accept="image/*" data-v-fcf83496>`);
+      _push(`<!--[--><input hidden type="file" accept="image/*" data-v-fe4106ba><input hidden type="file" accept="image/*" data-v-fe4106ba>`);
       _push(ssrRenderComponent(ImageEditWorkspaceBody, {
         "aria-label": unref(t)("imageEditor.workspaceAria"),
         "inspector-placement": unref(inspectorPlacement)
@@ -18771,7 +19986,7 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
         }),
         inspector: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<aside class="image-workspace__panel image-workspace__panel--inspector" style="${ssrRenderStyle(!unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-fcf83496${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-fcf83496${_scopeId}><span data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.editWorkflow"))}</span><small data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(editModeLabel))}</small></div>`);
+            _push2(`<aside class="image-workspace__panel image-workspace__panel--inspector" style="${ssrRenderStyle(!unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-fe4106ba${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-fe4106ba${_scopeId}><span data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.editWorkflow"))}</span><small data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(editModeLabel))}</small></div>`);
             _push2(ssrRenderComponent(ImageEditSourceInspector, {
               style: unref(activeInspectorSection) === "source" ? null : { display: "none" },
               mode: unref(generation).mode,
@@ -18936,7 +20151,7 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
         }),
         canvas: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<main class="image-workspace__preview" data-v-fcf83496${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-fcf83496${_scopeId}><span data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.canvas"))}</span><small data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(generation).initImagePath ? outputFilename(unref(generation).initImagePath) : unref(t)("imageEditor.empty"))}</small></div>`);
+            _push2(`<main class="image-workspace__preview" data-v-fe4106ba${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-fe4106ba${_scopeId}><span data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.canvas"))}</span><small data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(generation).initImagePath ? outputFilename(unref(generation).initImagePath) : unref(t)("imageEditor.empty"))}</small></div>`);
             _push2(ssrRenderComponent(ImageEditCanvasToolbar, {
               tool: unref(editTool),
               "brush-size": unref(brushSize),
@@ -18962,26 +20177,26 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
               "image-preview-stage--empty": !unref(canEdit),
               "image-preview-stage--pan": unref(canEdit) && (unref(editTool) === "pan" || unref(spacePressed)),
               "image-preview-stage--panning": unref(isPanning)
-            }, "image-preview-stage"])}" tabindex="0" role="region"${ssrRenderAttr("aria-label", unref(t)("imageEditor.canvasNavigationAria"))} data-v-fcf83496${_scopeId}>`);
+            }, "image-preview-stage"])}" tabindex="0" role="region"${ssrRenderAttr("aria-label", unref(t)("imageEditor.canvasNavigationAria"))} data-v-fe4106ba${_scopeId}>`);
             if (unref(canEdit)) {
-              _push2(`<div class="canvas-stack" style="${ssrRenderStyle(unref(canvasStackStyle))}" data-v-fcf83496${_scopeId}><canvas class="edit-canvas"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sourceCanvas"))} data-v-fcf83496${_scopeId}></canvas><canvas class="edit-canvas edit-canvas--mask"${ssrRenderAttr("aria-label", unref(t)("imageEditor.maskCanvas"))} style="${ssrRenderStyle(unref(showMask) ? null : { display: "none" })}" data-v-fcf83496${_scopeId}></canvas>`);
+              _push2(`<div class="canvas-stack" style="${ssrRenderStyle(unref(canvasStackStyle))}" data-v-fe4106ba${_scopeId}><canvas class="edit-canvas"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sourceCanvas"))} data-v-fe4106ba${_scopeId}></canvas><canvas class="edit-canvas edit-canvas--mask"${ssrRenderAttr("aria-label", unref(t)("imageEditor.maskCanvas"))} style="${ssrRenderStyle(unref(showMask) ? null : { display: "none" })}" data-v-fe4106ba${_scopeId}></canvas>`);
               if (unref(cropRect)) {
-                _push2(`<div class="crop-rect" style="${ssrRenderStyle(unref(cropStyle))}" data-v-fcf83496${_scopeId}></div>`);
+                _push2(`<div class="crop-rect" style="${ssrRenderStyle(unref(cropStyle))}" data-v-fe4106ba${_scopeId}></div>`);
               } else {
                 _push2(`<!---->`);
               }
               _push2(`</div>`);
             } else {
-              _push2(`<div class="image-empty-state" data-v-fcf83496${_scopeId}><span class="image-empty-state__label" data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.noSource"))}</span><strong data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openToStart"))}</strong><p data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.emptyHelp"))}</p><div class="image-empty-state__actions" data-v-fcf83496${_scopeId}><button class="primary-button" type="button" data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openLibrary"))}</button><button type="button" data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.uploadImage"))}</button></div></div>`);
+              _push2(`<div class="image-empty-state" data-v-fe4106ba${_scopeId}><span class="image-empty-state__label" data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.noSource"))}</span><strong data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openToStart"))}</strong><p data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.emptyHelp"))}</p><div class="image-empty-state__actions" data-v-fe4106ba${_scopeId}><button class="primary-button" type="button" data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openLibrary"))}</button><button type="button" data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.uploadImage"))}</button></div></div>`);
             }
             _push2(`</div>`);
             if (unref(historyWarning)) {
-              _push2(`<p class="warning" aria-live="polite" data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(historyWarning))}</p>`);
+              _push2(`<p class="warning" aria-live="polite" data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(historyWarning))}</p>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(editorError)) {
-              _push2(`<p class="error" aria-live="assertive" data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(editorError))}</p>`);
+              _push2(`<p class="error" aria-live="assertive" data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(editorError))}</p>`);
             } else {
               _push2(`<!---->`);
             }
@@ -19097,7 +20312,7 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
         }),
         handoff: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="image-send-panel"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sendAria"))} data-v-fcf83496${_scopeId}><div class="image-step-header image-step-header--compact" data-v-fcf83496${_scopeId}><span data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.send"))}</span><small data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendHelp"))}</small></div><div class="image-workspace__actions" data-v-fcf83496${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(generation).mode !== "txt2img" && !unref(generation).initImagePath) ? " disabled" : ""} data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendToGenerate"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(generation).initImagePath) ? " disabled" : ""} data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.useSourceAsControlNet"))}</button></div></div>`);
+            _push2(`<div class="image-send-panel"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sendAria"))} data-v-fe4106ba${_scopeId}><div class="image-step-header image-step-header--compact" data-v-fe4106ba${_scopeId}><span data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.send"))}</span><small data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendHelp"))}</small></div><div class="image-workspace__actions" data-v-fe4106ba${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(generation).mode !== "txt2img" && !unref(generation).initImagePath) ? " disabled" : ""} data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendToGenerate"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(generation).initImagePath) ? " disabled" : ""} data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.useSourceAsControlNet"))}</button></div></div>`);
           } else {
             return [
               createVNode("div", {
@@ -19127,13 +20342,13 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
         }),
         reference: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<aside class="image-workspace__panel image-workspace__panel--reference" style="${ssrRenderStyle(unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-fcf83496${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-fcf83496${_scopeId}><span data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.referenceWorkflow"))}</span>`);
+            _push2(`<aside class="image-workspace__panel image-workspace__panel--reference" style="${ssrRenderStyle(unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-fe4106ba${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-fe4106ba${_scopeId}><span data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.referenceWorkflow"))}</span>`);
             if (unref(generation).controlNetUnits.length > 0) {
-              _push2(`<button type="button" data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.add"))}</button>`);
+              _push2(`<button type="button" data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.add"))}</button>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</div><nav class="reference-focus-tabs"${ssrRenderAttr("aria-label", unref(t)("imageEditor.referenceTabsAria"))} data-v-fcf83496${_scopeId}><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "reference" }, "icon-button"])}" data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.reference"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "openpose" }, "icon-button"])}" data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openPose"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "presets" }, "icon-button"])}" data-v-fcf83496${_scopeId}>${ssrInterpolate(unref(t)("controlNet.presets"))}</button></nav>`);
+            _push2(`</div><nav class="reference-focus-tabs"${ssrRenderAttr("aria-label", unref(t)("imageEditor.referenceTabsAria"))} data-v-fe4106ba${_scopeId}><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "reference" }, "icon-button"])}" data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.reference"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "openpose" }, "icon-button"])}" data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openPose"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "presets" }, "icon-button"])}" data-v-fe4106ba${_scopeId}>${ssrInterpolate(unref(t)("controlNet.presets"))}</button></nav>`);
             _push2(ssrRenderComponent(ImageEditReferenceInspector, {
               style: unref(activeInspectorSection) === "reference" ? null : { display: "none" },
               units: unref(generation).controlNetUnits,
@@ -19289,7 +20504,7 @@ _sfc_main$1q.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageWorkspace.vue");
   return _sfc_setup$1q ? _sfc_setup$1q(props, ctx) : void 0;
 };
-const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1q, [["__scopeId", "data-v-fcf83496"]]), { __name: "StudioImageWorkspace" });
+const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1q, [["__scopeId", "data-v-fe4106ba"]]), { __name: "StudioImageWorkspace" });
 const _sfc_main$1p = /* @__PURE__ */ defineComponent({
   __name: "ImageEditDraftNavigationDialog",
   __ssrInlineRender: true,
@@ -19405,6 +20620,19 @@ const _sfc_main$1o = /* @__PURE__ */ defineComponent({
       return "";
     });
     const promptInputRecovered = computed(() => props.preview.warning_codes.includes("prompt_input_invalid_fallback") || props.preview.warning_codes.includes("prompt_input_mismatch_fallback"));
+    const spatialPromptStateKey = computed(() => {
+      switch (props.preview.spatial_prompt_status) {
+        case "ready":
+          return "imageMetadata.spatialReady";
+        case "partial":
+          return "imageMetadata.spatialPartial";
+        case "legacy":
+          return "imageMetadata.spatialLegacy";
+        case "unsupported":
+          return "imageMetadata.spatialUnsupported";
+      }
+    });
+    const spatialPromptNeedsSource = computed(() => props.preview.spatial_prompt_status === "legacy" && props.preview.spatial_prompt_warning_code === "legacy_spatial_source_required");
     const promptText = (value) => {
       if (value.presence === "absent") return t("imageMetadata.notFound");
       return value.value || t("imageMetadata.explicitEmpty");
@@ -19413,61 +20641,67 @@ const _sfc_main$1o = /* @__PURE__ */ defineComponent({
       _push(`<div${ssrRenderAttrs(mergeProps({
         class: "image-metadata-backdrop",
         role: "presentation"
-      }, _attrs))} data-v-1ddeab9f><section class="image-metadata-dialog" role="dialog" aria-modal="true" aria-labelledby="image-metadata-title" tabindex="-1" data-v-1ddeab9f><header class="image-metadata-dialog__header" data-v-1ddeab9f><div data-v-1ddeab9f><p data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.eyebrow"))}</p><h2 id="image-metadata-title" data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.title"))}</h2><small data-v-1ddeab9f>${ssrInterpolate(__props.preview.source.filename)} · ${ssrInterpolate(__props.preview.source.width)}×${ssrInterpolate(__props.preview.source.height)} · ${ssrInterpolate(__props.preview.source.format.toUpperCase())}</small></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("imageMetadata.close"))}${ssrIncludeBooleanAttr(__props.applying) ? " disabled" : ""} data-v-1ddeab9f> × </button></header><div class="image-metadata-dialog__summary"${ssrRenderAttr("data-status", __props.preview.status)} data-v-1ddeab9f><strong data-v-1ddeab9f>${ssrInterpolate(unref(t)(`imageMetadata.status.${__props.preview.status}`))}</strong><span data-v-1ddeab9f>${ssrInterpolate(unref(t)(`imageMetadata.family.${__props.preview.source_family}`))}</span>`);
+      }, _attrs))} data-v-4b9ebf18><section class="image-metadata-dialog" role="dialog" aria-modal="true" aria-labelledby="image-metadata-title" tabindex="-1" data-v-4b9ebf18><header class="image-metadata-dialog__header" data-v-4b9ebf18><div data-v-4b9ebf18><p data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.eyebrow"))}</p><h2 id="image-metadata-title" data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.title"))}</h2><small data-v-4b9ebf18>${ssrInterpolate(__props.preview.source.filename)} · ${ssrInterpolate(__props.preview.source.width)}×${ssrInterpolate(__props.preview.source.height)} · ${ssrInterpolate(__props.preview.source.format.toUpperCase())}</small></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("imageMetadata.close"))}${ssrIncludeBooleanAttr(__props.applying) ? " disabled" : ""} data-v-4b9ebf18> × </button></header><div class="image-metadata-dialog__summary"${ssrRenderAttr("data-status", __props.preview.status)} data-v-4b9ebf18><strong data-v-4b9ebf18>${ssrInterpolate(unref(t)(`imageMetadata.status.${__props.preview.status}`))}</strong><span data-v-4b9ebf18>${ssrInterpolate(unref(t)(`imageMetadata.family.${__props.preview.source_family}`))}</span>`);
       if (__props.preview.status === "unsupported") {
-        _push(`<small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.unsupportedHelp"))}</small>`);
+        _push(`<small data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.unsupportedHelp"))}</small>`);
       } else if (__props.preview.status === "partial") {
-        _push(`<small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.partialHelp"))}</small>`);
+        _push(`<small data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.partialHelp"))}</small>`);
       } else {
-        _push(`<small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.completeHelp"))}</small>`);
+        _push(`<small data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.completeHelp"))}</small>`);
       }
-      _push(`</div><div class="image-metadata-dialog__content" data-v-1ddeab9f><section class="image-metadata-section image-metadata-section--prompts" data-v-1ddeab9f><header data-v-1ddeab9f><h3 data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.prompts"))}</h3><small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.promptsHelp"))}</small></header><dl data-v-1ddeab9f><div data-v-1ddeab9f><dt data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.positivePrompt"))}</dt><dd data-v-1ddeab9f>${ssrInterpolate(promptText(__props.preview.positive_prompt))}</dd></div><div data-v-1ddeab9f><dt data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.negativePrompt"))}</dt><dd data-v-1ddeab9f>${ssrInterpolate(promptText(__props.preview.negative_prompt))}</dd></div></dl>`);
+      _push(`</div><div class="image-metadata-dialog__content" data-v-4b9ebf18><section class="image-metadata-section image-metadata-section--prompts" data-v-4b9ebf18><header data-v-4b9ebf18><h3 data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.prompts"))}</h3><small data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.promptsHelp"))}</small></header><dl data-v-4b9ebf18><div data-v-4b9ebf18><dt data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.positivePrompt"))}</dt><dd data-v-4b9ebf18>${ssrInterpolate(promptText(__props.preview.positive_prompt))}</dd></div><div data-v-4b9ebf18><dt data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.negativePrompt"))}</dt><dd data-v-4b9ebf18>${ssrInterpolate(promptText(__props.preview.negative_prompt))}</dd></div></dl>`);
       if (unref(promptInputMessageKey)) {
-        _push(`<p class="image-metadata-prompt-state"${ssrRenderAttr("data-recovered", unref(promptInputRecovered))} data-v-1ddeab9f>${ssrInterpolate(unref(t)(unref(promptInputMessageKey)))}</p>`);
+        _push(`<p class="image-metadata-prompt-state"${ssrRenderAttr("data-recovered", unref(promptInputRecovered))} data-v-4b9ebf18>${ssrInterpolate(unref(t)(unref(promptInputMessageKey)))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</section><section class="image-metadata-section" data-v-1ddeab9f><header data-v-1ddeab9f><h3 data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.settings"))}</h3><small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.settingsHelp"))}</small></header>`);
+      _push(`<div class="image-metadata-spatial-prompt"${ssrRenderAttr("data-spatial-prompt-status", __props.preview.spatial_prompt_status)} data-v-4b9ebf18><p data-v-4b9ebf18>${ssrInterpolate(unref(t)(unref(spatialPromptStateKey)))}</p>`);
+      if (unref(spatialPromptNeedsSource)) {
+        _push(`<p data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.spatialNeedsSource"))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div></section><section class="image-metadata-section" data-v-4b9ebf18><header data-v-4b9ebf18><h3 data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.settings"))}</h3><small data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.settingsHelp"))}</small></header>`);
       if (unref(settingEntries).length) {
-        _push(`<dl class="image-metadata-settings" data-v-1ddeab9f><!--[-->`);
+        _push(`<dl class="image-metadata-settings" data-v-4b9ebf18><!--[-->`);
         ssrRenderList(unref(settingEntries), (entry2) => {
-          _push(`<div data-v-1ddeab9f><dt data-v-1ddeab9f>${ssrInterpolate(entry2.label)}</dt><dd data-v-1ddeab9f>${ssrInterpolate(entry2.value)}</dd></div>`);
+          _push(`<div data-v-4b9ebf18><dt data-v-4b9ebf18>${ssrInterpolate(entry2.label)}</dt><dd data-v-4b9ebf18>${ssrInterpolate(entry2.value)}</dd></div>`);
         });
         _push(`<!--]--></dl>`);
       } else {
-        _push(`<p class="image-metadata-empty" data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.noSettings"))}</p>`);
+        _push(`<p class="image-metadata-empty" data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.noSettings"))}</p>`);
       }
-      _push(`<div class="image-metadata-seed" data-v-1ddeab9f><span data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.foundSeed"))}</span><strong data-v-1ddeab9f>${ssrInterpolate(__props.preview.seed ?? unref(t)("imageMetadata.notFound"))}</strong><small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.seedPreservedHelp"))}</small></div></section><section class="image-metadata-section" data-v-1ddeab9f><header data-v-1ddeab9f><h3 data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.resources"))}</h3><small data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.resourcesHelp"))}</small></header>`);
+      _push(`<div class="image-metadata-seed" data-v-4b9ebf18><span data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.foundSeed"))}</span><strong data-v-4b9ebf18>${ssrInterpolate(__props.preview.seed ?? unref(t)("imageMetadata.notFound"))}</strong><small data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.seedPreservedHelp"))}</small></div></section><section class="image-metadata-section" data-v-4b9ebf18><header data-v-4b9ebf18><h3 data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.resources"))}</h3><small data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.resourcesHelp"))}</small></header>`);
       if (__props.preview.resources.length) {
-        _push(`<ul class="image-metadata-resources" data-v-1ddeab9f><!--[-->`);
+        _push(`<ul class="image-metadata-resources" data-v-4b9ebf18><!--[-->`);
         ssrRenderList(unref(availableResources), (resource) => {
-          _push(`<li data-v-1ddeab9f><span data-v-1ddeab9f>${ssrInterpolate(resource.source_name)}</span><strong data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.resource.available"))}</strong></li>`);
+          _push(`<li data-v-4b9ebf18><span data-v-4b9ebf18>${ssrInterpolate(resource.source_name)}</span><strong data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.resource.available"))}</strong></li>`);
         });
         _push(`<!--]--><!--[-->`);
         ssrRenderList(unref(unavailableResources), (resource) => {
-          _push(`<li class="image-metadata-resource--warning" data-v-1ddeab9f><span data-v-1ddeab9f>${ssrInterpolate(resource.source_name)}</span><strong data-v-1ddeab9f>${ssrInterpolate(unref(t)(`imageMetadata.resource.${resource.status}`))}</strong></li>`);
+          _push(`<li class="image-metadata-resource--warning" data-v-4b9ebf18><span data-v-4b9ebf18>${ssrInterpolate(resource.source_name)}</span><strong data-v-4b9ebf18>${ssrInterpolate(unref(t)(`imageMetadata.resource.${resource.status}`))}</strong></li>`);
         });
         _push(`<!--]--></ul>`);
       } else {
-        _push(`<p class="image-metadata-empty" data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.noResources"))}</p>`);
+        _push(`<p class="image-metadata-empty" data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.noResources"))}</p>`);
       }
       if (unref(unavailableResources).length) {
-        _push(`<p class="image-metadata-warning" data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.missingResourceHelp"))}</p>`);
+        _push(`<p class="image-metadata-warning" data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.missingResourceHelp"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.preview.warning_codes.length || __props.preview.unsupported_codes.length) {
-        _push(`<p class="image-metadata-warning" data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.metadataWarning"))}</p>`);
+        _push(`<p class="image-metadata-warning" data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.metadataWarning"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</section></div>`);
       if (__props.error) {
-        _push(`<p class="image-metadata-error" aria-live="assertive" data-v-1ddeab9f>${ssrInterpolate(__props.error)}</p>`);
+        _push(`<p class="image-metadata-error" aria-live="assertive" data-v-4b9ebf18>${ssrInterpolate(__props.error)}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<footer class="image-metadata-dialog__actions" data-v-1ddeab9f><button data-image-metadata-action="prompts" type="button"${ssrIncludeBooleanAttr(!unref(canReusePrompts) || __props.applying) ? " disabled" : ""} data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.usePrompts"))}</button><button data-image-metadata-action="settings" class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canReuseSettings) || __props.applying) ? " disabled" : ""} data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.reuseSettings"))}</button><button data-image-metadata-action="image-input" type="button"${ssrIncludeBooleanAttr(!unref(canUseImageInput) || __props.applying) ? " disabled" : ""} data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.useImageInput"))}</button><button data-image-metadata-action="seed" type="button"${ssrIncludeBooleanAttr(!unref(canUseSeed) || __props.applying) ? " disabled" : ""} data-v-1ddeab9f>${ssrInterpolate(unref(t)("imageMetadata.useSeed"))}</button></footer></section></div>`);
+      _push(`<footer class="image-metadata-dialog__actions" data-v-4b9ebf18><button data-image-metadata-action="prompts" type="button"${ssrIncludeBooleanAttr(!unref(canReusePrompts) || __props.applying) ? " disabled" : ""} data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.usePrompts"))}</button><button data-image-metadata-action="settings" class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canReuseSettings) || __props.applying) ? " disabled" : ""} data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.reuseSettings"))}</button><button data-image-metadata-action="image-input" type="button"${ssrIncludeBooleanAttr(!unref(canUseImageInput) || __props.applying) ? " disabled" : ""} data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.useImageInput"))}</button><button data-image-metadata-action="seed" type="button"${ssrIncludeBooleanAttr(!unref(canUseSeed) || __props.applying) ? " disabled" : ""} data-v-4b9ebf18>${ssrInterpolate(unref(t)("imageMetadata.useSeed"))}</button></footer></section></div>`);
     };
   }
 });
@@ -19477,7 +20711,7 @@ _sfc_main$1o.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageMetadataImportDialog.vue");
   return _sfc_setup$1o ? _sfc_setup$1o(props, ctx) : void 0;
 };
-const ImageMetadataImportDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1o, [["__scopeId", "data-v-1ddeab9f"]]), { __name: "StudioImageMetadataImportDialog" });
+const ImageMetadataImportDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1o, [["__scopeId", "data-v-4b9ebf18"]]), { __name: "StudioImageMetadataImportDialog" });
 const _sfc_main$1n = /* @__PURE__ */ defineComponent({
   __name: "ImageMetadataImportFlow",
   __ssrInlineRender: true,
@@ -46879,6 +48113,30 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       const blockingItem = generationReadinessItems.value.find((item) => !item.ready && !item.advisory);
       return blockingItem?.message ?? "";
     });
+    const dismissedSpatialRecoveryJobId = ref("");
+    const spatialNoOverlapTargetIds = computed(() => {
+      const job = generation.currentJob;
+      if (!job || job.id === dismissedSpatialRecoveryJobId.value || job.status !== "failed") return [];
+      return job.error.split(":").includes("spatial_prompt_inpaint_no_overlap") ? [...job.error_target_ids ?? []] : [];
+    });
+    const clearSpatialFailure = () => {
+      generation.error = "";
+      dismissedSpatialRecoveryJobId.value = generation.currentJob?.id ?? "";
+    };
+    const adjustSpatialFailure = () => {
+      generation.requestPromptPlacementReview(spatialNoOverlapTargetIds.value[0] ?? null);
+      clearSpatialFailure();
+    };
+    const excludeSpatialFailure = () => {
+      if (!generation.excludePromptPlacementTargets(spatialNoOverlapTargetIds.value)) {
+        generation.disablePromptPlacement();
+      }
+      clearSpatialFailure();
+    };
+    const disableSpatialFailure = () => {
+      generation.disablePromptPlacement();
+      clearSpatialFailure();
+    };
     const canCancel = computed(() => Boolean(generation.currentJob && ["queued", "running", "cancelling"].includes(generation.currentJob.status)));
     const canRetry = computed(() => Boolean(generation.currentJob && generation.currentJob.status === "failed"));
     const discordModelReferences = computed(() => projectDiscordModelReferences(
@@ -47119,6 +48377,11 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
             } else {
               _push2(`<!---->`);
             }
+            if (unref(spatialNoOverlapTargetIds).length) {
+              _push2(`<section class="spatial-recovery" role="alert" data-v-dbe83228${_scopeId}><p data-v-dbe83228${_scopeId}>${ssrInterpolate(unref(t)("prompt.placement.inpaintNoOverlap"))}</p><div data-v-dbe83228${_scopeId}><button type="button" data-v-dbe83228${_scopeId}>${ssrInterpolate(unref(t)("prompt.placement.adjustNow"))}</button><button type="button" data-v-dbe83228${_scopeId}>${ssrInterpolate(unref(t)("prompt.placement.excludeThisRun"))}</button><button type="button" data-v-dbe83228${_scopeId}>${ssrInterpolate(unref(t)("prompt.placement.disable"))}</button><button type="button" data-v-dbe83228${_scopeId}>${ssrInterpolate(unref(t)("common.cancel"))}</button></div></section>`);
+            } else {
+              _push2(`<!---->`);
+            }
           } else {
             return [
               createVNode(TopStatusBar, {
@@ -47159,7 +48422,32 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 onCancel: unref(generation).stopGeneration,
                 onRetry: unref(generation).retryCurrentJob,
                 onPublishDiscord: publishGenerateSettingsToDiscord
-              }, null, 8, ["loading", "can-generate", "can-cancel", "can-retry", "auto-repeat", "repeat-active", "repeat-stop-requested", "repeat-count", "seed", "status", "mode", "size-label", "readiness-items", "disabled-reason", "can-publish-discord", "discord-publishing", "discord-published-revision", "discord-publish-error", "onGenerate", "onStopRepeat", "onCancel", "onRetry"])) : createCommentVNode("", true)
+              }, null, 8, ["loading", "can-generate", "can-cancel", "can-retry", "auto-repeat", "repeat-active", "repeat-stop-requested", "repeat-count", "seed", "status", "mode", "size-label", "readiness-items", "disabled-reason", "can-publish-discord", "discord-publishing", "discord-published-revision", "discord-publish-error", "onGenerate", "onStopRepeat", "onCancel", "onRetry"])) : createCommentVNode("", true),
+              unref(spatialNoOverlapTargetIds).length ? (openBlock(), createBlock("section", {
+                key: 1,
+                class: "spatial-recovery",
+                role: "alert"
+              }, [
+                createVNode("p", null, toDisplayString(unref(t)("prompt.placement.inpaintNoOverlap")), 1),
+                createVNode("div", null, [
+                  createVNode("button", {
+                    type: "button",
+                    onClick: adjustSpatialFailure
+                  }, toDisplayString(unref(t)("prompt.placement.adjustNow")), 1),
+                  createVNode("button", {
+                    type: "button",
+                    onClick: excludeSpatialFailure
+                  }, toDisplayString(unref(t)("prompt.placement.excludeThisRun")), 1),
+                  createVNode("button", {
+                    type: "button",
+                    onClick: disableSpatialFailure
+                  }, toDisplayString(unref(t)("prompt.placement.disable")), 1),
+                  createVNode("button", {
+                    type: "button",
+                    onClick: clearSpatialFailure
+                  }, toDisplayString(unref(t)("common.cancel")), 1)
+                ])
+              ])) : createCommentVNode("", true)
             ];
           }
         }),
@@ -47177,7 +48465,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
               _push2(`<!---->`);
             }
             if (unref(imageWorkspaceMounted)) {
-              _push2(`<div class="image-workspace-mount" style="${ssrRenderStyle(unref(activeWorkspace) === "image" ? null : { display: "none" })}" data-v-a05cedd0${_scopeId}>`);
+              _push2(`<div class="image-workspace-mount" style="${ssrRenderStyle(unref(activeWorkspace) === "image" ? null : { display: "none" })}" data-v-dbe83228${_scopeId}>`);
               _push2(ssrRenderComponent(ImageWorkspace, {
                 ref_key: "imageWorkspaceRef",
                 ref: imageWorkspaceRef,
@@ -47419,7 +48707,7 @@ _sfc_main$3.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/GenerateStudio.vue");
   return _sfc_setup$3 ? _sfc_setup$3(props, ctx) : void 0;
 };
-const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-a05cedd0"]]), { __name: "GenerateStudio" });
+const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-dbe83228"]]), { __name: "GenerateStudio" });
 const _sfc_main$2 = /* @__PURE__ */ defineComponent({
   __name: "app",
   __ssrInlineRender: true,

@@ -5,8 +5,12 @@ from pydantic import BaseModel, Field, model_validator
 
 from app.core.config import AppConfig
 from app.schemas.prompt_input import PromptInput
+from app.schemas.prompt_layout import PromptLayout
 from app.services import api_errors
-from app.services.prompt_input import PromptInputWarningCode, validate_prompt_input_pair
+from app.services.spatial_prompt_contract import (
+    SpatialPromptRecoveryStatus,
+    validate_spatial_prompt_contract,
+)
 from app.services.prompt_presets import PromptPreset, PromptPresetRepository
 
 router = APIRouter(prefix="/api/prompt-presets", tags=["prompt-presets"])
@@ -19,7 +23,9 @@ class PromptPresetItem(BaseModel):
     negative_prompt: str = ""
     tags: list[str] = Field(default_factory=list)
     prompt_input: PromptInput | None = None
-    warning_codes: list[PromptInputWarningCode] = Field(default_factory=list)
+    prompt_layout: PromptLayout | None = None
+    spatial_recovery_status: SpatialPromptRecoveryStatus = "ready"
+    warning_codes: list[str] = Field(default_factory=list)
 
 
 class PromptPresetListResponse(BaseModel):
@@ -32,11 +38,16 @@ class PromptPresetCreateRequest(BaseModel):
     negative_prompt: str = ""
     tags: list[str] = Field(default_factory=list)
     prompt_input: PromptInput | None = None
+    prompt_layout: PromptLayout | None = None
 
     @model_validator(mode="after")
     def validate_prompt_sections(self) -> "PromptPresetCreateRequest":
-        if self.prompt_input is not None:
-            validate_prompt_input_pair(self.prompt, self.prompt_input)
+        validate_spatial_prompt_contract(
+            self.prompt,
+            self.prompt_input,
+            self.prompt_layout,
+            "txt2img",
+        )
         return self
 
 
@@ -52,6 +63,8 @@ def _item(preset: PromptPreset) -> PromptPresetItem:
         negative_prompt=preset.negative_prompt,
         tags=list(preset.tags),
         prompt_input=preset.prompt_input,
+        prompt_layout=preset.prompt_layout,
+        spatial_recovery_status=preset.spatial_recovery_status,
         warning_codes=list(preset.warning_codes),
     )
 
@@ -72,6 +85,7 @@ def create_preset(request: PromptPresetCreateRequest) -> PromptPresetItem:
             request.negative_prompt,
             request.tags,
             request.prompt_input,
+            request.prompt_layout,
         )
     except OSError as exc:
         raise HTTPException(status_code=409, detail={"code": api_errors.PROMPT_PRESET_SAVE_FAILED}) from exc

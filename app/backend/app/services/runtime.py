@@ -33,6 +33,7 @@ from app.services.comfy_admission import (
     comfy_admission,
 )
 from app.services.comfy_model_paths import comfy_model_name
+from app.services.external_model_libraries import ExternalModelRoot
 from app.services.controlnet_preprocessor import (
     COMFY_CONTROLNET_PREPROCESSOR_NODES,
     ControlNetPreprocessorError,
@@ -54,6 +55,24 @@ from app.services.seed_resize import seed_resize_active
 from app.services.topaz import TopazSettings, process_topaz_image
 from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
 from app.services.prompt_syntax import PromptSyntaxError, PromptSyntaxPlan, prompt_syntax_plan_from_dict
+from app.schemas.spatial_prompt_runtime import (
+    SpatialMaskBundle,
+    SpatialModelProfileReceipt,
+    SpatialPromptPlan,
+)
+from app.services.spatial_conditioning_builder import (
+    SpatialConditioningBuilderError,
+    build_spatial_conditioning_bundle,
+    spatial_prompt_stage,
+)
+from app.services.spatial_prompt_mapping import (
+    SpatialPromptMappingError,
+    append_spatial_prompt_mapping,
+)
+from app.services.spatial_generation_context import (
+    SpatialGenerationContextError,
+    upload_spatial_runtime_masks,
+)
 from app.services.workflow_mapping import WorkflowMapping, WorkflowMappingRepository
 
 
@@ -166,13 +185,6 @@ CONTROLNET_UNION_TYPES: dict[str, str] = {
 
 def _is_union_controlnet_model(model: object) -> bool:
     return "union" in str(model or "").lower()
-
-
-def _regional_color_value(value: object) -> int:
-    normalized = str(value or "").strip().lstrip("#")
-    if not re.fullmatch(r"[0-9A-Fa-f]{6}", normalized):
-        raise RuntimeErrorResponse(f"Invalid Anima regional prompt color: {value}")
-    return int(normalized, 16)
 
 
 class ComfyClient:
@@ -438,9 +450,15 @@ class ComfyClient:
 
 
 class ComfyTxt2ImgWorkflowBuilder:
-    def __init__(self, mapping_dir: Path | None = None, model_root: Path | None = None) -> None:
+    def __init__(
+        self,
+        mapping_dir: Path | None = None,
+        model_root: Path | None = None,
+        external_roots: tuple[ExternalModelRoot, ...] = (),
+    ) -> None:
         self.mapping_repository = WorkflowMappingRepository(mapping_dir or AppConfig().mapping_dir)
         self.model_root = model_root
+        self.external_roots = external_roots
 
     def build(self, request: dict) -> dict:
         profile = request.get("profile")
@@ -660,6 +678,20 @@ class ComfyTxt2ImgWorkflowBuilder:
                 stage_settings=settings,
                 embeddings=request.get("embeddings", []),
             )
+        spatial_global = self._append_sdxl_spatial_global(
+            request=request,
+            stage="base",
+            workflow=workflow,
+            next_id=next_id,
+            mapping=mapping,
+            clip_ref=clip_ref,
+            model_ref=model_ref,
+            width=int(settings["width"]),
+            height=int(settings["height"]),
+            stage_settings=settings,
+        )
+        if spatial_global is not None:
+            positive_ref, next_id = spatial_global
         for unit in settings.get("controlnet_units", []):
             if not unit.get("enabled") or not unit.get("model") or not unit.get("image_path"):
                 continue
@@ -747,6 +779,23 @@ class ComfyTxt2ImgWorkflowBuilder:
             }
             positive_ref = [control_apply_node, 0]
             negative_ref = [control_apply_node, 1]
+        base_unpatched_model_ref = model_ref
+        spatial_base = self._append_sdxl_spatial_stage(
+            request=request,
+            stage="base",
+            workflow=workflow,
+            next_id=next_id,
+            mapping=mapping,
+            model_ref=base_unpatched_model_ref,
+            clip_ref=clip_ref,
+            global_ref=positive_ref,
+            negative_ref=negative_ref,
+            width=int(settings["width"]),
+            height=int(settings["height"]),
+            stage_settings=settings,
+        )
+        if spatial_base is not None:
+            model_ref, positive_ref, negative_ref, next_id = spatial_base
         refiner_checkpoint = _refiner_checkpoint_setting(settings)
         should_refine_base_stage = bool(refiner_checkpoint and not self._uses_comfy_hires(settings))
         sample_node = sampler_node
@@ -863,7 +912,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "inputs": {"pixels": upscale_ref, "vae": vae_ref},
                 }
                 hires_latent_ref = [encode_node, 0]
-            hires_model_ref = model_ref
+            hires_model_ref = base_unpatched_model_ref
             hires_clip_ref = clip_ref
             hires_vae_ref = vae_ref
             hires_checkpoint = _hires_checkpoint_setting(settings)
@@ -949,6 +998,36 @@ class ComfyTxt2ImgWorkflowBuilder:
                     stage_settings=hires_stage_settings,
                     embeddings=request.get("embeddings", []),
                 )
+            spatial_hires_global = self._append_sdxl_spatial_global(
+                request=request,
+                stage="hires",
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                clip_ref=hires_clip_ref,
+                model_ref=hires_model_ref,
+                width=hires_width,
+                height=hires_height,
+                stage_settings=hires_stage_settings,
+            )
+            if spatial_hires_global is not None:
+                positive_ref, next_id = spatial_hires_global
+            spatial_hires = self._append_sdxl_spatial_stage(
+                request=request,
+                stage="hires",
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                model_ref=hires_model_ref,
+                clip_ref=hires_clip_ref,
+                global_ref=positive_ref,
+                negative_ref=negative_ref,
+                width=hires_width,
+                height=hires_height,
+                stage_settings=hires_stage_settings,
+            )
+            if spatial_hires is not None:
+                hires_model_ref, positive_ref, negative_ref, next_id = spatial_hires
             sample_node = str(next_id)
             next_id += 1
             use_inspire_hires = bool(settings.get("use_inspire_ksampler", True))
@@ -1033,11 +1112,51 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "sampler": refiner_sampler,
                 "scheduler": refiner_scheduler,
             }
+            refiner_model_ref: list[str | int] = [refiner_checkpoint_node, 0]
+            refiner_positive_ref: list[str | int] = [refiner_positive_node, 0]
+            refiner_negative_ref: list[str | int] = [refiner_negative_node, 0]
+            spatial_refiner_global = self._append_sdxl_spatial_global(
+                request=request,
+                stage="refiner",
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                clip_ref=[refiner_checkpoint_node, 1],
+                model_ref=refiner_model_ref,
+                width=current_width,
+                height=current_height,
+                stage_settings=refiner_stage_settings,
+                refiner=True,
+            )
+            if spatial_refiner_global is not None:
+                refiner_positive_ref, next_id = spatial_refiner_global
+            spatial_refiner = self._append_sdxl_spatial_stage(
+                request=request,
+                stage="refiner",
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                model_ref=refiner_model_ref,
+                clip_ref=[refiner_checkpoint_node, 1],
+                global_ref=refiner_positive_ref,
+                negative_ref=refiner_negative_ref,
+                width=current_width,
+                height=current_height,
+                stage_settings=refiner_stage_settings,
+                refiner=True,
+            )
+            if spatial_refiner is not None:
+                (
+                    refiner_model_ref,
+                    refiner_positive_ref,
+                    refiner_negative_ref,
+                    next_id,
+                ) = spatial_refiner
             workflow[refiner_sample_node] = self._ksampler_advanced_node(
                 refiner_stage_settings,
-                [refiner_checkpoint_node, 0],
-                [refiner_positive_node, 0],
-                [refiner_negative_node, 0],
+                refiner_model_ref,
+                refiner_positive_ref,
+                refiner_negative_ref,
                 [sample_node, 0],
                 mapping,
                 start_at_step=self._refiner_switch_step(settings, refiner_steps),
@@ -1046,7 +1165,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 return_with_leftover_noise=False,
             )
             sample_node = refiner_sample_node
-            model_ref = [refiner_checkpoint_node, 0]
+            model_ref = refiner_model_ref
             clip_ref = [refiner_checkpoint_node, 1]
             settings["refiner_runtime"] = "sdxl_advanced_sampler"
 
@@ -1486,6 +1605,14 @@ class ComfyTxt2ImgWorkflowBuilder:
     def _build_anima(self, request: dict) -> dict:
         mapping = self._mapping("anima")
         settings = request["settings"]
+        if any(
+            isinstance(unit, dict) and bool(unit.get("regional_prompts"))
+            for unit in settings.get("anima_lllite_units", [])
+        ):
+            raise RuntimeErrorResponse(
+                "Legacy Anima regional prompts cannot be used for a new generation. "
+                "Open the prompt layout editor and import the saved regions first."
+            )
         model_slots = request.get("model_slots", {})
         diffusion_model = model_slots.get("diffusion_model")
         text_encoder = model_slots.get("text_encoder")
@@ -1495,9 +1622,13 @@ class ComfyTxt2ImgWorkflowBuilder:
             isinstance(bundle, dict)
             and bundle.get("variant_id") == "anima_3_8b_52"
         )
-        if is_anima_3_8b and settings.get("mode", "txt2img") != "txt2img":
+        if is_anima_3_8b and settings.get("mode", "txt2img") not in {
+            "txt2img",
+            "img2img",
+            "inpaint",
+        }:
             raise RuntimeErrorResponse(
-                "The verified Anima 3.8B workflow currently supports txt2img only."
+                "Anima 3.8B supports txt2img, img2img, and inpaint."
             )
         qwen35_text_encoder = model_slots.get("qwen35_text_encoder")
         progressive_adapter = model_slots.get("progressive_adapter")
@@ -1715,8 +1846,9 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "inputs": {"image": settings["init_image_path"]},
             }
             image_ref = [image_node, 0]
-            workflow[conditioning_node]["inputs"]["image"] = image_ref
-            workflow[negative_conditioning_node]["inputs"]["image"] = image_ref
+            if not is_anima_3_8b:
+                workflow[conditioning_node]["inputs"]["image"] = image_ref
+                workflow[negative_conditioning_node]["inputs"]["image"] = image_ref
             if settings.get("mode") == "inpaint":
                 mask_image = settings.get("mask_image_path")
                 if not mask_image:
@@ -1783,26 +1915,36 @@ class ComfyTxt2ImgWorkflowBuilder:
         else:
             workflow[conditioning_node]["inputs"]["clip"] = clip_ref
             workflow[negative_conditioning_node]["inputs"]["clip"] = clip_ref
-        regional_prompts: list[tuple[dict, dict, list[str | int]]] = []
         for unit in settings.get("anima_lllite_units", []):
             if not unit.get("enabled") or not unit.get("model") or not unit.get("image_path"):
                 continue
             image_node = str(next_id)
-            node_id = str(next_id + 1)
-            next_id += 2
+            next_id += 1
             workflow[image_node] = {
                 "class_type": mapping.class_type("load_image", "LoadImage"),
                 "inputs": {"image": unit["image_path"]},
             }
+            contract = settings.get("anima_lllite_runtime_contract", "model_patch")
             inputs = {
                 "model": model_ref,
-                "lllite_name": self._model_name(unit["model"], "controlnet"),
                 "image": [image_node, 0],
                 "strength": unit.get("strength", 1.0),
                 "start_percent": unit.get("guidance_start", 0.0),
                 "end_percent": unit.get("guidance_end", 0.45),
-                "preserve_wrapper": unit.get("preserve_wrapper", True),
             }
+            if contract == "legacy_direct":
+                inputs["lllite_name"] = self._model_name(unit["model"], "controlnet")
+                inputs["preserve_wrapper"] = unit.get("preserve_wrapper", True)
+            else:
+                loader_node = str(next_id)
+                next_id += 1
+                workflow[loader_node] = {
+                    "class_type": mapping.class_type("model_patch_loader", "ModelPatchLoader"),
+                    "inputs": {
+                        "name": self._model_name(unit["model"], "model_patches"),
+                    },
+                }
+                inputs["model_patch"] = [loader_node, 0]
             if unit.get("mask_image_path"):
                 mask_node = str(next_id)
                 next_id += 1
@@ -1811,6 +1953,8 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "inputs": {"image": unit["mask_image_path"]},
                 }
                 inputs["mask"] = [mask_node, 1]
+            node_id = str(next_id)
+            next_id += 1
             workflow[node_id] = {
                 "class_type": mapping.class_type("anima_lllite_apply", "AnimaLLLiteApply"),
                 "inputs": inputs,
@@ -1823,85 +1967,133 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "inputs": inputs | {"model": hires_model_ref},
                 }
                 hires_model_ref = [hires_node_id, 0]
-            for region in unit.get("regional_prompts", []):
-                if not isinstance(region, dict) or not str(region.get("prompt") or "").strip():
-                    continue
-                regional_prompts.append((unit, region, [image_node, 0]))
             unit["runtime"] = "comfy_workflow"
             model_ref = [node_id, 0]
-        if regional_prompts:
-            base_mask_node = str(next_id)
-            next_id += 1
-            workflow[base_mask_node] = {
-                "class_type": mapping.class_type("solid_mask", "SolidMask"),
-                "inputs": {
-                    "value": 1.0,
-                    "width": settings["width"],
-                    "height": settings["height"],
-                },
-            }
-            couple_inputs: dict[str, object] = {
-                "model": model_ref,
-                "base_cond": [conditioning_node, 0],
-                "base_mask": [base_mask_node, 0],
-            }
-            coupled_units: set[int] = set()
-            for index, (unit, region, image_ref) in enumerate(regional_prompts, start=1):
-                conditioning_id = str(next_id)
-                mask_id = str(next_id + 1)
-                next_id += 2
-                workflow[conditioning_id] = {
-                    "class_type": mapping.class_type("conditioning", "TextEncodeQwenImageEdit"),
+        base_unpatched_model_ref = model_ref
+        hires_unpatched_model_ref = hires_model_ref or model_ref
+        base_positive_ref: list[str | int] = [conditioning_node, 0]
+        base_negative_ref: list[str | int] = [negative_conditioning_node, 0]
+        spatial_base = self._append_anima_spatial_stage(
+            request=request,
+            stage="base",
+            workflow=workflow,
+            next_id=next_id,
+            mapping=mapping,
+            model_ref=base_unpatched_model_ref,
+            clip_ref=clip_ref,
+            vae_ref=[vae_node, 0],
+            negative_ref=base_negative_ref,
+            width=int(settings["width"]),
+            height=int(settings["height"]),
+            is_anima_3_8b=is_anima_3_8b,
+            qwen35_ref=[qwen35_loader_node, 0] if is_anima_3_8b else None,
+            progressive_adapter=(
+                self._model_name(progressive_adapter, "text_encoders")
+                if is_anima_3_8b and progressive_adapter
+                else None
+            ),
+            output_index=0,
+        )
+        if spatial_base is not None:
+            model_ref, base_positive_ref, base_negative_ref, next_id = spatial_base
+
+        hires_positive_ref: list[str | int] | None = None
+        hires_negative_ref: list[str | int] | None = None
+        if self._uses_comfy_hires(settings) and request.get("_spatial_runtime_context") is not None:
+            hires_payload = self._spatial_stage_payload(request, "hires")
+            if hires_payload is None:
+                raise RuntimeErrorResponse("Spatial Hires context is missing.")
+            hires_negative_prompt = settings.get("hires_negative_prompt") or request.get(
+                "negative_prompt", ""
+            )
+            hires_negative_node, next_id = self._allocate_prompt_node_id(
+                workflow, next_id
+            )
+            if is_anima_3_8b:
+                if negative_strength > 0:
+                    workflow[hires_negative_node] = {
+                        "class_type": mapping.class_type(
+                            "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                        ),
+                        "inputs": {
+                            "model": hires_unpatched_model_ref,
+                            "native_clip": clip_ref,
+                            "qwen35_clip": [qwen35_loader_node, 0],
+                            "adapter_name": self._model_name(
+                                progressive_adapter, "text_encoders"
+                            ),
+                            "prompt": hires_negative_prompt,
+                            "adapter_strength": negative_strength,
+                        },
+                    }
+                    hires_negative_ref = [hires_negative_node, 1]
+                else:
+                    workflow[hires_negative_node] = {
+                        "class_type": mapping.class_type(
+                            "native_text_encode", "CLIPTextEncode"
+                        ),
+                        "inputs": {"clip": clip_ref, "text": hires_negative_prompt},
+                    }
+                    hires_negative_ref = [hires_negative_node, 0]
+            else:
+                workflow[hires_negative_node] = {
+                    "class_type": mapping.class_type(
+                        "conditioning", "TextEncodeQwenImageEdit"
+                    ),
                     "inputs": {
                         "clip": clip_ref,
-                        "prompt": str(region["prompt"]).strip(),
+                        "prompt": hires_negative_prompt,
                         "vae": [vae_node, 0],
                     },
                 }
-                workflow[mask_id] = {
-                    "class_type": mapping.class_type("image_color_to_mask", "ImageColorToMask"),
-                    "inputs": {
-                        "image": image_ref,
-                        "color": _regional_color_value(region.get("color")),
-                    },
-                }
-                couple_inputs[f"cond_{index}"] = [conditioning_id, 0]
-                couple_inputs[f"mask_{index}"] = [mask_id, 0]
-                region["runtime"] = "attention_couple_ppm"
-                coupled_units.add(id(unit))
-            couple_node = str(next_id)
-            next_id += 1
-            workflow[couple_node] = {
-                "class_type": mapping.class_type("attention_couple", "AttentionCouplePPM"),
-                "inputs": couple_inputs,
-            }
-            hires_couple_node: str | None = None
-            if hires_model_ref is not None:
-                hires_couple_node = str(next_id)
-                next_id += 1
-                workflow[hires_couple_node] = {
-                    "class_type": mapping.class_type("attention_couple", "AttentionCouplePPM"),
-                    "inputs": couple_inputs | {"model": hires_model_ref},
-                }
-            for unit in settings.get("anima_lllite_units", []):
-                if id(unit) in coupled_units:
-                    unit["regional_prompt_runtime"] = "attention_couple_ppm"
-            model_ref = [couple_node, 0]
-            if hires_couple_node is not None:
-                hires_model_ref = [hires_couple_node, 0]
+                hires_negative_ref = [hires_negative_node, 0]
+            spatial_hires = self._append_anima_spatial_stage(
+                request=request,
+                stage="hires",
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                model_ref=hires_unpatched_model_ref,
+                clip_ref=clip_ref,
+                vae_ref=[vae_node, 0],
+                negative_ref=hires_negative_ref,
+                width=self._hires_target_dimensions(settings)[0],
+                height=self._hires_target_dimensions(settings)[1],
+                is_anima_3_8b=is_anima_3_8b,
+                qwen35_ref=[qwen35_loader_node, 0] if is_anima_3_8b else None,
+                progressive_adapter=(
+                    self._model_name(progressive_adapter, "text_encoders")
+                    if is_anima_3_8b and progressive_adapter
+                    else None
+                ),
+                output_index=1 if is_anima_3_8b else 0,
+            )
+            if spatial_hires is not None:
+                (
+                    hires_model_ref,
+                    hires_positive_ref,
+                    hires_negative_ref,
+                    next_id,
+                ) = spatial_hires
         workflow = self._build_custom_sampler_tail(
             workflow,
             settings,
             model_ref=model_ref,
-            conditioning_ref=[conditioning_node, 0],
-            negative_ref=[negative_conditioning_node, 0],
+            conditioning_ref=base_positive_ref,
+            negative_ref=base_negative_ref,
             hires_conditioning_ref=(
-                [conditioning_node, 1] if is_anima_3_8b else None
+                hires_positive_ref
+                if hires_positive_ref is not None
+                else ([conditioning_node, 1] if is_anima_3_8b else None)
             ),
             hires_negative_ref=(
-                [negative_conditioning_node, 1]
-                if is_anima_3_8b and negative_strength > 0
-                else None
+                hires_negative_ref
+                if hires_negative_ref is not None
+                else (
+                    [negative_conditioning_node, 1]
+                    if is_anima_3_8b and negative_strength > 0
+                    else None
+                )
             ),
             latent_ref=latent_ref,
             vae_ref=[vae_node, 0],
@@ -2314,15 +2506,28 @@ class ComfyTxt2ImgWorkflowBuilder:
         height: int,
         stage_settings: dict,
         embeddings: list[str],
+        refiner: bool = False,
     ) -> tuple[list[str | int], int]:
-        if plan is None or plan.operation == "identity":
-            workflow[preferred_node] = self._sdxl_conditioning_node(
-                self._comfy_prompt_text(fallback_text, embeddings),
+        def conditioning_node(text: str) -> dict:
+            normalized = self._comfy_prompt_text(text, embeddings)
+            if refiner:
+                return self._sdxl_refiner_conditioning_node(
+                    normalized,
+                    clip_ref,
+                    mapping,
+                    width,
+                    height,
+                )
+            return self._sdxl_conditioning_node(
+                normalized,
                 clip_ref,
                 mapping,
                 width,
                 height,
             )
+
+        if plan is None or plan.operation == "identity":
+            workflow[preferred_node] = conditioning_node(fallback_text)
             return [preferred_node, 0], next_id
 
         encoded_refs: list[list[str | int]] = []
@@ -2331,13 +2536,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 node_id = preferred_node
             else:
                 node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
-            workflow[node_id] = self._sdxl_conditioning_node(
-                self._comfy_prompt_text(segment.text, embeddings),
-                clip_ref,
-                mapping,
-                width,
-                height,
-            )
+            workflow[node_id] = conditioning_node(segment.text)
             encoded_refs.append([node_id, 0])
 
         if plan.operation == "token_weight":
@@ -2475,6 +2674,383 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "clip": clip_ref,
             },
         }
+
+    def _spatial_stage_payload(
+        self,
+        request: dict,
+        stage: str,
+    ) -> tuple[
+        SpatialPromptPlan,
+        SpatialMaskBundle,
+        SpatialModelProfileReceipt,
+        str,
+        dict[str, str],
+    ] | None:
+        context = request.get("_spatial_runtime_context")
+        if context is None:
+            return None
+        try:
+            if (
+                not isinstance(context, dict)
+                or context.get("schema_version")
+                != "asteria.spatial-workflow-context.v1"
+            ):
+                raise ValueError("context")
+            prompt_plan = SpatialPromptPlan.model_validate(context["prompt_plan"])
+            if prompt_plan.profile_id != request.get("profile"):
+                raise ValueError("profile")
+            stages = context["stages"]
+            if not isinstance(stages, dict):
+                raise ValueError("stages")
+            stage_payload = stages[stage]
+            if not isinstance(stage_payload, dict):
+                raise ValueError("stage")
+            mask_bundle = SpatialMaskBundle.model_validate(stage_payload["mask_bundle"])
+            profile_receipt = SpatialModelProfileReceipt.model_validate(
+                stage_payload["profile_receipt"]
+            )
+            compatible_model_families = {
+                "sdxl": {"sdxl", "illustrious"},
+                "anima": {"anima"},
+            }.get(prompt_plan.profile_id, {prompt_plan.profile_id})
+            if profile_receipt.model_family not in compatible_model_families:
+                raise ValueError("profile_receipt")
+            profile_json = stage_payload["profile_json"]
+            mask_paths = stage_payload["mask_paths"]
+            if not isinstance(profile_json, str) or not isinstance(mask_paths, dict):
+                raise ValueError("payload")
+            normalized_paths = {
+                target_id: path
+                for target_id, path in mask_paths.items()
+                if isinstance(target_id, str)
+                and isinstance(path, str)
+                and path.strip()
+            }
+            if len(normalized_paths) != len(mask_paths):
+                raise ValueError("mask_paths")
+            spatial_prompt_stage(prompt_plan, stage)
+        except (KeyError, TypeError, ValueError, SpatialConditioningBuilderError) as error:
+            raise RuntimeErrorResponse(
+                f"Invalid internal spatial runtime context for {stage}."
+            ) from error
+        return prompt_plan, mask_bundle, profile_receipt, profile_json, normalized_paths
+
+    def _append_spatial_mask_loaders(
+        self,
+        *,
+        workflow: dict[str, dict],
+        next_id: int,
+        mask_paths: dict[str, str],
+        mapping: WorkflowMapping,
+    ) -> tuple[dict[str, list[str | int]], int]:
+        mask_refs: dict[str, list[str | int]] = {}
+        for target_id, mask_path in mask_paths.items():
+            node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node_id] = {
+                "class_type": mapping.class_type("load_image", "LoadImage"),
+                "inputs": {"image": mask_path},
+            }
+            mask_refs[target_id] = [node_id, 1]
+        return mask_refs, next_id
+
+    @staticmethod
+    def _spatial_combined_prompt(global_prompt: str, target_prompt: str) -> str:
+        return "\n".join(
+            value.strip() for value in (global_prompt, target_prompt) if value.strip()
+        )
+
+    def _append_sdxl_spatial_stage(
+        self,
+        *,
+        request: dict,
+        stage: str,
+        workflow: dict[str, dict],
+        next_id: int,
+        mapping: WorkflowMapping,
+        model_ref: list[str | int],
+        clip_ref: list[str | int],
+        global_ref: list[str | int],
+        negative_ref: list[str | int],
+        width: int,
+        height: int,
+        stage_settings: dict,
+        refiner: bool = False,
+    ) -> tuple[list[str | int], list[str | int], list[str | int], int] | None:
+        payload = self._spatial_stage_payload(request, stage)
+        if payload is None:
+            return None
+        prompt_plan, mask_bundle, profile_receipt, profile_json, mask_paths = payload
+        if mask_bundle.width != width or mask_bundle.height != height:
+            raise RuntimeErrorResponse(
+                f"Spatial {stage} mask dimensions do not match the generation stage."
+            )
+        stage_plan = spatial_prompt_stage(prompt_plan, stage)
+        target_refs: dict[str, list[str | int]] = {}
+        for fragment in stage_plan.target_fragments:
+            preferred_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            try:
+                syntax_plan = prompt_syntax_plan_from_dict(
+                    fragment.syntax_plan.model_dump(mode="json")
+                )
+            except PromptSyntaxError as error:
+                raise RuntimeErrorResponse(
+                    f"Spatial prompt syntax plan is invalid: {error.code}"
+                ) from error
+            target_only_ref, next_id = self._append_sdxl_prompt_conditioning(
+                workflow=workflow,
+                next_id=next_id,
+                preferred_node=preferred_node,
+                plan=syntax_plan,
+                fallback_text=fragment.expanded_prompt,
+                clip_ref=clip_ref,
+                model_ref=model_ref,
+                mapping=mapping,
+                width=width,
+                height=height,
+                stage_settings=stage_settings,
+                embeddings=list(fragment.embeddings),
+                refiner=refiner,
+            )
+            combine_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[combine_node] = {
+                "class_type": mapping.class_type(
+                    "conditioning_combine", "ConditioningCombine"
+                ),
+                "inputs": {
+                    "conditioning_1": global_ref,
+                    "conditioning_2": target_only_ref,
+                },
+            }
+            if fragment.target_id is None:
+                raise RuntimeErrorResponse("Spatial prompt target id is missing.")
+            target_refs[fragment.target_id] = [combine_node, 0]
+        mask_refs, next_id = self._append_spatial_mask_loaders(
+            workflow=workflow,
+            next_id=next_id,
+            mask_paths=mask_paths,
+            mapping=mapping,
+        )
+        try:
+            bundle = build_spatial_conditioning_bundle(
+                prompt_plan=prompt_plan,
+                mask_bundle=mask_bundle,
+                profile_receipt=profile_receipt,
+                stage=stage,
+                encoder_id=(
+                    mapping.class_type(
+                        "clip_text_encode_sdxl_refiner", "CLIPTextEncodeSDXLRefiner"
+                    )
+                    if refiner
+                    else mapping.class_type(
+                        "clip_text_encode_sdxl", "CLIPTextEncodeSDXL"
+                    )
+                ),
+                global_conditioning_ref=global_ref,
+                negative_conditioning_ref=negative_ref,
+                target_conditioning_refs=target_refs,
+            )
+            mapped = append_spatial_prompt_mapping(
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                model_ref=model_ref,
+                conditioning_bundle=bundle,
+                mask_bundle=mask_bundle,
+                mask_refs=mask_refs,
+                profile_json=profile_json,
+            )
+        except (SpatialConditioningBuilderError, SpatialPromptMappingError) as error:
+            raise RuntimeErrorResponse(
+                f"Spatial prompt workflow mapping failed: {error}"
+            ) from error
+        return mapped.model_ref, mapped.positive_ref, mapped.negative_ref, mapped.next_id
+
+    def _append_sdxl_spatial_global(
+        self,
+        *,
+        request: dict,
+        stage: str,
+        workflow: dict[str, dict],
+        next_id: int,
+        mapping: WorkflowMapping,
+        clip_ref: list[str | int],
+        model_ref: list[str | int],
+        width: int,
+        height: int,
+        stage_settings: dict,
+        refiner: bool = False,
+    ) -> tuple[list[str | int], int] | None:
+        payload = self._spatial_stage_payload(request, stage)
+        if payload is None:
+            return None
+        stage_plan = spatial_prompt_stage(payload[0], stage)
+        try:
+            syntax_plan = prompt_syntax_plan_from_dict(
+                stage_plan.global_fragment.syntax_plan.model_dump(mode="json")
+            )
+        except PromptSyntaxError as error:
+            raise RuntimeErrorResponse(
+                f"Spatial global prompt syntax plan is invalid: {error.code}"
+            ) from error
+        preferred_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+        return self._append_sdxl_prompt_conditioning(
+            workflow=workflow,
+            next_id=next_id,
+            preferred_node=preferred_node,
+            plan=syntax_plan,
+            fallback_text=stage_plan.global_fragment.expanded_prompt,
+            clip_ref=clip_ref,
+            model_ref=model_ref,
+            mapping=mapping,
+            width=width,
+            height=height,
+            stage_settings=stage_settings,
+            embeddings=list(stage_plan.global_fragment.embeddings),
+            refiner=refiner,
+        )
+
+    def _append_anima_spatial_stage(
+        self,
+        *,
+        request: dict,
+        stage: str,
+        workflow: dict[str, dict],
+        next_id: int,
+        mapping: WorkflowMapping,
+        model_ref: list[str | int],
+        clip_ref: list[str | int],
+        vae_ref: list[str | int],
+        negative_ref: list[str | int],
+        width: int,
+        height: int,
+        is_anima_3_8b: bool,
+        qwen35_ref: list[str | int] | None = None,
+        progressive_adapter: str | None = None,
+        output_index: int = 0,
+    ) -> tuple[list[str | int], list[str | int], list[str | int], int] | None:
+        payload = self._spatial_stage_payload(request, stage)
+        if payload is None:
+            return None
+        prompt_plan, mask_bundle, profile_receipt, profile_json, mask_paths = payload
+        if mask_bundle.width != width or mask_bundle.height != height:
+            raise RuntimeErrorResponse(
+                f"Spatial {stage} mask dimensions do not match the generation stage."
+            )
+        stage_plan = spatial_prompt_stage(prompt_plan, stage)
+        global_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+        if is_anima_3_8b:
+            if qwen35_ref is None or not progressive_adapter:
+                raise RuntimeErrorResponse(
+                    "Anima 3.8B spatial prompt encoder inputs are incomplete."
+                )
+            workflow[global_node] = {
+                "class_type": mapping.class_type(
+                    "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                ),
+                "inputs": {
+                    "model": model_ref,
+                    "native_clip": clip_ref,
+                    "qwen35_clip": qwen35_ref,
+                    "adapter_name": progressive_adapter,
+                    "prompt": stage_plan.global_fragment.expanded_prompt,
+                    "adapter_strength": request["settings"].get(
+                        "anima_qwen35_adapter_strength", 1.0
+                    ),
+                },
+            }
+        else:
+            workflow[global_node] = {
+                "class_type": mapping.class_type(
+                    "conditioning", "TextEncodeQwenImageEdit"
+                ),
+                "inputs": {
+                    "clip": clip_ref,
+                    "prompt": stage_plan.global_fragment.expanded_prompt,
+                    "vae": vae_ref,
+                },
+            }
+        global_ref: list[str | int] = [global_node, output_index]
+        target_refs: dict[str, list[str | int]] = {}
+        for fragment in stage_plan.target_fragments:
+            node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            prompt = self._spatial_combined_prompt(
+                stage_plan.global_fragment.expanded_prompt,
+                fragment.expanded_prompt,
+            )
+            if is_anima_3_8b:
+                if qwen35_ref is None or not progressive_adapter:
+                    raise RuntimeErrorResponse(
+                        "Anima 3.8B spatial prompt encoder inputs are incomplete."
+                    )
+                workflow[node_id] = {
+                    "class_type": mapping.class_type(
+                        "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                    ),
+                    "inputs": {
+                        "model": model_ref,
+                        "native_clip": clip_ref,
+                        "qwen35_clip": qwen35_ref,
+                        "adapter_name": progressive_adapter,
+                        "prompt": prompt,
+                        "adapter_strength": request["settings"].get(
+                            "anima_qwen35_adapter_strength", 1.0
+                        ),
+                    },
+                }
+            else:
+                workflow[node_id] = {
+                    "class_type": mapping.class_type(
+                        "conditioning", "TextEncodeQwenImageEdit"
+                    ),
+                    "inputs": {
+                        "clip": clip_ref,
+                        "prompt": prompt,
+                        "vae": vae_ref,
+                    },
+                }
+            if fragment.target_id is None:
+                raise RuntimeErrorResponse("Spatial prompt target id is missing.")
+            target_refs[fragment.target_id] = [node_id, output_index]
+        mask_refs, next_id = self._append_spatial_mask_loaders(
+            workflow=workflow,
+            next_id=next_id,
+            mask_paths=mask_paths,
+            mapping=mapping,
+        )
+        try:
+            bundle = build_spatial_conditioning_bundle(
+                prompt_plan=prompt_plan,
+                mask_bundle=mask_bundle,
+                profile_receipt=profile_receipt,
+                stage=stage,
+                encoder_id=(
+                    mapping.class_type(
+                        "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                    )
+                    if is_anima_3_8b
+                    else mapping.class_type(
+                        "conditioning", "TextEncodeQwenImageEdit"
+                    )
+                ),
+                global_conditioning_ref=global_ref,
+                negative_conditioning_ref=negative_ref,
+                target_conditioning_refs=target_refs,
+            )
+            mapped = append_spatial_prompt_mapping(
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                model_ref=model_ref,
+                conditioning_bundle=bundle,
+                mask_bundle=mask_bundle,
+                mask_refs=mask_refs,
+                profile_json=profile_json,
+            )
+        except (SpatialConditioningBuilderError, SpatialPromptMappingError) as error:
+            raise RuntimeErrorResponse(
+                f"Spatial prompt workflow mapping failed: {error}"
+            ) from error
+        return mapped.model_ref, mapped.positive_ref, mapped.negative_ref, mapped.next_id
 
     def _uses_comfy_hires(self, settings: dict) -> bool:
         if not settings.get("hires_enabled"):
@@ -2798,7 +3374,12 @@ class ComfyTxt2ImgWorkflowBuilder:
         return int(float(value) / step + 0.5) * step
 
     def _model_name(self, value: str, model_dir_name: str) -> str:
-        return comfy_model_name(value, model_dir_name, model_root=self.model_root)
+        return comfy_model_name(
+            value,
+            model_dir_name,
+            model_root=self.model_root,
+            external_roots=self.external_roots,
+        )
 
     def _comfy_prompt_text(self, text: str, embeddings: list[str]) -> str:
         result = text
@@ -3062,6 +3643,7 @@ class ComfyGenerationRuntime:
         client: ComfyClient,
         workflow_builder: ComfyTxt2ImgWorkflowBuilder | None = None,
         model_root: Path | None = None,
+        external_roots: tuple[ExternalModelRoot, ...] = (),
         comfy_output_dir: Path | None = None,
         topaz_executable: Path | None = None,
         topaz_processor: Callable[..., dict[str, str | list[str]]] = process_topaz_image,
@@ -3069,7 +3651,10 @@ class ComfyGenerationRuntime:
         admission_timeout_seconds: float | None = 30.0,
     ) -> None:
         self.client = client
-        self.workflow_builder = workflow_builder or ComfyTxt2ImgWorkflowBuilder(model_root=model_root)
+        self.workflow_builder = workflow_builder or ComfyTxt2ImgWorkflowBuilder(
+            model_root=model_root,
+            external_roots=external_roots,
+        )
         self.comfy_output_dir = Path(comfy_output_dir) if comfy_output_dir else None
         self.topaz_executable = topaz_executable
         self.topaz_processor = topaz_processor
@@ -3084,6 +3669,7 @@ class ComfyGenerationRuntime:
         request.setdefault("settings", {})["mode"] = "txt2img"
         self._ensure_controlnet_mode_runtime(request)
         self._apply_runtime_node_fallbacks(request)
+        self._prepare_spatial_runtime_masks(request)
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
         return self._generate(request, output_dir)
@@ -3097,6 +3683,7 @@ class ComfyGenerationRuntime:
         self._ensure_controlnet_mode_runtime(request)
         self._apply_runtime_node_fallbacks(request)
         self._prepare_init_image(request)
+        self._prepare_spatial_runtime_masks(request)
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
         return self._generate(request, output_dir)
@@ -3118,6 +3705,7 @@ class ComfyGenerationRuntime:
         else:
             self._prepare_init_image(request)
             self._prepare_mask_image(request)
+        self._prepare_spatial_runtime_masks(request)
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
         result = self._generate(request, output_dir)
@@ -3956,6 +4544,22 @@ class ComfyGenerationRuntime:
         settings["height"] = effective_height
         settings["source_init_image_path"] = str(path)
         settings["init_image_path"] = self.client.upload_image(path)
+
+    def _prepare_spatial_runtime_masks(self, request: dict) -> None:
+        context = request.get("_spatial_runtime_context")
+        if context is None:
+            return
+        if isinstance(context, dict) and context.get("mask_transport") == "comfy_upload":
+            return
+        try:
+            uploaded = upload_spatial_runtime_masks(
+                context,
+                upload=self.client.upload_image,
+            )
+        except SpatialGenerationContextError as exc:
+            raise RuntimeErrorResponse(exc.code) from exc
+        uploaded["mask_transport"] = "comfy_upload"
+        request["_spatial_runtime_context"] = uploaded
 
     def _prepare_mask_image(self, request: dict) -> None:
         if request.get("profile") not in {"sdxl", "anima", "flux1", "flux2"}:

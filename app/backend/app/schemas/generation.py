@@ -1,6 +1,6 @@
 import hashlib
 import json
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -8,9 +8,10 @@ from app.schemas.common import LoraSelection
 from app.schemas.image_edit import ImageEditLineage
 from app.schemas.media import MediaArtifact, MediaKind
 from app.schemas.prompt_input import PromptInput
+from app.schemas.prompt_layout import PromptLayout
 from app.schemas.remaster import PrimaryOutput, RemasterResponse, RemasterSettingsInput
 from app.services.controlnet_mode import ControlNetMode
-from app.services.prompt_input import validate_prompt_input_pair
+from app.services.spatial_prompt_contract import validate_spatial_prompt_contract
 
 
 class AdvancedStyleSelection(BaseModel):
@@ -181,10 +182,13 @@ def _prompt_record_sha256(payload: dict[str, Any]) -> str:
 
 
 class Txt2ImgRequest(BaseModel):
+    _spatial_generation_mode: ClassVar[Literal["txt2img", "img2img", "inpaint"]] = "txt2img"
+
     profile: str = "sdxl"
     runtime: str | None = None
     prompt: str = Field(min_length=1)
     prompt_input: PromptInput | None = None
+    prompt_layout: PromptLayout | None = None
     negative_prompt: str = ""
     steps: int = Field(default=30, ge=1, le=150)
     cfg_scale: float = Field(default=6.5, ge=1, le=30)
@@ -248,18 +252,34 @@ class Txt2ImgRequest(BaseModel):
     def apply_profile_scheduler_default(cls, data):
         if not isinstance(data, dict):
             return data
+        unknown_spatial_fields = {
+            key
+            for key in data
+            if key not in cls.model_fields
+            and isinstance(key, str)
+            and (key.startswith("prompt_lay") or key.startswith("spatial_"))
+        }
+        if unknown_spatial_fields:
+            fields = ", ".join(sorted(unknown_spatial_fields))
+            raise ValueError(f"unknown spatial generation field: {fields}")
         if data.get("profile", "sdxl") == "flux2" and "scheduler" not in data:
             return {**data, "scheduler": "Flux2"}
         return data
 
     @model_validator(mode="after")
     def validate_prompt_input_contract(self):
-        if self.prompt_input is not None:
-            validate_prompt_input_pair(self.prompt, self.prompt_input)
+        validate_spatial_prompt_contract(
+            self.prompt,
+            self.prompt_input,
+            self.prompt_layout,
+            self._spatial_generation_mode,
+        )
         return self
 
 
 class Img2ImgRequest(Txt2ImgRequest):
+    _spatial_generation_mode: ClassVar[Literal["img2img"]] = "img2img"
+
     hires_enabled: bool = False
     init_image_path: str = Field(min_length=1)
     denoising_strength: float = Field(default=0.55, ge=0, le=1)
@@ -273,6 +293,8 @@ class Img2ImgRequest(Txt2ImgRequest):
 
 
 class InpaintRequest(Img2ImgRequest):
+    _spatial_generation_mode: ClassVar[Literal["inpaint"]] = "inpaint"
+
     mask_image_path: str = Field(min_length=1)
     mask_blur: int = Field(default=4, ge=0, le=64)
     masked_content: str = "original"

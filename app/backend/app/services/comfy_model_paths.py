@@ -32,6 +32,10 @@ COMFY_MODEL_PATH_DIRECTORIES: dict[str, tuple[str, ...]] = {
     "loras": MODEL_TYPE_DIRECTORIES["lora"],
     "embeddings": MODEL_TYPE_DIRECTORIES["embedding"],
     "controlnet": MODEL_TYPE_DIRECTORIES["controlnet"],
+    # Current ComfyUI loads Anima LLLite through ModelPatchLoader. Keep the
+    # existing ControlNet library layout available to that standard loader so
+    # users do not have to move already installed models.
+    "model_patches": MODEL_TYPE_DIRECTORIES["controlnet"],
     "ultralytics_bbox": _DETAILER_BBOX_DIRECTORIES,
     "ultralytics_segm": _DETAILER_SEGM_DIRECTORIES,
     "upscale_models": MODEL_TYPE_DIRECTORIES["upscaler"],
@@ -45,7 +49,7 @@ _EXTERNAL_COMFY_KEYS: dict[str, tuple[str, ...]] = {
     "tokenizer": ("tokenizers", "tokenizer"),
     "lora": ("loras",),
     "embedding": ("embeddings",),
-    "controlnet": ("controlnet",),
+    "controlnet": ("controlnet", "model_patches"),
     "upscaler": ("upscale_models",),
 }
 

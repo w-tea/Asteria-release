@@ -26,14 +26,13 @@ _MANDATORY_RUNTIME_IDS = {
     "asteria-h3-latent-assembly",
     "asteria-anima-lora-remap",
     "asteria-qwen2d-vae",
+    "asteria-spatial-prompt",
     "comfyui-anima-3-8b",
     "comfyui-impact-pack",
     "comfyui-impact-subpack",
     "comfyui-controlnet-aux",
     "comfyui-inspire-pack",
     "comfyui-advanced-controlnet",
-    "comfyui-anima-lllite",
-    "comfyui-ppm",
     "comfyui-h3-motion-context",
     "comfyui-mmh3-ultimate-upscale",
 }
@@ -342,6 +341,10 @@ def _validate_runtime_catalog_item(item: object) -> None:
             "asteria-qwen2d-vae": (
                 "runtime-components/comfyui/Asteria-Qwen2D-VAE",
                 "asteria.qwen2d_vae.v1",
+            ),
+            "asteria-spatial-prompt": (
+                "runtime-components/comfyui/Asteria-Spatial-Prompt",
+                "asteria.spatial-prompt.node.v1",
             ),
         }
         expected = bundled_contracts.get(getattr(item, "id", None))
