@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "c6a5bcfee2585768d4be058f7ed5b72534ed75ea",
-  "build_timestamp_utc": "2026-08-29T17:22:55Z",
+  "source_commit": "b461f44893e54a73d91484d5bffe1b0fd27abea7",
+  "build_timestamp_utc": "2026-08-29T17:44:16Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -1247,29 +1247,29 @@
       "sha256": "7dc00e00c0b113ab1a0020779d96b49c7cd0caf52f769507a3d7fafeb3d25104"
     },
     {
-      "path": "app/frontend/public/_nuxt/BZWL-uvW.js",
+      "path": "app/frontend/public/_nuxt/C2xqBVOp.js",
+      "size_bytes": 1979716,
+      "sha256": "def7a86dccdfcceadc04c85169fcf5929db2cfce7a324c83a540d818a3d332ce"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/Ca8_sl_9.js",
       "size_bytes": 9504,
-      "sha256": "08e2d860fbd9a2cbb12979500a7251fb0353c5b2e22f2c88692af2bcabfb05dd"
+      "sha256": "218f024373000bdcb26004aaa02361b232151181bd146de63f2983fb44a60d19"
     },
     {
-      "path": "app/frontend/public/_nuxt/D-QrKgQm.js",
+      "path": "app/frontend/public/_nuxt/DLn4Y4Re.js",
       "size_bytes": 3451,
-      "sha256": "662616392b5f00d487a810a7ce09b3c0ed1606ff20abe0f80eb7c6d2bdf382d7"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/G3i54R5Z.js",
-      "size_bytes": 1979653,
-      "sha256": "fb0f22e874dc14150c241da0497851729f539bdb0fba0b4b222b5415ef245ce7"
+      "sha256": "912671854e990197e85ca4a627cbf07755b4c7cfe9668e1e7166f343b6e65d39"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "bc26e651fc2c42898137fb98644d8112ccb3ca23ccf18ecaf0e8781a82946e23"
+      "sha256": "f09f8d9302194b88865038b62c5ad16b29898bd99af20170118c9a5fe807b4ce"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/a4030e04-f75d-441e-932c-363797cc9c77.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/5325602a-c1a3-4c2b-a45c-df3aa026c615.json",
       "size_bytes": 88,
-      "sha256": "b818cd059b6b191de533005932a2dcde0536a6e32bebac7b1efa1d956bda5594"
+      "sha256": "e0306d90165f262378b287dc01130234d5021789b5b64272a769b5a118bff61e"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.DyG7CnJH.css",
@@ -1314,7 +1314,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "ac0a135b533431030d4af0cb16f97d1e63f344b42be0d5680d5f2ce854b58b04"
+      "sha256": "e4b83c54e9f04edbf9a5cc775a919e956af7a9e3a5b2b56b19cd025598df07db"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.NLK6jfRQ.mjs",
@@ -1989,7 +1989,7 @@
     {
       "path": "app/frontend/server/chunks/build/client.precomputed.mjs",
       "size_bytes": 2916,
-      "sha256": "9d2982acb42719696c587210134d88da22582646935146f582301d210607e3fe"
+      "sha256": "97b4980e991dd2320f46bf8cde1f1a73e1224f535a6cb61c9bfd5cbf701b8320"
     },
     {
       "path": "app/frontend/server/chunks/build/error-404-DXgHoesY.mjs",
@@ -2013,13 +2013,13 @@
     },
     {
       "path": "app/frontend/server/chunks/build/server.mjs",
-      "size_bytes": 3187899,
-      "sha256": "6bbd30d1f83631daf928f79b53054e271c0266aaebea157e51acd34920082f56"
+      "size_bytes": 3188005,
+      "sha256": "085a7676e7112eb32d9d3483c7c27437b02c2c2b6b8bbe1505cb19f38ecb5186"
     },
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 18376,
-      "sha256": "cb5aedab3b8e2a5ae60ceffa5110cb49a374007870a1184a647fae80ed2b19b6"
+      "sha256": "bebe4fd030141d243414392e6e8cfa68fa05dd5d1894539fd1c78c96c2bab508"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",

@@ -9544,11 +9544,13 @@ const useGenerationStore = defineStore("generation", {
       current.order = target.order;
       target.order = currentOrder;
       this.promptSections = ordered.sort((left, right) => left.order - right.order);
-      this.prompt = combinePromptSections(this.promptSections);
       this.promptInputNotice = "";
-      if (this.spatialPromptInput?.sections) {
+      if (this.spatialPromptInput?.mode === "sections") {
         const orderById = new Map(this.promptSections.map((section) => [section.id, section.order]));
         this.spatialPromptInput.sections = this.spatialPromptInput.sections.map((section) => ({ ...section, order: orderById.get(section.id) ?? section.order })).sort((left, right) => left.order - right.order);
+        this.prompt = combinePromptInputV2(this.spatialPromptInput.sections);
+      } else {
+        this.prompt = combinePromptSections(this.promptSections);
       }
       this.promptStructureRevision += 1;
     },
