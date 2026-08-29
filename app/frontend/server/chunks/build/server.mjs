@@ -2827,7 +2827,7 @@ const messages = {
   "prompt.sections.invalidFallback": { en: "The sectioned prompt data could not be read. The full prompt was restored to the single prompt field.", ja: "項目別の入力情報を読み込めませんでした。プロンプト全文を「まとめて入力」へ戻しました。" },
   "prompt.sections.mismatchFallback": { en: "The sectioned prompt data did not match the full prompt. The full prompt was restored to the single prompt field.", ja: "項目別の入力情報と全文が一致しませんでした。プロンプト全文を「まとめて入力」へ戻しました。" },
   "prompt.sections.allEmpty": { en: "The prompt is empty. Enter text in at least one section.", ja: "プロンプトが空です。いずれかの欄へ入力してください。" },
-  "prompt.sections.targetEditing": { en: "Edit each target and its position in the placement screen.", ja: "対象ごとの文章と位置は、配置画面で編集します。" },
+  "prompt.sections.targetEditing": { en: "Edit additional target prompts and all positions in the placement screen.", ja: "追加した対象の文章と、すべての位置は配置画面で編集します。" },
   "prompt.placement.open": { en: "Set placement", ja: "配置を設定" },
   "prompt.placement.change": { en: "Edit placement", ja: "配置を変更" },
   "prompt.placement.summary": { en: "{count} targets placed", ja: "対象{count}件を配置" },
@@ -6819,8 +6819,23 @@ const promptInputV2EditorSections = (sections) => sections.map((section) => ({
   id: section.id,
   label: section.label,
   order: section.order,
-  text: promptSectionV2Text(section)
+  text: section.content.mode === "global" ? section.content.text : [...section.content.targets].sort((left, right) => left.order - right.order)[0]?.text ?? ""
 }));
+const promptTargetDisplayNumbers = (sections) => {
+  const numbers = {};
+  const additionalTargetIds = [];
+  for (const section of [...sections].sort((left, right) => left.order - right.order)) {
+    if (section.content.mode !== "targets") continue;
+    const targets = [...section.content.targets].sort((left, right) => left.order - right.order);
+    const primary = targets.shift();
+    if (primary) numbers[primary.id] = section.order + 1;
+    additionalTargetIds.push(...targets.map((target) => target.id));
+  }
+  additionalTargetIds.forEach((targetId, index) => {
+    numbers[targetId] = PROMPT_SECTION_IDS.length + index + 1;
+  });
+  return numbers;
+};
 const cloneTransition = (transition) => transition ? {
   sections: clonePromptSections(transition.sections),
   sourceCombinedPrompt: transition.sourceCombinedPrompt,
@@ -9474,10 +9489,13 @@ const useGenerationStore = defineStore("generation", {
       const spatialSection = this.spatialPromptInput?.sections?.find((item) => item.id === id);
       if (spatialSection?.content.mode === "global") {
         spatialSection.content.text = text;
+      } else if (spatialSection?.content.mode === "targets") {
+        const primaryTarget = [...spatialSection.content.targets].sort((left, right) => left.order - right.order)[0];
+        if (primaryTarget) primaryTarget.text = text;
       }
       this.promptInputNotice = "";
       if (this.promptInputMode === "sections") {
-        this.prompt = combinePromptSections(this.promptSections);
+        this.prompt = this.spatialPromptInput?.mode === "sections" ? combinePromptInputV2(this.spatialPromptInput.sections ?? []) : combinePromptSections(this.promptSections);
       }
       this.promptStructureRevision += 1;
     },
@@ -9500,9 +9518,18 @@ const useGenerationStore = defineStore("generation", {
     setPromptSectionLabel(id, label) {
       const section = this.promptSections.find((item) => item.id === id);
       if (!section) return;
+      const previousLabel = section.label;
       section.label = label;
       const spatialSection = this.spatialPromptInput?.sections?.find((item) => item.id === id);
-      if (spatialSection) spatialSection.label = label;
+      if (spatialSection) {
+        spatialSection.label = label;
+        if (spatialSection.content.mode === "targets") {
+          const primaryTarget = [...spatialSection.content.targets].sort((left, right) => left.order - right.order)[0];
+          if (primaryTarget && (primaryTarget.name === previousLabel || /^(?:対象\d+|Target \d+)$/.test(primaryTarget.name))) {
+            primaryTarget.name = label;
+          }
+        }
+      }
       this.promptInputNotice = "";
       this.promptStructureRevision += 1;
     },
@@ -9581,12 +9608,22 @@ const useGenerationStore = defineStore("generation", {
         mode: "sections",
         sections: promptSectionsToV2(this.promptSections)
       };
-      return createPlacementDraft({
+      const sectionLabel = this.promptSections.find((section) => section.id === sectionId)?.label ?? sectionId;
+      const draft = createPlacementDraft({
         promptInput,
         promptLayout: this.promptLayout ? cloneStoreState(this.promptLayout) : null,
         sectionId,
+        targetName: sectionLabel,
         canvas: { width: this.width, height: this.height }
       });
+      const draftSection = draft.promptInput.sections?.find((section) => section.id === sectionId);
+      if (draftSection?.content.mode === "targets") {
+        const primaryTarget = [...draftSection.content.targets].sort((left, right) => left.order - right.order)[0];
+        if (primaryTarget && /^(?:対象\d+|Target \d+)$/.test(primaryTarget.name)) {
+          primaryTarget.name = sectionLabel;
+        }
+      }
+      return draft;
     },
     applyPromptPlacement(promptInput, promptLayout) {
       const prompt = combinePromptInputV2(promptInput.sections ?? []);
@@ -12171,23 +12208,23 @@ const _sfc_main$21 = /* @__PURE__ */ defineComponent({
     const editorFor = (id) => editors.get(id) ?? null;
     __expose({ editorFor });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "prompt-sections-editor" }, _attrs))} data-v-93191c1e><div class="prompt-sections-editor__list" data-v-93191c1e><!--[-->`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "prompt-sections-editor" }, _attrs))} data-v-c6e8ec51><div class="prompt-sections-editor__list" data-v-c6e8ec51><!--[-->`);
       ssrRenderList(unref(orderedSections), (section, index) => {
-        _push(`<section class="${ssrRenderClass([{ "prompt-section--active": section.id === __props.activeSectionId }, "prompt-section"])}"${ssrRenderAttr("data-prompt-section-id", section.id)} data-v-93191c1e><div class="prompt-section__rail" aria-hidden="true" data-v-93191c1e><span data-v-93191c1e>${ssrInterpolate(index + 1)}</span></div><div class="prompt-section__body" data-v-93191c1e><div class="prompt-section__header" data-v-93191c1e><label class="prompt-section__label"${ssrRenderAttr("for", labelInputId(section))} data-v-93191c1e><span class="visually-hidden" data-v-93191c1e>${ssrInterpolate(positionLabel(section, index))}</span><input${ssrRenderAttr("id", labelInputId(section))}${ssrRenderAttr("value", section.label)}${ssrRenderAttr("aria-label", positionLabel(section, index))} data-v-93191c1e></label><div class="prompt-section__move-actions" data-v-93191c1e><button class="prompt-section__placement-action" type="button"${ssrRenderAttr("data-placement-section", section.id)} data-v-93191c1e>${ssrInterpolate(placementCount(section.id) ? unref(t)("prompt.placement.change") : unref(t)("prompt.placement.open"))}</button><button type="button"${ssrIncludeBooleanAttr(index === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", `${section.label}：${unref(t)("prompt.sections.moveUp")}`)} data-v-93191c1e> ↑ </button><button type="button"${ssrIncludeBooleanAttr(index === unref(orderedSections).length - 1) ? " disabled" : ""}${ssrRenderAttr("aria-label", `${section.label}：${unref(t)("prompt.sections.moveDown")}`)} data-v-93191c1e> ↓ </button></div></div><textarea${ssrRenderAttr("id", textInputId(section))}${ssrRenderAttr("aria-label", positionLabel(section, index))}${ssrIncludeBooleanAttr(placementCount(section.id) > 0) ? " readonly" : ""} rows="4" data-v-93191c1e>${ssrInterpolate(section.text)}</textarea>`);
+        _push(`<section class="${ssrRenderClass([{ "prompt-section--active": section.id === __props.activeSectionId }, "prompt-section"])}"${ssrRenderAttr("data-prompt-section-id", section.id)} data-v-c6e8ec51><div class="prompt-section__rail" aria-hidden="true" data-v-c6e8ec51><span data-v-c6e8ec51>${ssrInterpolate(index + 1)}</span></div><div class="prompt-section__body" data-v-c6e8ec51><div class="prompt-section__header" data-v-c6e8ec51><label class="prompt-section__label"${ssrRenderAttr("for", labelInputId(section))} data-v-c6e8ec51><span class="visually-hidden" data-v-c6e8ec51>${ssrInterpolate(positionLabel(section, index))}</span><input${ssrRenderAttr("id", labelInputId(section))}${ssrRenderAttr("value", section.label)}${ssrRenderAttr("aria-label", positionLabel(section, index))} data-v-c6e8ec51></label><div class="prompt-section__move-actions" data-v-c6e8ec51><button class="prompt-section__placement-action" type="button"${ssrRenderAttr("data-placement-section", section.id)} data-v-c6e8ec51>${ssrInterpolate(placementCount(section.id) ? unref(t)("prompt.placement.change") : unref(t)("prompt.placement.open"))}</button><button type="button"${ssrIncludeBooleanAttr(index === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", `${section.label}：${unref(t)("prompt.sections.moveUp")}`)} data-v-c6e8ec51> ↑ </button><button type="button"${ssrIncludeBooleanAttr(index === unref(orderedSections).length - 1) ? " disabled" : ""}${ssrRenderAttr("aria-label", `${section.label}：${unref(t)("prompt.sections.moveDown")}`)} data-v-c6e8ec51> ↓ </button></div></div><textarea${ssrRenderAttr("id", textInputId(section))}${ssrRenderAttr("aria-label", positionLabel(section, index))} rows="4" data-v-c6e8ec51>${ssrInterpolate(section.text)}</textarea>`);
         if (placementCount(section.id)) {
-          _push(`<small class="prompt-section__placement-summary" data-v-93191c1e>${ssrInterpolate(__props.placementEnabled ? unref(t)("prompt.placement.summary", { count: placementCount(section.id) }) : unref(t)("prompt.placement.disabledSummary", { count: placementCount(section.id) }))} · ${ssrInterpolate(unref(t)("prompt.sections.targetEditing"))}</small>`);
+          _push(`<small class="prompt-section__placement-summary" data-v-c6e8ec51>${ssrInterpolate(__props.placementEnabled ? unref(t)("prompt.placement.summary", { count: placementCount(section.id) }) : unref(t)("prompt.placement.disabledSummary", { count: placementCount(section.id) }))} · ${ssrInterpolate(unref(t)("prompt.sections.targetEditing"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         _push(`</div></section>`);
       });
-      _push(`<!--]--></div><details class="prompt-sections-editor__combined" data-v-93191c1e><summary data-v-93191c1e><span data-v-93191c1e>${ssrInterpolate(unref(t)("prompt.sections.combined"))}</span>`);
+      _push(`<!--]--></div><details class="prompt-sections-editor__combined" data-v-c6e8ec51><summary data-v-c6e8ec51><span data-v-c6e8ec51>${ssrInterpolate(unref(t)("prompt.sections.combined"))}</span>`);
       if (unref(combinedSummary)) {
-        _push(`<small data-v-93191c1e>${ssrInterpolate(unref(combinedSummary))}</small>`);
+        _push(`<small data-v-c6e8ec51>${ssrInterpolate(unref(combinedSummary))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</summary><label class="visually-hidden" for="prompt-sections-combined" data-v-93191c1e>${ssrInterpolate(unref(t)("prompt.sections.combined"))}</label><textarea id="prompt-sections-combined"${ssrRenderAttr("aria-label", unref(t)("prompt.sections.combined"))} rows="4" readonly data-v-93191c1e>${ssrInterpolate(__props.combinedPrompt)}</textarea></details></div>`);
+      _push(`</summary><label class="visually-hidden" for="prompt-sections-combined" data-v-c6e8ec51>${ssrInterpolate(unref(t)("prompt.sections.combined"))}</label><textarea id="prompt-sections-combined"${ssrRenderAttr("aria-label", unref(t)("prompt.sections.combined"))} rows="4" readonly data-v-c6e8ec51>${ssrInterpolate(__props.combinedPrompt)}</textarea></details></div>`);
     };
   }
 });
@@ -12197,7 +12234,7 @@ _sfc_main$21.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptSectionsEditor.vue");
   return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
 };
-const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-93191c1e"]]), { __name: "StudioGeneratePromptSectionsEditor" });
+const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-c6e8ec51"]]), { __name: "StudioGeneratePromptSectionsEditor" });
 const _sfc_main$20 = /* @__PURE__ */ defineComponent({
   __name: "PromptPlacementCanvas",
   __ssrInlineRender: true,
@@ -12205,6 +12242,7 @@ const _sfc_main$20 = /* @__PURE__ */ defineComponent({
     canvasWidth: {},
     canvasHeight: {},
     targets: {},
+    targetNumbers: {},
     selectedTargetId: {},
     depthOrder: {},
     backgroundUrl: {},
@@ -12247,30 +12285,30 @@ const _sfc_main$20 = /* @__PURE__ */ defineComponent({
       _push(`<div${ssrRenderAttrs(mergeProps({
         class: "placement-canvas",
         style: { aspectRatio: `${__props.canvasWidth} / ${__props.canvasHeight}` }
-      }, _attrs))} data-v-c9cde4d4><svg viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img"${ssrRenderAttr("aria-label", __props.ariaLabel)} data-v-c9cde4d4>`);
+      }, _attrs))} data-v-5d919d7b><svg viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img"${ssrRenderAttr("aria-label", __props.ariaLabel)} data-v-5d919d7b>`);
       if (__props.backgroundUrl) {
-        _push(`<image${ssrRenderAttr("href", __props.backgroundUrl)} x="0" y="0" width="1000" height="1000" preserveAspectRatio="none" data-v-c9cde4d4></image>`);
+        _push(`<image${ssrRenderAttr("href", __props.backgroundUrl)} x="0" y="0" width="1000" height="1000" preserveAspectRatio="none" data-v-5d919d7b></image>`);
       } else {
         _push(`<!---->`);
       }
       _push(`<!--[-->`);
       ssrRenderList(unref(orderedTargets), (target, index) => {
-        _push(`<g class="${ssrRenderClass([{ "placement-target--selected": target.target_id === __props.selectedTargetId, "placement-target--legacy": target.shape === "mask" }, "placement-target"])}" data-v-c9cde4d4>`);
+        _push(`<g class="${ssrRenderClass([{ "placement-target--selected": target.target_id === __props.selectedTargetId, "placement-target--legacy": target.shape === "mask" }, "placement-target"])}" data-v-5d919d7b>`);
         if (target.shape === "ellipse") {
-          _push(`<ellipse${ssrRenderAttr("cx", target.center_x * 1e3)}${ssrRenderAttr("cy", target.center_y * 1e3)}${ssrRenderAttr("rx", target.width * 500)}${ssrRenderAttr("ry", target.height * 500)} data-v-c9cde4d4></ellipse>`);
+          _push(`<ellipse${ssrRenderAttr("cx", target.center_x * 1e3)}${ssrRenderAttr("cy", target.center_y * 1e3)}${ssrRenderAttr("rx", target.width * 500)}${ssrRenderAttr("ry", target.height * 500)} data-v-5d919d7b></ellipse>`);
         } else {
-          _push(`<rect${ssrRenderAttr("x", (target.center_x - target.width / 2) * 1e3)}${ssrRenderAttr("y", (target.center_y - target.height / 2) * 1e3)}${ssrRenderAttr("width", target.width * 1e3)}${ssrRenderAttr("height", target.height * 1e3)}${ssrRenderAttr("rx", target.shape === "mask" ? 16 : 4)} data-v-c9cde4d4></rect>`);
+          _push(`<rect${ssrRenderAttr("x", (target.center_x - target.width / 2) * 1e3)}${ssrRenderAttr("y", (target.center_y - target.height / 2) * 1e3)}${ssrRenderAttr("width", target.width * 1e3)}${ssrRenderAttr("height", target.height * 1e3)}${ssrRenderAttr("rx", target.shape === "mask" ? 16 : 4)} data-v-5d919d7b></rect>`);
         }
         if (target.shape === "mask" && target.mask_source) {
-          _push(`<image class="placement-target__legacy-preview"${ssrRenderAttr("href", legacyMaskUrl(target))}${ssrRenderAttr("x", (target.center_x - target.width / 2) * 1e3)}${ssrRenderAttr("y", (target.center_y - target.height / 2) * 1e3)}${ssrRenderAttr("width", target.width * 1e3)}${ssrRenderAttr("height", target.height * 1e3)} preserveAspectRatio="none" data-v-c9cde4d4></image>`);
+          _push(`<image class="placement-target__legacy-preview"${ssrRenderAttr("href", legacyMaskUrl(target))}${ssrRenderAttr("x", (target.center_x - target.width / 2) * 1e3)}${ssrRenderAttr("y", (target.center_y - target.height / 2) * 1e3)}${ssrRenderAttr("width", target.width * 1e3)}${ssrRenderAttr("height", target.height * 1e3)} preserveAspectRatio="none" data-v-5d919d7b></image>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<text${ssrRenderAttr("x", target.center_x * 1e3)}${ssrRenderAttr("y", target.center_y * 1e3)} data-v-c9cde4d4>${ssrInterpolate(index + 1)}</text>`);
+        _push(`<text${ssrRenderAttr("x", target.center_x * 1e3)}${ssrRenderAttr("y", target.center_y * 1e3)} data-v-5d919d7b>${ssrInterpolate(__props.targetNumbers[target.target_id] ?? index + 1)}</text>`);
         if (target.target_id === __props.selectedTargetId) {
-          _push(`<g class="placement-target__handles" data-v-c9cde4d4><!--[-->`);
+          _push(`<g class="placement-target__handles" data-v-5d919d7b><!--[-->`);
           ssrRenderList(handles(target), (handle) => {
-            _push(`<!--[--><circle class="placement-target__handle-halo"${ssrRenderAttr("cx", handle.x)}${ssrRenderAttr("cy", handle.y)} r="22" data-v-c9cde4d4></circle><circle class="placement-target__handle-core"${ssrRenderAttr("cx", handle.x)}${ssrRenderAttr("cy", handle.y)} r="12" data-v-c9cde4d4></circle><!--]-->`);
+            _push(`<!--[--><circle class="placement-target__handle-halo"${ssrRenderAttr("cx", handle.x)}${ssrRenderAttr("cy", handle.y)} r="22" data-v-5d919d7b></circle><circle class="placement-target__handle-core"${ssrRenderAttr("cx", handle.x)}${ssrRenderAttr("cy", handle.y)} r="12" data-v-5d919d7b></circle><!--]-->`);
           });
           _push(`<!--]--></g>`);
         } else {
@@ -12288,7 +12326,7 @@ _sfc_main$20.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptPlacementCanvas.vue");
   return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
 };
-const PromptPlacementCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-c9cde4d4"]]), { __name: "StudioGeneratePromptPlacementCanvas" });
+const PromptPlacementCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-5d919d7b"]]), { __name: "StudioGeneratePromptPlacementCanvas" });
 const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
   __name: "PromptPlacementDialog",
   __ssrInlineRender: true,
@@ -12296,6 +12334,7 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
     promptInput: {},
     promptLayout: {},
     sectionId: {},
+    initialTargetId: {},
     canvasWidth: {},
     canvasHeight: {},
     backgroundUrl: {}
@@ -12307,7 +12346,6 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
     ref(null);
     const promptInputDraft = ref(cloneJsonValue(props.promptInput));
     const promptLayoutDraft = ref(cloneJsonValue(props.promptLayout));
-    const selectedTargetId = ref(promptLayoutDraft.value.targets[0]?.target_id ?? null);
     const bulkUndo = ref(null);
     const bulkSettings = reactive({
       strengthMode: "auto",
@@ -12321,6 +12359,13 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
       promptLayout: promptLayoutDraft.value
     }) !== initialSnapshot);
     const targetRecords = computed(() => (promptInputDraft.value.sections ?? []).flatMap((section) => section.content.mode === "targets" ? section.content.targets.map((target) => ({ sectionId: section.id, target })) : []));
+    const initialSectionTargets = (promptInputDraft.value.sections ?? []).find((section) => section.id === props.sectionId)?.content;
+    const initialSectionTargetIds = initialSectionTargets?.mode === "targets" ? initialSectionTargets.targets.map((target) => target.id) : [];
+    const selectedTargetId = ref(
+      props.initialTargetId && initialSectionTargetIds.includes(props.initialTargetId) ? props.initialTargetId : initialSectionTargetIds[0] ?? promptLayoutDraft.value.targets[0]?.target_id ?? null
+    );
+    const targetDisplayNumbers = computed(() => promptTargetDisplayNumbers(promptInputDraft.value.sections ?? []));
+    const targetDisplayNumber = (targetId) => targetDisplayNumbers.value[targetId] ?? 1;
     const selectedRecord = computed(() => targetRecords.value.find(({ target }) => target.id === selectedTargetId.value) ?? null);
     const selectedLayoutTarget = computed(() => promptLayoutDraft.value.targets.find((target) => target.target_id === selectedTargetId.value) ?? null);
     const canApply = computed(() => isPromptPlacementDraftSaveable(
@@ -12331,91 +12376,95 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
       const index = promptLayoutDraft.value.targets.findIndex((item) => item.target_id === target.target_id);
       if (index >= 0) promptLayoutDraft.value.targets[index] = cloneJsonValue(target);
     };
+    const selectTarget = (targetId) => {
+      selectedTargetId.value = targetId;
+    };
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<div${ssrRenderAttrs(mergeProps({
         class: "placement-dialog-backdrop",
         role: "presentation"
-      }, _attrs))} data-v-b9e22fa8><section class="placement-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "prompt-placement-title")} tabindex="-1" data-v-b9e22fa8><header class="placement-dialog__header" data-v-b9e22fa8><div data-v-b9e22fa8><h2 id="prompt-placement-title" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.title"))}</h2><p data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.help"))}</p></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("common.close"))} data-v-b9e22fa8>×</button></header><div class="placement-dialog__workspace" data-v-b9e22fa8><section class="placement-dialog__stage"${ssrRenderAttr("aria-label", unref(t)("prompt.placement.canvas"))} data-v-b9e22fa8>`);
+      }, _attrs))} data-v-7505122c><section class="placement-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "prompt-placement-title")} tabindex="-1" data-v-7505122c><header class="placement-dialog__header" data-v-7505122c><div data-v-7505122c><h2 id="prompt-placement-title" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.title"))}</h2><p data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.help"))}</p></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("common.close"))} data-v-7505122c>×</button></header><div class="placement-dialog__workspace" data-v-7505122c><section class="placement-dialog__stage"${ssrRenderAttr("aria-label", unref(t)("prompt.placement.canvas"))} data-v-7505122c>`);
       _push(ssrRenderComponent(PromptPlacementCanvas, {
         "canvas-width": __props.canvasWidth,
         "canvas-height": __props.canvasHeight,
         targets: unref(promptLayoutDraft).targets,
+        "target-numbers": unref(targetDisplayNumbers),
         "selected-target-id": unref(selectedTargetId),
         "depth-order": unref(promptLayoutDraft).depth_order,
         "background-url": __props.backgroundUrl,
         "aria-label": unref(t)("prompt.placement.canvas"),
-        onSelect: ($event) => selectedTargetId.value = $event,
+        onSelect: selectTarget,
         onUpdateTarget: updateLayoutTarget
       }, null, _parent));
-      _push(`<div class="placement-dialog__stage-actions" data-v-b9e22fa8><label class="toggle-row" data-v-b9e22fa8><input${ssrIncludeBooleanAttr(ssrLooseEqual(unref(promptLayoutDraft).mode, "enabled")) ? " checked" : ""} type="checkbox" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.enabled"))}</span></label><button type="button" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.centerAll"))}</button></div>`);
+      _push(`<div class="placement-dialog__stage-actions" data-v-7505122c><label class="toggle-row" data-v-7505122c><input${ssrIncludeBooleanAttr(ssrLooseEqual(unref(promptLayoutDraft).mode, "enabled")) ? " checked" : ""} type="checkbox" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.enabled"))}</span></label><button type="button" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.centerAll"))}</button></div>`);
       if (unref(targetRecords).length >= 4) {
-        _push(`<p class="placement-dialog__memory-note" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.memoryNote"))}</p>`);
+        _push(`<p class="placement-dialog__memory-note" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.memoryNote"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<details class="placement-bulk-settings" data-v-b9e22fa8><summary data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.bulkTitle"))}</summary><div class="field-grid" data-v-b9e22fa8><label class="field" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.strength"))}</span><select data-v-b9e22fa8><option value="auto" data-v-b9e22fa8${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).strengthMode) ? ssrLooseContain(unref(bulkSettings).strengthMode, "auto") : ssrLooseEqual(unref(bulkSettings).strengthMode, "auto")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-b9e22fa8${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).strengthMode) ? ssrLooseContain(unref(bulkSettings).strengthMode, "manual") : ssrLooseEqual(unref(bulkSettings).strengthMode, "manual")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+      _push(`<details class="placement-bulk-settings" data-v-7505122c><summary data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.bulkTitle"))}</summary><div class="field-grid" data-v-7505122c><label class="field" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.strength"))}</span><select data-v-7505122c><option value="auto" data-v-7505122c${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).strengthMode) ? ssrLooseContain(unref(bulkSettings).strengthMode, "auto") : ssrLooseEqual(unref(bulkSettings).strengthMode, "auto")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-7505122c${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).strengthMode) ? ssrLooseContain(unref(bulkSettings).strengthMode, "manual") : ssrLooseEqual(unref(bulkSettings).strengthMode, "manual")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
       if (unref(bulkSettings).strengthMode === "manual") {
-        _push(`<input${ssrRenderAttr("value", unref(bulkSettings).strength)} type="range" min="0" max="100" data-v-b9e22fa8>`);
+        _push(`<input${ssrRenderAttr("value", unref(bulkSettings).strength)} type="range" min="0" max="100" data-v-7505122c>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</label><label class="field" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.blending"))}</span><select data-v-b9e22fa8><option value="auto" data-v-b9e22fa8${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).blendingMode) ? ssrLooseContain(unref(bulkSettings).blendingMode, "auto") : ssrLooseEqual(unref(bulkSettings).blendingMode, "auto")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-b9e22fa8${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).blendingMode) ? ssrLooseContain(unref(bulkSettings).blendingMode, "manual") : ssrLooseEqual(unref(bulkSettings).blendingMode, "manual")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+      _push(`</label><label class="field" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.blending"))}</span><select data-v-7505122c><option value="auto" data-v-7505122c${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).blendingMode) ? ssrLooseContain(unref(bulkSettings).blendingMode, "auto") : ssrLooseEqual(unref(bulkSettings).blendingMode, "auto")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-7505122c${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).blendingMode) ? ssrLooseContain(unref(bulkSettings).blendingMode, "manual") : ssrLooseEqual(unref(bulkSettings).blendingMode, "manual")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
       if (unref(bulkSettings).blendingMode === "manual") {
-        _push(`<input${ssrRenderAttr("value", unref(bulkSettings).blending)} type="range" min="0" max="100" data-v-b9e22fa8>`);
+        _push(`<input${ssrRenderAttr("value", unref(bulkSettings).blending)} type="range" min="0" max="100" data-v-7505122c>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</label></div><div class="placement-bulk-settings__actions" data-v-b9e22fa8><button type="button" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.bulkApply"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(bulkUndo)) ? " disabled" : ""} data-v-b9e22fa8>${ssrInterpolate(unref(t)("common.undo"))}</button></div></details></section><aside class="placement-dialog__editor" data-v-b9e22fa8><div class="placement-target-list" data-v-b9e22fa8><!--[-->`);
-      ssrRenderList(unref(targetRecords), (record, index) => {
-        _push(`<button type="button" class="${ssrRenderClass({ "is-active": record.target.id === unref(selectedTargetId) })}" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(index + 1)}</span><strong data-v-b9e22fa8>${ssrInterpolate(record.target.name)}</strong></button>`);
+      _push(`</label></div><div class="placement-bulk-settings__actions" data-v-7505122c><button type="button" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.bulkApply"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(bulkUndo)) ? " disabled" : ""} data-v-7505122c>${ssrInterpolate(unref(t)("common.undo"))}</button></div></details></section><aside class="placement-dialog__editor" data-v-7505122c><div class="placement-target-list" data-v-7505122c><!--[-->`);
+      ssrRenderList(unref(targetRecords), (record) => {
+        _push(`<button type="button" class="${ssrRenderClass({ "is-active": record.target.id === unref(selectedTargetId) })}" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(targetDisplayNumber(record.target.id))}</span><strong data-v-7505122c>${ssrInterpolate(record.target.name)}</strong></button>`);
       });
-      _push(`<!--]--><button type="button" class="placement-target-list__add" data-v-b9e22fa8>＋ ${ssrInterpolate(unref(t)("prompt.placement.addTarget"))}</button></div>`);
+      _push(`<!--]--><button type="button" class="placement-target-list__add" data-v-7505122c>＋ ${ssrInterpolate(unref(t)("prompt.placement.addTarget"))}</button></div>`);
       if (unref(selectedRecord) && unref(selectedLayoutTarget)) {
-        _push(`<!--[--><label class="field" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.name"))}</span><input${ssrRenderAttr("value", unref(selectedRecord).target.name)} maxlength="40" data-v-b9e22fa8></label><label class="field" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.prompt"))}</span><textarea rows="4" data-v-b9e22fa8>${ssrInterpolate(unref(selectedRecord).target.text)}</textarea></label><div class="field-grid" data-v-b9e22fa8><label class="field" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.shape"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).shape === "mask" ? "mask" : unref(selectedLayoutTarget).shape)} data-v-b9e22fa8>`);
+        _push(`<!--[--><label class="field" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.name"))}</span><input${ssrRenderAttr("value", unref(selectedRecord).target.name)} maxlength="40" data-v-7505122c></label><label class="field" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.prompt"))}</span><textarea rows="4" data-v-7505122c>${ssrInterpolate(unref(selectedRecord).target.text)}</textarea></label><div class="field-grid" data-v-7505122c><label class="field" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.shape"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).shape === "mask" ? "mask" : unref(selectedLayoutTarget).shape)} data-v-7505122c>`);
         if (unref(selectedLayoutTarget).shape === "mask") {
-          _push(`<option value="mask" disabled data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.legacyShape"))}</option>`);
+          _push(`<option value="mask" disabled data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.legacyShape"))}</option>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<option value="ellipse" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.ellipse"))}</option><option value="rectangle" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.rectangle"))}</option></select></label><label class="field" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.size"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).size_mode)} data-v-b9e22fa8><option value="auto" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.sizeAuto"))}</option><option value="small" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.sizeSmall"))}</option><option value="standard" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.sizeStandard"))}</option><option value="large" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.sizeLarge"))}</option><option value="custom" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.sizeCustom"))}</option></select></label></div>`);
+        _push(`<option value="ellipse" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.ellipse"))}</option><option value="rectangle" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.rectangle"))}</option></select></label><label class="field" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.size"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).size_mode)} data-v-7505122c><option value="auto" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.sizeAuto"))}</option><option value="small" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.sizeSmall"))}</option><option value="standard" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.sizeStandard"))}</option><option value="large" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.sizeLarge"))}</option><option value="custom" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.sizeCustom"))}</option></select></label></div>`);
         if (unref(selectedLayoutTarget).shape === "mask") {
-          _push(`<div class="placement-legacy-actions" data-v-b9e22fa8><button type="button" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.convertEllipse"))}</button><button type="button" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.convertRectangle"))}</button></div>`);
+          _push(`<div class="placement-legacy-actions" data-v-7505122c><button type="button" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.convertEllipse"))}</button><button type="button" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.convertRectangle"))}</button></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="field-grid" data-v-b9e22fa8><label class="field" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.strength"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).strength_mode)} data-v-b9e22fa8><option value="auto" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+        _push(`<div class="field-grid" data-v-7505122c><label class="field" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.strength"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).strength_mode)} data-v-7505122c><option value="auto" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
         if (unref(selectedLayoutTarget).strength_mode === "manual") {
-          _push(`<input${ssrRenderAttr("value", unref(selectedLayoutTarget).strength ?? 70)} type="range" min="0" max="100" data-v-b9e22fa8>`);
+          _push(`<input${ssrRenderAttr("value", unref(selectedLayoutTarget).strength ?? 70)} type="range" min="0" max="100" data-v-7505122c>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</label><label class="field" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.blending"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).blending_mode)} data-v-b9e22fa8><option value="auto" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+        _push(`</label><label class="field" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.blending"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).blending_mode)} data-v-7505122c><option value="auto" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
         if (unref(selectedLayoutTarget).blending_mode === "manual") {
-          _push(`<input${ssrRenderAttr("value", unref(selectedLayoutTarget).blending ?? 25)} type="range" min="0" max="100" data-v-b9e22fa8>`);
+          _push(`<input${ssrRenderAttr("value", unref(selectedLayoutTarget).blending ?? 25)} type="range" min="0" max="100" data-v-7505122c>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</label></div><label class="field" data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.depth"))}</span><select${ssrRenderAttr("value", unref(promptLayoutDraft).depth_mode)} data-v-b9e22fa8><option value="auto" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.depthAuto"))}</option><option value="manual" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.depthManual"))}</option></select></label>`);
+        _push(`</label></div><label class="field" data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.depth"))}</span><select${ssrRenderAttr("value", unref(promptLayoutDraft).depth_mode)} data-v-7505122c><option value="auto" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.depthAuto"))}</option><option value="manual" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.depthManual"))}</option></select></label>`);
         if (unref(promptLayoutDraft).depth_mode === "manual") {
-          _push(`<div class="placement-depth-list" data-v-b9e22fa8><!--[-->`);
+          _push(`<div class="placement-depth-list" data-v-7505122c><!--[-->`);
           ssrRenderList(unref(promptLayoutDraft).depth_order, (targetId, index) => {
-            _push(`<div data-v-b9e22fa8><span data-v-b9e22fa8>${ssrInterpolate(unref(targetRecords).find((record) => record.target.id === targetId)?.target.name)}</span><button type="button"${ssrIncludeBooleanAttr(index === 0) ? " disabled" : ""} data-v-b9e22fa8>↑</button><button type="button"${ssrIncludeBooleanAttr(index === unref(promptLayoutDraft).depth_order.length - 1) ? " disabled" : ""} data-v-b9e22fa8>↓</button></div>`);
+            _push(`<div data-v-7505122c><span data-v-7505122c>${ssrInterpolate(unref(targetRecords).find((record) => record.target.id === targetId)?.target.name)}</span><button type="button"${ssrIncludeBooleanAttr(index === 0) ? " disabled" : ""} data-v-7505122c>↑</button><button type="button"${ssrIncludeBooleanAttr(index === unref(promptLayoutDraft).depth_order.length - 1) ? " disabled" : ""} data-v-7505122c>↓</button></div>`);
           });
           _push(`<!--]--></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<button type="button" class="danger-button"${ssrIncludeBooleanAttr(unref(targetRecords).length <= 1) ? " disabled" : ""} data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.deleteTarget"))}</button><!--]-->`);
+        _push(`<button type="button" class="danger-button"${ssrIncludeBooleanAttr(unref(targetRecords).length <= 1) ? " disabled" : ""} data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.deleteTarget"))}</button><!--]-->`);
       } else {
         _push(`<!---->`);
       }
       _push(`</aside></div>`);
       if (!unref(canApply)) {
-        _push(`<p class="placement-dialog__validation" aria-live="polite" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.required"))}</p>`);
+        _push(`<p class="placement-dialog__validation" aria-live="polite" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.required"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<footer class="placement-dialog__footer" data-v-b9e22fa8><button type="button" data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.remove"))}</button><span data-v-b9e22fa8></span><button type="button" data-v-b9e22fa8>${ssrInterpolate(unref(t)("common.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canApply)) ? " disabled" : ""} data-v-b9e22fa8>${ssrInterpolate(unref(t)("prompt.placement.save"))}</button></footer></section></div>`);
+      _push(`<footer class="placement-dialog__footer" data-v-7505122c><button type="button" data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.remove"))}</button><span data-v-7505122c></span><button type="button" data-v-7505122c>${ssrInterpolate(unref(t)("common.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canApply)) ? " disabled" : ""} data-v-7505122c>${ssrInterpolate(unref(t)("prompt.placement.save"))}</button></footer></section></div>`);
     };
   }
 });
@@ -12425,7 +12474,7 @@ _sfc_main$1$.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptPlacementDialog.vue");
   return _sfc_setup$1$ ? _sfc_setup$1$(props, ctx) : void 0;
 };
-const PromptPlacementDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-b9e22fa8"]]), { __name: "StudioGeneratePromptPlacementDialog" });
+const PromptPlacementDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-7505122c"]]), { __name: "StudioGeneratePromptPlacementDialog" });
 const useAppSettingsStore = defineStore("appSettings", {
   state: () => ({
     outputRoot: "",
@@ -12620,6 +12669,7 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
     const promptSectionsEditor = ref(null);
     const placementDialogDraft = ref(null);
     const placementDialogSectionId = ref("character");
+    const placementDialogInitialTargetId = ref(null);
     const placementDialogTrigger = ref(null);
     const negativePromptTextarea = ref(null);
     const notationMenuTarget = ref(null);
@@ -12660,7 +12710,6 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
       }
       return counts;
     });
-    const activeSectionHasPlacement = computed(() => (placementTargetCounts.value[generation.activePromptSectionId] ?? 0) > 0);
     const placementBackgroundUrl = computed(() => generation.mode !== "txt2img" && generation.initImagePath ? assetUrl(generation.initImagePath) : void 0);
     const promptSectionsEmptyText = computed(() => generation.promptInputMode === "sections" && generation.promptSections.every((section) => !section.text.trim()) ? t("prompt.sections.allEmpty") : "");
     const notationFeature = (action) => ({
@@ -12732,8 +12781,10 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
       placementDialogTrigger.value = trigger ?? null;
       placementDialogDraft.value = cloneJsonValue(draft);
       generation.activePromptSectionId = id;
-      const firstTarget = draft.promptInput.sections?.find((section) => section.id === id)?.content;
-      generation.setActivePromptTarget(firstTarget?.mode === "targets" ? firstTarget.targets[0]?.id ?? null : null);
+      const sectionContent = draft.promptInput.sections?.find((section) => section.id === id)?.content;
+      const sectionTargets = sectionContent?.mode === "targets" ? [...sectionContent.targets].sort((left, right) => left.order - right.order) : [];
+      placementDialogInitialTargetId.value = sectionTargets.some((target) => target.id === generation.activePromptTargetId) ? generation.activePromptTargetId : sectionTargets[0]?.id ?? null;
+      generation.setActivePromptTarget(placementDialogInitialTargetId.value);
     };
     watch(
       () => generation.placementReviewRevision,
@@ -12749,8 +12800,10 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
       await nextTick();
       placementDialogTrigger.value?.focus();
     };
-    const applyPromptPlacement = async (promptInput, promptLayout) => {
+    const applyPromptPlacement = async (promptInput, promptLayout, selectedTargetId) => {
       if (!generation.applyPromptPlacement(promptInput, promptLayout)) return;
+      generation.setActivePromptTarget(selectedTargetId);
+      placementDialogInitialTargetId.value = selectedTargetId;
       await closePromptPlacement();
     };
     const removePromptPlacement = async () => {
@@ -13161,25 +13214,25 @@ ${generation.negativePrompt}`;
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "pane pane-left prompt-composer",
         "aria-label": unref(t)("prompt.editorAria")
-      }, _attrs))} data-v-47ac5ae2><div class="pane-title" data-v-47ac5ae2><span data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.title"))}</span><div class="prompt-pane-title-actions" data-v-47ac5ae2><small data-v-47ac5ae2>${ssrInterpolate(unref(generation).mode)}</small><button data-image-metadata-picker type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("imageMetadata.chooseImage"))}</button></div></div><div class="prompt-input-mode" role="group"${ssrRenderAttr("aria-label", unref(t)("prompt.inputMode.label"))} data-v-47ac5ae2><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "single" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "single")} data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.inputMode.single"))}</button><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "sections" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "sections")} data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.inputMode.sections"))}</button></div>`);
+      }, _attrs))} data-v-2cf15f89><div class="pane-title" data-v-2cf15f89><span data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.title"))}</span><div class="prompt-pane-title-actions" data-v-2cf15f89><small data-v-2cf15f89>${ssrInterpolate(unref(generation).mode)}</small><button data-image-metadata-picker type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("imageMetadata.chooseImage"))}</button></div></div><div class="prompt-input-mode" role="group"${ssrRenderAttr("aria-label", unref(t)("prompt.inputMode.label"))} data-v-2cf15f89><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "single" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "single")} data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.inputMode.single"))}</button><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "sections" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "sections")} data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.inputMode.sections"))}</button></div>`);
       if (unref(promptInputNoticeText)) {
-        _push(`<small class="prompt-input-notice" aria-live="polite" data-v-47ac5ae2>${ssrInterpolate(unref(promptInputNoticeText))}</small>`);
+        _push(`<small class="prompt-input-notice" aria-live="polite" data-v-2cf15f89>${ssrInterpolate(unref(promptInputNoticeText))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).promptInputMode === "single") {
-        _push(`<div class="field prompt-primary-editor" data-v-47ac5ae2><div class="prompt-editor-heading" data-v-47ac5ae2><label for="generation-prompt" data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.prompt"))}</label><button type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.prompt"))} rows="6" data-v-47ac5ae2>${ssrInterpolate(unref(generation).prompt)}</textarea></div>`);
+        _push(`<div class="field prompt-primary-editor" data-v-2cf15f89><div class="prompt-editor-heading" data-v-2cf15f89><label for="generation-prompt" data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.prompt"))}</label><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.prompt"))} rows="6" data-v-2cf15f89>${ssrInterpolate(unref(generation).prompt)}</textarea></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).promptInputMode === "sections") {
-        _push(`<div class="prompt-primary-editor prompt-primary-editor--sections" data-v-47ac5ae2>`);
+        _push(`<div class="prompt-primary-editor prompt-primary-editor--sections" data-v-2cf15f89>`);
         if (unref(promptSectionsEmptyText)) {
-          _push(`<small class="prompt-input-notice" aria-live="polite" data-v-47ac5ae2>${ssrInterpolate(unref(promptSectionsEmptyText))}</small>`);
+          _push(`<small class="prompt-input-notice" aria-live="polite" data-v-2cf15f89>${ssrInterpolate(unref(promptSectionsEmptyText))}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="prompt-editor-heading" data-v-47ac5ae2><span data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.prompt"))}</span><button type="button"${ssrIncludeBooleanAttr(unref(activeSectionHasPlacement)) ? " disabled" : ""} data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div>`);
+        _push(`<div class="prompt-editor-heading" data-v-2cf15f89><span data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.prompt"))}</span><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div>`);
         _push(ssrRenderComponent(PromptSectionsEditor, {
           ref_key: "promptSectionsEditor",
           ref: promptSectionsEditor,
@@ -13204,6 +13257,7 @@ ${generation.negativePrompt}`;
           "prompt-input": unref(placementDialogDraft).promptInput,
           "prompt-layout": unref(placementDialogDraft).promptLayout,
           "section-id": unref(placementDialogSectionId),
+          "initial-target-id": unref(placementDialogInitialTargetId),
           "canvas-width": unref(generation).width,
           "canvas-height": unref(generation).height,
           "background-url": unref(placementBackgroundUrl),
@@ -13214,21 +13268,21 @@ ${generation.negativePrompt}`;
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="field prompt-negative-editor" data-v-47ac5ae2><div class="prompt-editor-heading" data-v-47ac5ae2><label for="generation-negative-prompt" data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.negative"))}</label><button type="button"${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-negative-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.negative"))}${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} rows="4" data-v-47ac5ae2>${ssrInterpolate(unref(generation).negativePrompt)}</textarea>`);
+      _push(`<div class="field prompt-negative-editor" data-v-2cf15f89><div class="prompt-editor-heading" data-v-2cf15f89><label for="generation-negative-prompt" data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.negative"))}</label><button type="button"${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-negative-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.negative"))}${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} rows="4" data-v-2cf15f89>${ssrInterpolate(unref(generation).negativePrompt)}</textarea>`);
       if (!unref(supportsNegativePrompt)) {
-        _push(`<small class="field-hint" data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.negativeFluxGuidance"))}</small>`);
+        _push(`<small class="field-hint" data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.negativeFluxGuidance"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</div>`);
       if (unref(notationMenuTarget)) {
-        _push(`<section class="prompt-notation-menu"${ssrRenderAttr("aria-label", unref(t)("prompt.notation.menuAria"))} data-v-47ac5ae2><div class="prompt-notation-menu__header" data-v-47ac5ae2><strong data-v-47ac5ae2>${ssrInterpolate(editorTargetLabel(unref(notationMenuTarget)))}</strong><button type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("common.close"))}</button></div><div class="prompt-notation-menu__actions" data-v-47ac5ae2><!--[-->`);
+        _push(`<section class="prompt-notation-menu"${ssrRenderAttr("aria-label", unref(t)("prompt.notation.menuAria"))} data-v-2cf15f89><div class="prompt-notation-menu__header" data-v-2cf15f89><strong data-v-2cf15f89>${ssrInterpolate(editorTargetLabel(unref(notationMenuTarget)))}</strong><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("common.close"))}</button></div><div class="prompt-notation-menu__actions" data-v-2cf15f89><!--[-->`);
         ssrRenderList(unref(notationActions), (action) => {
-          _push(`<button type="button" class="${ssrRenderClass({ "prompt-notation-menu__action--unsupported": !notationSupported(action.id) })}"${ssrRenderAttr("aria-disabled", !notationSupported(action.id))} data-v-47ac5ae2>${ssrInterpolate(action.label)}</button>`);
+          _push(`<button type="button" class="${ssrRenderClass({ "prompt-notation-menu__action--unsupported": !notationSupported(action.id) })}"${ssrRenderAttr("aria-disabled", !notationSupported(action.id))} data-v-2cf15f89>${ssrInterpolate(action.label)}</button>`);
         });
-        _push(`<!--]--></div><small data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.notation.shortcut"))}</small>`);
+        _push(`<!--]--></div><small data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.notation.shortcut"))}</small>`);
         if (unref(notationMessage)) {
-          _push(`<small class="prompt-notation-menu__message" aria-live="polite" data-v-47ac5ae2>${ssrInterpolate(unref(notationMessage))}</small>`);
+          _push(`<small class="prompt-notation-menu__message" aria-live="polite" data-v-2cf15f89>${ssrInterpolate(unref(notationMessage))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -13237,51 +13291,51 @@ ${generation.negativePrompt}`;
         _push(`<!---->`);
       }
       if (unref(notationDialog)) {
-        _push(`<div class="prompt-notation-dialog-backdrop" role="presentation" data-v-47ac5ae2><section class="prompt-notation-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)(`prompt.notation.${unref(notationDialog)}`))} data-v-47ac5ae2><strong data-v-47ac5ae2>${ssrInterpolate(unref(t)(`prompt.notation.${unref(notationDialog)}`))}</strong>`);
+        _push(`<div class="prompt-notation-dialog-backdrop" role="presentation" data-v-2cf15f89><section class="prompt-notation-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)(`prompt.notation.${unref(notationDialog)}`))} data-v-2cf15f89><strong data-v-2cf15f89>${ssrInterpolate(unref(t)(`prompt.notation.${unref(notationDialog)}`))}</strong>`);
         if (unref(notationDialog) === "weight") {
-          _push(`<label class="field" data-v-47ac5ae2><span data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.notation.targetText"))}</span><input${ssrRenderAttr("value", unref(notationDraft).text)} data-v-47ac5ae2></label>`);
+          _push(`<label class="field" data-v-2cf15f89><span data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.notation.targetText"))}</span><input${ssrRenderAttr("value", unref(notationDraft).text)} data-v-2cf15f89></label>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(notationDialog) === "weight") {
-          _push(`<label class="field" data-v-47ac5ae2><span data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.notation.weightValue"))}</span><input${ssrRenderAttr("value", unref(notationDraft).value)} type="number" min="-10" max="10" step="0.1" data-v-47ac5ae2></label>`);
+          _push(`<label class="field" data-v-2cf15f89><span data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.notation.weightValue"))}</span><input${ssrRenderAttr("value", unref(notationDraft).value)} type="number" min="-10" max="10" step="0.1" data-v-2cf15f89></label>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="prompt-notation-dialog__actions" data-v-47ac5ae2><button type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("common.cancel"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(notationDraftValid)) ? " disabled" : ""} data-v-47ac5ae2>${ssrInterpolate(unref(t)("common.apply"))}</button></div></section></div>`);
+        _push(`<div class="prompt-notation-dialog__actions" data-v-2cf15f89><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("common.cancel"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(notationDraftValid)) ? " disabled" : ""} data-v-2cf15f89>${ssrInterpolate(unref(t)("common.apply"))}</button></div></section></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<section class="prompt-asset-quick prompt-asset-quick--wildcards"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-47ac5ae2><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-47ac5ae2><option value="" data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
+      _push(`<section class="prompt-asset-quick prompt-asset-quick--wildcards"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-2cf15f89><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-2cf15f89><option value="" data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
       ssrRenderList(unref(wildcards), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.name)} data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
+        _push(`<option${ssrRenderAttr("value", item.name)} data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
       });
-      _push(`<!--]--></select><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-47ac5ae2>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button><button type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("promptAssets.open"))}</button>`);
+      _push(`<!--]--></select><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-2cf15f89>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("promptAssets.open"))}</button>`);
       if (unref(wildcardError)) {
-        _push(`<small class="error prompt-asset-quick__message" aria-live="assertive" data-v-47ac5ae2>${ssrInterpolate(unref(wildcardError))}</small>`);
+        _push(`<small class="error prompt-asset-quick__message" aria-live="assertive" data-v-2cf15f89>${ssrInterpolate(unref(wildcardError))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--styles"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.aria"))} data-v-47ac5ae2><div class="asset-panel__header" data-v-47ac5ae2><span data-v-47ac5ae2>${ssrInterpolate(unref(t)("advancedStyles.title"))}</span><button type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("promptAssets.openStyleGallery"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-47ac5ae2><input${ssrRenderAttr("value", unref(advancedStyles).query)}${ssrRenderAttr("aria-label", unref(t)("advancedStyles.searchStyles"))}${ssrRenderAttr("placeholder", unref(t)("advancedStyles.searchStylesPlaceholder"))} data-v-47ac5ae2><button type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("promptAssets.open"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).filteredStyles.length) ? " disabled" : ""} data-v-47ac5ae2>${ssrInterpolate(unref(t)("advancedStyles.random"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading) ? " disabled" : ""} data-v-47ac5ae2>${ssrInterpolate(unref(t)("advancedStyles.reload"))}</button></div>`);
+      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--styles"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.aria"))} data-v-2cf15f89><div class="asset-panel__header" data-v-2cf15f89><span data-v-2cf15f89>${ssrInterpolate(unref(t)("advancedStyles.title"))}</span><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("promptAssets.openStyleGallery"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-2cf15f89><input${ssrRenderAttr("value", unref(advancedStyles).query)}${ssrRenderAttr("aria-label", unref(t)("advancedStyles.searchStyles"))}${ssrRenderAttr("placeholder", unref(t)("advancedStyles.searchStylesPlaceholder"))} data-v-2cf15f89><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("promptAssets.open"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).filteredStyles.length) ? " disabled" : ""} data-v-2cf15f89>${ssrInterpolate(unref(t)("advancedStyles.random"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading) ? " disabled" : ""} data-v-2cf15f89>${ssrInterpolate(unref(t)("advancedStyles.reload"))}</button></div>`);
       _push(ssrRenderComponent(StyleChain, {
         compact: "",
         onOpenDetails: ($event) => openPromptAssets("advanced-styles")
       }, null, _parent));
-      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--lora"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.aria"))} data-v-47ac5ae2><div class="asset-panel__header" data-v-47ac5ae2><span data-v-47ac5ae2>LoRA <small data-v-47ac5ae2>${ssrInterpolate(unref(loraOptions).length)}</small></span><button type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("promptAssets.openLoraBrowser"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-47ac5ae2><input${ssrRenderAttr("value", unref(selectedQuickLoraPath))} list="prompt-quick-lora-options"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectLora"))}${ssrRenderAttr("placeholder", unref(t)("loraBrowser.selectLora"))} data-v-47ac5ae2><datalist id="prompt-quick-lora-options" data-v-47ac5ae2><!--[-->`);
+      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--lora"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.aria"))} data-v-2cf15f89><div class="asset-panel__header" data-v-2cf15f89><span data-v-2cf15f89>LoRA <small data-v-2cf15f89>${ssrInterpolate(unref(loraOptions).length)}</small></span><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("promptAssets.openLoraBrowser"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-2cf15f89><input${ssrRenderAttr("value", unref(selectedQuickLoraPath))} list="prompt-quick-lora-options"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectLora"))}${ssrRenderAttr("placeholder", unref(t)("loraBrowser.selectLora"))} data-v-2cf15f89><datalist id="prompt-quick-lora-options" data-v-2cf15f89><!--[-->`);
       ssrRenderList(unref(loraOptions), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-47ac5ae2></option>`);
+        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-2cf15f89></option>`);
       });
-      _push(`<!--]--></datalist><button type="button"${ssrIncludeBooleanAttr(!unref(selectedQuickLoraPath)) ? " disabled" : ""} data-v-47ac5ae2>${ssrInterpolate(unref(t)("loraBrowser.add"))}</button></div>`);
+      _push(`<!--]--></datalist><button type="button"${ssrIncludeBooleanAttr(!unref(selectedQuickLoraPath)) ? " disabled" : ""} data-v-2cf15f89>${ssrInterpolate(unref(t)("loraBrowser.add"))}</button></div>`);
       _push(ssrRenderComponent(SelectedLoRAStack, { compact: "" }, null, _parent));
-      _push(`</section><section class="prompt-asset-quick prompt-asset-quick--assist"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-47ac5ae2><span data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-47ac5ae2><!--[-->`);
+      _push(`</section><section class="prompt-asset-quick prompt-asset-quick--assist"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-2cf15f89><span data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-2cf15f89><!--[-->`);
       ssrRenderList(unref(promptAssistProviderModeOptions), (option) => {
-        _push(`<option${ssrRenderAttr("value", option.id)} data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}>${ssrInterpolate(option.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", option.id)} data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}>${ssrInterpolate(option.label)}</option>`);
       });
-      _push(`<!--]--></select><button type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section><section class="prompt-asset-quick prompt-asset-quick--embeddings"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-47ac5ae2><div class="prompt-asset-embedding__header" data-v-47ac5ae2><span data-v-47ac5ae2>${ssrInterpolate(unref(t)("prompt.embedding.title"))}</span></div><div class="prompt-asset-embedding__content" data-v-47ac5ae2><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-47ac5ae2><option value="" data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
+      _push(`<!--]--></select><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section><section class="prompt-asset-quick prompt-asset-quick--embeddings"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-2cf15f89><div class="prompt-asset-embedding__header" data-v-2cf15f89><span data-v-2cf15f89>${ssrInterpolate(unref(t)("prompt.embedding.title"))}</span></div><div class="prompt-asset-embedding__content" data-v-2cf15f89><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-2cf15f89><option value="" data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
       ssrRenderList(unref(embeddingOptions), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
+        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
       });
-      _push(`<!--]--></select></div><div class="asset-actions prompt-asset-embedding__actions" data-v-47ac5ae2><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-47ac5ae2>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-47ac5ae2>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div><button type="button" data-v-47ac5ae2>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section>`);
+      _push(`<!--]--></select></div><div class="asset-actions prompt-asset-embedding__actions" data-v-2cf15f89><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-2cf15f89>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-2cf15f89>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div><button type="button" data-v-2cf15f89>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section>`);
       _push(ssrRenderComponent(PromptAssetsDrawer, {
         open: unref(promptAssetsOpen),
         "active-tab": unref(promptAssetsTab),
@@ -13290,58 +13344,58 @@ ${generation.negativePrompt}`;
       }, {
         "prompt-assist": withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel prompt-assist-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-47ac5ae2${_scopeId}><div class="asset-panel__header" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><div class="prompt-assist-header-actions" data-v-47ac5ae2${_scopeId}><small data-v-47ac5ae2${_scopeId}>${ssrInterpolate(promptAssistTargetLabel(unref(promptAssist)?.target ?? unref(promptAssistTarget)))}</small><button class="prompt-assist-guide-link" type="button" data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.guide"))}</button></div></div><div class="prompt-assist-provider-draft" data-v-47ac5ae2${_scopeId}><label class="field" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.purpose"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.purpose"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider)) ? " disabled" : ""} data-v-47ac5ae2${_scopeId}><!--[-->`);
+            _push2(`<section class="asset-panel prompt-assist-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-2cf15f89${_scopeId}><div class="asset-panel__header" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><div class="prompt-assist-header-actions" data-v-2cf15f89${_scopeId}><small data-v-2cf15f89${_scopeId}>${ssrInterpolate(promptAssistTargetLabel(unref(promptAssist)?.target ?? unref(promptAssistTarget)))}</small><button class="prompt-assist-guide-link" type="button" data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.guide"))}</button></div></div><div class="prompt-assist-provider-draft" data-v-2cf15f89${_scopeId}><label class="field" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.purpose"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.purpose"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider)) ? " disabled" : ""} data-v-2cf15f89${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistPurposeOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistPurposePreset)) ? ssrLooseContain(unref(promptAssistPurposePreset), option.id) : ssrLooseEqual(unref(promptAssistPurposePreset), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistPurposePreset)) ? ssrLooseContain(unref(promptAssistPurposePreset), option.id) : ssrLooseEqual(unref(promptAssistPurposePreset), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select><small class="field-hint" data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(promptAssistPurposeHelp))}</small></label><div class="field-grid" data-v-47ac5ae2${_scopeId}><label class="field" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.target"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.target"))} data-v-47ac5ae2${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select><small class="field-hint" data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(promptAssistPurposeHelp))}</small></label><div class="field-grid" data-v-2cf15f89${_scopeId}><label class="field" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.target"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.target"))} data-v-2cf15f89${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistTargetOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)}${ssrIncludeBooleanAttr(option.id === "negative" && !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistTarget)) ? ssrLooseContain(unref(promptAssistTarget), option.id) : ssrLooseEqual(unref(promptAssistTarget), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)}${ssrIncludeBooleanAttr(option.id === "negative" && !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistTarget)) ? ssrLooseContain(unref(promptAssistTarget), option.id) : ssrLooseEqual(unref(promptAssistTarget), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label><label class="field" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.language"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.language"))} data-v-47ac5ae2${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select></label><label class="field" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.language"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.language"))} data-v-2cf15f89${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistLanguageOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistLanguage)) ? ssrLooseContain(unref(promptAssistLanguage), option.id) : ssrLooseEqual(unref(promptAssistLanguage), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistLanguage)) ? ssrLooseContain(unref(promptAssistLanguage), option.id) : ssrLooseEqual(unref(promptAssistLanguage), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label></div><div class="field-grid" data-v-47ac5ae2${_scopeId}><label class="field" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.provider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-47ac5ae2${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select></label></div><div class="field-grid" data-v-2cf15f89${_scopeId}><label class="field" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.provider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-2cf15f89${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistProviderModeOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label><label class="${ssrRenderClass([{ "field--disabled": !unref(promptAssistUsesProvider) }, "field"])}" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.model"))}</span><input${ssrRenderAttr("value", unref(promptAssistModelInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.model"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.modelPlaceholder"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider) || Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-47ac5ae2${_scopeId}></label></div>`);
+            _push2(`<!--]--></select></label><label class="${ssrRenderClass([{ "field--disabled": !unref(promptAssistUsesProvider) }, "field"])}" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.model"))}</span><input${ssrRenderAttr("value", unref(promptAssistModelInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.model"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.modelPlaceholder"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider) || Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-2cf15f89${_scopeId}></label></div>`);
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-47ac5ae2${_scopeId}><label class="field" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.savedProvider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.savedProvider"))} data-v-47ac5ae2${_scopeId}><option value="" data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), "") : ssrLooseEqual(unref(promptAssistProviderPresetId), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.manualPerRequest"))}</option><!--[-->`);
+              _push2(`<div class="field-grid" data-v-2cf15f89${_scopeId}><label class="field" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.savedProvider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.savedProvider"))} data-v-2cf15f89${_scopeId}><option value="" data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), "") : ssrLooseEqual(unref(promptAssistProviderPresetId), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.manualPerRequest"))}</option><!--[-->`);
               ssrRenderList(unref(promptAssistProviders), (provider) => {
-                _push2(`<option${ssrRenderAttr("value", provider.id)} data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), provider.id) : ssrLooseEqual(unref(promptAssistProviderPresetId), provider.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(provider.name)} / ${ssrInterpolate(provider.model)}</option>`);
+                _push2(`<option${ssrRenderAttr("value", provider.id)} data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), provider.id) : ssrLooseEqual(unref(promptAssistProviderPresetId), provider.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(provider.name)} / ${ssrInterpolate(provider.model)}</option>`);
               });
-              _push2(`<!--]--></select></label><label class="field" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKey"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKey))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKey"))} type="password"${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyPlaceholder"))} autocomplete="off" data-v-47ac5ae2${_scopeId}></label></div>`);
+              _push2(`<!--]--></select></label><label class="field" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKey"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKey))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKey"))} type="password"${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyPlaceholder"))} autocomplete="off" data-v-2cf15f89${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-47ac5ae2${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKeyEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVar))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKeyEnvVar"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyEnvVarPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-47ac5ae2${_scopeId}></label><label class="field field--disabled" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVarValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEnvVar"))} disabled data-v-47ac5ae2${_scopeId}></label></div>`);
+              _push2(`<div class="field-grid" data-v-2cf15f89${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKeyEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVar))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKeyEnvVar"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyEnvVarPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-2cf15f89${_scopeId}></label><label class="field field--disabled" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVarValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEnvVar"))} disabled data-v-2cf15f89${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-47ac5ae2${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.endpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpoint))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.endpoint"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.endpointPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-47ac5ae2${_scopeId}></label><label class="field" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.timeout"))}</span><input${ssrRenderAttr("value", unref(promptAssistTimeoutInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.timeout"))} type="number" min="1" max="300"${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-47ac5ae2${_scopeId}></label></div>`);
+              _push2(`<div class="field-grid" data-v-2cf15f89${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.endpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpoint))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.endpoint"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.endpointPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-2cf15f89${_scopeId}></label><label class="field" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.timeout"))}</span><input${ssrRenderAttr("value", unref(promptAssistTimeoutInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.timeout"))} type="number" min="1" max="300"${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-2cf15f89${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<label class="field field--disabled" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEndpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpointValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEndpoint"))} disabled data-v-47ac5ae2${_scopeId}></label>`);
+              _push2(`<label class="field field--disabled" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEndpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpointValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEndpoint"))} disabled data-v-2cf15f89${_scopeId}></label>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<label class="field" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.extraInstruction"))}</span><textarea${ssrRenderAttr("aria-label", unref(t)("prompt.assist.extraInstruction"))} rows="2" data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(promptAssistInstruction))}</textarea></label></div><div class="asset-actions" data-v-47ac5ae2${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promptAssistLoading)) ? " disabled" : ""} data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(promptAssistActionLabel))}</button></div>`);
+            _push2(`<label class="field" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.extraInstruction"))}</span><textarea${ssrRenderAttr("aria-label", unref(t)("prompt.assist.extraInstruction"))} rows="2" data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(promptAssistInstruction))}</textarea></label></div><div class="asset-actions" data-v-2cf15f89${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promptAssistLoading)) ? " disabled" : ""} data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(promptAssistActionLabel))}</button></div>`);
             if (unref(promptAssist)) {
-              _push2(`<div class="prompt-assist-output" data-v-47ac5ae2${_scopeId}><div class="runtime-log" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedPrompt"))}</span><pre data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_prompt)}</pre></div><div class="runtime-log" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedNegative"))}</span><pre data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_negative_prompt || unref(t)("prompt.assist.negativeUnavailable"))}</pre></div><div class="tag-suggestion-list" data-v-47ac5ae2${_scopeId}><!--[-->`);
+              _push2(`<div class="prompt-assist-output" data-v-2cf15f89${_scopeId}><div class="runtime-log" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedPrompt"))}</span><pre data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_prompt)}</pre></div><div class="runtime-log" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedNegative"))}</span><pre data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_negative_prompt || unref(t)("prompt.assist.negativeUnavailable"))}</pre></div><div class="tag-suggestion-list" data-v-2cf15f89${_scopeId}><!--[-->`);
               ssrRenderList(unref(promptAssist).suggested_tags, (tag) => {
-                _push2(`<small data-v-47ac5ae2${_scopeId}>${ssrInterpolate(tag)}</small>`);
+                _push2(`<small data-v-2cf15f89${_scopeId}>${ssrInterpolate(tag)}</small>`);
               });
               _push2(`<!--]--></div>`);
               if (unref(promptAssistWarningMessages).length) {
-                _push2(`<div class="tag-suggestion-list tag-suggestion-list--warning" data-v-47ac5ae2${_scopeId}><!--[-->`);
+                _push2(`<div class="tag-suggestion-list tag-suggestion-list--warning" data-v-2cf15f89${_scopeId}><!--[-->`);
                 ssrRenderList(unref(promptAssistWarningMessages), (warning) => {
-                  _push2(`<small data-v-47ac5ae2${_scopeId}>${ssrInterpolate(warning)}</small>`);
+                  _push2(`<small data-v-2cf15f89${_scopeId}>${ssrInterpolate(warning)}</small>`);
                 });
                 _push2(`<!--]--></div>`);
               } else {
@@ -13351,17 +13405,17 @@ ${generation.negativePrompt}`;
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<div class="asset-actions prompt-assist-apply-actions" data-v-47ac5ae2${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(promptAssistResultState).canApplyPrompt) ? " disabled" : ""} data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyPrompt"))}</button><button${ssrRenderAttrs(mergeProps({
+            _push2(`<div class="asset-actions prompt-assist-apply-actions" data-v-2cf15f89${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(promptAssistResultState).canApplyPrompt) ? " disabled" : ""} data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyPrompt"))}</button><button${ssrRenderAttrs(mergeProps({
               type: "button",
               disabled: !unref(promptAssistResultState).canApplyNegative
-            }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(promptAssistResultState).canApplyNegative ? "" : unref(promptAssistStateMessage))))} data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyNegative"))}</button></div><div class="${ssrRenderClass([`prompt-assist-state--${unref(promptAssistResultState).id}`, "prompt-assist-state"])}"${ssrRenderAttr("aria-live", unref(promptAssistError) ? "assertive" : "polite")} data-v-47ac5ae2${_scopeId}><strong data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(promptAssistStateMessage))}</strong>`);
+            }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(promptAssistResultState).canApplyNegative ? "" : unref(promptAssistStateMessage))))} data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyNegative"))}</button></div><div class="${ssrRenderClass([`prompt-assist-state--${unref(promptAssistResultState).id}`, "prompt-assist-state"])}"${ssrRenderAttr("aria-live", unref(promptAssistError) ? "assertive" : "polite")} data-v-2cf15f89${_scopeId}><strong data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(promptAssistStateMessage))}</strong>`);
             if (unref(promptAssistError)) {
-              _push2(`<small class="error" data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(promptAssistError))}</small>`);
+              _push2(`<small class="error" data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(promptAssistError))}</small>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistError) && unref(promptAssistRequestContext)) {
-              _push2(`<small data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.requestContext"))}: ${ssrInterpolate(unref(promptAssistRequestContext))}</small>`);
+              _push2(`<small data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.requestContext"))}: ${ssrInterpolate(unref(promptAssistRequestContext))}</small>`);
             } else {
               _push2(`<!---->`);
             }
@@ -13671,19 +13725,19 @@ ${generation.negativePrompt}`;
         }),
         embeddings: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-47ac5ae2${_scopeId}><div class="asset-panel__header prompt-asset-embedding__header" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.title"))} <small data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(embeddingOptions).length)}</small></span></div><div class="prompt-asset-embedding__content" data-v-47ac5ae2${_scopeId}><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-47ac5ae2${_scopeId}><option value="" data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
+            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-2cf15f89${_scopeId}><div class="asset-panel__header prompt-asset-embedding__header" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.title"))} <small data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(embeddingOptions).length)}</small></span></div><div class="prompt-asset-embedding__content" data-v-2cf15f89${_scopeId}><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-2cf15f89${_scopeId}><option value="" data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
             ssrRenderList(unref(embeddingOptions), (item) => {
-              _push2(`<option${ssrRenderAttr("value", item.relative_path)} data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.relative_path)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", item.relative_path)} data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.relative_path)}</option>`);
             });
-            _push2(`<!--]--></select><div class="embedding-browser"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.browserAria"))} data-v-47ac5ae2${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select><div class="embedding-browser"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.browserAria"))} data-v-2cf15f89${_scopeId}><!--[-->`);
             ssrRenderList(unref(embeddingOptions), (item) => {
               _push2(`<button${ssrRenderAttrs(mergeProps({
                 key: item.path,
                 class: "embedding-row",
                 type: "button"
-              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.relative_path)))} data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(embeddingToken(String(item.relative_path)))}</span><small data-v-47ac5ae2${_scopeId}>${ssrInterpolate(item.relative_path)}</small></button>`);
+              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.relative_path)))} data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(embeddingToken(String(item.relative_path)))}</span><small data-v-2cf15f89${_scopeId}>${ssrInterpolate(item.relative_path)}</small></button>`);
             });
-            _push2(`<!--]--></div></div><div class="asset-actions prompt-asset-embedding__actions" data-v-47ac5ae2${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div></section>`);
+            _push2(`<!--]--></div></div><div class="asset-actions prompt-asset-embedding__actions" data-v-2cf15f89${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath) || !unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div></section>`);
           } else {
             return [
               createVNode("section", {
@@ -13748,13 +13802,13 @@ ${generation.negativePrompt}`;
         }),
         wildcards: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-47ac5ae2${_scopeId}><div class="asset-panel__header" data-v-47ac5ae2${_scopeId}><span data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.title"))}</span></div><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-47ac5ae2${_scopeId}><option value="" data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
+            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-2cf15f89${_scopeId}><div class="asset-panel__header" data-v-2cf15f89${_scopeId}><span data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.title"))}</span></div><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-2cf15f89${_scopeId}><option value="" data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
             ssrRenderList(unref(wildcards), (item) => {
-              _push2(`<option${ssrRenderAttr("value", item.name)} data-v-47ac5ae2${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
+              _push2(`<option${ssrRenderAttr("value", item.name)} data-v-2cf15f89${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
             });
-            _push2(`<!--]--></select><div class="asset-actions" data-v-47ac5ae2${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button></div>`);
+            _push2(`<!--]--></select><div class="asset-actions" data-v-2cf15f89${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button></div>`);
             if (unref(wildcardError)) {
-              _push2(`<small class="error" aria-live="assertive" data-v-47ac5ae2${_scopeId}>${ssrInterpolate(unref(wildcardError))}</small>`);
+              _push2(`<small class="error" aria-live="assertive" data-v-2cf15f89${_scopeId}>${ssrInterpolate(unref(wildcardError))}</small>`);
             } else {
               _push2(`<!---->`);
             }
@@ -13814,7 +13868,7 @@ _sfc_main$1_.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptPane.vue");
   return _sfc_setup$1_ ? _sfc_setup$1_(props, ctx) : void 0;
 };
-const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-47ac5ae2"]]), { __name: "StudioPromptPane" });
+const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-2cf15f89"]]), { __name: "StudioPromptPane" });
 const normalizeEagleFolderSelection = (folders, selectedId) => selectedId && folders.some((folder) => folder.id === selectedId) ? selectedId : "";
 const errorMessage$2 = (error) => {
   return userFacingErrorMessage(error, "common.error.external");

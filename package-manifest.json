@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "6ab30f27cb8d9b40b42f9ede9a0f1fd687f99006",
-  "build_timestamp_utc": "2026-08-29T14:55:44Z",
+  "source_commit": "c6a5bcfee2585768d4be058f7ed5b72534ed75ea",
+  "build_timestamp_utc": "2026-08-29T17:22:55Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -1247,34 +1247,34 @@
       "sha256": "7dc00e00c0b113ab1a0020779d96b49c7cd0caf52f769507a3d7fafeb3d25104"
     },
     {
-      "path": "app/frontend/public/_nuxt/BTuYyeIP.js",
-      "size_bytes": 3451,
-      "sha256": "545e6cc8d2ee34345a5798425ac5cf2801aebb2948e213bff403a69316b43edd"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/DQEw4gIZ.js",
+      "path": "app/frontend/public/_nuxt/BZWL-uvW.js",
       "size_bytes": 9504,
-      "sha256": "cc08ad78e585dcb642933159857e4ca381fc81be9cc9fa9e8678c5df2314a715"
+      "sha256": "08e2d860fbd9a2cbb12979500a7251fb0353c5b2e22f2c88692af2bcabfb05dd"
     },
     {
-      "path": "app/frontend/public/_nuxt/U8iDCgcY.js",
-      "size_bytes": 1978104,
-      "sha256": "6d41db1fe295a70c0a4631f322b0df0ea8e2f5e16499242ba47abd09fd4cf5c2"
+      "path": "app/frontend/public/_nuxt/D-QrKgQm.js",
+      "size_bytes": 3451,
+      "sha256": "662616392b5f00d487a810a7ce09b3c0ed1606ff20abe0f80eb7c6d2bdf382d7"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/G3i54R5Z.js",
+      "size_bytes": 1979653,
+      "sha256": "fb0f22e874dc14150c241da0497851729f539bdb0fba0b4b222b5415ef245ce7"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "895a186146086765c6f238517c88e2202c963dd2c6a01871bfbbbf255b57a748"
+      "sha256": "bc26e651fc2c42898137fb98644d8112ccb3ca23ccf18ecaf0e8781a82946e23"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/8cee712b-f957-4159-9542-e84c0e13d326.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/a4030e04-f75d-441e-932c-363797cc9c77.json",
       "size_bytes": 88,
-      "sha256": "dffba0f2a72e1d4aba219f9da081dd38e0a30923d6e0de1dc01dd50b7cdb5673"
+      "sha256": "b818cd059b6b191de533005932a2dcde0536a6e32bebac7b1efa1d956bda5594"
     },
     {
-      "path": "app/frontend/public/_nuxt/entry.BSA36Q5V.css",
-      "size_bytes": 467592,
-      "sha256": "53123a789f858cab20acbc8ee2f25534bf77627b35fa80ed6a5b62cdf30e5647"
+      "path": "app/frontend/public/_nuxt/entry.DyG7CnJH.css",
+      "size_bytes": 467489,
+      "sha256": "bd3b7c5ca148b30436edeadc4e75a0c9949d68e8645ac1a3f3aef220a9451591"
     },
     {
       "path": "app/frontend/public/_nuxt/error-404.BBhU_iaz.css",
@@ -1314,7 +1314,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "656457fdc2c8ec4b01f0891cad1318ff163943c8c3a385c7a6c10cc3de17bc29"
+      "sha256": "ac0a135b533431030d4af0cb16f97d1e63f344b42be0d5680d5f2ce854b58b04"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.NLK6jfRQ.mjs",
@@ -1752,24 +1752,24 @@
       "sha256": "54d42ef76cc2d1097b95c80c87d223e9d4fc35e36da90904c4a669f8b40246fa"
     },
     {
-      "path": "app/frontend/server/chunks/build/PromptPane-styles.DMZSlFBG.mjs",
+      "path": "app/frontend/server/chunks/build/PromptPane-styles.DQXW2A6C.mjs",
       "size_bytes": 8848,
-      "sha256": "50b2b4ae3ed102d54c257aa690702b33057f0ab0ba99b571eac7917146eec102"
+      "sha256": "4c76b067e21a574673abaeb03748de41524c9651269e97f0cc6a266ec14fe95d"
     },
     {
-      "path": "app/frontend/server/chunks/build/PromptPlacementCanvas-styles.Dme_WG5G.mjs",
+      "path": "app/frontend/server/chunks/build/PromptPlacementCanvas-styles.Z3haOKwi.mjs",
       "size_bytes": 2565,
-      "sha256": "ca7748b7e7a2607ff3afc916511108429ed1049f6f31a3f4cf86a03ed3189013"
+      "sha256": "988007580fb65b743156ef95bc052078830d2f325bee5d0ac51e8e0a9af17e95"
     },
     {
-      "path": "app/frontend/server/chunks/build/PromptPlacementDialog-styles.K9fRg4mi.mjs",
+      "path": "app/frontend/server/chunks/build/PromptPlacementDialog-styles.CLVsIVS3.mjs",
       "size_bytes": 5146,
-      "sha256": "2540b5d0206f64123dfa125d02a9cdba47ee43ae0235a9c6b639d3c649490aab"
+      "sha256": "99e2c7cf2be34309ac8f8c3155542d476eca7ea5952ce26259e37380a5cb58e5"
     },
     {
-      "path": "app/frontend/server/chunks/build/PromptSectionsEditor-styles.2nHruCrH.mjs",
-      "size_bytes": 3871,
-      "sha256": "6ae6985f24973ad6619d1e865ada0867e3c74f2134b6f8d0fa4c0691c72eec86"
+      "path": "app/frontend/server/chunks/build/PromptSectionsEditor-styles.GNVfYkHo.mjs",
+      "size_bytes": 3768,
+      "sha256": "6d91e1b2c3d10b88427fd49d2e2543c9f7b69090309f0480551befb7bb321409"
     },
     {
       "path": "app/frontend/server/chunks/build/RemasterSettingsPanel-styles._TVnkfgq.mjs",
@@ -1989,7 +1989,7 @@
     {
       "path": "app/frontend/server/chunks/build/client.precomputed.mjs",
       "size_bytes": 2916,
-      "sha256": "8de7b3a09aa42691f0c1839f1b39f7f8969ffa0109d91669ba066ffed1d9e282"
+      "sha256": "9d2982acb42719696c587210134d88da22582646935146f582301d210607e3fe"
     },
     {
       "path": "app/frontend/server/chunks/build/error-404-DXgHoesY.mjs",
@@ -2013,13 +2013,13 @@
     },
     {
       "path": "app/frontend/server/chunks/build/server.mjs",
-      "size_bytes": 3184576,
-      "sha256": "356dea3c8d9549dac1b924eb6dd19f3a2e66e99a095eec6f9e0b3de5fd5ede47"
+      "size_bytes": 3187899,
+      "sha256": "6bbd30d1f83631daf928f79b53054e271c0266aaebea157e51acd34920082f56"
     },
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 18376,
-      "sha256": "21694c15074931c5e5384a3ada27cc0d029655ded13b133c40c9c6331af7b3b0"
+      "sha256": "cb5aedab3b8e2a5ae60ceffa5110cb49a374007870a1184a647fae80ed2b19b6"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
