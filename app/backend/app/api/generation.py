@@ -774,23 +774,6 @@ def _validate_runtime_feature_requirements(
                 ],
             },
         )
-    if (
-        requires_spatial_prompt
-        and settings.get("hires_enabled")
-        and settings.get("hires_upscaler") == "Topaz Photo AI"
-    ):
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING,
-                "unsupported": [
-                    {
-                        "field": "hires_upscaler",
-                        "reason": "spatial_prompt_topaz_hires_not_supported",
-                    }
-                ],
-            },
-        )
     if selected_runtime != "comfy_workflow":
         return
     requires_anima_lllite = bool(settings.get("anima_lllite_units"))
@@ -2541,21 +2524,7 @@ def _spatial_model_evidence(
     slot_id = f"model:{stage}:{path.name}"
     if profile == "sdxl":
         lineage_metadata = {**header.metadata, **dict(catalog_metadata or {})}
-        selected_profile_id = manual_profile_id or infer_sdxl_spatial_profile_id(
-            lineage_metadata
-        )
-        if selected_profile_id is None:
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": "spatial_profile_selection_required",
-                    "stage": stage,
-                    "profile_options": [
-                        "sdxl.attention.v1",
-                        "illustrious.attention.v1",
-                    ],
-                },
-            )
+        selected_profile_id = infer_sdxl_spatial_profile_id(lineage_metadata)
         return sdxl_spatial_model_evidence(
             header,
             model_slot_id=slot_id,
@@ -2692,10 +2661,10 @@ def _prepare_spatial_generation(
         if isinstance(anima_bundle, dict)
         else None
     )
-    profile_selection = request.prompt_layout.model_profile_selection
-    base_manual_profile = (
-        profile_selection.base if profile_selection is not None else None
-    )
+    # Runtime tensors are authoritative. SDXL uses its verified 24-block
+    # structure; Anima resolves the 28/40/52-block profile from its tensors.
+    # Older histories may retain a manual selection, but it is no longer used.
+    base_manual_profile = None
     base_width, base_height, inpaint_mask, crop_rect = _spatial_base_geometry(request)
     stage_inputs: list[SpatialStagePreparation] = [
         SpatialStagePreparation(
@@ -2716,11 +2685,7 @@ def _prepare_spatial_generation(
             manual_profile_id=base_manual_profile,
         )
     ]
-    hires_size = (
-        _hires_target_size(settings)
-        if settings.get("hires_upscaler") != "Topaz Photo AI"
-        else None
-    )
+    hires_size = _hires_target_size(settings)
     if hires_size is not None:
         hires_value = str(settings.get("hires_checkpoint") or "").strip()
         hires_path = base_path
@@ -2731,11 +2696,7 @@ def _prepare_spatial_generation(
                 model_directory=model_directory,
                 library=library,
             )
-        hires_manual_profile = (
-            profile_selection.hires if profile_selection is not None else None
-        )
-        if hires_manual_profile is None and hires_path == base_path:
-            hires_manual_profile = base_manual_profile
+        hires_manual_profile = None
         hires_mask = (
             inpaint_mask.resize(hires_size, Image.Resampling.NEAREST)
             if inpaint_mask is not None and crop_rect is None
@@ -2771,14 +2732,7 @@ def _prepare_spatial_generation(
             library=library,
         )
         refiner_size = hires_size or (base_width, base_height)
-        refiner_manual_profile = (
-            profile_selection.refiner if profile_selection is not None else None
-        )
-        if refiner_manual_profile is None:
-            if refiner_path == base_path:
-                refiner_manual_profile = base_manual_profile
-            elif hires_size is not None and refiner_path == hires_path:
-                refiner_manual_profile = hires_manual_profile
+        refiner_manual_profile = None
         refiner_mask = (
             inpaint_mask.resize(refiner_size, Image.Resampling.NEAREST)
             if inpaint_mask is not None and crop_rect is None

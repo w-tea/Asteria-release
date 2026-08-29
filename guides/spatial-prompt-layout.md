@@ -22,7 +22,9 @@
 
 ## 背景画像、Hires、モデル系統
 
-img2imgやinpaintでは、入力画像を背景としてキャンバスに表示し、その上で配置を設定できます。Hires.fixやRefinerを使う場合は、選択したモデル系統に対応する設定が適用されます。SDXL／Illustrious系とAnima系では利用できる処理が異なるため、モデルを自動で決められない場合は画面の選択肢から明示的に選んでください。未確認の派生モデルで、同じ結果になるとは限りません。
+img2imgやinpaintでは、入力画像を背景としてキャンバスに表示し、その上で配置を設定できます。Asteriaは、生成に使うcheckpointの構造を内部で確認します。SDXL／Illustrious系では共通の24ブロック構造を使い、Animaでは28／40／52ブロックの違いを判別します。利用者がモデル系統を選ぶ必要はありません。構造を確認できないモデルでは配置を付けた生成を始めず、別のモデルへ切り替えるよう案内します。
+
+Hires.fixでは、拡大後の画像サイズに合わせて配置用マスクを作り直します。Topaz Photo AIを選んだ場合も、Topazが担当するのは画像の拡大だけです。その後のimg2imgで同じcheckpointを使う場合は、初回生成で確認した構造を引き継ぎます。Hires用に別のcheckpointを指定した場合は、そのcheckpointの構造を改めて確認してから、Hires段階の処理へ渡します。未確認の派生モデルで、同じ結果になるとは限りません。
 
 Anima 2.9B／3.8Bでは、LLLiteが生成結果に作用することを確認しています。ただし、現在の位置や構図の制御は実験段階です。狙った位置や構図を保証するものではないため、強さと範囲を調整しながら結果を確認してください。
 
@@ -66,7 +68,9 @@ Overlapping targets can use automatic or manual front-to-back priority. This pri
 
 ### Source images, Hires.fix, and model families
 
-For img2img and inpaint, the source image appears behind the placement canvas. Hires.fix and Refiner use the model-family configuration selected for their stages. SDXL/Illustrious and Anima use different execution paths, so choose the family explicitly when Asteria cannot determine it. Unverified fine-tunes may behave differently.
+For img2img and inpaint, the source image appears behind the placement canvas. Asteria inspects the selected checkpoint structure internally. SDXL and Illustrious use the shared 24-block path, while Anima is classified by its 28-, 40-, or 52-block structure. You do not need to select a model family. If Asteria cannot verify a supported structure, it stops before generation and asks you to choose another model.
+
+Hires.fix rebuilds the placement masks for the enlarged image size. When Topaz Photo AI is selected, Topaz only enlarges the image. The following img2img pass reuses the verified base structure when it uses the same checkpoint. If you select a separate Hires checkpoint, Asteria inspects that checkpoint before preparing the Hires-stage masks and conditioning. Unverified fine-tunes may behave differently.
 
 LLLite has a confirmed effect on outputs from Anima 2.9B and 3.8B. Its current position and composition control remains experimental and does not guarantee the intended layout. Adjust the strength and area while reviewing the results.
 

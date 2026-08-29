@@ -50,7 +50,7 @@ class CompiledSpatialMaskBundle:
     masks: tuple[SpatialCompiledMask, ...]
 
 
-def _runtime_mask_sha256(values: np.ndarray) -> str:
+def runtime_mask_sha256(values: np.ndarray) -> str:
     normalized = np.expand_dims(np.asarray(values, dtype=np.uint8, order="C"), axis=0)
     digest = hashlib.sha256()
     digest.update(
@@ -327,7 +327,7 @@ def compile_spatial_masks(
     for target in active_targets:
         values = np.rint(np.clip(weighted[target.target_id], 0.0, 1.0) * 255.0).astype(np.uint8)
         mask_bytes = values.tobytes(order="C")
-        mask_sha = _runtime_mask_sha256(values)
+        mask_sha = runtime_mask_sha256(values)
         compiled.append(
             SpatialCompiledMask(
                 target_id=target.target_id,

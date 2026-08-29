@@ -71,6 +71,7 @@ from app.services.spatial_prompt_mapping import (
 )
 from app.services.spatial_generation_context import (
     SpatialGenerationContextError,
+    resize_spatial_runtime_stage,
     upload_spatial_runtime_masks,
 )
 from app.services.workflow_mapping import WorkflowMapping, WorkflowMappingRepository
@@ -478,6 +479,7 @@ class ComfyTxt2ImgWorkflowBuilder:
     def _build_sdxl(self, request: dict) -> dict:
         mapping = self._mapping("sdxl")
         settings = request["settings"]
+        spatial_runtime_stage = str(request.get("_spatial_runtime_stage") or "base")
         positive_plan = self._request_prompt_syntax_plan(request, "positive")
         negative_plan = self._request_prompt_syntax_plan(request, "negative")
         model_slots = request.get("model_slots", {})
@@ -680,7 +682,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             )
         spatial_global = self._append_sdxl_spatial_global(
             request=request,
-            stage="base",
+            stage=spatial_runtime_stage,
             workflow=workflow,
             next_id=next_id,
             mapping=mapping,
@@ -782,7 +784,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         base_unpatched_model_ref = model_ref
         spatial_base = self._append_sdxl_spatial_stage(
             request=request,
-            stage="base",
+            stage=spatial_runtime_stage,
             workflow=workflow,
             next_id=next_id,
             mapping=mapping,
@@ -1605,6 +1607,7 @@ class ComfyTxt2ImgWorkflowBuilder:
     def _build_anima(self, request: dict) -> dict:
         mapping = self._mapping("anima")
         settings = request["settings"]
+        spatial_runtime_stage = str(request.get("_spatial_runtime_stage") or "base")
         if any(
             isinstance(unit, dict) and bool(unit.get("regional_prompts"))
             for unit in settings.get("anima_lllite_units", [])
@@ -1975,7 +1978,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         base_negative_ref: list[str | int] = [negative_conditioning_node, 0]
         spatial_base = self._append_anima_spatial_stage(
             request=request,
-            stage="base",
+            stage=spatial_runtime_stage,
             workflow=workflow,
             next_id=next_id,
             mapping=mapping,
@@ -3669,9 +3672,9 @@ class ComfyGenerationRuntime:
         request.setdefault("settings", {})["mode"] = "txt2img"
         self._ensure_controlnet_mode_runtime(request)
         self._apply_runtime_node_fallbacks(request)
-        self._prepare_spatial_runtime_masks(request)
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
+        self._prepare_spatial_runtime_masks(request)
         return self._generate(request, output_dir)
 
     def generate_img2img(self, request: dict, output_dir: Path) -> dict:
@@ -3683,9 +3686,9 @@ class ComfyGenerationRuntime:
         self._ensure_controlnet_mode_runtime(request)
         self._apply_runtime_node_fallbacks(request)
         self._prepare_init_image(request)
-        self._prepare_spatial_runtime_masks(request)
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
+        self._prepare_spatial_runtime_masks(request)
         return self._generate(request, output_dir)
 
     def generate_inpaint(self, request: dict, output_dir: Path) -> dict:
@@ -3705,9 +3708,9 @@ class ComfyGenerationRuntime:
         else:
             self._prepare_init_image(request)
             self._prepare_mask_image(request)
-        self._prepare_spatial_runtime_masks(request)
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
+        self._prepare_spatial_runtime_masks(request)
         result = self._generate(request, output_dir)
         if only_masked:
             full_size = _size_tuple(settings.get("inpaint_full_size"))
@@ -4160,6 +4163,7 @@ class ComfyGenerationRuntime:
         settings["topaz_hires_source_mode"] = source_mode
         if self.topaz_executable is None or not _path_is_file_safely(self.topaz_executable):
             settings["topaz_hires_runtime"] = "skipped_missing_executable"
+            self._prepare_spatial_runtime_masks(request)
             return self._generate(request, output_dir)
 
         first_request = deepcopy(request)
@@ -4177,6 +4181,7 @@ class ComfyGenerationRuntime:
             first_settings["detailer_units"] = []
         settings["topaz_first_pass_batch_size"] = 1
         settings["topaz_first_pass_batch_count"] = first_pass_count
+        self._prepare_spatial_runtime_masks(first_request)
         first_result = self._generate(first_request, output_dir)
         self._merge_builder_runtime_settings(request, first_request)
         first_paths = [Path(path) for path in first_result["output_paths"]]
@@ -4250,6 +4255,7 @@ class ComfyGenerationRuntime:
                 [*first_paths, *topaz_paths, *(Path(path) for path in final_paths)],
             )
             second_request = deepcopy(request)
+            second_request["_spatial_runtime_stage"] = "hires"
             second_settings = second_request.setdefault("settings", {})
             second_width, second_height = topaz_sizes[index]
             second_settings["mode"] = "img2img"
@@ -4289,6 +4295,19 @@ class ComfyGenerationRuntime:
                 second_request["expanded_prompt"] = settings["hires_prompt"]
             if settings.get("hires_negative_prompt"):
                 second_request["negative_prompt"] = settings["hires_negative_prompt"]
+
+            spatial_context = second_request.get("_spatial_runtime_context")
+            if spatial_context is not None:
+                try:
+                    second_request["_spatial_runtime_context"] = resize_spatial_runtime_stage(
+                        spatial_context,
+                        stage="hires",
+                        width=second_width,
+                        height=second_height,
+                    )
+                except SpatialGenerationContextError as exc:
+                    raise RuntimeErrorResponse(exc.code) from exc
+            self._prepare_spatial_runtime_masks(second_request)
 
             try:
                 second_result = self._generate(second_request, output_dir)

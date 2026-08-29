@@ -7,10 +7,12 @@ from pathlib import Path
 from typing import Literal, Mapping, Sequence
 from uuid import uuid4
 
+import numpy as np
 from PIL import Image, ImageOps
 
 from app.schemas.prompt_layout import PromptLayout
 from app.schemas.spatial_prompt_runtime import (
+    SpatialMaskBundle,
     SpatialModelProfileReceipt,
     SpatialPromptPlan,
     canonical_runtime_sha256,
@@ -18,6 +20,7 @@ from app.schemas.spatial_prompt_runtime import (
 from app.services.spatial_mask_compiler import (
     CompiledSpatialMaskBundle,
     compile_spatial_masks,
+    runtime_mask_sha256,
 )
 from app.services.spatial_model_profiles import load_spatial_model_profiles
 from app.services.spatial_profile_resolver import (
@@ -280,3 +283,136 @@ def upload_spatial_runtime_masks(
         uploaded_stages[stage] = {**dict(raw_payload), "mask_paths": uploaded_paths}
     uploaded_context["stages"] = uploaded_stages
     return uploaded_context
+
+
+def resize_spatial_runtime_stage(
+    runtime_context: Mapping[str, object],
+    *,
+    stage: SpatialStage,
+    width: int,
+    height: int,
+) -> dict[str, object]:
+    if runtime_context.get("schema_version") != "asteria.spatial-workflow-context.v1":
+        raise SpatialGenerationContextError("spatial_runtime_context_invalid")
+    if runtime_context.get("mask_transport") == "comfy_upload":
+        raise SpatialGenerationContextError("spatial_runtime_masks_already_uploaded")
+    if width <= 0 or height <= 0 or width > 8192 or height > 8192:
+        raise SpatialGenerationContextError("spatial_prompt_canvas_invalid", stage=stage)
+    stages = runtime_context.get("stages")
+    if not isinstance(stages, Mapping):
+        raise SpatialGenerationContextError("spatial_runtime_context_invalid")
+    raw_stage = stages.get(stage)
+    if not isinstance(raw_stage, Mapping):
+        raise SpatialGenerationContextError("spatial_runtime_stage_unavailable", stage=stage)
+    raw_paths = raw_stage.get("mask_paths")
+    if not isinstance(raw_paths, Mapping):
+        raise SpatialGenerationContextError("spatial_runtime_context_invalid", stage=stage)
+    try:
+        source_bundle = SpatialMaskBundle.model_validate(raw_stage.get("mask_bundle"))
+    except ValueError as exc:
+        raise SpatialGenerationContextError("spatial_runtime_context_invalid", stage=stage) from exc
+    if source_bundle.stage != stage:
+        raise SpatialGenerationContextError("spatial_runtime_context_invalid", stage=stage)
+
+    resized_context = dict(runtime_context)
+    resized_stages = dict(stages)
+    resized_context["stages"] = resized_stages
+    if source_bundle.width == width and source_bundle.height == height:
+        resized_stages[stage] = dict(raw_stage)
+        return resized_context
+
+    source_paths: dict[str, Path] = {}
+    for target_id, path_value in raw_paths.items():
+        if not isinstance(target_id, str) or not isinstance(path_value, str):
+            raise SpatialGenerationContextError("spatial_runtime_context_invalid", stage=stage)
+        path = Path(path_value)
+        if not path.is_file():
+            raise SpatialGenerationContextError("spatial_mask_file_unavailable", stage=stage)
+        source_paths[target_id] = path
+    ordered_receipts = sorted(source_bundle.targets, key=lambda item: item.depth_index)
+    receipt_ids = {item.target_id for item in ordered_receipts}
+    if set(source_paths) != receipt_ids:
+        raise SpatialGenerationContextError("spatial_runtime_context_invalid", stage=stage)
+
+    stage_directories = {path.parent for path in source_paths.values()}
+    if len(stage_directories) != 1:
+        raise SpatialGenerationContextError("spatial_runtime_context_invalid", stage=stage)
+    target_directory = next(iter(stage_directories)) / f"actual-{uuid4().hex}"
+    target_directory.mkdir(parents=True, exist_ok=False)
+
+    resized_paths: dict[str, str] = {}
+    target_receipts: list[dict[str, object]] = []
+    try:
+        for index, source_receipt in enumerate(ordered_receipts):
+            target_id = source_receipt.target_id
+            source_path = source_paths[target_id]
+            try:
+                with Image.open(source_path) as source_image:
+                    if "A" not in source_image.getbands():
+                        raise SpatialGenerationContextError(
+                            "spatial_runtime_context_invalid",
+                            stage=stage,
+                        )
+                    source_mask = ImageOps.invert(source_image.getchannel("A"))
+                    resized_mask = source_mask.resize(
+                        (width, height),
+                        Image.Resampling.BILINEAR,
+                    )
+            except OSError as exc:
+                raise SpatialGenerationContextError(
+                    "spatial_mask_file_unavailable",
+                    stage=stage,
+                ) from exc
+            values = np.asarray(resized_mask, dtype=np.uint8)
+            rgba = Image.new("RGBA", (width, height), (255, 255, 255, 0))
+            rgba.putalpha(ImageOps.invert(resized_mask))
+            target_path = target_directory / f"{stage}-{index:03d}.png"
+            temporary = target_directory / f".{target_path.name}.{uuid4().hex}.tmp"
+            try:
+                rgba.save(temporary, format="PNG")
+                os.replace(temporary, target_path)
+            finally:
+                try:
+                    temporary.unlink(missing_ok=True)
+                except OSError:
+                    pass
+            target_receipts.append(
+                {
+                    **source_receipt.model_dump(mode="json"),
+                    "mask_sha256": runtime_mask_sha256(values),
+                    "overlap_weight": float(values.mean() / 255.0),
+                }
+            )
+            resized_paths[target_id] = str(target_path)
+    except Exception:
+        for path_value in resized_paths.values():
+            try:
+                Path(path_value).unlink(missing_ok=True)
+            except OSError:
+                pass
+        try:
+            target_directory.rmdir()
+        except OSError:
+            pass
+        raise
+
+    target_receipts.sort(key=lambda item: int(item["depth_index"]))
+    bundle_body: dict[str, object] = {
+        "schema_version": "asteria.spatial-mask-bundle.v1",
+        "stage": stage,
+        "width": width,
+        "height": height,
+        "targets": target_receipts,
+    }
+    resized_bundle = SpatialMaskBundle.model_validate(
+        {
+            **bundle_body,
+            "bundle_sha256": canonical_runtime_sha256(bundle_body),
+        }
+    )
+    resized_stages[stage] = {
+        **dict(raw_stage),
+        "mask_bundle": resized_bundle.model_dump(mode="json"),
+        "mask_paths": resized_paths,
+    }
+    return resized_context
