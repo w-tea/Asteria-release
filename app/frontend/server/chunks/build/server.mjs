@@ -2849,7 +2849,7 @@ const messages = {
   "prompt.placement.convertEllipse": { en: "Convert to ellipse", ja: "楕円へ変更" },
   "prompt.placement.convertRectangle": { en: "Convert to rectangle", ja: "長方形へ変更" },
   "prompt.placement.size": { en: "Area size", ja: "範囲の大きさ" },
-  "prompt.placement.sizeAuto": { en: "Auto", ja: "自動" },
+  "prompt.placement.sizeAuto": { en: "Default size", ja: "初期サイズ" },
   "prompt.placement.sizeSmall": { en: "Small", ja: "狭い" },
   "prompt.placement.sizeStandard": { en: "Standard", ja: "標準" },
   "prompt.placement.sizeLarge": { en: "Large", ja: "広い" },
@@ -2871,8 +2871,7 @@ const messages = {
   "prompt.placement.discardConfirm": { en: "Discard changes made in this screen?", ja: "この画面で変更した内容を破棄しますか？" },
   "prompt.placement.invalidFallback": { en: "The placement could not be read. The full prompt was restored to the single prompt field and placement was turned off.", ja: "位置指定を読み込めませんでした。プロンプト全文を「まとめて入力」へ戻し、配置を解除しました。" },
   "prompt.placement.modelFamily": { en: "Model family", ja: "モデルの系統" },
-  "prompt.placement.modelFamilyHelp": { en: "Choose the family the selected model was based on. Custom and merged models should use their original base family.", ja: "選択中のモデルがどの系統を元にしているか選びます。追加学習モデルやマージモデルは、元にした系統を選んでください。" },
-  "prompt.placement.modelFamilyRequired": { en: "Choose the model family before saving the placement.", ja: "配置を保存する前に、モデルの系統を選んでください。" },
+  "prompt.placement.modelFamilyHelp": { en: "Asteria detects the family when the model metadata identifies it. For a custom or merged model that cannot be identified, choose its original base family.", ja: "モデル情報から系統を判定できる場合は自動で選びます。判定できない追加学習モデルやマージモデルは、元にした系統を選んでください。" },
   "prompt.placement.modelAuto": { en: "Detect automatically", ja: "自動判定" },
   "prompt.placement.modelSdxl": { en: "SDXL", ja: "SDXL" },
   "prompt.placement.modelIllustrious": { en: "Illustrious", ja: "Illustrious" },
@@ -7245,6 +7244,15 @@ const parsePromptLayout = (value) => {
     targets: clone(parsedTargets),
     ...value.model_profile_selection === void 0 ? {} : { model_profile_selection: modelProfileSelection ?? null }
   };
+};
+const isPromptPlacementDraftSaveable = (promptInput, promptLayout) => {
+  const parsedLayout = parsePromptLayout(promptLayout);
+  if (!parsedLayout) return false;
+  const targets = (promptInput.sections ?? []).flatMap((section) => section.content.mode === "targets" ? section.content.targets : []);
+  if (!targets.length || targets.some((target) => !target.name.trim() || !target.text.trim())) return false;
+  const promptTargetIds = targets.map((target) => target.id);
+  const layoutTargetIds = parsedLayout.targets.map((target) => target.target_id);
+  return promptTargetIds.length === layoutTargetIds.length && promptTargetIds.every((targetId) => layoutTargetIds.includes(targetId));
 };
 const createSpatialTargetId = (now = Date.now()) => {
   const bytes = new Uint8Array(16);
@@ -12239,30 +12247,30 @@ const _sfc_main$20 = /* @__PURE__ */ defineComponent({
       _push(`<div${ssrRenderAttrs(mergeProps({
         class: "placement-canvas",
         style: { aspectRatio: `${__props.canvasWidth} / ${__props.canvasHeight}` }
-      }, _attrs))} data-v-eea6509f><svg viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img"${ssrRenderAttr("aria-label", __props.ariaLabel)} data-v-eea6509f>`);
+      }, _attrs))} data-v-c9cde4d4><svg viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img"${ssrRenderAttr("aria-label", __props.ariaLabel)} data-v-c9cde4d4>`);
       if (__props.backgroundUrl) {
-        _push(`<image${ssrRenderAttr("href", __props.backgroundUrl)} x="0" y="0" width="1000" height="1000" preserveAspectRatio="none" data-v-eea6509f></image>`);
+        _push(`<image${ssrRenderAttr("href", __props.backgroundUrl)} x="0" y="0" width="1000" height="1000" preserveAspectRatio="none" data-v-c9cde4d4></image>`);
       } else {
         _push(`<!---->`);
       }
       _push(`<!--[-->`);
       ssrRenderList(unref(orderedTargets), (target, index) => {
-        _push(`<g class="${ssrRenderClass([{ "placement-target--selected": target.target_id === __props.selectedTargetId, "placement-target--legacy": target.shape === "mask" }, "placement-target"])}" data-v-eea6509f>`);
+        _push(`<g class="${ssrRenderClass([{ "placement-target--selected": target.target_id === __props.selectedTargetId, "placement-target--legacy": target.shape === "mask" }, "placement-target"])}" data-v-c9cde4d4>`);
         if (target.shape === "ellipse") {
-          _push(`<ellipse${ssrRenderAttr("cx", target.center_x * 1e3)}${ssrRenderAttr("cy", target.center_y * 1e3)}${ssrRenderAttr("rx", target.width * 500)}${ssrRenderAttr("ry", target.height * 500)} data-v-eea6509f></ellipse>`);
+          _push(`<ellipse${ssrRenderAttr("cx", target.center_x * 1e3)}${ssrRenderAttr("cy", target.center_y * 1e3)}${ssrRenderAttr("rx", target.width * 500)}${ssrRenderAttr("ry", target.height * 500)} data-v-c9cde4d4></ellipse>`);
         } else {
-          _push(`<rect${ssrRenderAttr("x", (target.center_x - target.width / 2) * 1e3)}${ssrRenderAttr("y", (target.center_y - target.height / 2) * 1e3)}${ssrRenderAttr("width", target.width * 1e3)}${ssrRenderAttr("height", target.height * 1e3)}${ssrRenderAttr("rx", target.shape === "mask" ? 16 : 4)} data-v-eea6509f></rect>`);
+          _push(`<rect${ssrRenderAttr("x", (target.center_x - target.width / 2) * 1e3)}${ssrRenderAttr("y", (target.center_y - target.height / 2) * 1e3)}${ssrRenderAttr("width", target.width * 1e3)}${ssrRenderAttr("height", target.height * 1e3)}${ssrRenderAttr("rx", target.shape === "mask" ? 16 : 4)} data-v-c9cde4d4></rect>`);
         }
         if (target.shape === "mask" && target.mask_source) {
-          _push(`<image class="placement-target__legacy-preview"${ssrRenderAttr("href", legacyMaskUrl(target))}${ssrRenderAttr("x", (target.center_x - target.width / 2) * 1e3)}${ssrRenderAttr("y", (target.center_y - target.height / 2) * 1e3)}${ssrRenderAttr("width", target.width * 1e3)}${ssrRenderAttr("height", target.height * 1e3)} preserveAspectRatio="none" data-v-eea6509f></image>`);
+          _push(`<image class="placement-target__legacy-preview"${ssrRenderAttr("href", legacyMaskUrl(target))}${ssrRenderAttr("x", (target.center_x - target.width / 2) * 1e3)}${ssrRenderAttr("y", (target.center_y - target.height / 2) * 1e3)}${ssrRenderAttr("width", target.width * 1e3)}${ssrRenderAttr("height", target.height * 1e3)} preserveAspectRatio="none" data-v-c9cde4d4></image>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<text${ssrRenderAttr("x", target.center_x * 1e3)}${ssrRenderAttr("y", target.center_y * 1e3)} data-v-eea6509f>${ssrInterpolate(index + 1)}</text>`);
+        _push(`<text${ssrRenderAttr("x", target.center_x * 1e3)}${ssrRenderAttr("y", target.center_y * 1e3)} data-v-c9cde4d4>${ssrInterpolate(index + 1)}</text>`);
         if (target.target_id === __props.selectedTargetId) {
-          _push(`<g class="placement-target__handles" data-v-eea6509f><!--[-->`);
+          _push(`<g class="placement-target__handles" data-v-c9cde4d4><!--[-->`);
           ssrRenderList(handles(target), (handle) => {
-            _push(`<circle${ssrRenderAttr("cx", handle.x)}${ssrRenderAttr("cy", handle.y)} r="12" data-v-eea6509f></circle>`);
+            _push(`<!--[--><circle class="placement-target__handle-halo"${ssrRenderAttr("cx", handle.x)}${ssrRenderAttr("cy", handle.y)} r="22" data-v-c9cde4d4></circle><circle class="placement-target__handle-core"${ssrRenderAttr("cx", handle.x)}${ssrRenderAttr("cy", handle.y)} r="12" data-v-c9cde4d4></circle><!--]-->`);
           });
           _push(`<!--]--></g>`);
         } else {
@@ -12280,7 +12288,7 @@ _sfc_main$20.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptPlacementCanvas.vue");
   return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
 };
-const PromptPlacementCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-eea6509f"]]), { __name: "StudioGeneratePromptPlacementCanvas" });
+const PromptPlacementCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-c9cde4d4"]]), { __name: "StudioGeneratePromptPlacementCanvas" });
 const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
   __name: "PromptPlacementDialog",
   __ssrInlineRender: true,
@@ -12331,7 +12339,10 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
     const selectedBaseProfile = computed(() => promptLayoutDraft.value.model_profile_selection?.base ?? "");
     const selectedHiresProfile = computed(() => promptLayoutDraft.value.model_profile_selection?.hires ?? "");
     const selectedRefinerProfile = computed(() => promptLayoutDraft.value.model_profile_selection?.refiner ?? "");
-    const canApply = computed(() => targetRecords.value.length > 0 && targetRecords.value.every(({ target }) => target.name.trim() && target.text.trim()) && (props.generationProfile !== "sdxl" || Boolean(selectedBaseProfile.value)) && parsePromptLayout(promptLayoutDraft.value) !== null);
+    const canApply = computed(() => isPromptPlacementDraftSaveable(
+      promptInputDraft.value,
+      promptLayoutDraft.value
+    ));
     const updateLayoutTarget = (target) => {
       const index = promptLayoutDraft.value.targets.findIndex((item) => item.target_id === target.target_id);
       if (index >= 0) promptLayoutDraft.value.targets[index] = cloneJsonValue(target);
@@ -12340,7 +12351,7 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
       _push(`<div${ssrRenderAttrs(mergeProps({
         class: "placement-dialog-backdrop",
         role: "presentation"
-      }, _attrs))} data-v-2416820e><section class="placement-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "prompt-placement-title")} tabindex="-1" data-v-2416820e><header class="placement-dialog__header" data-v-2416820e><div data-v-2416820e><h2 id="prompt-placement-title" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.title"))}</h2><p data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.help"))}</p></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("common.close"))} data-v-2416820e>×</button></header><div class="placement-dialog__workspace" data-v-2416820e><section class="placement-dialog__stage"${ssrRenderAttr("aria-label", unref(t)("prompt.placement.canvas"))} data-v-2416820e>`);
+      }, _attrs))} data-v-5aa06178><section class="placement-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "prompt-placement-title")} tabindex="-1" data-v-5aa06178><header class="placement-dialog__header" data-v-5aa06178><div data-v-5aa06178><h2 id="prompt-placement-title" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.title"))}</h2><p data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.help"))}</p></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("common.close"))} data-v-5aa06178>×</button></header><div class="placement-dialog__workspace" data-v-5aa06178><section class="placement-dialog__stage"${ssrRenderAttr("aria-label", unref(t)("prompt.placement.canvas"))} data-v-5aa06178>`);
       _push(ssrRenderComponent(PromptPlacementCanvas, {
         "canvas-width": __props.canvasWidth,
         "canvas-height": __props.canvasHeight,
@@ -12352,26 +12363,26 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
         onSelect: ($event) => selectedTargetId.value = $event,
         onUpdateTarget: updateLayoutTarget
       }, null, _parent));
-      _push(`<div class="placement-dialog__stage-actions" data-v-2416820e><label class="toggle-row" data-v-2416820e><input${ssrIncludeBooleanAttr(ssrLooseEqual(unref(promptLayoutDraft).mode, "enabled")) ? " checked" : ""} type="checkbox" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.enabled"))}</span></label><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.centerAll"))}</button></div><section class="placement-profile"${ssrRenderAttr("aria-label", unref(t)("prompt.placement.modelFamily"))} data-v-2416820e><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.modelFamily"))}</span><select${ssrRenderAttr("value", unref(selectedBaseProfile))} data-v-2416820e><!--[-->`);
+      _push(`<div class="placement-dialog__stage-actions" data-v-5aa06178><label class="toggle-row" data-v-5aa06178><input${ssrIncludeBooleanAttr(ssrLooseEqual(unref(promptLayoutDraft).mode, "enabled")) ? " checked" : ""} type="checkbox" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.enabled"))}</span></label><button type="button" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.centerAll"))}</button></div><section class="placement-profile"${ssrRenderAttr("aria-label", unref(t)("prompt.placement.modelFamily"))} data-v-5aa06178><label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.modelFamily"))}</span><select${ssrRenderAttr("value", unref(selectedBaseProfile))} data-v-5aa06178><!--[-->`);
       ssrRenderList(unref(spatialProfileOptions), (option) => {
-        _push(`<option${ssrRenderAttr("value", option.value)} data-v-2416820e>${ssrInterpolate(option.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", option.value)} data-v-5aa06178>${ssrInterpolate(option.label)}</option>`);
       });
-      _push(`<!--]--></select></label><p data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.modelFamilyHelp"))}</p>`);
+      _push(`<!--]--></select></label><p data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.modelFamilyHelp"))}</p>`);
       if (__props.hiresEnabled || __props.refinerEnabled) {
-        _push(`<div class="field-grid" data-v-2416820e>`);
+        _push(`<div class="field-grid" data-v-5aa06178>`);
         if (__props.hiresEnabled) {
-          _push(`<label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.hiresModelFamily"))}</span><select${ssrRenderAttr("value", unref(selectedHiresProfile))} data-v-2416820e><option value="" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.inheritBase"))}</option><!--[-->`);
+          _push(`<label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.hiresModelFamily"))}</span><select${ssrRenderAttr("value", unref(selectedHiresProfile))} data-v-5aa06178><option value="" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.inheritBase"))}</option><!--[-->`);
           ssrRenderList(unref(spatialProfileOptions).filter((item) => item.value), (option) => {
-            _push(`<option${ssrRenderAttr("value", option.value)} data-v-2416820e>${ssrInterpolate(option.label)}</option>`);
+            _push(`<option${ssrRenderAttr("value", option.value)} data-v-5aa06178>${ssrInterpolate(option.label)}</option>`);
           });
           _push(`<!--]--></select></label>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.refinerEnabled && __props.generationProfile === "sdxl") {
-          _push(`<label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.refinerModelFamily"))}</span><select${ssrRenderAttr("value", unref(selectedRefinerProfile))} data-v-2416820e><option value="" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.inheritBase"))}</option><!--[-->`);
+          _push(`<label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.refinerModelFamily"))}</span><select${ssrRenderAttr("value", unref(selectedRefinerProfile))} data-v-5aa06178><option value="" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.inheritBase"))}</option><!--[-->`);
           ssrRenderList(unref(spatialProfileOptions).filter((item) => item.value), (option) => {
-            _push(`<option${ssrRenderAttr("value", option.value)} data-v-2416820e>${ssrInterpolate(option.label)}</option>`);
+            _push(`<option${ssrRenderAttr("value", option.value)} data-v-5aa06178>${ssrInterpolate(option.label)}</option>`);
           });
           _push(`<!--]--></select></label>`);
         } else {
@@ -12381,80 +12392,75 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
       } else {
         _push(`<!---->`);
       }
-      if (__props.generationProfile === "sdxl" && !unref(selectedBaseProfile)) {
-        _push(`<p class="placement-dialog__validation" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.modelFamilyRequired"))}</p>`);
-      } else {
-        _push(`<!---->`);
-      }
       _push(`</section>`);
       if (unref(targetRecords).length >= 4) {
-        _push(`<p class="placement-dialog__memory-note" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.memoryNote"))}</p>`);
+        _push(`<p class="placement-dialog__memory-note" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.memoryNote"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<details class="placement-bulk-settings" data-v-2416820e><summary data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.bulkTitle"))}</summary><div class="field-grid" data-v-2416820e><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.strength"))}</span><select data-v-2416820e><option value="auto" data-v-2416820e${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).strengthMode) ? ssrLooseContain(unref(bulkSettings).strengthMode, "auto") : ssrLooseEqual(unref(bulkSettings).strengthMode, "auto")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-2416820e${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).strengthMode) ? ssrLooseContain(unref(bulkSettings).strengthMode, "manual") : ssrLooseEqual(unref(bulkSettings).strengthMode, "manual")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+      _push(`<details class="placement-bulk-settings" data-v-5aa06178><summary data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.bulkTitle"))}</summary><div class="field-grid" data-v-5aa06178><label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.strength"))}</span><select data-v-5aa06178><option value="auto" data-v-5aa06178${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).strengthMode) ? ssrLooseContain(unref(bulkSettings).strengthMode, "auto") : ssrLooseEqual(unref(bulkSettings).strengthMode, "auto")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-5aa06178${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).strengthMode) ? ssrLooseContain(unref(bulkSettings).strengthMode, "manual") : ssrLooseEqual(unref(bulkSettings).strengthMode, "manual")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
       if (unref(bulkSettings).strengthMode === "manual") {
-        _push(`<input${ssrRenderAttr("value", unref(bulkSettings).strength)} type="range" min="0" max="100" data-v-2416820e>`);
+        _push(`<input${ssrRenderAttr("value", unref(bulkSettings).strength)} type="range" min="0" max="100" data-v-5aa06178>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</label><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.blending"))}</span><select data-v-2416820e><option value="auto" data-v-2416820e${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).blendingMode) ? ssrLooseContain(unref(bulkSettings).blendingMode, "auto") : ssrLooseEqual(unref(bulkSettings).blendingMode, "auto")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-2416820e${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).blendingMode) ? ssrLooseContain(unref(bulkSettings).blendingMode, "manual") : ssrLooseEqual(unref(bulkSettings).blendingMode, "manual")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+      _push(`</label><label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.blending"))}</span><select data-v-5aa06178><option value="auto" data-v-5aa06178${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).blendingMode) ? ssrLooseContain(unref(bulkSettings).blendingMode, "auto") : ssrLooseEqual(unref(bulkSettings).blendingMode, "auto")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-5aa06178${ssrIncludeBooleanAttr(Array.isArray(unref(bulkSettings).blendingMode) ? ssrLooseContain(unref(bulkSettings).blendingMode, "manual") : ssrLooseEqual(unref(bulkSettings).blendingMode, "manual")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
       if (unref(bulkSettings).blendingMode === "manual") {
-        _push(`<input${ssrRenderAttr("value", unref(bulkSettings).blending)} type="range" min="0" max="100" data-v-2416820e>`);
+        _push(`<input${ssrRenderAttr("value", unref(bulkSettings).blending)} type="range" min="0" max="100" data-v-5aa06178>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</label></div><div class="placement-bulk-settings__actions" data-v-2416820e><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.bulkApply"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(bulkUndo)) ? " disabled" : ""} data-v-2416820e>${ssrInterpolate(unref(t)("common.undo"))}</button></div></details></section><aside class="placement-dialog__editor" data-v-2416820e><div class="placement-target-list" data-v-2416820e><!--[-->`);
+      _push(`</label></div><div class="placement-bulk-settings__actions" data-v-5aa06178><button type="button" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.bulkApply"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(bulkUndo)) ? " disabled" : ""} data-v-5aa06178>${ssrInterpolate(unref(t)("common.undo"))}</button></div></details></section><aside class="placement-dialog__editor" data-v-5aa06178><div class="placement-target-list" data-v-5aa06178><!--[-->`);
       ssrRenderList(unref(targetRecords), (record, index) => {
-        _push(`<button type="button" class="${ssrRenderClass({ "is-active": record.target.id === unref(selectedTargetId) })}" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(index + 1)}</span><strong data-v-2416820e>${ssrInterpolate(record.target.name)}</strong></button>`);
+        _push(`<button type="button" class="${ssrRenderClass({ "is-active": record.target.id === unref(selectedTargetId) })}" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(index + 1)}</span><strong data-v-5aa06178>${ssrInterpolate(record.target.name)}</strong></button>`);
       });
-      _push(`<!--]--><button type="button" class="placement-target-list__add" data-v-2416820e>＋ ${ssrInterpolate(unref(t)("prompt.placement.addTarget"))}</button></div>`);
+      _push(`<!--]--><button type="button" class="placement-target-list__add" data-v-5aa06178>＋ ${ssrInterpolate(unref(t)("prompt.placement.addTarget"))}</button></div>`);
       if (unref(selectedRecord) && unref(selectedLayoutTarget)) {
-        _push(`<!--[--><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.name"))}</span><input${ssrRenderAttr("value", unref(selectedRecord).target.name)} maxlength="40" data-v-2416820e></label><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.prompt"))}</span><textarea rows="4" data-v-2416820e>${ssrInterpolate(unref(selectedRecord).target.text)}</textarea></label><div class="field-grid" data-v-2416820e><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.shape"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).shape === "mask" ? "mask" : unref(selectedLayoutTarget).shape)} data-v-2416820e>`);
+        _push(`<!--[--><label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.name"))}</span><input${ssrRenderAttr("value", unref(selectedRecord).target.name)} maxlength="40" data-v-5aa06178></label><label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.prompt"))}</span><textarea rows="4" data-v-5aa06178>${ssrInterpolate(unref(selectedRecord).target.text)}</textarea></label><div class="field-grid" data-v-5aa06178><label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.shape"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).shape === "mask" ? "mask" : unref(selectedLayoutTarget).shape)} data-v-5aa06178>`);
         if (unref(selectedLayoutTarget).shape === "mask") {
-          _push(`<option value="mask" disabled data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.legacyShape"))}</option>`);
+          _push(`<option value="mask" disabled data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.legacyShape"))}</option>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<option value="ellipse" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.ellipse"))}</option><option value="rectangle" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.rectangle"))}</option></select></label><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.size"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).size_mode)} data-v-2416820e><option value="auto" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.sizeAuto"))}</option><option value="small" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.sizeSmall"))}</option><option value="standard" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.sizeStandard"))}</option><option value="large" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.sizeLarge"))}</option><option value="custom" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.sizeCustom"))}</option></select></label></div>`);
+        _push(`<option value="ellipse" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.ellipse"))}</option><option value="rectangle" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.rectangle"))}</option></select></label><label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.size"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).size_mode)} data-v-5aa06178><option value="auto" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.sizeAuto"))}</option><option value="small" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.sizeSmall"))}</option><option value="standard" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.sizeStandard"))}</option><option value="large" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.sizeLarge"))}</option><option value="custom" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.sizeCustom"))}</option></select></label></div>`);
         if (unref(selectedLayoutTarget).shape === "mask") {
-          _push(`<div class="placement-legacy-actions" data-v-2416820e><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.convertEllipse"))}</button><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.convertRectangle"))}</button></div>`);
+          _push(`<div class="placement-legacy-actions" data-v-5aa06178><button type="button" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.convertEllipse"))}</button><button type="button" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.convertRectangle"))}</button></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="field-grid" data-v-2416820e><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.strength"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).strength_mode)} data-v-2416820e><option value="auto" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+        _push(`<div class="field-grid" data-v-5aa06178><label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.strength"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).strength_mode)} data-v-5aa06178><option value="auto" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
         if (unref(selectedLayoutTarget).strength_mode === "manual") {
-          _push(`<input${ssrRenderAttr("value", unref(selectedLayoutTarget).strength ?? 70)} type="range" min="0" max="100" data-v-2416820e>`);
+          _push(`<input${ssrRenderAttr("value", unref(selectedLayoutTarget).strength ?? 70)} type="range" min="0" max="100" data-v-5aa06178>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</label><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.blending"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).blending_mode)} data-v-2416820e><option value="auto" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
+        _push(`</label><label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.blending"))}</span><select${ssrRenderAttr("value", unref(selectedLayoutTarget).blending_mode)} data-v-5aa06178><option value="auto" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.auto"))}</option><option value="manual" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.manual"))}</option></select>`);
         if (unref(selectedLayoutTarget).blending_mode === "manual") {
-          _push(`<input${ssrRenderAttr("value", unref(selectedLayoutTarget).blending ?? 25)} type="range" min="0" max="100" data-v-2416820e>`);
+          _push(`<input${ssrRenderAttr("value", unref(selectedLayoutTarget).blending ?? 25)} type="range" min="0" max="100" data-v-5aa06178>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</label></div><label class="field" data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.depth"))}</span><select${ssrRenderAttr("value", unref(promptLayoutDraft).depth_mode)} data-v-2416820e><option value="auto" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.depthAuto"))}</option><option value="manual" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.depthManual"))}</option></select></label>`);
+        _push(`</label></div><label class="field" data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.depth"))}</span><select${ssrRenderAttr("value", unref(promptLayoutDraft).depth_mode)} data-v-5aa06178><option value="auto" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.depthAuto"))}</option><option value="manual" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.depthManual"))}</option></select></label>`);
         if (unref(promptLayoutDraft).depth_mode === "manual") {
-          _push(`<div class="placement-depth-list" data-v-2416820e><!--[-->`);
+          _push(`<div class="placement-depth-list" data-v-5aa06178><!--[-->`);
           ssrRenderList(unref(promptLayoutDraft).depth_order, (targetId, index) => {
-            _push(`<div data-v-2416820e><span data-v-2416820e>${ssrInterpolate(unref(targetRecords).find((record) => record.target.id === targetId)?.target.name)}</span><button type="button"${ssrIncludeBooleanAttr(index === 0) ? " disabled" : ""} data-v-2416820e>↑</button><button type="button"${ssrIncludeBooleanAttr(index === unref(promptLayoutDraft).depth_order.length - 1) ? " disabled" : ""} data-v-2416820e>↓</button></div>`);
+            _push(`<div data-v-5aa06178><span data-v-5aa06178>${ssrInterpolate(unref(targetRecords).find((record) => record.target.id === targetId)?.target.name)}</span><button type="button"${ssrIncludeBooleanAttr(index === 0) ? " disabled" : ""} data-v-5aa06178>↑</button><button type="button"${ssrIncludeBooleanAttr(index === unref(promptLayoutDraft).depth_order.length - 1) ? " disabled" : ""} data-v-5aa06178>↓</button></div>`);
           });
           _push(`<!--]--></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<button type="button" class="danger-button"${ssrIncludeBooleanAttr(unref(targetRecords).length <= 1) ? " disabled" : ""} data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.deleteTarget"))}</button><!--]-->`);
+        _push(`<button type="button" class="danger-button"${ssrIncludeBooleanAttr(unref(targetRecords).length <= 1) ? " disabled" : ""} data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.deleteTarget"))}</button><!--]-->`);
       } else {
         _push(`<!---->`);
       }
       _push(`</aside></div>`);
       if (!unref(canApply)) {
-        _push(`<p class="placement-dialog__validation" aria-live="polite" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.required"))}</p>`);
+        _push(`<p class="placement-dialog__validation" aria-live="polite" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.required"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<footer class="placement-dialog__footer" data-v-2416820e><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.remove"))}</button><span data-v-2416820e></span><button type="button" data-v-2416820e>${ssrInterpolate(unref(t)("common.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canApply)) ? " disabled" : ""} data-v-2416820e>${ssrInterpolate(unref(t)("prompt.placement.save"))}</button></footer></section></div>`);
+      _push(`<footer class="placement-dialog__footer" data-v-5aa06178><button type="button" data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.remove"))}</button><span data-v-5aa06178></span><button type="button" data-v-5aa06178>${ssrInterpolate(unref(t)("common.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canApply)) ? " disabled" : ""} data-v-5aa06178>${ssrInterpolate(unref(t)("prompt.placement.save"))}</button></footer></section></div>`);
     };
   }
 });
@@ -12464,7 +12470,7 @@ _sfc_main$1$.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptPlacementDialog.vue");
   return _sfc_setup$1$ ? _sfc_setup$1$(props, ctx) : void 0;
 };
-const PromptPlacementDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-2416820e"]]), { __name: "StudioGeneratePromptPlacementDialog" });
+const PromptPlacementDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-5aa06178"]]), { __name: "StudioGeneratePromptPlacementDialog" });
 const useAppSettingsStore = defineStore("appSettings", {
   state: () => ({
     outputRoot: "",

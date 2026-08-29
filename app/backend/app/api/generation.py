@@ -11,7 +11,7 @@ import sqlite3
 import threading
 import time
 import unicodedata
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 from urllib.parse import quote
 from uuid import uuid4
 import zipfile
@@ -166,6 +166,7 @@ from app.services.spatial_generation_context import (
 from app.services.spatial_mask_compiler import SpatialMaskCompilerError
 from app.services.spatial_profile_resolver import (
     SpatialModelEvidence,
+    infer_sdxl_spatial_profile_id,
     sdxl_spatial_model_evidence,
 )
 from app.services.media_model_catalog import (
@@ -2531,6 +2532,7 @@ def _spatial_model_evidence(
     stage: str,
     anima_variant: str | None = None,
     manual_profile_id: str | None = None,
+    catalog_metadata: Mapping[str, str] | None = None,
 ) -> SpatialModelEvidence:
     try:
         header = read_safetensors_header(path)
@@ -2538,12 +2540,28 @@ def _spatial_model_evidence(
         raise SpatialGenerationContextError(exc.reason_code) from exc
     slot_id = f"model:{stage}:{path.name}"
     if profile == "sdxl":
+        lineage_metadata = {**header.metadata, **dict(catalog_metadata or {})}
+        selected_profile_id = manual_profile_id or infer_sdxl_spatial_profile_id(
+            lineage_metadata
+        )
+        if selected_profile_id is None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "spatial_profile_selection_required",
+                    "stage": stage,
+                    "profile_options": [
+                        "sdxl.attention.v1",
+                        "illustrious.attention.v1",
+                    ],
+                },
+            )
         return sdxl_spatial_model_evidence(
             header,
             model_slot_id=slot_id,
             variant=(
                 "illustrious"
-                if manual_profile_id == "illustrious.attention.v1"
+                if selected_profile_id == "illustrious.attention.v1"
                 else "sdxl"
             ),
         )
@@ -2571,6 +2589,14 @@ def _spatial_model_evidence(
     if evidence is None:
         raise SpatialGenerationContextError("spatial_model_structure_unverified")
     return evidence
+
+
+def _spatial_catalog_metadata(
+    library,
+    path: Path,
+) -> Mapping[str, str]:
+    item = next((candidate for candidate in library.items if candidate.path == path), None)
+    return item.metadata if item is not None else {}
 
 
 def _positive_inpaint_mask(path: str | Path, size: tuple[int, int]) -> Image.Image:
@@ -2670,18 +2696,6 @@ def _prepare_spatial_generation(
     base_manual_profile = (
         profile_selection.base if profile_selection is not None else None
     )
-    if request.profile == "sdxl" and base_manual_profile is None:
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": "spatial_profile_selection_required",
-                "stage": "base",
-                "profile_options": [
-                    "sdxl.attention.v1",
-                    "illustrious.attention.v1",
-                ],
-            },
-        )
     base_width, base_height, inpaint_mask, crop_rect = _spatial_base_geometry(request)
     stage_inputs: list[SpatialStagePreparation] = [
         SpatialStagePreparation(
@@ -2695,6 +2709,7 @@ def _prepare_spatial_generation(
                 stage="base",
                 anima_variant=anima_variant,
                 manual_profile_id=base_manual_profile,
+                catalog_metadata=_spatial_catalog_metadata(library, base_path),
             ),
             inpaint_mask=inpaint_mask,
             crop_rect=crop_rect,
@@ -2721,18 +2736,6 @@ def _prepare_spatial_generation(
         )
         if hires_manual_profile is None and hires_path == base_path:
             hires_manual_profile = base_manual_profile
-        if request.profile == "sdxl" and hires_manual_profile is None:
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": "spatial_profile_selection_required",
-                    "stage": "hires",
-                    "profile_options": [
-                        "sdxl.attention.v1",
-                        "illustrious.attention.v1",
-                    ],
-                },
-            )
         hires_mask = (
             inpaint_mask.resize(hires_size, Image.Resampling.NEAREST)
             if inpaint_mask is not None and crop_rect is None
@@ -2754,6 +2757,7 @@ def _prepare_spatial_generation(
                         else anima_variant
                     ),
                     manual_profile_id=hires_manual_profile,
+                    catalog_metadata=_spatial_catalog_metadata(library, hires_path),
                 ),
                 inpaint_mask=hires_mask,
                 manual_profile_id=hires_manual_profile,
@@ -2775,18 +2779,6 @@ def _prepare_spatial_generation(
                 refiner_manual_profile = base_manual_profile
             elif hires_size is not None and refiner_path == hires_path:
                 refiner_manual_profile = hires_manual_profile
-        if refiner_manual_profile is None:
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": "spatial_profile_selection_required",
-                    "stage": "refiner",
-                    "profile_options": [
-                        "sdxl.attention.v1",
-                        "illustrious.attention.v1",
-                    ],
-                },
-            )
         refiner_mask = (
             inpaint_mask.resize(refiner_size, Image.Resampling.NEAREST)
             if inpaint_mask is not None and crop_rect is None
@@ -2803,6 +2795,7 @@ def _prepare_spatial_generation(
                     path=refiner_path,
                     stage="refiner",
                     manual_profile_id=refiner_manual_profile,
+                    catalog_metadata=_spatial_catalog_metadata(library, refiner_path),
                 ),
                 inpaint_mask=refiner_mask,
                 crop_rect=crop_rect if hires_size is None else None,

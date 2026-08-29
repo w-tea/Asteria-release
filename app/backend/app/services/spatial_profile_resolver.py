@@ -25,6 +25,66 @@ _ANIMA_SPATIAL_LAYOUT_TENSOR = re.compile(
     r"llm_adapter\.blocks\.\d+\.(?:cross_attn\.k_proj|self_attn\.q_proj)"
     r")\.weight$"
 )
+_ASTERIA_SOURCE_METADATA = re.compile(
+    r"^asteria\.source\.([A-Z])\.metadata\.(.+)$",
+    re.IGNORECASE,
+)
+_SDXL_LINEAGE_METADATA_KEYS = frozenset(
+    {
+        "base_model",
+        "display_name",
+        "model_name",
+        "modelspec.title",
+        "ss_base_model_version",
+        "title",
+        "version_name",
+    }
+)
+
+
+def _sdxl_lineage_from_metadata_value(value: str) -> str | None:
+    normalized = value.casefold()
+    if "illustrious" in normalized:
+        return "illustrious.attention.v1"
+    if any(
+        marker in normalized
+        for marker in (
+            "sdxl",
+            "sd xl",
+            "sd_xl",
+            "stable diffusion xl",
+            "stable-diffusion-xl",
+            "pony",
+        )
+    ):
+        return "sdxl.attention.v1"
+    return None
+
+
+def _sdxl_lineages_from_metadata_group(metadata: Mapping[str, str]) -> set[str]:
+    return {
+        profile
+        for key, value in metadata.items()
+        if key.casefold() in _SDXL_LINEAGE_METADATA_KEYS and str(value).strip()
+        if (profile := _sdxl_lineage_from_metadata_value(str(value))) is not None
+    }
+
+
+def infer_sdxl_spatial_profile_id(metadata: Mapping[str, str]) -> str | None:
+    """Infer lineage only from explicit metadata, never filename or tensor shape."""
+    direct: dict[str, str] = {}
+    source_groups: dict[str, dict[str, str]] = {}
+    for key, value in metadata.items():
+        match = _ASTERIA_SOURCE_METADATA.match(str(key))
+        if match:
+            source_groups.setdefault(match.group(1).upper(), {})[match.group(2)] = str(value)
+        else:
+            direct[str(key)] = str(value)
+
+    profiles = _sdxl_lineages_from_metadata_group(direct)
+    for group in source_groups.values():
+        profiles.update(_sdxl_lineages_from_metadata_group(group))
+    return next(iter(profiles)) if len(profiles) == 1 else None
 
 
 @dataclass(frozen=True, slots=True)
