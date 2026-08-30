@@ -2895,21 +2895,6 @@ class ComfyTxt2ImgWorkflowBuilder:
             if fragment.target_id is None:
                 raise RuntimeErrorResponse("Spatial prompt target id is missing.")
             target_refs[fragment.target_id] = target_only_ref
-        composite_global_ref = global_ref
-        for fragment in stage_plan.target_fragments:
-            if fragment.target_id is None:
-                raise RuntimeErrorResponse("Spatial prompt target id is missing.")
-            node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
-            workflow[node_id] = {
-                "class_type": mapping.class_type(
-                    "conditioning_concat", "ConditioningConcat"
-                ),
-                "inputs": {
-                    "conditioning_to": composite_global_ref,
-                    "conditioning_from": target_refs[fragment.target_id],
-                },
-            }
-            composite_global_ref = [node_id, 0]
         mask_refs, next_id = self._append_spatial_mask_loaders(
             workflow=workflow,
             next_id=next_id,
@@ -2931,7 +2916,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                         "clip_text_encode_sdxl", "CLIPTextEncodeSDXL"
                     )
                 ),
-                global_conditioning_ref=composite_global_ref,
+                global_conditioning_ref=global_ref,
                 negative_conditioning_ref=negative_ref,
                 target_conditioning_refs=target_refs,
             )
@@ -3035,7 +3020,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 f"Spatial {stage} mask dimensions do not match the generation stage."
             )
         stage_plan = spatial_prompt_stage(prompt_plan, stage)
-        full_global_prompt = stage_plan.combined_expanded_prompt
+        full_global_prompt = stage_plan.global_fragment.expanded_prompt
         global_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
         if is_anima_3_8b:
             if qwen35_ref is None or not progressive_adapter:
