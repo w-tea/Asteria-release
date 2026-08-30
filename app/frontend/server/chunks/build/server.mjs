@@ -703,7 +703,7 @@ function freezeHead(head) {
     head.push = realPush;
   };
 }
-const unhead_k2P3m_ZDyjlr2mMYnoDPwavjsDN8hBlk9cFai0bbopU = /* @__PURE__ */ defineNuxtPlugin({
+const unhead_jhs_eE6wBfRiTVtn2ViEGeM3PtGstwj_bxp1mHx_4bU = /* @__PURE__ */ defineNuxtPlugin({
   name: "nuxt:head",
   enforce: "pre",
   setup(nuxtApp) {
@@ -747,7 +747,7 @@ function getRouteFromPath(fullPath) {
     href: fullPath
   };
 }
-const router_DclsWNDeVV7SyG4lslgLnjbQUK1ws8wgf2FHaAbo7Cw = /* @__PURE__ */ defineNuxtPlugin({
+const router_pSCchE4hWYvFLsJ7gbtP1bM61n7i4miwtC3kM8CFPio = /* @__PURE__ */ defineNuxtPlugin({
   name: "nuxt:router",
   enforce: "pre",
   setup(nuxtApp) {
@@ -928,7 +928,7 @@ const reducers = [
   ["Ref", (data) => isRef(data) && data.value],
   ["Reactive", (data) => isReactive(data) && toRaw(data)]
 ];
-const revive_payload_server_MVtmlZaQpj6ApFmshWfUWl5PehCebzaBf2NuRMiIbms = /* @__PURE__ */ defineNuxtPlugin({
+const revive_payload_server_zkax7x5Evj7QlW_Wa4yuqIDn0_N9oxu5Re6fm9xB8ro = /* @__PURE__ */ defineNuxtPlugin({
   name: "nuxt:revive-payload:server",
   setup() {
     for (const [reducer, fn] of reducers) {
@@ -1576,9 +1576,9 @@ const asteria_tooltip_fSFARtpwGbHlO1KB4At5caYKXgNivLM9kmiwguLVh5w = /* @__PURE__
 });
 const plugins = [
   payloadPlugin,
-  unhead_k2P3m_ZDyjlr2mMYnoDPwavjsDN8hBlk9cFai0bbopU,
-  router_DclsWNDeVV7SyG4lslgLnjbQUK1ws8wgf2FHaAbo7Cw,
-  revive_payload_server_MVtmlZaQpj6ApFmshWfUWl5PehCebzaBf2NuRMiIbms,
+  unhead_jhs_eE6wBfRiTVtn2ViEGeM3PtGstwj_bxp1mHx_4bU,
+  router_pSCchE4hWYvFLsJ7gbtP1bM61n7i4miwtC3kM8CFPio,
+  revive_payload_server_zkax7x5Evj7QlW_Wa4yuqIDn0_N9oxu5Re6fm9xB8ro,
   plugin,
   components_plugin_z4hgvsiddfKkfXTP6M8M4zG5Cb7sGnDhcryKVM45Di4,
   asteria_tooltip_fSFARtpwGbHlO1KB4At5caYKXgNivLM9kmiwguLVh5w
@@ -6828,6 +6828,26 @@ const joinPromptFragments = (values2) => {
   }
   return combined;
 };
+const removeExactPromptFragments = (prompt, fragments) => {
+  let next = normalizePromptSectionText(prompt);
+  for (const rawFragment of fragments) {
+    const fragment = normalizePromptSectionText(rawFragment);
+    if (!fragment) continue;
+    const index = next.lastIndexOf(fragment);
+    if (index < 0) continue;
+    const before = next.slice(0, index);
+    const after = next.slice(index + fragment.length);
+    if (after.startsWith(",\n")) {
+      next = `${before}${after.slice(2)}`;
+    } else if (before.endsWith(",\n")) {
+      next = `${before.slice(0, -2)}${after}`;
+    } else {
+      next = `${before}${after}`;
+    }
+    next = normalizePromptSectionText(next);
+  }
+  return next;
+};
 const clonePromptInput = (promptInput) => cloneJsonValue(promptInput);
 const promptSectionV2Text = (section) => section.content.mode === "global" ? section.content.text : joinPromptFragments([...section.content.targets].sort((left, right) => left.order - right.order).map((target) => normalizePromptSectionText(target.text)).filter(Boolean));
 const combinePromptInputV2 = (sections) => joinPromptFragments([...sections].sort((left, right) => left.order - right.order).map(promptSectionV2Text).map(normalizePromptSectionText).filter(Boolean));
@@ -9500,10 +9520,40 @@ const useGenerationStore = defineStore("generation", {
     },
     setPromptInputMode(mode) {
       if (mode === this.promptInputMode) return;
+      if (mode === "single" && this.spatialPromptInput?.mode === "sections") {
+        const spatialSections = this.spatialPromptInput.sections ?? [];
+        const prompt = combinePromptInputV2(spatialSections);
+        const transitionSections = spatialSections.map((section) => ({
+          id: section.id,
+          label: section.label,
+          order: section.order,
+          text: promptSectionV2Text(section)
+        }));
+        const next2 = enterSingleMode(this.promptEditorState());
+        next2.prompt = prompt;
+        next2.sections = transitionSections;
+        if (next2.transition) {
+          next2.transition.sections = transitionSections.map((section) => ({ ...section }));
+          next2.transition.sourceCombinedPrompt = prompt;
+        }
+        this.applyPromptEditorState(next2);
+        this.spatialPromptInput = null;
+        this.promptLayout = null;
+        this.activePromptTargetId = null;
+        this.promptStructureRevision += 1;
+        return;
+      }
       const current = this.promptEditorState();
-      this.applyPromptEditorState(
-        mode === "sections" ? enterSectionsMode(current) : enterSingleMode(current)
-      );
+      const next = mode === "sections" ? enterSectionsMode(current) : enterSingleMode(current);
+      if (mode === "sections" && next.notice) {
+        const previousTargetTexts = this.spatialPromptInput?.sections ? this.spatialPromptInput.sections.flatMap((section) => section.content.mode === "targets" ? [...section.content.targets].sort((left, right) => left.order - right.order).map((target) => target.text) : []) : current.transition?.sections.filter((section) => section.id !== "base").map((section) => section.text) ?? [];
+        const base = next.sections.find((section) => section.id === "base");
+        if (base) {
+          base.text = removeExactPromptFragments(base.text, previousTargetTexts);
+          next.prompt = combinePromptSections(next.sections);
+        }
+      }
+      this.applyPromptEditorState(next);
       if (mode === "sections" && this.promptInputNotice) {
         this.spatialPromptInput = null;
         this.promptLayout = null;
@@ -48800,8 +48850,8 @@ const _sfc_main$1 = {
     const statusText = _error.statusMessage ?? (is404 ? "Page Not Found" : "Internal Server Error");
     const description = _error.message || _error.toString();
     const stack = void 0;
-    const _Error404 = defineAsyncComponent(() => import('./error-404-Bzcq6syD.mjs'));
-    const _Error = defineAsyncComponent(() => import('./error-500-MMmCwWeE.mjs'));
+    const _Error404 = defineAsyncComponent(() => import('./error-404-BACVib4k.mjs'));
+    const _Error = defineAsyncComponent(() => import('./error-500-BsroL_2c.mjs'));
     const ErrorTemplate = is404 ? _Error404 : _Error;
     return (_ctx, _push, _parent, _attrs) => {
       _push(ssrRenderComponent(unref(ErrorTemplate), mergeProps({ status: unref(status), statusText: unref(statusText), statusCode: unref(status), statusMessage: unref(statusText), description: unref(description), stack: unref(stack) }, _attrs), null, _parent));
@@ -48811,7 +48861,7 @@ const _sfc_main$1 = {
 const _sfc_setup$1 = _sfc_main$1.setup;
 _sfc_main$1.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("node_modules/nuxt/dist/app/components/nuxt-error-page.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../../../frontend/node_modules/nuxt/dist/app/components/nuxt-error-page.vue");
   return _sfc_setup$1 ? _sfc_setup$1(props, ctx) : void 0;
 };
 const _sfc_main = {
@@ -48870,7 +48920,7 @@ const _sfc_main = {
 const _sfc_setup = _sfc_main.setup;
 _sfc_main.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("node_modules/nuxt/dist/app/components/nuxt-root.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../../../frontend/node_modules/nuxt/dist/app/components/nuxt-root.vue");
   return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
 };
 let entry;

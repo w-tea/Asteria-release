@@ -1,6 +1,6 @@
 {
   "id": "asteria-spatial-prompt",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "contract_version": "asteria.spatial-prompt.node.v2",
   "files": [
     "__init__.py",

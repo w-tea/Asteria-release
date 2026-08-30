@@ -273,8 +273,10 @@ class AsteriaSpatialModelAdapter:
         execution_body = {
             "schema_version": "asteria.spatial-node-execution.v2",
             "contract_version": CONTRACT_VERSION,
-            "adapter_revision": "asteria-layout-attention-v2",
+            "adapter_revision": "asteria-layout-attention-v3",
             "routing_mode": "cross_and_self_attention",
+            "instance_formation_mode": "mask_anchored_early_cohesion_and_isolation",
+            "regional_binding_mode": "unconditional_background_then_global_refinement",
             "conditioning_preprocess_mode": preprocess_mode,
             "stage": normalized_stage,
             "profile_receipt_sha256": profile.profile_receipt_sha256,

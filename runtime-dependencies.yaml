@@ -69,8 +69,8 @@ dependencies:
       provenance_url: bundled://asteria/spatial-prompt/v2
     target:
       relative_path: custom_nodes/Asteria-Spatial-Prompt
-    size_bytes: 64926
-    checksum_sha256: 1b4b8111176af304b29cb39cbdb162a125a7e3071154c6f7146544e0d8b8505d
+    size_bytes: 67824
+    checksum_sha256: 6df80ee3f9e1f2a85b31ba801d9acf069789437ae35b15c67c27d3925add3ebd
     license:
       id: mit
       url: bundled://asteria/license

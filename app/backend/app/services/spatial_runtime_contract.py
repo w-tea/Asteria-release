@@ -5,7 +5,7 @@ from typing import Any
 
 
 SPATIAL_PROMPT_CONTRACT_VERSION = "asteria.spatial-prompt.node.v2"
-SPATIAL_PROMPT_PACK_VERSION = "2.0.0"
+SPATIAL_PROMPT_PACK_VERSION = "2.1.0"
 SPATIAL_PROMPT_PROFILE_COVERAGE = {
     "sdxl": "supported",
     "illustrious": "supported",

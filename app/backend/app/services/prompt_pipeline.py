@@ -6,6 +6,12 @@ from pathlib import Path
 from app.services.prompt_syntax import PromptSyntaxPlan, parse_prompt_syntax
 
 
+_EXPLICIT_WILDCARD_PATTERN = re.compile(r"__([A-Za-z0-9_./-]+)__")
+_BARE_NESTED_WILDCARD_PATTERN = re.compile(
+    r"(?<![A-Za-z0-9_./-])([A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+)(?![A-Za-z0-9_./-])"
+)
+
+
 @dataclass
 class PromptExpansion:
     raw: str
@@ -111,7 +117,8 @@ def _expand_wildcards(
         selections.append(f"{name}={selected}")
         return _expand_wildcards(selected, rng, selections, wildcard_dir, depth + 1)
 
-    return re.sub(r"__([A-Za-z0-9_./-]+)__", replace, prompt)
+    expanded = _EXPLICIT_WILDCARD_PATTERN.sub(replace, prompt)
+    return _BARE_NESTED_WILDCARD_PATTERN.sub(replace, expanded)
 
 
 def expand_dynamic_prompt(prompt: str, seed: int | None = None, wildcard_dir: Path | None = None) -> PromptExpansion:
@@ -163,7 +170,8 @@ def expand_prompt_fragment(
             )
             return expand_wildcards(selected, depth + 1)
 
-        return re.sub(r"__([A-Za-z0-9_./-]+)__", replace_wildcard, text)
+        expanded = _EXPLICIT_WILDCARD_PATTERN.sub(replace_wildcard, text)
+        return _BARE_NESTED_WILDCARD_PATTERN.sub(replace_wildcard, expanded)
 
     wildcard_expanded = expand_wildcards(prompt)
 

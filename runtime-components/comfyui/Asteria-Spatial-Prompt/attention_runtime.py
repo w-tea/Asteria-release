@@ -94,6 +94,28 @@ def _branch_rows(options: dict[str, Any], batch: int, *, positive_only: bool) ->
     return torch.tensor(values, dtype=torch.bool)
 
 
+def _paired_unconditional_output(
+    output: torch.Tensor,
+    options: dict[str, Any],
+) -> torch.Tensor | None:
+    branches = options.get("cond_or_uncond")
+    batch = int(output.shape[0])
+    if not isinstance(branches, (list, tuple)) or not branches or batch % len(branches):
+        return None
+    positive_branches = [index for index, value in enumerate(branches) if value == 0]
+    unconditional_branches = [index for index, value in enumerate(branches) if value != 0]
+    if len(positive_branches) != 1 or len(unconditional_branches) != 1:
+        return None
+    rows_per_branch = batch // len(branches)
+    positive_start = positive_branches[0] * rows_per_branch
+    unconditional_start = unconditional_branches[0] * rows_per_branch
+    paired = output.clone()
+    paired[positive_start : positive_start + rows_per_branch] = output[
+        unconditional_start : unconditional_start + rows_per_branch
+    ]
+    return paired
+
+
 def _expand_context(tensor: torch.Tensor, batch: int, reference: torch.Tensor) -> torch.Tensor:
     if tensor.ndim != 3:
         raise ValueError("Asteria spatial target conditioning shape is unsupported")
@@ -200,6 +222,9 @@ class SpatialAttentionRouter:
             "cross_bias_applied": 0,
             "cross_output_blends": 0,
             "self_bias_applied": 0,
+            "instance_boundary_bias_applied": 0,
+            "instance_cohesion_bias_applied": 0,
+            "hard_binding_background_substitutions": 0,
             "anima_context_preparations": 0,
             "cross_blocks": set(),
             "self_blocks": set(),
@@ -243,6 +268,9 @@ class SpatialAttentionRouter:
                 "cross_bias_applied": self._stats["cross_bias_applied"],
                 "cross_output_blends": self._stats["cross_output_blends"],
                 "self_bias_applied": self._stats["self_bias_applied"],
+                "instance_boundary_bias_applied": self._stats["instance_boundary_bias_applied"],
+                "instance_cohesion_bias_applied": self._stats["instance_cohesion_bias_applied"],
+                "hard_binding_background_substitutions": self._stats["hard_binding_background_substitutions"],
                 "anima_context_preparations": self._stats["anima_context_preparations"],
                 "cross_blocks": sorted(self._stats["cross_blocks"]),
                 "self_blocks": sorted(self._stats["self_blocks"]),
@@ -549,7 +577,21 @@ class SpatialAttentionRouter:
         total_weight = raw_weights.sum(dim=0)
         normalized_weights = raw_weights / total_weight.clamp_min(1.0).unsqueeze(0)
         covered_weight = total_weight.clamp(0.0, 1.0)
-        blended = global_output * _query_weight(global_output, 1.0 - covered_weight)
+        background_output = global_output
+        hard_binding = 1.0 - _smoothstep(
+            self.profile.early_guidance_end,
+            self.profile.isolation_end,
+            call.progress,
+        )
+        if hard_binding > 0.0:
+            unconditional_output = _paired_unconditional_output(global_output, call.options)
+            if unconditional_output is not None:
+                background_output = (
+                    global_output * (1.0 - hard_binding)
+                    + unconditional_output * hard_binding
+                )
+                self._increment("hard_binding_background_substitutions")
+        blended = background_output * _query_weight(background_output, 1.0 - covered_weight)
 
         for group, weight in zip(call.groups, normalized_weights, strict=True):
             target_output = self._base_attention(
@@ -598,6 +640,20 @@ class SpatialAttentionRouter:
             * early_separation
         )
         single = torch.zeros((query_tokens, query_tokens), device=q.device, dtype=q.dtype)
+        boundary_penalty = separation_penalty * isolation * early_separation
+        if boundary_penalty > 0.0:
+            for target in vectors:
+                exterior = 1.0 - target
+                single -= boundary_penalty * (
+                    torch.outer(target, exterior)
+                    + torch.outer(exterior, target)
+                )
+            self._increment("instance_boundary_bias_applied")
+        cohesion_bias = 0.5 * separation_penalty * isolation * early_separation
+        if cohesion_bias > 0.0:
+            for target in vectors:
+                single += cohesion_bias * torch.outer(target, target)
+            self._increment("instance_cohesion_bias_applied")
         for left_index, left in enumerate(vectors):
             for right_index, right in enumerate(vectors):
                 if left_index == right_index:
