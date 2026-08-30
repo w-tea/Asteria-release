@@ -1,13 +1,14 @@
 {
   "id": "asteria-spatial-prompt",
-  "version": "1.2.0",
-  "contract_version": "asteria.spatial-prompt.node.v1",
+  "version": "2.0.0",
+  "contract_version": "asteria.spatial-prompt.node.v2",
   "files": [
     "__init__.py",
     "nodes.py",
     "spatial_contract.py",
     "mask_runtime.py",
     "profile_runtime.py",
+    "attention_runtime.py",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md"
   ]

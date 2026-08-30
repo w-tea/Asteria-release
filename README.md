@@ -44,7 +44,7 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 
 - Video Studioでは、Text、Image、First / Last Frame、Reference / Video Edit、Sequenceの5タスクから目的に合う動画作成を選べます。使用するモデルや構成、Steps、Sampler、Schedulerなどを選び、生成後に結果を確認してからアップスケールできます。Sequenceではクリップをプレビューし、**このクリップを再試行**、**採用して次へ**、**採用して完成**から次の操作を選びます。最後の連結だけ失敗したときは、採用済みクリップを作り直さず再試行できます。
 - Music Studioでは、VocalとInstrumentalを別々に下書きし、モデル構成、Steps、Sampler、Scheduler、曲の長さ、Seedなどを選べます。MiniMax-Music3の処理が失敗しても有料APIへ切り替わりません。
-- Generateでは、ポジティブプロンプトを「まとめて入力」と「項目別に入力」から選べます。項目別入力では、ベース、キャラクター、詳細の表示名と並び順を変更できます。生成時は指定した順に一つのプロンプトへまとめ、履歴、生成プリセット、画像のメタデータからも同じ構成を復元できます。
+- Generateでは、ポジティブプロンプトを「まとめて入力」と「項目別に入力」から選べます。項目別入力では、ベース、キャラクター、詳細の表示名と並び順を変更できます。生成時は項目の間へ区切りを補って一つのプロンプトにまとめ、履歴、生成プリセット、画像のメタデータからも同じ構成を復元できます。
 - 項目別入力では、必要な項目を画像内の範囲へ配置できます。対象ごとに形、範囲、配置の強さ、境界のなじみ、前後関係を設定できます。位置や人数を保証する機能ではありません。詳しくは[項目別プロンプトの配置ガイド](guides/spatial-prompt-layout.md)を参照してください。
 - Generateでは、選択した文字の重みをCtrl＋↑／↓で0.1ずつ調整できます。記法メニューから強調、弱化、数値指定、候補、段階切り替え、交互切り替え、AND、BREAKを入力できます。
 - AIプロンプト支援では、用途に合わせて標準、Anima、Illustrious、Danbooruタグへ変換を選べます。OpenAI互換の接続先では、利用できるモデルの一覧を取得して選べます。
@@ -285,7 +285,7 @@ Asteria is a Windows application for local AI creation. It combines image genera
 - Added MiniMax H3 Video Studio with Text, Image, First / Last Frame, Reference / Video Edit, and Sequence tasks. You can choose the model configuration, Steps, Sampler, Scheduler, and other generation settings, then review the result before upscaling it.
 - Added per-clip Sequence review with Retry, Accept and continue, and Accept and finish. If only the final joining step fails, you can retry it without regenerating accepted clips.
 - Added MiniMax-Music3 Music Studio for new Vocal and Instrumental generation, with selectable model configuration, Steps, Sampler, Scheduler, duration, and Seed. A failed local run never falls back to a paid API.
-- Generate now lets you switch between one positive-prompt field and three editable sections. You can rename and reorder Base, Character, and Details. Asteria combines them in the selected order and restores the section structure from history, generation presets, and image metadata.
+- Generate now lets you switch between one positive-prompt field and three editable sections. You can rename and reorder Base, Character, and Details. Asteria inserts prompt separators when combining them in the selected order and restores the section structure from history, generation presets, and image metadata.
 - Sectioned prompt input can now place selected sections within the image. Each target supports an ellipse or rectangle, strength, edge blending, and front-to-back priority. Placement guides generation and does not guarantee exact coordinates or subject counts. See the [Spatial prompt placement guide](guides/spatial-prompt-layout.md).
 - Added Ctrl + Up/Down prompt-weight adjustment and a notation menu for emphasis, de-emphasis, numeric weight, prompt alternatives, scheduled switching, alternating prompts, AND, and BREAK.
 - Added explicit Standard, Anima, Illustrious, or Convert to Danbooru tags output in AI Prompt Assist. OpenAI-compatible connections can load their available model list for selection.

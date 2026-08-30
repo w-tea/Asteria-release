@@ -18,6 +18,8 @@
 
 配置の強さを上げると指定範囲へ結び付きやすくなりますが、構図や画質へ影響する場合があります。境界のなじみを上げると周囲へ滑らかにつながります。どちらも結果を保証する値ではありません。
 
+Asteriaは、対象ごとの文章と範囲をモデル内部のAttentionで関連付けます。ControlNetやLLLiteの制御画像を、そのまま配置機能の代わりに使う方式ではありません。ControlNetやLLLiteを併用した場合は、制御画像が位置や形を補い、Asteriaの配置処理が文章と対象の対応付けを補います。
+
 対象が重なる場合は、前後関係を自動または手動で選べます。これは生成中に特徴をどちらへ寄せるかの手掛かりであり、後処理で画像を重ねる機能でも、完全な遮蔽順を保証する機能でもありません。
 
 ## 背景画像、Hires、モデル系統
@@ -63,6 +65,8 @@ Each target can use an ellipse or rectangle. Move and resize the area on the can
 When imported legacy Anima data contains a free-form area, Asteria keeps that outline until you replace it with an ellipse or rectangle. Importing legacy placement does not discard the regular prompt.
 
 Strength influences how closely a section is associated with its target area, but higher values can affect composition and image quality. Edge blending controls how smoothly the target connects to its surroundings. Neither value guarantees a particular result.
+
+Asteria associates each target's text with its area inside the model's attention layers. It does not use a ControlNet or LLLite control image as a substitute for prompt placement. When combined, ControlNet or LLLite can guide position and shape while Asteria's placement path reinforces which text belongs to each target.
 
 Overlapping targets can use automatic or manual front-to-back priority. This priority guides conditioning during generation. It is not post-processing compositing and does not guarantee complete occlusion.
 

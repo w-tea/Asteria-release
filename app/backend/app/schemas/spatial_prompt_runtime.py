@@ -7,6 +7,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.schemas.prompt_input import join_prompt_contract_fragments
+
 from app.schemas.prompt_layout import TARGET_ID_PATTERN
 
 
@@ -194,7 +196,7 @@ class SpatialStagePromptPlan(_RuntimeModel):
         return self._validate_integrity()
 
     def _validate_integrity(self) -> "SpatialStagePromptPlan":
-        combined = "\n".join(
+        combined = join_prompt_contract_fragments(
             item.expanded_prompt
             for item in (self.global_fragment, *self.target_fragments)
             if item.expanded_prompt

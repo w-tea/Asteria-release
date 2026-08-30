@@ -19,6 +19,8 @@ class SpatialPhaseProfile:
     stage: str
     profile_id: str
     profile_revision: str
+    model_family: str
+    encoder_kind: str
     profile_receipt_sha256: str
     profile_payload_sha256: str
     target_ids: tuple[str, ...]
@@ -26,6 +28,12 @@ class SpatialPhaseProfile:
     isolation_start: float
     isolation_end: float
     late_blending_start: float
+    schedule_smoothing: float
+    cross_inside_bias: float
+    cross_outside_penalty: float
+    global_inside_penalty: float
+    self_leakage_penalty: float
+    self_attention_token_limit: int
 
 
 _RECEIPT_KEYS = {
@@ -50,6 +58,12 @@ _COEFFICIENT_KEYS = {
     "isolation_start",
     "isolation_end",
     "late_blending_start",
+    "schedule_smoothing",
+    "cross_inside_bias",
+    "cross_outside_penalty",
+    "global_inside_penalty",
+    "self_leakage_penalty",
+    "self_attention_token_limit",
 }
 
 
@@ -69,7 +83,7 @@ def load_phase_profile(profile_json: Any) -> SpatialPhaseProfile:
         "profile_payload_sha256",
     }:
         raise ValueError("Asteria spatial profile contract is invalid")
-    if payload.get("schema_version") != "asteria.spatial-node-profile.v1":
+    if payload.get("schema_version") != "asteria.spatial-node-profile.v2":
         raise ValueError("Asteria spatial profile contract is invalid")
     if payload.get("contract_version") != CONTRACT_VERSION:
         raise ValueError("Asteria spatial profile contract is invalid")
@@ -141,12 +155,52 @@ def load_phase_profile(profile_json: Any) -> SpatialPhaseProfile:
         minimum=0.0,
         maximum=1.0,
     )
+    smoothing = finite_number(
+        coefficients.get("schedule_smoothing"),
+        "schedule smoothing",
+        minimum=0.001,
+        maximum=0.25,
+    )
+    cross_inside = finite_number(
+        coefficients.get("cross_inside_bias"),
+        "cross inside bias",
+        minimum=0.0,
+        maximum=32.0,
+    )
+    cross_outside = finite_number(
+        coefficients.get("cross_outside_penalty"),
+        "cross outside penalty",
+        minimum=0.0,
+        maximum=32.0,
+    )
+    global_inside = finite_number(
+        coefficients.get("global_inside_penalty"),
+        "global inside penalty",
+        minimum=0.0,
+        maximum=8.0,
+    )
+    self_leakage = finite_number(
+        coefficients.get("self_leakage_penalty"),
+        "self leakage penalty",
+        minimum=0.0,
+        maximum=32.0,
+    )
+    token_limit = coefficients.get("self_attention_token_limit")
+    if (
+        isinstance(token_limit, bool)
+        or not isinstance(token_limit, int)
+        or token_limit < 1
+        or token_limit > 65536
+    ):
+        raise ValueError("Asteria spatial self attention token limit is invalid")
     if early <= 0.0 or isolation_start >= isolation_end or late >= 1.0:
         raise ValueError("Asteria spatial profile coefficient order is invalid")
     return SpatialPhaseProfile(
         stage=validate_stage(receipt.get("stage")),
         profile_id=str(receipt.get("profile_id") or ""),
         profile_revision=str(receipt.get("profile_revision") or ""),
+        model_family=str(receipt.get("model_family") or ""),
+        encoder_kind=str(receipt.get("encoder_kind") or ""),
         profile_receipt_sha256=actual_receipt,
         profile_payload_sha256=actual_payload,
         target_ids=target_ids,
@@ -154,4 +208,10 @@ def load_phase_profile(profile_json: Any) -> SpatialPhaseProfile:
         isolation_start=isolation_start,
         isolation_end=isolation_end,
         late_blending_start=late,
+        schedule_smoothing=smoothing,
+        cross_inside_bias=cross_inside,
+        cross_outside_penalty=cross_outside,
+        global_inside_penalty=global_inside,
+        self_leakage_penalty=self_leakage,
+        self_attention_token_limit=token_limit,
     )

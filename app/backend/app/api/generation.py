@@ -2530,7 +2530,7 @@ def _spatial_model_evidence(
             model_slot_id=slot_id,
             variant=(
                 "illustrious"
-                if selected_profile_id == "illustrious.attention.v1"
+                if selected_profile_id == "illustrious.attention.v2"
                 else "sdxl"
             ),
         )

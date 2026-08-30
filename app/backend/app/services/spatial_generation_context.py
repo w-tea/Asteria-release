@@ -84,7 +84,7 @@ def _profile_json(
     if definition is None:
         raise SpatialGenerationContextError("spatial_profile_not_found")
     body = {
-        "schema_version": "asteria.spatial-node-profile.v1",
+        "schema_version": "asteria.spatial-node-profile.v2",
         "contract_version": ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
         "profile_receipt": receipt.model_dump(mode="json"),
         "coefficients": definition.coefficients.model_dump(mode="json"),

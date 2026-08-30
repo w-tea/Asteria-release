@@ -40,12 +40,19 @@ _SDXL_LINEAGE_METADATA_KEYS = frozenset(
         "version_name",
     }
 )
+_LEGACY_SPATIAL_PROFILE_IDS = {
+    "sdxl.attention.v1": "sdxl.attention.v2",
+    "illustrious.attention.v1": "illustrious.attention.v2",
+    "anima.28.attention.v1": "anima.28.attention.v2",
+    "anima.40.attention.v1": "anima.40.attention.v2",
+    "anima.52.attention.experimental.v1": "anima.52.attention.experimental.v2",
+}
 
 
 def _sdxl_lineage_from_metadata_value(value: str) -> str | None:
     normalized = value.casefold()
     if "illustrious" in normalized:
-        return "illustrious.attention.v1"
+        return "illustrious.attention.v2"
     if any(
         marker in normalized
         for marker in (
@@ -57,7 +64,7 @@ def _sdxl_lineage_from_metadata_value(value: str) -> str | None:
             "pony",
         )
     ):
-        return "sdxl.attention.v1"
+        return "sdxl.attention.v2"
     return None
 
 
@@ -238,6 +245,10 @@ def resolve_spatial_model_profile(
     by_id = {item.profile_id: item for item in catalog.profiles}
     selection_mode = "manual" if manual_profile_id else "auto"
     if manual_profile_id is not None:
+        manual_profile_id = _LEGACY_SPATIAL_PROFILE_IDS.get(
+            manual_profile_id,
+            manual_profile_id,
+        )
         definition = by_id.get(manual_profile_id)
         if definition is None:
             return _receipt(

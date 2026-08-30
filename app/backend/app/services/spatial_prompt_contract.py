@@ -10,6 +10,7 @@ from app.schemas.prompt_input import PromptInput, PromptInputV2, TargetPromptCon
 from app.schemas.prompt_layout import PromptLayout
 from app.services.prompt_input import (
     PromptInputError,
+    saved_prompt_input_matches,
     upgrade_prompt_input_to_v2,
     validate_prompt_input_pair,
 )
@@ -164,12 +165,23 @@ def recover_saved_spatial_prompt_contract(
         )
         if parsed_input is not None:
             parsed_input = upgrade_prompt_input_to_v2(parsed_input)
+        validation_prompt = prompt
+        if parsed_input is not None and saved_prompt_input_matches(prompt, parsed_input):
+            validation_prompt = parsed_input.canonical_prompt or prompt
         snapshot = validate_spatial_prompt_contract(
-            prompt,
+            validation_prompt,
             parsed_input,
             parsed_layout,
             mode,
         )
+        if validation_prompt != prompt:
+            snapshot = SpatialPromptSnapshot(
+                prompt=prompt,
+                prompt_input=snapshot.prompt_input,
+                prompt_layout=snapshot.prompt_layout,
+                mode=snapshot.mode,
+                target_ids=snapshot.target_ids,
+            )
     except (TypeError, ValidationError, SpatialPromptContractError):
         fallback_input = PromptInput.model_validate(
             {

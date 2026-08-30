@@ -55,6 +55,7 @@ class_types:
   spatial_mask_collector: AsteriaSpatialMaskCollector
   spatial_prompt_binder: AsteriaSpatialPromptBinder
   spatial_model_adapter: AsteriaSpatialModelAdapter
+  spatial_execution_receipt: AsteriaSpatialExecutionReceipt
 node_contracts:
   spatial_mask_collector:
     required_inputs:
@@ -95,7 +96,14 @@ node_contracts:
       0: MODEL
       1: CONDITIONING
       2: CONDITIONING
-      3: STRING
+      3: ASTERIA_SPATIAL_EXECUTION_STATE
+  spatial_execution_receipt:
+    required_inputs:
+      - execution_state
+      - samples
+      - contract_version
+    outputs_by_index:
+      0: STRING
   conditioning_time_range:
     required_inputs:
       - conditioning

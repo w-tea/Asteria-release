@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import Any
 
 
-SPATIAL_PROMPT_CONTRACT_VERSION = "asteria.spatial-prompt.node.v1"
-SPATIAL_PROMPT_PACK_VERSION = "1.2.0"
+SPATIAL_PROMPT_CONTRACT_VERSION = "asteria.spatial-prompt.node.v2"
+SPATIAL_PROMPT_PACK_VERSION = "2.0.0"
 SPATIAL_PROMPT_PROFILE_COVERAGE = {
     "sdxl": "supported",
     "illustrious": "supported",
@@ -25,7 +25,16 @@ _NODE_CONTRACTS = {
     ),
     "model_adapter": (
         "AsteriaSpatialModelAdapter",
-        ["MODEL", "CONDITIONING", "CONDITIONING", "STRING"],
+        [
+            "MODEL",
+            "CONDITIONING",
+            "CONDITIONING",
+            "ASTERIA_SPATIAL_EXECUTION_STATE",
+        ],
+    ),
+    "execution_receipt": (
+        "AsteriaSpatialExecutionReceipt",
+        ["STRING"],
     ),
 }
 

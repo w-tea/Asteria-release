@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Iterable, Literal
 
 from pydantic import (
     BaseModel,
@@ -26,6 +26,20 @@ def normalize_prompt_contract_text(value: str) -> str:
     return value.replace("\r\n", "\n").replace("\r", "\n").strip(
         PROMPT_EDGE_CHARS
     )
+
+
+def join_prompt_contract_fragments(values: Iterable[str]) -> str:
+    """Join independently-authored prompt fragments without token run-on."""
+    combined = ""
+    for raw_value in values:
+        value = normalize_prompt_contract_text(raw_value)
+        if not value:
+            continue
+        if not combined:
+            combined = value
+            continue
+        combined += ("\n" if combined.endswith(",") else ",\n") + value
+    return combined
 
 
 class PromptSection(BaseModel):
@@ -158,7 +172,7 @@ class PromptSectionV2(BaseModel):
     def text(self) -> str:
         if isinstance(self.content, GlobalPromptContent):
             return self.content.text
-        return "\n".join(
+        return join_prompt_contract_fragments(
             target.text for target in sorted(self.content.targets, key=lambda item: item.order)
         )
 
@@ -230,8 +244,7 @@ class PromptInput(RootModel[PromptInputVariant]):
     def canonical_prompt(self) -> str | None:
         if self.mode == "single" or self.sections is None:
             return None
-        values = (
-            normalize_prompt_contract_text(section.text)
+        return join_prompt_contract_fragments(
+            section.text
             for section in sorted(self.sections, key=lambda item: item.order)
         )
-        return "\n".join(value for value in values if value)

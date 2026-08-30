@@ -13,7 +13,7 @@ from app.services.spatial_conditioning_builder import parse_workflow_ref
 from app.services.workflow_mapping import WorkflowMapping
 
 
-ASTERIA_SPATIAL_NODE_CONTRACT_VERSION = "asteria.spatial-prompt.node.v1"
+ASTERIA_SPATIAL_NODE_CONTRACT_VERSION = "asteria.spatial-prompt.node.v2"
 _AUTO_STRENGTH = 100.0
 _AUTO_BLENDING = 25.0
 
@@ -29,7 +29,7 @@ class SpatialWorkflowRefs:
     model_ref: list[str | int]
     positive_ref: list[str | int]
     negative_ref: list[str | int]
-    execution_receipt_ref: list[str | int]
+    execution_state_ref: list[str | int]
     next_id: int
 
 
@@ -57,7 +57,7 @@ def _profile_identity(profile_json: str) -> tuple[str, str, tuple[str, ...]]:
     except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
         raise SpatialPromptMappingError("spatial_mapping_profile_invalid") from error
     if (
-        payload.get("schema_version") != "asteria.spatial-node-profile.v1"
+        payload.get("schema_version") != "asteria.spatial-node-profile.v2"
         or payload.get("contract_version") != ASTERIA_SPATIAL_NODE_CONTRACT_VERSION
         or not isinstance(stage, str)
         or not isinstance(receipt_sha256, str)
@@ -198,6 +198,31 @@ def append_spatial_prompt_mapping(
         model_ref=[adapter_node, 0],
         positive_ref=[adapter_node, 1],
         negative_ref=[adapter_node, 2],
-        execution_receipt_ref=[adapter_node, 3],
+        execution_state_ref=[adapter_node, 3],
         next_id=cursor + 1,
     )
+
+
+def append_spatial_execution_receipt(
+    *,
+    workflow: MutableMapping[str, dict[str, Any]],
+    next_id: int,
+    mapping: WorkflowMapping,
+    execution_state_ref: Sequence[str | int],
+    samples_ref: Sequence[str | int],
+) -> int:
+    class_type = mapping.class_type("spatial_execution_receipt", "")
+    if not class_type:
+        raise SpatialPromptMappingError("spatial_mapping_contract_missing")
+    node_id = str(next_id)
+    if node_id in workflow:
+        raise SpatialPromptMappingError("spatial_mapping_node_id_collision")
+    workflow[node_id] = {
+        "class_type": class_type,
+        "inputs": {
+            "execution_state": _workflow_ref(execution_state_ref),
+            "samples": _workflow_ref(samples_ref),
+            "contract_version": ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
+        },
+    }
+    return next_id + 1

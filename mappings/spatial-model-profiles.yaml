@@ -1,7 +1,7 @@
 schema_version: asteria.spatial-model-profiles.v1
 profiles:
-  - profile_id: sdxl.attention.v1
-    revision: "1"
+  - profile_id: sdxl.attention.v2
+    revision: "2"
     model_family: sdxl
     architectures: [sdxl]
     variants: [sdxl]
@@ -16,8 +16,14 @@ profiles:
       isolation_start: 0.15
       isolation_end: 0.85
       late_blending_start: 0.65
-  - profile_id: illustrious.attention.v1
-    revision: "1"
+      schedule_smoothing: 0.08
+      cross_inside_bias: 3.0
+      cross_outside_penalty: 6.0
+      global_inside_penalty: 0.4
+      self_leakage_penalty: 2.0
+      self_attention_token_limit: 4096
+  - profile_id: illustrious.attention.v2
+    revision: "2"
     model_family: illustrious
     architectures: [sdxl]
     variants: [illustrious]
@@ -32,8 +38,14 @@ profiles:
       isolation_start: 0.15
       isolation_end: 0.85
       late_blending_start: 0.65
-  - profile_id: anima.28.attention.v1
-    revision: "1"
+      schedule_smoothing: 0.08
+      cross_inside_bias: 3.0
+      cross_outside_penalty: 6.0
+      global_inside_penalty: 0.4
+      self_leakage_penalty: 2.0
+      self_attention_token_limit: 4096
+  - profile_id: anima.28.attention.v2
+    revision: "2"
     model_family: anima
     architectures: [anima]
     variants: [anima_base_28]
@@ -48,8 +60,14 @@ profiles:
       isolation_start: 0.12
       isolation_end: 0.82
       late_blending_start: 0.68
-  - profile_id: anima.40.attention.v1
-    revision: "1"
+      schedule_smoothing: 0.06
+      cross_inside_bias: 2.5
+      cross_outside_penalty: 5.5
+      global_inside_penalty: 0.3
+      self_leakage_penalty: 1.75
+      self_attention_token_limit: 4096
+  - profile_id: anima.40.attention.v2
+    revision: "2"
     model_family: anima
     architectures: [anima]
     variants: [anima_2_9b_40]
@@ -64,8 +82,14 @@ profiles:
       isolation_start: 0.12
       isolation_end: 0.82
       late_blending_start: 0.68
-  - profile_id: anima.52.attention.experimental.v1
-    revision: "1"
+      schedule_smoothing: 0.06
+      cross_inside_bias: 2.5
+      cross_outside_penalty: 5.5
+      global_inside_penalty: 0.3
+      self_leakage_penalty: 1.75
+      self_attention_token_limit: 4096
+  - profile_id: anima.52.attention.experimental.v2
+    revision: "2"
     model_family: anima
     architectures: [anima]
     variants: [anima_3_8b_52]
@@ -73,10 +97,16 @@ profiles:
     verified_structure_ids: [anima_3_8b_52]
     layout_fingerprints: [2ad87dae9a23485c1ce5b5fa51a79e5d2649cb63cb115101afeeb11c27a40e8c]
     diffusion_block_counts: [52]
-    automatic_status: selection_required
+    automatic_status: supported
     manual_selectable: true
     coefficients:
       early_guidance_end: 0.30
       isolation_start: 0.10
       isolation_end: 0.80
       late_blending_start: 0.70
+      schedule_smoothing: 0.06
+      cross_inside_bias: 2.5
+      cross_outside_penalty: 5.5
+      global_inside_penalty: 0.3
+      self_leakage_penalty: 1.75
+      self_attention_token_limit: 4096

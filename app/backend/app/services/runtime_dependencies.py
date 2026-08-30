@@ -139,7 +139,17 @@ class RuntimeDependencyRepository:
         else:
             if self._path_is_dir_safely(path):
                 status = "installed"
-                if self._requires_post_install(
+                if dependency.provider == "bundled":
+                    try:
+                        if (
+                            not dependency.checksum_sha256
+                            or bundled_tree_sha256(path, ignore_runtime_cache=True)
+                            != dependency.checksum_sha256
+                        ):
+                            status = "missing"
+                    except OSError:
+                        status = "missing"
+                if status == "installed" and self._requires_post_install(
                     dependency
                 ) and not self._post_install_marker_is_current(dependency):
                     status = "post_install_pending"
@@ -376,10 +386,25 @@ class RuntimeDependencyRepository:
         return path
 
 
-def bundled_tree_sha256(root: Path) -> str:
+def bundled_tree_sha256(
+    root: Path,
+    *,
+    ignore_runtime_cache: bool = False,
+) -> str:
     digest = hashlib.sha256()
     files = sorted(
-        (item for item in root.rglob("*") if item.is_file()),
+        (
+            item
+            for item in root.rglob("*")
+            if item.is_file()
+            and not (
+                ignore_runtime_cache
+                and (
+                    "__pycache__" in item.relative_to(root).parts
+                    or item.suffix.casefold() in {".pyc", ".pyo"}
+                )
+            )
+        ),
         key=lambda item: item.relative_to(root).as_posix(),
     )
     for path in files:

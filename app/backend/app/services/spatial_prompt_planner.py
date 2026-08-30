@@ -8,6 +8,7 @@ from app.schemas.prompt_input import (
     GlobalPromptContent,
     PromptInputV2,
     TargetPromptContent,
+    join_prompt_contract_fragments,
 )
 from app.schemas.spatial_prompt_runtime import (
     SpatialExcludedTargetReceipt,
@@ -165,7 +166,7 @@ def _stage_receipt(
     excluded_targets: Sequence[SpatialExcludedTargetReceipt],
     reused_from_stage: str | None,
 ) -> SpatialStagePromptPlan:
-    combined = "\n".join(
+    combined = join_prompt_contract_fragments(
         item.expanded_prompt
         for item in (global_fragment, *target_fragments)
         if item.expanded_prompt
@@ -252,7 +253,7 @@ def build_spatial_prompt_plan(
                 for target in sorted(section.content.targets, key=lambda item: item.order)
             )
 
-    global_raw = "\n".join(global_parts)
+    global_raw = join_prompt_contract_fragments(global_parts)
     excluded_ids = set(layout.excluded_target_ids)
     excluded_targets = tuple(
         SpatialExcludedTargetReceipt(target_id=target_id, reason="user_choice")

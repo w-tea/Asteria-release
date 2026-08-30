@@ -17,6 +17,12 @@ class SpatialStageCoefficients(BaseModel):
     isolation_start: float = Field(ge=0.0, lt=1.0, allow_inf_nan=False)
     isolation_end: float = Field(gt=0.0, le=1.0, allow_inf_nan=False)
     late_blending_start: float = Field(gt=0.0, lt=1.0, allow_inf_nan=False)
+    schedule_smoothing: float = Field(gt=0.0, le=0.25, allow_inf_nan=False)
+    cross_inside_bias: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
+    cross_outside_penalty: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
+    global_inside_penalty: float = Field(ge=0.0, le=8.0, allow_inf_nan=False)
+    self_leakage_penalty: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
+    self_attention_token_limit: int = Field(ge=1, le=65536, strict=True)
 
     @model_validator(mode="after")
     def validate_ranges(self) -> "SpatialStageCoefficients":

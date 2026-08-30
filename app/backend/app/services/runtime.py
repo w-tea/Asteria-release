@@ -55,10 +55,12 @@ from app.services.seed_resize import seed_resize_active
 from app.services.topaz import TopazSettings, process_topaz_image
 from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
 from app.services.prompt_syntax import PromptSyntaxError, PromptSyntaxPlan, prompt_syntax_plan_from_dict
+from app.schemas.prompt_input import join_prompt_contract_fragments
 from app.schemas.spatial_prompt_runtime import (
     SpatialMaskBundle,
     SpatialModelProfileReceipt,
     SpatialPromptPlan,
+    canonical_runtime_sha256,
 )
 from app.services.spatial_conditioning_builder import (
     SpatialConditioningBuilderError,
@@ -67,6 +69,7 @@ from app.services.spatial_conditioning_builder import (
 )
 from app.services.spatial_prompt_mapping import (
     SpatialPromptMappingError,
+    append_spatial_execution_receipt,
     append_spatial_prompt_mapping,
 )
 from app.services.spatial_generation_context import (
@@ -782,6 +785,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             positive_ref = [control_apply_node, 0]
             negative_ref = [control_apply_node, 1]
         base_unpatched_model_ref = model_ref
+        base_execution_state_ref: list[str | int] | None = None
         spatial_base = self._append_sdxl_spatial_stage(
             request=request,
             stage=spatial_runtime_stage,
@@ -797,7 +801,13 @@ class ComfyTxt2ImgWorkflowBuilder:
             stage_settings=settings,
         )
         if spatial_base is not None:
-            model_ref, positive_ref, negative_ref, next_id = spatial_base
+            (
+                model_ref,
+                positive_ref,
+                negative_ref,
+                base_execution_state_ref,
+                next_id,
+            ) = spatial_base
         refiner_checkpoint = _refiner_checkpoint_setting(settings)
         should_refine_base_stage = bool(refiner_checkpoint and not self._uses_comfy_hires(settings))
         sample_node = sampler_node
@@ -851,6 +861,14 @@ class ComfyTxt2ImgWorkflowBuilder:
                 latent_ref,
                 mapping,
                 use_inspire=bool(settings.get("use_inspire_ksampler", True)),
+            )
+        if base_execution_state_ref is not None:
+            next_id = append_spatial_execution_receipt(
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                execution_state_ref=base_execution_state_ref,
+                samples_ref=[sample_node, 0],
             )
         current_width = int(settings["width"])
         current_height = int(settings["height"])
@@ -1014,6 +1032,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             )
             if spatial_hires_global is not None:
                 positive_ref, next_id = spatial_hires_global
+            hires_execution_state_ref: list[str | int] | None = None
             spatial_hires = self._append_sdxl_spatial_stage(
                 request=request,
                 stage="hires",
@@ -1029,7 +1048,13 @@ class ComfyTxt2ImgWorkflowBuilder:
                 stage_settings=hires_stage_settings,
             )
             if spatial_hires is not None:
-                hires_model_ref, positive_ref, negative_ref, next_id = spatial_hires
+                (
+                    hires_model_ref,
+                    positive_ref,
+                    negative_ref,
+                    hires_execution_state_ref,
+                    next_id,
+                ) = spatial_hires
             sample_node = str(next_id)
             next_id += 1
             use_inspire_hires = bool(settings.get("use_inspire_ksampler", True))
@@ -1055,6 +1080,14 @@ class ComfyTxt2ImgWorkflowBuilder:
                     hires_latent_ref,
                     mapping,
                     use_inspire=use_inspire_hires,
+                )
+            if hires_execution_state_ref is not None:
+                next_id = append_spatial_execution_receipt(
+                    workflow=workflow,
+                    next_id=next_id,
+                    mapping=mapping,
+                    execution_state_ref=hires_execution_state_ref,
+                    samples_ref=[sample_node, 0],
                 )
             current_width, current_height = hires_width, hires_height
             model_ref = hires_model_ref
@@ -1147,11 +1180,13 @@ class ComfyTxt2ImgWorkflowBuilder:
                 stage_settings=refiner_stage_settings,
                 refiner=True,
             )
+            refiner_execution_state_ref: list[str | int] | None = None
             if spatial_refiner is not None:
                 (
                     refiner_model_ref,
                     refiner_positive_ref,
                     refiner_negative_ref,
+                    refiner_execution_state_ref,
                     next_id,
                 ) = spatial_refiner
             workflow[refiner_sample_node] = self._ksampler_advanced_node(
@@ -1166,6 +1201,14 @@ class ComfyTxt2ImgWorkflowBuilder:
                 add_noise=False,
                 return_with_leftover_noise=False,
             )
+            if refiner_execution_state_ref is not None:
+                next_id = append_spatial_execution_receipt(
+                    workflow=workflow,
+                    next_id=next_id,
+                    mapping=mapping,
+                    execution_state_ref=refiner_execution_state_ref,
+                    samples_ref=[refiner_sample_node, 0],
+                )
             sample_node = refiner_sample_node
             model_ref = refiner_model_ref
             clip_ref = [refiner_checkpoint_node, 1]
@@ -1976,6 +2019,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         hires_unpatched_model_ref = hires_model_ref or model_ref
         base_positive_ref: list[str | int] = [conditioning_node, 0]
         base_negative_ref: list[str | int] = [negative_conditioning_node, 0]
+        base_execution_state_ref: list[str | int] | None = None
         spatial_base = self._append_anima_spatial_stage(
             request=request,
             stage=spatial_runtime_stage,
@@ -1998,7 +2042,13 @@ class ComfyTxt2ImgWorkflowBuilder:
             output_index=0,
         )
         if spatial_base is not None:
-            model_ref, base_positive_ref, base_negative_ref, next_id = spatial_base
+            (
+                model_ref,
+                base_positive_ref,
+                base_negative_ref,
+                base_execution_state_ref,
+                next_id,
+            ) = spatial_base
 
         hires_positive_ref: list[str | int] | None = None
         hires_negative_ref: list[str | int] | None = None
@@ -2050,6 +2100,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                     },
                 }
                 hires_negative_ref = [hires_negative_node, 0]
+            hires_execution_state_ref: list[str | int] | None = None
             spatial_hires = self._append_anima_spatial_stage(
                 request=request,
                 stage="hires",
@@ -2076,8 +2127,11 @@ class ComfyTxt2ImgWorkflowBuilder:
                     hires_model_ref,
                     hires_positive_ref,
                     hires_negative_ref,
+                    hires_execution_state_ref,
                     next_id,
                 ) = spatial_hires
+        else:
+            hires_execution_state_ref = None
         workflow = self._build_custom_sampler_tail(
             workflow,
             settings,
@@ -2102,6 +2156,8 @@ class ComfyTxt2ImgWorkflowBuilder:
             vae_ref=[vae_node, 0],
             mapping=mapping,
             hires_model_ref=hires_model_ref,
+            base_execution_state_ref=base_execution_state_ref,
+            hires_execution_state_ref=hires_execution_state_ref,
         )
         detailer_units = [
             unit
@@ -2175,6 +2231,8 @@ class ComfyTxt2ImgWorkflowBuilder:
         hires_model_ref: list[str | int] | None = None,
         hires_conditioning_ref: list[str | int] | None = None,
         hires_negative_ref: list[str | int] | None = None,
+        base_execution_state_ref: list[str | int] | None = None,
+        hires_execution_state_ref: list[str | int] | None = None,
     ) -> dict:
         next_id = max(int(node_id) for node_id in workflow) + 1
         sample_node = self._append_custom_sample(
@@ -2189,6 +2247,14 @@ class ComfyTxt2ImgWorkflowBuilder:
             scheduler_kind=scheduler_kind,
         )
         next_id += self._custom_sample_node_count(settings, scheduler_kind)
+        if base_execution_state_ref is not None:
+            next_id = append_spatial_execution_receipt(
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                execution_state_ref=base_execution_state_ref,
+                samples_ref=[sample_node, 0],
+            )
         if self._uses_comfy_hires(settings):
             if settings.get("hires_keep_first_pass"):
                 first_pass_decode_node = str(next_id)
@@ -2274,6 +2340,14 @@ class ComfyTxt2ImgWorkflowBuilder:
                 settings | {"denoise": settings.get("hires_denoising_strength", 0.7)},
                 scheduler_kind,
             )
+            if hires_execution_state_ref is not None:
+                next_id = append_spatial_execution_receipt(
+                    workflow=workflow,
+                    next_id=next_id,
+                    mapping=mapping,
+                    execution_state_ref=hires_execution_state_ref,
+                    samples_ref=[sample_node, 0],
+                )
 
         decode_node = str(next_id)
         save_node = str(next_id + 1)
@@ -2758,9 +2832,7 @@ class ComfyTxt2ImgWorkflowBuilder:
 
     @staticmethod
     def _spatial_combined_prompt(global_prompt: str, target_prompt: str) -> str:
-        return "\n".join(
-            value.strip() for value in (global_prompt, target_prompt) if value.strip()
-        )
+        return join_prompt_contract_fragments((global_prompt, target_prompt))
 
     def _append_sdxl_spatial_stage(
         self,
@@ -2778,7 +2850,13 @@ class ComfyTxt2ImgWorkflowBuilder:
         height: int,
         stage_settings: dict,
         refiner: bool = False,
-    ) -> tuple[list[str | int], list[str | int], list[str | int], int] | None:
+    ) -> tuple[
+        list[str | int],
+        list[str | int],
+        list[str | int],
+        list[str | int],
+        int,
+    ] | None:
         payload = self._spatial_stage_payload(request, stage)
         if payload is None:
             return None
@@ -2814,19 +2892,24 @@ class ComfyTxt2ImgWorkflowBuilder:
                 embeddings=list(fragment.embeddings),
                 refiner=refiner,
             )
-            combine_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
-            workflow[combine_node] = {
-                "class_type": mapping.class_type(
-                    "conditioning_combine", "ConditioningCombine"
-                ),
-                "inputs": {
-                    "conditioning_1": global_ref,
-                    "conditioning_2": target_only_ref,
-                },
-            }
             if fragment.target_id is None:
                 raise RuntimeErrorResponse("Spatial prompt target id is missing.")
-            target_refs[fragment.target_id] = [combine_node, 0]
+            target_refs[fragment.target_id] = target_only_ref
+        composite_global_ref = global_ref
+        for fragment in stage_plan.target_fragments:
+            if fragment.target_id is None:
+                raise RuntimeErrorResponse("Spatial prompt target id is missing.")
+            node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node_id] = {
+                "class_type": mapping.class_type(
+                    "conditioning_concat", "ConditioningConcat"
+                ),
+                "inputs": {
+                    "conditioning_to": composite_global_ref,
+                    "conditioning_from": target_refs[fragment.target_id],
+                },
+            }
+            composite_global_ref = [node_id, 0]
         mask_refs, next_id = self._append_spatial_mask_loaders(
             workflow=workflow,
             next_id=next_id,
@@ -2848,7 +2931,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                         "clip_text_encode_sdxl", "CLIPTextEncodeSDXL"
                     )
                 ),
-                global_conditioning_ref=global_ref,
+                global_conditioning_ref=composite_global_ref,
                 negative_conditioning_ref=negative_ref,
                 target_conditioning_refs=target_refs,
             )
@@ -2866,7 +2949,13 @@ class ComfyTxt2ImgWorkflowBuilder:
             raise RuntimeErrorResponse(
                 f"Spatial prompt workflow mapping failed: {error}"
             ) from error
-        return mapped.model_ref, mapped.positive_ref, mapped.negative_ref, mapped.next_id
+        return (
+            mapped.model_ref,
+            mapped.positive_ref,
+            mapped.negative_ref,
+            mapped.execution_state_ref,
+            mapped.next_id,
+        )
 
     def _append_sdxl_spatial_global(
         self,
@@ -2930,7 +3019,13 @@ class ComfyTxt2ImgWorkflowBuilder:
         qwen35_ref: list[str | int] | None = None,
         progressive_adapter: str | None = None,
         output_index: int = 0,
-    ) -> tuple[list[str | int], list[str | int], list[str | int], int] | None:
+    ) -> tuple[
+        list[str | int],
+        list[str | int],
+        list[str | int],
+        list[str | int],
+        int,
+    ] | None:
         payload = self._spatial_stage_payload(request, stage)
         if payload is None:
             return None
@@ -2940,6 +3035,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 f"Spatial {stage} mask dimensions do not match the generation stage."
             )
         stage_plan = spatial_prompt_stage(prompt_plan, stage)
+        full_global_prompt = stage_plan.combined_expanded_prompt
         global_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
         if is_anima_3_8b:
             if qwen35_ref is None or not progressive_adapter:
@@ -2955,7 +3051,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "native_clip": clip_ref,
                     "qwen35_clip": qwen35_ref,
                     "adapter_name": progressive_adapter,
-                    "prompt": stage_plan.global_fragment.expanded_prompt,
+                    "prompt": full_global_prompt,
                     "adapter_strength": request["settings"].get(
                         "anima_qwen35_adapter_strength", 1.0
                     ),
@@ -2968,7 +3064,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 ),
                 "inputs": {
                     "clip": clip_ref,
-                    "prompt": stage_plan.global_fragment.expanded_prompt,
+                    "prompt": full_global_prompt,
                     "vae": vae_ref,
                 },
             }
@@ -2976,10 +3072,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         target_refs: dict[str, list[str | int]] = {}
         for fragment in stage_plan.target_fragments:
             node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
-            prompt = self._spatial_combined_prompt(
-                stage_plan.global_fragment.expanded_prompt,
-                fragment.expanded_prompt,
-            )
+            prompt = fragment.expanded_prompt
             if is_anima_3_8b:
                 if qwen35_ref is None or not progressive_adapter:
                     raise RuntimeErrorResponse(
@@ -3053,7 +3146,13 @@ class ComfyTxt2ImgWorkflowBuilder:
             raise RuntimeErrorResponse(
                 f"Spatial prompt workflow mapping failed: {error}"
             ) from error
-        return mapped.model_ref, mapped.positive_ref, mapped.negative_ref, mapped.next_id
+        return (
+            mapped.model_ref,
+            mapped.positive_ref,
+            mapped.negative_ref,
+            mapped.execution_state_ref,
+            mapped.next_id,
+        )
 
     def _uses_comfy_hires(self, settings: dict) -> bool:
         if not settings.get("hires_enabled"):
@@ -3920,6 +4019,31 @@ class ComfyGenerationRuntime:
                 else:
                     history = self.client.wait_for_history(prompt_id)
                 self._raise_if_generation_cancelled(request, output_paths)
+                spatial_receipts = self._spatial_receipts_from_history(
+                    history,
+                    prompt_id,
+                )
+                if iteration_request.get("_spatial_runtime_context") is not None:
+                    if not spatial_receipts:
+                        raise RuntimeErrorResponse(
+                            "Spatial prompt execution receipt is missing."
+                        )
+                    recorded_receipts = request.setdefault("settings", {}).setdefault(
+                        "spatial_execution_receipts",
+                        [],
+                    )
+                    recorded_receipts.extend(
+                        {
+                            **receipt,
+                            "runtime_job_id": prompt_id,
+                            "batch_index": batch_index,
+                            "seed": seed,
+                        }
+                        for receipt in spatial_receipts
+                    )
+                    settings["spatial_execution_receipts"] = deepcopy(
+                        recorded_receipts
+                    )
                 images = self._images_from_history(history, prompt_id)
                 primary_node_ids = {
                     str(node_id) for node_id in settings.get("primary_output_node_ids", [])
@@ -4717,6 +4841,95 @@ class ComfyGenerationRuntime:
         for node_id, output in outputs.items():
             images.extend({**image, "node_id": str(node_id)} for image in output.get("images", []))
         return sorted(images, key=lambda image: "first_pass" in str(image.get("filename", "")).lower())
+
+    @staticmethod
+    def _spatial_receipts_from_history(
+        history: dict,
+        prompt_id: str,
+    ) -> list[dict]:
+        outputs = history.get(prompt_id, {}).get("outputs", {})
+        receipts: list[dict] = []
+        for output in outputs.values():
+            raw_receipts = output.get("asteria_spatial_receipts", [])
+            if not isinstance(raw_receipts, list):
+                raise RuntimeErrorResponse("Spatial prompt execution receipt is invalid.")
+            for raw in raw_receipts:
+                try:
+                    payload = json.loads(raw)
+                except (TypeError, ValueError, json.JSONDecodeError) as error:
+                    raise RuntimeErrorResponse(
+                        "Spatial prompt execution receipt is invalid."
+                    ) from error
+                if not isinstance(payload, dict):
+                    raise RuntimeErrorResponse(
+                        "Spatial prompt execution receipt is invalid."
+                    )
+                execution_sha256 = payload.get("execution_sha256")
+                body = {
+                    key: value
+                    for key, value in payload.items()
+                    if key != "execution_sha256"
+                }
+                runtime = payload.get("runtime")
+                target_ids = payload.get("target_ids")
+                target_routes = runtime.get("target_routes") if isinstance(runtime, dict) else None
+                preprocess_mode = payload.get("conditioning_preprocess_mode")
+                anima_preparations = (
+                    runtime.get("anima_context_preparations")
+                    if isinstance(runtime, dict)
+                    else None
+                )
+                if (
+                    payload.get("schema_version") != "asteria.spatial-node-execution.v2"
+                    or payload.get("contract_version")
+                    != "asteria.spatial-prompt.node.v2"
+                    or not isinstance(execution_sha256, str)
+                    or canonical_runtime_sha256(body) != execution_sha256
+                    or not isinstance(runtime, dict)
+                    or not isinstance(target_ids, list)
+                    or not target_ids
+                    or not isinstance(target_routes, dict)
+                    or set(target_routes) != set(target_ids)
+                    or any(
+                        isinstance(value, bool)
+                        or not isinstance(value, int)
+                        or value < 1
+                        for value in target_routes.values()
+                    )
+                    or not isinstance(runtime.get("cross_attention_calls"), int)
+                    or runtime["cross_attention_calls"] < 1
+                    or not isinstance(runtime.get("self_attention_calls"), int)
+                    or runtime["self_attention_calls"] < 1
+                    or not isinstance(runtime.get("cross_bias_applied"), int)
+                    or runtime["cross_bias_applied"] < 1
+                    or not isinstance(runtime.get("cross_output_blends"), int)
+                    or runtime["cross_output_blends"] < 1
+                    or not isinstance(runtime.get("self_bias_applied"), int)
+                    or runtime["self_bias_applied"] < 1
+                    or preprocess_mode not in {
+                        "direct",
+                        "native_anima_llm_adapter",
+                        "progressive_qwen35_preprocessed",
+                    }
+                    or isinstance(anima_preparations, bool)
+                    or not isinstance(anima_preparations, int)
+                    or anima_preparations < 0
+                    or (
+                        preprocess_mode == "native_anima_llm_adapter"
+                        and anima_preparations < len(target_ids)
+                    )
+                ):
+                    raise RuntimeErrorResponse(
+                        "Spatial prompt execution receipt is invalid."
+                    )
+                receipts.append(payload)
+        return sorted(
+            receipts,
+            key=lambda item: {"base": 0, "hires": 1, "refiner": 2}.get(
+                str(item.get("stage")),
+                99,
+            ),
+        )
 
     def _safe_filename(self, filename: str) -> str:
         return re.sub(r"[^A-Za-z0-9._-]+", "_", Path(filename).name)

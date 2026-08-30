@@ -10,6 +10,7 @@ from app.schemas.prompt_input import (
     PromptInputV1,
     PromptSection,
     PromptSectionV2,
+    join_prompt_contract_fragments,
     normalize_prompt_contract_text,
 )
 
@@ -39,11 +40,29 @@ def normalize_prompt_section_text(value: str) -> str:
 def combine_prompt_sections(
     sections: Sequence[PromptSection | PromptSectionV2],
 ) -> str:
-    values = (
+    return join_prompt_contract_fragments(
+        section.text for section in sorted(sections, key=lambda section: section.order)
+    )
+
+
+def _legacy_prompt_sections(
+    sections: Sequence[PromptSection | PromptSectionV2],
+) -> str:
+    """Reproduce the pre-comma section join only for saved-data recovery."""
+    fragments = (
         normalize_prompt_section_text(section.text)
         for section in sorted(sections, key=lambda section: section.order)
     )
-    return "\n".join(value for value in values if value)
+    return "\n".join(fragment for fragment in fragments if fragment)
+
+
+def saved_prompt_input_matches(prompt: str, prompt_input: PromptInput) -> bool:
+    """Accept both the current canonical prompt and the former saved representation."""
+    if prompt_input.mode != "sections":
+        return True
+    if prompt_input.canonical_prompt == prompt:
+        return True
+    return _legacy_prompt_sections(prompt_input.sections or ()) == prompt
 
 
 def validate_prompt_input_pair(prompt: str, prompt_input: PromptInput) -> PromptInput:
@@ -99,9 +118,7 @@ def recover_saved_prompt_input(
             warning_code="prompt_input_invalid_fallback",
         )
 
-    try:
-        validate_prompt_input_pair(prompt, prompt_input)
-    except PromptInputError:
+    if not saved_prompt_input_matches(prompt, prompt_input):
         return PromptInputRecovery(
             prompt_input=None,
             warning_code="prompt_input_mismatch_fallback",
