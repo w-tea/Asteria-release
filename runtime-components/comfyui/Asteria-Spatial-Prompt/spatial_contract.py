@@ -204,6 +204,60 @@ class SpatialConditioningBundle:
     receipt_sha256: str
 
 
+@dataclass(frozen=True, slots=True)
+class SpatialTokenChunkRange:
+    chunk_index: int
+    start: int
+    end: int
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialTargetTokenBinding:
+    target_id: str
+    character_start: int
+    character_end: int
+    semantic_start: int
+    semantic_end: int
+    context_indices: tuple[int, ...]
+    adapter_context_indices: tuple[int, ...]
+    chunk_ranges: tuple[SpatialTokenChunkRange, ...]
+    token_weights: tuple[float, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialEncoderTokenBinding:
+    encoder_id: str
+    tokenizer_fingerprint: str
+    full_text_sha256: str
+    token_ids: tuple[int, ...]
+    special_token_indices: tuple[int, ...]
+    padding_token_indices: tuple[int, ...]
+    overflow_chunk_indices: tuple[int, ...]
+    truncated: bool
+    truncation_character_start: int | None
+    adapter_role: str
+    targets: tuple[SpatialTargetTokenBinding, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialTokenBindingBundle:
+    schema_version: str
+    full_text: str
+    full_text_sha256: str
+    step_start_percent: float
+    step_end_percent: float
+    pooled_output_scope: str
+    encoders: tuple[SpatialEncoderTokenBinding, ...]
+    receipt_sha256: str
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialScheduledTokenBindingBundle:
+    schema_version: str
+    bindings: tuple[SpatialTokenBindingBundle, ...]
+    receipt_sha256: str
+
+
 def mask_bundle_payload(targets: tuple[SpatialMaskTarget, ...]) -> dict[str, Any]:
     return {
         "schema_version": "asteria.spatial-node-mask-bundle.v1",

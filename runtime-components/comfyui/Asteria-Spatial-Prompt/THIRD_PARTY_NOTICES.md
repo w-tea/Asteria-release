@@ -13,5 +13,7 @@ one of several behavioral references during design.
 - License: AGPL-3.0
 
 Asteria-Spatial-Prompt is an independent implementation. It uses Asteria-owned
-contracts, staged masked conditioning, validation, receipts, and workflow
-mapping. No third-party implementation is bundled in this component.
+contracts, full-text token binding, smooth spatial guidance fields, latent
+guidance, validation, receipts, and workflow mapping. It does not compose
+target-specific latents or attention outputs. No third-party implementation is
+bundled in this component.

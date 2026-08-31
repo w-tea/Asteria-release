@@ -130,6 +130,13 @@ def comfy_model_name(
     external_roots: Iterable[ExternalModelRoot] = (),
 ) -> str:
     normalized = value.replace("\\", "/")
+    external_virtual_name = _relative_to_external_virtual_name(
+        normalized,
+        model_dir_name,
+        external_roots,
+    )
+    if external_virtual_name is not None:
+        return external_virtual_name.replace("/", "\\")
     relative = _relative_to_model_root(normalized, model_root)
     aliases = sorted(
         COMFY_MODEL_PATH_DIRECTORIES.get(model_dir_name, (model_dir_name,)),
@@ -196,6 +203,34 @@ def _relative_to_external_model_root(
         stripped = _strip_leading_alias(relative, directories)
         if stripped != relative:
             return stripped
+    return None
+
+
+def _relative_to_external_virtual_name(
+    normalized_value: str,
+    model_dir_name: str,
+    external_roots: Iterable[ExternalModelRoot],
+) -> str | None:
+    parts = normalized_value.strip("/").split("/")
+    if len(parts) < 4 or parts[0].casefold() != "external":
+        return None
+    root_id, model_type = parts[1], parts[2]
+    if any(part in {"", ".", ".."} for part in parts[3:]):
+        return None
+    allowed_model_types = {
+        candidate
+        for candidate, comfy_keys in _EXTERNAL_COMFY_KEYS.items()
+        if model_dir_name in comfy_keys
+    }
+    if model_type not in allowed_model_types:
+        return None
+    for root in external_roots:
+        if (
+            root.enabled
+            and root.root_id == root_id
+            and root.mappings.get(model_type)
+        ):
+            return "/".join(parts[3:])
     return None
 
 

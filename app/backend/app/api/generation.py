@@ -732,6 +732,41 @@ def _validate_spatial_prompt_runtime_contract(
         )
 
 
+_SPATIAL_PROMPT_SUPPORTED_SAMPLERS = {
+    "euler_ancestral": "Euler a",
+    "dpmpp_2m": "DPM++ 2M",
+    "er_sde": "ER SDE",
+}
+
+
+def _validate_spatial_prompt_sampling_options(settings: dict) -> None:
+    if not uses_spatial_prompt_layout(settings):
+        return
+    candidates = [("sampler", str(settings.get("sampler") or "Euler a"))]
+    if settings.get("hires_enabled"):
+        hires_sampler = str(settings.get("hires_sampler") or "Use same sampler")
+        if hires_sampler != "Use same sampler":
+            candidates.append(("hires_sampler", hires_sampler))
+    unsupported = [
+        {
+            "field": field,
+            "label": label,
+            "reason": "spatial_prompt_sampler_not_supported",
+            "supported": list(_SPATIAL_PROMPT_SUPPORTED_SAMPLERS.values()),
+        }
+        for field, label in candidates
+        if sampler_runtime_name(label) not in _SPATIAL_PROMPT_SUPPORTED_SAMPLERS
+    ]
+    if unsupported:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING,
+                "unsupported": unsupported,
+            },
+        )
+
+
 def _validate_runtime_feature_requirements(
     config: AppConfig,
     selected_runtime: str,
@@ -774,6 +809,7 @@ def _validate_runtime_feature_requirements(
                 ],
             },
         )
+    _validate_spatial_prompt_sampling_options(settings)
     if selected_runtime != "comfy_workflow":
         return
     requires_anima_lllite = bool(settings.get("anima_lllite_units"))
@@ -954,6 +990,7 @@ def _validate_runtime_feature_requirements(
             object_info,
             loras or [],
             model_root=config.model_dir,
+            external_roots=_registered_external_model_roots(config),
         )
         if missing_lora_models:
             raise HTTPException(
@@ -1094,6 +1131,7 @@ def _validate_runtime_feature_requirements(
             object_info,
             loras or [],
             model_root=config.model_dir,
+            external_roots=_registered_external_model_roots(config),
         )
         if missing_lora_models:
             raise HTTPException(
@@ -1545,6 +1583,7 @@ def _missing_lora_models(
     loras: list[dict],
     *,
     model_root: Path | None = None,
+    external_roots: tuple[ExternalModelRoot, ...] = (),
 ) -> list[dict[str, Any]]:
     missing: list[dict[str, Any]] = []
     lora_loader_present = "LoraLoader" in object_info
@@ -1563,7 +1602,12 @@ def _missing_lora_models(
         name = str(lora.get("name") or "").strip()
         if not name:
             continue
-        model_name = comfy_model_name(name, "loras", model_root=model_root)
+        model_name = comfy_model_name(
+            name,
+            "loras",
+            model_root=model_root,
+            external_roots=external_roots,
+        )
         block_vector = str(lora.get("block_weight") or lora.get("block_weight_preset") or "").strip()
         uses_block_loader = bool(block_vector and lora.get("hierarchy_mode") != "disabled")
         uses_anima_remap = isinstance(lora.get("anima_remap"), dict)
@@ -2530,7 +2574,7 @@ def _spatial_model_evidence(
             model_slot_id=slot_id,
             variant=(
                 "illustrious"
-                if selected_profile_id == "illustrious.attention.v2"
+                if selected_profile_id == "illustrious.guidance.v3"
                 else "sdxl"
             ),
         )

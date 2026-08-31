@@ -68,6 +68,7 @@ from app.services.spatial_conditioning_builder import (
     spatial_prompt_stage,
 )
 from app.services.spatial_prompt_mapping import (
+    ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
     SpatialPromptMappingError,
     append_spatial_execution_receipt,
     append_spatial_prompt_mapping,
@@ -821,7 +822,27 @@ class ComfyTxt2ImgWorkflowBuilder:
                 settings,
                 mapping,
             )
-        if seed_resize_noise_ref is not None and seed_resize_seed is not None:
+        if base_execution_state_ref is not None:
+            workflow[sample_node] = self._spatial_guidance_sampler_node(
+                settings,
+                model_ref,
+                positive_ref,
+                negative_ref,
+                latent_ref,
+                base_execution_state_ref,
+                mapping,
+                noise_ref=seed_resize_noise_ref,
+                start_at_step=0,
+                end_at_step=(
+                    self._refiner_switch_step(settings, int(settings["steps"]))
+                    if should_refine_base_stage
+                    else int(settings["steps"])
+                ),
+                add_noise=True,
+                return_with_leftover_noise=should_refine_base_stage,
+            )
+            base_execution_state_ref = [sample_node, 1]
+        elif seed_resize_noise_ref is not None and seed_resize_seed is not None:
             workflow[sample_node] = self._ksampler_advanced_inspire_node(
                 settings,
                 model_ref,
@@ -1058,7 +1079,28 @@ class ComfyTxt2ImgWorkflowBuilder:
             sample_node = str(next_id)
             next_id += 1
             use_inspire_hires = bool(settings.get("use_inspire_ksampler", True))
-            if refiner_checkpoint:
+            if hires_execution_state_ref is not None:
+                workflow[sample_node] = self._spatial_guidance_sampler_node(
+                    hires_stage_settings,
+                    hires_model_ref,
+                    positive_ref,
+                    negative_ref,
+                    hires_latent_ref,
+                    hires_execution_state_ref,
+                    mapping,
+                    start_at_step=0,
+                    end_at_step=(
+                        self._refiner_switch_step(
+                            settings, int(hires_stage_settings["steps"])
+                        )
+                        if refiner_checkpoint
+                        else int(hires_stage_settings["steps"])
+                    ),
+                    add_noise=True,
+                    return_with_leftover_noise=bool(refiner_checkpoint),
+                )
+                hires_execution_state_ref = [sample_node, 1]
+            elif refiner_checkpoint:
                 workflow[sample_node] = self._ksampler_advanced_node(
                     hires_stage_settings,
                     hires_model_ref,
@@ -1189,18 +1231,34 @@ class ComfyTxt2ImgWorkflowBuilder:
                     refiner_execution_state_ref,
                     next_id,
                 ) = spatial_refiner
-            workflow[refiner_sample_node] = self._ksampler_advanced_node(
-                refiner_stage_settings,
-                refiner_model_ref,
-                refiner_positive_ref,
-                refiner_negative_ref,
-                [sample_node, 0],
-                mapping,
-                start_at_step=self._refiner_switch_step(settings, refiner_steps),
-                end_at_step=refiner_steps,
-                add_noise=False,
-                return_with_leftover_noise=False,
-            )
+            if refiner_execution_state_ref is not None:
+                workflow[refiner_sample_node] = self._spatial_guidance_sampler_node(
+                    refiner_stage_settings,
+                    refiner_model_ref,
+                    refiner_positive_ref,
+                    refiner_negative_ref,
+                    [sample_node, 0],
+                    refiner_execution_state_ref,
+                    mapping,
+                    start_at_step=self._refiner_switch_step(settings, refiner_steps),
+                    end_at_step=refiner_steps,
+                    add_noise=False,
+                    return_with_leftover_noise=False,
+                )
+                refiner_execution_state_ref = [refiner_sample_node, 1]
+            else:
+                workflow[refiner_sample_node] = self._ksampler_advanced_node(
+                    refiner_stage_settings,
+                    refiner_model_ref,
+                    refiner_positive_ref,
+                    refiner_negative_ref,
+                    [sample_node, 0],
+                    mapping,
+                    start_at_step=self._refiner_switch_step(settings, refiner_steps),
+                    end_at_step=refiner_steps,
+                    add_noise=False,
+                    return_with_leftover_noise=False,
+                )
             if refiner_execution_state_ref is not None:
                 next_id = append_spatial_execution_receipt(
                     workflow=workflow,
@@ -2235,18 +2293,36 @@ class ComfyTxt2ImgWorkflowBuilder:
         hires_execution_state_ref: list[str | int] | None = None,
     ) -> dict:
         next_id = max(int(node_id) for node_id in workflow) + 1
-        sample_node = self._append_custom_sample(
-            workflow,
-            next_id,
-            settings,
-            model_ref,
-            conditioning_ref,
-            latent_ref,
-            mapping,
-            negative_ref=negative_ref,
-            scheduler_kind=scheduler_kind,
-        )
-        next_id += self._custom_sample_node_count(settings, scheduler_kind)
+        if base_execution_state_ref is not None:
+            if negative_ref is None or scheduler_kind != "basic":
+                raise RuntimeErrorResponse(
+                    "Spatial prompt guidance requires a standard CFG sampling stage."
+                )
+            sample_node = str(next_id)
+            workflow[sample_node] = self._spatial_guidance_sampler_node(
+                settings,
+                model_ref,
+                conditioning_ref,
+                negative_ref,
+                latent_ref,
+                base_execution_state_ref,
+                mapping,
+            )
+            base_execution_state_ref = [sample_node, 1]
+            next_id += 1
+        else:
+            sample_node = self._append_custom_sample(
+                workflow,
+                next_id,
+                settings,
+                model_ref,
+                conditioning_ref,
+                latent_ref,
+                mapping,
+                negative_ref=negative_ref,
+                scheduler_kind=scheduler_kind,
+            )
+            next_id += self._custom_sample_node_count(settings, scheduler_kind)
         if base_execution_state_ref is not None:
             next_id = append_spatial_execution_receipt(
                 workflow=workflow,
@@ -2314,10 +2390,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "inputs": {"pixels": upscale_ref, "vae": vae_ref},
                 }
                 hires_latent_ref = [encode_node, 0]
-            sample_node = self._append_custom_sample(
-                workflow,
-                next_id,
-                settings | {
+            hires_sample_settings = settings | {
                     "steps": settings.get("hires_steps") or settings["steps"],
                     "cfg_scale": settings.get("hires_cfg_scale") or settings["cfg_scale"],
                     "sampler": self._hires_sampler(settings),
@@ -2328,18 +2401,40 @@ class ComfyTxt2ImgWorkflowBuilder:
                         if scheduler_kind == "flux2"
                         else {}
                     ),
-                },
-                hires_model_ref or model_ref,
-                hires_conditioning_ref or conditioning_ref,
-                hires_latent_ref,
-                mapping,
-                negative_ref=hires_negative_ref or negative_ref,
-                scheduler_kind=scheduler_kind,
-            )
-            next_id += self._custom_sample_node_count(
-                settings | {"denoise": settings.get("hires_denoising_strength", 0.7)},
-                scheduler_kind,
-            )
+                }
+            if hires_execution_state_ref is not None:
+                if (hires_negative_ref or negative_ref) is None or scheduler_kind != "basic":
+                    raise RuntimeErrorResponse(
+                        "Spatial prompt guidance requires a standard CFG Hires stage."
+                    )
+                sample_node = str(next_id)
+                workflow[sample_node] = self._spatial_guidance_sampler_node(
+                    hires_sample_settings,
+                    hires_model_ref or model_ref,
+                    hires_conditioning_ref or conditioning_ref,
+                    hires_negative_ref or negative_ref,
+                    hires_latent_ref,
+                    hires_execution_state_ref,
+                    mapping,
+                )
+                hires_execution_state_ref = [sample_node, 1]
+                next_id += 1
+            else:
+                sample_node = self._append_custom_sample(
+                    workflow,
+                    next_id,
+                    hires_sample_settings,
+                    hires_model_ref or model_ref,
+                    hires_conditioning_ref or conditioning_ref,
+                    hires_latent_ref,
+                    mapping,
+                    negative_ref=hires_negative_ref or negative_ref,
+                    scheduler_kind=scheduler_kind,
+                )
+                next_id += self._custom_sample_node_count(
+                    hires_sample_settings,
+                    scheduler_kind,
+                )
             if hires_execution_state_ref is not None:
                 next_id = append_spatial_execution_receipt(
                     workflow=workflow,
@@ -2496,6 +2591,61 @@ class ComfyTxt2ImgWorkflowBuilder:
                 else mapping.class_type("ksampler", "KSampler")
                 if mapping
                 else "KSampler"
+            ),
+            "inputs": inputs,
+        }
+
+    def _spatial_guidance_sampler_node(
+        self,
+        settings: dict,
+        model_ref: list[str | int],
+        positive_ref: list[str | int],
+        negative_ref: list[str | int],
+        latent_ref: list[str | int],
+        guidance_state_ref: list[str | int],
+        mapping: WorkflowMapping,
+        *,
+        noise_ref: list[str | int] | None = None,
+        start_at_step: int = 0,
+        end_at_step: int | None = None,
+        add_noise: bool = True,
+        return_with_leftover_noise: bool = False,
+    ) -> dict:
+        sampler_name = self._sampler_name(settings.get("sampler", "Euler a"))
+        if sampler_name not in {"euler_ancestral", "dpmpp_2m", "er_sde"}:
+            raise RuntimeErrorResponse(
+                "Spatial prompt guidance currently supports Euler a, DPM++ 2M, and ER SDE."
+            )
+        seed = settings.get("seed", -1)
+        if seed is None or seed < 0:
+            seed = random.randint(0, 2**32 - 1)
+        inputs = {
+            "model": model_ref,
+            "seed": seed,
+            "steps": settings["steps"],
+            "cfg": settings["cfg_scale"],
+            "sampler_name": sampler_name,
+            "scheduler": self._scheduler_name(
+                settings.get("scheduler", "Automatic")
+            ),
+            "positive": positive_ref,
+            "negative": negative_ref,
+            "latent_image": latent_ref,
+            "denoise": settings.get("denoise", 1.0),
+            "guidance_state": guidance_state_ref,
+            "contract_version": ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
+            "add_noise": "enable" if add_noise else "disable",
+            "start_at_step": start_at_step,
+            "end_at_step": int(end_at_step or settings["steps"]),
+            "return_with_leftover_noise": (
+                "enable" if return_with_leftover_noise else "disable"
+            ),
+        }
+        if noise_ref is not None:
+            inputs["noise_opt"] = noise_ref
+        return {
+            "class_type": mapping.class_type(
+                "spatial_guidance_sampler", "AsteriaSpatialGuidanceSampler"
             ),
             "inputs": inputs,
         }
@@ -2865,36 +3015,6 @@ class ComfyTxt2ImgWorkflowBuilder:
             raise RuntimeErrorResponse(
                 f"Spatial {stage} mask dimensions do not match the generation stage."
             )
-        stage_plan = spatial_prompt_stage(prompt_plan, stage)
-        target_refs: dict[str, list[str | int]] = {}
-        for fragment in stage_plan.target_fragments:
-            preferred_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
-            try:
-                syntax_plan = prompt_syntax_plan_from_dict(
-                    fragment.syntax_plan.model_dump(mode="json")
-                )
-            except PromptSyntaxError as error:
-                raise RuntimeErrorResponse(
-                    f"Spatial prompt syntax plan is invalid: {error.code}"
-                ) from error
-            target_only_ref, next_id = self._append_sdxl_prompt_conditioning(
-                workflow=workflow,
-                next_id=next_id,
-                preferred_node=preferred_node,
-                plan=syntax_plan,
-                fallback_text=fragment.expanded_prompt,
-                clip_ref=clip_ref,
-                model_ref=model_ref,
-                mapping=mapping,
-                width=width,
-                height=height,
-                stage_settings=stage_settings,
-                embeddings=list(fragment.embeddings),
-                refiner=refiner,
-            )
-            if fragment.target_id is None:
-                raise RuntimeErrorResponse("Spatial prompt target id is missing.")
-            target_refs[fragment.target_id] = target_only_ref
         mask_refs, next_id = self._append_spatial_mask_loaders(
             workflow=workflow,
             next_id=next_id,
@@ -2916,9 +3036,9 @@ class ComfyTxt2ImgWorkflowBuilder:
                         "clip_text_encode_sdxl", "CLIPTextEncodeSDXL"
                     )
                 ),
-                global_conditioning_ref=global_ref,
+                text_encoder_ref=clip_ref,
+                full_positive_conditioning_ref=global_ref,
                 negative_conditioning_ref=negative_ref,
-                target_conditioning_refs=target_refs,
             )
             mapped = append_spatial_prompt_mapping(
                 workflow=workflow,
@@ -2961,28 +3081,71 @@ class ComfyTxt2ImgWorkflowBuilder:
         if payload is None:
             return None
         stage_plan = spatial_prompt_stage(payload[0], stage)
-        try:
-            syntax_plan = prompt_syntax_plan_from_dict(
-                stage_plan.global_fragment.syntax_plan.model_dump(mode="json")
-            )
-        except PromptSyntaxError as error:
-            raise RuntimeErrorResponse(
-                f"Spatial global prompt syntax plan is invalid: {error.code}"
-            ) from error
+        if stage_plan.full_text is None:
+            raise RuntimeErrorResponse("Spatial full prompt is missing.")
+        if stage_plan.scheduled_bindings:
+            ranged_refs: list[list[str | int]] = []
+            embeddings = list(payload[0].embeddings)
+            for scheduled in stage_plan.scheduled_bindings:
+                encode_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                normalized_text = self._comfy_prompt_text(scheduled.full_text, embeddings)
+                workflow[encode_node] = (
+                    self._sdxl_refiner_conditioning_node(
+                        normalized_text,
+                        clip_ref,
+                        mapping,
+                        width,
+                        height,
+                    )
+                    if refiner
+                    else self._sdxl_conditioning_node(
+                        normalized_text,
+                        clip_ref,
+                        mapping,
+                        width,
+                        height,
+                    )
+                )
+                range_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[range_node] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_time_range", "ConditioningSetTimestepRange"
+                    ),
+                    "inputs": {
+                        "conditioning": [encode_node, 0],
+                        "start": scheduled.start_percent,
+                        "end": scheduled.end_percent,
+                    },
+                }
+                ranged_refs.append([range_node, 0])
+            combined = ranged_refs[0]
+            for ranged_ref in ranged_refs[1:]:
+                combine_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[combine_node] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_combine", "ConditioningCombine"
+                    ),
+                    "inputs": {
+                        "conditioning_1": combined,
+                        "conditioning_2": ranged_ref,
+                    },
+                }
+                combined = [combine_node, 0]
+            return combined, next_id
         preferred_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
         return self._append_sdxl_prompt_conditioning(
             workflow=workflow,
             next_id=next_id,
             preferred_node=preferred_node,
-            plan=syntax_plan,
-            fallback_text=stage_plan.global_fragment.expanded_prompt,
+            plan=None,
+            fallback_text=stage_plan.full_text,
             clip_ref=clip_ref,
             model_ref=model_ref,
             mapping=mapping,
             width=width,
             height=height,
             stage_settings=stage_settings,
-            embeddings=list(stage_plan.global_fragment.embeddings),
+            embeddings=list(payload[0].embeddings),
             refiner=refiner,
         )
 
@@ -3020,50 +3183,24 @@ class ComfyTxt2ImgWorkflowBuilder:
                 f"Spatial {stage} mask dimensions do not match the generation stage."
             )
         stage_plan = spatial_prompt_stage(prompt_plan, stage)
-        full_global_prompt = stage_plan.global_fragment.expanded_prompt
-        global_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
-        if is_anima_3_8b:
-            if qwen35_ref is None or not progressive_adapter:
-                raise RuntimeErrorResponse(
-                    "Anima 3.8B spatial prompt encoder inputs are incomplete."
-                )
-            workflow[global_node] = {
-                "class_type": mapping.class_type(
-                    "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
-                ),
-                "inputs": {
-                    "model": model_ref,
-                    "native_clip": clip_ref,
-                    "qwen35_clip": qwen35_ref,
-                    "adapter_name": progressive_adapter,
-                    "prompt": full_global_prompt,
-                    "adapter_strength": request["settings"].get(
-                        "anima_qwen35_adapter_strength", 1.0
-                    ),
-                },
-            }
-        else:
-            workflow[global_node] = {
-                "class_type": mapping.class_type(
-                    "conditioning", "TextEncodeQwenImageEdit"
-                ),
-                "inputs": {
-                    "clip": clip_ref,
-                    "prompt": full_global_prompt,
-                    "vae": vae_ref,
-                },
-            }
-        global_ref: list[str | int] = [global_node, output_index]
-        target_refs: dict[str, list[str | int]] = {}
-        for fragment in stage_plan.target_fragments:
-            node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
-            prompt = fragment.expanded_prompt
+        if stage_plan.full_text is None:
+            raise RuntimeErrorResponse("Spatial full prompt is missing.")
+        full_positive_prompt = stage_plan.full_text
+        schedule = tuple(stage_plan.scheduled_bindings or ())
+        prompts = (
+            tuple((item.full_text, item.start_percent, item.end_percent) for item in schedule)
+            if schedule
+            else ((full_positive_prompt, 0.0, 1.0),)
+        )
+        ranged_refs: list[list[str | int]] = []
+        for prompt_text, start_percent, end_percent in prompts:
+            global_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
             if is_anima_3_8b:
                 if qwen35_ref is None or not progressive_adapter:
                     raise RuntimeErrorResponse(
                         "Anima 3.8B spatial prompt encoder inputs are incomplete."
                     )
-                workflow[node_id] = {
+                workflow[global_node] = {
                     "class_type": mapping.class_type(
                         "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
                     ),
@@ -3072,26 +3209,51 @@ class ComfyTxt2ImgWorkflowBuilder:
                         "native_clip": clip_ref,
                         "qwen35_clip": qwen35_ref,
                         "adapter_name": progressive_adapter,
-                        "prompt": prompt,
+                        "prompt": prompt_text,
                         "adapter_strength": request["settings"].get(
                             "anima_qwen35_adapter_strength", 1.0
                         ),
                     },
                 }
             else:
-                workflow[node_id] = {
+                workflow[global_node] = {
                     "class_type": mapping.class_type(
                         "conditioning", "TextEncodeQwenImageEdit"
                     ),
                     "inputs": {
                         "clip": clip_ref,
-                        "prompt": prompt,
+                        "prompt": prompt_text,
                         "vae": vae_ref,
                     },
                 }
-            if fragment.target_id is None:
-                raise RuntimeErrorResponse("Spatial prompt target id is missing.")
-            target_refs[fragment.target_id] = [node_id, output_index]
+            encoded_ref: list[str | int] = [global_node, output_index]
+            if schedule:
+                range_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[range_node] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_time_range", "ConditioningSetTimestepRange"
+                    ),
+                    "inputs": {
+                        "conditioning": encoded_ref,
+                        "start": start_percent,
+                        "end": end_percent,
+                    },
+                }
+                encoded_ref = [range_node, 0]
+            ranged_refs.append(encoded_ref)
+        global_ref = ranged_refs[0]
+        for ranged_ref in ranged_refs[1:]:
+            combine_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[combine_node] = {
+                "class_type": mapping.class_type(
+                    "conditioning_combine", "ConditioningCombine"
+                ),
+                "inputs": {
+                    "conditioning_1": global_ref,
+                    "conditioning_2": ranged_ref,
+                },
+            }
+            global_ref = [combine_node, 0]
         mask_refs, next_id = self._append_spatial_mask_loaders(
             workflow=workflow,
             next_id=next_id,
@@ -3113,9 +3275,9 @@ class ComfyTxt2ImgWorkflowBuilder:
                         "conditioning", "TextEncodeQwenImageEdit"
                     )
                 ),
-                global_conditioning_ref=global_ref,
+                text_encoder_ref=(qwen35_ref if is_anima_3_8b else clip_ref),
+                full_positive_conditioning_ref=global_ref,
                 negative_conditioning_ref=negative_ref,
-                target_conditioning_refs=target_refs,
             )
             mapped = append_spatial_prompt_mapping(
                 workflow=workflow,
@@ -3996,6 +4158,7 @@ class ComfyGenerationRuntime:
                     try:
                         history = self.client.wait_for_history(
                             prompt_id,
+                            timeout_seconds=None,
                             runtime_stop_confirmed=runtime_stop_confirmed,
                         )
                     except RuntimeCancellationConfirmed:
@@ -4855,53 +5018,101 @@ class ComfyGenerationRuntime:
                     for key, value in payload.items()
                     if key != "execution_sha256"
                 }
-                runtime = payload.get("runtime")
                 target_ids = payload.get("target_ids")
-                target_routes = runtime.get("target_routes") if isinstance(runtime, dict) else None
-                preprocess_mode = payload.get("conditioning_preprocess_mode")
-                anima_preparations = (
-                    runtime.get("anima_context_preparations")
-                    if isinstance(runtime, dict)
-                    else None
+                solver_steps = payload.get("solver_steps")
+                loss_steps = payload.get("loss_steps")
+                forbidden_counts = (
+                    "target_latent_count",
+                    "target_noise_prediction_count",
+                    "target_denoised_output_count",
+                    "target_only_attention_forward_count",
+                    "global_only_attention_forward_count",
+                    "spatial_output_blend_count",
+                    "background_substitution_count",
+                )
+                valid_solver_steps = (
+                    isinstance(solver_steps, list)
+                    and bool(solver_steps)
+                    and all(
+                        isinstance(item, dict)
+                        and item.get("sampler_consumption_count") == 1
+                        and all(
+                            isinstance(item.get(field), str)
+                            and bool(re.fullmatch(r"[0-9a-f]{64}", item[field]))
+                            for field in (
+                                "input_latent_sha256",
+                                "guidance_input_latent_sha256",
+                                "updated_latent_sha256",
+                                "sampler_input_latent_sha256",
+                                "sampler_output_latent_sha256",
+                            )
+                        )
+                        and item.get("input_latent_sha256")
+                        == item.get("guidance_input_latent_sha256")
+                        and item.get("updated_latent_sha256")
+                        == item.get("sampler_input_latent_sha256")
+                        for item in solver_steps
+                    )
+                )
+                if valid_solver_steps:
+                    for index, item in enumerate(solver_steps):
+                        if item.get("step_index") != index:
+                            valid_solver_steps = False
+                            break
+                        next_input = item.get("next_step_input_latent_sha256")
+                        if index + 1 < len(solver_steps):
+                            if (
+                                next_input != item.get("sampler_output_latent_sha256")
+                                or next_input
+                                != solver_steps[index + 1].get("input_latent_sha256")
+                            ):
+                                valid_solver_steps = False
+                                break
+                        elif next_input is not None:
+                            valid_solver_steps = False
+                            break
+                valid_loss_steps = (
+                    isinstance(loss_steps, list)
+                    and bool(loss_steps)
+                    and all(
+                        isinstance(item, dict)
+                        and isinstance(item.get("cross_attention_call_count"), int)
+                        and item["cross_attention_call_count"] > 0
+                        and isinstance(item.get("self_attention_call_count"), int)
+                        and item["self_attention_call_count"] >= 0
+                        and isinstance(item.get("total"), (int, float))
+                        for item in loss_steps
+                    )
                 )
                 if (
-                    payload.get("schema_version") != "asteria.spatial-node-execution.v2"
+                    payload.get("schema_version") != "asteria.spatial-node-execution.v3"
                     or payload.get("contract_version")
                     != "asteria.spatial-prompt.node.v2"
+                    or payload.get("adapter_revision")
+                    != "asteria-layout-latent-guidance-v1"
+                    or payload.get("routing_mode")
+                    != "single_full_text_latent_guidance"
                     or not isinstance(execution_sha256, str)
                     or canonical_runtime_sha256(body) != execution_sha256
-                    or not isinstance(runtime, dict)
                     or not isinstance(target_ids, list)
                     or not target_ids
-                    or not isinstance(target_routes, dict)
-                    or set(target_routes) != set(target_ids)
-                    or any(
-                        isinstance(value, bool)
-                        or not isinstance(value, int)
-                        or value < 1
-                        for value in target_routes.values()
+                    or len(target_ids) != len(set(target_ids))
+                    or any(payload.get(name) != 0 for name in forbidden_counts)
+                    or not isinstance(payload.get("latent_update_count"), int)
+                    or payload["latent_update_count"] < 1
+                    or not isinstance(
+                        payload.get("sampler_attention_prior_count"), int
                     )
-                    or not isinstance(runtime.get("cross_attention_calls"), int)
-                    or runtime["cross_attention_calls"] < 1
-                    or not isinstance(runtime.get("self_attention_calls"), int)
-                    or runtime["self_attention_calls"] < 1
-                    or not isinstance(runtime.get("cross_bias_applied"), int)
-                    or runtime["cross_bias_applied"] < 1
-                    or not isinstance(runtime.get("cross_output_blends"), int)
-                    or runtime["cross_output_blends"] < 1
-                    or not isinstance(runtime.get("self_bias_applied"), int)
-                    or runtime["self_bias_applied"] < 1
-                    or preprocess_mode not in {
-                        "direct",
-                        "native_anima_llm_adapter",
-                        "progressive_qwen35_preprocessed",
-                    }
-                    or isinstance(anima_preparations, bool)
-                    or not isinstance(anima_preparations, int)
-                    or anima_preparations < 0
-                    or (
-                        preprocess_mode == "native_anima_llm_adapter"
-                        and anima_preparations < len(target_ids)
+                    or payload["sampler_attention_prior_count"] < 1
+                    or payload.get("sampler_step_count") != len(solver_steps or ())
+                    or payload.get("sampler_consumption_count") != len(solver_steps or ())
+                    or not valid_solver_steps
+                    or not valid_loss_steps
+                    or not isinstance(payload.get("latent_shape"), list)
+                    or not payload["latent_shape"]
+                    or any(
+                        isinstance(value, bool) or not isinstance(value, int) or value < 1
+                        for value in payload["latent_shape"]
                     )
                 ):
                     raise RuntimeErrorResponse(

@@ -5,7 +5,7 @@ from typing import Any
 
 
 SPATIAL_PROMPT_CONTRACT_VERSION = "asteria.spatial-prompt.node.v2"
-SPATIAL_PROMPT_PACK_VERSION = "2.1.0"
+SPATIAL_PROMPT_PACK_VERSION = "3.0.0"
 SPATIAL_PROMPT_PROFILE_COVERAGE = {
     "sdxl": "supported",
     "illustrious": "supported",
@@ -19,18 +19,22 @@ _NODE_CONTRACTS = {
         "AsteriaSpatialMaskCollector",
         ["ASTERIA_SPATIAL_MASK_BUNDLE", "STRING"],
     ),
-    "prompt_binder": (
-        "AsteriaSpatialPromptBinder",
-        ["ASTERIA_SPATIAL_CONDITIONING", "STRING"],
+    "token_binding": (
+        "AsteriaSpatialTokenBinding",
+        ["CONDITIONING", "ASTERIA_SPATIAL_TOKEN_BINDING", "STRING"],
     ),
-    "model_adapter": (
-        "AsteriaSpatialModelAdapter",
+    "guidance_adapter": (
+        "AsteriaSpatialGuidanceAdapter",
         [
             "MODEL",
             "CONDITIONING",
             "CONDITIONING",
-            "ASTERIA_SPATIAL_EXECUTION_STATE",
+            "ASTERIA_SPATIAL_GUIDANCE_STATE",
         ],
+    ),
+    "guidance_sampler": (
+        "AsteriaSpatialGuidanceSampler",
+        ["LATENT", "ASTERIA_SPATIAL_GUIDANCE_STATE"],
     ),
     "execution_receipt": (
         "AsteriaSpatialExecutionReceipt",

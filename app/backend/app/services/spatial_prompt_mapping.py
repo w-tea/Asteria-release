@@ -8,6 +8,7 @@ from typing import Any
 from app.schemas.spatial_prompt_runtime import (
     SpatialConditioningBundle,
     SpatialMaskBundle,
+    canonical_runtime_sha256,
 )
 from app.services.spatial_conditioning_builder import parse_workflow_ref
 from app.services.workflow_mapping import WorkflowMapping
@@ -57,7 +58,7 @@ def _profile_identity(profile_json: str) -> tuple[str, str, tuple[str, ...]]:
     except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
         raise SpatialPromptMappingError("spatial_mapping_profile_invalid") from error
     if (
-        payload.get("schema_version") != "asteria.spatial-node-profile.v2"
+        payload.get("schema_version") != "asteria.spatial-node-profile.v3"
         or payload.get("contract_version") != ASTERIA_SPATIAL_NODE_CONTRACT_VERSION
         or not isinstance(stage, str)
         or not isinstance(receipt_sha256, str)
@@ -66,6 +67,29 @@ def _profile_identity(profile_json: str) -> tuple[str, str, tuple[str, ...]]:
     ):
         raise SpatialPromptMappingError("spatial_mapping_profile_invalid")
     return stage, receipt_sha256, target_ids
+
+
+def _scheduled_bindings_in_target_order(
+    conditioning_bundle: SpatialConditioningBundle,
+    target_ids: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    expected = set(target_ids)
+    normalized: list[dict[str, Any]] = []
+    for scheduled in conditioning_bundle.scheduled_bindings:
+        by_id = {item.target_id: item for item in scheduled.character_bindings}
+        if len(by_id) != len(scheduled.character_bindings) or set(by_id) != expected:
+            raise SpatialPromptMappingError("spatial_mapping_target_ids_mismatch")
+        payload = scheduled.model_dump(mode="json", exclude={"binding_sha256"})
+        payload["character_bindings"] = [
+            by_id[target_id].model_dump(mode="json") for target_id in target_ids
+        ]
+        normalized.append(
+            {
+                **payload,
+                "binding_sha256": canonical_runtime_sha256(payload),
+            }
+        )
+    return normalized
 
 
 def append_spatial_prompt_mapping(
@@ -83,7 +107,7 @@ def append_spatial_prompt_mapping(
         raise SpatialPromptMappingError("spatial_mapping_node_id_invalid")
     normalized_model_ref = _workflow_ref(model_ref)
     conditioning_target_ids = tuple(
-        item.target_id for item in conditioning_bundle.targets
+        item.target_id for item in conditioning_bundle.character_bindings
     )
     mask_by_id = {item.target_id: item for item in mask_bundle.targets}
     expected = set(conditioning_target_ids)
@@ -113,31 +137,28 @@ def append_spatial_prompt_mapping(
         logical_name: mapping.class_type(logical_name, "")
         for logical_name in (
             "spatial_mask_collector",
-            "spatial_prompt_binder",
-            "spatial_model_adapter",
+            "spatial_token_binding",
+            "spatial_guidance_adapter",
         )
     }
     if any(not value for value in class_types.values()):
         raise SpatialPromptMappingError("spatial_mapping_contract_missing")
-    global_ref = parse_workflow_ref(conditioning_bundle.global_conditioning_ref)
+    full_positive_ref = parse_workflow_ref(
+        conditioning_bundle.full_positive_conditioning_ref
+    )
     negative_ref = parse_workflow_ref(conditioning_bundle.negative_conditioning_ref)
-    conditioning_refs = {
-        item.target_id: parse_workflow_ref(item.target_conditioning_ref)
-        for item in conditioning_bundle.targets
-    }
+    text_encoder_ref = parse_workflow_ref(conditioning_bundle.text_encoder_ref)
     normalized_mask_refs = {
         target_id: _workflow_ref(value) for target_id, value in mask_refs.items()
     }
 
     fragment: dict[str, dict[str, Any]] = {}
     previous_mask: list[str | int] | None = None
-    previous_conditioning: list[str | int] | None = None
     cursor = next_id
     for target_id in target_ids:
         mask_receipt = mask_by_id[target_id]
         mask_node = str(cursor)
-        binder_node = str(cursor + 1)
-        cursor += 2
+        cursor += 1
         mask_inputs: dict[str, Any] = {
             "mask": normalized_mask_refs[target_id],
             "target_id": target_id,
@@ -156,34 +177,61 @@ def append_spatial_prompt_mapping(
             "mask_sha256": mask_receipt.mask_sha256,
             "contract_version": ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
         }
-        binder_inputs: dict[str, Any] = {
-            "conditioning": conditioning_refs[target_id],
-            "target_id": target_id,
-            "contract_version": ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
-        }
         if previous_mask is not None:
             mask_inputs["previous"] = previous_mask
-        if previous_conditioning is not None:
-            binder_inputs["previous"] = previous_conditioning
         fragment[mask_node] = {
             "class_type": class_types["spatial_mask_collector"],
             "inputs": mask_inputs,
         }
-        fragment[binder_node] = {
-            "class_type": class_types["spatial_prompt_binder"],
-            "inputs": binder_inputs,
-        }
         previous_mask = [mask_node, 0]
-        previous_conditioning = [binder_node, 0]
 
-    adapter_node = str(cursor)
+    binding_node = str(cursor)
+    adapter_node = str(cursor + 1)
+    binding_by_id = {
+        item.target_id: item for item in conditioning_bundle.character_bindings
+    }
+    character_ranges = [
+        {
+            "target_id": target_id,
+            "character_start": binding_by_id[target_id].start,
+            "character_end": binding_by_id[target_id].end,
+        }
+        for target_id in target_ids
+    ]
+    fragment[binding_node] = {
+        "class_type": class_types["spatial_token_binding"],
+        "inputs": {
+            "conditioning": full_positive_ref,
+            "clip": text_encoder_ref,
+            "full_text": conditioning_bundle.full_text,
+            "character_ranges_json": json.dumps(
+                character_ranges,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+            "scheduled_bindings_json": json.dumps(
+                _scheduled_bindings_in_target_order(conditioning_bundle, target_ids),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+            "required_encoders_json": json.dumps(
+                list(conditioning_bundle.required_encoders),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+            "adapter_kind": conditioning_bundle.adapter_kind,
+            "step_start_percent": conditioning_bundle.step_start_percent,
+            "step_end_percent": conditioning_bundle.step_end_percent,
+            "contract_version": ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
+        },
+    }
     fragment[adapter_node] = {
-        "class_type": class_types["spatial_model_adapter"],
+        "class_type": class_types["spatial_guidance_adapter"],
         "inputs": {
             "model": normalized_model_ref,
-            "global_positive": global_ref,
+            "full_positive": [binding_node, 0],
             "negative": negative_ref,
-            "conditions": previous_conditioning,
+            "token_binding": [binding_node, 1],
             "masks": previous_mask,
             "profile_json": profile_json,
             "stage": conditioning_bundle.stage,
@@ -199,7 +247,7 @@ def append_spatial_prompt_mapping(
         positive_ref=[adapter_node, 1],
         negative_ref=[adapter_node, 2],
         execution_state_ref=[adapter_node, 3],
-        next_id=cursor + 1,
+        next_id=cursor + 2,
     )
 
 

@@ -1,7 +1,7 @@
-schema_version: asteria.spatial-model-profiles.v1
+schema_version: asteria.spatial-model-profiles.v3
 profiles:
-  - profile_id: sdxl.attention.v2
-    revision: "2"
+  - profile_id: sdxl.guidance.v3
+    revision: "3"
     model_family: sdxl
     architectures: [sdxl]
     variants: [sdxl]
@@ -11,19 +11,23 @@ profiles:
     diffusion_block_counts: [24]
     automatic_status: supported
     manual_selectable: true
-    coefficients:
-      early_guidance_end: 0.35
-      isolation_start: 0.15
-      isolation_end: 0.85
-      late_blending_start: 0.65
-      schedule_smoothing: 0.08
-      cross_inside_bias: 3.0
-      cross_outside_penalty: 6.0
-      global_inside_penalty: 0.4
-      self_leakage_penalty: 2.0
-      self_attention_token_limit: 4096
-  - profile_id: illustrious.attention.v2
-    revision: "2"
+    guidance: &sdxl_guidance
+      start_percent: 0.0
+      end_percent: 0.34
+      iterations: 5
+      step_size: 0.04
+      attention_prior_scale: 0.8
+      attention_layers: ["block:middle:0", "block:output:0"]
+      self_relation_layers: ["block:middle:0", "block:output:0"]
+      global_retention_floor: 0.70
+      loss_weights:
+        position: 1.0
+        size: 0.25
+        separation: 0.50
+        presence: 0.50
+        global_retention: 0.75
+  - profile_id: illustrious.guidance.v3
+    revision: "3"
     model_family: illustrious
     architectures: [sdxl]
     variants: [illustrious]
@@ -33,19 +37,9 @@ profiles:
     diffusion_block_counts: [24]
     automatic_status: supported
     manual_selectable: true
-    coefficients:
-      early_guidance_end: 0.35
-      isolation_start: 0.15
-      isolation_end: 0.85
-      late_blending_start: 0.65
-      schedule_smoothing: 0.08
-      cross_inside_bias: 3.0
-      cross_outside_penalty: 6.0
-      global_inside_penalty: 0.4
-      self_leakage_penalty: 2.0
-      self_attention_token_limit: 4096
-  - profile_id: anima.28.attention.v2
-    revision: "2"
+    guidance: *sdxl_guidance
+  - profile_id: anima.28.guidance.v3
+    revision: "3"
     model_family: anima
     architectures: [anima]
     variants: [anima_base_28]
@@ -55,19 +49,23 @@ profiles:
     diffusion_block_counts: [28]
     automatic_status: supported
     manual_selectable: true
-    coefficients:
-      early_guidance_end: 0.32
-      isolation_start: 0.12
-      isolation_end: 0.82
-      late_blending_start: 0.68
-      schedule_smoothing: 0.06
-      cross_inside_bias: 2.5
-      cross_outside_penalty: 5.5
-      global_inside_penalty: 0.3
-      self_leakage_penalty: 1.75
-      self_attention_token_limit: 4096
-  - profile_id: anima.40.attention.v2
-    revision: "2"
+    guidance: &anima_guidance
+      start_percent: 0.0
+      end_percent: 0.32
+      iterations: 1
+      step_size: 0.025
+      attention_prior_scale: 0.6
+      attention_layers: ["block_index:7"]
+      self_relation_layers: ["block_index:7"]
+      global_retention_floor: 0.70
+      loss_weights:
+        position: 1.0
+        size: 0.20
+        separation: 0.55
+        presence: 0.55
+        global_retention: 0.75
+  - profile_id: anima.40.guidance.v3
+    revision: "3"
     model_family: anima
     architectures: [anima]
     variants: [anima_2_9b_40]
@@ -77,19 +75,12 @@ profiles:
     diffusion_block_counts: [40]
     automatic_status: supported
     manual_selectable: true
-    coefficients:
-      early_guidance_end: 0.32
-      isolation_start: 0.12
-      isolation_end: 0.82
-      late_blending_start: 0.68
-      schedule_smoothing: 0.06
-      cross_inside_bias: 2.5
-      cross_outside_penalty: 5.5
-      global_inside_penalty: 0.3
-      self_leakage_penalty: 1.75
-      self_attention_token_limit: 4096
-  - profile_id: anima.52.attention.experimental.v2
-    revision: "2"
+    guidance:
+      <<: *anima_guidance
+      attention_layers: ["block_index:10"]
+      self_relation_layers: ["block_index:10"]
+  - profile_id: anima.52.guidance.experimental.v3
+    revision: "3"
     model_family: anima
     architectures: [anima]
     variants: [anima_3_8b_52]
@@ -99,14 +90,8 @@ profiles:
     diffusion_block_counts: [52]
     automatic_status: supported
     manual_selectable: true
-    coefficients:
-      early_guidance_end: 0.30
-      isolation_start: 0.10
-      isolation_end: 0.80
-      late_blending_start: 0.70
-      schedule_smoothing: 0.06
-      cross_inside_bias: 2.5
-      cross_outside_penalty: 5.5
-      global_inside_penalty: 0.3
-      self_leakage_penalty: 1.75
-      self_attention_token_limit: 4096
+    guidance:
+      <<: *anima_guidance
+      step_size: 0.025
+      attention_layers: ["block_index:13"]
+      self_relation_layers: ["block_index:13"]

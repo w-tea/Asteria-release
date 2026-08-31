@@ -139,8 +139,55 @@ class SpatialExcludedTargetReceipt(_RuntimeModel):
     reason: Literal["user_choice", "inpaint_no_overlap"]
 
 
+class SpatialCharacterBindingReceipt(_RuntimeModel):
+    target_id: TargetId
+    fragment_id: str = Field(pattern=FRAGMENT_ID_PATTERN.pattern)
+    start: int = Field(ge=0)
+    end: int = Field(gt=0)
+    text_sha256: Sha256
+    separator_before: Literal["", ",\n", "\n"]
+    syntax_plan_sha256: Sha256
+
+    @model_validator(mode="after")
+    def validate_binding_identity(self) -> "SpatialCharacterBindingReceipt":
+        if self.end <= self.start:
+            raise ValueError("character binding end must be greater than start")
+        if self.fragment_id != f"base:target:{self.target_id}" and not self.fragment_id.endswith(
+            f":target:{self.target_id}"
+        ):
+            raise ValueError("character binding target_id does not match fragment_id")
+        return self
+
+
+class SpatialScheduledPromptBinding(_RuntimeModel):
+    schema_version: Literal["asteria.spatial-scheduled-binding.v1"]
+    start_percent: float = Field(ge=0.0, lt=1.0, allow_inf_nan=False)
+    end_percent: float = Field(gt=0.0, le=1.0, allow_inf_nan=False)
+    full_text: str
+    full_text_sha256: Sha256
+    character_bindings: tuple[SpatialCharacterBindingReceipt, ...]
+    global_character_ranges: tuple[tuple[int, int], ...]
+    binding_sha256: Sha256
+
+    @model_validator(mode="after")
+    def validate_scheduled_binding(self) -> "SpatialScheduledPromptBinding":
+        if self.end_percent <= self.start_percent:
+            raise ValueError("scheduled binding end must be greater than start")
+        _validate_character_ranges(
+            full_text=self.full_text,
+            full_text_sha256=self.full_text_sha256,
+            character_bindings=self.character_bindings,
+            global_character_ranges=self.global_character_ranges,
+        )
+        _require_receipt_hash(self, "binding_sha256")
+        return self
+
+
 class SpatialStagePromptPlan(_RuntimeModel):
-    schema_version: Literal["asteria.spatial-stage-prompt.v1"]
+    schema_version: Literal[
+        "asteria.spatial-stage-prompt.v1",
+        "asteria.spatial-stage-prompt.v2",
+    ]
     stage: Stage
     global_fragment: SpatialPromptFragmentReceipt
     target_fragments: tuple[SpatialPromptFragmentReceipt, ...]
@@ -148,6 +195,27 @@ class SpatialStagePromptPlan(_RuntimeModel):
     combined_expanded_prompt: str
     combined_expanded_sha256: Sha256
     reused_from_stage: Literal["base", "hires"] | None = None
+    full_text: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    full_text_sha256: Sha256 | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    character_bindings: tuple[SpatialCharacterBindingReceipt, ...] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    global_character_ranges: tuple[tuple[int, int], ...] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    fragment_receipts: tuple[SpatialPromptFragmentReceipt, ...] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    scheduled_bindings: tuple[SpatialScheduledPromptBinding, ...] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     stage_receipt_sha256: Sha256
 
     @model_validator(mode="after")
@@ -205,12 +273,64 @@ class SpatialStagePromptPlan(_RuntimeModel):
             raise ValueError("combined_expanded_prompt does not match its fragments")
         if self.combined_expanded_sha256 != runtime_text_sha256(combined):
             raise ValueError("combined_expanded_sha256 does not match the combined prompt")
+        self._validate_guidance_v2()
         _require_receipt_hash(self, "stage_receipt_sha256")
         return self
 
+    def _validate_guidance_v2(self) -> None:
+        guidance_fields = (
+            self.full_text,
+            self.full_text_sha256,
+            self.character_bindings,
+            self.global_character_ranges,
+            self.fragment_receipts,
+            self.scheduled_bindings,
+        )
+        if self.schema_version == "asteria.spatial-stage-prompt.v1":
+            if any(item is not None for item in guidance_fields):
+                raise ValueError("v1 stage must not contain v2 guidance fields")
+            return
+        if any(item is None for item in guidance_fields):
+            raise ValueError("v2 stage requires all guidance fields")
+        assert self.full_text is not None
+        assert self.full_text_sha256 is not None
+        assert self.character_bindings is not None
+        assert self.global_character_ranges is not None
+        assert self.fragment_receipts is not None
+        assert self.scheduled_bindings is not None
+        expected_fragments = (self.global_fragment, *self.target_fragments)
+        if self.fragment_receipts != expected_fragments:
+            raise ValueError("fragment_receipts do not match stage fragments")
+        _validate_character_ranges(
+            full_text=self.full_text,
+            full_text_sha256=self.full_text_sha256,
+            character_bindings=self.character_bindings,
+            global_character_ranges=self.global_character_ranges,
+        )
+        expected_targets = tuple(item.target_id for item in self.target_fragments)
+        if tuple(item.target_id for item in self.character_bindings) != expected_targets:
+            raise ValueError("character binding target_ids do not match target fragments")
+        if self.scheduled_bindings:
+            if self.full_text != self.scheduled_bindings[0].full_text:
+                raise ValueError("full_text must match the first scheduled binding")
+            cursor = 0.0
+            for binding in self.scheduled_bindings:
+                if binding.start_percent != cursor:
+                    raise ValueError("scheduled bindings must be contiguous from zero")
+                if tuple(item.target_id for item in binding.character_bindings) != expected_targets:
+                    raise ValueError("scheduled binding target_ids do not match target fragments")
+                cursor = binding.end_percent
+            if cursor != 1.0:
+                raise ValueError("scheduled bindings must cover the full sampling interval")
+        elif self.full_text != self.combined_expanded_prompt:
+            raise ValueError("full_text does not match the expanded stage prompt")
+
 
 class SpatialPromptPlan(_RuntimeModel):
-    schema_version: Literal["asteria.spatial-prompt-plan.v1"]
+    schema_version: Literal[
+        "asteria.spatial-prompt-plan.v1",
+        "asteria.spatial-prompt-plan.v2",
+    ]
     planner_revision: str = Field(min_length=1, max_length=256)
     profile_id: str = Field(min_length=1, max_length=512)
     generation_seed: int = Field(ge=0, le=(2**64) - 1)
@@ -247,6 +367,13 @@ class SpatialPromptPlan(_RuntimeModel):
             actual.update(item.target_id for item in stage.excluded_targets)
             if actual != expected:
                 raise ValueError("stage target ids do not match the prompt plan")
+            expected_schema = (
+                "asteria.spatial-stage-prompt.v2"
+                if self.schema_version == "asteria.spatial-prompt-plan.v2"
+                else "asteria.spatial-stage-prompt.v1"
+            )
+            if stage.schema_version != expected_schema:
+                raise ValueError("stage schema does not match the prompt plan schema")
         if self.canonical_raw_sha256 != runtime_text_sha256(self.canonical_raw_prompt):
             raise ValueError("canonical_raw_sha256 does not match canonical_raw_prompt")
         if self.layout_global_raw_sha256 != runtime_text_sha256(self.layout_global_raw_prompt):
@@ -314,24 +441,50 @@ class SpatialModelProfileReceipt(_RuntimeModel):
         return self
 
 
-class SpatialConditioningTarget(_RuntimeModel):
-    target_id: TargetId
-    target_conditioning_ref: str = Field(min_length=1, max_length=2048)
-
-
 class SpatialConditioningBundle(_RuntimeModel):
-    schema_version: Literal["asteria.spatial-conditioning-bundle.v1"]
+    schema_version: Literal["asteria.spatial-conditioning-bundle.v2"]
     stage: Stage
     encoder_id: str = Field(min_length=1, max_length=512)
     profile_receipt_sha256: Sha256
-    global_conditioning_ref: str = Field(min_length=1, max_length=2048)
+    text_encoder_ref: str = Field(min_length=1, max_length=2048)
+    full_positive_conditioning_ref: str = Field(min_length=1, max_length=2048)
     negative_conditioning_ref: str = Field(min_length=1, max_length=2048)
-    targets: tuple[SpatialConditioningTarget, ...] = Field(min_length=1)
+    full_text: str
+    full_text_sha256: Sha256
+    character_bindings: tuple[SpatialCharacterBindingReceipt, ...] = Field(min_length=1)
+    scheduled_bindings: tuple[SpatialScheduledPromptBinding, ...]
+    required_encoders: tuple[str, ...] = Field(min_length=1)
+    adapter_kind: Literal[
+        "identity",
+        "anima_native_t5_query_v1",
+        "anima_progressive_qwen35_t5_query_v1",
+    ]
+    step_start_percent: float = Field(ge=0.0, lt=1.0, allow_inf_nan=False)
+    step_end_percent: float = Field(gt=0.0, le=1.0, allow_inf_nan=False)
     bundle_sha256: Sha256
 
     @model_validator(mode="after")
     def validate_unique_targets(self) -> "SpatialConditioningBundle":
-        _require_unique_target_ids(self.targets)
+        target_ids = [item.target_id for item in self.character_bindings]
+        if len(target_ids) != len(set(target_ids)):
+            raise ValueError("conditioning target ids must be unique")
+        if self.full_text_sha256 != runtime_text_sha256(self.full_text):
+            raise ValueError("conditioning full text hash does not match")
+        if len(self.required_encoders) != len(set(self.required_encoders)):
+            raise ValueError("conditioning encoders must be unique")
+        if self.step_start_percent >= self.step_end_percent:
+            raise ValueError("conditioning step range must increase")
+        if self.scheduled_bindings:
+            expected_ids = tuple(target_ids)
+            cursor = 0.0
+            for scheduled in self.scheduled_bindings:
+                if abs(scheduled.start_percent - cursor) > 1e-9:
+                    raise ValueError("conditioning schedule must be contiguous")
+                if tuple(item.target_id for item in scheduled.character_bindings) != expected_ids:
+                    raise ValueError("conditioning schedule target ids do not match")
+                cursor = scheduled.end_percent
+            if abs(cursor - 1.0) > 1e-9:
+                raise ValueError("conditioning schedule must cover the full sampling range")
         _require_receipt_hash(self, "bundle_sha256")
         return self
 
@@ -365,3 +518,32 @@ def _require_unique_target_ids(items: tuple[object, ...]) -> None:
     target_ids = [getattr(item, "target_id") for item in items]
     if len(target_ids) != len(set(target_ids)):
         raise ValueError("bundle target ids must be unique")
+
+
+def _validate_character_ranges(
+    *,
+    full_text: str,
+    full_text_sha256: str,
+    character_bindings: tuple[SpatialCharacterBindingReceipt, ...],
+    global_character_ranges: tuple[tuple[int, int], ...],
+) -> None:
+    if full_text_sha256 != runtime_text_sha256(full_text):
+        raise ValueError("full_text_sha256 does not match full_text")
+    ranges: list[tuple[int, int, str]] = []
+    for start, end in global_character_ranges:
+        if start < 0 or end <= start or end > len(full_text):
+            raise ValueError("global character range is outside full_text")
+        ranges.append((start, end, "global"))
+    for binding in character_bindings:
+        if binding.end > len(full_text):
+            raise ValueError("character binding is outside full_text")
+        if runtime_text_sha256(full_text[binding.start : binding.end]) != binding.text_sha256:
+            raise ValueError("character binding text_sha256 does not match full_text")
+        separator_start = binding.start - len(binding.separator_before)
+        if separator_start < 0 or full_text[separator_start : binding.start] != binding.separator_before:
+            raise ValueError("character binding separator does not match full_text")
+        ranges.append((binding.start, binding.end, binding.target_id))
+    ordered = sorted(ranges, key=lambda item: (item[0], item[1]))
+    for previous, current in zip(ordered, ordered[1:]):
+        if previous[1] > current[0]:
+            raise ValueError("character ranges overlap")

@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "10d7e35f1ac91baeb1667a38355d6896403071d0",
-  "build_timestamp_utc": "2026-08-30T14:07:21Z",
+  "source_commit": "0fdb5adbd99223167abb236cc13977b5ef2ef8c5",
+  "build_timestamp_utc": "2026-08-31T15:19:42Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -98,8 +98,8 @@
     },
     {
       "path": "app/backend/app/api/generation.py",
-      "size_bytes": 229715,
-      "sha256": "64808a2c7309e77390df921ea5f66498f592cd57902a4a7b546c051156031d62"
+      "size_bytes": 231196,
+      "sha256": "2ba6ab37accdade2cdced582208febb310e33ab91bb4ae30145a41f04acb8972"
     },
     {
       "path": "app/backend/app/api/image_metadata.py",
@@ -402,9 +402,14 @@
       "sha256": "cf8de6b952ac8cc74a22d5c8dca998666253028259dc4d81432a7e46b1fbce2e"
     },
     {
+      "path": "app/backend/app/schemas/spatial_prompt_guidance.py",
+      "size_bytes": 3365,
+      "sha256": "026bd1132f1771f7f2eb3f9a9fbcdabac64b08c3b141be2c46efabc4a222c800"
+    },
+    {
       "path": "app/backend/app/schemas/spatial_prompt_runtime.py",
-      "size_bytes": 15682,
-      "sha256": "41d20340eb5449fd535bbd5559abdba644b5092266ceaf6defd26daa6f0858f7"
+      "size_bytes": 24585,
+      "sha256": "13545acfd0be7dc265b24c5e524e0badacf74b903c71cf7621ed21ada53d3190"
     },
     {
       "path": "app/backend/app/schemas/video.py",
@@ -473,8 +478,8 @@
     },
     {
       "path": "app/backend/app/services/comfy_model_paths.py",
-      "size_bytes": 9355,
-      "sha256": "02f10238db5cff8f1b98160ce1812fb57863d299759cdfbfc7d67a94f8b0ecf9"
+      "size_bytes": 10446,
+      "sha256": "b8c3b61171c61d1418327fe58354be8f83dc999ce27b54ba3e23da128c6d0875"
     },
     {
       "path": "app/backend/app/services/controlnet_mode.py",
@@ -998,8 +1003,8 @@
     },
     {
       "path": "app/backend/app/services/runtime.py",
-      "size_bytes": 222928,
-      "sha256": "253e0db31f7c19404e51ec6a10c9a64df072c23ceb5b105ef0b0bff1afd93350"
+      "size_bytes": 232241,
+      "sha256": "1a556bf78c996c26309419fba12ff7a8bae6be5ec60f9c19ed8b99195f58c232"
     },
     {
       "path": "app/backend/app/services/runtime_adapters.py",
@@ -1013,8 +1018,8 @@
     },
     {
       "path": "app/backend/app/services/runtime_dependencies.py",
-      "size_bytes": 30380,
-      "sha256": "ecd6484bd6acb79f8837ebcf5e1734a1d3f8458c800fb2385250fbe15e7411f5"
+      "size_bytes": 30580,
+      "sha256": "4bca448d644009c3853ba269ad4169e657047debc49586ba479adc1bccfaaa1b"
     },
     {
       "path": "app/backend/app/services/runtime_process.py",
@@ -1053,13 +1058,18 @@
     },
     {
       "path": "app/backend/app/services/spatial_conditioning_builder.py",
-      "size_bytes": 4026,
-      "sha256": "501835488cb447ef3bc71d82daf893c18bc0c31eb8319a58a9face37b2e7a002"
+      "size_bytes": 5338,
+      "sha256": "2678a8288567536e51cdb11e69fc4008019c1eddd69ca02f3985a9c45bee271e"
     },
     {
       "path": "app/backend/app/services/spatial_generation_context.py",
-      "size_bytes": 16712,
-      "sha256": "81078703f0a7f224611640d4a1011df63c0aaac131c6477203dd343fce87a1d7"
+      "size_bytes": 17454,
+      "sha256": "be23a1bb6ea1c0ce3175786e1951d12b218c0a3e5d59e6d98dbe34599d257df1"
+    },
+    {
+      "path": "app/backend/app/services/spatial_layout_field.py",
+      "size_bytes": 9378,
+      "sha256": "f311e2297d3ced2defeadd1f2d8eea71bcca9575f516e4667d22203f83e3e14e"
     },
     {
       "path": "app/backend/app/services/spatial_layout_import.py",
@@ -1073,13 +1083,13 @@
     },
     {
       "path": "app/backend/app/services/spatial_model_profiles.py",
-      "size_bytes": 2914,
-      "sha256": "3243e04168a54000deb36899a0bb1b3f92d42f23d107b612a1c57a4e413412da"
+      "size_bytes": 3529,
+      "sha256": "97fa53c5e10e35738b22a0b59b69316ca657297e065782139f89495d8f9be1e4"
     },
     {
       "path": "app/backend/app/services/spatial_profile_resolver.py",
-      "size_bytes": 12247,
-      "sha256": "26c64ed2b0334e5a2df69c5bf6f1c0629d56f6c3d70839ec4256f5a71a5bf977"
+      "size_bytes": 12520,
+      "sha256": "281f9f1b4429bb9b5f936479187af449155442fff629e89cf72a9afda5543d25"
     },
     {
       "path": "app/backend/app/services/spatial_prompt_contract.py",
@@ -1088,18 +1098,18 @@
     },
     {
       "path": "app/backend/app/services/spatial_prompt_mapping.py",
-      "size_bytes": 8705,
-      "sha256": "1e3b96e1dcde828db121eada9733f8997240107014a70f5c89be09d2ad34c389"
+      "size_bytes": 10508,
+      "sha256": "0dafa27ca350b5a57ac0afcaf19805274d6b9d7a8cba2f871f474084fe044656"
     },
     {
       "path": "app/backend/app/services/spatial_prompt_planner.py",
-      "size_bytes": 13515,
-      "sha256": "2fa4d0423e53b5b06c3a70738e760ede30f13842667d2bbab6716c9078ebfe8f"
+      "size_bytes": 19419,
+      "sha256": "a3ff96bb6d07b6f269062457cc6dad5a4ea86f81a241735a3e2f2f11930ffe07"
     },
     {
       "path": "app/backend/app/services/spatial_runtime_contract.py",
-      "size_bytes": 2458,
-      "sha256": "751141174ba8bd515a95889303fa2b281945121891f29efd82fd108c358f8e0f"
+      "size_bytes": 2593,
+      "sha256": "0eacbea86f61942da576366210dd5e95a8f3e84096c3fabbae64aa94c5955799"
     },
     {
       "path": "app/backend/app/services/startup_readiness.py",
@@ -2593,13 +2603,13 @@
     },
     {
       "path": "mappings/anima/lora-block-remap.v1.json",
-      "size_bytes": 3237,
-      "sha256": "e987254822cb9c00242374127284f8f55f4be7c2ffc15ab4ff799589c60816bb"
+      "size_bytes": 3236,
+      "sha256": "d9f938c063eb38b6607b57c736c0ffb29473db62523023d55a6a0523e0cda1b7"
     },
     {
       "path": "mappings/anima_txt2img.yaml",
-      "size_bytes": 2989,
-      "sha256": "e1d10d656e8fd2816b389bc9b25c5c76bb1bd8790133a855622cfd37b83da3c8"
+      "size_bytes": 3478,
+      "sha256": "073b8d9b58c34470640bc7b1017df7983e70e2155d5d61e0f577e4f3a598c29c"
     },
     {
       "path": "mappings/flux2_txt2img.yaml",
@@ -2653,13 +2663,13 @@
     },
     {
       "path": "mappings/sdxl_txt2img.yaml",
-      "size_bytes": 5690,
-      "sha256": "6d66f5c9e010eef69a1a2c0d1ed1784126a94ef96ab01bc7b4b572451fa0bab9"
+      "size_bytes": 6179,
+      "sha256": "0e016dcb9777e0bffd991b5960d9040e763d353b8a6fc4382a92836f953aed80"
     },
     {
       "path": "mappings/spatial-model-profiles.yaml",
-      "size_bytes": 3825,
-      "sha256": "a5ab1d6fbc37c5cb0e69c3d9cd9f270860fd8016d108297d4500b4faa29ceea7"
+      "size_bytes": 3229,
+      "sha256": "9e5f9771f1433394bd30f056520f6149fb0dfbfc9fe4d346b0b6b98466ac15b5"
     },
     {
       "path": "mappings/video/minimax-h3-local-sequence.v1.json",
@@ -2848,13 +2858,18 @@
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/THIRD_PARTY_NOTICES.md",
-      "size_bytes": 635,
-      "sha256": "c1893c06b986d35b5a3510b1e4d2160be215dbb4b92712f6a7092163849c60b8"
+      "size_bytes": 747,
+      "sha256": "695ca893b2f21515af06a040e56bffb13a08a6d47158cf8f74513f84643309c0"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/__init__.py",
-      "size_bytes": 524,
-      "sha256": "edb953edadd371fdcea4bda879935bf6970d61a8fdda39fca5fcfd5c75364839"
+      "size_bytes": 1197,
+      "sha256": "4daaeaa46a95b07c6b089449988c18c242667ac815f48781298af76dbf272dc8"
+    },
+    {
+      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/attention_capture_runtime.py",
+      "size_bytes": 41662,
+      "sha256": "4bddeb62c2566841dcda514c9282d00aeaff3b7951cee57c3dbdc0aca5b68577"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/attention_runtime.py",
@@ -2862,9 +2877,24 @@
       "sha256": "c4d143cd94e61a118ae1355d14dc159ac8bb0ade2e5bc63cc4cc7459478f4fa7"
     },
     {
+      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/guidance_loss_runtime.py",
+      "size_bytes": 13687,
+      "sha256": "b8739d40d06419d2aee29ba901687393fc5be787be88e85853c0225dadc59131"
+    },
+    {
+      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/latent_guidance_runtime.py",
+      "size_bytes": 19871,
+      "sha256": "6278f817d6dc978ba1598c67222e45e3f272d3d74db870b77c21bd028b1f433a"
+    },
+    {
+      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/layout_field_runtime.py",
+      "size_bytes": 2118,
+      "sha256": "27d10968bc2dcd83ed816b040eccd38453a6170af26662d640a3825598dd3944"
+    },
+    {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/manifest.json",
-      "size_bytes": 316,
-      "sha256": "a9f78f8af863904a53ca3d4fd6779cfcc5c1c8cfa9adaffcdbe2393cf656085f"
+      "size_bytes": 507,
+      "sha256": "5a9e148379e74810b36cfa3201975e311ca647ab10168d68feef45baac205f23"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/mask_runtime.py",
@@ -2873,23 +2903,33 @@
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/nodes.py",
-      "size_bytes": 15460,
-      "sha256": "3af0348ff63f0656a59ec86cdffe2469a5cb512122770dbd827bf252ecb4c727"
+      "size_bytes": 33912,
+      "sha256": "ef2607936fd0b75f24dc0366b5cbb2b667cf60b2d3d10504b936804ba91d36cd"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/profile_runtime.py",
-      "size_bytes": 7583,
-      "sha256": "19968e43fb7ded6ed635d9d3f1c173e0a621fa9d38d7f2e23d3e7c486da64dfa"
+      "size_bytes": 15682,
+      "sha256": "196ddbcd0c2794b2b37cee361ba204676cbe445b9d3b6170ac079ce8dbb209f0"
+    },
+    {
+      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/sampler_runtime.py",
+      "size_bytes": 43619,
+      "sha256": "975434520a7fe25ad8cb8fd75f0e6859f51f3490925c041dd41f4de4d1607f40"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/spatial_contract.py",
-      "size_bytes": 8480,
-      "sha256": "de8d06a4f296291c39cae6e33bf6c2209e8976da6190b76669b2fb3020e4abff"
+      "size_bytes": 9883,
+      "sha256": "16b81b46cbbbea783de45f865532ef47e66d6406b388ef79c78aa51bec5db5ca"
+    },
+    {
+      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/token_binding_runtime.py",
+      "size_bytes": 22591,
+      "sha256": "0e3a2571c4739a02830b38af5932b30ce1f26d4791ef4933b76beca50c768afa"
     },
     {
       "path": "runtime-dependencies.yaml",
-      "size_bytes": 14511,
-      "sha256": "3f5a358ec647ec3cb7972e5c0834a317cdd2b66283064681a8ce7853f039aab2"
+      "size_bytes": 14509,
+      "sha256": "ff27991236a2f38203528c270bb21213832a1200e6f7941f34d362159af91ab3"
     },
     {
       "path": "schemas/anima_txt2img.yaml",

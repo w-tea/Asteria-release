@@ -497,7 +497,11 @@ class RuntimeDependencyInstaller:
             raise RuntimeDependencyError(f"Bundled runtime source is outside the package: {dependency.id}") from exc
         if not source.is_dir():
             raise RuntimeDependencyError(f"Bundled runtime source is missing: {dependency.id}")
-        if not dependency.checksum_sha256 or bundled_tree_sha256(source) != dependency.checksum_sha256:
+        if (
+            not dependency.checksum_sha256
+            or bundled_tree_sha256(source, ignore_runtime_cache=True)
+            != dependency.checksum_sha256
+        ):
             raise RuntimeDependencyError(f"Bundled runtime checksum mismatch: {dependency.id}")
 
         target = self.repository.path_for(dependency)
@@ -505,7 +509,11 @@ class RuntimeDependencyInstaller:
         staging = target.parent / f".{target.name}.staging-{uuid4().hex}"
         backup = target.parent / f".{target.name}.backup-{uuid4().hex}"
         try:
-            shutil.copytree(source, staging)
+            shutil.copytree(
+                source,
+                staging,
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+            )
             if target.exists():
                 target.replace(backup)
             staging.replace(target)

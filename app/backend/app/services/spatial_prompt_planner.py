@@ -10,14 +10,16 @@ from app.schemas.prompt_input import (
     TargetPromptContent,
     join_prompt_contract_fragments,
 )
+from app.schemas.spatial_prompt_guidance import SpatialStagePromptPlanV2
 from app.schemas.spatial_prompt_runtime import (
+    SpatialCharacterBindingReceipt,
     SpatialExcludedTargetReceipt,
     SpatialLoraReceipt,
     SpatialPromptFragmentReceipt,
     SpatialPromptPlan,
     SpatialPromptSelectionReceipt,
     SpatialPromptSyntaxReceipt,
-    SpatialStagePromptPlan,
+    SpatialScheduledPromptBinding,
     canonical_runtime_sha256,
     runtime_text_sha256,
 )
@@ -30,7 +32,7 @@ from app.services.prompt_syntax import parse_prompt_syntax
 from app.services.spatial_prompt_contract import SpatialPromptSnapshot
 
 
-SPATIAL_PROMPT_PLANNER_REVISION = "asteria-spatial-planner-v1"
+SPATIAL_PROMPT_PLANNER_REVISION = "asteria-spatial-planner-v2"
 SPATIAL_FRAGMENT_EXPANSION_VERSION = "asteria-fragment-expansion-v1"
 
 
@@ -165,14 +167,33 @@ def _stage_receipt(
     target_fragments: Sequence[SpatialPromptFragmentReceipt],
     excluded_targets: Sequence[SpatialExcludedTargetReceipt],
     reused_from_stage: str | None,
-) -> SpatialStagePromptPlan:
+) -> SpatialStagePromptPlanV2:
     combined = join_prompt_contract_fragments(
         item.expanded_prompt
         for item in (global_fragment, *target_fragments)
         if item.expanded_prompt
     )
+    fragment_receipts = (global_fragment, *target_fragments)
+    scheduled_intervals = _scheduled_intervals(fragment_receipts)
+    scheduled_bindings = tuple(
+        _scheduled_binding(
+            fragment_receipts,
+            start_percent=start_percent,
+            end_percent=end_percent,
+        )
+        for start_percent, end_percent in scheduled_intervals
+    )
+    if scheduled_bindings:
+        full_text = scheduled_bindings[0].full_text
+        character_bindings = scheduled_bindings[0].character_bindings
+        global_character_ranges = scheduled_bindings[0].global_character_ranges
+    else:
+        full_text, character_bindings, global_character_ranges = _join_stage_fragments(
+            fragment_receipts,
+            progress=None,
+        )
     payload: dict[str, Any] = {
-        "schema_version": "asteria.spatial-stage-prompt.v1",
+        "schema_version": "asteria.spatial-stage-prompt.v2",
         "stage": stage,
         "global_fragment": global_fragment.model_dump(mode="json"),
         "target_fragments": [item.model_dump(mode="json") for item in target_fragments],
@@ -180,9 +201,128 @@ def _stage_receipt(
         "combined_expanded_prompt": combined,
         "combined_expanded_sha256": _sha256_text(combined),
         "reused_from_stage": reused_from_stage,
+        "full_text": full_text,
+        "full_text_sha256": _sha256_text(full_text),
+        "character_bindings": [
+            item.model_dump(mode="json") for item in character_bindings
+        ],
+        "global_character_ranges": [list(item) for item in global_character_ranges],
+        "fragment_receipts": [
+            item.model_dump(mode="json") for item in fragment_receipts
+        ],
+        "scheduled_bindings": [
+            item.model_dump(mode="json") for item in scheduled_bindings
+        ],
     }
-    return SpatialStagePromptPlan.model_validate(
+    return SpatialStagePromptPlanV2.model_validate(
         {**payload, "stage_receipt_sha256": _sha256_json(payload)}
+    )
+
+
+def _fragment_text_at(
+    fragment: SpatialPromptFragmentReceipt,
+    *,
+    progress: float | None,
+) -> str:
+    syntax = fragment.syntax_plan
+    if syntax.operation != "scheduled_switch" or progress is None:
+        return fragment.expanded_prompt
+    for segment in syntax.segments:
+        if segment.start is None or segment.end is None:
+            continue
+        if float(segment.start) <= progress < float(segment.end):
+            return segment.text
+    raise SpatialPromptPlannerError("spatial_prompt_scheduled_interval_invalid")
+
+
+def _separator_for_append(current: str, fragment: str) -> tuple[str, str]:
+    if not current:
+        return fragment, ""
+    joined = join_prompt_contract_fragments((current, fragment))
+    separator_end = len(joined) - len(fragment)
+    return joined, joined[len(current) : separator_end]
+
+
+def _join_stage_fragments(
+    fragments: Sequence[SpatialPromptFragmentReceipt],
+    *,
+    progress: float | None,
+) -> tuple[
+    str,
+    tuple[SpatialCharacterBindingReceipt, ...],
+    tuple[tuple[int, int], ...],
+]:
+    full_text = ""
+    character_bindings: list[SpatialCharacterBindingReceipt] = []
+    global_ranges: list[tuple[int, int]] = []
+    for fragment in fragments:
+        text = _fragment_text_at(fragment, progress=progress)
+        if not text:
+            continue
+        previous_length = len(full_text)
+        full_text, separator = _separator_for_append(full_text, text)
+        start = previous_length + len(separator)
+        end = start + len(text)
+        if fragment.kind == "global":
+            global_ranges.append((start, end))
+            continue
+        if fragment.target_id is None:
+            raise SpatialPromptPlannerError("spatial_prompt_target_id_missing")
+        character_bindings.append(
+            SpatialCharacterBindingReceipt(
+                target_id=fragment.target_id,
+                fragment_id=fragment.fragment_id,
+                start=start,
+                end=end,
+                text_sha256=_sha256_text(text),
+                separator_before=separator,
+                syntax_plan_sha256=fragment.syntax_plan.sha256,
+            )
+        )
+    return full_text, tuple(character_bindings), tuple(global_ranges)
+
+
+def _scheduled_intervals(
+    fragments: Sequence[SpatialPromptFragmentReceipt],
+) -> tuple[tuple[float, float], ...]:
+    boundaries = {0.0, 1.0}
+    for fragment in fragments:
+        if fragment.syntax_plan.operation != "scheduled_switch":
+            continue
+        for segment in fragment.syntax_plan.segments:
+            if segment.start is None or segment.end is None:
+                raise SpatialPromptPlannerError("spatial_prompt_scheduled_interval_invalid")
+            boundaries.add(float(segment.start))
+            boundaries.add(float(segment.end))
+    ordered = sorted(boundaries)
+    if len(ordered) == 2:
+        return ()
+    return tuple(zip(ordered, ordered[1:]))
+
+
+def _scheduled_binding(
+    fragments: Sequence[SpatialPromptFragmentReceipt],
+    *,
+    start_percent: float,
+    end_percent: float,
+) -> SpatialScheduledPromptBinding:
+    full_text, character_bindings, global_ranges = _join_stage_fragments(
+        fragments,
+        progress=(start_percent + end_percent) / 2.0,
+    )
+    payload: dict[str, Any] = {
+        "schema_version": "asteria.spatial-scheduled-binding.v1",
+        "start_percent": start_percent,
+        "end_percent": end_percent,
+        "full_text": full_text,
+        "full_text_sha256": _sha256_text(full_text),
+        "character_bindings": [
+            item.model_dump(mode="json") for item in character_bindings
+        ],
+        "global_character_ranges": [list(item) for item in global_ranges],
+    }
+    return SpatialScheduledPromptBinding.model_validate(
+        {**payload, "binding_sha256": _sha256_json(payload)}
     )
 
 
@@ -255,6 +395,24 @@ def build_spatial_prompt_plan(
 
     global_raw = join_prompt_contract_fragments(global_parts)
     excluded_ids = set(layout.excluded_target_ids)
+    layout_targets = {target.target_id: target for target in layout.targets}
+    source_order = {
+        target_id: index for index, (target_id, _raw_prompt) in enumerate(ordered_targets)
+    }
+    if any(target_id not in layout_targets for target_id, _raw_prompt in ordered_targets):
+        raise SpatialPromptPlannerError("spatial_prompt_layout_target_missing")
+    serialized_targets = sorted(
+        (
+            (target_id, raw_prompt)
+            for target_id, raw_prompt in ordered_targets
+            if target_id not in excluded_ids
+        ),
+        key=lambda item: (
+            float(layout_targets[item[0]].center_x),
+            float(layout_targets[item[0]].center_y),
+            source_order[item[0]],
+        ),
+    )
     excluded_targets = tuple(
         SpatialExcludedTargetReceipt(target_id=target_id, reason="user_choice")
         for target_id, _ in ordered_targets
@@ -287,8 +445,7 @@ def build_spatial_prompt_plan(
             wildcard_dir=wildcard_dir,
             known_embedding_names=known_embedding_names,
         )
-        for target_id, raw_prompt in ordered_targets
-        if target_id not in excluded_ids
+        for target_id, raw_prompt in serialized_targets
     )
     base = _stage_receipt(
         stage="base",
@@ -298,7 +455,7 @@ def build_spatial_prompt_plan(
         reused_from_stage=None,
     )
 
-    hires: SpatialStagePromptPlan | None = None
+    hires: SpatialStagePromptPlanV2 | None = None
     if include_hires:
         normalized_hires = hires_prompt.replace("\r\n", "\n").replace("\r", "\n").strip()
         if not normalized_hires:
@@ -331,7 +488,7 @@ def build_spatial_prompt_plan(
                 reused_from_stage=None,
             )
 
-    refiner: SpatialStagePromptPlan | None = None
+    refiner: SpatialStagePromptPlanV2 | None = None
     if include_refiner:
         source = hires or base
         refiner = _stage_receipt(
@@ -346,7 +503,7 @@ def build_spatial_prompt_plan(
     if hires is not None and hires.reused_from_stage is None:
         execution_fragments.append(hires.global_fragment)
     payload: dict[str, Any] = {
-        "schema_version": "asteria.spatial-prompt-plan.v1",
+        "schema_version": "asteria.spatial-prompt-plan.v2",
         "planner_revision": SPATIAL_PROMPT_PLANNER_REVISION,
         "profile_id": profile_id,
         "generation_seed": generation_seed,

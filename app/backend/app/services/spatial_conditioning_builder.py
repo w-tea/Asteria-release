@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from typing import Literal
 
 from app.schemas.spatial_prompt_runtime import (
@@ -64,9 +64,9 @@ def build_spatial_conditioning_bundle(
     profile_receipt: SpatialModelProfileReceipt,
     stage: SpatialStage,
     encoder_id: str,
-    global_conditioning_ref: WorkflowRef,
+    text_encoder_ref: WorkflowRef,
+    full_positive_conditioning_ref: WorkflowRef,
     negative_conditioning_ref: WorkflowRef,
-    target_conditioning_refs: Mapping[str, WorkflowRef],
 ) -> SpatialConditioningBundle:
     if not encoder_id.strip():
         raise SpatialConditioningBuilderError("spatial_conditioning_encoder_invalid")
@@ -75,34 +75,61 @@ def build_spatial_conditioning_bundle(
         raise SpatialConditioningBuilderError("spatial_conditioning_stage_mismatch")
     if profile_receipt.support_status != "supported":
         raise SpatialConditioningBuilderError("spatial_conditioning_profile_unsupported")
-
+    if stage_plan.schema_version != "asteria.spatial-stage-prompt.v2":
+        raise SpatialConditioningBuilderError("spatial_conditioning_prompt_v2_required")
+    if (
+        stage_plan.full_text is None
+        or stage_plan.full_text_sha256 is None
+        or stage_plan.character_bindings is None
+    ):
+        raise SpatialConditioningBuilderError("spatial_conditioning_prompt_v2_required")
     prompt_ids = tuple(item.target_id for item in stage_plan.target_fragments)
     mask_ids = tuple(item.target_id for item in mask_bundle.targets)
     profile_ids = tuple(profile_receipt.target_ids)
-    ref_ids = tuple(target_conditioning_refs)
+    binding_ids = tuple(item.target_id for item in stage_plan.character_bindings)
     expected = set(prompt_ids)
     if not expected:
         raise SpatialConditioningBuilderError("spatial_conditioning_targets_empty")
-    if any(set(values) != expected for values in (mask_ids, profile_ids, ref_ids)):
+    if any(set(values) != expected for values in (mask_ids, profile_ids, binding_ids)):
         raise SpatialConditioningBuilderError("spatial_conditioning_target_ids_mismatch")
-
-    targets = [
-        {
-            "target_id": target_id,
-            "target_conditioning_ref": canonical_workflow_ref(
-                target_conditioning_refs[target_id]
-            ),
-        }
-        for target_id in prompt_ids
-    ]
+    encoder_contracts = {
+        "clip": (("l", "g"), "identity"),
+        "native_qwen": (
+            ("qwen3_06b", "t5xxl"),
+            "anima_native_t5_query_v1",
+        ),
+        "qwen35_progressive": (
+            ("qwen35_4b", "t5xxl"),
+            "anima_progressive_qwen35_t5_query_v1",
+        ),
+    }
+    encoder_contract = encoder_contracts.get(profile_receipt.encoder_kind)
+    if encoder_contract is None:
+        raise SpatialConditioningBuilderError("spatial_conditioning_encoder_invalid")
+    required_encoders, adapter_kind = encoder_contract
     payload = {
-        "schema_version": "asteria.spatial-conditioning-bundle.v1",
+        "schema_version": "asteria.spatial-conditioning-bundle.v2",
         "stage": stage,
         "encoder_id": encoder_id,
         "profile_receipt_sha256": profile_receipt.receipt_sha256,
-        "global_conditioning_ref": canonical_workflow_ref(global_conditioning_ref),
+        "text_encoder_ref": canonical_workflow_ref(text_encoder_ref),
+        "full_positive_conditioning_ref": canonical_workflow_ref(
+            full_positive_conditioning_ref
+        ),
         "negative_conditioning_ref": canonical_workflow_ref(negative_conditioning_ref),
-        "targets": targets,
+        "full_text": stage_plan.full_text,
+        "full_text_sha256": stage_plan.full_text_sha256,
+        "character_bindings": [
+            item.model_dump(mode="json") for item in stage_plan.character_bindings
+        ],
+        "scheduled_bindings": [
+            item.model_dump(mode="json")
+            for item in (stage_plan.scheduled_bindings or ())
+        ],
+        "required_encoders": list(required_encoders),
+        "adapter_kind": adapter_kind,
+        "step_start_percent": 0.0,
+        "step_end_percent": 1.0,
     }
     return SpatialConditioningBundle.model_validate(
         {**payload, "bundle_sha256": canonical_runtime_sha256(payload)}

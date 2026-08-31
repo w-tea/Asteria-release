@@ -41,18 +41,23 @@ _SDXL_LINEAGE_METADATA_KEYS = frozenset(
     }
 )
 _LEGACY_SPATIAL_PROFILE_IDS = {
-    "sdxl.attention.v1": "sdxl.attention.v2",
-    "illustrious.attention.v1": "illustrious.attention.v2",
-    "anima.28.attention.v1": "anima.28.attention.v2",
-    "anima.40.attention.v1": "anima.40.attention.v2",
-    "anima.52.attention.experimental.v1": "anima.52.attention.experimental.v2",
+    "sdxl.attention.v1": "sdxl.guidance.v3",
+    "sdxl.attention.v2": "sdxl.guidance.v3",
+    "illustrious.attention.v1": "illustrious.guidance.v3",
+    "illustrious.attention.v2": "illustrious.guidance.v3",
+    "anima.28.attention.v1": "anima.28.guidance.v3",
+    "anima.28.attention.v2": "anima.28.guidance.v3",
+    "anima.40.attention.v1": "anima.40.guidance.v3",
+    "anima.40.attention.v2": "anima.40.guidance.v3",
+    "anima.52.attention.experimental.v1": "anima.52.guidance.experimental.v3",
+    "anima.52.attention.experimental.v2": "anima.52.guidance.experimental.v3",
 }
 
 
 def _sdxl_lineage_from_metadata_value(value: str) -> str | None:
     normalized = value.casefold()
     if "illustrious" in normalized:
-        return "illustrious.attention.v2"
+        return "illustrious.guidance.v3"
     if any(
         marker in normalized
         for marker in (
@@ -64,7 +69,7 @@ def _sdxl_lineage_from_metadata_value(value: str) -> str | None:
             "pony",
         )
     ):
-        return "sdxl.attention.v2"
+        return "sdxl.guidance.v3"
     return None
 
 

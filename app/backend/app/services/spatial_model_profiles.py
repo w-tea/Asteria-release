@@ -10,24 +10,42 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 Sha256Text = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 
 
-class SpatialStageCoefficients(BaseModel):
+class SpatialLossWeightsDefinition(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    early_guidance_end: float = Field(gt=0.0, lt=1.0, allow_inf_nan=False)
-    isolation_start: float = Field(ge=0.0, lt=1.0, allow_inf_nan=False)
-    isolation_end: float = Field(gt=0.0, le=1.0, allow_inf_nan=False)
-    late_blending_start: float = Field(gt=0.0, lt=1.0, allow_inf_nan=False)
-    schedule_smoothing: float = Field(gt=0.0, le=0.25, allow_inf_nan=False)
-    cross_inside_bias: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
-    cross_outside_penalty: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
-    global_inside_penalty: float = Field(ge=0.0, le=8.0, allow_inf_nan=False)
-    self_leakage_penalty: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
-    self_attention_token_limit: int = Field(ge=1, le=65536, strict=True)
+    position: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
+    size: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
+    separation: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
+    presence: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
+    global_retention: float = Field(ge=0.0, le=32.0, allow_inf_nan=False)
+
+
+class SpatialGuidanceDefinition(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    start_percent: float = Field(ge=0.0, lt=1.0, allow_inf_nan=False)
+    end_percent: float = Field(gt=0.0, le=1.0, allow_inf_nan=False)
+    iterations: int = Field(ge=1, le=8, strict=True)
+    step_size: float = Field(gt=0.0, le=1.0, allow_inf_nan=False)
+    attention_prior_scale: float = Field(ge=0.0, le=5.0, allow_inf_nan=False)
+    attention_layers: tuple[str, ...] = Field(min_length=1)
+    self_relation_layers: tuple[str, ...] = Field(min_length=1)
+    global_retention_floor: float | None = Field(
+        default=None,
+        gt=0.0,
+        le=1.0,
+        allow_inf_nan=False,
+    )
+    loss_weights: SpatialLossWeightsDefinition
 
     @model_validator(mode="after")
-    def validate_ranges(self) -> "SpatialStageCoefficients":
-        if self.isolation_start >= self.isolation_end:
-            raise ValueError("spatial isolation range must increase")
+    def validate_ranges(self) -> "SpatialGuidanceDefinition":
+        if self.start_percent >= self.end_percent:
+            raise ValueError("spatial guidance range must increase")
+        if len(set(self.attention_layers)) != len(self.attention_layers):
+            raise ValueError("spatial attention layers must be unique")
+        if len(set(self.self_relation_layers)) != len(self.self_relation_layers):
+            raise ValueError("spatial self relation layers must be unique")
         return self
 
 
@@ -45,13 +63,13 @@ class SpatialModelProfileDefinition(BaseModel):
     diffusion_block_counts: tuple[int, ...] = Field(min_length=1)
     automatic_status: Literal["supported", "selection_required", "unsupported"]
     manual_selectable: bool
-    coefficients: SpatialStageCoefficients
+    guidance: SpatialGuidanceDefinition
 
 
 class SpatialModelProfileCatalog(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["asteria.spatial-model-profiles.v1"]
+    schema_version: Literal["asteria.spatial-model-profiles.v3"]
     profiles: tuple[SpatialModelProfileDefinition, ...] = Field(min_length=1)
 
     @model_validator(mode="after")

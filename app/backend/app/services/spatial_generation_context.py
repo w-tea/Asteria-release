@@ -22,6 +22,7 @@ from app.services.spatial_mask_compiler import (
     compile_spatial_masks,
     runtime_mask_sha256,
 )
+from app.services.spatial_layout_field import compile_spatial_layout_fields
 from app.services.spatial_model_profiles import load_spatial_model_profiles
 from app.services.spatial_profile_resolver import (
     SpatialModelEvidence,
@@ -84,10 +85,10 @@ def _profile_json(
     if definition is None:
         raise SpatialGenerationContextError("spatial_profile_not_found")
     body = {
-        "schema_version": "asteria.spatial-node-profile.v2",
+        "schema_version": "asteria.spatial-node-profile.v3",
         "contract_version": ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
         "profile_receipt": receipt.model_dump(mode="json"),
-        "coefficients": definition.coefficients.model_dump(mode="json"),
+        "guidance": definition.guidance.model_dump(mode="json"),
     }
     payload = {
         **body,
@@ -187,6 +188,21 @@ def prepare_spatial_generation_context(
             inpaint_mask=item.inpaint_mask,
             crop_rect=item.crop_rect,
         )
+        compiled_mask_fields = {
+            mask.target_id: np.frombuffer(mask.mask_bytes, dtype=np.uint8)
+            .reshape(mask.height, mask.width)
+            .astype(np.float32)
+            / 255.0
+            for mask in compiled.masks
+        }
+        layout_fields = compile_spatial_layout_fields(
+            item.layout,
+            width=item.width,
+            height=item.height,
+            stage=item.stage,
+            crop_rect=item.crop_rect,
+            source_masks=compiled_mask_fields,
+        )
         target_ids = _ordered_target_ids(compiled)
         if canonical_target_ids is None:
             canonical_target_ids = target_ids
@@ -222,12 +238,14 @@ def prepare_spatial_generation_context(
         )
         runtime_stages[item.stage] = {
             "mask_bundle": compiled.receipt.model_dump(mode="json"),
+            "layout_field_bundle": layout_fields.receipt.model_dump(mode="json"),
             "profile_receipt": receipt.model_dump(mode="json"),
             "profile_json": profile_json,
             "mask_paths": mask_paths,
         }
         history_stages[item.stage] = {
             "mask_bundle": compiled.receipt.model_dump(mode="json"),
+            "layout_field_bundle": layout_fields.receipt.model_dump(mode="json"),
             "profile_receipt": receipt.model_dump(mode="json"),
             "profile_payload_sha256": profile_payload["profile_payload_sha256"],
         }
