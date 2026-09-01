@@ -13,6 +13,8 @@ import yaml
 
 from app.services.managed_artifacts import (
     ManagedArtifactError,
+    ManagedArtifactPathTooLong,
+    ManagedArtifactRollbackIncomplete,
     ManagedArtifactService,
     ManagedArtifactSpec,
 )
@@ -481,6 +483,8 @@ class RuntimeDependencyInstaller:
             if status.status == "installed":
                 service.mark_post_install_complete(spec)
             return status
+        except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete):
+            raise
         except (ManagedArtifactError, OSError) as exc:
             message = str(exc) or f"Failed to install runtime dependency: {dependency.id}"
             raise RuntimeDependencyError(message) from exc
