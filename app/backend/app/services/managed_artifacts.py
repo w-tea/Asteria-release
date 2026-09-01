@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+import errno
 from hashlib import sha256
 from http.client import HTTPException, IncompleteRead
 import json
@@ -10,6 +11,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
 import shutil
 import stat
+from tempfile import mkdtemp
 import time
 from typing import BinaryIO
 from urllib.error import HTTPError, URLError
@@ -28,6 +30,10 @@ class ManagedArtifactError(Exception):
 
 
 class ManagedArtifactCancelled(ManagedArtifactError):
+    pass
+
+
+class ManagedArtifactPathTooLong(ManagedArtifactError):
     pass
 
 
@@ -331,8 +337,9 @@ class ManagedArtifactService:
             destination.parent.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
             raise ManagedArtifactError(f"managed artifact archive destination failed: {exc}") from exc
-        stage = destination.parent / f".{destination.name}.asteria-stage-{uuid4().hex}"
-        backup = destination.parent / f".{destination.name}.asteria-backup-{uuid4().hex}"
+        publish_root = self._create_publish_workspace()
+        stage = publish_root / "s"
+        backup = publish_root / "b"
         self._require_same_volume(part_path, stage)
         try:
             self._validate_managed_write_path(destination)
@@ -373,7 +380,30 @@ class ManagedArtifactService:
                 except (ManagedArtifactError, OSError):
                     pass
             self._remove_path_safely(backup)
+            if isinstance(exc, OSError) and self._is_path_too_long_error(exc):
+                raise ManagedArtifactPathTooLong(
+                    "managed artifact installation path is too long"
+                ) from exc
             raise ManagedArtifactError(f"managed artifact archive publish failed: {exc}") from exc
+        finally:
+            self._remove_path_safely(publish_root)
+
+    def _create_publish_workspace(self) -> Path:
+        self._validate_managed_write_path(self.temp_root)
+        try:
+            self.temp_root.mkdir(parents=True, exist_ok=True)
+            self._validate_managed_write_path(self.temp_root)
+            workspace = Path(mkdtemp(prefix="", dir=self.temp_root))
+            self._validate_managed_write_path(workspace)
+            return workspace
+        except OSError as exc:
+            if self._is_path_too_long_error(exc):
+                raise ManagedArtifactPathTooLong(
+                    "managed artifact installation path is too long"
+                ) from exc
+            raise ManagedArtifactError(
+                f"managed artifact publish workspace failed: {exc}"
+            ) from exc
 
     def _extract_zip(self, archive_path: Path, stage: Path, *, strip_single_root: bool) -> None:
         try:
@@ -397,7 +427,15 @@ class ManagedArtifactService:
         except ManagedArtifactError:
             raise
         except (OSError, RuntimeError, zipfile.BadZipFile) as exc:
+            if isinstance(exc, OSError) and self._is_path_too_long_error(exc):
+                raise ManagedArtifactPathTooLong(
+                    "managed artifact installation path is too long"
+                ) from exc
             raise ManagedArtifactError(f"managed artifact archive extraction failed: {exc}") from exc
+
+    @staticmethod
+    def _is_path_too_long_error(exc: OSError) -> bool:
+        return exc.errno == errno.ENAMETOOLONG or getattr(exc, "winerror", None) == 206
 
     def _validated_zip_entries(
         self,

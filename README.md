@@ -1,9 +1,10 @@
-# Asteria V1.1.1 Windows Portable
+# Asteria V1.1.2 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
 ## 更新履歴 / Release history
 
+- **V1.1.2** — 初回セットアップ中の一時展開パスが不要に長くなり、一部の管理対象コンポーネントを導入できない問題を修正。パスが長すぎる場合には、原因と復旧手順を表示。 / Fixed managed-component installation failures caused by an unnecessarily long temporary extraction path and added actionable recovery guidance when a path is still too long.
 - **V1.1.1** — 空白を含むフォルダへ配置した場合にComfyUIのデータベース引数が分割され、Asteriaを起動できない問題を修正。 / Fixed startup failure when Asteria was installed under a folder path containing spaces and the ComfyUI database argument was split.
 - **V1.1.0** — 永続操作、更新・復旧保護、外部モデルライブラリ、追加Merge方式、全画面テーマ刷新、画像metadata再利用、Discord生成、診断を追加。 / Added durable operations, safer update and recovery, external model libraries, new Merge modes, a full visual refresh, image-metadata reuse, Discord generation, and diagnostics.
 - **V1.0.4** — Runtime Monitor、生成時間、Seed単独適用、LoRAサムネイルと生成出力を改善。 / Added Runtime Monitor and generation time, seed-only reuse, LoRA thumbnails, and generation-output fixes.
@@ -32,6 +33,11 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 - **Discord生成**: Generateで明示公開した設定だけを、許可したDiscordサーバーやチャンネルから利用できます。
 
 ### 更新履歴
+
+#### V1.1.2
+
+- 管理対象ZIPをAsteriaの`temp/`内にある短い一時フォルダへ展開し、最終配置先より展開中だけパスが長くなる問題を修正しました。これにより、最終配置先がWindowsのパス上限内であれば、ControlNet用コンポーネントなどを正しく導入できます。
+- 最終配置先自体が長すぎる場合は、`setup_path_too_long`とともに原因を表示し、Asteriaを`D:\Asteria`などの短いパスへ移動してから`Repair-Asteria.cmd`を実行するよう案内します。
 
 #### V1.1.1
 
@@ -242,6 +248,11 @@ Asteria is a Windows application for local AI image production. It covers image 
 - **Discord generation**: Use only the Generate settings you explicitly publish from allowed Discord servers or channels.
 
 ### Release history
+
+#### V1.1.2
+
+- Managed ZIP files now use a short temporary extraction path under Asteria's `temp/` directory. This prevents setup paths from becoming longer only during extraction, so components such as ControlNet support can be installed whenever their final destination fits within the Windows path limit.
+- If the final destination itself is still too long, setup reports `setup_path_too_long` and explains how to move Asteria to a shorter path such as `D:\Asteria` before running `Repair-Asteria.cmd`.
 
 #### V1.1.1
 
