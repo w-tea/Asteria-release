@@ -37,6 +37,10 @@ class ManagedArtifactPathTooLong(ManagedArtifactError):
     pass
 
 
+class ManagedArtifactRollbackIncomplete(ManagedArtifactError):
+    pass
+
+
 @dataclass(frozen=True)
 class ManagedArtifactSpec:
     manifest_version: int
@@ -323,6 +327,10 @@ class ManagedArtifactService:
             self._validate_managed_write_path(destination)
             os.replace(part_path, destination)
         except OSError as exc:
+            if self._is_path_too_long_error(exc):
+                raise ManagedArtifactPathTooLong(
+                    "managed artifact installation path is too long"
+                ) from exc
             raise ManagedArtifactError(f"managed artifact atomic publish failed: {exc}") from exc
 
     def _publish_zip(
@@ -336,10 +344,15 @@ class ManagedArtifactService:
         try:
             destination.parent.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
+            if self._is_path_too_long_error(exc):
+                raise ManagedArtifactPathTooLong(
+                    "managed artifact installation path is too long"
+                ) from exc
             raise ManagedArtifactError(f"managed artifact archive destination failed: {exc}") from exc
         publish_root = self._create_publish_workspace()
         stage = publish_root / "s"
         backup = publish_root / "b"
+        preserve_publish_root = False
         self._require_same_volume(part_path, stage)
         try:
             self._validate_managed_write_path(destination)
@@ -348,45 +361,45 @@ class ManagedArtifactService:
             self._extract_zip(part_path, stage, strip_single_root=spec.strip_single_root)
             self._write_json_atomic(stage / ".asteria-managed.json", receipt)
             self._validate_managed_write_path(destination)
-            had_destination = self._path_exists(destination)
-            if had_destination:
+            if self._path_exists(destination):
                 self._validate_managed_write_path(destination)
                 self._validate_managed_write_path(backup)
                 os.replace(destination, backup)
-            try:
-                self._validate_managed_write_path(destination)
-                self._validate_managed_write_path(stage)
-                os.replace(stage, destination)
-            except OSError:
-                if had_destination and self._path_exists(backup) and not self._path_exists(destination):
-                    self._validate_managed_write_path(backup)
-                    self._validate_managed_write_path(destination)
-                    os.replace(backup, destination)
+            self._validate_managed_write_path(destination)
+            self._validate_managed_write_path(stage)
+            os.replace(stage, destination)
+            self._remove_path_safely(backup)
+        except (ManagedArtifactError, OSError, zipfile.BadZipFile) as exc:
+            self._remove_path_safely(stage)
+            if self._path_exists(backup) and not self._restore_zip_backup(backup, destination):
+                preserve_publish_root = True
+                raise ManagedArtifactRollbackIncomplete(
+                    "managed artifact rollback is incomplete; previous component backup was preserved"
+                ) from exc
+            self._remove_path_safely(backup)
+            if isinstance(exc, ManagedArtifactError):
+                self._remove_file_safely(part_path)
+                self._remove_file_safely(self.resume_receipt_path_for(spec))
                 raise
-            self._remove_path_safely(backup)
-        except ManagedArtifactError:
-            self._remove_path_safely(stage)
-            self._remove_path_safely(backup)
-            self._remove_file_safely(part_path)
-            self._remove_file_safely(self.resume_receipt_path_for(spec))
-            raise
-        except (OSError, zipfile.BadZipFile) as exc:
-            self._remove_path_safely(stage)
-            if self._path_exists(backup) and not self._path_exists(destination):
-                try:
-                    self._validate_managed_write_path(backup)
-                    self._validate_managed_write_path(destination)
-                    os.replace(backup, destination)
-                except (ManagedArtifactError, OSError):
-                    pass
-            self._remove_path_safely(backup)
             if isinstance(exc, OSError) and self._is_path_too_long_error(exc):
                 raise ManagedArtifactPathTooLong(
                     "managed artifact installation path is too long"
                 ) from exc
             raise ManagedArtifactError(f"managed artifact archive publish failed: {exc}") from exc
         finally:
-            self._remove_path_safely(publish_root)
+            if not preserve_publish_root:
+                self._remove_path_safely(publish_root)
+
+    def _restore_zip_backup(self, backup: Path, destination: Path) -> bool:
+        if self._path_exists(destination):
+            return False
+        try:
+            self._validate_managed_write_path(backup)
+            self._validate_managed_write_path(destination)
+            os.replace(backup, destination)
+        except (ManagedArtifactError, OSError):
+            return False
+        return True
 
     def _create_publish_workspace(self) -> Path:
         self._validate_managed_write_path(self.temp_root)

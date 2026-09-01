@@ -13,6 +13,7 @@ from app.services.model_selections import ModelSelectionRepository
 from app.services.initial_data import InitialDataMaterializer
 from app.services.managed_artifacts import (
     ManagedArtifactPathTooLong,
+    ManagedArtifactRollbackIncomplete,
     ManagedArtifactService,
     ManagedArtifactSpec,
 )
@@ -261,6 +262,28 @@ class ManagedSetupEngine:
             self._append_event(events, ManagedSetupEvent("setup_component_started", component.id))
             try:
                 self._acquire(component)
+            except ManagedArtifactRollbackIncomplete:
+                failed.append(component.id)
+                self._append_event(
+                    events,
+                    ManagedSetupEvent(
+                        "setup_component_failed",
+                        component.id,
+                        error_code="setup_rollback_incomplete",
+                        message_en=(
+                            "The previous managed component backup was kept because Asteria could not restore it. "
+                            "Close other programs using Asteria, then run Repair-Asteria.cmd again. "
+                            "If the problem continues, keep the logs and contact support."
+                        ),
+                        message_ja=(
+                            "以前の管理対象コンポーネントのバックアップは削除せず保持しています。"
+                            "Asteriaを使用しているほかのプログラムを閉じてから、"
+                            "Repair-Asteria.cmdをもう一度実行してください。"
+                            "解決しない場合は、ログを残したままサポートへ連絡してください。"
+                        ),
+                    ),
+                )
+                continue
             except ManagedArtifactPathTooLong:
                 failed.append(component.id)
                 self._append_event(
