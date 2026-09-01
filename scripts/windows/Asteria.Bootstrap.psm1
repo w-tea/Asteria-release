@@ -21,6 +21,20 @@ if (-not ("System.Net.Http.HttpClient" -as [type])) {
     }
 }
 
+function Get-AsteriaFileSha256 {
+    param([Parameter(Mandatory = $true)][string]$Path)
+    $stream = [System.IO.File]::OpenRead($Path)
+    $hasher = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = $hasher.ComputeHash($stream)
+        return ([System.BitConverter]::ToString($bytes)).Replace("-", "").ToLowerInvariant()
+    }
+    finally {
+        $hasher.Dispose()
+        $stream.Dispose()
+    }
+}
+
 function Resolve-AsteriaBootstrapRoot {
     param([Parameter(Mandatory = $true)][string]$AppRoot)
     $isDrivePath = $AppRoot -match '^[A-Za-z]:[\\/]'
@@ -267,7 +281,7 @@ function Get-AsteriaBootstrapComponentIdentity {
         target_relative_path = $relativeTarget
         entry_relative_path = "$relativeTarget/$([System.IO.Path]::GetFileName($entry))"
         entry_size_bytes = [int64](Get-Item -LiteralPath $entry).Length
-        entry_sha256 = (Get-FileHash -LiteralPath $entry -Algorithm SHA256).Hash.ToLowerInvariant()
+        entry_sha256 = Get-AsteriaFileSha256 -Path $entry
         state = "complete"
     }
 }
@@ -336,7 +350,7 @@ function Test-AsteriaVerifiedDownload {
     if (-not (Test-Path -LiteralPath $DownloadPath -PathType Leaf)) { return $false }
     try {
         if ((Get-Item -LiteralPath $DownloadPath).Length -ne [int64]$Artifact.size_bytes) { return $false }
-        return (Get-FileHash -LiteralPath $DownloadPath -Algorithm SHA256).Hash.ToLowerInvariant() -eq $Artifact.checksum_sha256
+        return (Get-AsteriaFileSha256 -Path $DownloadPath) -eq $Artifact.checksum_sha256
     }
     catch {
         return $false
@@ -417,7 +431,7 @@ function Invoke-AsteriaVerifiedDownload {
     if ($download.Length -ne [int64]$Artifact.size_bytes) {
         throw (New-AsteriaBootstrapError -Code "bootstrap_download_size_mismatch" -Message "Downloaded artifact size is invalid.")
     }
-    $hash = (Get-FileHash -LiteralPath $partPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    $hash = Get-AsteriaFileSha256 -Path $partPath
     if ($hash -ne $Artifact.checksum_sha256) {
         throw (New-AsteriaBootstrapError -Code "bootstrap_download_checksum_mismatch" -Message "Downloaded artifact checksum is invalid.")
     }
