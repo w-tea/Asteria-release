@@ -440,6 +440,8 @@ class ModelBootstrapper:
                 continue
             try:
                 installed.append(self.installer.install(dependency.id, license_confirmed=True))
+            except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete) as exc:
+                failed[dependency.id] = exc.error_code
             except Exception as exc:  # noqa: BLE001 - keep bootstrapping independent files.
                 failed[dependency.id] = str(exc)
             completed_count += 1

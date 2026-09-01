@@ -8,6 +8,8 @@ from pydantic import BaseModel
 
 from app.core.config import AppConfig
 from app.services.api_errors import (
+    MANAGED_ARTIFACT_PATH_TOO_LONG,
+    MANAGED_ARTIFACT_ROLLBACK_INCOMPLETE,
     MODEL_DEPENDENCY_INSTALL_FAILED,
     MODEL_DEPENDENCY_LICENSE_CONFIRMATION_REQUIRED,
     MODEL_DEPENDENCY_NOT_FOUND,
@@ -16,6 +18,10 @@ from app.services.api_errors import (
     MODEL_SELECTION_SAVE_FAILED,
     MODEL_SELECTION_SLOT_NOT_FOUND,
     MODEL_STORAGE_SETTINGS_SAVE_FAILED,
+)
+from app.services.managed_artifacts import (
+    ManagedArtifactPathTooLong,
+    ManagedArtifactRollbackIncomplete,
 )
 from app.services.model_dependencies import (
     LicenseConfirmationRequired,
@@ -465,6 +471,10 @@ def install_dependency(
         ) from exc
     except ModelDependencyNotFound as exc:
         raise HTTPException(status_code=404, detail={"code": MODEL_DEPENDENCY_NOT_FOUND}) from exc
+    except ManagedArtifactPathTooLong as exc:
+        raise HTTPException(status_code=409, detail={"code": MANAGED_ARTIFACT_PATH_TOO_LONG}) from exc
+    except ManagedArtifactRollbackIncomplete as exc:
+        raise HTTPException(status_code=409, detail={"code": MANAGED_ARTIFACT_ROLLBACK_INCOMPLETE}) from exc
     except ModelDependencyError as exc:
         raise HTTPException(status_code=409, detail={"code": MODEL_DEPENDENCY_INSTALL_FAILED}) from exc
 

@@ -34,11 +34,11 @@ class ManagedArtifactCancelled(ManagedArtifactError):
 
 
 class ManagedArtifactPathTooLong(ManagedArtifactError):
-    pass
+    error_code = "managed_artifact_path_too_long"
 
 
 class ManagedArtifactRollbackIncomplete(ManagedArtifactError):
-    pass
+    error_code = "managed_artifact_rollback_incomplete"
 
 
 @dataclass(frozen=True)

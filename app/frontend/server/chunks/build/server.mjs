@@ -1709,6 +1709,8 @@ const messages = {
   "shell.statusAria": { en: "Studio status and actions", ja: "スタジオ状態と操作" },
   "shell.workspaceAria": { en: "Studio workspace", ja: "スタジオ作業領域" },
   "common.error.generic": { en: "The operation failed. Review the selected settings and try again.", ja: "処理に失敗しました。選択中の設定を確認してから再試行してください。" },
+  "common.error.managedArtifactPathTooLong": { en: "The Asteria folder path is too long. Move the Asteria folder to a shorter location such as D:\\Asteria, then run Repair-Asteria.cmd.", ja: "Asteriaの保存場所が深すぎます。D:\\Asteriaなどの短い場所へフォルダごと移動し、Repair-Asteria.cmdを実行してください。" },
+  "common.error.managedArtifactRollbackIncomplete": { en: "Asteria could not restore the previous managed component. Close Asteria and other apps using its files, then run Repair-Asteria.cmd again.", ja: "以前の管理対象コンポーネントを復元できませんでした。Asteriaと関連ファイルを使用中のアプリを閉じ、Repair-Asteria.cmdをもう一度実行してください。" },
   "remaster.aria": { en: "Pixel-Anchored Remaster settings", ja: "ピクセル固定リマスター設定" },
   "remaster.title": { en: "Pixel-Anchored Remaster", ja: "ピクセル固定リマスター" },
   "remaster.enable": { en: "Enable", ja: "有効" },
@@ -6094,6 +6096,8 @@ const useApiWebSocketUrl = (path) => {
   return `${useApiBase().replace(/^http/i, "ws")}${normalizedPath}`;
 };
 const knownErrorCodeKeys = {
+  managed_artifact_path_too_long: "common.error.managedArtifactPathTooLong",
+  managed_artifact_rollback_incomplete: "common.error.managedArtifactRollbackIncomplete",
   startup_ready: "settings.startup.noIssues",
   startup_readiness_execution_failed: "common.error.startupReadiness",
   startup_setup_plan_stale: "common.error.startupReadiness",

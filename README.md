@@ -38,6 +38,8 @@ Asteriaは、ローカル環境で動作するWindows向けAI画像制作アプ�
 
 - 管理対象ZIPをAsteriaの`temp/`内にある短い一時フォルダへ展開し、最終配置先より展開中だけパスが長くなる問題を修正しました。これにより、最終配置先がWindowsのパス上限内であれば、ControlNet用コンポーネントなどを正しく導入できます。
 - 最終配置先自体が長すぎる場合は、`setup_path_too_long`とともに原因を表示し、Asteriaを`D:\Asteria`などの短いパスへ移動してから`Repair-Asteria.cmd`を実行するよう案内します。
+- Settingsからの導入・修復でも、パス超過と以前のコンポーネントを復元できない状態を区別して、具体的な対処方法を表示します。修復前に生成環境を停止した場合は、修復の成否にかかわらず再起動を試みます。
+- `.cmd`から起動した場合でも、PowerShellのモジュール自動読み込みに依存せず、配布ファイルのSHA-256を検証できるようにしました。
 
 #### V1.1.1
 
@@ -253,6 +255,8 @@ Asteria is a Windows application for local AI image production. It covers image 
 
 - Managed ZIP files now use a short temporary extraction path under Asteria's `temp/` directory. This prevents setup paths from becoming longer only during extraction, so components such as ControlNet support can be installed whenever their final destination fits within the Windows path limit.
 - If the final destination itself is still too long, setup reports `setup_path_too_long` and explains how to move Asteria to a shorter path such as `D:\Asteria` before running `Repair-Asteria.cmd`.
+- Setup and Repair actions in Settings now distinguish an overlong path from an incomplete rollback and show the appropriate recovery steps. If Repair stops a running generation environment, Asteria attempts to restart it whether the repair succeeds or fails.
+- Launching from a `.cmd` file no longer relies on PowerShell module auto-loading to verify the SHA-256 of distributed files.
 
 #### V1.1.1
 

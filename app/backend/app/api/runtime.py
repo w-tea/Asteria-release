@@ -6,6 +6,8 @@ from pydantic import BaseModel
 from app.core.config import AppConfig
 from app.api.generation import AVAILABLE_RUNTIMES
 from app.services.api_errors import (
+    MANAGED_ARTIFACT_PATH_TOO_LONG,
+    MANAGED_ARTIFACT_ROLLBACK_INCOMPLETE,
     RUNTIME_CORE_INSTALL_FAILED,
     RUNTIME_CORE_REPAIR_FAILED,
     RUNTIME_CORE_UPDATE_FAILED,
@@ -14,6 +16,10 @@ from app.services.api_errors import (
     RUNTIME_DEPENDENCY_REPAIR_FAILED,
     RUNTIME_INTERRUPT_FAILED,
     RUNTIME_START_FAILED,
+)
+from app.services.managed_artifacts import (
+    ManagedArtifactPathTooLong,
+    ManagedArtifactRollbackIncomplete,
 )
 from app.services.controlnet_preprocessor import COMFY_CONTROLNET_PREPROCESSOR_NODES
 from app.services.controlnet_mode import (
@@ -39,6 +45,17 @@ from app.services.runtime_process import RuntimeProcessError, RuntimeProcessMana
 from app.services.workflow_mapping import WorkflowMappingRepository
 
 router = APIRouter(prefix="/api/runtime", tags=["runtime"])
+
+
+def _managed_artifact_http_exception(
+    exc: ManagedArtifactPathTooLong | ManagedArtifactRollbackIncomplete,
+) -> HTTPException:
+    code = (
+        MANAGED_ARTIFACT_PATH_TOO_LONG
+        if isinstance(exc, ManagedArtifactPathTooLong)
+        else MANAGED_ARTIFACT_ROLLBACK_INCOMPLETE
+    )
+    return HTTPException(status_code=409, detail={"code": code})
 
 
 class RuntimeConfigResponse(BaseModel):
@@ -680,6 +697,8 @@ def runtime_core_status() -> ComfyRuntimeCoreStatusResponse:
 def install_runtime_core() -> ComfyRuntimeCoreStatusResponse:
     try:
         return _core_to_response(_core_manager().install())
+    except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete) as exc:
+        raise _managed_artifact_http_exception(exc) from exc
     except ComfyRuntimeCoreError as exc:
         raise HTTPException(status_code=409, detail={"code": RUNTIME_CORE_INSTALL_FAILED}) from exc
 
@@ -688,6 +707,8 @@ def install_runtime_core() -> ComfyRuntimeCoreStatusResponse:
 def repair_runtime_core() -> ComfyRuntimeCoreStatusResponse:
     try:
         return _core_to_response(_core_manager().repair())
+    except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete) as exc:
+        raise _managed_artifact_http_exception(exc) from exc
     except ComfyRuntimeCoreError as exc:
         raise HTTPException(status_code=409, detail={"code": RUNTIME_CORE_REPAIR_FAILED}) from exc
 
@@ -696,6 +717,8 @@ def repair_runtime_core() -> ComfyRuntimeCoreStatusResponse:
 def update_runtime_core() -> ComfyRuntimeCoreStatusResponse:
     try:
         return _core_to_response(_core_manager().update())
+    except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete) as exc:
+        raise _managed_artifact_http_exception(exc) from exc
     except ComfyRuntimeCoreError as exc:
         raise HTTPException(status_code=409, detail={"code": RUNTIME_CORE_UPDATE_FAILED}) from exc
 
@@ -712,6 +735,8 @@ def install_dependency(dependency_id: str) -> RuntimeDependencyStatusResponse:
         status = RuntimeDependencyInstaller(repository, runner=_runtime_dependency_runner(), python_path=app_config.comfy_python_path).install(dependency_id)
     except RuntimeDependencyNotFound as exc:
         raise HTTPException(status_code=404, detail={"code": RUNTIME_DEPENDENCY_NOT_FOUND}) from exc
+    except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete) as exc:
+        raise _managed_artifact_http_exception(exc) from exc
     except RuntimeDependencyError as exc:
         raise HTTPException(status_code=409, detail={"code": RUNTIME_DEPENDENCY_INSTALL_FAILED}) from exc
     return _dependency_to_response(status)
@@ -732,42 +757,31 @@ def repair_dependency(dependency_id: str) -> RuntimeDependencyRepairResponse:
             ) from exc
 
     try:
-        status = RuntimeDependencyInstaller(
-            _dependency_repository(),
-            runner=_runtime_dependency_runner(),
-            python_path=app_config.comfy_python_path,
-        ).repair(dependency_id)
-    except RuntimeDependencyNotFound as exc:
-        if was_running:
-            try:
-                manager.start()
-            except RuntimeProcessError as restart_exc:
-                raise HTTPException(
-                    status_code=409,
-                    detail={"code": RUNTIME_START_FAILED},
-                ) from restart_exc
-        raise HTTPException(status_code=404, detail={"code": RUNTIME_DEPENDENCY_NOT_FOUND}) from exc
-    except RuntimeDependencyError as exc:
-        if was_running:
-            try:
-                manager.start()
-            except RuntimeProcessError as restart_exc:
-                raise HTTPException(
-                    status_code=409,
-                    detail={"code": RUNTIME_START_FAILED},
-                ) from restart_exc
-        raise HTTPException(status_code=409, detail={"code": RUNTIME_DEPENDENCY_REPAIR_FAILED}) from exc
-
-    runtime_restarted = False
-    if was_running:
         try:
-            manager.start()
-        except RuntimeProcessError as exc:
-            raise HTTPException(status_code=409, detail={"code": RUNTIME_START_FAILED}) from exc
-        runtime_restarted = True
+            status = RuntimeDependencyInstaller(
+                _dependency_repository(),
+                runner=_runtime_dependency_runner(),
+                python_path=app_config.comfy_python_path,
+            ).repair(dependency_id)
+        except RuntimeDependencyNotFound as exc:
+            raise HTTPException(status_code=404, detail={"code": RUNTIME_DEPENDENCY_NOT_FOUND}) from exc
+        except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete) as exc:
+            raise _managed_artifact_http_exception(exc) from exc
+        except RuntimeDependencyError as exc:
+            raise HTTPException(status_code=409, detail={"code": RUNTIME_DEPENDENCY_REPAIR_FAILED}) from exc
+    finally:
+        if was_running:
+            try:
+                manager.start()
+            except RuntimeProcessError as restart_exc:
+                raise HTTPException(
+                    status_code=409,
+                    detail={"code": RUNTIME_START_FAILED},
+                ) from restart_exc
+
     return RuntimeDependencyRepairResponse(
         dependency=_dependency_to_response(status),
-        runtime_restarted=runtime_restarted,
+        runtime_restarted=was_running,
     )
 
 
@@ -792,6 +806,8 @@ def _install_dependencies(only_missing: bool, update: bool = False, repair: bool
                 status = installer.repair(status.id)
             else:
                 status = installer.install(status.id)
+        except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete) as exc:
+            errors[status.id] = exc.error_code
         except RuntimeDependencyError as exc:
             errors[status.id] = str(exc)
         statuses.append(_dependency_to_response(status))
