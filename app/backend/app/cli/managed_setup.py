@@ -272,11 +272,13 @@ class ManagedSetupEngine:
                         error_code="setup_rollback_incomplete",
                         message_en=(
                             "The previous managed component backup was kept because Asteria could not restore it. "
+                            "The next Repair will try to restore the backup before retrying the installation. "
                             "Close other programs using Asteria, then run Repair-Asteria.cmd again. "
                             "If the problem continues, keep the logs and contact support."
                         ),
                         message_ja=(
                             "以前の管理対象コンポーネントのバックアップは削除せず保持しています。"
+                            "次回の「修復」では、再インストールの前にこのバックアップの復元を試みます。"
                             "Asteriaを使用しているほかのプログラムを閉じてから、"
                             "Repair-Asteria.cmdをもう一度実行してください。"
                             "解決しない場合は、ログを残したままサポートへ連絡してください。"

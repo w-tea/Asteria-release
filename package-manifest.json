@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.1.2",
   "platform": "windows-x64",
-  "source_commit": "26055aaf612032d7e071428e3d015538c0db28db",
-  "build_timestamp_utc": "2026-09-01T04:03:42Z",
+  "source_commit": "54dc7ef766ab17fe1a02bf59b8a11df945b30694",
+  "build_timestamp_utc": "2026-09-01T04:38:31Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -193,8 +193,8 @@
     },
     {
       "path": "app/backend/app/cli/managed_setup.py",
-      "size_bytes": 22643,
-      "sha256": "28a17e0525007b92c8b25095a3dabc24d238d6ef7abba2296d2b99b94d3e7a52"
+      "size_bytes": 22899,
+      "sha256": "81f5da152ef2b42bdfa8465e77550b0152ecee9d264554061440a90944602a32"
     },
     {
       "path": "app/backend/app/cli/startup_readiness.py",
@@ -503,8 +503,8 @@
     },
     {
       "path": "app/backend/app/services/managed_artifacts.py",
-      "size_bytes": 28449,
-      "sha256": "92d3ac724a3c92ab5c1c0e0bfc8f397ac2b675fb3594c521b4c1473155629885"
+      "size_bytes": 32483,
+      "sha256": "741b151712f33e07783e9e8d0b7924b1aaf4ecf9d01054e1dd0bdd9699fb6a08"
     },
     {
       "path": "app/backend/app/services/managed_downloads.py",
@@ -804,12 +804,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "9718713e022d902402ed9aaa6c99856047f58527e9ab10c9eeb0ff925211bb21"
+      "sha256": "47a76f713be9377136c1faccf41aaf9703c59c05059e2b4a4f90b67ef2a8bcb3"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/0729ce75-0ed7-4ce2-9710-89dfe901129e.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/c90b1c72-4c39-4002-b7ed-7868fda0d096.json",
       "size_bytes": 88,
-      "sha256": "e186439e361b692e9331784e25300fc6b56912a7e4d3b05fe850b898fc665894"
+      "sha256": "880e384b0dc0c321cff928a2ebc22da02dcfdcedcdb1bd4a18ad6344d00325f4"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.CTkUDxYn.css",
@@ -864,7 +864,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "28d62f7df8ac83e29e3f55cc010944bd46a4c3879a7d2d5a636ded77872934bd"
+      "sha256": "868a5f6a1e834a103881edb567cce81ba74fbb7b7e2ffc90a0af3c9f4bd00e3a"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.BkPLWzeU.mjs",
@@ -1379,7 +1379,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 13325,
-      "sha256": "0d28299363c43b963017ae01f237f203d5fd68c6898fcbda42321a8ec0b9112f"
+      "sha256": "89063cfcdd133fef1fab2b5c6a07a2302a789edcdfcacd404e9cb43eedb28b65"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",

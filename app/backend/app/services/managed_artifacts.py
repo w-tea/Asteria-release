@@ -99,6 +99,9 @@ class ManagedArtifactService:
         destination = self._absolute_without_resolving(spec.destination)
         self._validate_managed_write_path(destination)
         self._validate_destination_type(spec, destination)
+        if spec.kind == "zip":
+            self._recover_pending_zip_publish(spec, destination)
+            self._validate_destination_type(spec, destination)
         receipt_path = self.receipt_path_for(spec)
         if self._installed_receipt_matches(spec, destination, receipt_path):
             return ManagedArtifactResult(
@@ -143,6 +146,9 @@ class ManagedArtifactService:
 
     def resume_receipt_path_for(self, spec: ManagedArtifactSpec) -> Path:
         return self.temp_root / "managed-artifacts" / f"{spec.component_id}.resume.json"
+
+    def rollback_receipt_path_for(self, spec: ManagedArtifactSpec) -> Path:
+        return self.temp_root / "managed-artifacts" / f"{spec.component_id}.rollback.json"
 
     def receipt_path_for(self, spec: ManagedArtifactSpec) -> Path:
         destination = self._absolute_without_resolving(spec.destination)
@@ -276,6 +282,10 @@ class ManagedArtifactService:
         except ManagedArtifactError:
             raise
         except OSError as exc:
+            if self._is_path_too_long_error(exc):
+                raise ManagedArtifactPathTooLong(
+                    "managed artifact installation path is too long"
+                ) from exc
             raise ManagedArtifactError(f"managed artifact destination check failed: {exc}") from exc
 
     @staticmethod
@@ -290,6 +300,10 @@ class ManagedArtifactService:
             except FileNotFoundError:
                 continue
             except OSError as exc:
+                if self._is_path_too_long_error(exc):
+                    raise ManagedArtifactPathTooLong(
+                        "managed artifact installation path is too long"
+                    ) from exc
                 raise ManagedArtifactError("managed artifact destination could not be inspected safely") from exc
             attributes = getattr(details, "st_file_attributes", 0)
             is_reparse = bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
@@ -299,6 +313,10 @@ class ManagedArtifactService:
                 try:
                     is_junction = bool(junction_check(component))
                 except OSError as exc:
+                    if self._is_path_too_long_error(exc):
+                        raise ManagedArtifactPathTooLong(
+                            "managed artifact installation path is too long"
+                        ) from exc
                     raise ManagedArtifactError("managed artifact destination could not be inspected safely") from exc
             if stat.S_ISLNK(details.st_mode) or is_junction or is_reparse:
                 raise ManagedArtifactError(
@@ -352,6 +370,7 @@ class ManagedArtifactService:
         publish_root = self._create_publish_workspace()
         stage = publish_root / "s"
         backup = publish_root / "b"
+        rollback_receipt_path = self.rollback_receipt_path_for(spec)
         preserve_publish_root = False
         self._require_same_volume(part_path, stage)
         try:
@@ -360,6 +379,10 @@ class ManagedArtifactService:
             self._validate_managed_write_path(backup)
             self._extract_zip(part_path, stage, strip_single_root=spec.strip_single_root)
             self._write_json_atomic(stage / ".asteria-managed.json", receipt)
+            self._write_json_atomic(
+                rollback_receipt_path,
+                self._rollback_receipt(spec, publish_root.name),
+            )
             self._validate_managed_write_path(destination)
             if self._path_exists(destination):
                 self._validate_managed_write_path(destination)
@@ -368,6 +391,7 @@ class ManagedArtifactService:
             self._validate_managed_write_path(destination)
             self._validate_managed_write_path(stage)
             os.replace(stage, destination)
+            self._remove_file_safely(rollback_receipt_path)
             self._remove_path_safely(backup)
         except (ManagedArtifactError, OSError, zipfile.BadZipFile) as exc:
             self._remove_path_safely(stage)
@@ -376,6 +400,7 @@ class ManagedArtifactService:
                 raise ManagedArtifactRollbackIncomplete(
                     "managed artifact rollback is incomplete; previous component backup was preserved"
                 ) from exc
+            self._remove_file_safely(rollback_receipt_path)
             self._remove_path_safely(backup)
             if isinstance(exc, ManagedArtifactError):
                 self._remove_file_safely(part_path)
@@ -400,6 +425,51 @@ class ManagedArtifactService:
         except (ManagedArtifactError, OSError):
             return False
         return True
+
+    def _recover_pending_zip_publish(self, spec: ManagedArtifactSpec, destination: Path) -> None:
+        rollback_receipt_path = self.rollback_receipt_path_for(spec)
+        if not self._path_is_file(rollback_receipt_path):
+            return
+        self._validate_managed_write_path(rollback_receipt_path)
+        state = self._read_json(rollback_receipt_path)
+        workspace_name = state.get("workspace") if isinstance(state, dict) else None
+        if (
+            not isinstance(workspace_name, str)
+            or re.fullmatch(r"[A-Za-z0-9._-]{1,128}", workspace_name) is None
+            or state != self._rollback_receipt(spec, workspace_name)
+        ):
+            raise ManagedArtifactRollbackIncomplete(
+                "managed artifact rollback state is invalid; previous component backup was preserved"
+            )
+        publish_root = self.temp_root / workspace_name
+        if publish_root.parent != self.temp_root:
+            raise ManagedArtifactRollbackIncomplete(
+                "managed artifact rollback state is invalid; previous component backup was preserved"
+            )
+        self._validate_managed_write_path(publish_root)
+        backup = publish_root / "b"
+        if not self._path_exists(backup):
+            self._remove_path_safely(publish_root)
+            self._remove_file_safely(rollback_receipt_path)
+            return
+        if self._path_exists(destination):
+            if self._installed_receipt_matches(
+                spec,
+                destination,
+                destination / ".asteria-managed.json",
+            ):
+                self._remove_path_safely(publish_root)
+                self._remove_file_safely(rollback_receipt_path)
+                return
+            raise ManagedArtifactRollbackIncomplete(
+                "managed artifact rollback is incomplete; previous component backup was preserved"
+            )
+        if not self._restore_zip_backup(backup, destination):
+            raise ManagedArtifactRollbackIncomplete(
+                "managed artifact rollback is incomplete; previous component backup was preserved"
+            )
+        self._remove_path_safely(publish_root)
+        self._remove_file_safely(rollback_receipt_path)
 
     def _create_publish_workspace(self) -> Path:
         self._validate_managed_write_path(self.temp_root)
@@ -537,6 +607,17 @@ class ManagedArtifactService:
             "source_url": spec.source_url,
             "expected_size": spec.expected_size,
             "checksum_sha256": spec.checksum_sha256,
+        }
+
+    @staticmethod
+    def _rollback_receipt(spec: ManagedArtifactSpec, workspace_name: str) -> dict[str, object]:
+        return {
+            "state_version": 1,
+            "component_id": spec.component_id,
+            "manifest_version": spec.manifest_version,
+            "expected_size": spec.expected_size,
+            "checksum_sha256": spec.checksum_sha256,
+            "workspace": workspace_name,
         }
 
     @staticmethod
