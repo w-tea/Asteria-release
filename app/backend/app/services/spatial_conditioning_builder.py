@@ -4,6 +4,7 @@ import json
 from collections.abc import Sequence
 from typing import Literal
 
+from app.schemas.prompt_input import join_prompt_contract_fragments
 from app.schemas.spatial_prompt_runtime import (
     SpatialConditioningBundle,
     SpatialMaskBundle,
@@ -11,6 +12,7 @@ from app.schemas.spatial_prompt_runtime import (
     SpatialPromptPlan,
     SpatialStagePromptPlan,
     canonical_runtime_sha256,
+    runtime_text_sha256,
 )
 
 
@@ -107,8 +109,54 @@ def build_spatial_conditioning_bundle(
     if encoder_contract is None:
         raise SpatialConditioningBuilderError("spatial_conditioning_encoder_invalid")
     required_encoders, adapter_kind = encoder_contract
+    fragment_payload = {
+        "schema_version": "asteria.spatial-fragments.v6",
+        "global_fragment": {
+            "fragment_id": stage_plan.global_fragment.fragment_id,
+            "text": stage_plan.global_fragment.expanded_prompt,
+        },
+        "target_fragments": [
+            {
+                "fragment_id": item.fragment_id,
+                "target_id": item.target_id,
+                "text": item.expanded_prompt,
+            }
+            for item in stage_plan.target_fragments
+        ],
+    }
+    if stage_plan.scheduled_bindings:
+        fragment_by_target = {
+            item.target_id: item for item in stage_plan.target_fragments
+        }
+        fragment_payload["schedules"] = [
+            {
+                "start_percent": scheduled.start_percent,
+                "end_percent": scheduled.end_percent,
+                "global_fragment": {
+                    "fragment_id": stage_plan.global_fragment.fragment_id,
+                    "text": join_prompt_contract_fragments(
+                        scheduled.full_text[start:end]
+                        for start, end in scheduled.global_character_ranges
+                    ),
+                },
+                "target_fragments": [
+                    {
+                        "fragment_id": fragment_by_target[binding.target_id].fragment_id,
+                        "target_id": binding.target_id,
+                        "text": scheduled.full_text[binding.start : binding.end],
+                    }
+                    for binding in scheduled.character_bindings
+                ],
+            }
+            for scheduled in stage_plan.scheduled_bindings
+        ]
+    fragments_json = json.dumps(
+        fragment_payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
     payload = {
-        "schema_version": "asteria.spatial-conditioning-bundle.v2",
+        "schema_version": "asteria.spatial-conditioning-bundle.v3",
         "stage": stage,
         "encoder_id": encoder_id,
         "profile_receipt_sha256": profile_receipt.receipt_sha256,
@@ -128,6 +176,8 @@ def build_spatial_conditioning_bundle(
         ],
         "required_encoders": list(required_encoders),
         "adapter_kind": adapter_kind,
+        "fragments_json": fragments_json,
+        "fragments_sha256": runtime_text_sha256(fragments_json),
         "step_start_percent": 0.0,
         "step_end_percent": 1.0,
     }

@@ -1,97 +1,240 @@
-schema_version: asteria.spatial-model-profiles.v3
+schema_version: asteria.spatial-model-profiles.v5
 profiles:
-  - profile_id: sdxl.guidance.v3
-    revision: "3"
+  - profile_id: sdxl.boundary.v5
+    revision: "9-experimental"
     model_family: sdxl
     architectures: [sdxl]
     variants: [sdxl]
     encoder_kinds: [clip]
+    prediction_types: [eps]
     verified_structure_ids: [sdxl_unet_v1]
     layout_fingerprints: [69bf36b3dd32fcdf15f04b43e9654d862a88c6c2321f9b4915c5f43f03816db9]
     diffusion_block_counts: [24]
     automatic_status: supported
     manual_selectable: true
-    guidance: &sdxl_guidance
-      start_percent: 0.0
-      end_percent: 0.34
-      iterations: 5
-      step_size: 0.04
-      attention_prior_scale: 0.8
-      attention_layers: ["block:middle:0", "block:output:0"]
-      self_relation_layers: ["block:middle:0", "block:output:0"]
-      global_retention_floor: 0.70
-      loss_weights:
-        position: 1.0
-        size: 0.25
-        separation: 0.50
-        presence: 0.50
-        global_retention: 0.75
-  - profile_id: illustrious.guidance.v3
-    revision: "3"
+    routing: &sdxl_boundary
+      cross_start_percent: 0.0
+      cross_end_percent: 0.5
+      self_start_percent: 0.0
+      self_end_percent: 0.0
+      cross_penalty: 3.0
+      cross_penalty_cap: 3.0
+      self_penalty: 0.0
+      self_penalty_cap: 0.0
+      core_threshold: 0.58
+      ownership_margin: 0.12
+      cross_attention_layers:
+        - block:input:7
+        - block:input:8
+        - block:middle:0
+        - block:output:0
+        - block:output:1
+        - block:output:2
+      self_attention_layers: []
+      self_attention_token_counts: []
+      self_attention_token_limit: 4096
+      hires_mode: base_only
+  - profile_id: sdxl.v_prediction.boundary.v5
+    revision: "9-experimental"
+    model_family: sdxl
+    architectures: [sdxl]
+    variants: [sdxl]
+    encoder_kinds: [clip]
+    prediction_types: [v_prediction, v_prediction_edm]
+    verified_structure_ids: [sdxl_unet_v1]
+    layout_fingerprints: [69bf36b3dd32fcdf15f04b43e9654d862a88c6c2321f9b4915c5f43f03816db9]
+    diffusion_block_counts: [24]
+    automatic_status: supported
+    manual_selectable: true
+    routing: *sdxl_boundary
+  - profile_id: illustrious.boundary.v5
+    revision: "9-experimental"
     model_family: illustrious
     architectures: [sdxl]
     variants: [illustrious]
     encoder_kinds: [clip]
+    prediction_types: [eps]
     verified_structure_ids: [sdxl_unet_v1]
     layout_fingerprints: [69bf36b3dd32fcdf15f04b43e9654d862a88c6c2321f9b4915c5f43f03816db9]
     diffusion_block_counts: [24]
     automatic_status: supported
     manual_selectable: true
-    guidance: *sdxl_guidance
-  - profile_id: anima.28.guidance.v3
-    revision: "3"
+    routing: *sdxl_boundary
+  - profile_id: anima.28.boundary.v5
+    revision: "9-experimental"
     model_family: anima
     architectures: [anima]
     variants: [anima_base_28]
     encoder_kinds: [native_qwen]
+    prediction_types: [native]
     verified_structure_ids: [anima_base_28]
     layout_fingerprints: [f8d20d9fc69b04dc4b137a51727498143cc8304748245a48e94f3998d850ddd0]
     diffusion_block_counts: [28]
     automatic_status: supported
     manual_selectable: true
-    guidance: &anima_guidance
-      start_percent: 0.0
-      end_percent: 0.32
-      iterations: 1
-      step_size: 0.025
-      attention_prior_scale: 0.6
-      attention_layers: ["block_index:7"]
-      self_relation_layers: ["block_index:7"]
-      global_retention_floor: 0.70
-      loss_weights:
-        position: 1.0
-        size: 0.20
-        separation: 0.55
-        presence: 0.55
-        global_retention: 0.75
-  - profile_id: anima.40.guidance.v3
-    revision: "3"
+    routing: &anima_28_boundary
+      cross_start_percent: 0.0
+      cross_end_percent: 0.5
+      self_start_percent: 0.0
+      self_end_percent: 0.0
+      cross_penalty: 3.0
+      cross_penalty_cap: 3.0
+      self_penalty: 0.0
+      self_penalty_cap: 0.0
+      core_threshold: 0.58
+      ownership_margin: 0.12
+      cross_attention_layers:
+        - block_index:0
+        - block_index:1
+        - block_index:2
+        - block_index:3
+        - block_index:4
+        - block_index:5
+        - block_index:6
+        - block_index:7
+        - block_index:8
+        - block_index:9
+        - block_index:10
+        - block_index:11
+        - block_index:12
+        - block_index:13
+        - block_index:14
+        - block_index:15
+        - block_index:16
+        - block_index:17
+        - block_index:18
+        - block_index:19
+        - block_index:20
+        - block_index:21
+        - block_index:22
+        - block_index:23
+        - block_index:24
+        - block_index:25
+        - block_index:26
+        - block_index:27
+      self_attention_layers: []
+      self_attention_token_counts: []
+      self_attention_token_limit: 4096
+      hires_mode: base_only
+  - profile_id: anima.40.boundary.v5
+    revision: "9-experimental"
     model_family: anima
     architectures: [anima]
     variants: [anima_2_9b_40]
     encoder_kinds: [native_qwen]
+    prediction_types: [native]
     verified_structure_ids: [anima_2_9b_40]
     layout_fingerprints: [e5191b87d9cfeeff7046de3cb2e9eda335f2523215ae06e0d20476ea3f458518]
     diffusion_block_counts: [40]
     automatic_status: supported
     manual_selectable: true
-    guidance:
-      <<: *anima_guidance
-      attention_layers: ["block_index:10"]
-      self_relation_layers: ["block_index:10"]
-  - profile_id: anima.52.guidance.experimental.v3
-    revision: "3"
+    routing:
+      <<: *anima_28_boundary
+      cross_attention_layers:
+        - block_index:0
+        - block_index:1
+        - block_index:2
+        - block_index:3
+        - block_index:4
+        - block_index:5
+        - block_index:6
+        - block_index:7
+        - block_index:8
+        - block_index:9
+        - block_index:10
+        - block_index:11
+        - block_index:12
+        - block_index:13
+        - block_index:14
+        - block_index:15
+        - block_index:16
+        - block_index:17
+        - block_index:18
+        - block_index:19
+        - block_index:20
+        - block_index:21
+        - block_index:22
+        - block_index:23
+        - block_index:24
+        - block_index:25
+        - block_index:26
+        - block_index:27
+        - block_index:28
+        - block_index:29
+        - block_index:30
+        - block_index:31
+        - block_index:32
+        - block_index:33
+        - block_index:34
+        - block_index:35
+        - block_index:36
+        - block_index:37
+        - block_index:38
+        - block_index:39
+  - profile_id: anima.52.boundary.experimental.v5
+    revision: "9-experimental"
     model_family: anima
     architectures: [anima]
     variants: [anima_3_8b_52]
     encoder_kinds: [qwen35_progressive]
+    prediction_types: [native]
     verified_structure_ids: [anima_3_8b_52]
     layout_fingerprints: [2ad87dae9a23485c1ce5b5fa51a79e5d2649cb63cb115101afeeb11c27a40e8c]
     diffusion_block_counts: [52]
     automatic_status: supported
     manual_selectable: true
-    guidance:
-      <<: *anima_guidance
-      step_size: 0.025
-      attention_layers: ["block_index:13"]
-      self_relation_layers: ["block_index:13"]
+    routing:
+      <<: *anima_28_boundary
+      cross_attention_layers:
+        - block_index:0
+        - block_index:1
+        - block_index:2
+        - block_index:3
+        - block_index:4
+        - block_index:5
+        - block_index:6
+        - block_index:7
+        - block_index:8
+        - block_index:9
+        - block_index:10
+        - block_index:11
+        - block_index:12
+        - block_index:13
+        - block_index:14
+        - block_index:15
+        - block_index:16
+        - block_index:17
+        - block_index:18
+        - block_index:19
+        - block_index:20
+        - block_index:21
+        - block_index:22
+        - block_index:23
+        - block_index:24
+        - block_index:25
+        - block_index:26
+        - block_index:27
+        - block_index:28
+        - block_index:29
+        - block_index:30
+        - block_index:31
+        - block_index:32
+        - block_index:33
+        - block_index:34
+        - block_index:35
+        - block_index:36
+        - block_index:37
+        - block_index:38
+        - block_index:39
+        - block_index:40
+        - block_index:41
+        - block_index:42
+        - block_index:43
+        - block_index:44
+        - block_index:45
+        - block_index:46
+        - block_index:47
+        - block_index:48
+        - block_index:49
+        - block_index:50
+        - block_index:51

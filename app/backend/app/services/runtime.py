@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import random
 import re
 import struct
@@ -72,6 +73,7 @@ from app.services.spatial_prompt_mapping import (
     SpatialPromptMappingError,
     append_spatial_execution_receipt,
     append_spatial_prompt_mapping,
+    spatial_runtime_mask_receipt_sha256,
 )
 from app.services.spatial_generation_context import (
     SpatialGenerationContextError,
@@ -87,6 +89,14 @@ class RuntimeErrorResponse(Exception):
 
 class RuntimeCancellationConfirmed(RuntimeErrorResponse):
     pass
+
+
+def _valid_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def _path_exists_safely(path: Path) -> bool:
@@ -466,6 +476,13 @@ class ComfyTxt2ImgWorkflowBuilder:
         self.external_roots = external_roots
 
     def build(self, request: dict) -> dict:
+        if isinstance(request.get("_spatial_runtime_context"), dict):
+            settings = request.get("settings")
+            if not isinstance(settings, dict):
+                raise RuntimeErrorResponse("Generation settings are invalid.")
+            seed = settings.get("seed", -1)
+            if seed is None or int(seed) < 0:
+                settings["seed"] = random.randint(0, 2**32 - 1)
         profile = request.get("profile")
         if profile == "sdxl":
             return self._build_sdxl(request)
@@ -822,27 +839,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 settings,
                 mapping,
             )
-        if base_execution_state_ref is not None:
-            workflow[sample_node] = self._spatial_guidance_sampler_node(
-                settings,
-                model_ref,
-                positive_ref,
-                negative_ref,
-                latent_ref,
-                base_execution_state_ref,
-                mapping,
-                noise_ref=seed_resize_noise_ref,
-                start_at_step=0,
-                end_at_step=(
-                    self._refiner_switch_step(settings, int(settings["steps"]))
-                    if should_refine_base_stage
-                    else int(settings["steps"])
-                ),
-                add_noise=True,
-                return_with_leftover_noise=should_refine_base_stage,
-            )
-            base_execution_state_ref = [sample_node, 1]
-        elif seed_resize_noise_ref is not None and seed_resize_seed is not None:
+        if seed_resize_noise_ref is not None and seed_resize_seed is not None:
             workflow[sample_node] = self._ksampler_advanced_inspire_node(
                 settings,
                 model_ref,
@@ -1079,28 +1076,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             sample_node = str(next_id)
             next_id += 1
             use_inspire_hires = bool(settings.get("use_inspire_ksampler", True))
-            if hires_execution_state_ref is not None:
-                workflow[sample_node] = self._spatial_guidance_sampler_node(
-                    hires_stage_settings,
-                    hires_model_ref,
-                    positive_ref,
-                    negative_ref,
-                    hires_latent_ref,
-                    hires_execution_state_ref,
-                    mapping,
-                    start_at_step=0,
-                    end_at_step=(
-                        self._refiner_switch_step(
-                            settings, int(hires_stage_settings["steps"])
-                        )
-                        if refiner_checkpoint
-                        else int(hires_stage_settings["steps"])
-                    ),
-                    add_noise=True,
-                    return_with_leftover_noise=bool(refiner_checkpoint),
-                )
-                hires_execution_state_ref = [sample_node, 1]
-            elif refiner_checkpoint:
+            if refiner_checkpoint:
                 workflow[sample_node] = self._ksampler_advanced_node(
                     hires_stage_settings,
                     hires_model_ref,
@@ -1231,34 +1207,18 @@ class ComfyTxt2ImgWorkflowBuilder:
                     refiner_execution_state_ref,
                     next_id,
                 ) = spatial_refiner
-            if refiner_execution_state_ref is not None:
-                workflow[refiner_sample_node] = self._spatial_guidance_sampler_node(
-                    refiner_stage_settings,
-                    refiner_model_ref,
-                    refiner_positive_ref,
-                    refiner_negative_ref,
-                    [sample_node, 0],
-                    refiner_execution_state_ref,
-                    mapping,
-                    start_at_step=self._refiner_switch_step(settings, refiner_steps),
-                    end_at_step=refiner_steps,
-                    add_noise=False,
-                    return_with_leftover_noise=False,
-                )
-                refiner_execution_state_ref = [refiner_sample_node, 1]
-            else:
-                workflow[refiner_sample_node] = self._ksampler_advanced_node(
-                    refiner_stage_settings,
-                    refiner_model_ref,
-                    refiner_positive_ref,
-                    refiner_negative_ref,
-                    [sample_node, 0],
-                    mapping,
-                    start_at_step=self._refiner_switch_step(settings, refiner_steps),
-                    end_at_step=refiner_steps,
-                    add_noise=False,
-                    return_with_leftover_noise=False,
-                )
+            workflow[refiner_sample_node] = self._ksampler_advanced_node(
+                refiner_stage_settings,
+                refiner_model_ref,
+                refiner_positive_ref,
+                refiner_negative_ref,
+                [sample_node, 0],
+                mapping,
+                start_at_step=self._refiner_switch_step(settings, refiner_steps),
+                end_at_step=refiner_steps,
+                add_noise=False,
+                return_with_leftover_noise=False,
+            )
             if refiner_execution_state_ref is not None:
                 next_id = append_spatial_execution_receipt(
                     workflow=workflow,
@@ -2293,36 +2253,18 @@ class ComfyTxt2ImgWorkflowBuilder:
         hires_execution_state_ref: list[str | int] | None = None,
     ) -> dict:
         next_id = max(int(node_id) for node_id in workflow) + 1
-        if base_execution_state_ref is not None:
-            if negative_ref is None or scheduler_kind != "basic":
-                raise RuntimeErrorResponse(
-                    "Spatial prompt guidance requires a standard CFG sampling stage."
-                )
-            sample_node = str(next_id)
-            workflow[sample_node] = self._spatial_guidance_sampler_node(
-                settings,
-                model_ref,
-                conditioning_ref,
-                negative_ref,
-                latent_ref,
-                base_execution_state_ref,
-                mapping,
-            )
-            base_execution_state_ref = [sample_node, 1]
-            next_id += 1
-        else:
-            sample_node = self._append_custom_sample(
-                workflow,
-                next_id,
-                settings,
-                model_ref,
-                conditioning_ref,
-                latent_ref,
-                mapping,
-                negative_ref=negative_ref,
-                scheduler_kind=scheduler_kind,
-            )
-            next_id += self._custom_sample_node_count(settings, scheduler_kind)
+        sample_node = self._append_custom_sample(
+            workflow,
+            next_id,
+            settings,
+            model_ref,
+            conditioning_ref,
+            latent_ref,
+            mapping,
+            negative_ref=negative_ref,
+            scheduler_kind=scheduler_kind,
+        )
+        next_id += self._custom_sample_node_count(settings, scheduler_kind)
         if base_execution_state_ref is not None:
             next_id = append_spatial_execution_receipt(
                 workflow=workflow,
@@ -2402,39 +2344,21 @@ class ComfyTxt2ImgWorkflowBuilder:
                         else {}
                     ),
                 }
-            if hires_execution_state_ref is not None:
-                if (hires_negative_ref or negative_ref) is None or scheduler_kind != "basic":
-                    raise RuntimeErrorResponse(
-                        "Spatial prompt guidance requires a standard CFG Hires stage."
-                    )
-                sample_node = str(next_id)
-                workflow[sample_node] = self._spatial_guidance_sampler_node(
-                    hires_sample_settings,
-                    hires_model_ref or model_ref,
-                    hires_conditioning_ref or conditioning_ref,
-                    hires_negative_ref or negative_ref,
-                    hires_latent_ref,
-                    hires_execution_state_ref,
-                    mapping,
-                )
-                hires_execution_state_ref = [sample_node, 1]
-                next_id += 1
-            else:
-                sample_node = self._append_custom_sample(
-                    workflow,
-                    next_id,
-                    hires_sample_settings,
-                    hires_model_ref or model_ref,
-                    hires_conditioning_ref or conditioning_ref,
-                    hires_latent_ref,
-                    mapping,
-                    negative_ref=hires_negative_ref or negative_ref,
-                    scheduler_kind=scheduler_kind,
-                )
-                next_id += self._custom_sample_node_count(
-                    hires_sample_settings,
-                    scheduler_kind,
-                )
+            sample_node = self._append_custom_sample(
+                workflow,
+                next_id,
+                hires_sample_settings,
+                hires_model_ref or model_ref,
+                hires_conditioning_ref or conditioning_ref,
+                hires_latent_ref,
+                mapping,
+                negative_ref=hires_negative_ref or negative_ref,
+                scheduler_kind=scheduler_kind,
+            )
+            next_id += self._custom_sample_node_count(
+                hires_sample_settings,
+                scheduler_kind,
+            )
             if hires_execution_state_ref is not None:
                 next_id = append_spatial_execution_receipt(
                     workflow=workflow,
@@ -2591,61 +2515,6 @@ class ComfyTxt2ImgWorkflowBuilder:
                 else mapping.class_type("ksampler", "KSampler")
                 if mapping
                 else "KSampler"
-            ),
-            "inputs": inputs,
-        }
-
-    def _spatial_guidance_sampler_node(
-        self,
-        settings: dict,
-        model_ref: list[str | int],
-        positive_ref: list[str | int],
-        negative_ref: list[str | int],
-        latent_ref: list[str | int],
-        guidance_state_ref: list[str | int],
-        mapping: WorkflowMapping,
-        *,
-        noise_ref: list[str | int] | None = None,
-        start_at_step: int = 0,
-        end_at_step: int | None = None,
-        add_noise: bool = True,
-        return_with_leftover_noise: bool = False,
-    ) -> dict:
-        sampler_name = self._sampler_name(settings.get("sampler", "Euler a"))
-        if sampler_name not in {"euler_ancestral", "dpmpp_2m", "er_sde"}:
-            raise RuntimeErrorResponse(
-                "Spatial prompt guidance currently supports Euler a, DPM++ 2M, and ER SDE."
-            )
-        seed = settings.get("seed", -1)
-        if seed is None or seed < 0:
-            seed = random.randint(0, 2**32 - 1)
-        inputs = {
-            "model": model_ref,
-            "seed": seed,
-            "steps": settings["steps"],
-            "cfg": settings["cfg_scale"],
-            "sampler_name": sampler_name,
-            "scheduler": self._scheduler_name(
-                settings.get("scheduler", "Automatic")
-            ),
-            "positive": positive_ref,
-            "negative": negative_ref,
-            "latent_image": latent_ref,
-            "denoise": settings.get("denoise", 1.0),
-            "guidance_state": guidance_state_ref,
-            "contract_version": ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
-            "add_noise": "enable" if add_noise else "disable",
-            "start_at_step": start_at_step,
-            "end_at_step": int(end_at_step or settings["steps"]),
-            "return_with_leftover_noise": (
-                "enable" if return_with_leftover_noise else "disable"
-            ),
-        }
-        if noise_ref is not None:
-            inputs["noise_opt"] = noise_ref
-        return {
-            "class_type": mapping.class_type(
-                "spatial_guidance_sampler", "AsteriaSpatialGuidanceSampler"
             ),
             "inputs": inputs,
         }
@@ -2981,6 +2850,22 @@ class ComfyTxt2ImgWorkflowBuilder:
         return mask_refs, next_id
 
     @staticmethod
+    def _record_spatial_fragments_sha256(
+        request: dict,
+        *,
+        stage: str,
+        fragments_sha256: str,
+    ) -> None:
+        context = request.get("_spatial_runtime_context")
+        if not isinstance(context, dict):
+            raise RuntimeErrorResponse("Spatial prompt runtime context is invalid.")
+        stages = context.get("stages")
+        stage_payload = stages.get(stage) if isinstance(stages, dict) else None
+        if not isinstance(stage_payload, dict):
+            raise RuntimeErrorResponse("Spatial prompt runtime stage is invalid.")
+        stage_payload["fragments_sha256"] = fragments_sha256
+
+    @staticmethod
     def _spatial_combined_prompt(global_prompt: str, target_prompt: str) -> str:
         return join_prompt_contract_fragments((global_prompt, target_prompt))
 
@@ -3009,6 +2894,11 @@ class ComfyTxt2ImgWorkflowBuilder:
     ] | None:
         payload = self._spatial_stage_payload(request, stage)
         if payload is None:
+            return None
+        # V5 establishes composition during the base denoise only. Hires and
+        # refiner stages keep the full prompt, but must not register another
+        # Cross/Self boundary router at the enlarged latent resolution.
+        if stage != "base":
             return None
         prompt_plan, mask_bundle, profile_receipt, profile_json, mask_paths = payload
         if mask_bundle.width != width or mask_bundle.height != height:
@@ -3049,6 +2939,15 @@ class ComfyTxt2ImgWorkflowBuilder:
                 mask_bundle=mask_bundle,
                 mask_refs=mask_refs,
                 profile_json=profile_json,
+                initial_noise_seed=int(stage_settings["seed"]),
+                routing_geometry=request["_spatial_runtime_context"]["stages"][stage].get("routing_geometry"),
+                width=width,
+                height=height,
+            )
+            self._record_spatial_fragments_sha256(
+                request,
+                stage=stage,
+                fragments_sha256=mapped.fragments_sha256,
             )
         except (SpatialConditioningBuilderError, SpatialPromptMappingError) as error:
             raise RuntimeErrorResponse(
@@ -3171,7 +3070,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         list[str | int],
         list[str | int],
         list[str | int],
-        list[str | int],
+        list[str | int] | None,
         int,
     ] | None:
         payload = self._spatial_stage_payload(request, stage)
@@ -3254,6 +3153,11 @@ class ComfyTxt2ImgWorkflowBuilder:
                 },
             }
             global_ref = [combine_node, 0]
+        # As with SDXL, the Anima V5 router is a base-stage composition aid.
+        # A later Hires/Topaz pass receives the complete conditioning but no
+        # second boundary mask, which bounds both memory and runtime overhead.
+        if stage != "base":
+            return model_ref, global_ref, negative_ref, None, next_id
         mask_refs, next_id = self._append_spatial_mask_loaders(
             workflow=workflow,
             next_id=next_id,
@@ -3275,7 +3179,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                         "conditioning", "TextEncodeQwenImageEdit"
                     )
                 ),
-                text_encoder_ref=(qwen35_ref if is_anima_3_8b else clip_ref),
+                text_encoder_ref=clip_ref,
                 full_positive_conditioning_ref=global_ref,
                 negative_conditioning_ref=negative_ref,
             )
@@ -3288,6 +3192,22 @@ class ComfyTxt2ImgWorkflowBuilder:
                 mask_bundle=mask_bundle,
                 mask_refs=mask_refs,
                 profile_json=profile_json,
+                initial_noise_seed=int(request["settings"]["seed"]),
+                routing_geometry=request["_spatial_runtime_context"]["stages"][stage].get("routing_geometry"),
+                width=width,
+                height=height,
+                secondary_text_encoder_ref=(qwen35_ref if is_anima_3_8b else None),
+                progressive_adapter_name=(
+                    progressive_adapter if is_anima_3_8b else None
+                ),
+                progressive_adapter_strength=float(
+                    request["settings"].get("anima_qwen35_adapter_strength", 1.0)
+                ),
+            )
+            self._record_spatial_fragments_sha256(
+                request,
+                stage=stage,
+                fragments_sha256=mapped.fragments_sha256,
             )
         except (SpatialConditioningBuilderError, SpatialPromptMappingError) as error:
             raise RuntimeErrorResponse(
@@ -4172,26 +4092,45 @@ class ComfyGenerationRuntime:
                     prompt_id,
                 )
                 if iteration_request.get("_spatial_runtime_context") is not None:
-                    if not spatial_receipts:
-                        raise RuntimeErrorResponse(
-                            "Spatial prompt execution receipt is missing."
+                    spatial_stage = str(
+                        iteration_request.get("_spatial_runtime_stage") or "base"
+                    )
+                    if spatial_stage == "base":
+                        if not spatial_receipts:
+                            raise RuntimeErrorResponse(
+                                "Spatial prompt execution receipt is missing."
+                            )
+                        self._validate_spatial_receipts_against_context(
+                            iteration_request["_spatial_runtime_context"],
+                            spatial_receipts,
                         )
-                    recorded_receipts = request.setdefault("settings", {}).setdefault(
-                        "spatial_execution_receipts",
-                        [],
-                    )
-                    recorded_receipts.extend(
-                        {
-                            **receipt,
-                            "runtime_job_id": prompt_id,
-                            "batch_index": batch_index,
-                            "seed": seed,
-                        }
-                        for receipt in spatial_receipts
-                    )
-                    settings["spatial_execution_receipts"] = deepcopy(
-                        recorded_receipts
-                    )
+                        if any(
+                            receipt.get("initial_noise_seed") != seed
+                            for receipt in spatial_receipts
+                        ):
+                            raise RuntimeErrorResponse(
+                                "Spatial prompt execution seed does not match the sampler seed."
+                            )
+                        recorded_receipts = request.setdefault("settings", {}).setdefault(
+                            "spatial_execution_receipts",
+                            [],
+                        )
+                        recorded_receipts.extend(
+                            {
+                                **receipt,
+                                "runtime_job_id": prompt_id,
+                                "batch_index": batch_index,
+                                "seed": seed,
+                            }
+                            for receipt in spatial_receipts
+                        )
+                        settings["spatial_execution_receipts"] = deepcopy(
+                            recorded_receipts
+                        )
+                    elif spatial_receipts:
+                        raise RuntimeErrorResponse(
+                            "Spatial prompt execution receipt is unexpected outside the base stage."
+                        )
                 images = self._images_from_history(history, prompt_id)
                 primary_node_ids = {
                     str(node_id) for node_id in settings.get("primary_output_node_ids", [])
@@ -4456,6 +4395,12 @@ class ComfyGenerationRuntime:
         self._prepare_spatial_runtime_masks(first_request)
         first_result = self._generate(first_request, output_dir)
         self._merge_builder_runtime_settings(request, first_request)
+        # Topaz uses a copied request; retain the base execution evidence in the
+        # owning request so history and final-image sidecars receive it too.
+        if first_settings.get("spatial_execution_receipts"):
+            settings["spatial_execution_receipts"] = deepcopy(
+                first_settings["spatial_execution_receipts"]
+            )
         first_paths = [Path(path) for path in first_result["output_paths"]]
         self._raise_if_generation_cancelled(request, first_paths)
         generated_seeds = list(first_result.get("generated_seeds", []))
@@ -4991,6 +4936,72 @@ class ComfyGenerationRuntime:
         return sorted(images, key=lambda image: "first_pass" in str(image.get("filename", "")).lower())
 
     @staticmethod
+    def _validate_spatial_receipts_against_context(
+        context: object,
+        receipts: list[dict],
+    ) -> None:
+        try:
+            if (
+                not isinstance(context, dict)
+                or context.get("schema_version")
+                != "asteria.spatial-workflow-context.v1"
+                or len(receipts) != 1
+            ):
+                raise ValueError("context")
+            stages = context["stages"]
+            stage = stages["base"]
+            prompt_stage = context["prompt_plan"]["base"]
+            profile_receipt = stage["profile_receipt"]
+            profile_payload = json.loads(stage["profile_json"])
+            mask_bundle = stage["mask_bundle"]
+            ordered_masks = sorted(
+                mask_bundle["targets"],
+                key=lambda item: int(item["depth_index"]),
+            )
+            expected_target_ids = [item["target_id"] for item in ordered_masks]
+            expected_field_hashes = [item["mask_sha256"] for item in ordered_masks]
+            scheduled = prompt_stage.get("scheduled_bindings") or []
+            expected_full_text_hash: str | list[str] = (
+                [item["full_text_sha256"] for item in scheduled]
+                if scheduled
+                else prompt_stage["full_text_sha256"]
+            )
+            receipt = receipts[0]
+            matches = (
+                receipt.get("stage") == "base"
+                and receipt.get("target_ids") == expected_target_ids
+                and profile_receipt.get("target_ids") == expected_target_ids
+                and receipt.get("profile_id") == profile_receipt.get("profile_id")
+                and receipt.get("profile_revision")
+                == profile_receipt.get("profile_revision")
+                and receipt.get("profile_receipt_sha256")
+                == profile_receipt.get("receipt_sha256")
+                and receipt.get("profile_payload_sha256")
+                == profile_payload.get("profile_payload_sha256")
+                and receipt.get("mask_bundle_sha256")
+                == spatial_runtime_mask_receipt_sha256(mask_bundle)
+                and receipt.get("field_sha256") == expected_field_hashes
+                and (
+                    receipt.get("fragments_sha256")
+                    == stage.get("fragments_sha256")
+                    if receipt.get("schema_version")
+                    == "asteria.spatial-node-execution.v6"
+                    else receipt.get("full_text_sha256")
+                    == expected_full_text_hash
+                )
+            )
+            if receipt.get("schema_version") == "asteria.spatial-node-execution.v9":
+                matches = matches and receipt.get("geometry_sha256") == canonical_runtime_sha256(stage.get("routing_geometry"))
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+            raise RuntimeErrorResponse(
+                "Spatial prompt execution receipt does not match the submitted context."
+            ) from error
+        if not matches:
+            raise RuntimeErrorResponse(
+                "Spatial prompt execution receipt does not match the submitted context."
+            )
+
+    @staticmethod
     def _spatial_receipts_from_history(
         history: dict,
         prompt_id: str,
@@ -5019,6 +5030,848 @@ class ComfyGenerationRuntime:
                     if key != "execution_sha256"
                 }
                 target_ids = payload.get("target_ids")
+                if payload.get("schema_version") == "asteria.spatial-node-execution.v9":
+                    from app.services.spatial_native_receipt import validate_native_spatial_receipt
+                    try:
+                        validate_native_spatial_receipt(payload)
+                    except (KeyError, TypeError, ValueError) as error:
+                        raise RuntimeErrorResponse("Spatial prompt execution receipt is invalid.") from error
+                    receipts.append(payload)
+                    continue
+                if payload.get("schema_version") == "asteria.spatial-node-execution.v6":
+                    runtime = payload.get("runtime")
+                    structure_id = payload.get("verified_structure_id")
+                    expected_block_count = {
+                        "sdxl_unet_v1": 24,
+                        "anima_base_28": 28,
+                        "anima_2_9b_40": 40,
+                        "anima_3_8b_52": 52,
+                    }.get(structure_id)
+                    forbidden_counts = (
+                        "target_latent_count",
+                        "target_noise_prediction_count",
+                        "target_denoised_output_count",
+                        "target_only_attention_forward_count",
+                        "global_only_attention_forward_count",
+                        "spatial_output_blend_count",
+                        "background_substitution_count",
+                        "self_attention_spatial_mask_count",
+                        "hires_self_attention_mask_count",
+                        "negative_token_change_count",
+                        "global_token_block_count",
+                        "query_key_recompute_count",
+                        "extra_model_evaluation_count",
+                        "latent_update_count",
+                        "candidate_search_count",
+                    )
+                    runtime_forbidden_counts = (
+                        "extra_model_evaluation_count",
+                        "target_only_attention_forward_count",
+                        "spatial_output_blend_count",
+                        "latent_update_count",
+                    )
+                    declared_layers = payload.get("cross_attention_layers")
+                    applied_layers = (
+                        runtime.get("cross_attention_layers")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    target_ranges = (
+                        runtime.get("target_context_ranges")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    cross_count = (
+                        runtime.get("cross_attention_mask_count")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    cross_min = runtime.get("cross_mask_min") if isinstance(runtime, dict) else None
+                    cross_max = runtime.get("cross_mask_max") if isinstance(runtime, dict) else None
+                    schedule_min = runtime.get("cross_schedule_min") if isinstance(runtime, dict) else None
+                    schedule_max = runtime.get("cross_schedule_max") if isinstance(runtime, dict) else None
+                    query_counts = runtime.get("cross_query_token_counts") if isinstance(runtime, dict) else None
+                    key_counts = runtime.get("cross_key_token_counts") if isinstance(runtime, dict) else None
+                    latent_shape = payload.get("latent_shape")
+                    registered = payload.get("registered_patches")
+                    isolated_context_length = payload.get("isolated_context_length")
+                    aligned_value_count = (
+                        runtime.get("aligned_value_patch_count")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    router_revision = (
+                        runtime.get("router_revision")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    sdxl_v8 = payload.get("model_family") == "sdxl"
+                    sdxl_v6_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-isolated-conditioning-v6"
+                        and payload.get("adapter_id")
+                        == "sdxl.isolated-conditioning.v6"
+                        and payload.get("routing_mode")
+                        == "isolated_context_cross_attention_mask"
+                        and registered == ["attn2_replace", "attn1_replace"]
+                        and router_revision == "asteria-isolated-conditioning-v6"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                    )
+                    sdxl_v16_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-group-binding-vector-v16"
+                        and payload.get("adapter_id")
+                        == "sdxl.group-binding-vector.v16"
+                        and payload.get("routing_mode")
+                        == "full_prompt_group_binding_sparse_attention"
+                        and registered == ["attn2_replace"]
+                        and router_revision == "asteria-group-binding-vector-v16"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                    )
+                    sdxl_v17_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-attribute-value-binding-v17"
+                        and payload.get("adapter_id")
+                        == "sdxl.attribute-value-binding.v17"
+                        and payload.get("routing_mode")
+                        == "full_prompt_attribute_value_sparse_attention"
+                        and registered == ["attn2_patch", "attn2_replace"]
+                        and router_revision == "asteria-attribute-value-binding-v17"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count > 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                    )
+                    sdxl_v20_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-appended-appearance-v20-research"
+                        and payload.get("adapter_id")
+                        == "sdxl.appended-appearance.v20.research"
+                        and payload.get("routing_mode")
+                        == "single_attention_appended_multilayer_appearance_tokens"
+                        and registered == ["attn2_replace", "attn1_replace"]
+                        and router_revision
+                        == "asteria-appended-appearance-v20-research"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                    )
+                    sparse_grounding = (
+                        runtime.get("sparse_grounding")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    sdxl_v21_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-sparse-gligen-mid-v21-research"
+                        and payload.get("adapter_id")
+                        == "sdxl.sparse-gligen-mid.v21.research"
+                        and payload.get("routing_mode")
+                        == "single_latent_sparse_grounding_with_isolated_cross_attention"
+                        and registered == ["attn2_replace", "middle_patch"]
+                        and router_revision
+                        == "asteria-sparse-gligen-mid-v21-research"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                        and isinstance(sparse_grounding, dict)
+                        and sparse_grounding.get("revision")
+                        == "asteria-sparse-gligen-mid-v21-research"
+                        and sparse_grounding.get("layers")
+                        == (
+                            [f"block:input:7:{index}" for index in range(10)]
+                            + [f"block:input:8:{index}" for index in range(10)]
+                            + [f"block:middle:0:{index}" for index in range(10)]
+                            + [f"block:output:0:{index}" for index in range(10)]
+                            + [f"block:output:1:{index}" for index in range(10)]
+                            + [f"block:output:2:{index}" for index in range(10)]
+                        )
+                        and sparse_grounding.get("fuser_count") == 60
+                        and isinstance(
+                            sparse_grounding.get("layer_call_counts"), dict
+                        )
+                        and set(sparse_grounding["layer_call_counts"])
+                        == set(sparse_grounding["layers"])
+                        and all(
+                            isinstance(value, int)
+                            and not isinstance(value, bool)
+                            and value >= 1
+                            for value in sparse_grounding["layer_call_counts"].values()
+                        )
+                        and isinstance(sparse_grounding.get("call_count"), int)
+                        and not isinstance(sparse_grounding.get("call_count"), bool)
+                        and sparse_grounding["call_count"] >= 1
+                        and isinstance(sparse_grounding.get("query_token_counts"), list)
+                        and bool(sparse_grounding["query_token_counts"])
+                        and all(
+                            isinstance(value, int)
+                            and not isinstance(value, bool)
+                            and 1 <= value <= 1024
+                            for value in sparse_grounding["query_token_counts"]
+                        )
+                        and sparse_grounding.get("target_count") == len(target_ids or [])
+                        and sparse_grounding.get("object_capacity") == 30
+                        and isinstance(sparse_grounding.get("weight_bytes"), int)
+                        and not isinstance(sparse_grounding.get("weight_bytes"), bool)
+                        and sparse_grounding["weight_bytes"] > 0
+                        and all(
+                            isinstance(sparse_grounding.get(name), (int, float))
+                            and not isinstance(sparse_grounding.get(name), bool)
+                            and math.isfinite(float(sparse_grounding[name]))
+                            for name in ("gain", "schedule_min", "schedule_max")
+                        )
+                        and 0.25 <= float(sparse_grounding["gain"]) <= 16.0
+                        and 0.0
+                        < float(sparse_grounding["schedule_min"])
+                        <= float(sparse_grounding["schedule_max"])
+                        <= 1.0
+                        and all(
+                            sparse_grounding.get(name) == 0
+                            for name in runtime_forbidden_counts
+                        )
+                    )
+                    fused_adapter_layers = (
+                        runtime.get("fused_adapter_layers")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    expected_ifadapter_layers = (
+                        [f"block:middle:0:{index}" for index in range(4)]
+                        + [
+                            f"block:output:{block}:{index}"
+                            for block in range(3)
+                            for index in range(4)
+                        ]
+                    )
+                    sdxl_v22_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-faithful-ifadapter-v22-research"
+                        and payload.get("adapter_id")
+                        == "sdxl.faithful-ifadapter.v22.research"
+                        and payload.get("routing_mode")
+                        == "single_latent_learned_instance_feature_attention"
+                        and registered == ["attn2_replace"]
+                        and router_revision
+                        == "asteria-faithful-ifadapter-v22-research"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                        and fused_adapter_layers == expected_ifadapter_layers
+                        and isinstance(
+                            runtime.get("fused_adapter_layer_call_counts"), dict
+                        )
+                        and set(runtime["fused_adapter_layer_call_counts"])
+                        == set(expected_ifadapter_layers)
+                        and all(
+                            isinstance(value, int)
+                            and not isinstance(value, bool)
+                            and value >= 1
+                            for value in runtime[
+                                "fused_adapter_layer_call_counts"
+                            ].values()
+                        )
+                        and isinstance(
+                            runtime.get("fused_adapter_attention_count"), int
+                        )
+                        and runtime["fused_adapter_attention_count"] >= 1
+                        and runtime.get("fused_adapter_cbam_fusion_count")
+                        == runtime["fused_adapter_attention_count"]
+                        and isinstance(
+                            runtime.get("fused_adapter_cfg_positive_row_count"), int
+                        )
+                        and runtime["fused_adapter_cfg_positive_row_count"] >= 1
+                        and isinstance(
+                            runtime.get(
+                                "fused_adapter_cfg_unconditional_row_count"
+                            ),
+                            int,
+                        )
+                        and runtime[
+                            "fused_adapter_cfg_unconditional_row_count"
+                        ]
+                        >= 1
+                        and runtime.get("fused_adapter_aspect_ratio_aware") is True
+                        and runtime.get("fused_adapter_max_objects") == 10
+                        and isinstance(
+                            runtime.get("fused_adapter_control_ratio"), (int, float)
+                        )
+                        and not isinstance(
+                            runtime.get("fused_adapter_control_ratio"), bool
+                        )
+                        and 0.05
+                        <= float(runtime["fused_adapter_control_ratio"])
+                        <= 1.0
+                    )
+                    v20_self_count = (
+                        runtime.get("self_attention_boundary_mask_count")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_layers = (
+                        runtime.get("self_attention_layers")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_queries = (
+                        runtime.get("self_query_token_counts")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_stats = (
+                        runtime.get("self_boundary_stats")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_min = (
+                        runtime.get("self_mask_min")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_max = (
+                        runtime.get("self_mask_max")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_schedule_min = (
+                        runtime.get("self_schedule_min")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_schedule_max = (
+                        runtime.get("self_schedule_max")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    valid_sparse_self = (
+                        (sdxl_v6_research or sdxl_v20_research)
+                        and isinstance(v20_self_count, int)
+                        and not isinstance(v20_self_count, bool)
+                        and v20_self_count >= 1
+                        and v20_self_layers == ["block:middle:0:0"]
+                        and isinstance(v20_self_queries, list)
+                        and bool(v20_self_queries)
+                        and all(
+                            isinstance(value, int)
+                            and not isinstance(value, bool)
+                            and 1 <= value <= 1024
+                            for value in v20_self_queries
+                        )
+                        and isinstance(v20_self_stats, dict)
+                        and isinstance(
+                            v20_self_stats.get("different_target_block_count"), int
+                        )
+                        and v20_self_stats["different_target_block_count"] > 0
+                        and all(
+                            isinstance(value, (int, float))
+                            and not isinstance(value, bool)
+                            and math.isfinite(float(value))
+                            for value in (
+                                v20_self_min,
+                                v20_self_max,
+                                v20_self_schedule_min,
+                                v20_self_schedule_max,
+                            )
+                        )
+                        and -6.0 <= float(v20_self_min) <= float(v20_self_max) <= 0.0
+                        and 0.0
+                        < float(v20_self_schedule_min)
+                        <= float(v20_self_schedule_max)
+                        <= 1.0
+                    )
+                    sdxl_v19_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-alternating-conditioning-v19-research"
+                        and payload.get("adapter_id")
+                        == "sdxl.alternating-conditioning.v19.research"
+                        and payload.get("routing_mode")
+                        == "early_alternating_target_context"
+                        and registered == ["attn2_replace"]
+                        and router_revision
+                        == "asteria-alternating-conditioning-v19-research"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                    )
+                    valid_mechanism = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-full-fragment-context-v8"
+                        and payload.get("adapter_id")
+                        == "sdxl.full-fragment-context.v8"
+                        and payload.get("routing_mode")
+                        == "full_fragment_context_sparse_attention_mask"
+                        and registered == ["attn2_replace"]
+                        and router_revision == "asteria-full-fragment-context-v8"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and isinstance(payload.get("adapter_context_length"), int)
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                        and isolated_context_length % 77 == 0
+                    ) or sdxl_v6_research or sdxl_v16_research or sdxl_v17_research or sdxl_v20_research or sdxl_v21_research or sdxl_v22_research or sdxl_v19_research or (
+                        not sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-isolated-conditioning-v6"
+                        and payload.get("routing_mode")
+                        == "isolated_context_cross_attention_mask"
+                        and registered
+                        == [
+                            "attn2_patch",
+                            "optimized_attention_override",
+                            "diffusion_model.preprocess_text_embeds",
+                        ]
+                    )
+                    valid_anima = payload.get("model_family") != "anima" or (
+                        payload.get("token_position_source") == "T5_adapter_context"
+                        and payload.get("context_length") == 512
+                        and payload.get("padding_positions_preserved") is True
+                    )
+                    valid_ranges = (
+                        isinstance(isolated_context_length, int)
+                        and not isinstance(isolated_context_length, bool)
+                        and isolated_context_length > 0
+                        and isinstance(target_ranges, list)
+                        and isinstance(target_ids, list)
+                        and len(target_ranges) == len(target_ids)
+                        and [item.get("target_id") for item in target_ranges if isinstance(item, dict)]
+                        == target_ids
+                        and all(
+                            isinstance(item, dict)
+                            and isinstance(item.get("start"), int)
+                            and isinstance(item.get("end"), int)
+                            and 0 <= item["start"] < item["end"]
+                            <= isolated_context_length
+                            for item in target_ranges
+                        )
+                    )
+                    if (
+                        payload.get("contract_version")
+                        != ASTERIA_SPATIAL_NODE_CONTRACT_VERSION
+                        or not valid_mechanism
+                        or payload.get("stage") != "base"
+                        or payload.get("hires_mode") != "base_only"
+                        or expected_block_count is None
+                        or payload.get("diffusion_block_count") != expected_block_count
+                        or not isinstance(payload.get("model_slot_id"), str)
+                        or not payload["model_slot_id"]
+                        or not isinstance(payload.get("encoder_kind"), str)
+                        or not payload["encoder_kind"]
+                        or not all(
+                            _valid_sha256(payload.get(name))
+                            for name in (
+                                "layout_fingerprint",
+                                "structure_fingerprint",
+                                "profile_receipt_sha256",
+                                "profile_payload_sha256",
+                                "mask_bundle_sha256",
+                                "isolated_context_sha256",
+                                "fragments_sha256",
+                            )
+                        )
+                        or not _valid_sha256(execution_sha256)
+                        or canonical_runtime_sha256(body) != execution_sha256
+                        or not isinstance(target_ids, list)
+                        or not target_ids
+                        or len(target_ids) != len(set(target_ids))
+                        or not isinstance(runtime, dict)
+                        or any(payload.get(name) != 0 for name in forbidden_counts)
+                        or any(runtime.get(name) != 0 for name in runtime_forbidden_counts)
+                        or (
+                            not valid_sparse_self
+                            if (sdxl_v6_research or sdxl_v20_research)
+                            else runtime.get("self_attention_boundary_mask_count") != 0
+                        )
+                        or payload.get("initial_noise_candidate_count") != 1
+                        or isinstance(payload.get("initial_noise_seed"), bool)
+                        or not isinstance(payload.get("initial_noise_seed"), int)
+                        or not isinstance(declared_layers, list)
+                        or not declared_layers
+                        or not isinstance(applied_layers, list)
+                        or not applied_layers
+                        or not all(
+                            applied in declared_layers
+                            or any(
+                                applied.startswith(f"{declared}:")
+                                for declared in declared_layers
+                            )
+                            for applied in applied_layers
+                        )
+                        or isinstance(cross_count, bool)
+                        or not isinstance(cross_count, int)
+                        or cross_count < 1
+                        or not isinstance(query_counts, list)
+                        or not query_counts
+                        or not isinstance(key_counts, list)
+                        or not key_counts
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            for value in (*query_counts, *key_counts)
+                        )
+                        or not valid_ranges
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, (int, float))
+                            or not math.isfinite(float(value))
+                            for value in (
+                                cross_min,
+                                cross_max,
+                                schedule_min,
+                                schedule_max,
+                                payload.get("cross_penalty_cap"),
+                            )
+                        )
+                        or not -float(payload["cross_penalty_cap"])
+                        <= float(cross_min)
+                        <= float(cross_max)
+                        <= float(payload["cross_penalty_cap"])
+                        or (
+                            router_revision == "asteria-full-fragment-context-v8"
+                            and float(cross_max) > 0.0
+                        )
+                        or not 0.0 < float(schedule_min) <= float(schedule_max) <= 1.0
+                        or not isinstance(payload.get("field_sha256"), list)
+                        or len(payload["field_sha256"]) != len(target_ids)
+                        or not all(_valid_sha256(value) for value in payload["field_sha256"])
+                        or not isinstance(latent_shape, list)
+                        or not latent_shape
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            for value in latent_shape
+                        )
+                        or not valid_anima
+                    ):
+                        raise RuntimeErrorResponse(
+                            "Spatial prompt execution receipt is invalid."
+                        )
+                    receipts.append(payload)
+                    continue
+                if payload.get("schema_version") == "asteria.spatial-node-execution.v5":
+                    runtime = payload.get("runtime")
+                    forbidden_counts = (
+                        "target_latent_count",
+                        "target_noise_prediction_count",
+                        "target_denoised_output_count",
+                        "target_only_attention_forward_count",
+                        "global_only_attention_forward_count",
+                        "spatial_output_blend_count",
+                        "background_substitution_count",
+                        "hires_self_attention_mask_count",
+                        "negative_token_change_count",
+                        "global_token_block_count",
+                        "query_key_recompute_count",
+                        "extra_model_evaluation_count",
+                        "latent_update_count",
+                        "candidate_search_count",
+                    )
+                    runtime_forbidden_counts = (
+                        "target_only_attention_forward_count",
+                        "global_only_attention_forward_count",
+                        "spatial_output_blend_count",
+                        "background_substitution_count",
+                        "target_latent_count",
+                        "target_noise_prediction_count",
+                        "target_denoised_output_count",
+                        "hires_self_attention_mask_count",
+                        "negative_token_change_count",
+                        "global_token_block_count",
+                        "query_key_recompute_count",
+                        "extra_model_evaluation_count",
+                        "latent_update_count",
+                        "candidate_search_count",
+                    )
+                    declared_cross_layers = payload.get("cross_attention_layers")
+                    declared_self_layers = payload.get("self_attention_layers")
+                    applied_cross_layers = (
+                        runtime.get("cross_attention_layers")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    applied_self_layers = (
+                        runtime.get("self_attention_layers")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    cross_count = (
+                        runtime.get("cross_attention_boundary_mask_count")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    self_count = (
+                        runtime.get("self_attention_boundary_mask_count")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    cross_schedule_min = (
+                        runtime.get("cross_schedule_min")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    cross_schedule_max = (
+                        runtime.get("cross_schedule_max")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    self_schedule_min = (
+                        runtime.get("self_schedule_min")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    self_schedule_max = (
+                        runtime.get("self_schedule_max")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    self_stats = runtime.get("self_boundary_stats") if isinstance(runtime, dict) else None
+                    cross_cap = payload.get("cross_penalty_cap")
+                    self_cap = payload.get("self_penalty_cap")
+                    cross_min = runtime.get("cross_mask_min") if isinstance(runtime, dict) else None
+                    cross_max = runtime.get("cross_mask_max") if isinstance(runtime, dict) else None
+                    self_min = runtime.get("self_mask_min") if isinstance(runtime, dict) else None
+                    self_max = runtime.get("self_mask_max") if isinstance(runtime, dict) else None
+                    latent_shape = payload.get("latent_shape")
+                    full_text_sha256 = payload.get("full_text_sha256")
+                    structure_id = payload.get("verified_structure_id")
+                    expected_block_count = {
+                        "sdxl_unet_v1": 24,
+                        "anima_base_28": 28,
+                        "anima_2_9b_40": 40,
+                        "anima_3_8b_52": 52,
+                    }.get(structure_id)
+                    cross_query_tokens = runtime.get("cross_query_token_counts") if isinstance(runtime, dict) else None
+                    self_query_tokens = runtime.get("self_query_token_counts") if isinstance(runtime, dict) else None
+                    declared_self_token_counts = payload.get(
+                        "self_attention_token_counts"
+                    )
+                    self_token_limit = payload.get("self_attention_token_limit")
+                    target_token_indices = runtime.get("target_token_indices") if isinstance(runtime, dict) else None
+                    sigma_values = (
+                        runtime.get("stage_sigma_start") if isinstance(runtime, dict) else None,
+                        runtime.get("stage_sigma_end") if isinstance(runtime, dict) else None,
+                        runtime.get("cross_sigma_start") if isinstance(runtime, dict) else None,
+                        runtime.get("cross_sigma_end") if isinstance(runtime, dict) else None,
+                        runtime.get("self_sigma_start") if isinstance(runtime, dict) else None,
+                        runtime.get("self_sigma_end") if isinstance(runtime, dict) else None,
+                    )
+                    valid_full_text_hash = _valid_sha256(full_text_sha256) or (
+                        isinstance(full_text_sha256, list)
+                        and bool(full_text_sha256)
+                        and all(_valid_sha256(value) for value in full_text_sha256)
+                    )
+                    valid_anima = payload.get("model_family") != "anima" or (
+                        payload.get("token_position_source") == "T5_adapter_context"
+                        and payload.get("context_length") == 512
+                        and payload.get("padding_positions_preserved") is True
+                    )
+                    if (
+                        payload.get("contract_version")
+                        != ASTERIA_SPATIAL_NODE_CONTRACT_VERSION
+                        or payload.get("adapter_revision")
+                        != "asteria-cross-self-boundary-v5"
+                        or payload.get("routing_mode")
+                        != "cross_self_boundary_attention_mask"
+                        or payload.get("stage") != "base"
+                        or payload.get("hires_mode") != "base_only"
+                        or not isinstance(payload.get("model_slot_id"), str)
+                        or not payload["model_slot_id"]
+                        or not isinstance(payload.get("encoder_kind"), str)
+                        or not payload["encoder_kind"]
+                        or expected_block_count is None
+                        or payload.get("diffusion_block_count") != expected_block_count
+                        or not _valid_sha256(payload.get("layout_fingerprint"))
+                        or not _valid_sha256(payload.get("structure_fingerprint"))
+                        or not _valid_sha256(execution_sha256)
+                        or canonical_runtime_sha256(body) != execution_sha256
+                        or not isinstance(target_ids, list)
+                        or not target_ids
+                        or len(target_ids) != len(set(target_ids))
+                        or not isinstance(runtime, dict)
+                        or any(payload.get(name) != 0 for name in forbidden_counts)
+                        or any(runtime.get(name) != 0 for name in runtime_forbidden_counts)
+                        or payload.get("initial_noise_candidate_count") != 1
+                        or runtime.get("initial_noise_candidate_count") != 1
+                        or isinstance(payload.get("initial_noise_seed"), bool)
+                        or not isinstance(payload.get("initial_noise_seed"), int)
+                        or payload.get("registered_patches") != [
+                            "attn1_patch",
+                            "attn2_patch",
+                            "optimized_attention_override",
+                        ]
+                        or not isinstance(declared_cross_layers, list)
+                        or not declared_cross_layers
+                        or not isinstance(declared_self_layers, list)
+                        or not declared_self_layers
+                        or not isinstance(applied_cross_layers, list)
+                        or not applied_cross_layers
+                        or not set(applied_cross_layers).issubset(set(declared_cross_layers))
+                        or not isinstance(applied_self_layers, list)
+                        or (len(target_ids) > 1 and not applied_self_layers)
+                        or not set(applied_self_layers).issubset(set(declared_self_layers))
+                        or isinstance(cross_count, bool)
+                        or not isinstance(cross_count, int)
+                        or cross_count < 1
+                        or isinstance(self_count, bool)
+                        or not isinstance(self_count, int)
+                        or self_count < (1 if len(target_ids) > 1 else 0)
+                        or runtime.get("cross_original_attention_call_count") != cross_count
+                        or runtime.get("self_original_attention_call_count") != self_count
+                        or not isinstance(cross_query_tokens, list)
+                        or not cross_query_tokens
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            for value in cross_query_tokens
+                        )
+                        or not isinstance(self_query_tokens, list)
+                        or (self_count > 0 and not self_query_tokens)
+                        or not isinstance(declared_self_token_counts, list)
+                        or not declared_self_token_counts
+                        or len(declared_self_token_counts)
+                        != len(set(declared_self_token_counts))
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            for value in declared_self_token_counts
+                        )
+                        or isinstance(self_token_limit, bool)
+                        or not isinstance(self_token_limit, int)
+                        or self_token_limit < 1
+                        or self_token_limit > 65536
+                        or any(
+                            value > self_token_limit
+                            for value in declared_self_token_counts
+                        )
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            or value > self_token_limit
+                            for value in self_query_tokens
+                        )
+                        or not isinstance(target_token_indices, list)
+                        or len(target_token_indices) != len(target_ids)
+                        or any(
+                            not isinstance(indices, list)
+                            or not indices
+                            or any(
+                                isinstance(index, bool)
+                                or not isinstance(index, int)
+                                or index < 0
+                                for index in indices
+                            )
+                            for indices in target_token_indices
+                        )
+                        or len(
+                            [index for indices in target_token_indices for index in indices]
+                        )
+                        != len(
+                            set(index for indices in target_token_indices for index in indices)
+                        )
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, (int, float))
+                            or not math.isfinite(float(value))
+                            for value in sigma_values
+                        )
+                        or float(sigma_values[0]) <= float(sigma_values[1])
+                        or not float(sigma_values[0]) >= float(sigma_values[2]) > float(sigma_values[3]) >= float(sigma_values[1])
+                        or not float(sigma_values[0]) >= float(sigma_values[4]) > float(sigma_values[5]) >= float(sigma_values[1])
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, (int, float))
+                            or not math.isfinite(float(value))
+                            for value in (
+                                cross_schedule_min,
+                                cross_schedule_max,
+                                *(
+                                    (self_schedule_min, self_schedule_max)
+                                    if self_count
+                                    else ()
+                                ),
+                            )
+                        )
+                        or not 0.0 < float(cross_schedule_min)
+                        <= float(cross_schedule_max)
+                        <= 1.0
+                        or (self_count and not 0.0 < float(self_schedule_min) <= float(self_schedule_max) <= 1.0)
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, (int, float))
+                            or not math.isfinite(float(value))
+                            for value in (
+                                cross_cap,
+                                self_cap,
+                                cross_min,
+                                cross_max,
+                                self_min,
+                                self_max,
+                            )
+                        )
+                        or float(cross_cap) <= 0.0
+                        or float(self_cap) <= 0.0
+                        or not -float(cross_cap) <= float(cross_min) <= float(cross_max) <= 0.0
+                        or not -float(self_cap) <= float(self_min) <= float(self_max) <= 0.0
+                        or not isinstance(self_stats, dict)
+                        or self_stats.get("target_to_background_block_count") != 0
+                        or self_stats.get("background_to_target_block_count") != 0
+                        or not all(
+                            _valid_sha256(payload.get(name))
+                            for name in (
+                                "profile_receipt_sha256",
+                                "profile_payload_sha256",
+                                "mask_bundle_sha256",
+                                "token_binding_sha256",
+                            )
+                        )
+                        or not valid_full_text_hash
+                        or not isinstance(payload.get("field_sha256"), list)
+                        or len(payload["field_sha256"]) != len(target_ids)
+                        or not all(_valid_sha256(value) for value in payload["field_sha256"])
+                        or not isinstance(latent_shape, list)
+                        or not latent_shape
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            for value in latent_shape
+                        )
+                        or not valid_anima
+                    ):
+                        raise RuntimeErrorResponse(
+                            "Spatial prompt execution receipt is invalid."
+                        )
+                    receipts.append(payload)
+                    continue
                 solver_steps = payload.get("solver_steps")
                 loss_steps = payload.get("loss_steps")
                 forbidden_counts = (

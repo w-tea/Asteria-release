@@ -2,11 +2,17 @@
 
 項目別入力では、ポジティブプロンプトを「ベース」「キャラクター」「詳細」などに分けて管理できます。さらに、必要な項目だけを画像内の配置対象にして、対象ごとの範囲と条件を設定できます。
 
+## dev版の制限（2026年9月8日）
+
+配置はまだ開発中です。処理の重さを抑えるため、追加の反復生成をやめ、最初の生成の前半だけ位置を誘導する方式へ変更しました。人数や位置が指定どおりにならない、髪色・髪型・服装が別の対象へ移る、といった問題は残っています。配置の品質が完成した版ではありません。
+
+Hires.fixとRefinerでは配置の誘導を追加せず、通常の拡大・再描画を使います。配置を無効にすれば通常の生成を使えます。配置した範囲は、描画を切り抜く枠ではなく、対象を寄せたい位置と大きさの目安です。
+
 ## 基本の使い方
 
 配置を設定しない項目は、これまでどおり画像全体へ反映します。配置を使わない生成では、配置用の追加処理は行いません。
 
-配置したい項目で「配置を設定」を押すと、専用画面が開きます。初回は、その項目の入力内容が対象1へ入ります。文章の内容から人物や物体を自動で分けることはありません。対象1の内容を確認し、必要なら対象を追加して各欄へ入力してください。
+配置したい項目で「配置を設定」を押すと、専用画面が開きます。選んだ項目の番号、名前、入力内容を引き継ぎます。文章の内容から人物や物体を自動で分けることはありません。内容を確認し、必要なら別の項目にも配置を設定するか、配置画面で対象を追加してください。
 
 対象数に固定の上限はありません。対象を増やすほど処理時間とメモリ使用量が増えるため、4件目以降は注意が表示されます。注意が出ても、利用者が実行を選べば生成できます。
 
@@ -26,7 +32,7 @@ Asteriaは、対象ごとの文章と範囲をモデル内部のAttentionで関�
 
 img2imgやinpaintでは、入力画像を背景としてキャンバスに表示し、その上で配置を設定できます。Asteriaは、生成に使うcheckpointの構造を内部で確認します。SDXL／Illustrious系では共通の24ブロック構造を使い、Animaでは28／40／52ブロックの違いを判別します。利用者がモデル系統を選ぶ必要はありません。構造を確認できないモデルでは配置を付けた生成を始めず、別のモデルへ切り替えるよう案内します。
 
-Hires.fixでは、拡大後の画像サイズに合わせて配置用マスクを作り直します。Topaz Photo AIを選んだ場合も、Topazが担当するのは画像の拡大だけです。その後のimg2imgで同じcheckpointを使う場合は、初回生成で確認した構造を引き継ぎます。Hires用に別のcheckpointを指定した場合は、そのcheckpointの構造を改めて確認してから、Hires段階の処理へ渡します。未確認の派生モデルで、同じ結果になるとは限りません。
+現在のdev版では、Hires.fixは最初に生成した画像を通常の処理で拡大・再描画します。Hires用に別のcheckpointを選んだ場合も、配置の誘導は追加しません。Topaz Photo AIが担当するのは画像の拡大です。拡大後の再描画で構図や属性が変わる場合があります。
 
 Anima 2.9B／3.8Bでは、LLLiteが生成結果に作用することを確認しています。ただし、現在の位置や構図の制御は実験段階です。狙った位置や構図を保証するものではないため、強さと範囲を調整しながら結果を確認してください。
 
@@ -50,11 +56,17 @@ Anima 2.9B／3.8Bでは、LLLiteが生成結果に作用することを確認し
 
 Sectioned prompt input can keep the positive prompt in separate sections such as Base, Character, and Details. You can also place selected sections within the image and configure a separate area for each target.
 
+### Dev limitations (September 8, 2026)
+
+Placement remains experimental. To reduce overhead, additional iterative generation passes have been removed; placement now guides only the early part of base sampling. Incorrect counts or positions and mixed hair, hairstyle, and clothing assignments remain unresolved. This is not a completed placement-quality release.
+
+Hires.fix and Refiner use normal enlargement/refinement without additional placement guidance. Disable placement to use regular generation. Each area expresses a preferred position and size, not a hard drawing boundary or cutout.
+
 ### Basic workflow
 
 Sections without placement continue to affect the whole image. A generation without placement does not use the additional spatial processing path.
 
-Select **Set placement** for a section to open the placement editor. The first section you place becomes Target 1. Asteria does not automatically split people or objects from the prompt text. Review Target 1, then add and edit more targets when needed.
+Select **Set placement** for a section to open the placement editor. It inherits the selected section's number, name, and prompt. Asteria does not automatically split people or objects from the text. Review the content, then place another section or add more targets in the editor as needed.
 
 There is no fixed target limit. More targets require additional processing time and memory, so Asteria shows an advisory from the fourth target onward. The advisory does not disable generation.
 
@@ -74,7 +86,7 @@ Overlapping targets can use automatic or manual front-to-back priority. This pri
 
 For img2img and inpaint, the source image appears behind the placement canvas. Asteria inspects the selected checkpoint structure internally. SDXL and Illustrious use the shared 24-block path, while Anima is classified by its 28-, 40-, or 52-block structure. You do not need to select a model family. If Asteria cannot verify a supported structure, it stops before generation and asks you to choose another model.
 
-Hires.fix rebuilds the placement masks for the enlarged image size. When Topaz Photo AI is selected, Topaz only enlarges the image. The following img2img pass reuses the verified base structure when it uses the same checkpoint. If you select a separate Hires checkpoint, Asteria inspects that checkpoint before preparing the Hires-stage masks and conditioning. Unverified fine-tunes may behave differently.
+In the current dev build, Hires.fix enlarges and refines the base image through the normal path. No additional placement guidance runs, including when a separate Hires checkpoint is selected. Topaz Photo AI performs enlargement only. Subsequent refinement may change the composition or attributes.
 
 LLLite has a confirmed effect on outputs from Anima 2.9B and 3.8B. Its current position and composition control remains experimental and does not guarantee the intended layout. Adjust the strength and area while reviewing the results.
 

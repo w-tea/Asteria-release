@@ -11,7 +11,12 @@ from app.services.model_dependencies import ModelDependencyRepository
 from app.services.model_dependencies import ModelDependencyInstaller
 from app.services.model_selections import ModelSelectionRepository
 from app.services.initial_data import InitialDataMaterializer
-from app.services.managed_artifacts import ManagedArtifactService, ManagedArtifactSpec
+from app.services.managed_artifacts import (
+    ManagedArtifactPathTooLong,
+    ManagedArtifactRollbackIncomplete,
+    ManagedArtifactService,
+    ManagedArtifactSpec,
+)
 from app.services.package_environment import PackageEnvironmentManager
 from app.services.release_manifest import ReleaseManifestRepository
 from app.services.runtime_core import ComfyRuntimeCoreManager
@@ -68,11 +73,20 @@ class ManagedSetupPlan:
 class ManagedSetupEvent:
     code: str
     component_id: str | None = None
+    error_code: str | None = None
+    message_en: str | None = None
+    message_ja: str | None = None
 
     def to_json(self) -> str:
         payload: dict[str, str] = {"code": self.code}
         if self.component_id is not None:
             payload["component_id"] = self.component_id
+        if self.error_code is not None:
+            payload["error_code"] = self.error_code
+        if self.message_en is not None:
+            payload["message_en"] = self.message_en
+        if self.message_ja is not None:
+            payload["message_ja"] = self.message_ja
         return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 
 
@@ -248,6 +262,51 @@ class ManagedSetupEngine:
             self._append_event(events, ManagedSetupEvent("setup_component_started", component.id))
             try:
                 self._acquire(component)
+            except ManagedArtifactRollbackIncomplete:
+                failed.append(component.id)
+                self._append_event(
+                    events,
+                    ManagedSetupEvent(
+                        "setup_component_failed",
+                        component.id,
+                        error_code="setup_rollback_incomplete",
+                        message_en=(
+                            "The previous managed component backup was kept because Asteria could not restore it. "
+                            "The next Repair will try to restore the backup before retrying the installation. "
+                            "Close other programs using Asteria, then run Repair-Asteria.cmd again. "
+                            "If the problem continues, keep the logs and contact support."
+                        ),
+                        message_ja=(
+                            "以前の管理対象コンポーネントのバックアップは削除せず保持しています。"
+                            "次回の「修復」では、再インストールの前にこのバックアップの復元を試みます。"
+                            "Asteriaを使用しているほかのプログラムを閉じてから、"
+                            "Repair-Asteria.cmdをもう一度実行してください。"
+                            "解決しない場合は、ログを残したままサポートへ連絡してください。"
+                        ),
+                    ),
+                )
+                continue
+            except ManagedArtifactPathTooLong:
+                failed.append(component.id)
+                self._append_event(
+                    events,
+                    ManagedSetupEvent(
+                        "setup_component_failed",
+                        component.id,
+                        error_code="setup_path_too_long",
+                        message_en=(
+                            "The installation path is too long for this component. "
+                            "Move the Asteria folder to a shorter location such as D:\\Asteria, "
+                            "then run Repair-Asteria.cmd."
+                        ),
+                        message_ja=(
+                            "このコンポーネントを展開するには、Asteriaの配置先が長すぎます。"
+                            "Asteriaを短いパスへ移動してください（例: D:\\Asteria）。"
+                            "移動後、Repair-Asteria.cmdを実行してください。"
+                        ),
+                    ),
+                )
+                continue
             except Exception:
                 failed.append(component.id)
                 self._append_event(events, ManagedSetupEvent("setup_component_failed", component.id))

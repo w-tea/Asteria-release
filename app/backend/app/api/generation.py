@@ -2574,7 +2574,7 @@ def _spatial_model_evidence(
             model_slot_id=slot_id,
             variant=(
                 "illustrious"
-                if selected_profile_id == "illustrious.guidance.v3"
+                if selected_profile_id == "illustrious.boundary.v5"
                 else "sdxl"
             ),
         )

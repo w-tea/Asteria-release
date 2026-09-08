@@ -64,13 +64,13 @@ dependencies:
     source:
       provider: bundled
       url: runtime-components/comfyui/Asteria-Spatial-Prompt
-      ref: asteria.spatial-prompt.node.v2
-      verified_at: "2026-08-31"
-      provenance_url: bundled://asteria/spatial-prompt/v2
+      ref: asteria.spatial-prompt.node.v4
+      verified_at: "2026-09-01"
+      provenance_url: bundled://asteria/spatial-prompt/v9-experimental
     target:
       relative_path: custom_nodes/Asteria-Spatial-Prompt
-    size_bytes: 240302
-    checksum_sha256: 508edabeb3f6a0ba03272d1934d70d6c222cf9178ab69d2ec3e68413085b91b5
+    size_bytes: 73480
+    checksum_sha256: 2b26e021415b0783768c03edf5447ac6211d68e925caa61a909429f685f67dcf
     license:
       id: mit
       url: bundled://asteria/license

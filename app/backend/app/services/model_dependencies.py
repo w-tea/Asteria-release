@@ -12,6 +12,8 @@ import yaml
 
 from app.services.managed_artifacts import (
     ManagedArtifactError,
+    ManagedArtifactPathTooLong,
+    ManagedArtifactRollbackIncomplete,
     ManagedArtifactService,
     ManagedArtifactSpec,
 )
@@ -374,6 +376,8 @@ class ModelDependencyInstaller:
         try:
             service.acquire(spec)
             service.mark_post_install_complete(spec)
+        except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete):
+            raise
         except (ManagedArtifactError, OSError) as exc:
             message = str(exc) or f"Failed to install model dependency: {dependency.id}"
             raise ModelDependencyError(message) from exc
@@ -436,6 +440,8 @@ class ModelBootstrapper:
                 continue
             try:
                 installed.append(self.installer.install(dependency.id, license_confirmed=True))
+            except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete) as exc:
+                failed[dependency.id] = exc.error_code
             except Exception as exc:  # noqa: BLE001 - keep bootstrapping independent files.
                 failed[dependency.id] = str(exc)
             completed_count += 1

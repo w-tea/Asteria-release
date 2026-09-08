@@ -10,7 +10,7 @@ from typing import Any
 import torch
 
 
-CONTRACT_VERSION = "asteria.spatial-prompt.node.v2"
+CONTRACT_VERSION = "asteria.spatial-prompt.node.v4"
 _TARGET_ID = re.compile(r"^target_[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -256,6 +256,35 @@ class SpatialScheduledTokenBindingBundle:
     schema_version: str
     bindings: tuple[SpatialTokenBindingBundle, ...]
     receipt_sha256: str
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialIsolatedTargetRange:
+    target_id: str
+    fragment_id: str
+    start: int
+    end: int
+    destination_indices: tuple[int, ...] = ()
+    source_start: int | None = None
+    source_end: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialIsolatedContextBundle:
+    schema_version: str
+    model_family: str
+    adapter_kind: str
+    global_fragment_id: str
+    global_range: tuple[int, int]
+    targets: tuple[SpatialIsolatedTargetRange, ...]
+    context_length: int
+    source_fragment_lengths: tuple[int, ...]
+    adapter_fragment_lengths: tuple[int, ...]
+    adapter_context_length: int
+    fragments_sha256: str
+    receipt_sha256: str
+    full_context_length: int | None = None
+    aligned_target_values: tuple[torch.Tensor, ...] = ()
 
 
 def mask_bundle_payload(targets: tuple[SpatialMaskTarget, ...]) -> dict[str, Any]:

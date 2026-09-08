@@ -442,7 +442,10 @@ class SpatialModelProfileReceipt(_RuntimeModel):
 
 
 class SpatialConditioningBundle(_RuntimeModel):
-    schema_version: Literal["asteria.spatial-conditioning-bundle.v2"]
+    schema_version: Literal[
+        "asteria.spatial-conditioning-bundle.v2",
+        "asteria.spatial-conditioning-bundle.v3",
+    ]
     stage: Stage
     encoder_id: str = Field(min_length=1, max_length=512)
     profile_receipt_sha256: Sha256
@@ -458,7 +461,19 @@ class SpatialConditioningBundle(_RuntimeModel):
         "identity",
         "anima_native_t5_query_v1",
         "anima_progressive_qwen35_t5_query_v1",
+        "sdxl_isolated_context_v6",
+        "anima_native_block_diagonal_v6",
+        "anima_progressive_block_diagonal_v6",
     ]
+    fragments_json: str | None = Field(
+        default=None,
+        max_length=1024 * 1024,
+        exclude_if=lambda value: value is None,
+    )
+    fragments_sha256: Sha256 | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     step_start_percent: float = Field(ge=0.0, lt=1.0, allow_inf_nan=False)
     step_end_percent: float = Field(gt=0.0, le=1.0, allow_inf_nan=False)
     bundle_sha256: Sha256
@@ -474,6 +489,26 @@ class SpatialConditioningBundle(_RuntimeModel):
             raise ValueError("conditioning encoders must be unique")
         if self.step_start_percent >= self.step_end_percent:
             raise ValueError("conditioning step range must increase")
+        if self.schema_version == "asteria.spatial-conditioning-bundle.v3":
+            if self.fragments_json is None or self.fragments_sha256 is None:
+                raise ValueError("v3 conditioning requires isolated fragments")
+            if self.fragments_sha256 != runtime_text_sha256(self.fragments_json):
+                raise ValueError("conditioning fragments hash does not match")
+            try:
+                fragments = json.loads(self.fragments_json)
+                fragment_targets = tuple(
+                    item["target_id"] for item in fragments["target_fragments"]
+                )
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+                raise ValueError("conditioning isolated fragments are invalid") from error
+            if (
+                fragments.get("schema_version") != "asteria.spatial-fragments.v6"
+                or len(fragment_targets) != len(set(fragment_targets))
+                or set(fragment_targets) != set(target_ids)
+            ):
+                raise ValueError("conditioning isolated fragments do not match")
+        elif self.fragments_json is not None or self.fragments_sha256 is not None:
+            raise ValueError("v2 conditioning cannot contain isolated fragments")
         if self.scheduled_bindings:
             expected_ids = tuple(target_ids)
             cursor = 0.0

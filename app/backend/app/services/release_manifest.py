@@ -344,7 +344,7 @@ def _validate_runtime_catalog_item(item: object) -> None:
             ),
             "asteria-spatial-prompt": (
                 "runtime-components/comfyui/Asteria-Spatial-Prompt",
-                "asteria.spatial-prompt.node.v2",
+                "asteria.spatial-prompt.node.v4",
             ),
         }
         expected = bundled_contracts.get(getattr(item, "id", None))

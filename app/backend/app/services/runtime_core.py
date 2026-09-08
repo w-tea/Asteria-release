@@ -7,6 +7,8 @@ import subprocess
 
 from app.services.managed_artifacts import (
     ManagedArtifactError,
+    ManagedArtifactPathTooLong,
+    ManagedArtifactRollbackIncomplete,
     ManagedArtifactService,
     ManagedArtifactSpec,
 )
@@ -105,6 +107,8 @@ class ComfyRuntimeCoreManager:
             if self.install_python_dependencies:
                 self._repair_python_dependencies()
             service.mark_post_install_complete(spec)
+        except (ManagedArtifactPathTooLong, ManagedArtifactRollbackIncomplete):
+            raise
         except (ManagedArtifactError, OSError) as exc:
             message = str(exc) or "Failed to install managed ComfyUI runtime"
             raise ComfyRuntimeCoreError(message) from exc

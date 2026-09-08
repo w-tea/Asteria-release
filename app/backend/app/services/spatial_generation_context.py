@@ -84,11 +84,25 @@ def _profile_json(
     )
     if definition is None:
         raise SpatialGenerationContextError("spatial_profile_not_found")
+    routing = definition.routing.model_dump(mode="json")
+    v6_routing = {
+        key: routing[key]
+        for key in (
+            "cross_start_percent",
+            "cross_end_percent",
+            "cross_penalty",
+            "cross_penalty_cap",
+            "core_threshold",
+            "ownership_margin",
+            "cross_attention_layers",
+            "hires_mode",
+        )
+    }
     body = {
-        "schema_version": "asteria.spatial-node-profile.v3",
+        "schema_version": "asteria.spatial-node-profile.v6",
         "contract_version": ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
         "profile_receipt": receipt.model_dump(mode="json"),
-        "guidance": definition.guidance.model_dump(mode="json"),
+        "routing": v6_routing,
     }
     payload = {
         **body,
@@ -237,6 +251,7 @@ def prepare_spatial_generation_context(
             directory=workdir / item.stage,
         )
         runtime_stages[item.stage] = {
+            "routing_geometry": _native_routing_geometry(item, target_ids),
             "mask_bundle": compiled.receipt.model_dump(mode="json"),
             "layout_field_bundle": layout_fields.receipt.model_dump(mode="json"),
             "profile_receipt": receipt.model_dump(mode="json"),
@@ -270,6 +285,28 @@ def prepare_spatial_generation_context(
         history_record=history_record,
         working_directory=workdir,
     )
+
+
+def _native_routing_geometry(item, target_ids):
+    """Carry canvas geometry directly, including a real inpaint crop transform."""
+    by_id = {target.target_id: target for target in item.layout.targets}
+    left, top, right, bottom = item.crop_rect or (0, 0, item.width, item.height)
+    width, height = right-left, bottom-top
+    return [
+        {
+            "target_id": target_id,
+            "shape": by_id[target_id].shape,
+            "center_x": (by_id[target_id].center_x*item.width-left)/width,
+            "center_y": (by_id[target_id].center_y*item.height-top)/height,
+            "width": by_id[target_id].width*item.width/width,
+            "height": by_id[target_id].height*item.height/height,
+            "depth_prior": (
+                1.-.2*index/max(1,len(target_ids)-1)
+                if item.layout.depth_mode == "manual" else 1.
+            ),
+        }
+        for index, target_id in enumerate(target_ids)
+    ]
 
 
 def upload_spatial_runtime_masks(

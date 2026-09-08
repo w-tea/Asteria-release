@@ -50,9 +50,8 @@ class_types:
   face_detailer: FaceDetailer
   merge_runtime: AsteriaAnimaMergeRuntime
   spatial_mask_collector: AsteriaSpatialMaskCollector
-  spatial_token_binding: AsteriaSpatialTokenBinding
-  spatial_guidance_adapter: AsteriaSpatialGuidanceAdapter
-  spatial_guidance_sampler: AsteriaSpatialGuidanceSampler
+  spatial_full_text_binding: AsteriaSpatialFullTextBinding
+  spatial_native_guidance: AsteriaSpatialNativeGuidance
   spatial_execution_receipt: AsteriaSpatialExecutionReceipt
 node_contracts:
   spatial_mask_collector:
@@ -70,52 +69,34 @@ node_contracts:
     outputs_by_index:
       0: ASTERIA_SPATIAL_MASK_BUNDLE
       1: STRING
-  spatial_token_binding:
+  spatial_full_text_binding:
     required_inputs:
-      - conditioning
       - clip
-      - full_text
-      - character_ranges_json
-      - required_encoders_json
-      - adapter_kind
-      - step_start_percent
-      - step_end_percent
+      - source_positive
+      - binding_json
+      - family
       - contract_version
     outputs_by_index:
       0: CONDITIONING
-      1: ASTERIA_SPATIAL_TOKEN_BINDING
+      1: ASTERIA_SPATIAL_FULL_TEXT
       2: STRING
-  spatial_guidance_adapter:
+  spatial_native_guidance:
     required_inputs:
       - model
-      - full_positive
+      - positive
       - negative
-      - token_binding
+      - binding
       - masks
+      - geometry_json
       - profile_json
       - stage
+      - initial_noise_seed
       - contract_version
     outputs_by_index:
       0: MODEL
       1: CONDITIONING
       2: CONDITIONING
       3: ASTERIA_SPATIAL_GUIDANCE_STATE
-  spatial_guidance_sampler:
-    required_inputs:
-      - model
-      - seed
-      - steps
-      - cfg
-      - sampler_name
-      - scheduler
-      - positive
-      - negative
-      - latent_image
-      - denoise
-      - guidance_state
-    outputs_by_index:
-      0: LATENT
-      1: ASTERIA_SPATIAL_GUIDANCE_STATE
   spatial_execution_receipt:
     required_inputs:
       - execution_state

@@ -41,23 +41,33 @@ _SDXL_LINEAGE_METADATA_KEYS = frozenset(
     }
 )
 _LEGACY_SPATIAL_PROFILE_IDS = {
-    "sdxl.attention.v1": "sdxl.guidance.v3",
-    "sdxl.attention.v2": "sdxl.guidance.v3",
-    "illustrious.attention.v1": "illustrious.guidance.v3",
-    "illustrious.attention.v2": "illustrious.guidance.v3",
-    "anima.28.attention.v1": "anima.28.guidance.v3",
-    "anima.28.attention.v2": "anima.28.guidance.v3",
-    "anima.40.attention.v1": "anima.40.guidance.v3",
-    "anima.40.attention.v2": "anima.40.guidance.v3",
-    "anima.52.attention.experimental.v1": "anima.52.guidance.experimental.v3",
-    "anima.52.attention.experimental.v2": "anima.52.guidance.experimental.v3",
+    "sdxl.attention.v1": "sdxl.boundary.v5",
+    "sdxl.attention.v2": "sdxl.boundary.v5",
+    "sdxl.guidance.v3": "sdxl.boundary.v5",
+    "sdxl.routing.v4": "sdxl.boundary.v5",
+    "illustrious.attention.v1": "illustrious.boundary.v5",
+    "illustrious.attention.v2": "illustrious.boundary.v5",
+    "illustrious.guidance.v3": "illustrious.boundary.v5",
+    "illustrious.routing.v4": "illustrious.boundary.v5",
+    "anima.28.attention.v1": "anima.28.boundary.v5",
+    "anima.28.attention.v2": "anima.28.boundary.v5",
+    "anima.28.guidance.v3": "anima.28.boundary.v5",
+    "anima.28.routing.v4": "anima.28.boundary.v5",
+    "anima.40.attention.v1": "anima.40.boundary.v5",
+    "anima.40.attention.v2": "anima.40.boundary.v5",
+    "anima.40.guidance.v3": "anima.40.boundary.v5",
+    "anima.40.routing.v4": "anima.40.boundary.v5",
+    "anima.52.attention.experimental.v1": "anima.52.boundary.experimental.v5",
+    "anima.52.attention.experimental.v2": "anima.52.boundary.experimental.v5",
+    "anima.52.guidance.experimental.v3": "anima.52.boundary.experimental.v5",
+    "anima.52.routing.experimental.v4": "anima.52.boundary.experimental.v5",
 }
 
 
 def _sdxl_lineage_from_metadata_value(value: str) -> str | None:
     normalized = value.casefold()
     if "illustrious" in normalized:
-        return "illustrious.guidance.v3"
+        return "illustrious.boundary.v5"
     if any(
         marker in normalized
         for marker in (
@@ -69,7 +79,7 @@ def _sdxl_lineage_from_metadata_value(value: str) -> str | None:
             "pony",
         )
     ):
-        return "sdxl.guidance.v3"
+        return "sdxl.boundary.v5"
     return None
 
 
@@ -109,6 +119,7 @@ class SpatialModelEvidence:
     layout_fingerprint: str
     structure_fingerprint: str
     diffusion_block_count: int
+    prediction_type: str = "native"
 
     def __post_init__(self) -> None:
         if not self.model_slot_id.strip():
@@ -131,6 +142,8 @@ class SpatialModelEvidence:
             raise ValueError("spatial structure fingerprint must be a lowercase sha256")
         if self.diffusion_block_count < 1:
             raise ValueError("spatial diffusion block count must be positive")
+        if not self.prediction_type.strip():
+            raise ValueError("spatial model prediction type evidence is required")
 
 
 def spatial_structure_fingerprint(header: SafetensorsHeader) -> str:
@@ -172,6 +185,18 @@ def spatial_layout_fingerprint(
     return canonical_runtime_sha256(layout)
 
 
+def sdxl_prediction_type_from_header(header: SafetensorsHeader) -> str:
+    """Match ComfyUI's SDXL model-type markers without reading a filename."""
+    tensor_names = set(header.tensors)
+    if "edm_mean" in tensor_names and "edm_std" in tensor_names:
+        return "edm"
+    if "edm_vpred.sigma_max" in tensor_names:
+        return "v_prediction_edm"
+    if "v_pred" in tensor_names:
+        return "v_prediction"
+    return "eps"
+
+
 def sdxl_spatial_model_evidence(
     header: SafetensorsHeader,
     *,
@@ -191,6 +216,7 @@ def sdxl_spatial_model_evidence(
         ),
         structure_fingerprint=spatial_structure_fingerprint(header),
         diffusion_block_count=24,
+        prediction_type=sdxl_prediction_type_from_header(header),
     )
 
 
@@ -199,6 +225,7 @@ def _matches(definition: SpatialModelProfileDefinition, evidence: SpatialModelEv
         evidence.architecture in definition.architectures
         and evidence.variant in definition.variants
         and evidence.encoder_kind in definition.encoder_kinds
+        and evidence.prediction_type in definition.prediction_types
         and evidence.verified_structure_id in definition.verified_structure_ids
         and evidence.layout_fingerprint in definition.layout_fingerprints
         and evidence.diffusion_block_count in definition.diffusion_block_counts

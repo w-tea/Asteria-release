@@ -1,7 +1,7 @@
 {
   "id": "asteria-spatial-prompt",
-  "version": "3.0.0",
-  "contract_version": "asteria.spatial-prompt.node.v2",
+  "version": "9.0.0",
+  "contract_version": "asteria.spatial-prompt.node.v4",
   "files": [
     "__init__.py",
     "nodes.py",
@@ -10,11 +10,7 @@
     "layout_field_runtime.py",
     "token_binding_runtime.py",
     "profile_runtime.py",
-    "attention_runtime.py",
-    "attention_capture_runtime.py",
-    "guidance_loss_runtime.py",
-    "latent_guidance_runtime.py",
-    "sampler_runtime.py",
+    "native_attention_runtime.py",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md"
   ]

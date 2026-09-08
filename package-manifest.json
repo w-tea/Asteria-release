@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "0fdb5adbd99223167abb236cc13977b5ef2ef8c5",
-  "build_timestamp_utc": "2026-08-31T15:19:42Z",
+  "source_commit": "42e649540b2e48db9c00d16256285ffa6660d1af",
+  "build_timestamp_utc": "2026-09-08T14:21:28Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 51352,
-      "sha256": "8b657885be9fd4d8f58d05d7942c7421cf6d24e7c0f5ed3b5d633af86bc69068"
+      "size_bytes": 53984,
+      "sha256": "6e5f79b318b59677df41987f8fdc41ed2c482c147ae7ac140d17b7015dfcdf39"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -98,8 +98,8 @@
     },
     {
       "path": "app/backend/app/api/generation.py",
-      "size_bytes": 231196,
-      "sha256": "2ba6ab37accdade2cdced582208febb310e33ab91bb4ae30145a41f04acb8972"
+      "size_bytes": 231266,
+      "sha256": "3e65477ee39cc348d82da4e5ff3968405e06c844a78a7fcb7750951d279d99bc"
     },
     {
       "path": "app/backend/app/api/image_metadata.py",
@@ -123,8 +123,8 @@
     },
     {
       "path": "app/backend/app/api/models.py",
-      "size_bytes": 21533,
-      "sha256": "1d4f7ead363251dee2ddb8323ae8c18544df67e71dac64aa30f0682706805191"
+      "size_bytes": 22050,
+      "sha256": "19e926731c01cc7c1d7998e7afd31efcaa0c3aa2af966b2b963549e337d4f79b"
     },
     {
       "path": "app/backend/app/api/music.py",
@@ -173,8 +173,8 @@
     },
     {
       "path": "app/backend/app/api/runtime.py",
-      "size_bytes": 33210,
-      "sha256": "137ce0d6504228861b810d3ba880b58effabec263eeee86223be15aaa6e42b4c"
+      "size_bytes": 34141,
+      "sha256": "5468439cc582b8f04c9d2324006857d806c623f974c639599ad52befc72a1388"
     },
     {
       "path": "app/backend/app/api/settings.py",
@@ -233,8 +233,8 @@
     },
     {
       "path": "app/backend/app/cli/managed_setup.py",
-      "size_bytes": 19722,
-      "sha256": "3a55a2fc7855f2101bec77096b29de379bee4bfff7b7cabdd9f65bdf25e89446"
+      "size_bytes": 22899,
+      "sha256": "8b9d0d13f314c18c180bfeab1310d47980b6f4912ccd5409e94b3b876f6e5ba7"
     },
     {
       "path": "app/backend/app/cli/startup_readiness.py",
@@ -408,8 +408,8 @@
     },
     {
       "path": "app/backend/app/schemas/spatial_prompt_runtime.py",
-      "size_bytes": 24585,
-      "sha256": "13545acfd0be7dc265b24c5e524e0badacf74b903c71cf7621ed21ada53d3190"
+      "size_bytes": 26322,
+      "sha256": "50526a770ddede897df2ab609a4cebfa6e0550e5a59c885af18d0ca951dcbac3"
     },
     {
       "path": "app/backend/app/schemas/video.py",
@@ -458,8 +458,8 @@
     },
     {
       "path": "app/backend/app/services/api_errors.py",
-      "size_bytes": 7971,
-      "sha256": "42dd7b8fadfd7a27caf40cb0f2445e7d4b4a42cc86d4bee8cae017504c102c33"
+      "size_bytes": 8117,
+      "sha256": "911b83a834d91e7ffbc9d6e5f6049a01eca6feb5718332a7adee4c43924dc751"
     },
     {
       "path": "app/backend/app/services/artifact_lifecycle.py",
@@ -733,8 +733,8 @@
     },
     {
       "path": "app/backend/app/services/managed_artifacts.py",
-      "size_bytes": 37021,
-      "sha256": "77d12e8a312d785e4fe89a2bb7f2e206ef1a6600645e0d2ccb731bce42552e0a"
+      "size_bytes": 43160,
+      "sha256": "7b5fbc1faea13a9344ac0f6d0a4b9c4756e11a9527580fad591be2131cce7259"
     },
     {
       "path": "app/backend/app/services/managed_downloads.py",
@@ -793,8 +793,8 @@
     },
     {
       "path": "app/backend/app/services/model_dependencies.py",
-      "size_bytes": 19048,
-      "sha256": "aa43d847a745efec2452d1c84c08d22b873d5a3f469a9f8b77a9615cc76f3981"
+      "size_bytes": 19369,
+      "sha256": "8fa8efc81a70d3dbcfda702676b57e8a24f70632c2f6b5d49b396a717243dcb1"
     },
     {
       "path": "app/backend/app/services/model_fingerprints.py",
@@ -968,8 +968,8 @@
     },
     {
       "path": "app/backend/app/services/release_manifest.py",
-      "size_bytes": 20571,
-      "sha256": "65db4ce6893fd95ac80f90c9a73b01dab48ab92e1354cda548483c2303c1725c"
+      "size_bytes": 20570,
+      "sha256": "fe83665cdd1febe568108eb7164c9382e81c481aa54ac934e04f1dcd0038c7d8"
     },
     {
       "path": "app/backend/app/services/release_signing.py",
@@ -1003,8 +1003,8 @@
     },
     {
       "path": "app/backend/app/services/runtime.py",
-      "size_bytes": 232241,
-      "sha256": "1a556bf78c996c26309419fba12ff7a8bae6be5ec60f9c19ed8b99195f58c232"
+      "size_bytes": 280181,
+      "sha256": "37b5d836ac5e6ba609c0724e048bc8300dd2f64bc949e295dd2b52ae041aa8ad"
     },
     {
       "path": "app/backend/app/services/runtime_adapters.py",
@@ -1013,13 +1013,13 @@
     },
     {
       "path": "app/backend/app/services/runtime_core.py",
-      "size_bytes": 7450,
-      "sha256": "a8962e5fea0ce45a00bd436a15e68d7d4300a0eae100819369511d58fc399cdd"
+      "size_bytes": 7623,
+      "sha256": "7e83491ee15d3a48fa8724dbd24749216597463f70173cca7507cfda426146a8"
     },
     {
       "path": "app/backend/app/services/runtime_dependencies.py",
-      "size_bytes": 30580,
-      "sha256": "4bca448d644009c3853ba269ad4169e657047debc49586ba479adc1bccfaaa1b"
+      "size_bytes": 30763,
+      "sha256": "8211bad1d33005ee70d5184178fe7598b0fae4c423110117f1ffbd06d87dcef1"
     },
     {
       "path": "app/backend/app/services/runtime_process.py",
@@ -1058,13 +1058,13 @@
     },
     {
       "path": "app/backend/app/services/spatial_conditioning_builder.py",
-      "size_bytes": 5338,
-      "sha256": "2678a8288567536e51cdb11e69fc4008019c1eddd69ca02f3985a9c45bee271e"
+      "size_bytes": 7318,
+      "sha256": "0a8d8902875a4175a008a7e964cd844d354844fb5f5faae4e6860978e65496ec"
     },
     {
       "path": "app/backend/app/services/spatial_generation_context.py",
-      "size_bytes": 17454,
-      "sha256": "be23a1bb6ea1c0ce3175786e1951d12b218c0a3e5d59e6d98dbe34599d257df1"
+      "size_bytes": 18856,
+      "sha256": "8e8377751a8ff6c860c91e68ad41acb786eca78a7f184eb91969b60b4cdec268"
     },
     {
       "path": "app/backend/app/services/spatial_layout_field.py",
@@ -1083,13 +1083,18 @@
     },
     {
       "path": "app/backend/app/services/spatial_model_profiles.py",
-      "size_bytes": 3529,
-      "sha256": "97fa53c5e10e35738b22a0b59b69316ca657297e065782139f89495d8f9be1e4"
+      "size_bytes": 4577,
+      "sha256": "209d43af4a93b00f03199472e5939f4c8a9614f34bef203d738b008967b19ca4"
+    },
+    {
+      "path": "app/backend/app/services/spatial_native_receipt.py",
+      "size_bytes": 3440,
+      "sha256": "e90c361e235fb90bdd9c4ca66a641bab3a4169f8e62e53c4f665406c26a3d8fe"
     },
     {
       "path": "app/backend/app/services/spatial_profile_resolver.py",
-      "size_bytes": 12520,
-      "sha256": "281f9f1b4429bb9b5f936479187af449155442fff629e89cf72a9afda5543d25"
+      "size_bytes": 13807,
+      "sha256": "a4e73706c5fd1c8b0417a51426cc1d9bff2c596a8721c73244560d669f2859b2"
     },
     {
       "path": "app/backend/app/services/spatial_prompt_contract.py",
@@ -1098,8 +1103,8 @@
     },
     {
       "path": "app/backend/app/services/spatial_prompt_mapping.py",
-      "size_bytes": 10508,
-      "sha256": "0dafa27ca350b5a57ac0afcaf19805274d6b9d7a8cba2f871f474084fe044656"
+      "size_bytes": 16813,
+      "sha256": "b807a46ac13c8923a30672dc697d173eafda5714d43dcf82ff888b2dc7debb83"
     },
     {
       "path": "app/backend/app/services/spatial_prompt_planner.py",
@@ -1108,8 +1113,8 @@
     },
     {
       "path": "app/backend/app/services/spatial_runtime_contract.py",
-      "size_bytes": 2593,
-      "sha256": "0eacbea86f61942da576366210dd5e95a8f3e84096c3fabbae64aa94c5955799"
+      "size_bytes": 2339,
+      "sha256": "51135ce9d9c322edaaaaa18370df968fa0a15895e75634496c7e6669226af257"
     },
     {
       "path": "app/backend/app/services/startup_readiness.py",
@@ -1257,24 +1262,29 @@
       "sha256": "7dc00e00c0b113ab1a0020779d96b49c7cd0caf52f769507a3d7fafeb3d25104"
     },
     {
-      "path": "app/frontend/public/_nuxt/BWlypfLp.js",
-      "size_bytes": 1982570,
-      "sha256": "73c226bc53399da44cee538a34832c9c5a4f182bae4103aa8666f881ce20b77f"
+      "path": "app/frontend/public/_nuxt/9OD1Shs8.js",
+      "size_bytes": 3451,
+      "sha256": "6550877bc6ee281f863362f0e8a20fdf8de9502b6f6e643f650c32e32b83b27f"
     },
     {
-      "path": "app/frontend/public/_nuxt/CKwh3Ga4.js",
-      "size_bytes": 3451,
-      "sha256": "590e2c07953fc16271a5d3a7a4f2743052d9dece08564868a9fc8c304551a6a2"
+      "path": "app/frontend/public/_nuxt/Bo4zXP_2.js",
+      "size_bytes": 9504,
+      "sha256": "799cd6a4e289d4c647d96d6d68a5f2a08eec9a7cb45c3c6045c429bb37aeee7b"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/D0IW-uAy.js",
+      "size_bytes": 1983573,
+      "sha256": "6e3f17a4b015f9230faf4ec34ff029e230bc290b4f2dd23184675d763d1a77f6"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "a24506db17362ec93e3fc88e641202d6561fd0bcf4c2dd683c804da136eae21d"
+      "sha256": "fa44a0077f72b7353250320f556d69c98a70d803ecefdea77f4ad7b72d25fe96"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/0074847f-a3fd-41e1-9f9f-2aaa82354989.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/6ceb92a4-c989-4d1e-bdd2-6786c90ce02c.json",
       "size_bytes": 88,
-      "sha256": "45394f57a7db0c1b2fd650ebb9101dde5f40c9b63a05197a658b172154bfa782"
+      "sha256": "4c78a8f11708750785e188f1f41db92d79fdef0c5592065ffbb1e44db6c38a17"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.Cz7TUyOd.css",
@@ -1290,11 +1300,6 @@
       "path": "app/frontend/public/_nuxt/error-500.Da-Z0YA7.css",
       "size_bytes": 1907,
       "sha256": "0c15608923a40f738550fa46af7ba60565a26e866581d6ea7800907920a1e2d7"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/h2So1lJZ.js",
-      "size_bytes": 9504,
-      "sha256": "a3766a9f1a083cf4d7a541f0288dda2e915633fa4111723cd0a0489aed8b3215"
     },
     {
       "path": "app/frontend/public/brand/asteria-mark-navy.svg",
@@ -1324,7 +1329,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "bd20fd27854cebe9b3e4a4e1b84293b92824afaca7f41a47f13330f783b63d41"
+      "sha256": "b773fd720fdf97417ace2a317114b598be9a080f13c522b94060c749171355c6"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.BkPLWzeU.mjs",
@@ -1999,7 +2004,7 @@
     {
       "path": "app/frontend/server/chunks/build/client.precomputed.mjs",
       "size_bytes": 2916,
-      "sha256": "cbbed27a4f062f92b9247e4634845b0779a8eb96b13e3b8185769754c27c9eba"
+      "sha256": "0de0a05b1888af01998454406c7df2d138d76fd1b597e4546ed4f85d59168472"
     },
     {
       "path": "app/frontend/server/chunks/build/error-404-DXgHoesY.mjs",
@@ -2023,13 +2028,13 @@
     },
     {
       "path": "app/frontend/server/chunks/build/server.mjs",
-      "size_bytes": 3191948,
-      "sha256": "e686a6841b584c1874dfbc990db8ceafd520b34fe9cbadc303ca8a4148de491b"
+      "size_bytes": 3192880,
+      "sha256": "949fbec42010483427e5d446ced822e5d76683cd8e0913a1fca63d40b5de23e0"
     },
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 18376,
-      "sha256": "8e8cc8921be3f05c90e41fd5454e9fabaf5e118721f5335a7873b4d351398b31"
+      "sha256": "4960ac9cd3fabf1153f9493e8198379ffd641f8585a5c129c173f2a64778bdc2"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -2598,8 +2603,8 @@
     },
     {
       "path": "guides/spatial-prompt-layout.md",
-      "size_bytes": 10511,
-      "sha256": "67fad05669500bcb756956f776bf7300529adfc6fd9945c35a19f85c34837ea5"
+      "size_bytes": 11573,
+      "sha256": "4a851e40fe3a61b3f2e6eca48e66edf99ada5c2eca7828d6d675b19899e8c7ec"
     },
     {
       "path": "mappings/anima/lora-block-remap.v1.json",
@@ -2608,8 +2613,8 @@
     },
     {
       "path": "mappings/anima_txt2img.yaml",
-      "size_bytes": 3478,
-      "sha256": "073b8d9b58c34470640bc7b1017df7983e70e2155d5d61e0f577e4f3a598c29c"
+      "size_bytes": 2950,
+      "sha256": "6518d9e473bfdec7b09a3221803d91b21483a8a059eed57b8fd35ec479c7708b"
     },
     {
       "path": "mappings/flux2_txt2img.yaml",
@@ -2663,13 +2668,13 @@
     },
     {
       "path": "mappings/sdxl_txt2img.yaml",
-      "size_bytes": 6179,
-      "sha256": "0e016dcb9777e0bffd991b5960d9040e763d353b8a6fc4382a92836f953aed80"
+      "size_bytes": 5536,
+      "sha256": "13ea9f9806de80cb55e50178f0ceff1c935d79b263f09288253d9e16aae9b9f0"
     },
     {
       "path": "mappings/spatial-model-profiles.yaml",
-      "size_bytes": 3229,
-      "sha256": "9e5f9771f1433394bd30f056520f6149fb0dfbfc9fe4d346b0b6b98466ac15b5"
+      "size_bytes": 6987,
+      "sha256": "db8117c7a599482c193b56b8d2a329641694234f5b181a7890e0f77e586c3686"
     },
     {
       "path": "mappings/video/minimax-h3-local-sequence.v1.json",
@@ -2718,8 +2723,8 @@
     },
     {
       "path": "release-manifest.yaml",
-      "size_bytes": 3601,
-      "sha256": "2d3e5e6637900e8b0a437f3e844ed731331a9823a08f42fca47df7c900f1b3d6"
+      "size_bytes": 3598,
+      "sha256": "54611aeedb97df6d89bfa740736056ca4e4d68d6acc7a77eadb84e1bfd866e33"
     },
     {
       "path": "release-public-keys.json",
@@ -2863,28 +2868,8 @@
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/__init__.py",
-      "size_bytes": 1197,
-      "sha256": "4daaeaa46a95b07c6b089449988c18c242667ac815f48781298af76dbf272dc8"
-    },
-    {
-      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/attention_capture_runtime.py",
-      "size_bytes": 41662,
-      "sha256": "4bddeb62c2566841dcda514c9282d00aeaff3b7951cee57c3dbdc0aca5b68577"
-    },
-    {
-      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/attention_runtime.py",
-      "size_bytes": 30055,
-      "sha256": "c4d143cd94e61a118ae1355d14dc159ac8bb0ade2e5bc63cc4cc7459478f4fa7"
-    },
-    {
-      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/guidance_loss_runtime.py",
-      "size_bytes": 13687,
-      "sha256": "b8739d40d06419d2aee29ba901687393fc5be787be88e85853c0225dadc59131"
-    },
-    {
-      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/latent_guidance_runtime.py",
-      "size_bytes": 19871,
-      "sha256": "6278f817d6dc978ba1598c67222e45e3f272d3d74db870b77c21bd028b1f433a"
+      "size_bytes": 724,
+      "sha256": "43bb2d3dd285dcdedad8ff7d26d80662cc5ec441721f423d67da006b99187df7"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/layout_field_runtime.py",
@@ -2893,8 +2878,8 @@
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/manifest.json",
-      "size_bytes": 507,
-      "sha256": "5a9e148379e74810b36cfa3201975e311ca647ab10168d68feef45baac205f23"
+      "size_bytes": 386,
+      "sha256": "142464de55c93ec514bf95ca8a0acb7059bf15cd654fccd0069e931fa2318547"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/mask_runtime.py",
@@ -2902,24 +2887,24 @@
       "sha256": "375314aa49cd77e2b44cf892ec1807e4f6b36277fae29b321e4bba9b95b2d78e"
     },
     {
+      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/native_attention_runtime.py",
+      "size_bytes": 11056,
+      "sha256": "b127d339dbc33847e6ab1cc8c387f77af35fc3a825c84b2f92014a47a679579e"
+    },
+    {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/nodes.py",
-      "size_bytes": 33912,
-      "sha256": "ef2607936fd0b75f24dc0366b5cbb2b667cf60b2d3d10504b936804ba91d36cd"
+      "size_bytes": 12072,
+      "sha256": "5f6eb6f07b4bd616f56db633adac889e70cd12fc69fe053819e6cdf95942518a"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/profile_runtime.py",
-      "size_bytes": 15682,
-      "sha256": "196ddbcd0c2794b2b37cee361ba204676cbe445b9d3b6170ac079ce8dbb209f0"
-    },
-    {
-      "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/sampler_runtime.py",
-      "size_bytes": 43619,
-      "sha256": "975434520a7fe25ad8cb8fd75f0e6859f51f3490925c041dd41f4de4d1607f40"
+      "size_bytes": 8323,
+      "sha256": "cbe5510b61881de3e53badbb82921acb6db1f3e3689acf535427946b3b5b8bd7"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/spatial_contract.py",
-      "size_bytes": 9883,
-      "sha256": "16b81b46cbbbea783de45f865532ef47e66d6406b388ef79c78aa51bec5db5ca"
+      "size_bytes": 10692,
+      "sha256": "598487ef7a54cf36d3cef361a565407ffbc1a505604599e4222965eda906e5ae"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Spatial-Prompt/token_binding_runtime.py",
@@ -2928,8 +2913,8 @@
     },
     {
       "path": "runtime-dependencies.yaml",
-      "size_bytes": 14509,
-      "sha256": "ff27991236a2f38203528c270bb21213832a1200e6f7941f34d362159af91ab3"
+      "size_bytes": 14518,
+      "sha256": "95c5b779ff858525661cdd897f51edfef0ea6bae63c2093041143d02917f1503"
     },
     {
       "path": "schemas/anima_txt2img.yaml",
@@ -2963,8 +2948,8 @@
     },
     {
       "path": "scripts/windows/Asteria.Bootstrap.psm1",
-      "size_bytes": 34841,
-      "sha256": "cd3d0e753ca235304e9236ad23638517e843237001c58e75687ac800a1cda380"
+      "size_bytes": 35159,
+      "sha256": "694039a33fdbec30d97750e2d8ddfaeb56ad451db6420b751d98a48112c7ce42"
     },
     {
       "path": "scripts/windows/Asteria.Launcher.psm1",

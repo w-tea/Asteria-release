@@ -2,9 +2,14 @@
 
 [日本語](#日本語) | [English](#english)
 
+> **dev版を利用する方へ（2026年9月8日更新）**：V1.1.2までの修正を含みます。プロンプトの配置は開発中です。大きな負荷の原因になっていた追加の反復処理を外し、生成前半だけ配置を誘導する方式に更新しました。人数、位置、髪色や服装の対応はまだ安定していません。Hires.fix・Refinerでは配置を追加で誘導せず、通常の拡大・再描画を使います。配置を使わない生成と項目別入力は引き続き利用できます。
+>
+> **For dev users (September 8, 2026)**: This build includes fixes through V1.1.2. Spatial prompt placement remains experimental. The costly extra iterative passes have been removed; placement now guides only the early part of base sampling. Subject counts, positions, and hair/clothing assignments remain unreliable. Hires.fix and Refiner use normal enlargement/refinement without additional placement guidance. Generation without placement and sectioned prompt input remain available.
+
 ## 更新履歴 / Release history
 
 - **V1.2.0** — MiniMax H3のVideo Studio、MiniMax-Music3のMusic Studio、動画・音声に対応したMedia Library、標準／フルアクセス拡張、Anima 2.9B／3.8BとQwen2D-Anime VAE、Asteria独自の3つのMerge計算方法、項目別プロンプト入力、プロンプト記法とAI支援、生成時のRAM使用量設定を追加。 / Added MiniMax H3 Video Studio, MiniMax-Music3 Music Studio, video/audio Media Library support, Standard and Full-access Extensions, Anima 2.9B/3.8B and Qwen2D-Anime VAE support, three Asteria-native Merge calculation modes, sectioned positive-prompt input, prompt tools and AI assistance, and a Reduce RAM use during generation setting.
+- **V1.1.2** — 初回セットアップで一時的にパスが長くなり、一部の管理対象コンポーネントを導入できない問題を修正。復旧が必要な場合は、原因と対処方法を表示します。 / Fixed managed-component installation failures caused by an unnecessarily long temporary extraction path and added actionable recovery guidance.
 - **V1.1.1** — 空白を含むフォルダーへAsteriaを配置すると起動できない問題を修正。 / Fixed Asteria failing to start when installed in a folder whose path contains spaces.
 - **V1.1.0** — 中断後も再開できる処理、更新・復旧時の保護、外部モデルライブラリ、追加のMerge方式、全画面のテーマ刷新、画像メタデータの再利用、Discord生成、診断を追加。 / Added resumable long-running work, safer update and recovery, external model libraries, new Merge modes, a full visual refresh, image-metadata reuse, Discord generation, and diagnostics.
 - **V1.0.4** — Runtime Monitor、生成時間、Seed単独適用、LoRAサムネイルと生成出力を改善。 / Added Runtime Monitor and generation time, seed-only reuse, LoRA thumbnails, and generation-output fixes.
@@ -13,7 +18,7 @@
 - **V1.0.1** — Merge XYZ、Windowsのリンク経由モデル、Portable版の初期設定と修復を強化。 / Added Merge XYZ and strengthened Windows linked-model and Portable bootstrap/repair behavior.
 - **V1.0.0** — Windows Portable初回公開版。 / Initial Windows Portable release.
 
-この一覧には、各バージョンで利用者が使える正式な変更だけを記載します。 / This list contains only supported user-facing changes for each version.
+この一覧には利用者向けの変更を記載します。dev版の開発中機能には、上記の制限があります。 / This list covers user-facing changes. Experimental features in dev have the limitations described above.
 
 ## 日本語
 
@@ -51,13 +56,20 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - Settingsに「生成時のRAM使用量を抑える」を追加しました。大きな動画や連続生成でRAMが不足する場合に選べます。単発生成は遅くなる場合があり、変更はAsteriaの次回起動時に反映されます。
 - Media Libraryでは画像・動画・音声をまとめて扱えます。動画をVideo Studioへ渡し、音楽は設定だけを引き継いで作り直せます。
 - Extensionsではカタログ、URL／GitHub、ローカルZIP、手動フォルダーを選べます。標準拡張はAsteriaが許可した機能だけを利用します。フルアクセス拡張はAsteriaと同じ利用者権限でコードを実行します。更新、元に戻す、無効化、Safe Modeからの復旧は明示操作と再起動で反映されます。
-- AsteriaがAnima 2.9B（40ブロック）とAnima 3.8B（52ブロック）を見分け、画像生成とMerge Studioで必要な選択肢を表示します。どちらのモデルでも、項目別プロンプトの配置をテキストから生成、画像から生成、インペイント、Hires.fixで利用できます。MBWでは、既存の全プリセットを各ブロック構成に合わせて選べます。
+- AsteriaがAnima 2.9B（40ブロック）とAnima 3.8B（52ブロック）を見分け、画像生成とMerge Studioで必要な選択肢を表示します。MBWでは、既存の全プリセットを各ブロック構成に合わせて選べます。プロンプトの配置は、これらのモデルを含めて開発中です。
 - Anima 2.9B／3.8Bでは、LLLiteが生成結果に作用することを確認しています。ただし、現在の位置や構図の制御は実験段階です。狙った位置や構図を保証するものではないため、強さと範囲を調整しながら結果を確認してください。
 - 旧28ブロックAnima向けLoRAは、Anima 2.9Bで使えるように再配置できます。Anima 3.8Bでは結果をまだ確認できないため、自動変換しません。
 - AnimaではQwen2D-Anime VAEも選べます。必要な読み込み機能はAsteriaに含まれるため、別の拡張機能を追加する必要はありません。
 - Merge StudioではMoment Weave、Log Weave、Dual Residualを、Weight sumでモデルを組み合わせる際の計算方法として選べます。MBWの部位別設定やMerge XYZの比較にも使えます。
 - 詳しい操作方法は[Extensions](guides/EXTENSIONS.md)、[Video Studio](guides/VIDEO_STUDIO.md)、[Music Studio](guides/MUSIC_STUDIO.md)、[Media Library](guides/MEDIA_LIBRARY.md)を参照してください。
 - 項目別プロンプトの配置については、[項目別プロンプトの配置ガイド](guides/spatial-prompt-layout.md)を参照してください。
+
+#### V1.1.2
+
+- 管理対象ZIPの一時展開パスを、Asteriaの`temp/`内に作る短いフォルダーへ変更しました。従来は配置先より展開中だけパスが長くなる問題があり、ControlNet用コンポーネントなどを導入できない場合がありました。
+- 最終的な配置先のパスが長すぎる場合は、`setup_path_too_long`とともに原因と対処方法を表示します。Asteriaを`D:\Asteria`などの短いパスへ移動してから、`Repair-Asteria.cmd`を実行してください。
+- Settingsから導入や修復を行った場合も、パスが長すぎる状態と、以前のコンポーネントを復元できない状態を区別して案内します。修復の前に生成環境を停止した場合は、修復に失敗しても再起動を試みます。
+- `.cmd`から起動した場合も、配布ファイルのSHA-256を確実に検証します。
 
 #### V1.1.1
 
@@ -292,12 +304,19 @@ Asteria is a Windows application for local AI creation. It combines image genera
 - Added **Reduce RAM use during generation** under Settings. It can help when large video or repeated generation runs exhaust system RAM, may slow single jobs, and applies after restarting Asteria.
 - Extended Media Library to images, video, and audio. The selected video can be sent to Video Studio, while Music regeneration copies settings without using the existing audio as an input.
 - Added Standard and Full-access Extensions from the catalog, URL or GitHub, local ZIP, or manual folder. Standard extensions can use only the Asteria features you approve. Full-access extensions can run code with the same user permissions as Asteria. Updates, rollback, disable, and Safe Mode recovery remain explicit actions and take effect after restart.
-- Asteria now recognizes Anima 2.9B (40 blocks) and Anima 3.8B (52 blocks) and shows the matching generation and Merge Studio choices. Spatial prompt placement works with both models for text to image, image to image, inpaint, and Hires.fix. Existing MBW presets are available for both block layouts.
+- Asteria now recognizes Anima 2.9B (40 blocks) and Anima 3.8B (52 blocks) and shows the matching generation and Merge Studio choices. Existing MBW presets are available for both block layouts. Spatial prompt placement remains experimental for these models as well.
 - LLLite has a confirmed effect on outputs from Anima 2.9B and 3.8B. Its current position and composition control remains experimental and does not guarantee the intended layout. Adjust the strength and area while reviewing the results.
 - Legacy 28-block Anima LoRAs can be remapped for use with Anima 2.9B. Asteria does not automatically convert them for Anima 3.8B because the result has not yet been confirmed.
 - Added Qwen2D-Anime VAE support for Anima without requiring a separate extension.
 - Added the Asteria-native Moment Weave, Log Weave, and Dual Residual Calculation Modes for Weight sum, MBW, and Merge XYZ.
 - See the guides for [Extensions](guides/EXTENSIONS.md), [Video Studio](guides/VIDEO_STUDIO.md), [Music Studio](guides/MUSIC_STUDIO.md), and [Media Library](guides/MEDIA_LIBRARY.md).
+
+#### V1.1.2
+
+- Managed ZIP files now use a short temporary extraction path under Asteria's `temp/` directory. This prevents setup paths from becoming longer only during extraction, so components such as ControlNet support can be installed whenever their final destination fits within the Windows path limit.
+- If the final destination is still too long, setup explains how to move Asteria to a shorter path such as `D:\Asteria` before running `Repair-Asteria.cmd`.
+- Setup and Repair actions in Settings now distinguish an overlong path from an incomplete rollback and show the appropriate recovery steps. If Repair stops a running generation environment, Asteria attempts to restart it even when repair fails.
+- Launching from a `.cmd` file no longer relies on PowerShell module auto-loading to verify the SHA-256 of distributed files.
 
 #### V1.1.1
 
