@@ -566,6 +566,8 @@ function Set-AsteriaContainedEnvironment {
     $env:PYTHONUTF8 = "1"
     $env:PIP_CONFIG_FILE = "NUL"
     $env:PIP_DISABLE_PIP_VERSION_CHECK = "1"
+    $env:YOLO_CONFIG_DIR = Join-Path $AppRoot "data\config"
+    [System.IO.Directory]::CreateDirectory($env:YOLO_CONFIG_DIR) | Out-Null
     Remove-Item Env:PYTHONHOME -ErrorAction SilentlyContinue
     Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
 }

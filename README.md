@@ -2,13 +2,13 @@
 
 [日本語](#日本語) | [English](#english)
 
-> **dev版を利用する方へ（2026年9月8日更新）**：V1.1.2までの修正を含みます。プロンプトの配置は開発中です。大きな負荷の原因になっていた追加の反復処理を外し、生成前半だけ配置を誘導する方式に更新しました。人数、位置、髪色や服装の対応はまだ安定していません。Hires.fix・Refinerでは配置を追加で誘導せず、通常の拡大・再描画を使います。配置を使わない生成と項目別入力は引き続き利用できます。
+> **dev版を利用する方へ（2026年10月11日更新）**：V1.1.2までの修正を含みます。プロンプトの配置機能はV1.2.0に含めません。通常の生成と、ポジティブプロンプトを三欄に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。元の履歴や画像は変更しません。
 >
-> **For dev users (September 8, 2026)**: This build includes fixes through V1.1.2. Spatial prompt placement remains experimental. The costly extra iterative passes have been removed; placement now guides only the early part of base sampling. Subject counts, positions, and hair/clothing assignments remain unreliable. Hires.fix and Refiner use normal enlargement/refinement without additional placement guidance. Generation without placement and sectioned prompt input remain available.
+> **For dev users (October 11, 2026)**: This build includes fixes through V1.1.2. Spatial prompt placement is not included in V1.2.0. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without changing the original history or images.
 
 ## 更新履歴 / Release history
 
-- **V1.2.0** — MiniMax H3のVideo Studio、MiniMax-Music3のMusic Studio、動画・音声に対応したMedia Library、標準／フルアクセス拡張、Anima 2.9B／3.8BとQwen2D-Anime VAE、Asteria独自の3つのMerge計算方法、項目別プロンプト入力、プロンプト記法とAI支援、生成時のRAM使用量設定を追加。 / Added MiniMax H3 Video Studio, MiniMax-Music3 Music Studio, video/audio Media Library support, Standard and Full-access Extensions, Anima 2.9B/3.8B and Qwen2D-Anime VAE support, three Asteria-native Merge calculation modes, sectioned positive-prompt input, prompt tools and AI assistance, and a Reduce RAM use during generation setting.
+- **V1.2.0** — Video Studio、Music Studio、動画・音声に対応したMedia Library、拡張機能、Anima 2.9B／3.8B、独自のMerge計算方法を追加。プロンプトの組み立て・解釈・比較、ワイルドカードの部分固定、生成過程の保存と途中からの分岐、画像・LoRAの点検、自動生成の終了条件も選べます。 / Added Video Studio, Music Studio, video/audio support in Media Library, Extensions, Anima 2.9B/3.8B support, and new Merge modes. New creative tools cover prompt assembly, interpretation and comparison, partial wildcard pinning, generation-stage recording and branching, image and LoRA review, and automatic-generation limits.
 - **V1.1.2** — 初回セットアップで一時的にパスが長くなり、一部の管理対象コンポーネントを導入できない問題を修正。復旧が必要な場合は、原因と対処方法を表示します。 / Fixed managed-component installation failures caused by an unnecessarily long temporary extraction path and added actionable recovery guidance.
 - **V1.1.1** — 空白を含むフォルダーへAsteriaを配置すると起動できない問題を修正。 / Fixed Asteria failing to start when installed in a folder whose path contains spaces.
 - **V1.1.0** — 中断後も再開できる処理、更新・復旧時の保護、外部モデルライブラリ、追加のMerge方式、全画面のテーマ刷新、画像メタデータの再利用、Discord生成、診断を追加。 / Added resumable long-running work, safer update and recovery, external model libraries, new Merge modes, a full visual refresh, image-metadata reuse, Discord generation, and diagnostics.
@@ -18,7 +18,7 @@
 - **V1.0.1** — Merge XYZ、Windowsのリンク経由モデル、Portable版の初期設定と修復を強化。 / Added Merge XYZ and strengthened Windows linked-model and Portable bootstrap/repair behavior.
 - **V1.0.0** — Windows Portable初回公開版。 / Initial Windows Portable release.
 
-この一覧には利用者向けの変更を記載します。dev版の開発中機能には、上記の制限があります。 / This list covers user-facing changes. Experimental features in dev have the limitations described above.
+この一覧には利用者向けの変更を記載します。dev版の対象範囲は上記の案内を確認してください。 / This list covers user-facing changes. See the note above for the scope of this dev build.
 
 ## 日本語
 
@@ -34,7 +34,6 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - **Music Studioで曲を作る**: MiniMax-Music3でVocalまたはInstrumentalを選び、用途に合う新しい曲を生成できます。
 - **設定を再利用する**: スタイル、ワイルドカード、Embedding、LoRA、生成プリセットを組み合わせ、PNG／JPEG／WebPからプロンプトや対応する生成設定を読み込んで次の生成に使えます。
 - **プロンプトを分けて入力する**: ポジティブプロンプトをベース、キャラクター、詳細の三つに分け、表示名と並び順を用途に合わせて変更できます。生成時は指定した順に一つのプロンプトへまとめ、履歴、生成プリセット、画像のメタデータからも同じ構成を復元できます。
-- **項目を配置して生成する**: 項目別入力では、必要な項目だけを配置対象にして、画像内の範囲、効き具合、境界のなじみ、前後関係を設定できます。配置は生成を誘導する機能であり、位置や人数を保証するものではありません。詳しい使い方は[項目別プロンプトの配置ガイド](guides/spatial-prompt-layout.md)を参照してください。
 - **プロンプトを整える**: 選択した文字の重みをCtrl＋↑／↓で調整し、記法メニューから強調、弱化、数値指定、候補、段階切り替え、交互切り替え、AND、BREAKを入力できます。AIプロンプト支援では、用途に合わせて標準、Anima、Illustrious、Danbooruタグへ変換を選べます。
 - **LoRAを学習する**: 学習画像とキャプションを用意して学習を実行し、完成したモデルをモデル一覧から選べる状態にします。
 - **モデルを組み合わせる**: Merge StudioでCheckpointやLoRAの条件を比べ、Weight sum、MBW、Merge XYZから方式を選択できます。Moment Weave、Log Weave、Dual Residualは違いを見ながら合成するためのAsteria独自方式です。
@@ -50,19 +49,26 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - Video Studioでは、Text、Image、First / Last Frame、Reference / Video Edit、Sequenceの5タスクから目的に合う動画作成を選べます。使用するモデルや構成、Steps、Sampler、Schedulerなどを選び、生成後に結果を確認してからアップスケールできます。Sequenceではクリップをプレビューし、**このクリップを再試行**、**採用して次へ**、**採用して完成**から次の操作を選びます。最後の連結だけ失敗したときは、採用済みクリップを作り直さず再試行できます。
 - Music Studioでは、VocalとInstrumentalを別々に下書きし、モデル構成、Steps、Sampler、Scheduler、曲の長さ、Seedなどを選べます。MiniMax-Music3の処理が失敗しても有料APIへ切り替わりません。
 - Generateでは、ポジティブプロンプトを「まとめて入力」と「項目別に入力」から選べます。項目別入力では、ベース、キャラクター、詳細の表示名と並び順を変更できます。生成時は項目の間へ区切りを補って一つのプロンプトにまとめ、履歴、生成プリセット、画像のメタデータからも同じ構成を復元できます。
-- 項目別入力では、必要な項目を画像内の範囲へ配置できます。対象ごとに形、範囲、配置の強さ、境界のなじみ、前後関係を設定できます。位置や人数を保証する機能ではありません。詳しくは[項目別プロンプトの配置ガイド](guides/spatial-prompt-layout.md)を参照してください。
 - Generateでは、選択した文字の重みをCtrl＋↑／↓で0.1ずつ調整できます。記法メニューから強調、弱化、数値指定、候補、段階切り替え、交互切り替え、AND、BREAKを入力できます。
+- 自動リピートの進行確認を修正しました。進行通知が途切れた場合は同じ生成の状態を確認し直します。履歴の読み込み待ちで次の生成を止めず、生成自体が失敗した場合は理由を表示して停止します。
+- 自動生成に最大試行枚数、最大時間、合格枚数の終了条件を追加しました。失敗や不合格も試行枚数に含め、終了時は理由を表示します。
+- プロンプト解釈ビューで、ワイルドカードの展開、重み、記法、実際に使ったモデルへの入力を確認できます。語句の効き方比較では一つの変更を同じSeedで比べ、条件名を隠して好みを選べます。ワイルドカードは髪色など一部の選択だけを固定できます。
+- 日本語のシーン説明から三欄のプロンプトを組み立てるAI支援、人物・衣装などの素材保存、意味上の矛盾候補の確認を追加しました。提案は確認してから適用し、入力文を勝手に書き換えません。
+- HiresやDetailerの前後の画像、メイキング動画・GIF、生成途中の状態を任意で保存できます。対応する生成では、保存した途中状態から文章や条件を変えて別の候補を作れます。
+- Media Libraryで条件への一致やシリーズ内の変化を確認し、判定を訂正できます。再生成アシストでは、保存した設定と現在のモデルの違いを確認して再利用できます。画像対応AIの判定には見逃しや誤判定があります。
+- LoRA学習用の画像とcaptionを点検し、学習後は服・背景・ポーズを変えた生成で効果を比べられます。AIの注釈候補は確認用であり、勝手にcaptionを変更したり学習を始めたりしません。
+- 生成時に語句の参照範囲を記録し、手直しして部分編集へ渡せます。範囲は正確な部位の輪郭ではありません。複数人のポーズは一つの制御画像として編集できますが、AnimaのLLLiteではポーズへの追従を保証しません。
+- 生成画像のチェックを追加しました。画像対応AIでHires前に手足や身体の崩れを確認し、不合格画像を保存するか選べます。Settingsでは履歴の画像を選び、設定を保存する前に判定を試せます。AIには見逃しや誤判定があり、独自の人体判定器は現在選べません。[操作と制約](guides/IMAGE_CHECK.md)を確認してください。
 - AIプロンプト支援では、用途に合わせて標準、Anima、Illustrious、Danbooruタグへ変換を選べます。OpenAI互換の接続先では、利用できるモデルの一覧を取得して選べます。
 - Settingsに「生成時のRAM使用量を抑える」を追加しました。大きな動画や連続生成でRAMが不足する場合に選べます。単発生成は遅くなる場合があり、変更はAsteriaの次回起動時に反映されます。
 - Media Libraryでは画像・動画・音声をまとめて扱えます。動画をVideo Studioへ渡し、音楽は設定だけを引き継いで作り直せます。
 - Extensionsではカタログ、URL／GitHub、ローカルZIP、手動フォルダーを選べます。標準拡張はAsteriaが許可した機能だけを利用します。フルアクセス拡張はAsteriaと同じ利用者権限でコードを実行します。更新、元に戻す、無効化、Safe Modeからの復旧は明示操作と再起動で反映されます。
-- AsteriaがAnima 2.9B（40ブロック）とAnima 3.8B（52ブロック）を見分け、画像生成とMerge Studioで必要な選択肢を表示します。MBWでは、既存の全プリセットを各ブロック構成に合わせて選べます。プロンプトの配置は、これらのモデルを含めて開発中です。
+- AsteriaがAnima 2.9B（40ブロック）とAnima 3.8B（52ブロック）を見分け、画像生成とMerge Studioで必要な選択肢を表示します。MBWでは、既存の全プリセットを各ブロック構成に合わせて選べます。
 - Anima 2.9B／3.8Bでは、LLLiteが生成結果に作用することを確認しています。ただし、現在の位置や構図の制御は実験段階です。狙った位置や構図を保証するものではないため、強さと範囲を調整しながら結果を確認してください。
 - 旧28ブロックAnima向けLoRAは、Anima 2.9Bで使えるように再配置できます。Anima 3.8Bでは結果をまだ確認できないため、自動変換しません。
 - AnimaではQwen2D-Anime VAEも選べます。必要な読み込み機能はAsteriaに含まれるため、別の拡張機能を追加する必要はありません。
 - Merge StudioではMoment Weave、Log Weave、Dual Residualを、Weight sumでモデルを組み合わせる際の計算方法として選べます。MBWの部位別設定やMerge XYZの比較にも使えます。
-- 詳しい操作方法は[Extensions](guides/EXTENSIONS.md)、[Video Studio](guides/VIDEO_STUDIO.md)、[Music Studio](guides/MUSIC_STUDIO.md)、[Media Library](guides/MEDIA_LIBRARY.md)を参照してください。
-- 項目別プロンプトの配置については、[項目別プロンプトの配置ガイド](guides/spatial-prompt-layout.md)を参照してください。
+- 詳しい操作方法は[制作支援](guides/CREATIVE_WORKFLOWS.md)、[画像チェック](guides/IMAGE_CHECK.md)、[Extensions](guides/EXTENSIONS.md)、[Video Studio](guides/VIDEO_STUDIO.md)、[Music Studio](guides/MUSIC_STUDIO.md)、[Media Library](guides/MEDIA_LIBRARY.md)を参照してください。
 
 #### V1.1.2
 
@@ -281,7 +287,6 @@ Asteria is a Windows application for local AI creation. It combines image genera
 - **Music Studio**: Generate new Vocal or Instrumental music locally with MiniMax-Music3.
 - **Reusable prompts and settings**: Reuse styles, wildcards, embeddings, LoRAs, generation presets, and compatible prompts or settings found in PNG, JPEG, and WebP images.
 - **Sectioned prompt input**: Split the positive prompt into Base, Character, and Details sections, then rename or reorder them for the current workflow. Asteria combines the sections in that order and restores the same structure from history, generation presets, and image metadata.
-- **Spatial prompt placement**: Place selected prompt sections within the image, then adjust each target's area, strength, edge blending, and front-to-back priority. Placement guides generation; it does not guarantee exact coordinates or subject counts.
 - **Prompt tools**: Use Ctrl + Up/Down to adjust prompt weight, insert common prompt notation from a menu, and ask AI Prompt Assist for Standard, Anima, Illustrious, or Convert to Danbooru tags output.
 - **LoRA training**: Prepare training images and captions, run training from Asteria, and register the result in the model list.
 - **Merge Studio**: Compare checkpoint or LoRA settings and use the Asteria-native Moment Weave, Log Weave, and Dual Residual modes with Weight sum, MBW, and Merge XYZ.
@@ -298,18 +303,26 @@ Asteria is a Windows application for local AI creation. It combines image genera
 - Added per-clip Sequence review with Retry, Accept and continue, and Accept and finish. If only the final joining step fails, you can retry it without regenerating accepted clips.
 - Added MiniMax-Music3 Music Studio for new Vocal and Instrumental generation, with selectable model configuration, Steps, Sampler, Scheduler, duration, and Seed. A failed local run never falls back to a paid API.
 - Generate now lets you switch between one positive-prompt field and three editable sections. You can rename and reorder Base, Character, and Details. Asteria inserts prompt separators when combining them in the selected order and restores the section structure from history, generation presets, and image metadata.
-- Sectioned prompt input can now place selected sections within the image. Each target supports an ellipse or rectangle, strength, edge blending, and front-to-back priority. Placement guides generation and does not guarantee exact coordinates or subject counts. See the [Spatial prompt placement guide](guides/spatial-prompt-layout.md).
 - Added Ctrl + Up/Down prompt-weight adjustment and a notation menu for emphasis, de-emphasis, numeric weight, prompt alternatives, scheduled switching, alternating prompts, AND, and BREAK.
+- Fixed automatic-repeat progress monitoring. If progress notifications stop, Asteria checks the same job instead of submitting another one. A pending history refresh no longer blocks the next generation; actual generation failures still stop the repeat loop with an error.
+- Added automatic-generation limits for attempted images, elapsed time, and accepted images. Failed and rejected images count toward the attempt limit, and Asteria shows why the repeat stopped.
+- Added a prompt interpretation view for wildcard expansion, weights, notation, and actual model input. Prompt-effect comparisons change one input while sharing the same Seed, with an optional blind preference vote. You can also pin individual wildcard choices, such as hair color, while rerolling the others.
+- Added AI-assisted three-section prompt assembly from a scene description, reusable character and outfit materials, and semantic conflict suggestions. Suggestions require an explicit apply action and do not silently rewrite your prompt.
+- Added optional before/after images for Hires and Detailer, making-of videos and GIFs, and saved intermediate generation states. Supported runs can branch from a saved state with edited text or settings.
+- Media Library can review condition matches and consistency across a series, with editable judgments. Reproduction assistance compares recorded settings and assets with those currently available. Image-capable AI can miss problems or make incorrect judgments.
+- Added LoRA dataset review and practical generation comparisons using different outfits, backgrounds, and poses. AI annotations are review suggestions; they do not automatically change captions or start training.
+- You can record word-reference maps during generation, refine them, and send them to inpaint. These maps are not exact anatomical boundaries. Multi-person poses can be edited in one control image; Anima LLLite does not guarantee pose following.
+- Added generated-image checking through an image-capable AI before Hires, with a choice to keep or discard rejected images. Settings can try a saved history image before saving the check configuration. AI judgements may be wrong; an Asteria-native anatomy classifier is not currently available. See the [operation and limits](guides/IMAGE_CHECK.md).
 - Added explicit Standard, Anima, Illustrious, or Convert to Danbooru tags output in AI Prompt Assist. OpenAI-compatible connections can load their available model list for selection.
 - Added **Reduce RAM use during generation** under Settings. It can help when large video or repeated generation runs exhaust system RAM, may slow single jobs, and applies after restarting Asteria.
 - Extended Media Library to images, video, and audio. The selected video can be sent to Video Studio, while Music regeneration copies settings without using the existing audio as an input.
 - Added Standard and Full-access Extensions from the catalog, URL or GitHub, local ZIP, or manual folder. Standard extensions can use only the Asteria features you approve. Full-access extensions can run code with the same user permissions as Asteria. Updates, rollback, disable, and Safe Mode recovery remain explicit actions and take effect after restart.
-- Asteria now recognizes Anima 2.9B (40 blocks) and Anima 3.8B (52 blocks) and shows the matching generation and Merge Studio choices. Existing MBW presets are available for both block layouts. Spatial prompt placement remains experimental for these models as well.
+- Asteria now recognizes Anima 2.9B (40 blocks) and Anima 3.8B (52 blocks) and shows the matching generation and Merge Studio choices. Existing MBW presets are available for both block layouts.
 - LLLite has a confirmed effect on outputs from Anima 2.9B and 3.8B. Its current position and composition control remains experimental and does not guarantee the intended layout. Adjust the strength and area while reviewing the results.
 - Legacy 28-block Anima LoRAs can be remapped for use with Anima 2.9B. Asteria does not automatically convert them for Anima 3.8B because the result has not yet been confirmed.
 - Added Qwen2D-Anime VAE support for Anima without requiring a separate extension.
 - Added the Asteria-native Moment Weave, Log Weave, and Dual Residual Calculation Modes for Weight sum, MBW, and Merge XYZ.
-- See the guides for [Extensions](guides/EXTENSIONS.md), [Video Studio](guides/VIDEO_STUDIO.md), [Music Studio](guides/MUSIC_STUDIO.md), and [Media Library](guides/MEDIA_LIBRARY.md).
+- See the guides for [Creative workflows](guides/CREATIVE_WORKFLOWS.md), [Image checks](guides/IMAGE_CHECK.md), [Extensions](guides/EXTENSIONS.md), [Video Studio](guides/VIDEO_STUDIO.md), [Music Studio](guides/MUSIC_STUDIO.md), and [Media Library](guides/MEDIA_LIBRARY.md).
 
 #### V1.1.2
 

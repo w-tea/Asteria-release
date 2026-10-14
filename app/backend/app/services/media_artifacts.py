@@ -17,6 +17,7 @@ _MEDIA_DELIVERY_TYPES = {
     ("image", ".jpg"): "image/jpeg",
     ("image", ".jpeg"): "image/jpeg",
     ("image", ".webp"): "image/webp",
+    ("image", ".gif"): "image/gif",
     ("video", ".mp4"): "video/mp4",
     ("video", ".webm"): "video/webm",
     ("audio", ".wav"): "audio/wav",

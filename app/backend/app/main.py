@@ -31,6 +31,14 @@ from app.api.models import router as models_router, start_model_bootstrap
 from app.api.operations import get_operation_coordinator, router as operations_router
 from app.api.prompt_assist import router as prompt_assist_router
 from app.api.prompt_presets import router as prompt_presets_router
+from app.api.prompt_comparisons import router as prompt_comparisons_router
+from app.api.prompt_workshop import router as prompt_workshop_router
+from app.api.prompt_materials import router as prompt_materials_router
+from app.api.image_conditions import router as image_conditions_router
+from app.api.enhancement_comparison import router as enhancement_comparison_router
+from app.api.series_consistency import router as series_consistency_router
+from app.api.lora_dataset_review import router as lora_dataset_review_router
+from app.api.lora_practical_tests import router as lora_practical_tests_router
 from app.api.presets import router as presets_router
 from app.api.runtime import router as runtime_router
 from app.api.resources import router as resources_router
@@ -164,6 +172,14 @@ def create_app(*, config: AppConfig | None = None) -> FastAPI:
     app.include_router(startup_router)
     app.include_router(prompt_assist_router)
     app.include_router(prompt_presets_router)
+    app.include_router(prompt_comparisons_router)
+    app.include_router(prompt_workshop_router)
+    app.include_router(prompt_materials_router)
+    app.include_router(image_conditions_router)
+    app.include_router(enhancement_comparison_router)
+    app.include_router(series_consistency_router)
+    app.include_router(lora_dataset_review_router)
+    app.include_router(lora_practical_tests_router)
     app.include_router(presets_router)
     app.include_router(topaz_router)
     app.include_router(eagle_router)

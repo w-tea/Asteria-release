@@ -1,9 +1,11 @@
 import random
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from app.services.prompt_syntax import PromptSyntaxPlan, parse_prompt_syntax
+from app.schemas.prompt_choices import PromptChoicePins
+from app.services.prompt_choices import PromptChoice, expand_choices
 
 
 _EXPLICIT_WILDCARD_PATTERN = re.compile(r"__([A-Za-z0-9_./-]+)__")
@@ -17,6 +19,8 @@ class PromptExpansion:
     raw: str
     expanded: str
     selections: list[str]
+    choices: list[PromptChoice] = field(default_factory=list)
+    prompt_hash: str = ''
 
 
 @dataclass
@@ -121,19 +125,13 @@ def _expand_wildcards(
     return _BARE_NESTED_WILDCARD_PATTERN.sub(replace, expanded)
 
 
-def expand_dynamic_prompt(prompt: str, seed: int | None = None, wildcard_dir: Path | None = None) -> PromptExpansion:
-    rng = random.Random(seed)
-    selections: list[str] = []
-    prompt = _expand_wildcards(prompt, rng, selections, wildcard_dir)
-
-    def replace(match: re.Match[str]) -> str:
-        options = [part.strip() for part in match.group(1).split("|")]
-        selected = rng.choice(options)
-        selections.append(selected)
-        return selected
-
-    expanded = re.sub(r"\{([^{}]+)\}", replace, prompt)
-    return PromptExpansion(raw=prompt, expanded=expanded, selections=selections)
+def expand_dynamic_prompt(
+    prompt: str, seed: int | None = None, wildcard_dir: Path | None = None,
+    *, pins: PromptChoicePins | dict | None = None,
+) -> PromptExpansion:
+    reader = (lambda name: _read_wildcard_options(wildcard_dir, name)) if wildcard_dir else None
+    result = expand_choices(prompt, seed, reader, pins)
+    return PromptExpansion(prompt, result.expanded, result.selections, result.choices, result.prompt_hash)
 
 
 def expand_prompt_fragment(

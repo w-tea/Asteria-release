@@ -32,7 +32,7 @@ ResourceStatus = Literal["available", "missing", "ambiguous", "unsupported"]
 
 
 class ProfileModelSlotReference(StrictModel):
-    kind: Literal["checkpoint", "vae"]
+    kind: Literal["checkpoint", "vae", "text_encoder"]
     application: Literal["model_slot"] = "model_slot"
     slot_id: str = Field(min_length=1)
     source_name: str = Field(min_length=1)

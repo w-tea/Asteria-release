@@ -134,6 +134,8 @@ if (-not (Test-Path -LiteralPath $resolvedPython -PathType Leaf) -or
 foreach ($path in @($resolvedDataRoot, $resolvedModelRoot, $defaultOutputRoot, $resolvedLogsRoot, $resolvedTempRoot)) {
     [System.IO.Directory]::CreateDirectory($path) | Out-Null
 }
+$env:YOLO_CONFIG_DIR = [System.IO.Path]::Combine($resolvedDataRoot, "config")
+[System.IO.Directory]::CreateDirectory($env:YOLO_CONFIG_DIR) | Out-Null
 
 $extensionStartupJournal = [System.IO.Path]::Combine($resolvedDataRoot, "extensions", "startup-journal.json")
 if (-not $SafeMode -and (Test-Path -LiteralPath $extensionStartupJournal -PathType Leaf)) {

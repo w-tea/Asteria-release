@@ -73,7 +73,6 @@ RUNTIME_FEATURE_POLICY = (
     RuntimeFeatureRequirement("seed_variation", ("comfyui-inspire-pack",), "all"),
     RuntimeFeatureRequirement("seed_resize", ("comfyui-inspire-pack",), "all"),
     RuntimeFeatureRequirement("anima_lllite", (), "core"),
-    RuntimeFeatureRequirement("spatial_prompt_layout", ("asteria-spatial-prompt",), "all"),
 )
 
 

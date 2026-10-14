@@ -64,6 +64,7 @@ def build_image_metadata_preview(
     expires_at: datetime,
     history_payload: dict[str, object] | None = None,
     model_library: ModelLibrary | None = None,
+    model_slot_types_by_profile: dict[str, dict[str, str]] | None = None,
     available_style_ids: set[str] | None = None,
     available_preset_ids: set[str] | None = None,
     available_workflow_ids: set[str] | None = None,
@@ -137,7 +138,7 @@ def build_image_metadata_preview(
     settings, setting_warnings = _compatible_settings(merged)
     warnings.extend(setting_warnings)
     resources = resolve_resource_references(
-        _resource_references(merged, warnings),
+        _resource_references(merged, warnings, slot_types=(model_slot_types_by_profile or {}).get(str(merged.get("profile")), {})),
         library=model_library,
         available_style_ids=available_style_ids,
         available_preset_ids=available_preset_ids,
@@ -466,6 +467,8 @@ def _integer_value(value: object) -> int | None:
 def _resource_references(
     payload: dict[str, Any],
     warnings: list[str],
+    *,
+    slot_types: dict[str, str] | None = None,
 ) -> list[ResourceReference]:
     resources: list[ResourceReference] = []
     model_slots = payload.get("model_slots")
@@ -473,9 +476,13 @@ def _resource_references(
         for slot_id, value in model_slots.items():
             if not isinstance(value, str) or not value.strip():
                 continue
+            kind = _normalized_model_type((slot_types or {}).get(str(slot_id), "vae" if "vae" in str(slot_id).casefold() else "checkpoint"))
+            if kind not in {"checkpoint", "vae", "text_encoder"}:
+                warnings.append("model_slot_type_unsupported")
+                continue
             resources.append(
                 ProfileModelSlotReference(
-                    kind="vae" if "vae" in str(slot_id).casefold() else "checkpoint",
+                    kind=kind,
                     slot_id=str(slot_id),
                     source_name=value,
                     status="missing",
@@ -654,6 +661,19 @@ def resolve_resource_references(
             continue
         candidates = [item for item in library.items if _normalized_model_type(item.type) == model_type]
         exact = [item for item in candidates if _resource_exact_match(reference.source_name, item)]
+        exact.extend(item for item in library.aliases
+                     if _normalized_model_type(item.type) == model_type
+                     and _resource_exact_match(reference.source_name, item, allow_basename=False))
+        # Preserve an explicitly selected hidden alias, without making every alias
+        # a separate basename candidate in the visible library.
+        unique = {}
+        for item in exact:
+            try:
+                key = str(item.path.resolve()).casefold()
+            except OSError:
+                key = str(item.path).casefold()
+            unique.setdefault(key, item)
+        exact = list(unique.values())
         matches = exact if exact else [
             item for item in candidates if item.path.name.casefold() == Path(reference.source_name).name.casefold()
         ]
@@ -691,13 +711,14 @@ def _normalized_model_type(value: str) -> str:
     return "checkpoint" if value == "diffusion_model" else value
 
 
-def _resource_exact_match(source_name: str, item: ModelLibraryItem) -> bool:
+def _resource_exact_match(source_name: str, item: ModelLibraryItem, *, allow_basename: bool = True) -> bool:
     source = source_name.replace("\\", "/").lstrip("./").casefold()
     values = {
         str(item.path).replace("\\", "/").casefold(),
         item.relative_path.as_posix().lstrip("./").casefold(),
-        item.name.casefold(),
     }
+    if allow_basename:
+        values.add(item.name.casefold())
     external_relative = item.metadata.get("external_relative_path")
     if external_relative:
         values.add(external_relative.replace("\\", "/").lstrip("./").casefold())

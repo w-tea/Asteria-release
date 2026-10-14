@@ -21,12 +21,12 @@ _EXACT_REQUIREMENT_RE = re.compile(r"^[A-Za-z0-9_.-]+==[^<>=!*~\s]+$")
 _REVISION_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 _VERIFIED_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _MANDATORY_RUNTIME_IDS = {
+    "asteria-generation-stage",
     "asteria-prompt-syntax",
     "asteria-merge-runtime",
     "asteria-h3-latent-assembly",
     "asteria-anima-lora-remap",
     "asteria-qwen2d-vae",
-    "asteria-spatial-prompt",
     "comfyui-anima-3-8b",
     "comfyui-impact-pack",
     "comfyui-impact-subpack",
@@ -322,6 +322,10 @@ def _validate_runtime_catalog_item(item: object) -> None:
     provider = getattr(item, "provider", None)
     if provider == "bundled":
         bundled_contracts = {
+            "asteria-generation-stage": (
+                "runtime-components/comfyui/Asteria-Generation-Stage",
+                "asteria.generation-stage.v1",
+            ),
             "asteria-prompt-syntax": (
                 "runtime-components/comfyui/Asteria-Prompt-Syntax",
                 "asteria.prompt.step-schedule.v1",
@@ -341,10 +345,6 @@ def _validate_runtime_catalog_item(item: object) -> None:
             "asteria-qwen2d-vae": (
                 "runtime-components/comfyui/Asteria-Qwen2D-VAE",
                 "asteria.qwen2d_vae.v1",
-            ),
-            "asteria-spatial-prompt": (
-                "runtime-components/comfyui/Asteria-Spatial-Prompt",
-                "asteria.spatial-prompt.node.v4",
             ),
         }
         expected = bundled_contracts.get(getattr(item, "id", None))

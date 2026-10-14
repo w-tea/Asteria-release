@@ -17,13 +17,14 @@ from app.services.model_fingerprints import ModelFingerprintService
 
 
 _cache_lock = threading.RLock()
-_libraries: dict[tuple[str, str], ModelLibrary] = {}
+_libraries: dict[tuple[str, str, str], ModelLibrary] = {}
 
 
-def _cache_key(model_root: Path, config: AppConfig) -> tuple[str, str]:
+def _cache_key(model_root: Path, config: AppConfig) -> tuple[str, str, str]:
     return (
         os.path.normcase(os.path.abspath(str(model_root))),
         os.path.normcase(os.path.abspath(str(config.data_dir))),
+        os.path.normcase(os.path.abspath(str(config.comfy_dir))),
     )
 
 
@@ -65,6 +66,14 @@ def _scan_model_libraries(
     config: AppConfig,
 ) -> ModelLibrary:
     local = ModelLibraryScanner(model_root).scan()
+    # Impact's detector list also includes the configured engine's own model root.
+    # Keep those identities out of the application selection list, which already
+    # uses the engine's discovered detector names.
+    managed = ModelLibraryScanner(config.comfy_dir / 'models').scan(model_types=('detailer',))
+    aliases = [*local.aliases, *(
+        replace(item, source='runtime', root_id='asteria-runtime')
+        for item in [*managed.items, *managed.aliases]
+    )]
     fingerprints = ModelFingerprintService(config.data_dir / "config" / "model-fingerprints.json")
     local_items: list[ModelLibraryItem] = []
     for item in local.items:
@@ -100,7 +109,7 @@ def _scan_model_libraries(
     try:
         external = service.scan()
     except ExternalModelLibraryError:
-        return ModelLibrary(items=local_items, link_health=local.link_health)
+        return ModelLibrary(items=local_items, link_health=local.link_health, aliases=aliases)
     external_items = [
         ModelLibraryItem(
             type=item.model_type,
@@ -123,4 +132,4 @@ def _scan_model_libraries(
     ]
     items = [*local_items, *external_items]
     items.sort(key=lambda item: (item.type, item.name.casefold(), str(item.relative_path).casefold()))
-    return ModelLibrary(items=items, link_health=local.link_health)
+    return ModelLibrary(items=items, link_health=local.link_health, aliases=aliases)

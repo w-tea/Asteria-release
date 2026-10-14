@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field, model_validator
 from app.schemas.common import LoraSelection
 from app.schemas.image_edit import ImageEditLineage
 from app.schemas.media import MediaArtifact, MediaKind
-from app.schemas.prompt_input import PromptInput
+from app.schemas.prompt_input import PromptInput, TargetPromptContent
+from app.schemas.prompt_choices import PromptChoicePins
 from app.schemas.prompt_layout import PromptLayout
 from app.schemas.remaster import PrimaryOutput, RemasterResponse, RemasterSettingsInput
 from app.services.controlnet_mode import ControlNetMode
@@ -182,12 +183,14 @@ def _prompt_record_sha256(payload: dict[str, Any]) -> str:
 
 
 class Txt2ImgRequest(BaseModel):
+    image_check_enabled: bool | None = Field(default=None, strict=True)
     _spatial_generation_mode: ClassVar[Literal["txt2img", "img2img", "inpaint"]] = "txt2img"
 
     profile: str = "sdxl"
     runtime: str | None = None
     prompt: str = Field(min_length=1)
     prompt_input: PromptInput | None = None
+    prompt_pins: PromptChoicePins | None = None
     prompt_layout: PromptLayout | None = None
     negative_prompt: str = ""
     steps: int = Field(default=30, ge=1, le=150)
@@ -226,6 +229,11 @@ class Txt2ImgRequest(BaseModel):
     hires_cfg_scale: float = Field(default=0.0, ge=0, le=30)
     hires_distilled_cfg_scale: float = Field(default=0.0, ge=0, le=30)
     hires_keep_first_pass: bool = False
+    record_enhancement_stages: bool = False
+    record_making_video: bool = False
+    record_branch_step: int | None = Field(default=None, ge=1, le=149, strict=True)
+    record_word_masks: bool = False
+    branch_source_id: int | None = Field(default=None, ge=1, strict=True)
     hires_noise_mode: str = ""
     topaz_enabled: bool = False
     topaz_lighting: bool = False
@@ -268,6 +276,12 @@ class Txt2ImgRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_prompt_input_contract(self):
+        sections = self.prompt_input.sections if self.prompt_input is not None else ()
+        if self.prompt_layout is not None or any(
+            isinstance(getattr(section, "content", None), TargetPromptContent)
+            for section in (sections or ())
+        ):
+            raise ValueError("spatial_prompt_not_in_release")
         validate_spatial_prompt_contract(
             self.prompt,
             self.prompt_input,

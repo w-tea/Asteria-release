@@ -112,6 +112,20 @@ def _history_connection(db_path: Path) -> Iterator[sqlite3.Connection]:
 
 
 class HistoryRepository:
+    @staticmethod
+    def registered_output_source(db_path: Path, generation_id: int) -> dict | None:
+        """Read an existing output registration without initializing or migrating history."""
+        with closing(sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)) as con:
+            con.row_factory = sqlite3.Row
+            row = con.execute("select id, media_kind, settings_json, output_paths_json from generations where id = ?",
+                (generation_id,)).fetchone()
+        if row is None:
+            return None
+        settings, paths = json.loads(row["settings_json"]), json.loads(row["output_paths_json"])
+        if not isinstance(settings, dict) or not isinstance(paths, list):
+            raise ValueError("invalid_output_registration")
+        return {"id": row["id"], "media_kind": row["media_kind"], "settings": settings, "output_paths": paths}
+
     def __init__(self, db_path: Path):
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -304,6 +318,7 @@ class HistoryRepository:
         tag: str = "",
         folder: str = "all",
         media_kind: str = "all",
+        condition_verdict: str = "",
     ) -> HistoryPage:
         if limit < 1 or limit > 100:
             raise ValueError("invalid_history_limit")
@@ -318,6 +333,11 @@ class HistoryRepository:
         folder_where, folder_params = self._folder_where(folder)
         clauses = [folder_where.removeprefix("where ")] if folder_where else []
         params = list(folder_params)
+        if condition_verdict:
+            from app.services.image_conditions import condition_filter_clause
+            condition_clause, condition_params = condition_filter_clause(self.db_path, condition_verdict)
+            clauses.append(condition_clause)
+            params.extend(condition_params)
         if profile:
             clauses.append("g.profile = ?")
             params.append(profile)

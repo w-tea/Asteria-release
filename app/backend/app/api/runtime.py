@@ -36,12 +36,6 @@ from app.services.controlnet_mode import (
 from app.services.runtime import ComfyClient, RuntimeErrorResponse
 from app.services.runtime import INSPIRE_KSAMPLER_CLASS, LORA_BLOCK_WEIGHT_CLASS
 from app.services.seed_resize import resolve_seed_resize_contract, seed_resize_contract_status
-from app.services.spatial_runtime_contract import (
-    SPATIAL_PROMPT_CONTRACT_VERSION,
-    SPATIAL_PROMPT_PACK_VERSION,
-    SPATIAL_PROMPT_PROFILE_COVERAGE,
-    spatial_runtime_contract_status,
-)
 from app.services.model_dependencies import ModelDependencyRepository
 from app.services.sampling_catalog import SAMPLERS, SCHEDULERS
 from app.services.upscaler_catalog import UPSCALERS
@@ -515,21 +509,6 @@ def _merge_runtime_capability(object_info: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _spatial_prompt_capability(object_info: dict[str, Any]) -> dict[str, Any]:
-    status = spatial_runtime_contract_status(object_info)
-    return {
-        "available": status.available,
-        "runtime": "comfy_workflow",
-        "contract_version": SPATIAL_PROMPT_CONTRACT_VERSION,
-        "pack_version": SPATIAL_PROMPT_PACK_VERSION,
-        "missing_components": list(status.missing_components),
-        "profile_coverage": dict(SPATIAL_PROMPT_PROFILE_COVERAGE),
-        "message": "Spatial prompt layout ready"
-        if status.available
-        else "Spatial prompt layout runtime is missing or incompatible",
-    }
-
-
 def _unreachable_capabilities(base_url: str, message: str) -> RuntimeCapabilitiesResponse:
     return RuntimeCapabilitiesResponse(
         base_url=base_url,
@@ -559,10 +538,6 @@ def _unreachable_capabilities(base_url: str, message: str) -> RuntimeCapabilitie
                 "missing_nodes": sorted(ANIMA_LLLITE_CURRENT_REQUIRED_NODES),
                 "message": message,
                 "lllite_models": [],
-            },
-            "spatial_prompt_layout": {
-                **_spatial_prompt_capability({}),
-                "message": message,
             },
             "lora_block_weight": RuntimeFeatureCapability(
                 available=False,
@@ -618,7 +593,6 @@ def capabilities() -> RuntimeCapabilitiesResponse:
         features={
             "controlnet": _controlnet_capability(object_info, nodes),
             "anima_lllite": _anima_lllite_capability(object_info, nodes),
-            "spatial_prompt_layout": _spatial_prompt_capability(object_info),
             "detailer": _detailer_capability(object_info, nodes),
             "controlnet_preprocessors": _controlnet_preprocessor_capability(nodes),
             "lora_block_weight": _all_required_capability(

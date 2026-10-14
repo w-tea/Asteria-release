@@ -37,3 +37,5 @@ fields:
   hires_cfg_scale: {type: number, required: false, backend_key: hires_cfg_scale, min: 0, max: 30, default: 0}
   hires_distilled_cfg_scale: {type: number, required: false, backend_key: hires_distilled_cfg_scale, min: 0, max: 30, default: 0}
   hires_keep_first_pass: {type: boolean, required: false, backend_key: hires_keep_first_pass, default: false}
+  record_enhancement_stages: {type: boolean, required: false, backend_key: record_enhancement_stages, default: false}
+  record_making_video: {type: boolean, required: false, backend_key: record_making_video, default: false}

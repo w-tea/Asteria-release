@@ -102,6 +102,17 @@ class DraftPoseJoint(BaseModel):
     y: float = Field(ge=0, le=1)
 
 
+class DraftPosePerson(BaseModel):
+    id: str = Field(min_length=1, max_length=128)
+    joints: list[DraftPoseJoint] = Field(default_factory=list, max_length=128)
+
+    @model_validator(mode="after")
+    def _unique_joints(self):
+        if len({joint.id for joint in self.joints}) != len(self.joints):
+            raise ValueError("duplicate pose joint id")
+        return self
+
+
 class ImageEditorDraftWrite(BaseModel):
     draft_id: str = ""
     revision: int = Field(default=0, ge=0)
@@ -109,11 +120,23 @@ class ImageEditorDraftWrite(BaseModel):
     mask_path: str = ""
     crop_rect: DraftCropRect | None = None
     pose_joints: list[DraftPoseJoint] = Field(default_factory=list, max_length=128)
+    pose_people: list[DraftPosePerson] | None = None
+    selected_pose_id: str = Field(default="", max_length=128)
     active_tool: Literal["mask", "erase", "crop", "pan"] = "mask"
     active_inspector: str = "source"
     brush_size: int = Field(default=56, ge=1, le=512)
     brush_opacity: float = Field(default=0.78, ge=0, le=1)
     mask_visible: bool = True
+
+    @model_validator(mode="after")
+    def _unique_people(self):
+        if self.pose_people is not None:
+            ids = {person.id for person in self.pose_people}
+            if len(ids) != len(self.pose_people):
+                raise ValueError("duplicate pose person id")
+            if self.selected_pose_id and self.selected_pose_id not in ids:
+                raise ValueError("selected pose person is missing")
+        return self
 
     @field_validator("draft_id")
     @classmethod

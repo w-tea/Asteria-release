@@ -21,6 +21,7 @@ from app.services.history import HistoryRepository
 from app.services.image_metadata_import import build_image_metadata_preview
 from app.services.image_metadata_receipts import ImageMetadataReceipt, ImageMetadataReceiptError, ImageMetadataReceiptStore
 from app.services.model_library_cache import get_model_library
+from app.services.model_profiles import ModelProfileRepository
 from app.services.model_storage import resolve_model_root
 from app.services.native_path_picker import pick_native_path
 
@@ -56,6 +57,10 @@ def _preview_from_receipt(
         expires_at=receipt.expires_at,
         history_payload=history_payload,
         model_library=library,
+        model_slot_types_by_profile={
+            profile.id: {slot.id: slot.type for slot in profile.model_slots}
+            for profile in ModelProfileRepository(AppConfig().model_profiles_path).list()
+        },
         available_style_ids=style_ids,
         sidecar_path=sidecar_path,
         data_dir=AppConfig().data_dir,

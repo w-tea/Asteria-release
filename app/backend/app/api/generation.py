@@ -1,4 +1,5 @@
 import json
+from dataclasses import asdict
 import logging
 import os
 from pathlib import Path
@@ -19,7 +20,7 @@ import zipfile
 from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from PIL import Image, ImageOps
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from app.core.config import AppConfig
 from app.schemas.generation import (
@@ -38,6 +39,8 @@ from app.schemas.generation import (
     XYZPlotResponse,
 )
 from app.schemas.common import LoraSelection
+from app.schemas.prompt_choices import PromptChoicePins
+from app.services.prompt_choices import PromptChoice
 from app.schemas.media import MediaArtifact
 from app.schemas.remaster import RemasterRequest, RemasterResponse
 from app.schemas.operations import OperationChildSummary, OperationRecord
@@ -50,6 +53,8 @@ from app.services.artifact_lifecycle import (
     end_orphan_cleanup as _end_orphan_cleanup,
 )
 from app.services.image_validation import InvalidImageContentError, validate_image_file
+from app.services.image_check_operation import ImageCheckOperation, capture_image_check_operation
+from app.services.image_check import remap_checked_image_paths
 from app.services.library_thumbnails import LibraryThumbnailError, LibraryThumbnailService
 from app.services.inpaint_region import InpaintRegionError, validate_only_masked_inputs
 from app.services.external_settings import ExternalIntegrationSettingsRepository
@@ -103,6 +108,11 @@ from app.services.reference_mutation import (
 from app.services.model_library_cache import get_model_library
 from app.services.model_library import ModelLibrary
 from app.services.model_fingerprints import ModelFingerprintService
+from app.services.generation_reproduction import capture_generation_assets, compare_generation_assets
+from app.services.prompt_styles import (
+    apply_advanced_style_text as _apply_advanced_style_text,
+    compose_with_advanced_styles as _compose_with_advanced_styles,
+)
 from app.services.anima_lora_remap import (
     AnimaLoraRemapRegistryError,
     prepare_anima_lora_runtime_entries,
@@ -213,12 +223,15 @@ class PromptExpandRequest(BaseModel):
     negative_prompt: str = ""
     seed: int = -1
     advanced_styles: list[AdvancedStyleSelection] = Field(default_factory=list)
+    prompt_pins: PromptChoicePins | None = None
 
 
 class PromptExpandResponse(BaseModel):
     prompt: str
     expanded_prompt: str
     selections: list[str]
+    choices: list[PromptChoice] = Field(default_factory=list)
+    prompt_hash: str = ''
 
 
 class DeleteGenerationResponse(BaseModel):
@@ -393,9 +406,12 @@ def configure_generation_operation_coordinator(
 
 
 def _register_generation_executors(coordinator: OperationCoordinator) -> None:
+    from app.services.prompt_comparison_jobs import PromptComparisonExecutor
+
     for mode in ("txt2img", "img2img", "inpaint"):
         coordinator.register_executor(f"generation.{mode}", _GenerationOperationExecutor(mode))
     coordinator.register_executor("generation.remaster", _RemasterOperationExecutor())
+    coordinator.register_executor("generation.prompt_comparison", PromptComparisonExecutor(coordinator.repository.db_path))
 
 
 class _GenerationOperationExecutor:
@@ -455,6 +471,7 @@ def _execute_generation_operation(
         with _jobs_lock:
             cache = _jobs.setdefault(job_id, _new_job_cache(mode, request))
             cache["request"] = request
+            cache["generation_operation_snapshot"] = payload.get("generation_operation_snapshot")
         lease = _publisher_leases.pop(job_id, None)
         if lease is None:
             lease = reference_mutation_coordinator.acquire_publisher()
@@ -478,6 +495,10 @@ def _execute_generation_operation(
                 result = _generate(request, "inpaint", job_id=job_id)
             else:
                 result = _generate(request, "txt2img", job_id=job_id)
+            if mode != "remaster" and getattr(result, "status", None) == "cancelled":
+                _set_job(job_id, generation=result)
+                context.acknowledge_cancel()
+                raise OperationCancelled(artifact_refs=_generation_artifact_refs(result))
             context.raise_if_cancelled()
             result_field = "remaster" if mode == "remaster" else "generation"
             _set_job(job_id, **{result_field: result})
@@ -1880,7 +1901,7 @@ def _profile_base_required_nodes(profile: str, settings: dict, *, requires_lora:
             required.add("TextEncodeQwenImageEdit")
         mode = str(settings.get("mode") or "txt2img")
         if mode == "inpaint":
-            required.update({"LoadImage", "VAEEncodeForInpaint"})
+            required.update({"LoadImage", "VAEEncode", "SetLatentNoiseMask"})
         elif mode == "img2img":
             required.update({"LoadImage", "VAEEncode"})
         elif not is_anima_3_8b:
@@ -2216,7 +2237,7 @@ def _sdxl_base_required_nodes(settings: dict, model_slots: dict[str, str]) -> se
         required.add("CLIPSetLastLayer")
     mode = str(settings.get("mode") or "txt2img")
     if mode == "inpaint":
-        required.update({"LoadImage", "VAEEncodeForInpaint"})
+        required.update({"LoadImage", "VAEEncode", "SetLatentNoiseMask"})
     elif mode == "img2img":
         required.update({"LoadImage", "VAEEncode"})
     else:
@@ -2424,6 +2445,7 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
             "runtime",
             "prompt_input",
             "prompt_layout",
+            "prompt_pins",
             "loras",
             "controlnet_units",
             "anima_lllite_units",
@@ -2438,6 +2460,7 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
         },
         exclude_unset=True,
     )
+    values['record_branch_step'] = request.record_branch_step or 0
     try:
         mapped = ParameterMapper(schema_path).map(values)
     except ValueError as error:
@@ -2488,6 +2511,8 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
     if request.model_slot_overrides:
         mapped["model_slot_overrides"] = dict(request.model_slot_overrides)
     mapped["remaster"] = request.remaster.model_dump()
+    if request.prompt_pins is not None:
+        mapped["prompt_pins"] = request.prompt_pins.model_dump(mode="json")
     if request.prompt_input is not None:
         mapped["prompt_input"] = request.prompt_input.model_dump(
             mode="json",
@@ -2893,6 +2918,9 @@ def _round_hires_dimension(value: int | float, step: int = 8) -> int:
 
 
 def _apply_topaz_hires_if_needed(output_paths: list[str], settings: dict, request: Txt2ImgRequest, config: AppConfig, output_dir: Path) -> list[str]:
+    if isinstance(settings.get("image_check"), dict):
+        # Checked generation owns enhancement completely; rejected saves are never input to Topaz.
+        return output_paths
     if not settings.get("hires_enabled") or settings.get("hires_upscaler") != "Topaz Photo AI":
         return output_paths
     if settings.get("topaz_hires_runtime") in {"completed", "completed_topaz_only"}:
@@ -2959,6 +2987,20 @@ def wildcards() -> WildcardListResponse:
     )
 
 
+def _expand_with_pins(prompt: str, request: Txt2ImgRequest | PromptExpandRequest, config: AppConfig):
+    try:
+        return expand_dynamic_prompt(
+            prompt,
+            seed=request.seed if request.seed >= 0 else None,
+            wildcard_dir=config.wildcard_dir,
+            **({"pins": request.prompt_pins} if request.prompt_pins is not None else {}),
+        )
+    except ValueError as exc:
+        if str(exc).startswith('prompt_choices_'):
+            raise HTTPException(status_code=409, detail={"code": str(exc)}) from exc
+        raise
+
+
 @router.post("/prompt/expand", response_model=PromptExpandResponse)
 def expand_prompt_preview(request: PromptExpandRequest) -> PromptExpandResponse:
     prompt, _negative_prompt = _compose_with_advanced_styles(
@@ -2966,15 +3008,13 @@ def expand_prompt_preview(request: PromptExpandRequest) -> PromptExpandResponse:
         request.negative_prompt,
         request.advanced_styles,
     )
-    expansion = expand_dynamic_prompt(
-        prompt,
-        seed=request.seed if request.seed >= 0 else None,
-        wildcard_dir=AppConfig().wildcard_dir,
-    )
+    expansion = _expand_with_pins(prompt, request, AppConfig())
     return PromptExpandResponse(
         prompt=request.prompt,
         expanded_prompt=expansion.expanded,
         selections=expansion.selections,
+        choices=expansion.choices,
+        prompt_hash=expansion.prompt_hash,
     )
 
 
@@ -2983,26 +3023,6 @@ def _merge_loras(prompt_loras: list[dict], request_loras: list[dict]) -> list[di
     for lora in [*prompt_loras, *request_loras]:
         merged[str(lora["name"])] = lora
     return list(merged.values())
-
-
-def _apply_advanced_style_text(base: str, style_text: str) -> str:
-    value = str(style_text or "").strip()
-    if not value:
-        return base
-    if "{prompt}" in value:
-        return value.replace("{prompt}", base).strip()
-    if not base.strip():
-        return value
-    return f"{base.rstrip()}, {value}"
-
-
-def _compose_with_advanced_styles(prompt: str, negative_prompt: str, styles: list) -> tuple[str, str]:
-    composed_prompt = prompt
-    composed_negative = negative_prompt
-    for style in sorted(styles, key=lambda item: item.order):
-        composed_prompt = _apply_advanced_style_text(composed_prompt, style.prompt)
-        composed_negative = _apply_advanced_style_text(composed_negative, style.negative)
-    return composed_prompt, composed_negative
 
 
 def _unsupported_profile_prompt_settings(profile: str, negative_prompt: str) -> list[dict[str, str]]:
@@ -3286,15 +3306,25 @@ def _known_embedding_names(config: AppConfig) -> list[str]:
     return [item.path.stem for item in library.by_type("embedding")]
 
 
-def _output_dir_for(data_dir: Path, profile: str) -> Path:
+def _output_dir_for(data_dir: Path, profile: str, operation: ImageCheckOperation | None = None) -> Path:
     from datetime import datetime
 
-    output_settings = UserSettingsRepository(data_dir / "user-settings.json").load().output
-    parts = [resolve_output_root(data_dir, output_settings)]
+    output_settings = (operation.output_settings if operation is not None
+                       else UserSettingsRepository(data_dir / "user-settings.json").load().output)
+    parts = [operation.output_root if operation is not None else resolve_output_root(data_dir, output_settings)]
     if output_settings.organize_by_date:
         parts.append(Path(datetime.now().strftime("%Y-%m-%d")))
     parts.append(Path(safe_segment(profile)))
     return Path(*parts)
+
+
+def _generation_operation_snapshot(request: Txt2ImgRequest) -> dict:
+    data_dir = _data_dir()
+    current = UserSettingsRepository(data_dir / "user-settings.json").load()
+    try:
+        return capture_image_check_operation(current, data_dir=data_dir, enabled=request.image_check_enabled).snapshot()
+    except ValidationError as exc:
+        raise HTTPException(status_code=409, detail={"code": "image_check_settings_invalid"}) from exc
 
 
 def _delete_history_artifacts(
@@ -3573,13 +3603,46 @@ def _generate(
     merge_runtime_context: dict[str, Any] | None = None,
     comfy_admission_lease_token: str | None = None,
     merge_xyz_metadata: dict[str, Any] | None = None,
+    comparison_metadata: dict[str, Any] | None = None,
+) -> GenerationResponse:
+    from contextlib import nullcontext
+    from app.services.making_video import MakingRecorder
+    from app.services.generation_branch import BranchSession
+    from app.services.word_masks import WordMapSession
+
+    with (MakingRecorder() if request.record_making_video else nullcontext(None)) as making, \
+            (BranchSession() if request.record_branch_step is not None or request.branch_source_id else nullcontext(None)) as branch, \
+            (WordMapSession() if request.record_word_masks else nullcontext(None)) as word_maps:
+        return _generate_with_recording(
+            request, mode, job_id, making=making, branch=branch, word_maps=word_maps, merge_runtime_context=merge_runtime_context,
+            comfy_admission_lease_token=comfy_admission_lease_token,
+            merge_xyz_metadata=merge_xyz_metadata, comparison_metadata=comparison_metadata,
+        )
+
+
+def _generate_with_recording(
+    request: Txt2ImgRequest,
+    mode: str,
+    job_id: str | None = None,
+    *,
+    making=None,
+    branch=None,
+    word_maps=None,
+    merge_runtime_context: dict[str, Any] | None = None,
+    comfy_admission_lease_token: str | None = None,
+    merge_xyz_metadata: dict[str, Any] | None = None,
+    comparison_metadata: dict[str, Any] | None = None,
 ) -> GenerationResponse:
     generation_started = time.perf_counter()
     request = _freeze_spatial_request_seed(request)
     _preflight_profile_prompt_request(request)
     data_dir = _data_dir()
     config = AppConfig()
-    output_dir = _output_dir_for(data_dir, request.profile)
+    stored_operation = _jobs.get(job_id, {}).get("generation_operation_snapshot") if job_id else None
+    check_operation = ImageCheckOperation.from_snapshot(stored_operation or _generation_operation_snapshot(request))
+    output_dir = _output_dir_for(data_dir, request.profile, check_operation)
+    if making is not None:
+        making.begin(check_operation.output_root, expected_images=request.batch_count * request.batch_size)
     model_slots = _model_slots_for_request(request, config)
     _validate_required_model_slots(request.profile, model_slots, config)
     external_model_snapshots = _external_model_reference_snapshots(model_slots, config)
@@ -3597,13 +3660,11 @@ def _generate(
     prompt_expansion = (
         None
         if _spatial_request_enabled(request)
-        else expand_dynamic_prompt(
-            styled_prompt,
-            seed=request.seed if request.seed >= 0 else None,
-            wildcard_dir=config.wildcard_dir,
-        )
+        else _expand_with_pins(styled_prompt, request, config)
     )
     settings, negative_prompt = _settings_from_request(request, config, mode)
+    if comparison_metadata is not None:
+        settings['prompt_comparison'] = dict(comparison_metadata)
     if request.profile == "anima":
         try:
             anima_bundle = prepare_anima_generation_bundle(
@@ -3702,6 +3763,21 @@ def _generate(
         settings["advanced_styles"] = [style.model_dump() for style in request.advanced_styles]
     known_embeddings = _known_embedding_names(config)
     selected_runtime = _selected_runtime_id(config, request.runtime)
+    branch_source = None
+    if branch is not None:
+        from app.services.generation_branch import validate_capture, branch_request
+        try:
+            validate_capture(request, mode, selected_runtime)
+            if request.branch_source_id:
+                branch_source = HistoryRepository(data_dir / 'asteria.db').get(request.branch_source_id)
+                if branch_source is None:
+                    raise ValueError('branch_not_available')
+                canonical = branch_request(branch_source, {'prompt': request.prompt,
+                    'negative_prompt': request.negative_prompt, 'cfg_scale': request.cfg_scale})
+                if canonical.model_dump() != request.model_dump():
+                    raise ValueError('branch_fixed_settings_changed')
+        except (ValueError, KeyError) as exc:
+            raise HTTPException(status_code=409, detail={'code': str(exc)}) from exc
     if _spatial_request_enabled(request) and selected_runtime != "comfy_workflow":
         _validate_runtime_feature_requirements(
             config,
@@ -3735,6 +3811,11 @@ def _generate(
             raise RuntimeError("prompt expansion was not prepared")
         expanded_prompt = prompt_expansion.expanded
         expansion_selections = list(prompt_expansion.selections)
+        settings["prompt_choice_trace"] = {
+            "schema_version": "asteria.prompt-choices.v1",
+            "prompt_hash": prompt_expansion.prompt_hash,
+            "choices": [asdict(item) for item in prompt_expansion.choices],
+        }
     loras = _merge_loras(
         spatial_loras if spatial_loras is not None else extract_loras(expanded_prompt),
         [lora.model_dump(exclude_none=True) for lora in request.loras],
@@ -3830,6 +3911,14 @@ def _generate(
     _record_hires_runtime(settings, selected_runtime, request.profile)
     _record_hires_checkpoint_runtime(settings, selected_runtime, request.profile)
     _record_refiner_runtime(settings, selected_runtime, request.profile)
+    profile_contract = next((p for p in ModelProfileRepository(config.model_profiles_path).list() if p.id == request.profile), None)
+    settings["generation_assets"] = capture_generation_assets(
+        model_slots, settings, loras, embeddings,
+        get_model_library(_model_root(config), config=config),
+        ModelFingerprintService(config.data_dir / "config" / "model-fingerprints.json"),
+        slot_types={slot.id: slot.type for slot in profile_contract.model_slots} if profile_contract else {},
+        allow_identical_aliases=branch is not None,
+    )
     runtime_settings = dict(settings)
     runtime_settings.pop("prompt_input", None)
     runtime_settings.pop("prompt_layout", None)
@@ -3847,6 +3936,21 @@ def _generate(
         "prompt_syntax": prompt_syntax_record["semantic_plans"],
         "topaz_settings": _topaz_settings_from_request(request).model_dump(),
     }
+    if word_maps is not None and request.profile in {'sdxl', 'anima'} and selected_runtime == 'comfy_workflow':
+        runtime_request['_word_maps'] = word_maps.begin(check_operation.output_root, request.profile)
+    if branch is not None:
+        from app.services.generation_branch import check_asset_identity
+        try:
+            if branch_source:
+                check_asset_identity(branch_source['settings']['generation_branch']['generation_assets'], settings['generation_assets'])
+            runtime_request['_generation_branch'] = branch.begin(check_operation.output_root, request, branch_source)
+            branch.prepare_control_inputs(runtime_settings)
+        except (ValueError, OSError, KeyError) as exc:
+            raise HTTPException(status_code=409, detail={'code': 'branch_source_unavailable'}) from exc
+    if check_operation.settings.enabled:
+        if selected_runtime != "comfy_workflow":
+            raise HTTPException(status_code=409, detail={"code": "image_check_runtime_not_supported"})
+        runtime_request["_image_check_operation"] = check_operation
     if spatial_context is not None:
         runtime_request["_spatial_runtime_context"] = spatial_context.runtime_context
     if merge_runtime_context is not None:
@@ -3905,6 +4009,8 @@ def _generate(
         runtime_request["runtime_stop_confirmed"] = lambda: bool(
             _jobs.get(job_id, {}).get("runtime_stop_confirmed")
         )
+    if making is not None:
+        runtime_request['progress_callback'] = making.wrap(runtime_request.get('progress_callback'))
     runtime = _runtime(config, selected_runtime)
     _revalidate_external_model_reference_snapshots(external_model_snapshots, config)
     try:
@@ -3960,9 +4066,9 @@ def _generate(
         settings["comfy_prompt_ids"] = result["comfy_prompt_ids"]
     if result.get("generated_seeds"):
         settings["generated_seeds"] = result["generated_seeds"]
-    output_settings = UserSettingsRepository(data_dir / "user-settings.json").load().output
+    output_settings = check_operation.output_settings
     settings["output_directory"] = str(output_dir)
-    settings["output_root"] = str(resolve_output_root(data_dir, output_settings))
+    settings["output_root"] = str(check_operation.output_root)
     settings["filename_template"] = output_settings.filename_template
     settings["output_image_format"] = output_settings.image_format
     record_hires_metadata(settings)
@@ -3985,6 +4091,7 @@ def _generate(
     try:
         before_paths = output_paths
         output_paths = _apply_output_image_format(output_paths, output_settings.image_format)
+        remap_checked_image_paths(settings, before_paths, output_paths)
         primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
         if not manifest_mapped:
             settings["primary_output_manifest_warning"] = "output_format_path_mapping_failed"
@@ -4017,6 +4124,7 @@ def _generate(
     )
     before_paths = output_paths
     output_paths = _apply_filename_template(output_paths, settings, request.profile, generation_id)
+    remap_checked_image_paths(settings, before_paths, output_paths)
     primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
     if not manifest_mapped:
         settings["primary_output_manifest_warning"] = "filename_path_mapping_failed"
@@ -4027,15 +4135,30 @@ def _generate(
         mapping_id=f"{request.profile}_txt2img",
     )
     settings["primary_outputs"] = primary_outputs
-    _auto_send_primary_outputs_to_eagle(
-        data_dir=data_dir,
-        config=config,
-        primary_outputs=primary_outputs,
-        generated_tags=generated_tags,
-        prompt=expanded_prompt or request.prompt,
-        negative_prompt=negative_prompt,
-        settings=settings,
-    )
+    making_output_paths = list(output_paths) if making is not None else []
+    from app.services.enhancement_stages import finalize_stages
+    finalize_stages(settings, result.get('enhancement_stages', []), primary_outputs, output_paths)
+    word_paths = []
+    if word_maps is not None:
+        settings['word_masks'], word_paths = word_maps.finish(primary_outputs, result['status'])
+        output_paths.extend(word_paths)
+    branch_paths = []
+    if branch is not None:
+        settings['generation_branch'], branch_paths = branch.finish(
+            request, settings, model_slots, expanded_prompt, negative_prompt, result['status'])
+        output_paths.extend(branch_paths)
+        record_controlnet_artifacts(settings)
+        record_anima_lllite_artifacts(settings)
+    if result["status"] != "cancelled":
+        _auto_send_primary_outputs_to_eagle(
+            data_dir=data_dir,
+            config=config,
+            primary_outputs=primary_outputs,
+            generated_tags=generated_tags,
+            prompt=expanded_prompt or request.prompt,
+            negative_prompt=negative_prompt,
+            settings=settings,
+        )
     history.update_settings(generation_id, settings)
     _update_output_paths_safely(history, generation_id, output_paths)
     sidecar_paths = MetadataWriter().write_generation_sidecars(
@@ -4059,7 +4182,7 @@ def _generate(
         output_paths = [*output_paths, *sidecar_paths]
         _update_output_paths_safely(history, generation_id, output_paths)
     remasters: list[RemasterResponse] = []
-    if request.remaster.enabled:
+    if request.remaster.enabled and result["status"] != "cancelled":
         remasters = _fan_out_remasters(
             request,
             generation_id,
@@ -4092,7 +4215,25 @@ def _generate(
             },
             [str(primary["path"]) for primary in primary_outputs],
         )
+    if making is not None:
+        settings['making_video'] = making.finish(history, generation_id, {
+            'status': result['status'], 'profile': request.profile,
+            'prompt': request.prompt, 'expanded_prompt': expanded_prompt, 'negative_prompt': negative_prompt,
+            'settings': settings, 'model_slots': model_slots, 'loras': loras, 'embeddings': embeddings,
+            'output_paths': making_output_paths,
+        }, cancelled=runtime_request.get('cancel_requested', lambda: False))
+        history.update_settings(generation_id, settings)
+        MetadataWriter().write_generation_sidecars({
+            'generation_id': generation_id, 'status': result['status'], 'profile': request.profile,
+            'prompt': request.prompt, 'expanded_prompt': expanded_prompt, 'negative_prompt': negative_prompt,
+            'prompt_expansion_selections': expansion_selections, 'settings': settings,
+            'model_slots': model_slots, 'loras': loras, 'embeddings': embeddings, 'metadata_tags': generated_tags,
+        }, making_output_paths)
     history_item = history.get(generation_id)
+    if branch_paths:
+        branch.commit()
+    if word_paths:
+        word_maps.commit()
     return GenerationResponse(
         id=generation_id,
         status=result["status"],
@@ -4747,6 +4888,8 @@ def _set_job(job_id: str, **patch: Any) -> None:
     with _jobs_lock:
         if job_id in _jobs:
             _jobs[job_id].update(patch)
+        comparison_total = _jobs.get(job_id, {}).get('comparison_total')
+        comparison_index = int(_jobs.get(job_id, {}).get('comparison_index', 0))
     progress_keys = {"current", "total", "phase", "step", "steps"}
     if not progress_keys.intersection(patch):
         return
@@ -4759,6 +4902,9 @@ def _set_job(job_id: str, **patch: Any) -> None:
         current = patch.get("current")
         if current is None and "progress" in patch and total is not None:
             current = round(float(patch["progress"]) * total)
+        if comparison_total:
+            current = comparison_index + min(1, max(0, int(current or 0)))
+            total = comparison_total
         coordinator.repository.transition(
             job_id,
             expected_revision=current_operation.row_revision,
@@ -4821,6 +4967,8 @@ def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest
             "request": request.model_dump(mode="json"),
             "request_fields_set": sorted(request.model_fields_set),
         }
+        if isinstance(request, Txt2ImgRequest):
+            snapshot["generation_operation_snapshot"] = _generation_operation_snapshot(request)
         operation = coordinator.enqueue(
             kind=f"generation.{mode}",
             source_actor="local",
@@ -4879,6 +5027,7 @@ def enqueue_discord_txt2img(
             "request": request.model_dump(mode="json"),
             "request_fields_set": sorted(request.model_fields_set),
             "discord": dict(discord_snapshot),
+            "generation_operation_snapshot": _generation_operation_snapshot(request),
         }
         claim = coordinator.enqueue_with_discord_receipt(
             kind="generation.txt2img",
@@ -5072,19 +5221,28 @@ def _cancel_legacy_remaster_job(job_id: str, job: dict[str, Any]) -> GenerationJ
 def retry_job(job_id: str) -> GenerationJobResponse:
     coordinator = _generation_operation_coordinator()
     try:
+        source = coordinator.get(job_id)
+        mode = str(source.request_snapshot["mode"])
+        request_type = {
+            "txt2img": Txt2ImgRequest,
+            "img2img": Img2ImgRequest,
+            "inpaint": InpaintRequest,
+            "remaster": RemasterRequest,
+        }[mode]
+        # Reject retired request contracts before retry creates a new operation.
+        request = request_type.model_validate(source.request_snapshot["request"])
         operation = coordinator.retry(job_id, source_actor="local")
     except OperationNotFoundError:
         raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_JOB_NOT_FOUND}) from None
     except OperationRetryError as exc:
         raise HTTPException(status_code=409, detail={"code": str(exc)}) from exc
-    mode = str(operation.request_snapshot["mode"])
-    request_type = {
-        "txt2img": Txt2ImgRequest,
-        "img2img": Img2ImgRequest,
-        "inpaint": InpaintRequest,
-        "remaster": RemasterRequest,
-    }[mode]
-    request = request_type.model_validate(operation.request_snapshot["request"])
+    except ValueError as exc:
+        code = (
+            "spatial_prompt_not_in_release"
+            if "spatial_prompt_not_in_release" in str(exc)
+            else "invalid_generation_snapshot"
+        )
+        raise HTTPException(status_code=409, detail={"code": code}) from exc
     publisher_lease = reference_mutation_coordinator.acquire_publisher()
     with _jobs_lock:
         _jobs[operation.operation_id] = _new_job_cache(mode, request)
@@ -5137,6 +5295,81 @@ def cleanup_jobs() -> GenerationJobCleanupResponse:
     )
 
 
+@router.get("/history/{generation_id}/reproduction")
+def generation_reproduction(generation_id: int) -> dict:
+    config = AppConfig()
+    item = HistoryRepository(_data_dir() / "asteria.db").get(generation_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail={"code": "generation_not_found"})
+    return compare_generation_assets(
+        item.get("settings", {}).get("generation_assets"),
+        get_model_library(_model_root(config), config=config),
+        ModelFingerprintService(config.data_dir / "config" / "model-fingerprints.json"),
+    )
+
+
+class WordMaskSelection(BaseModel):
+    image_index: int = Field(ge=0, strict=True)
+    columns: list[int] = Field(min_length=1, max_length=256)
+    threshold: float = Field(default=.5, ge=.01, le=.99, allow_inf_nan=False)
+    expand: float = Field(default=0, ge=-10, le=10, allow_inf_nan=False)
+
+
+@router.get('/history/{generation_id}/word-masks')
+def generation_word_masks(generation_id: int) -> dict:
+    from app.services.word_masks import word_mask_details
+    item = HistoryRepository(_data_dir() / 'asteria.db').get(generation_id)
+    try:
+        return word_mask_details(item or {})
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=409, detail={'code': 'word_masks_unavailable'}) from exc
+
+
+@router.post('/history/{generation_id}/word-masks/preview')
+def preview_generation_word_mask(generation_id: int, selection: WordMaskSelection) -> Response:
+    from io import BytesIO
+    from app.services.word_masks import make_word_mask
+    item = HistoryRepository(_data_dir() / 'asteria.db').get(generation_id)
+    try:
+        mask = make_word_mask(item or {}, selection.image_index, selection.columns, selection.threshold, selection.expand)
+        stream = BytesIO(); mask.save(stream, format='PNG')
+        return Response(stream.getvalue(), media_type='image/png', headers={'Cache-Control': 'no-store'})
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=409, detail={'code': 'word_masks_unavailable'}) from exc
+
+
+@router.get('/history/{generation_id}/branch')
+def generation_branch_details(generation_id: int) -> dict:
+    from app.services.generation_branch import branch_request, resolve_source
+    item = HistoryRepository(_data_dir() / 'asteria.db').get(generation_id)
+    try:
+        if item is None:
+            raise ValueError('branch_not_available')
+        resolve_source(item)
+        request = branch_request(item, {})
+    except (ValueError, OSError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail={'code': 'branch_source_unavailable'}) from exc
+    saved = item['settings']['generation_branch']
+    return {'generation_id': generation_id, 'cut_step': saved['cut_step'], 'bytes': saved['bytes'],
+            'prompt': request.prompt, 'negative_prompt': request.negative_prompt, 'cfg_scale': request.cfg_scale,
+            'profile': request.profile, 'steps': request.steps, 'seed': request.seed,
+            'sampler': request.sampler, 'scheduler': request.scheduler, 'width': request.width, 'height': request.height}
+
+
+@router.post('/history/{generation_id}/branch', response_model=GenerationJobResponse)
+def queue_generation_branch(generation_id: int, changes: dict) -> GenerationJobResponse:
+    from app.services.generation_branch import branch_request, resolve_source
+    item = HistoryRepository(_data_dir() / 'asteria.db').get(generation_id)
+    try:
+        if item is None:
+            raise ValueError('branch_not_available')
+        resolve_source(item)
+        request = branch_request(item, changes)
+    except (ValueError, OSError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail={'code': 'branch_source_unavailable'}) from exc
+    return _enqueue_generation_job('txt2img', request)
+
+
 @router.get("/history", response_model=GenerationHistoryResponse)
 def history(
     limit: int = Query(default=72, ge=1, le=100),
@@ -5147,6 +5380,7 @@ def history(
     tag: str = "",
     folder: str = "all",
     media_kind: Literal["all", "image", "video", "audio"] = "all",
+    condition_verdict: Literal["", "match", "mismatch", "unknown", "unchecked"] = "",
 ) -> GenerationHistoryResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
     try:
@@ -5159,6 +5393,7 @@ def history(
             tag=tag,
             folder=folder,
             media_kind=media_kind,
+            condition_verdict=condition_verdict,
         )
     except ValueError as error:
         if str(error) == "invalid_history_cursor":
@@ -5187,6 +5422,7 @@ def history_media_artifact(
     generation_id: int,
     artifact_id: str,
     request: Request,
+    download: bool = False,
 ) -> Response:
     data_dir = _data_dir()
     item = HistoryRepository(data_dir / "asteria.db").get(generation_id)
@@ -5197,8 +5433,10 @@ def history_media_artifact(
             item,
             artifact_id,
             accepted_roots=_media_artifact_roots(data_dir, item, artifact_id),
-            allowed_kinds={"video", "audio", "poster"},
+            allowed_kinds={"video", "audio", "poster", "image"},
         )
+        if artifact.kind == 'image' and (artifact.mime_type != 'image/gif' or artifact.role != 'derived'):
+            raise MediaArtifactAccessError('media_artifact_not_found')
     except MediaArtifactAccessError as error:
         raise HTTPException(
             status_code=404,
@@ -5219,7 +5457,7 @@ def history_media_artifact(
     headers = {
         "Accept-Ranges": "bytes",
         "Content-Length": str(length),
-        "Content-Disposition": f"inline; filename*=UTF-8''{quote(path.name, safe='')}",
+        "Content-Disposition": f"{'attachment' if download else 'inline'}; filename*=UTF-8''{quote(path.name, safe='')}",
         "X-Content-Type-Options": "nosniff",
         "Access-Control-Allow-Origin": "*",
     }

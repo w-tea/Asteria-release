@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from app.core.config import AppConfig
 from app.schemas.prompt_input import PromptInput
+from app.schemas.prompt_choices import PromptChoicePins
 from app.schemas.prompt_layout import PromptLayout
 from app.services import api_errors
 from app.services.spatial_prompt_contract import (
@@ -23,6 +24,7 @@ class PromptPresetItem(BaseModel):
     negative_prompt: str = ""
     tags: list[str] = Field(default_factory=list)
     prompt_input: PromptInput | None = None
+    prompt_pins: PromptChoicePins | None = None
     prompt_layout: PromptLayout | None = None
     spatial_recovery_status: SpatialPromptRecoveryStatus = "ready"
     warning_codes: list[str] = Field(default_factory=list)
@@ -38,6 +40,7 @@ class PromptPresetCreateRequest(BaseModel):
     negative_prompt: str = ""
     tags: list[str] = Field(default_factory=list)
     prompt_input: PromptInput | None = None
+    prompt_pins: PromptChoicePins | None = None
     prompt_layout: PromptLayout | None = None
 
     @model_validator(mode="after")
@@ -63,6 +66,7 @@ def _item(preset: PromptPreset) -> PromptPresetItem:
         negative_prompt=preset.negative_prompt,
         tags=list(preset.tags),
         prompt_input=preset.prompt_input,
+        prompt_pins=preset.prompt_pins,
         prompt_layout=preset.prompt_layout,
         spatial_recovery_status=preset.spatial_recovery_status,
         warning_codes=list(preset.warning_codes),
@@ -86,6 +90,7 @@ def create_preset(request: PromptPresetCreateRequest) -> PromptPresetItem:
             request.tags,
             request.prompt_input,
             request.prompt_layout,
+            request.prompt_pins,
         )
     except OSError as exc:
         raise HTTPException(status_code=409, detail={"code": api_errors.PROMPT_PRESET_SAVE_FAILED}) from exc

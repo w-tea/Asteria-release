@@ -102,6 +102,8 @@ def retry_operation(operation_id: str, request: OperationRetryRequest) -> dict[s
             raise OperationRetryError("operation_retry_requires_video_studio")
         if original.kind == "music.generate":
             raise OperationRetryError("operation_retry_requires_music_studio")
+        if original.kind == "generation.prompt_comparison":
+            raise OperationRetryError("comparison_prepare_new_run")
         operation = coordinator.retry(
             operation_id,
             source_actor=request.source_actor,

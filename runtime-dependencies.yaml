@@ -31,6 +31,30 @@ feature_requirements:
     provenance_url: https://docs.comfy.org/tutorials/video/minimax/minimax-h3
 
 dependencies:
+  - id: asteria-generation-stage
+    label: Asteria Generation Stage
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - image_check
+      - generation_branch
+      - word_masks
+    source:
+      provider: bundled
+      url: runtime-components/comfyui/Asteria-Generation-Stage
+      ref: asteria.generation-stage.v1
+      verified_at: "2026-10-12"
+      provenance_url: bundled://asteria/generation-stage/v1
+    target:
+      relative_path: custom_nodes/Asteria-Generation-Stage
+    size_bytes: 50792
+    checksum_sha256: 747ad749b35b976c14678dbb7e536541d0644ed6977548698b83a359645ad283
+    license:
+      id: mit
+      url: bundled://asteria/license
+    repair_policy: replace-managed-component
+    auto_install: true
+
   - id: asteria-prompt-syntax
     label: Asteria Prompt Syntax
     type: comfy_custom_node
@@ -38,6 +62,7 @@ dependencies:
     features:
       - prompt_syntax
       - alternating_switch
+      - prompt_interpretation
     source:
       provider: bundled
       url: runtime-components/comfyui/Asteria-Prompt-Syntax
@@ -46,31 +71,8 @@ dependencies:
       provenance_url: bundled://asteria/prompt-syntax/v1.2
     target:
       relative_path: custom_nodes/Asteria-Prompt-Syntax
-    size_bytes: 4367
-    checksum_sha256: 54717524f99270ebd326770a46e5ec28738b5f154e3a4e925c0a6535ec8fd8e9
-    license:
-      id: mit
-      url: bundled://asteria/license
-    repair_policy: replace-managed-component
-    auto_install: true
-
-  - id: asteria-spatial-prompt
-    label: Asteria Spatial Prompt
-    type: comfy_custom_node
-    release_class: mandatory-feature
-    features:
-      - spatial_prompt_layout
-      - spatial_prompt_profiles
-    source:
-      provider: bundled
-      url: runtime-components/comfyui/Asteria-Spatial-Prompt
-      ref: asteria.spatial-prompt.node.v4
-      verified_at: "2026-09-01"
-      provenance_url: bundled://asteria/spatial-prompt/v9-experimental
-    target:
-      relative_path: custom_nodes/Asteria-Spatial-Prompt
-    size_bytes: 73480
-    checksum_sha256: 2b26e021415b0783768c03edf5447ac6211d68e925caa61a909429f685f67dcf
+    size_bytes: 12693
+    checksum_sha256: 46fbb28e5e53b7e681ad963960c1eb549cc11bc7a95e823ca9d7075d806a5ac0
     license:
       id: mit
       url: bundled://asteria/license

@@ -7,6 +7,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from app.schemas.prompt_input import PromptInput
+from app.schemas.prompt_choices import PromptChoicePins
 from app.schemas.prompt_layout import PromptLayout
 from app.services.spatial_prompt_contract import (
     SpatialPromptRecoveryStatus,
@@ -26,6 +27,7 @@ class PromptPreset:
     prompt_layout: PromptLayout | None = None
     spatial_recovery_status: SpatialPromptRecoveryStatus = "ready"
     warning_codes: tuple[str, ...] = ()
+    prompt_pins: PromptChoicePins | None = None
     persisted_raw_spatial_contract: dict[str, object] | None = field(
         default=None,
         repr=False,
@@ -48,6 +50,7 @@ class PromptPresetRepository:
         tags: list[str] | None = None,
         prompt_input: PromptInput | None = None,
         prompt_layout: PromptLayout | None = None,
+        prompt_pins: PromptChoicePins | None = None,
     ) -> PromptPreset:
         validate_spatial_prompt_contract(
             prompt,
@@ -64,6 +67,7 @@ class PromptPresetRepository:
             tags=tuple(self._normalize_tags(tags or [])),
             prompt_input=prompt_input,
             prompt_layout=prompt_layout,
+            prompt_pins=prompt_pins,
         )
         items.insert(0, item)
         self._write(items)
@@ -101,6 +105,13 @@ class PromptPresetRepository:
                     raise OSError("prompt preset file contains an invalid item")
                 continue
             prompt = str(item["prompt"])
+            try:
+                prompt_pins = (PromptChoicePins.model_validate(item["prompt_pins"])
+                               if item.get("prompt_pins") is not None else None)
+            except ValueError as exc:
+                if strict:
+                    raise OSError("prompt preset contains invalid pinned choices") from exc
+                continue
             recovery = recover_saved_spatial_prompt_contract(
                 prompt,
                 item.get("prompt_input"),
@@ -113,6 +124,7 @@ class PromptPresetRepository:
                     name=str(item.get("name") or "Untitled preset"),
                     prompt=prompt,
                     negative_prompt=str(item.get("negative_prompt") or ""),
+                    prompt_pins=prompt_pins,
                     tags=tuple(
                         self._normalize_tags(
                             item.get("tags") if isinstance(item.get("tags"), list) else []
@@ -153,6 +165,8 @@ class PromptPresetRepository:
                     serialized["prompt_input"] = item.prompt_input.model_dump(mode="json")
                 if item.prompt_layout is not None:
                     serialized["prompt_layout"] = item.prompt_layout.model_dump(mode="json")
+            if item.prompt_pins is not None:
+                serialized["prompt_pins"] = item.prompt_pins.model_dump(mode="json")
             payload.append(serialized)
         self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 

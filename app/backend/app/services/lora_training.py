@@ -1747,6 +1747,13 @@ def build_lora_training_character_caption_gate(
     )
 
 
+def build_lora_training_item_caption(dataset: LoRATrainingDataset, item: LoRATrainingDatasetItem) -> str:
+    """The exact caption exported for training, also used by image review."""
+    tags = _exportable_caption_tags(item.tags, settings=dataset.caption_export_settings)
+    tags = _category_prefixed_tags(tags, "manual", dataset.caption_export_settings)
+    return item.caption.strip() or ", ".join(tags)
+
+
 def materialize_lora_training_dataset(
     dataset: LoRATrainingDataset,
     request: DatasetMaterializeRequestData,
@@ -1791,7 +1798,7 @@ def materialize_lora_training_dataset(
         fallback_tags = _category_prefixed_tags(fallback_tags, "manual", dataset.caption_export_settings)
         if not item.caption.strip() and len(fallback_tags) < len(_normalize_tags(item.tags)):
             materialize_warnings.append(f"caption_non_exportable_tags_filtered:{item.id}")
-        caption = item.caption.strip() or ", ".join(fallback_tags)
+        caption = build_lora_training_item_caption(dataset, item)
         try:
             shutil.copy2(source_path, image_path)
             if dataset.caption_export_settings.output_mode in {"caption_txt", "caption_txt_and_metadata_json"}:

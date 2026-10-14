@@ -16,6 +16,12 @@ nodes:
   merge_source_c: "901"
   merge_runtime: "902"
 class_types:
+  generation_stage_save: AsteriaSaveGenerationStage
+  generation_branch_model: AsteriaGenerationBranchModel
+  generation_stage_load: AsteriaLoadGenerationStage
+  generation_stage_sampler: AsteriaGenerationStageSampler
+  generation_stage_noise: AsteriaSelectedGenerationNoise
+  generation_stage_sample_filter: AsteriaSelectedGenerationSampler
   checkpoint_loader: CheckpointLoaderSimple
   lora_loader: LoraLoader
   lora_block_weight_loader: LoraLoaderBlockWeight //Inspire
@@ -23,7 +29,7 @@ class_types:
   vae_loader: VAELoader
   load_image: LoadImage
   vae_encode: VAEEncode
-  vae_encode_inpaint: VAEEncodeForInpaint
+  set_latent_noise_mask: SetLatentNoiseMask
   latent: EmptyLatentImage
   clip_text_encode: CLIPTextEncode
   clip_text_encode_sdxl: CLIPTextEncodeSDXL
@@ -211,9 +217,10 @@ node_contracts:
       - variation_strength
     accepted_inputs:
       - noise_opt
+      - internal_seed
     required_input_values:
       noise_mode:
-        - GPU(=A1111)
+        - GPU+internal_seed
       batch_seed_mode:
         - incremental
     outputs_by_index:

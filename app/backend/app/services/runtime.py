@@ -26,6 +26,8 @@ except ImportError:  # pragma: no cover - optional runtime enhancement.
 
 from app.core.config import AppConfig
 from app.services import api_errors
+from app.services.comfy_enhancement_stages import mark_stage, decoded_stage_kind, append_stage_outputs
+from app.services.enhancement_stages import stage_receipt, copy_stage
 from app.services.comfy_admission import (
     ComfyAdmissionError,
     ComfyAdmissionService,
@@ -159,6 +161,18 @@ def _hires_checkpoint_setting(settings: dict) -> str:
 
 def _hires_noise_mode(settings: dict) -> str:
     return str(settings.get("hires_noise_mode") or "CPU")
+
+
+def _inspire_noise_inputs(settings: dict, seed: int) -> dict:
+    # GPU initial noise must not reuse the ancestral/SDE sampler's RNG stream.
+    noise_mode = str(settings.get("noise_mode") or "GPU+internal_seed")
+    inputs = {"noise_mode": noise_mode}
+    if "internal_seed" in noise_mode:
+        internal_seed = settings.get("internal_seed")
+        inputs["internal_seed"] = (
+            int(internal_seed) if internal_seed is not None else (seed + 1) % (2**64)
+        )
+    return inputs
 
 
 def _refiner_checkpoint_setting(settings: dict) -> str:
@@ -484,18 +498,72 @@ class ComfyTxt2ImgWorkflowBuilder:
             if seed is None or int(seed) < 0:
                 settings["seed"] = random.randint(0, 2**32 - 1)
         profile = request.get("profile")
-        if profile == "sdxl":
-            return self._build_sdxl(request)
-        if profile in {"flux", "flux1"}:
-            return self._build_flux(request)
-        if profile == "flux2":
-            return self._build_flux2(request)
-        if profile == "anima":
-            return self._build_anima(request)
-        raise RuntimeErrorResponse(f"Unsupported ComfyUI profile: {profile}")
+        builders = {"sdxl": self._build_sdxl, "flux": self._build_flux,
+                    "flux1": self._build_flux, "flux2": self._build_flux2,
+                    "anima": self._build_anima}
+        if profile not in builders:
+            raise RuntimeErrorResponse(f"Unsupported ComfyUI profile: {profile}")
+        settings = request.setdefault("settings", {})
+        capture = bool(request.get("_image_check_capture"))
+        settings.pop('_enhancement_points', None)
+        settings.pop('_branch_sample_node', None)
+        if capture:
+            settings["_image_check_capture"] = True
+        try:
+            workflow = builders[profile](request)
+            word_operation = request.get('_word_maps')
+            if word_operation and settings.get('_prompt_trace_stage') != 'hires':
+                from app.services.comfy_word_masks import attach_word_capture
+                attach_word_capture(workflow, settings['_branch_sample_node'], {
+                    **word_operation, 'seed': settings['seed'], 'width': settings['width'],
+                    'height': settings['height']}, self._mapping(profile))
+            branch_operation = request.get('_generation_branch')
+            if branch_operation and settings.get('mode', 'txt2img') == 'txt2img' and settings.get('_prompt_trace_stage') != 'hires':
+                from app.services.comfy_generation_branch import attach_branch
+                attach_branch(workflow, settings['_branch_sample_node'], branch_operation, self._mapping(profile))
+            append_stage_outputs(workflow, settings, self._mapping(profile))
+            if capture:
+                boundary = settings.pop("_image_check_boundary")
+                boundary["output_nodes"] = [
+                    key for key, node in workflow.items()
+                    if node["class_type"] == self._mapping(profile).class_type("save_image", "SaveImage")
+                ]
+                request["_image_check_boundary"] = boundary
+            return workflow
+        finally:
+            settings.pop("_image_check_capture", None)
+            settings.pop("_image_check_boundary", None)
+            settings.pop('_branch_sample_node', None)
+
+    @staticmethod
+    def _capture_image_check_boundary(settings: dict, sample_node: str, vae_ref: list, mapping) -> None:
+        settings['_branch_sample_node'] = sample_node
+        if settings.get('hires_enabled') and settings.get('hires_upscaler') != 'Topaz Photo AI':
+            mark_stage(settings, 'base', samples=[sample_node, 0], vae=vae_ref)
+        if settings.get("_image_check_capture"):
+            settings["_image_check_boundary"] = {
+                "samples": [sample_node, 0], "vae": list(vae_ref),
+                "batch_size": int(settings.get("batch_size", 1)),
+                "save_class": mapping.class_type("generation_stage_save", "AsteriaSaveGenerationStage"),
+                "load_class": mapping.class_type("generation_stage_load", "AsteriaLoadGenerationStage"),
+                "sampler_class": mapping.class_type("generation_stage_sampler", "AsteriaGenerationStageSampler"),
+                "noise_class": mapping.class_type("generation_stage_noise", "AsteriaSelectedGenerationNoise"),
+                "sample_filter_class": mapping.class_type("generation_stage_sample_filter", "AsteriaSelectedGenerationSampler"),
+            }
 
     def _mapping(self, profile: str) -> WorkflowMapping:
         return self.mapping_repository.get_txt2img(profile)
+
+    def prepare_output_writes(self, workflow: dict, profile: str) -> None:
+        # Comfy caches SaveImage's receipt, not the file. Asteria removes its local
+        # intermediate after importing it, so every submission needs a fresh write.
+        # Change only output leaves; retain cached model/sampling results and seeds.
+        save_class = self._mapping(profile).class_type("save_image", "SaveImage")
+        operation_id = uuid4().hex
+        for node in workflow.values():
+            if node.get("class_type") == save_class:
+                inputs = node["inputs"]
+                inputs["filename_prefix"] = f"{inputs['filename_prefix']}_{operation_id}"
 
     def _build_sdxl(self, request: dict) -> dict:
         mapping = self._mapping("sdxl")
@@ -619,6 +687,12 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "class_type": mapping.class_type("load_image", "LoadImage"),
                 "inputs": {"image": init_image},
             }
+            # "original" retains the source under the mask; VAEEncodeForInpaint erases it.
+            workflow[encode_node] = {
+                "class_type": mapping.class_type("vae_encode", "VAEEncode"),
+                "inputs": {"pixels": [image_node, 0], "vae": vae_ref},
+            }
+            latent_ref: list[str | int] = [encode_node, 0]
             if settings.get("mode") == "inpaint":
                 mask_image = settings.get("mask_image_path")
                 if not mask_image:
@@ -629,21 +703,16 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "class_type": mapping.class_type("load_image", "LoadImage"),
                     "inputs": {"image": mask_image},
                 }
-                workflow[encode_node] = {
-                    "class_type": mapping.class_type("vae_encode_inpaint", "VAEEncodeForInpaint"),
+                masked_latent_node = str(next_id)
+                next_id += 1
+                workflow[masked_latent_node] = {
+                    "class_type": mapping.class_type("set_latent_noise_mask", "SetLatentNoiseMask"),
                     "inputs": {
-                        "pixels": [image_node, 0],
-                        "vae": vae_ref,
+                        "samples": [encode_node, 0],
                         "mask": [mask_node, 1],
-                        "grow_mask_by": settings.get("mask_blur", 4),
                     },
                 }
-            else:
-                workflow[encode_node] = {
-                    "class_type": mapping.class_type("vae_encode", "VAEEncode"),
-                    "inputs": {"pixels": [image_node, 0], "vae": vae_ref},
-                }
-            latent_ref: list[str | int] = [encode_node, 0]
+                latent_ref = [masked_latent_node, 0]
         else:
             workflow[latent_node] = {
                 "class_type": mapping.class_type("latent", "EmptyLatentImage"),
@@ -888,6 +957,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 execution_state_ref=base_execution_state_ref,
                 samples_ref=[sample_node, 0],
             )
+        self._capture_image_check_boundary(settings, sample_node, vae_ref, mapping)
         current_width = int(settings["width"])
         current_height = int(settings["height"])
 
@@ -973,6 +1043,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             hires_prompt = settings.get("hires_prompt") or request["expanded_prompt"]
             hires_negative_prompt = settings.get("hires_negative_prompt") or request["negative_prompt"]
             hires_stage_settings = settings | {
+                "_prompt_trace_stage": "hires",
                 "steps": settings.get("hires_steps") or settings["steps"],
                 "cfg_scale": settings.get("hires_cfg_scale") or settings["cfg_scale"],
                 "sampler": self._hires_sampler(settings),
@@ -1160,6 +1231,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 refiner_sampler = self._hires_sampler(settings)
                 refiner_scheduler = self._hires_scheduler(settings)
             refiner_stage_settings = settings | {
+                "_prompt_trace_stage": "refiner",
                 "steps": refiner_steps,
                 "cfg_scale": refiner_cfg_scale,
                 "sampler": refiner_sampler,
@@ -1241,6 +1313,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             "inputs": {"samples": [sample_node, 0], "vae": vae_ref},
         }
         image_ref: list[str | int] = [decode_node, 0]
+        mark_stage(settings, decoded_stage_kind(settings), images=image_ref)
         if settings.get("restore_faces"):
             image_ref, next_id = self._append_face_detailer_node(
                 workflow,
@@ -1923,13 +1996,20 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "class_type": mapping.class_type("load_image", "LoadImage"),
                     "inputs": {"image": mask_image},
                 }
-                workflow[latent_node] = {
-                    "class_type": mapping.class_type("vae_encode_inpaint", "VAEEncodeForInpaint"),
+                encode_node = str(next_id)
+                next_id += 1
+                workflow[encode_node] = {
+                    "class_type": mapping.class_type("vae_encode", "VAEEncode"),
                     "inputs": {
                         "pixels": image_ref,
                         "vae": [vae_node, 0],
+                    },
+                }
+                workflow[latent_node] = {
+                    "class_type": mapping.class_type("set_latent_noise_mask", "SetLatentNoiseMask"),
+                    "inputs": {
+                        "samples": [encode_node, 0],
                         "mask": [mask_node, 1],
-                        "grow_mask_by": settings.get("mask_blur", 4),
                     },
                 }
                 settings["inpaint_runtime"] = "anima_vae_masked_img2img"
@@ -2265,6 +2345,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             scheduler_kind=scheduler_kind,
         )
         next_id += self._custom_sample_node_count(settings, scheduler_kind)
+        self._capture_image_check_boundary(settings, sample_node, vae_ref, mapping)
         if base_execution_state_ref is not None:
             next_id = append_spatial_execution_receipt(
                 workflow=workflow,
@@ -2333,6 +2414,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 }
                 hires_latent_ref = [encode_node, 0]
             hires_sample_settings = settings | {
+                "_prompt_trace_stage": "hires",
                     "steps": settings.get("hires_steps") or settings["steps"],
                     "cfg_scale": settings.get("hires_cfg_scale") or settings["cfg_scale"],
                     "sampler": self._hires_sampler(settings),
@@ -2378,6 +2460,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             "class_type": mapping.class_type("save_image", "SaveImage"),
             "inputs": {"images": [decode_node, 0], "filename_prefix": "Asteria"},
         }
+        mark_stage(settings, decoded_stage_kind(settings), images=[decode_node, 0])
         settings["primary_output_node_ids"] = [save_node]
         return workflow
 
@@ -2456,6 +2539,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             sigmas_ref = [split_node, 1]
         workflow[sample_node] = {
             "class_type": mapping.class_type("sampler_custom", "SamplerCustomAdvanced"),
+            "_meta": {"asteria_stage": settings.get("_prompt_trace_stage", "base")},
             "inputs": {
                 "noise": [noise_node, 0],
                 "guider": [guider_node, 0],
@@ -2502,7 +2586,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 variation_seed = 0
             inputs = {
                 **inputs,
-                "noise_mode": settings.get("noise_mode") or "GPU(=A1111)",
+                **_inspire_noise_inputs(settings, seed),
                 "batch_seed_mode": settings.get("batch_seed_mode") or "incremental",
                 "variation_seed": variation_seed,
                 "variation_strength": float(settings.get("subseed_strength") or 0),
@@ -2517,6 +2601,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 else "KSampler"
             ),
             "inputs": inputs,
+            "_meta": {"asteria_stage": settings.get("_prompt_trace_stage", "base")},
         }
 
     def _ksampler_advanced_node(
@@ -2538,6 +2623,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             seed = random.randint(0, 2**32 - 1)
         return {
             "class_type": mapping.class_type("ksampler_advanced", "KSamplerAdvanced"),
+            "_meta": {"asteria_stage": settings.get("_prompt_trace_stage", "base")},
             "inputs": {
                 "model": model_ref,
                 "add_noise": "enable" if add_noise else "disable",
@@ -3403,6 +3489,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         return_with_leftover_noise: bool,
     ) -> dict:
         return {
+            "_meta": {"asteria_stage": settings.get("_prompt_trace_stage", "base")},
             "class_type": mapping.class_type(
                 "ksampler_advanced_inspire",
                 "KSamplerAdvanced //Inspire",
@@ -3420,7 +3507,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "latent_image": latent_ref,
                 "start_at_step": start_at_step,
                 "end_at_step": end_at_step,
-                "noise_mode": "GPU(=A1111)",
+                **_inspire_noise_inputs(settings, seed),
                 "return_with_leftover_noise": return_with_leftover_noise,
                 "batch_seed_mode": "incremental",
                 "variation_seed": 0,
@@ -3720,6 +3807,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         }
         workflow[detailer_node] = {
             "class_type": mapping.class_type("face_detailer", "FaceDetailer"),
+            "_meta": {"asteria_stage": "detailer"},
             "inputs": {
                 "image": image_ref,
                 "model": model_ref,
@@ -3755,6 +3843,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "noise_mask_feather": 20,
             },
         }
+        mark_stage(settings, 'detailer', images=[detailer_node, 0])
         return [detailer_node, 0], next_id
 
     def _sampler_name(self, value: str) -> str:
@@ -3818,6 +3907,7 @@ class ComfyGenerationRuntime:
         topaz_processor: Callable[..., dict[str, str | list[str]]] = process_topaz_image,
         admission_service: ComfyAdmissionService = comfy_admission,
         admission_timeout_seconds: float | None = 30.0,
+        image_checker: Callable | None = None,
     ) -> None:
         self.client = client
         self.workflow_builder = workflow_builder or ComfyTxt2ImgWorkflowBuilder(
@@ -3829,6 +3919,7 @@ class ComfyGenerationRuntime:
         self.topaz_processor = topaz_processor
         self.admission_service = admission_service
         self.admission_timeout_seconds = admission_timeout_seconds
+        self.image_checker = image_checker
 
     def generate_txt2img(self, request: dict, output_dir: Path) -> dict:
         with self._admission_scope(request):
@@ -3838,6 +3929,8 @@ class ComfyGenerationRuntime:
         request.setdefault("settings", {})["mode"] = "txt2img"
         self._ensure_controlnet_mode_runtime(request)
         self._apply_runtime_node_fallbacks(request)
+        if self._uses_image_check(request):
+            return self._generate_checked(request, output_dir)
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
         self._prepare_spatial_runtime_masks(request)
@@ -3852,6 +3945,8 @@ class ComfyGenerationRuntime:
         self._ensure_controlnet_mode_runtime(request)
         self._apply_runtime_node_fallbacks(request)
         self._prepare_init_image(request)
+        if self._uses_image_check(request):
+            return self._generate_checked(request, output_dir)
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
         self._prepare_spatial_runtime_masks(request)
@@ -3874,6 +3969,11 @@ class ComfyGenerationRuntime:
         else:
             self._prepare_init_image(request)
             self._prepare_mask_image(request)
+        if self._uses_image_check(request):
+            result = self._generate_checked(request, output_dir)
+            if only_masked:
+                settings["width"], settings["height"] = _size_tuple(settings["inpaint_full_size"])
+            return result
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
         self._prepare_spatial_runtime_masks(request)
@@ -3884,6 +3984,18 @@ class ComfyGenerationRuntime:
                 raise RuntimeErrorResponse(api_errors.INPAINT_ONLY_MASKED_GEOMETRY_INVALID)
             settings["width"], settings["height"] = full_size
         return result
+
+    @staticmethod
+    def _uses_image_check(request: dict) -> bool:
+        operation = request.get("_image_check_operation")
+        return operation is not None and operation.settings.enabled
+
+    def _generate_checked(self, request: dict, output_dir: Path) -> dict:
+        from app.services.image_check_runtime import run_checked_generation
+        try:
+            return run_checked_generation(self, request, output_dir)
+        except (OSError, ValueError) as exc:
+            raise RuntimeErrorResponse(str(exc)) from exc
 
     def _ensure_supported_only_masked_runtime_request(self, request: dict) -> None:
         settings = request.get("settings", {})
@@ -4040,8 +4152,9 @@ class ComfyGenerationRuntime:
             raise
         except OSError as exc:
             raise RuntimeErrorResponse(f"Failed to prepare ComfyUI output directory: {output_dir}") from exc
-        self._prepare_control_images(request, output_dir / "controlnet")
-        self._prepare_anima_lllite_images(request)
+        if "_prepared_workflow" not in request:
+            self._prepare_control_images(request, output_dir / "controlnet")
+            self._prepare_anima_lllite_images(request)
         self._raise_if_generation_cancelled(request)
         batch_count = max(1, int(request.get("settings", {}).get("batch_count", 1)))
         base_seed = int(request.get("settings", {}).get("seed", -1))
@@ -4049,8 +4162,11 @@ class ComfyGenerationRuntime:
         self._publish_generation_progress(progress_callback, 0, batch_count)
         prompt_ids: list[str] = []
         generated_seeds: list[int] = []
+        sampler_noise_runtime: list[dict] = []
         output_paths: list[str] = []
         primary_outputs: list[dict[str, str | int]] = []
+        enhancement_stages: list[dict] = []
+        stage_paths: list[str] = []
         batch_state = {"index": 0}
         with self._preview_listener(
             output_dir / "_previews",
@@ -4058,7 +4174,7 @@ class ComfyGenerationRuntime:
             self._step_callback(progress_callback, batch_count, batch_state),
         ):
             for batch_index in range(batch_count):
-                self._raise_if_generation_cancelled(request, output_paths)
+                self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
                 batch_state["index"] = batch_index
                 iteration_request = deepcopy(request)
                 settings = iteration_request.setdefault("settings", {})
@@ -4066,10 +4182,20 @@ class ComfyGenerationRuntime:
                 seed = self._iteration_seed(base_seed, batch_index)
                 settings["seed"] = seed
                 generated_seeds.append(seed)
-                workflow = self.workflow_builder.build(iteration_request)
+                workflow = (deepcopy(iteration_request["_prepared_workflow"])
+                            if "_prepared_workflow" in iteration_request
+                            else self.workflow_builder.build(iteration_request))
                 self._merge_builder_runtime_settings(request, iteration_request)
+                prepare_outputs = getattr(self.workflow_builder, "prepare_output_writes", None)
+                if callable(prepare_outputs):
+                    prepare_outputs(workflow, request["profile"])
+                from app.services.comfy_prompt_trace import instrument_prompt_encoders, record_prompt_execution
+                if request.get("_record_prompt_inputs", True):
+                    instrument_prompt_encoders(workflow, capture_words=bool(request.get('_word_maps')))
                 prompt_id = self.client.queue_prompt(workflow)
                 prompt_ids.append(prompt_id)
+                from app.services.comfy_sampler_receipts import sampler_noise_receipts
+                sampler_noise_runtime.extend(sampler_noise_receipts(workflow, prompt_id))
                 runtime_job_callback = iteration_request.get("runtime_job_callback")
                 if callable(runtime_job_callback):
                     runtime_job_callback(prompt_id)
@@ -4082,11 +4208,14 @@ class ComfyGenerationRuntime:
                             runtime_stop_confirmed=runtime_stop_confirmed,
                         )
                     except RuntimeCancellationConfirmed:
-                        self._discard_unpublished_paths(output_paths)
+                        self._discard_unpublished_paths([*output_paths, *stage_paths])
                         raise
                 else:
                     history = self.client.wait_for_history(prompt_id)
-                self._raise_if_generation_cancelled(request, output_paths)
+                self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
+                if request.get("_record_prompt_inputs", True):
+                    record_prompt_execution(iteration_request, workflow, history, prompt_id, batch_index=batch_index)
+                    self._merge_builder_runtime_settings(request, iteration_request)
                 spatial_receipts = self._spatial_receipts_from_history(
                     history,
                     prompt_id,
@@ -4135,16 +4264,34 @@ class ComfyGenerationRuntime:
                 primary_node_ids = {
                     str(node_id) for node_id in settings.get("primary_output_node_ids", [])
                 }
+                stage_nodes = settings.get('_enhancement_output_nodes', {})
+                stage_image_indices: dict[str, int] = {}
                 for image in images:
                     filename = self._safe_filename(image.get("filename", "comfy-output.png"))
                     path = output_dir / f"{uuid4().hex}_{filename}"
+                    stage_meta = stage_nodes.get(str(image.get('node_id', '')))
+                    if stage_meta:
+                        directory = output_dir / '_stages'
+                        directory.mkdir(exist_ok=True)
+                        path = directory / path.name
                     image_bytes = self.client.download_image(image)
                     try:
                         path.write_bytes(image_bytes)
                     except OSError as exc:
                         raise RuntimeErrorResponse(f"Failed to save ComfyUI output image: {path}") from exc
+                    if stage_meta:
+                        stage_paths.append(str(path))
+                        self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
+                        key = str(image['node_id'])
+                        index = stage_image_indices.get(key, 0)
+                        stage_image_indices[key] = index + 1
+                        enhancement_stages.append(stage_receipt(path, stage_meta['kind'], seed=seed,
+                            batch_index=batch_index, image_index=index, runtime_job_id=prompt_id, ordinal=stage_meta['ordinal']))
+                        if self.comfy_output_dir is not None:
+                            self._remove_local_comfy_intermediate(image)
+                        continue
                     output_paths.append(str(path))
-                    self._raise_if_generation_cancelled(request, output_paths)
+                    self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
                     if settings.get("mode") == "inpaint":
                         if settings.get("inpaint_runtime") == "sdxl_only_masked_crop_composite":
                             try:
@@ -4184,10 +4331,11 @@ class ComfyGenerationRuntime:
                     batch_count,
                     output_paths[-1] if output_paths else "",
                 )
-        self._raise_if_generation_cancelled(request, output_paths)
+        self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
         if not output_paths:
             raise RuntimeErrorResponse(f"ComfyUI completed without image outputs: {', '.join(prompt_ids)}")
         request.setdefault("settings", {})["generated_seeds"] = generated_seeds
+        request["settings"]["sampler_noise_runtime"] = sampler_noise_runtime
         if base_seed < 0 and generated_seeds:
             request["settings"]["seed"] = generated_seeds[0]
         return {
@@ -4200,6 +4348,7 @@ class ComfyGenerationRuntime:
             "comfy_prompt_ids": prompt_ids,
             "generated_seeds": generated_seeds,
             "primary_outputs": primary_outputs,
+            "enhancement_stages": enhancement_stages,
         }
 
     def _remove_local_comfy_intermediate(self, image: dict) -> bool:
@@ -4248,6 +4397,9 @@ class ComfyGenerationRuntime:
             "seed_resize_noise_mode",
             "seed_resize_source_size",
             "seed_resize_target_size",
+            "sampler_noise_runtime",
+            "prompt_execution",
+            "prompt_execution_truncated",
         ):
             if key in iteration_settings:
                 target_settings[key] = iteration_settings[key]
@@ -4368,7 +4520,7 @@ class ComfyGenerationRuntime:
         except OSError:
             settings["inpaint_composited"] = False
 
-    def _generate_topaz_hires(self, request: dict, output_dir: Path) -> dict:
+    def _generate_topaz_hires(self, request: dict, output_dir: Path, *, first_result: dict | None = None) -> dict:
         settings = request.setdefault("settings", {})
         source_mode = str(settings.get("mode") or "txt2img")
         settings["topaz_hires_source_mode"] = source_mode
@@ -4393,7 +4545,8 @@ class ComfyGenerationRuntime:
         settings["topaz_first_pass_batch_size"] = 1
         settings["topaz_first_pass_batch_count"] = first_pass_count
         self._prepare_spatial_runtime_masks(first_request)
-        first_result = self._generate(first_request, output_dir)
+        if first_result is None:
+            first_result = self._generate(first_request, output_dir)
         self._merge_builder_runtime_settings(request, first_request)
         # Topaz uses a copied request; retain the base execution evidence in the
         # owning request so history and final-image sidecars receive it too.
@@ -4402,7 +4555,8 @@ class ComfyGenerationRuntime:
                 first_settings["spatial_execution_receipts"]
             )
         first_paths = [Path(path) for path in first_result["output_paths"]]
-        self._raise_if_generation_cancelled(request, first_paths)
+        enhancement_stages = list(first_result.get('enhancement_stages', []))
+        self._raise_if_generation_cancelled(request, [*first_paths, *(s['path'] for s in enhancement_stages)])
         generated_seeds = list(first_result.get("generated_seeds", []))
         if len(first_paths) != len(generated_seeds):
             raise RuntimeErrorResponse(
@@ -4418,8 +4572,8 @@ class ComfyGenerationRuntime:
         topaz_sizes: list[tuple[int, int]] = []
         topaz_source_sizes: list[tuple[int, int] | None] = []
         topaz_size_evidence: list[dict[str, object]] = []
-        for path in first_paths:
-            self._raise_if_generation_cancelled(request, [*first_paths, *topaz_paths])
+        for source_index, path in enumerate(first_paths):
+            self._raise_if_generation_cancelled(request, [*first_paths, *topaz_paths, *(s['path'] for s in enhancement_stages)])
             source_size = self._image_size(path)
             if source_size is None:
                 raise RuntimeErrorResponse(f"Could not read Topaz Hires first-pass image size: {path}")
@@ -4435,7 +4589,13 @@ class ComfyGenerationRuntime:
             if not _path_exists_safely(topaz_path) or not _path_is_file_safely(topaz_path):
                 raise RuntimeErrorResponse(f"Topaz Hires did not produce a valid image file: {topaz_path}")
             topaz_paths.append(topaz_path)
-            self._raise_if_generation_cancelled(request, [*first_paths, *topaz_paths])
+            if settings.get('record_enhancement_stages'):
+                identity = dict(seed=generated_seeds[source_index], batch_index=source_index,
+                                image_index=0, runtime_job_id=first_result.get('runtime_job_ids',
+                                    [first_result['runtime_job_id']])[source_index])
+                enhancement_stages.append(copy_stage(path, output_dir, 'before_topaz', ordinal=900, **identity))
+                enhancement_stages.append(copy_stage(topaz_path, output_dir, 'topaz', ordinal=1000, **identity))
+            self._raise_if_generation_cancelled(request, [*first_paths, *topaz_paths, *(s['path'] for s in enhancement_stages)])
             source_size = _size_tuple(result.get("source_size")) or source_size
             output_size = _size_tuple(result.get("output_size")) or self._image_size(topaz_path) or target_size
             topaz_source_sizes.append(source_size)
@@ -4469,11 +4629,12 @@ class ComfyGenerationRuntime:
         for index, topaz_path in enumerate(topaz_paths):
             self._raise_if_generation_cancelled(
                 request,
-                [*first_paths, *topaz_paths, *(Path(path) for path in final_paths)],
+                [*first_paths, *topaz_paths, *(Path(path) for path in final_paths), *(s['path'] for s in enhancement_stages)],
             )
             second_request = deepcopy(request)
             second_request["_spatial_runtime_stage"] = "hires"
             second_settings = second_request.setdefault("settings", {})
+            second_settings["_prompt_trace_stage"] = "hires"
             second_width, second_height = topaz_sizes[index]
             second_settings["mode"] = "img2img"
             second_settings["seed_resize_from_w"] = 0
@@ -4530,7 +4691,7 @@ class ComfyGenerationRuntime:
                 second_result = self._generate(second_request, output_dir)
             except RuntimeCancellationConfirmed:
                 self._discard_unpublished_paths(
-                    [*first_paths, *topaz_paths, *(Path(path) for path in final_paths)],
+                    [*first_paths, *topaz_paths, *(Path(path) for path in final_paths), *(s['path'] for s in enhancement_stages)],
                 )
                 raise
             self._raise_if_generation_cancelled(
@@ -4540,10 +4701,15 @@ class ComfyGenerationRuntime:
                     *topaz_paths,
                     *(Path(path) for path in final_paths),
                     *(Path(path) for path in second_result["output_paths"]),
+                    *(s['path'] for s in enhancement_stages),
+                    *(s['path'] for s in second_result.get('enhancement_stages', [])),
                 ],
             )
             if request.get("profile") == "anima":
                 self._merge_builder_runtime_settings(request, second_request)
+            for trace_key in ("prompt_execution", "prompt_execution_truncated"):
+                if trace_key in second_settings:
+                    settings[trace_key] = deepcopy(second_settings[trace_key])
             if source_mode == "inpaint":
                 composite_failed_paths: list[str] = []
                 for final_path_value in second_result["output_paths"]:
@@ -4559,6 +4725,9 @@ class ComfyGenerationRuntime:
                         + ", ".join(composite_failed_paths)
                     )
             final_paths.extend(second_result["output_paths"])
+            enhancement_stages.extend({**item, 'batch_index': index, 'image_index': 0,
+                                       'ordinal': 2000 + item['ordinal']}
+                                      for item in second_result.get('enhancement_stages', []))
             for primary_output in second_result.get("primary_outputs", []):
                 primary_outputs.append(
                     {
@@ -4567,6 +4736,9 @@ class ComfyGenerationRuntime:
                     }
                 )
             second_prompt_ids.extend(second_result.get("runtime_job_ids", [second_result["runtime_job_id"]]))
+            settings.setdefault("sampler_noise_runtime", []).extend(
+                second_settings.get("sampler_noise_runtime", [])
+            )
 
         settings["topaz_hires_runtime"] = "completed"
         settings["topaz_second_pass_runtime"] = {
@@ -4614,6 +4786,7 @@ class ComfyGenerationRuntime:
             "comfy_prompt_ids": prompt_ids,
             "generated_seeds": generated_seeds,
             "primary_outputs": primary_outputs,
+            "enhancement_stages": enhancement_stages,
         }
 
     def _uses_topaz_hires(self, request: dict) -> bool:
@@ -4808,7 +4981,7 @@ class ComfyGenerationRuntime:
         if not _path_exists_safely(path) or not _path_is_file_safely(path):
             raise RuntimeErrorResponse(f"Mask image not found: {path}")
         settings["source_mask_image_path"] = str(path)
-        blur_radius = int(settings.get("mask_blur") or 0) if request.get("profile") in {"flux1", "flux2"} else 0
+        blur_radius = int(settings.get("mask_blur") or 0)
         normalized_path = self._normalize_inpaint_mask(path, blur_radius)
         if normalized_path != path:
             settings["processed_mask_image_path"] = str(normalized_path)
