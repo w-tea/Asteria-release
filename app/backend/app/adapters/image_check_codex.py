@@ -233,7 +233,8 @@ async def run_codex(args: list[str], *, cwd: Path, prompt: str, timeout: float,
 
 
 async def check_image_with_codex(settings: ImageCheckSettings, source: str | Path, *,
-                                 output_root: str | Path, cancel_event: asyncio.Event | None = None) -> ImageCheckCodexResult:
+                                 output_root: str | Path, cancel_event: asyncio.Event | None = None,
+                                 generated_final: bool = False) -> ImageCheckCodexResult:
     image, version, attempts = None, "", 0
 
     def result(assessment):
@@ -251,7 +252,8 @@ async def check_image_with_codex(settings: ImageCheckSettings, source: str | Pat
         executable, version, reason = await asyncio.to_thread(discover_codex)
         if executable is None:
             raise ValueError(reason)
-        image = await asyncio.to_thread(prepare_image_check_image, source, output_root=output_root)
+        prepare_options = {"generated_final": True} if generated_final else {}
+        image = await asyncio.to_thread(prepare_image_check_image, source, output_root=output_root, **prepare_options)
         parent = Path(image.receipt.output_root) / ".image-check"
         parent.mkdir(exist_ok=True)
         if parent.resolve() != parent:

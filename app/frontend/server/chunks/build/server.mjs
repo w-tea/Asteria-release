@@ -2075,10 +2075,10 @@ const messages = {
   "imageCheck.title": { en: "Generated image check", ja: "生成画像のチェック" },
   "generation.error.imageCheckRuntimeUnsupported": { en: "Image checking is unavailable for the selected generation engine. Select the ComfyUI engine, or turn off image checking and retry.", ja: "選択中の生成エンジンでは画像をチェックできません。ComfyUIを選ぶか、画像のチェックをOFFにして再試行してください。" },
   "generation.error.imageCheckSettingsInvalid": { en: "The image-check settings could not be read. Open Check settings, select the AI connection again, and save.", ja: "画像チェックの設定を読み込めませんでした。「チェック設定」でAI接続先を選び直し、保存してください。" },
-  "imageCheck.checking": { en: "Checking the image before enhancement…", ja: "補正・拡大の前に画像を確認しています…" },
+  "imageCheck.checking": { en: "Checking the completed image…", ja: "完成した画像を確認しています…" },
   "imageCheck.toggle": { en: "Check images", ja: "画像をチェック" },
   "imageCheck.settings": { en: "Check settings", ja: "チェック設定" },
-  "imageCheck.description": { en: "Check visible anatomical defects before enhancement. This does not check whether an image matches your prompt.", ja: "手足や身体の崩れを、拡大・補正の前に確認します。プロンプトどおりに描かれたかを調べる機能とは別です。" },
+  "imageCheck.description": { en: "Check the completed image once before saving it. This does not check whether an image matches your prompt. The AI receives an image reduced to at most 1536 pixels on its longest edge; unclear details are inconclusive.", ja: "生成・補正を終えた画像を、保存前に一回確認します。プロンプトとの一致を調べる機能とは別です。AIには長辺1536pxまで縮小した画像を渡すため、見えない細部は判定できません。" },
   "imageCheck.defaultEnabled": { en: "Enable checking by default", ja: "生成画像のチェックを初期状態でONにする" },
   "imageCheck.provider": { en: "Image-capable AI connection", ja: "画像を判定するAI接続先" },
   "imageCheck.method": { en: "Check with", ja: "判定方法" },
@@ -2098,7 +2098,7 @@ const messages = {
   "imageCheck.providerHelp": { en: "Select an image-capable model from your saved local OpenAI-compatible or Anthropic connections. Text-only models cannot inspect an image.", ja: "保存済みのローカル接続またはAnthropic接続から、画像を読めるモデルを選んでください。文章専用のモデルでは判定できません。" },
   "imageCheck.noProvider": { en: "Save an image-capable AI connection above first.", ja: "先に上のAI接続設定で、画像を読めるモデルの接続先を保存してください。" },
   "imageCheck.saveRejected": { en: "Also save rejected images", ja: "不合格画像も保存" },
-  "imageCheck.saveHelp": { en: "Rejected images skip Hires and detail enhancement. With saving off, only the judgement remains in history. Auto repeat proceeds to the next generation; an inconclusive check pauses it.", ja: "不合格画像にはHiresや部分補正をかけません。保存をOFFにすると、履歴には判定だけを残します。自動リピートは次の生成へ進み、判定できなかった場合は停止します。" },
+  "imageCheck.saveHelp": { en: "Hires and detail enhancement finish before the check. With saving off, rejected images leave only their judgement in history. Auto repeat proceeds to the next generation; an inconclusive check pauses it.", ja: "Hiresや部分補正を終えてから判定します。不合格画像の保存をOFFにすると、履歴には判定だけを残します。自動リピートは次の生成へ進み、判定できなかった場合は停止します。" },
   "imageCheck.privacy": { en: "The image is sent to the selected connection without your prompt or image metadata. An external connection sends it outside this PC. AI judgements can be wrong.", ja: "選んだ接続先へ画像を送ります。プロンプトや画像内のメタデータは送りません。外部サービスを選ぶと画像がPCの外へ送信されます。判定には見逃しや誤判定があります。" },
   "imageCheck.saveSettings": { en: "Save check settings", ja: "チェック設定を保存" },
   "imageCheck.saved": { en: "Saved", ja: "保存しました" },
@@ -2123,7 +2123,7 @@ const messages = {
   "imageCheck.testReject": { en: "The AI reported an anatomical defect. Review its explanation against the image.", ja: "AIが身体の崩れを指摘しました。説明が画像と合っているか確認してください。" },
   "imageCheck.testModel": { en: "Model used", ja: "使用したモデル" },
   "imageCheck.testUnchanged": { en: "This trial did not change the image, history, or saved settings. It does not establish the AI’s accuracy.", ja: "この試験では画像・履歴・保存済み設定を変更していません。一回の結果だけでAIの精度は判断できません。" },
-  "imageCheck.shortHelp": { en: "Check anatomy before Hires. Choose the judge and rejected-image saving in Settings.", ja: "Hiresの前に身体の崩れを確認します。判定方法と不合格画像の保存は設定画面で選べます。" },
+  "imageCheck.shortHelp": { en: "Check the completed image once before saving. Choose the judge and rejected-image saving in Settings.", ja: "完成画像を保存前に一回確認します。判定方法と不合格画像の保存は設定画面で選べます。" },
   "imageCheck.result": { en: "{passed} passed / {rejected} rejected", ja: "合格 {passed}枚／不合格 {rejected}枚" },
   "imageCheck.paused": { en: "Image check inconclusive; generation paused", ja: "画像を判定できなかったため停止しました" },
   "imageCheck.cancelled": { en: "Generation cancelled. Completed images were kept.", ja: "生成を中止しました。完成済み画像は保存されています。" },
@@ -7281,7 +7281,8 @@ function imageCheckSummary(settings) {
   const check = value;
   if (!["pass", "reject", "unknown"].includes(String(check.status))) return null;
   const results = Array.isArray(check.results) ? check.results : [];
-  const assessments = results.map((result) => result?.assessment).filter(Boolean);
+  const childResults = Array.isArray(check.remaster_checks) ? check.remaster_checks.flatMap((child) => child && Array.isArray(child.results) ? child.results : []) : [];
+  const assessments = [...results, ...childResults].map((result) => result?.assessment).filter(Boolean);
   return {
     status: check.status,
     passed: Math.max(0, Number(check.passed) || 0),
@@ -11064,9 +11065,9 @@ const useGenerationStore = defineStore("generation", {
       }
     },
     restoreCancelledGeneration() {
-      if (this.currentJob?.status !== "cancelled" || !this.currentJob.generation) return false;
-      this.result = this.currentJob.generation;
-      this.currentJob.preview_path = firstImageOutput(this.result.output_paths);
+      if (this.currentJob?.status !== "cancelled") return false;
+      this.result = this.currentJob.generation ?? null;
+      this.currentJob.preview_path = this.result ? firstImageOutput(this.result.output_paths) : "";
       this.stopRepeatRequested = true;
       this.error = "";
       void useGenerationHistoryStore().fetchHistory();

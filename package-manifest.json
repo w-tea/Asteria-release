@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "28aab99aad68b5a1c22b9432276ae992724a7177",
-  "build_timestamp_utc": "2026-10-14T02:00:16Z",
+  "source_commit": "f8124abc091d8ffbb7172b677c6c8491dec45b7b",
+  "build_timestamp_utc": "2026-10-15T11:42:45Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 57612,
-      "sha256": "45c34bf32ff1976c38b4505468ddfb80140d5d8768ac4d6a87d8207ee1b7156d"
+      "size_bytes": 58373,
+      "sha256": "9d7bbdc60f0399265fb7c7766da71d6d306bc38971730291ffb56d9a367eb4d2"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -43,18 +43,18 @@
     },
     {
       "path": "app/backend/app/adapters/image_check_codex.py",
-      "size_bytes": 13032,
-      "sha256": "89c8d86d9d5b5f24823bd00f2f024e223565d56a80fb5a650f3d9a3f29b83bee"
+      "size_bytes": 13194,
+      "sha256": "2261c4c744e1bae2dcf915a74d3b11215ab543803b25903994cd66389b5fd669"
     },
     {
       "path": "app/backend/app/adapters/image_check_image.py",
-      "size_bytes": 6038,
-      "sha256": "a316f9a9caaf35c445049bba040e9204661d9b988e87d3960a146f742b9d8bd4"
+      "size_bytes": 6968,
+      "sha256": "a1c97d85206cd5b1b8727261defd90cbdc2d8c8f4f41490826e711f244cc580d"
     },
     {
       "path": "app/backend/app/adapters/image_check_llm.py",
-      "size_bytes": 14479,
-      "sha256": "c08c1ab00773a81b985729c58636893ddfdd372aafcfcbee393aa14733b728b5"
+      "size_bytes": 14841,
+      "sha256": "90e9d150cec35b4e421d10fd1509ae72c182ba0b1610c439c579df44cfbba86b"
     },
     {
       "path": "app/backend/app/adapters/image_conditions.py",
@@ -133,8 +133,8 @@
     },
     {
       "path": "app/backend/app/api/generation.py",
-      "size_bytes": 245566,
-      "sha256": "658fe11b67f9bf86e4df6a34259c110a4dfa6d6f6d4791953ebf84cf7dbe3099"
+      "size_bytes": 249925,
+      "sha256": "e1c14ffede35bc1e1441fbb4a22882306b17d9d6b1ac9fbbd3308522d93bd621"
     },
     {
       "path": "app/backend/app/api/image_conditions.py",
@@ -358,8 +358,8 @@
     },
     {
       "path": "app/backend/app/main.py",
-      "size_bytes": 10363,
-      "sha256": "783228b7674a9a70c1de91432814b1c12e9019460ee1d02a29c9fd5c7e35e7df"
+      "size_bytes": 10572,
+      "sha256": "f2c61f8c27333b2de3825a58597003b501c4ca3077a7b336785d6c68ff02a05d"
     },
     {
       "path": "app/backend/app/schemas/__init__.py",
@@ -783,8 +783,8 @@
     },
     {
       "path": "app/backend/app/services/generation_artifacts.py",
-      "size_bytes": 4816,
-      "sha256": "89bc27f8f192d905e8a783b7a49e25d5e0124eeaec526d8cb720f568913e85bc"
+      "size_bytes": 5493,
+      "sha256": "c4b220b2eb720afc10f851e80d1765e121f4bcc0285efcc8aad6cfd3b7b38557"
     },
     {
       "path": "app/backend/app/services/generation_branch.py",
@@ -818,8 +818,8 @@
     },
     {
       "path": "app/backend/app/services/history.py",
-      "size_bytes": 55694,
-      "sha256": "adef3c32f4b36b2e7938f32109e3289f558ba77830665ac0b3a53475896bba78"
+      "size_bytes": 59145,
+      "sha256": "9b4da8f3acba66265ba54c6871e7aa57a6b0529c951f5336aaa4d064835c2594"
     },
     {
       "path": "app/backend/app/services/image_assets.py",
@@ -828,8 +828,13 @@
     },
     {
       "path": "app/backend/app/services/image_check.py",
-      "size_bytes": 2542,
-      "sha256": "429ae0aa49c76aff696f485c81f4b2fd364e8309cc58eada004a934784e1f2d9"
+      "size_bytes": 2677,
+      "sha256": "d05982252eb2cec9800953f079fce0666e2c3443e466ddd4bc7e1e815fa53835"
+    },
+    {
+      "path": "app/backend/app/services/image_check_finalization.py",
+      "size_bytes": 12468,
+      "sha256": "7397b72335f3a34e0e81b52ffb3b6c07d197873be61cc67c9dd40f17cdc90866"
     },
     {
       "path": "app/backend/app/services/image_check_operation.py",
@@ -837,9 +842,14 @@
       "sha256": "ee93e5f83d6cfc3efae5ab2ca1f98f46427c27ba97fece018b6cb66c007b3993"
     },
     {
+      "path": "app/backend/app/services/image_check_recovery.py",
+      "size_bytes": 3985,
+      "sha256": "6d210b23caf0f9f04ab0aae8acb41fc201fc708b3c899f03acc536f73e0284ba"
+    },
+    {
       "path": "app/backend/app/services/image_check_runtime.py",
-      "size_bytes": 14531,
-      "sha256": "f5009403053fc79420e57b3aa4ec0e46da8bde3270c2da19dd10159b6b7bda50"
+      "size_bytes": 6941,
+      "sha256": "81bdb4c0b2d74d9c209d7acdd88976fda293da444970bbea2d67f0690eba9a61"
     },
     {
       "path": "app/backend/app/services/image_check_workflow.py",
@@ -983,8 +993,8 @@
     },
     {
       "path": "app/backend/app/services/metadata.py",
-      "size_bytes": 90185,
-      "sha256": "5cf2b8aaf46383294bd234bf7b83ba741c0e841ca8c959a5f6149419af3080de"
+      "size_bytes": 92030,
+      "sha256": "2652e50cb496a41759c164cc09795bd053828e5919f1a4b6b14fe5e931fd8014"
     },
     {
       "path": "app/backend/app/services/model_architecture_inspector.py",
@@ -1213,8 +1223,8 @@
     },
     {
       "path": "app/backend/app/services/remaster.py",
-      "size_bytes": 23130,
-      "sha256": "d31b92afd94ebd0352f7717f34d841071735f3fbd4569032a701c7b0b4363581"
+      "size_bytes": 27685,
+      "sha256": "9cf0eaf1f3c9e2c883fef8246a46734f9c585b32ba59d6e1d737b16333e858c5"
     },
     {
       "path": "app/backend/app/services/remaster_comparison.py",
@@ -1238,8 +1248,8 @@
     },
     {
       "path": "app/backend/app/services/runtime.py",
-      "size_bytes": 291536,
-      "sha256": "849156c75bcb349d3f6906d77422cafb143c9a442a19c008feec2a0be4184aec"
+      "size_bytes": 292835,
+      "sha256": "f0f82f8a6b7ab5046282fc02c666f316f10cbaf8b72d417ca08f12ca35251b56"
     },
     {
       "path": "app/backend/app/services/runtime_adapters.py",
@@ -1483,8 +1493,8 @@
     },
     {
       "path": "app/backend/app/services/word_masks.py",
-      "size_bytes": 11033,
-      "sha256": "ed07050adc33122b6d6d4e3a90520217892f1ee3a4039ab8157be7a3d376dc5f"
+      "size_bytes": 11109,
+      "sha256": "aaee698e2fed6e5b7989d13cd1b275f23deeb8f17b8838a926cf1e8ba44d2ee3"
     },
     {
       "path": "app/backend/app/services/workflow_mapping.py",
@@ -1507,29 +1517,29 @@
       "sha256": "7dc00e00c0b113ab1a0020779d96b49c7cd0caf52f769507a3d7fafeb3d25104"
     },
     {
-      "path": "app/frontend/public/_nuxt/38O4aJxZ.js",
-      "size_bytes": 3451,
-      "sha256": "b306722c79c557f1f9436c9434fbd63952f000501e564da85d64e1ddf0790f70"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/B0PBINGO.js",
-      "size_bytes": 2202956,
-      "sha256": "4682dc24fcf368b573d3ee6434a683917e9cc327407c56ffe967a8e941780757"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/C-xlYRlm.js",
+      "path": "app/frontend/public/_nuxt/BDyErxXN.js",
       "size_bytes": 9504,
-      "sha256": "5011fa4897b2bbacd897ef45835076b04592accaeb632f607990368e1601bbe9"
+      "sha256": "32f83cef262cb179d18dc8367ba03501cf247bf6f9c3c2639423e550c876fda8"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/BHVYutYR.js",
+      "size_bytes": 2203300,
+      "sha256": "d67899fb5255be9acc4fc91e3c60e264e0d17eebc5ce91d9b704823e8e31576d"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/C68oWzLC.js",
+      "size_bytes": 3451,
+      "sha256": "a5adec7f1e37a484ff1074ecd5de67605ca2dc048f078d8257aa71b0a6de1d28"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "a464b2a1edcea595c59618b28113f241dee2ae41856e358268855870f4ee85be"
+      "sha256": "9b236dd647c6c1bd5331e549014ffe7067fe06857b7e9a08debe8a3e7372cb0a"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/2c04ee57-db4b-4a29-b806-b62ff3171cdf.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/7c5292c7-2c15-4ea7-908f-3d52a609a671.json",
       "size_bytes": 88,
-      "sha256": "e137b5ff7fec6d7645ed80e9505fc7f2dfae9bd25467ff631239da7cfbcb7b97"
+      "sha256": "164743643715ba6a09dec351f094bb06f355cab815822c726c0881142eed7a58"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.p4RIhY8s.css",
@@ -1574,7 +1584,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "e777dfdadf6ac60f00c543f7531375a0d79ca996c9c3c64b30ccf03b2064a991"
+      "sha256": "4f599705c12f64ef65b18e2ca9d12d65a5271b842fef0959ea581a5f210f9541"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.DP0oR7hC.mjs",
@@ -2324,7 +2334,7 @@
     {
       "path": "app/frontend/server/chunks/build/client.precomputed.mjs",
       "size_bytes": 2916,
-      "sha256": "2e6da5d0b2c8d6aa0decf6be14af0a59005727b3b01ea853a2f945aad2a625ec"
+      "sha256": "b9c496826fe422eeebf3e5b2a7dd225c9013c4b9030c5f53a3a423f6977b89c2"
     },
     {
       "path": "app/frontend/server/chunks/build/error-404-DXgHoesY.mjs",
@@ -2348,13 +2358,13 @@
     },
     {
       "path": "app/frontend/server/chunks/build/server.mjs",
-      "size_bytes": 3490751,
-      "sha256": "d4ab00254c35ae8072a3df6c0917c31739db2dda31e275e752ec2290a5ca82ef"
+      "size_bytes": 3491169,
+      "sha256": "893a7349abee75862b3f52597485b663b2c9758e3630f6d707cdc44dc50fa11f"
     },
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 20343,
-      "sha256": "36385aecb494b7a1e0321162f1908b20afd4a83917ace0e307ba5be93f67ea12"
+      "sha256": "9fb891c01d2ae02eba23075344a8203c3a5900997c706ad6b0295fcb7a3584be"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -2903,8 +2913,8 @@
     },
     {
       "path": "guides/IMAGE_CHECK.md",
-      "size_bytes": 6437,
-      "sha256": "1e2d14131963f8c6a6eac9dcc9769356ceb6e4fdbb36f3e68864df83a51f4c98"
+      "size_bytes": 8309,
+      "sha256": "761feadb22da04c1aa122c7f4202c2c758c0660628f15274301003fa74edaf5c"
     },
     {
       "path": "guides/MEDIA_LIBRARY.md",

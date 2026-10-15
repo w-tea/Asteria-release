@@ -46,7 +46,9 @@ arm, leg, foot, torso, head, whole_body), description (at most 500 characters),
 and optional person_index (1-based, at most 64). Use at most 32 findings.
 For pass or reject use an empty reason_code. For unknown use insufficient_evidence.
 """
-USER_QUERY = "Check only the visible anatomy in this image and return the specified JSON assessment."
+USER_QUERY = ("Check only the visible anatomy in the supplied pixels and return the specified JSON assessment. "
+              "The supplied image may be reduced from a larger original. Do not infer that small fingers or "
+              "other unclear body parts are normal; return unknown when visible evidence is insufficient.")
 
 
 @dataclass(frozen=True)
@@ -251,6 +253,7 @@ async def check_image_with_llm(
     output_root: str | Path,
     cancel_event: asyncio.Event | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
+    generated_final: bool = False,
 ) -> ImageCheckLLMResult:
     """Assess one real image through an existing provider, with no tools or retries."""
     provider = None
@@ -283,7 +286,8 @@ async def check_image_with_llm(
             raise _CheckError("image_check_provider_ambiguous")
         provider = matches[0].model_copy(deep=True)
         api_key = _validate_provider(provider)
-        image = await asyncio.to_thread(prepare_image_check_image, source, output_root=output_root)
+        prepare_options = {"generated_final": True} if generated_final else {}
+        image = await asyncio.to_thread(prepare_image_check_image, source, output_root=output_root, **prepare_options)
         if cancel_event is not None and cancel_event.is_set():
             raise _CheckError("image_check_cancelled")
         payload = _request_payload(provider, image)

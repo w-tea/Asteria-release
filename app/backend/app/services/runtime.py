@@ -4166,10 +4166,11 @@ class ComfyGenerationRuntime:
         output_paths: list[str] = []
         primary_outputs: list[dict[str, str | int]] = []
         enhancement_stages: list[dict] = []
+        image_outputs: list[dict] = []
         stage_paths: list[str] = []
         batch_state = {"index": 0}
         with self._preview_listener(
-            output_dir / "_previews",
+            Path(request.get('_preview_output_dir') or output_dir / '_previews'),
             self._preview_callback(progress_callback, batch_count, batch_state),
             self._step_callback(progress_callback, batch_count, batch_state),
         ):
@@ -4214,7 +4215,8 @@ class ComfyGenerationRuntime:
                     history = self.client.wait_for_history(prompt_id)
                 self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
                 if request.get("_record_prompt_inputs", True):
-                    record_prompt_execution(iteration_request, workflow, history, prompt_id, batch_index=batch_index)
+                    record_prompt_execution(iteration_request, workflow, history, prompt_id,
+                                            batch_index=batch_index + int(request.get('_batch_index_offset', 0)))
                     self._merge_builder_runtime_settings(request, iteration_request)
                 spatial_receipts = self._spatial_receipts_from_history(
                     history,
@@ -4266,6 +4268,7 @@ class ComfyGenerationRuntime:
                 }
                 stage_nodes = settings.get('_enhancement_output_nodes', {})
                 stage_image_indices: dict[str, int] = {}
+                output_image_indices: dict[str, int] = {}
                 for image in images:
                     filename = self._safe_filename(image.get("filename", "comfy-output.png"))
                     path = output_dir / f"{uuid4().hex}_{filename}"
@@ -4291,6 +4294,11 @@ class ComfyGenerationRuntime:
                             self._remove_local_comfy_intermediate(image)
                         continue
                     output_paths.append(str(path))
+                    image_node = str(image.get('node_id', ''))
+                    image_index = output_image_indices.get(image_node, 0)
+                    output_image_indices[image_node] = image_index + 1
+                    image_outputs.append({'path': str(path), 'batch_index': batch_index,
+                                          'image_index': image_index, 'seed': seed})
                     self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
                     if settings.get("mode") == "inpaint":
                         if settings.get("inpaint_runtime") == "sdxl_only_masked_crop_composite":
@@ -4349,6 +4357,7 @@ class ComfyGenerationRuntime:
             "generated_seeds": generated_seeds,
             "primary_outputs": primary_outputs,
             "enhancement_stages": enhancement_stages,
+            "image_outputs": image_outputs,
         }
 
     def _remove_local_comfy_intermediate(self, image: dict) -> bool:
@@ -4625,6 +4634,7 @@ class ComfyGenerationRuntime:
 
         final_paths: list[str] = []
         second_prompt_ids: list[str] = []
+        topaz_image_outputs: list[dict] = []
         primary_outputs: list[dict[str, str | int]] = []
         for index, topaz_path in enumerate(topaz_paths):
             self._raise_if_generation_cancelled(
@@ -4725,6 +4735,8 @@ class ComfyGenerationRuntime:
                         + ", ".join(composite_failed_paths)
                     )
             final_paths.extend(second_result["output_paths"])
+            topaz_image_outputs.extend({**item, 'batch_index': index, 'image_index': 0}
+                                       for item in second_result.get('image_outputs', []))
             enhancement_stages.extend({**item, 'batch_index': index, 'image_index': 0,
                                        'ordinal': 2000 + item['ordinal']}
                                       for item in second_result.get('enhancement_stages', []))
@@ -4776,6 +4788,10 @@ class ComfyGenerationRuntime:
             else:
                 settings["topaz_upscaled_paths_deleted"] = True
         prompt_ids = [*first_result.get("runtime_job_ids", [first_result["runtime_job_id"]]), *second_prompt_ids]
+        topaz_image_outputs.extend({'path': str(path), 'batch_index': index, 'image_index': 0,
+                                    'seed': generated_seeds[index]}
+                                   for index, pair in enumerate(zip(first_paths, topaz_paths, strict=True))
+                                   for path in pair if str(path) in final_paths)
         return {
             "status": "completed",
             "output_paths": final_paths,
@@ -4787,6 +4803,7 @@ class ComfyGenerationRuntime:
             "generated_seeds": generated_seeds,
             "primary_outputs": primary_outputs,
             "enhancement_stages": enhancement_stages,
+            "image_outputs": topaz_image_outputs,
         }
 
     def _uses_topaz_hires(self, request: dict) -> bool:

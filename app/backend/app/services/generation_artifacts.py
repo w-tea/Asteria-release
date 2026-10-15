@@ -65,6 +65,8 @@ def apply_filename_template(
     settings: dict,
     profile: str,
     generation_id: int,
+    *,
+    identities: list[dict] | None = None,
 ) -> list[str]:
     template = str(settings.get("filename_template") or "").strip()
     if not template:
@@ -79,11 +81,13 @@ def apply_filename_template(
         image_index += 1
         seeds = settings.get("generated_seeds", [settings.get("seed", "")])
         seed = seeds[image_index - 1] if isinstance(seeds, list) and len(seeds) >= image_index else settings.get("seed", "")
+        identity = identities[image_index - 1] if identities and len(identities) >= image_index else {}
+        seed = identity.get("seed", seed)
         raw_name = template.format(
             profile=profile,
             seed=seed,
             id=generation_id,
-            index=image_index,
+            index=identity.get("index", image_index),
             sampler=settings.get("sampler", ""),
             scheduler=settings.get("scheduler", ""),
         )
@@ -115,12 +119,23 @@ def remap_primary_outputs(
     return remapped, True
 
 
-def unique_output_path(path: Path) -> Path:
-    if _is_available(path):
+def unique_output_path(
+    path: Path, *, include_sidecar: bool = False, reserved_paths: set[Path] | None = None,
+) -> Path:
+    def available(candidate: Path) -> bool:
+        reserved = reserved_paths or set()
+        return candidate not in reserved and _is_available(candidate) and (
+            not include_sidecar or (
+                candidate.with_suffix('.asteria.json') not in reserved
+                and _is_available(candidate.with_suffix('.asteria.json'))
+            )
+        )
+
+    if available(path):
         return path
     for index in range(2, 10000):
         candidate = path.with_name(f"{path.stem}_{index}{path.suffix}")
-        if _is_available(candidate):
+        if available(candidate):
             return candidate
     return path.with_name(f"{path.stem}_{uuid4().hex[:8]}{path.suffix}")
 

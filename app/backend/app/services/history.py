@@ -1,5 +1,6 @@
 from collections.abc import Callable, Iterator
 from contextlib import closing, contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import UTC, datetime
 import base64
@@ -18,6 +19,7 @@ from app.services.video_sequence_history import is_hidden_sequence_child
 MAX_USER_TAGS = 160
 HISTORY_PAGE_SCAN_BATCH = 128
 HISTORY_TAG_CATALOG_LIMIT = 1_000
+_active_publication: ContextVar[tuple[Path, sqlite3.Connection] | None] = ContextVar("history_publication", default=None)
 
 
 @dataclass(frozen=True)
@@ -102,16 +104,76 @@ create table if not exists history_tag_index (
 )
 """
 
+IMAGE_PUBLICATIONS_SQL = """
+create table if not exists image_check_publications (
+    publication_id text primary key,
+    output_root text not null,
+    directory text not null,
+    generation_id integer,
+    committed integer not null default 0,
+    cleanup_ready integer not null default 0
+)
+"""
+
 
 @contextmanager
 def _history_connection(db_path: Path) -> Iterator[sqlite3.Connection]:
     """Commit or roll back the transaction, then release the Windows file handle."""
+    active = _active_publication.get()
+    if active is not None and active[0] == db_path.resolve():
+        yield active[1]
+        return
     with closing(sqlite3.connect(db_path)) as connection:
         with connection:
             yield connection
 
 
 class HistoryRepository:
+    def begin_image_publication(self, publication_id: str, output_root: Path, directory: Path) -> None:
+        with _history_connection(self.db_path) as con:
+            con.execute('insert into image_check_publications(publication_id, output_root, directory) values (?, ?, ?)',
+                        (publication_id, str(output_root), str(directory)))
+
+    def complete_image_publication(self, publication_id: str, generation_id: int) -> None:
+        active = _active_publication.get()
+        if active is None or active[0] != self.db_path.resolve():
+            raise RuntimeError('image_publication_requires_history_transaction')
+        active[1].execute('update image_check_publications set committed = 1, generation_id = ? where publication_id = ?',
+                          (generation_id, publication_id))
+
+    def list_image_publications(self) -> list[dict]:
+        with _history_connection(self.db_path) as con:
+            con.row_factory = sqlite3.Row
+            return [dict(row) for row in con.execute('select * from image_check_publications')]
+
+    def image_publication_committed(self, publication_id: str) -> bool:
+        with _history_connection(self.db_path) as con:
+            row = con.execute('select committed from image_check_publications where publication_id = ?',
+                              (publication_id,)).fetchone()
+            return row is not None and row[0] == 1
+
+    def prepare_image_publication_cleanup(self, publication_id: str) -> None:
+        with _history_connection(self.db_path) as con:
+            con.execute('update image_check_publications set cleanup_ready = 1 where publication_id = ?',
+                        (publication_id,))
+
+    def forget_image_publication(self, publication_id: str) -> None:
+        with _history_connection(self.db_path) as con:
+            con.execute('delete from image_check_publications where publication_id = ?', (publication_id,))
+
+    @contextmanager
+    def publication(self) -> Iterator[None]:
+        """Publish final references together; callers perform no remote work here."""
+        if _active_publication.get() is not None:
+            raise RuntimeError("history_publication_already_active")
+        with _history_connection(self.db_path) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            token = _active_publication.set((self.db_path.resolve(), connection))
+            try:
+                yield
+            finally:
+                _active_publication.reset(token)
+
     @staticmethod
     def registered_output_source(db_path: Path, generation_id: int) -> dict | None:
         """Read an existing output registration without initializing or migrating history."""
@@ -133,6 +195,9 @@ class HistoryRepository:
             self._drop_legacy_table(con)
             con.execute(GENERATIONS_TABLE_SQL)
             con.execute(HISTORY_TAG_INDEX_SQL)
+            con.execute(IMAGE_PUBLICATIONS_SQL)
+            if 'cleanup_ready' not in {row[1] for row in con.execute('pragma table_info(image_check_publications)')}:
+                con.execute('alter table image_check_publications add column cleanup_ready integer not null default 0')
             con.execute(
                 "create index if not exists history_tag_catalog_idx "
                 "on history_tag_index(kind, normalized_key, generation_id desc)"

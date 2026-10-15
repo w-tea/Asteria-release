@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from contextlib import ExitStack, nullcontext
 from pathlib import Path
 import shutil
 from collections.abc import Callable
@@ -15,6 +16,8 @@ from app.services.generation_artifacts import (
     unique_output_path,
 )
 from app.services.history import HistoryRepository
+from app.services.image_check_operation import ImageCheckOperation
+from app.services.image_check_finalization import FinalImageSession, finalize_completed_batch, is_private_image_candidate
 from app.services.metadata import MetadataWriter
 from app.services.remaster_comparison import (
     RemasterComparisonResult,
@@ -108,10 +111,13 @@ class RemasterOrchestrator:
         cancel_requested: Callable[[], bool] | None = None,
         runtime_job_callback: Callable[[str], None] | None = None,
         runtime_stop_confirmed: Callable[[], bool] | None = None,
+        image_check_operation: ImageCheckOperation | None = None,
+        image_checker: Callable | None = None,
     ) -> RemasterResponse:
         validate_remaster_scheduler_contract(request)
         request_snapshot = request.model_dump(mode="json")
-        output_root = resolve_current_output_root(self.config.data_dir).resolve()
+        checked_operation = image_check_operation if image_check_operation and image_check_operation.settings.enabled else None
+        output_root = (checked_operation.output_root if checked_operation else resolve_current_output_root(self.config.data_dir)).resolve()
         settings: dict = {
             "mode": "remaster",
             "remaster_request_snapshot": request_snapshot,
@@ -186,8 +192,28 @@ class RemasterOrchestrator:
         working_dir = output_root / ".remaster-working" / str(remaster_id)
         runtime_result: dict = {}
         persisted_paths: list[str] = []
+        finalization_stack = ExitStack()
+        image_session = None
+
+        def failure_paths() -> list[str]:
+            if image_session and not image_session.committed:
+                # The session rolls these files back. Never register a path
+                # that will disappear as soon as the stack closes.
+                check = settings.get('image_check', {})
+                for record in check.get('results', []):
+                    record.pop('saved_path', None)
+                check['auxiliary_paths'] = []
+                settings.pop('final_output_path', None)
+                return []
+            return persisted_paths
+
         try:
+            image_session = (finalization_stack.enter_context(FinalImageSession(checked_operation, output_root / request.profile, history=self.history))
+                             if checked_operation else None)
+            if image_session:
+                working_dir = image_session.directory
             runtime_request = self._runtime_request(request, validation)
+            runtime_request['cancel_requested'] = cancel_requested
             runtime_request["runtime_job_callback"] = runtime_job_callback
             runtime_request["runtime_stop_confirmed"] = runtime_stop_confirmed
             runtime_result = self.runtime.generate_remaster(runtime_request, working_dir)
@@ -201,19 +227,47 @@ class RemasterOrchestrator:
             if not _is_file(runtime_path):
                 raise RemasterExecutionError(remaster_id, "remaster_primary_output_invalid")
 
-            final_path = self._finalize_runtime_output(
-                remaster_id,
-                request,
-                validation,
-                runtime_path,
-                output_root,
-            )
+            check_passed = True
+            if image_session:
+                checked = finalize_completed_batch(checked_operation, runtime_result, runtime_request['settings'],
+                    checker=image_checker, cancel_requested=cancel_requested)
+                records = checked['image_check_results']
+                if checked['status'] == 'cancelled' and not records:
+                    raise RuntimeCancellationConfirmed()
+                check_passed = bool(checked['primary_outputs'])
+                settings['image_check'] = {
+                    'settings': checked_operation.settings.model_dump(mode='json'), 'target_stage': 'final_output',
+                    'results': records, 'status': records[0]['status'], 'passed': int(check_passed),
+                    'rejected': sum(r['status'] == 'reject' for r in records),
+                    'pause': checked['image_check_pause'], 'cancelled': checked['status'] == 'cancelled',
+                    'auxiliary_paths': [],
+                }
+                settings['filename_template'] = checked_operation.output_settings.filename_template if checked_operation.output_settings else ''
+                settings['generated_seeds'] = [request.seed]
+                settings['seed'] = request.seed
+                if not checked['output_paths']:
+                    settings['remaster_result_status'] = 'completed_with_warnings'
+                    with self.history.publication():
+                        self.history.update_generation(remaster_id, status='completed', settings=settings, output_paths=[])
+                        image_session.seal_history(remaster_id)
+                    image_session.commit()
+                    return RemasterResponse(id=remaster_id, status='completed_with_warnings',
+                        source_generation_id=request.source_generation_id, source_image_path=request.source_image_path,
+                        source_output_index=request.source_output_index, settings=settings,
+                        model_slots=request.model_slot_overrides, loras=request.loras,
+                        warnings=['image_check_' + records[0]['status']])
+                final_path = Path(image_session.publish(checked['output_paths'], settings, request.profile, remaster_id)[0])
+            else:
+                final_path = self._finalize_runtime_output(remaster_id, request, validation, runtime_path, output_root)
             persisted_paths.append(str(final_path))
             if callable(cancel_requested) and cancel_requested():
-                self._persist_cancelled(remaster_id, settings, persisted_paths, runtime_result)
+                self._persist_cancelled(remaster_id, settings, failure_paths(), runtime_result)
                 raise RemasterExecutionError(remaster_id, "remaster_cancelled")
-            comparison = self._comparison(remaster_id, request, validation, final_path, runtime_result)
+            comparison = (self._comparison(remaster_id, request, validation, final_path, runtime_result)
+                          if check_passed else comparison_disabled_result())
             warnings = list(comparison.warnings)
+            if not check_passed:
+                warnings.append('image_check_reject')
             result_status = "completed_with_warnings" if warnings else "completed"
             settings.update(
                 {
@@ -263,13 +317,19 @@ class RemasterOrchestrator:
                 *([comparison.contact_sheet_path] if comparison.contact_sheet_path else []),
                 *([comparison.report_path] if comparison.report_path else []),
             ]
-            self.history.update_generation(
-                remaster_id,
-                status="completed",
-                settings=settings,
-                output_paths=output_paths,
-            )
-            shutil.rmtree(working_dir, ignore_errors=True)
+            with self.history.publication() if image_session else nullcontext():
+                self.history.update_generation(
+                    remaster_id,
+                    status="completed",
+                    settings=settings,
+                    output_paths=output_paths,
+                )
+                if image_session:
+                    image_session.seal_history(remaster_id)
+            if image_session:
+                image_session.commit()
+            else:
+                shutil.rmtree(working_dir, ignore_errors=True)
             return RemasterResponse(
                 id=remaster_id,
                 status=result_status,
@@ -290,14 +350,14 @@ class RemasterOrchestrator:
             self._persist_cancelled(
                 remaster_id,
                 settings,
-                [*persisted_paths, *self._working_paths(working_dir)],
+                [*failure_paths(), *self._working_paths(working_dir)],
                 runtime_result,
             )
             raise RemasterExecutionError(remaster_id, "remaster_cancelled") from exc
         except RemasterExecutionError as exc:
             if exc.code == "remaster_cancelled":
                 raise
-            self._persist_failure(remaster_id, settings, exc.code, working_dir, runtime_result, persisted_paths)
+            self._persist_failure(remaster_id, settings, exc.code, working_dir, runtime_result, failure_paths())
             raise
         except (
             OSError,
@@ -309,8 +369,10 @@ class RemasterOrchestrator:
             OutputFinalizationError,
         ) as exc:
             code = "remaster_execution_failed"
-            self._persist_failure(remaster_id, settings, code, working_dir, runtime_result, persisted_paths)
+            self._persist_failure(remaster_id, settings, code, working_dir, runtime_result, failure_paths())
             raise RemasterExecutionError(remaster_id, code) from exc
+        finally:
+            finalization_stack.close()
 
     def _runtime_request(self, request: RemasterRequest, validation: RemasterValidationResult) -> dict:
         resolved = validation.settings.model_dump(mode="json")
@@ -401,9 +463,10 @@ class RemasterOrchestrator:
         working_paths = [
             str(path)
             for path in working_dir.rglob("*")
-            if _is_file(path)
+            if _is_file(path) and not is_private_image_candidate(path)
         ] if working_dir.exists() else []
         retained_paths = [*persisted_paths, *working_paths]
+        retained_paths = [path for path in retained_paths if not is_private_image_candidate(path)]
         settings["working_output_paths"] = retained_paths
         settings["runtime_job_id"] = str(runtime_result.get("runtime_job_id") or "")
         self.history.update_generation(
@@ -422,6 +485,7 @@ class RemasterOrchestrator:
     ) -> None:
         settings["remaster_result_status"] = "cancelled"
         settings["runtime_job_id"] = str(runtime_result.get("runtime_job_id") or "")
+        retained_paths = [path for path in retained_paths if not is_private_image_candidate(path)]
         settings["working_output_paths"] = retained_paths
         self.history.update_generation(
             remaster_id,

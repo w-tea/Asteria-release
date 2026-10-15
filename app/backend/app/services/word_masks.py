@@ -111,8 +111,9 @@ class WordMapSession:
                 if record.get('status') != 'recorded':
                     raise ValueError(record.get('reason', 'word_map_not_recorded'))
                 archive, shape = check_archive(self.directory, record)
-                row = output.get('image_index', seen.get(seed, 0)); seen[seed] = seen.get(seed, 0) + 1
-                if 'image_index' not in output:
+                row = output.get('word_map_row', output.get('image_index', seen.get(seed, 0)))
+                seen[seed] = seen.get(seed, 0) + 1
+                if 'image_index' not in output and 'word_map_row' not in output:
                     implicit_seeds.add(seed)
                 rows = selected_rows.setdefault(seed, set())
                 if type(row) is not int or not 0 <= row < shape[0] or row in rows:

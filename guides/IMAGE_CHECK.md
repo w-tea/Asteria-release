@@ -29,9 +29,11 @@
 
 ### 生成時の動き
 
-チェックをONにした生成では、Hiresや部分補正の前に画像を確認します。不合格なら、その画像にHiresや部分補正をかけません。「不合格画像も保存」がOFFの場合は画像を保存せず、履歴には判定を残します。ONの場合は不合格の画像も残します。
+チェックをONにした生成では、Hires.fix、Topaz、ADetailerなど、指定した生成・補正をすべて終えた完成画像を一回確認します。判定は正式な保存と結果表示の前です。不合格でも、そこまでの生成・補正時間は掛かります。「不合格画像も保存」がOFFの場合は画像を保存せず、履歴には判定を残します。ONの場合は、不合格と分かる状態で完成画像も残します。
 
-単発生成はその結果で終了します。自動リピートは不合格でも次の生成へ進み、判定不能や接続エラーでは停止します。小さな手指は拡大・補正前では判別しづらいことがあります。Hires後に再判定する機能ではありません。
+単発生成はその結果で終了します。自動リピートは不合格でも次の生成へ進み、判定不能や接続エラーでは停止します。バッチの画像も一枚ずつ判定します。途中再開では残りの処理を終えた画像を確認します。自動Remasterでは、親画像と補正後の子画像を別の完成物として、それぞれ一回判定します。メディアライブラリから単独で実行するTopazやRemasterには、この生成時のチェックを自動適用しません。
+
+AIへ渡す画像は長辺1536px・2MiBまでに縮小します。生成時の完成候補は最大3,200万画素・64MiB、保存済み画像の試験は最大1,600万画素・32MiBです。上限を超えた場合は判定不能になります。元画像と判定用画像の寸法・ハッシュを判定記録に残します。縮小で見えなくなった手指や、隠れている部位の正常性は保証しません。AIには証拠が足りなければ判定不能を返すよう求めますが、AI自体の見逃しや誤判定をなくすものではありません。
 
 ### 画像の送信
 
@@ -64,9 +66,11 @@ Cancel check stops an ongoing trial. Changing the image or check settings clears
 
 ### During generation
 
-Enabled checks run before Hires or regional enhancement. Rejected images skip those stages. With Also save rejected images disabled, the image is not saved, but the verdict remains in history. With it enabled, the rejected image is kept.
+Enabled checks run once on each completed image after all requested generation and enhancement, including Hires.fix, Topaz and ADetailer, but before formal saving and result display. Rejected images still incur the generation and enhancement cost. With Also save rejected images disabled, only the verdict remains in history. With it enabled, the completed image is retained and marked as rejected.
 
-A single generation ends with that result. Auto-repeat continues after a rejection, but stops if the check is inconclusive or the connection fails. Small fingers may be hard to assess before upscaling or enhancement. This feature does not run a second check after Hires.
+A single generation ends with that result. Auto-repeat continues after a rejection, but stops if the check is inconclusive or the connection fails. Batch images are checked individually. Resumed generation is checked after its remaining processing. Automatic Remaster treats the parent and child as separate completed images, checking each once. Standalone Topaz and Remaster actions from Media Library do not automatically use this generation check.
+
+The AI input is reduced to at most 1536 pixels on its longest edge and 2 MiB. Generated candidates are limited to 32 million pixels and 64 MiB; saved-image trials retain their 16-million-pixel and 32-MiB limits. Exceeding a limit is inconclusive. The record includes dimensions and hashes for both the original and the actual AI input. Small fingers lost through reduction and hidden parts cannot be guaranteed normal. The AI is instructed to return unknown when evidence is insufficient, but it can still miss defects or make incorrect judgments.
 
 ### Image transmission
 

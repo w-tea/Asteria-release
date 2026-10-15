@@ -15,6 +15,8 @@ def remap_checked_image_paths(settings: dict, before: list[str], after: list[str
     for result in check.get("results", []):
         if result.get("saved_path") in mapping:
             result["saved_path"] = mapping[result["saved_path"]]
+    if "auxiliary_paths" in check:
+        check["auxiliary_paths"] = [mapping.get(path, path) for path in check["auxiliary_paths"]]
 
 
 def decide_image_check(

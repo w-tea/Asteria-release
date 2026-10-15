@@ -69,6 +69,8 @@ from app.services.resource_advisor import ResourceCapabilityRegistry
 from app.services.reference_mutation import reference_mutation_coordinator
 from app.services.video_runtime_adapters import default_video_adapters
 from app.services.music_runtime_adapters import default_music_adapters
+from app.services.history import HistoryRepository
+from app.services.image_check_recovery import recover_image_publications
 
 
 MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
@@ -100,6 +102,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         extension_root=config.extension_root,
     )
     coordinator.recover_startup()
+    recover_image_publications(HistoryRepository(config.data_dir / 'asteria.db'))
     if video_service is not None:
         video_service.cleanup_working_artifacts()
     sequence_service.sequences.interrupt_active_sequences()

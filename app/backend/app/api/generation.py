@@ -55,6 +55,7 @@ from app.services.artifact_lifecycle import (
 from app.services.image_validation import InvalidImageContentError, validate_image_file
 from app.services.image_check_operation import ImageCheckOperation, capture_image_check_operation
 from app.services.image_check import remap_checked_image_paths
+from app.services.image_check_finalization import FinalImageSession, is_private_image_candidate
 from app.services.library_thumbnails import LibraryThumbnailError, LibraryThumbnailService
 from app.services.inpaint_region import InpaintRegionError, validate_only_masked_inputs
 from app.services.external_settings import ExternalIntegrationSettingsRepository
@@ -2918,8 +2919,8 @@ def _round_hires_dimension(value: int | float, step: int = 8) -> int:
 
 
 def _apply_topaz_hires_if_needed(output_paths: list[str], settings: dict, request: Txt2ImgRequest, config: AppConfig, output_dir: Path) -> list[str]:
-    if isinstance(settings.get("image_check"), dict):
-        # Checked generation owns enhancement completely; rejected saves are never input to Topaz.
+    if isinstance(settings.get("image_check"), dict) and settings["image_check"].get("target_stage") == "final_output":
+        # A final decision must never be followed by another image correction.
         return output_paths
     if not settings.get("hires_enabled") or settings.get("hires_upscaler") != "Topaz Photo AI":
         return output_paths
@@ -3393,6 +3394,8 @@ def _scan_sidecar_metadata(repository: HistoryRepository, output_roots: list[Pat
             skipped += 1
             continue
         for sidecar_path in sidecar_paths:
+            if is_private_image_candidate(sidecar_path):
+                continue
             try:
                 payload = json.loads(sidecar_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
@@ -3411,6 +3414,7 @@ def _scan_sidecar_metadata(repository: HistoryRepository, output_roots: list[Pat
                 continue
             if (
                 resolved_image in referenced
+                or is_private_image_candidate(resolved_image)
                 or not _path_exists_safely(image_path)
                 or not _path_is_file_safely(image_path)
             ):
@@ -3471,6 +3475,8 @@ def _scan_sidecar_metadata(repository: HistoryRepository, output_roots: list[Pat
             skipped += 1
             continue
         for image_path in png_paths:
+            if is_private_image_candidate(image_path):
+                continue
             try:
                 resolved_image = str(image_path.resolve())
             except _PATH_ACCESS_ERRORS:
@@ -3605,18 +3611,20 @@ def _generate(
     merge_xyz_metadata: dict[str, Any] | None = None,
     comparison_metadata: dict[str, Any] | None = None,
 ) -> GenerationResponse:
-    from contextlib import nullcontext
+    from contextlib import ExitStack, nullcontext
     from app.services.making_video import MakingRecorder
     from app.services.generation_branch import BranchSession
     from app.services.word_masks import WordMapSession
 
-    with (MakingRecorder() if request.record_making_video else nullcontext(None)) as making, \
+    with ExitStack() as finalization_stack, \
+            (MakingRecorder() if request.record_making_video else nullcontext(None)) as making, \
             (BranchSession() if request.record_branch_step is not None or request.branch_source_id else nullcontext(None)) as branch, \
             (WordMapSession() if request.record_word_masks else nullcontext(None)) as word_maps:
         return _generate_with_recording(
             request, mode, job_id, making=making, branch=branch, word_maps=word_maps, merge_runtime_context=merge_runtime_context,
             comfy_admission_lease_token=comfy_admission_lease_token,
             merge_xyz_metadata=merge_xyz_metadata, comparison_metadata=comparison_metadata,
+            finalization_stack=finalization_stack,
         )
 
 
@@ -3632,7 +3640,9 @@ def _generate_with_recording(
     comfy_admission_lease_token: str | None = None,
     merge_xyz_metadata: dict[str, Any] | None = None,
     comparison_metadata: dict[str, Any] | None = None,
+    finalization_stack=None,
 ) -> GenerationResponse:
+    from contextlib import nullcontext
     generation_started = time.perf_counter()
     request = _freeze_spatial_request_seed(request)
     _preflight_profile_prompt_request(request)
@@ -3640,7 +3650,11 @@ def _generate_with_recording(
     config = AppConfig()
     stored_operation = _jobs.get(job_id, {}).get("generation_operation_snapshot") if job_id else None
     check_operation = ImageCheckOperation.from_snapshot(stored_operation or _generation_operation_snapshot(request))
-    output_dir = _output_dir_for(data_dir, request.profile, check_operation)
+    final_output_dir = _output_dir_for(data_dir, request.profile, check_operation)
+    history = HistoryRepository(data_dir / 'asteria.db') if check_operation.settings.enabled else None
+    image_session = (finalization_stack.enter_context(FinalImageSession(check_operation, final_output_dir, history=history))
+                     if check_operation.settings.enabled else None)
+    output_dir = image_session.directory if image_session else final_output_dir
     if making is not None:
         making.begin(check_operation.output_root, expected_images=request.batch_count * request.batch_size)
     model_slots = _model_slots_for_request(request, config)
@@ -3951,6 +3965,17 @@ def _generate_with_recording(
         if selected_runtime != "comfy_workflow":
             raise HTTPException(status_code=409, detail={"code": "image_check_runtime_not_supported"})
         runtime_request["_image_check_operation"] = check_operation
+        # Live frames retain the existing preview registry and serving path.
+        # Completed candidates stay private until their final decision.
+        runtime_request['_preview_output_dir'] = str(final_output_dir / '_previews')
+        def prepare_final_batch(completed, batch_settings, directory):
+            before = completed['output_paths']
+            after = _apply_topaz_hires_if_needed(before, batch_settings, request, config, directory)
+            primary, mapped = remap_primary_outputs(completed.get('primary_outputs', []), before, after)
+            if not mapped:
+                raise OutputFinalizationError('Final image manifest does not match completed processing')
+            return {**completed, 'output_paths': after, 'primary_outputs': primary}
+        runtime_request['_prepare_final_image_batch'] = prepare_final_batch
     if spatial_context is not None:
         runtime_request["_spatial_runtime_context"] = spatial_context.runtime_context
     if merge_runtime_context is not None:
@@ -4067,7 +4092,7 @@ def _generate_with_recording(
     if result.get("generated_seeds"):
         settings["generated_seeds"] = result["generated_seeds"]
     output_settings = check_operation.output_settings
-    settings["output_directory"] = str(output_dir)
+    settings["output_directory"] = str(final_output_dir)
     settings["output_root"] = str(check_operation.output_root)
     settings["filename_template"] = output_settings.filename_template
     settings["output_image_format"] = output_settings.image_format
@@ -4078,19 +4103,17 @@ def _generate_with_recording(
     output_paths = list(result["output_paths"])
     primary_outputs = [dict(output) for output in result.get("primary_outputs", [])]
     before_paths = output_paths
-    output_paths = _apply_topaz_hires_if_needed(
-        output_paths,
-        settings,
-        request,
-        config,
-        output_dir,
-    )
+    if image_session and not result.get('image_check_finalized'):
+        raise HTTPException(status_code=502, detail={'code': 'image_check_final_output_missing'})
+    output_paths = (output_paths if image_session else _apply_topaz_hires_if_needed(
+        output_paths, settings, request, config, output_dir))
     primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
     if not manifest_mapped:
         settings["primary_output_manifest_warning"] = "topaz_postprocess_path_mapping_failed"
     try:
         before_paths = output_paths
-        output_paths = _apply_output_image_format(output_paths, output_settings.image_format)
+        if image_session is None:
+            output_paths = _apply_output_image_format(output_paths, output_settings.image_format)
         remap_checked_image_paths(settings, before_paths, output_paths)
         primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
         if not manifest_mapped:
@@ -4108,79 +4131,76 @@ def _generate_with_recording(
         embeddings=embeddings,
         loras=loras,
     )
-    history = HistoryRepository(data_dir / "asteria.db")
-    generation_id = history.add(
-        status=result["status"],
-        profile=request.profile,
-        prompt=request.prompt,
-        expanded_prompt=expanded_prompt,
-        negative_prompt=negative_prompt,
-        settings=settings,
-        model_slots=model_slots,
-        loras=loras,
-        embeddings=embeddings,
-        output_paths=output_paths,
-        generated_tags=generated_tags,
-    )
-    before_paths = output_paths
-    output_paths = _apply_filename_template(output_paths, settings, request.profile, generation_id)
-    remap_checked_image_paths(settings, before_paths, output_paths)
-    primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
-    if not manifest_mapped:
-        settings["primary_output_manifest_warning"] = "filename_path_mapping_failed"
-    finalize_merge_xyz_metadata(
-        settings,
-        output_paths=output_paths,
-        runtime_adapter=str(result.get("runtime_adapter") or selected_runtime),
-        mapping_id=f"{request.profile}_txt2img",
-    )
-    settings["primary_outputs"] = primary_outputs
-    making_output_paths = list(output_paths) if making is not None else []
-    from app.services.enhancement_stages import finalize_stages
-    finalize_stages(settings, result.get('enhancement_stages', []), primary_outputs, output_paths)
-    word_paths = []
-    if word_maps is not None:
-        settings['word_masks'], word_paths = word_maps.finish(primary_outputs, result['status'])
-        output_paths.extend(word_paths)
-    branch_paths = []
-    if branch is not None:
-        settings['generation_branch'], branch_paths = branch.finish(
-            request, settings, model_slots, expanded_prompt, negative_prompt, result['status'])
-        output_paths.extend(branch_paths)
-        record_controlnet_artifacts(settings)
-        record_anima_lllite_artifacts(settings)
-    if result["status"] != "cancelled":
-        _auto_send_primary_outputs_to_eagle(
-            data_dir=data_dir,
-            config=config,
-            primary_outputs=primary_outputs,
-            generated_tags=generated_tags,
-            prompt=expanded_prompt or request.prompt,
-            negative_prompt=negative_prompt,
-            settings=settings,
+    history = history or HistoryRepository(data_dir / "asteria.db")
+    with history.publication() if image_session else nullcontext():
+        generation_id = history.add(
+            status=result["status"], profile=request.profile, prompt=request.prompt,
+            expanded_prompt=expanded_prompt, negative_prompt=negative_prompt,
+            settings=settings, model_slots=model_slots, loras=loras, embeddings=embeddings,
+            output_paths=[] if image_session else output_paths, generated_tags=generated_tags,
         )
-    history.update_settings(generation_id, settings)
-    _update_output_paths_safely(history, generation_id, output_paths)
-    sidecar_paths = MetadataWriter().write_generation_sidecars(
-        {
-            "generation_id": generation_id,
-            "status": result["status"],
-            "profile": request.profile,
-            "prompt": request.prompt,
-            "expanded_prompt": expanded_prompt,
-            "negative_prompt": negative_prompt,
-            "prompt_expansion_selections": expansion_selections,
-            "settings": settings,
-            "model_slots": model_slots,
-            "loras": loras,
-            "embeddings": embeddings,
-            "metadata_tags": generated_tags,
-        },
-        output_paths,
-    )
-    if sidecar_paths:
-        output_paths = [*output_paths, *sidecar_paths]
-        _update_output_paths_safely(history, generation_id, output_paths)
+        before_paths = output_paths
+        if image_session:
+            stage_paths = [s['path'] for s in result.get('enhancement_stages', [])]
+            all_paths = list(dict.fromkeys([*output_paths, *stage_paths]))
+            published = image_session.publish(all_paths, settings, request.profile, generation_id)
+            path_mapping = dict(zip(all_paths, published, strict=True))
+            output_paths = [path_mapping[p] for p in output_paths]
+            result['enhancement_stages'] = [{**s, 'path': path_mapping[s['path']]}
+                                           for s in result.get('enhancement_stages', [])]
+        else:
+            output_paths = _apply_filename_template(output_paths, settings, request.profile, generation_id)
+            remap_checked_image_paths(settings, before_paths, output_paths)
+        primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
+        if not manifest_mapped:
+            if image_session:
+                raise OutputFinalizationError('Final image publication manifest mismatch')
+            settings["primary_output_manifest_warning"] = "filename_path_mapping_failed"
+        finalize_merge_xyz_metadata(settings, output_paths=output_paths,
+            runtime_adapter=str(result.get("runtime_adapter") or selected_runtime), mapping_id=f"{request.profile}_txt2img")
+        settings["primary_outputs"] = primary_outputs
+        making_output_paths = list(output_paths) if making is not None else []
+        from app.services.enhancement_stages import finalize_stages
+        finalize_stages(settings, result.get('enhancement_stages', []), primary_outputs, output_paths)
+        word_paths = []
+        if word_maps is not None:
+            settings['word_masks'], word_paths = word_maps.finish(primary_outputs, result['status'])
+            output_paths.extend(word_paths)
+        branch_paths = []
+        if branch is not None:
+            settings['generation_branch'], branch_paths = branch.finish(
+                request, settings, model_slots, expanded_prompt, negative_prompt, result['status'])
+            output_paths.extend(branch_paths)
+            record_controlnet_artifacts(settings)
+            record_anima_lllite_artifacts(settings)
+        if image_session is None and result["status"] != "cancelled":
+            _auto_send_primary_outputs_to_eagle(data_dir=data_dir, config=config, primary_outputs=primary_outputs,
+                generated_tags=generated_tags, prompt=expanded_prompt or request.prompt,
+                negative_prompt=negative_prompt, settings=settings)
+        history.update_settings(generation_id, settings)
+        metadata_payload = {
+            "generation_id": generation_id, "status": result["status"], "profile": request.profile,
+            "prompt": request.prompt, "expanded_prompt": expanded_prompt, "negative_prompt": negative_prompt,
+            "prompt_expansion_selections": expansion_selections, "settings": settings,
+            "model_slots": model_slots, "loras": loras, "embeddings": embeddings, "metadata_tags": generated_tags,
+        }
+        sidecar_paths = MetadataWriter().write_generation_sidecars(metadata_payload, output_paths)
+        if sidecar_paths:
+            output_paths = [*output_paths, *sidecar_paths]
+        if image_session:
+            history.update_output_paths(generation_id, output_paths)
+            image_session.seal_history(generation_id)
+        else:
+            _update_output_paths_safely(history, generation_id, output_paths)
+    if image_session:
+        image_session.commit()
+        if result["status"] != "cancelled":
+            _auto_send_primary_outputs_to_eagle(data_dir=data_dir, config=config, primary_outputs=primary_outputs,
+                generated_tags=generated_tags, prompt=expanded_prompt or request.prompt,
+                negative_prompt=negative_prompt, settings=settings)
+            history.update_settings(generation_id, settings)
+            MetadataWriter().write_generation_sidecars(metadata_payload,
+                [p for p in output_paths if Path(p).suffix.lower() in {'.png', '.jpg', '.jpeg', '.webp'}])
     remasters: list[RemasterResponse] = []
     if request.remaster.enabled and result["status"] != "cancelled":
         remasters = _fan_out_remasters(
@@ -4190,11 +4210,18 @@ def _generate_with_recording(
             model_slots,
             loras,
             job_id=job_id,
+            image_check_operation=check_operation if image_session else None,
         )
         settings["remaster_generation_ids"] = [item.id for item in remasters]
         settings["remaster_statuses"] = [item.status for item in remasters]
         settings["remaster_output_paths"] = [item.output_path for item in remasters]
         settings["remaster_comparison_paths"] = [item.contact_sheet_path for item in remasters]
+        if image_session:
+            child_checks = [item.settings['image_check'] for item in remasters if 'image_check' in item.settings]
+            settings['image_check']['remaster_checks'] = child_checks
+            if any(check.get('pause') for check in child_checks):
+                settings['image_check']['pause'] = True
+                settings['image_check']['status'] = 'unknown'
         if len(remasters) != len(primary_outputs):
             settings["remaster_preparation_warning"] = "primary_output_manifest_incomplete"
         history.update_settings(generation_id, settings)
@@ -4262,6 +4289,7 @@ def _fan_out_remasters(
     *,
     job_id: str | None = None,
     orchestrator=None,
+    image_check_operation: ImageCheckOperation | None = None,
 ) -> list[RemasterResponse]:
     from app.api.remaster import _build_orchestrator
 
@@ -4295,6 +4323,7 @@ def _fan_out_remasters(
         try:
             result = active_orchestrator.run(
                 child_request,
+                **({'image_check_operation': image_check_operation} if image_check_operation else {}),
                 cancel_requested=(
                     (lambda: bool(_jobs.get(job_id, {}).get("cancelled"))) if job_id is not None else None
                 ),
@@ -4318,6 +4347,8 @@ def _fan_out_remasters(
                 warnings=[exc.code],
             )
         results.append(result)
+        if result.settings.get('image_check', {}).get('pause'):
+            break
     return results
 
 
@@ -5783,7 +5814,7 @@ def history_integrity() -> HistoryIntegrityResponse:
                     resolved = path.resolve()
                 except _PATH_ACCESS_ERRORS:
                     continue
-                if _path_is_file_safely(path) and resolved not in referenced:
+                if not is_private_image_candidate(resolved) and _path_is_file_safely(path) and resolved not in referenced:
                     orphan_files.append(str(path))
     return HistoryIntegrityResponse(missing_files=missing, orphan_files=orphan_files)
 
@@ -6019,6 +6050,7 @@ def output_file(filename: str) -> FileResponse:
         raise HTTPException(status_code=404, detail={"code": api_errors.OUTPUT_IMAGE_NOT_FOUND}) from None
     if (
         (output_dir != path and output_dir not in path.parents)
+        or is_private_image_candidate(path)
         or not _path_exists_safely(path)
         or not _path_is_file_safely(path)
     ):
@@ -6033,7 +6065,7 @@ def output_file_by_path(path: str) -> FileResponse:
     except _PATH_ACCESS_ERRORS:
         raise HTTPException(status_code=404, detail={"code": api_errors.OUTPUT_IMAGE_NOT_FOUND}) from None
     data_dir = _data_dir()
-    if not _path_exists_safely(output_path) or not _path_is_file_safely(output_path):
+    if is_private_image_candidate(output_path) or not _path_exists_safely(output_path) or not _path_is_file_safely(output_path):
         raise HTTPException(status_code=404, detail={"code": api_errors.OUTPUT_IMAGE_NOT_FOUND})
     if not _is_current_output_path(output_path, data_dir) and not _is_referenced_output_path(output_path, data_dir):
         raise HTTPException(status_code=403, detail={"code": api_errors.OUTPUT_IMAGE_NOT_REGISTERED})

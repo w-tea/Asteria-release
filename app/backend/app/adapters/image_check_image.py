@@ -13,6 +13,10 @@ from PIL import Image, ImageOps
 
 MAX_SOURCE_BYTES = 32 * 1024 * 1024
 MAX_SOURCE_PIXELS = 16_000_000
+# Generated candidates are read sequentially from an operation-owned directory.
+# Keep this finite and separate from the saved-image test's existing limits.
+MAX_GENERATED_SOURCE_BYTES = 64 * 1024 * 1024
+MAX_GENERATED_SOURCE_PIXELS = 32_000_000
 MAX_PREPARED_EDGE = 1536
 MAX_PREPARED_BYTES = 2 * 1024 * 1024
 SUPPORTED_SOURCE_FORMATS = frozenset({"PNG", "JPEG", "WEBP"})
@@ -43,6 +47,7 @@ class ImageCheckImageReceipt:
     resized: bool
     alpha_matte: str | None
     metadata_stripped: bool = True
+    input_policy: str = "saved_image"
 
 
 @dataclass(frozen=True)
@@ -52,7 +57,8 @@ class PreparedImageCheckImage:
     receipt: ImageCheckImageReceipt
 
 
-def _read_source(source: str | Path, output_root: str | Path) -> tuple[Path, Path, bytes]:
+def _read_source(source: str | Path, output_root: str | Path, *, max_bytes: int | None = None) -> tuple[Path, Path, bytes]:
+    byte_limit = MAX_SOURCE_BYTES if max_bytes is None else max_bytes
     try:
         root = Path(output_root).resolve(strict=True)
         if not root.is_dir():
@@ -70,19 +76,25 @@ def _read_source(source: str | Path, output_root: str | Path) -> tuple[Path, Pat
             source_stat = os.fstat(stream.fileno())
             if not stat.S_ISREG(source_stat.st_mode):
                 raise ImageCheckImageError("image_check_source_unavailable")
-            if source_stat.st_size > MAX_SOURCE_BYTES:
+            if source_stat.st_size > byte_limit:
                 raise ImageCheckImageError("image_check_source_too_large")
-            content = stream.read(MAX_SOURCE_BYTES + 1)
+            content = stream.read(byte_limit + 1)
     except OSError:
         raise ImageCheckImageError("image_check_source_unavailable") from None
-    if len(content) > MAX_SOURCE_BYTES:
+    if len(content) > byte_limit:
         raise ImageCheckImageError("image_check_source_too_large")
     return root, path, content
 
 
-def prepare_image_check_image(source: str | Path, *, output_root: str | Path) -> PreparedImageCheckImage:
-    """Prepare one static first-pass image without writing or changing its source."""
-    root, path, source_content = _read_source(source, output_root)
+def prepare_image_check_image(source: str | Path, *, output_root: str | Path,
+                              generated_final: bool = False) -> PreparedImageCheckImage:
+    """Prepare one bounded static image without writing or changing its source."""
+    if generated_final:
+        from app.services.image_check_finalization import is_private_image_candidate
+        if not is_private_image_candidate(Path(source).resolve()):
+            raise ImageCheckImageError("image_check_final_source_not_staged")
+    root, path, source_content = _read_source(source, output_root,
+        max_bytes=MAX_GENERATED_SOURCE_BYTES if generated_final else None)
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("error", Image.DecompressionBombWarning)
@@ -91,7 +103,8 @@ def prepare_image_check_image(source: str | Path, *, output_root: str | Path) ->
                 if source_format not in SUPPORTED_SOURCE_FORMATS:
                     raise ImageCheckImageError("image_check_source_format_unsupported")
                 width, height = opened.size
-                if width * height > MAX_SOURCE_PIXELS:
+                pixel_limit = MAX_GENERATED_SOURCE_PIXELS if generated_final else MAX_SOURCE_PIXELS
+                if width * height > pixel_limit:
                     raise ImageCheckImageError("image_check_source_too_many_pixels")
                 if getattr(opened, "n_frames", 1) != 1:
                     raise ImageCheckImageError("image_check_source_animated")
@@ -139,5 +152,6 @@ def prepare_image_check_image(source: str | Path, *, output_root: str | Path) ->
             prepared_height=prepared_height,
             resized=(prepared_width, prepared_height) != (oriented_width, oriented_height),
             alpha_matte="white" if has_alpha else None,
+            input_policy="generated_final" if generated_final else "saved_image",
         ),
     )
