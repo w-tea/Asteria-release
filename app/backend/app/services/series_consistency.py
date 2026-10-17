@@ -83,6 +83,8 @@ class SeriesRepository:
             if member['status'] != 'running':
                 raise ValueError('series_not_running')
             if assessment:
+                if document.get('cancelled_at'):
+                    raise ValueError('series_cancelled')
                 ids = [item.id for item in assessment.items]
                 if len(set(ids)) != len(ids) or set(ids) != {x['id'] for x in document['criteria']}:
                     raise ValueError('condition_response_ids')

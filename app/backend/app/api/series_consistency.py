@@ -123,7 +123,10 @@ async def check_member(run_id: str, index: int, request: Request):
         assessment, receipt = await task
         document = await run_in_threadpool(repo.finish, run_id, index, assessment, receipt)
         return await run_in_threadpool(annotate_sources, repo, document, root)
-    except (ValueError, httpx.HTTPError, TimeoutError):
+    except (ValueError, httpx.HTTPError, TimeoutError) as exc:
+        if isinstance(exc, ValueError) and str(exc) == 'series_cancelled':
+            await run_in_threadpool(repo.finish, run_id, index, error='cancelled')
+            raise HTTPException(409, detail={'code': 'series_cancelled'}) from None
         await run_in_threadpool(repo.finish, run_id, index, error='check_failed')
         raise HTTPException(502, detail={'code': 'condition_check_failed'}) from None
     except asyncio.CancelledError:

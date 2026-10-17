@@ -77,7 +77,7 @@ Media Libraryの「画像の条件チェック」では、人数、髪・服、�
 
 「再生成アシスト」では、保存した文章や設定に加え、当時のモデルと現在のモデルの違いを確認して再利用できます。資産の欠落や変更があれば、対応するものを選び直してください。設定を復元できても、モデルや実行環境が違えば同じ画素になるとは限りません。
 
-生成直後の人体チェックは[画像チェックのガイド](IMAGE_CHECK.md)を参照してください。AIには見逃しや誤判定があります。独自の人体判定器は現在選べません。
+人体チェックは、通常生成・Hires.fix・Topaz・ADetailerなど、すべての生成・補正が終わった完成画像に対して、正式な保存・履歴登録・表示の前に一回実施します。[画像チェックのガイド](IMAGE_CHECK.md)を参照してください。AIには見逃しや誤判定があります。独自の人体判定器は現在選べません。
 
 ### 7. 語句の範囲を部分編集へ渡す・複数人のポーズを作る
 
@@ -145,7 +145,7 @@ Series review compares two to 24 images against a reference for changes in appea
 
 Reproduction assistance restores recorded text and settings and checks recorded assets against currently available ones. Reselect missing or changed assets. Restored settings do not guarantee pixel-identical output across different models or execution environments.
 
-See [Image checks](IMAGE_CHECK.md) for pre-Hires anatomy checking. AI can miss problems or give false alarms. A native anatomy checker is not currently selectable.
+Anatomy checking runs once after all generation and enhancement steps, including ordinary generation, Hires.fix, Topaz, and ADetailer, on the completed image before its official save, history registration, and display. See [Image checks](IMAGE_CHECK.md). AI can miss problems or give false alarms. A native anatomy checker is not currently selectable.
 
 ### 7. Use word maps and multi-person poses
 

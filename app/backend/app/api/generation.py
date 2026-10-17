@@ -4255,7 +4255,7 @@ def _generate_with_recording(
             'prompt': request.prompt, 'expanded_prompt': expanded_prompt, 'negative_prompt': negative_prompt,
             'prompt_expansion_selections': expansion_selections, 'settings': settings,
             'model_slots': model_slots, 'loras': loras, 'embeddings': embeddings, 'metadata_tags': generated_tags,
-        }, making_output_paths)
+        }, [path for path in output_paths if Path(path).suffix.lower() in {'.png', '.jpg', '.jpeg', '.webp'}])
     history_item = history.get(generation_id)
     if branch_paths:
         branch.commit()

@@ -7150,6 +7150,7 @@ const _sfc_main$2o = /* @__PURE__ */ defineComponent({
     imageCheckSummary: {},
     repeatActive: { type: Boolean },
     repeatStopRequested: { type: Boolean },
+    hardStopRequested: { type: Boolean },
     repeatCount: {},
     repeatSummary: {},
     seed: {},
@@ -7170,29 +7171,29 @@ const _sfc_main$2o = /* @__PURE__ */ defineComponent({
       const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
       _push(`<div${ssrRenderAttrs(mergeProps({
         class: ["generate-action-strip", { "generate-action-strip--active": __props.loading || __props.repeatActive }]
-      }, _attrs))} data-v-50a265c9><div class="generate-action-strip__context" data-v-50a265c9><strong data-v-50a265c9>${ssrInterpolate(unref(t)("generation.activityBar"))}</strong><span data-v-50a265c9>${ssrInterpolate(__props.mode)} / ${ssrInterpolate(__props.sizeLabel)} / ${ssrInterpolate(__props.status)}</span>`);
+      }, _attrs))} data-v-f02894c0><div class="generate-action-strip__context" data-v-f02894c0><strong data-v-f02894c0>${ssrInterpolate(unref(t)("generation.activityBar"))}</strong><span data-v-f02894c0>${ssrInterpolate(__props.mode)} / ${ssrInterpolate(__props.sizeLabel)} / ${ssrInterpolate(__props.status)}</span>`);
       if (__props.imageCheckSummary) {
-        _push(`<small class="generate-action-strip__outcome" role="status" data-v-50a265c9>${ssrInterpolate(__props.imageCheckSummary)}</small>`);
+        _push(`<small class="generate-action-strip__outcome" role="status" data-v-f02894c0>${ssrInterpolate(__props.imageCheckSummary)}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.repeatSummary) {
-        _push(`<small class="generate-action-strip__outcome" role="status" data-v-50a265c9>${ssrInterpolate(__props.repeatSummary)}</small>`);
+        _push(`<small class="generate-action-strip__outcome" role="status" data-v-f02894c0>${ssrInterpolate(__props.repeatSummary)}</small>`);
       } else {
         _push(`<!---->`);
       }
-      if (__props.repeatActive && __props.repeatStopRequested) {
-        _push(`<small data-v-50a265c9>${ssrInterpolate(unref(t)("generation.repeatStoppingDetail"))}</small>`);
+      if (__props.repeatActive && __props.repeatStopRequested && !__props.hardStopRequested) {
+        _push(`<small data-v-f02894c0>${ssrInterpolate(unref(t)("generation.repeatStoppingDetail"))}</small>`);
       } else if (__props.autoRepeat && __props.seed !== -1) {
-        _push(`<small data-v-50a265c9>${ssrInterpolate(unref(t)("generation.fixedSeedRepeat", { seed: __props.seed }))}</small>`);
+        _push(`<small data-v-f02894c0>${ssrInterpolate(unref(t)("generation.fixedSeedRepeat", { seed: __props.seed }))}</small>`);
       } else if (__props.repeatActive) {
-        _push(`<small data-v-50a265c9>${ssrInterpolate(unref(t)("generation.repeatQueued", { count: __props.repeatCount + 1 }))}</small>`);
+        _push(`<small data-v-f02894c0>${ssrInterpolate(unref(t)("generation.repeatQueued", { count: __props.repeatCount + 1 }))}</small>`);
       } else if (__props.disabledReason) {
-        _push(`<small data-v-50a265c9>${ssrInterpolate(__props.disabledReason)}</small>`);
+        _push(`<small data-v-f02894c0>${ssrInterpolate(__props.disabledReason)}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="generate-action-strip__readiness"${ssrRenderAttr("aria-label", unref(t)("generation.readiness.needsAttention"))} data-v-50a265c9><!--[-->`);
+      _push(`<div class="generate-action-strip__readiness"${ssrRenderAttr("aria-label", unref(t)("generation.readiness.needsAttention"))} data-v-f02894c0><!--[-->`);
       ssrRenderList(__props.readinessItems, (item) => {
         _push(`<span${ssrRenderAttrs(mergeProps({
           key: item.id,
@@ -7201,35 +7202,35 @@ const _sfc_main$2o = /* @__PURE__ */ defineComponent({
             item.ready ? "generate-action-strip__readiness-chip--ready" : "generate-action-strip__readiness-chip--missing",
             item.advisory ? "generate-action-strip__readiness-chip--advisory" : ""
           ]
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.message)))} data-v-50a265c9>${ssrInterpolate(item.label)}</span>`);
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.message)))} data-v-f02894c0>${ssrInterpolate(item.label)}</span>`);
       });
-      _push(`<!--]--></div></div><div class="generate-action-strip__controls" data-v-50a265c9><label${ssrRenderAttrs(mergeProps({ class: "generate-action-strip__repeat" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("imageCheck.shortHelp"))))} data-v-50a265c9><input type="checkbox"${ssrIncludeBooleanAttr(__props.imageCheck) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.loading || __props.repeatActive) ? " disabled" : ""} data-v-50a265c9><span data-v-50a265c9>${ssrInterpolate(unref(t)("imageCheck.toggle"))}</span></label>`);
+      _push(`<!--]--></div></div><div class="generate-action-strip__controls" data-v-f02894c0><label${ssrRenderAttrs(mergeProps({ class: "generate-action-strip__repeat" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("imageCheck.shortHelp"))))} data-v-f02894c0><input type="checkbox"${ssrIncludeBooleanAttr(__props.imageCheck) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.loading || __props.repeatActive) ? " disabled" : ""} data-v-f02894c0><span data-v-f02894c0>${ssrInterpolate(unref(t)("imageCheck.toggle"))}</span></label>`);
       if (__props.imageCheck) {
-        _push(`<button type="button" data-v-50a265c9>${ssrInterpolate(unref(t)("imageCheck.settings"))}</button>`);
+        _push(`<button type="button" data-v-f02894c0>${ssrInterpolate(unref(t)("imageCheck.settings"))}</button>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="generate-action-strip__repeat" data-v-50a265c9><input type="checkbox"${ssrIncludeBooleanAttr(__props.autoRepeat) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.loading && !__props.repeatActive || __props.repeatActive && __props.repeatStopRequested) ? " disabled" : ""} data-v-50a265c9><span data-v-50a265c9>${ssrInterpolate(unref(t)("generation.autoRepeat"))}</span></label>`);
+      _push(`<label class="generate-action-strip__repeat" data-v-f02894c0><input type="checkbox"${ssrIncludeBooleanAttr(__props.autoRepeat) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.loading && !__props.repeatActive || __props.repeatActive && __props.repeatStopRequested) ? " disabled" : ""} data-v-f02894c0><span data-v-f02894c0>${ssrInterpolate(unref(t)("generation.autoRepeat"))}</span></label>`);
       if (__props.autoRepeat) {
-        _push(`<button type="button"${ssrIncludeBooleanAttr(__props.loading || __props.repeatActive) ? " disabled" : ""} data-v-50a265c9>${ssrInterpolate(unref(t)("generation.repeatLimits.open"))}</button>`);
+        _push(`<button type="button"${ssrIncludeBooleanAttr(__props.loading || __props.repeatActive) ? " disabled" : ""} data-v-f02894c0>${ssrInterpolate(unref(t)("generation.repeatLimits.open"))}</button>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<button class="generate-action-strip__primary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canGenerate) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.loading)} data-v-50a265c9>${ssrInterpolate(__props.repeatActive ? unref(t)("generation.repeating") : __props.loading ? unref(t)("generation.generating") : unref(t)("generation.generate"))}</button>`);
+      _push(`<button class="generate-action-strip__primary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canGenerate) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.loading)} data-v-f02894c0>${ssrInterpolate(__props.repeatActive ? unref(t)("generation.repeating") : __props.loading ? unref(t)("generation.generating") : unref(t)("generation.generate"))}</button>`);
       if (__props.loading) {
-        _push(`<span class="generate-action-strip__loading-indicator" aria-hidden="true" data-v-50a265c9></span>`);
+        _push(`<span class="generate-action-strip__loading-indicator" aria-hidden="true" data-v-f02894c0></span>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<button class="generate-action-strip__secondary generate-action-strip__discord" type="button"${ssrIncludeBooleanAttr(__props.discordPublishing || !__props.canPublishDiscord) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.discordPublishing)} data-v-50a265c9>${ssrInterpolate(__props.discordPublishing ? unref(t)("generation.discordPublishing") : __props.discordPublishedRevision ? unref(t)("generation.discordRepublish", { revision: __props.discordPublishedRevision }) : unref(t)("generation.discordPublish"))}</button>`);
+      _push(`<button class="generate-action-strip__secondary generate-action-strip__discord" type="button"${ssrIncludeBooleanAttr(__props.discordPublishing || !__props.canPublishDiscord) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.discordPublishing)} data-v-f02894c0>${ssrInterpolate(__props.discordPublishing ? unref(t)("generation.discordPublishing") : __props.discordPublishedRevision ? unref(t)("generation.discordRepublish", { revision: __props.discordPublishedRevision }) : unref(t)("generation.discordPublish"))}</button>`);
       if (__props.repeatActive) {
-        _push(`<button class="generate-action-strip__secondary generate-action-strip__repeat-stop" type="button"${ssrIncludeBooleanAttr(__props.repeatStopRequested) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.repeatStopRequested)} data-v-50a265c9>${ssrInterpolate(__props.repeatStopRequested ? unref(t)("generation.repeatStopping") : unref(t)("generation.stopRepeat"))}</button>`);
+        _push(`<button class="generate-action-strip__secondary generate-action-strip__repeat-stop" type="button"${ssrIncludeBooleanAttr(__props.repeatStopRequested) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.repeatStopRequested)} data-v-f02894c0>${ssrInterpolate(__props.repeatStopRequested ? unref(t)("generation.repeatStopping") : unref(t)("generation.stopRepeat"))}</button>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<button class="generate-action-strip__secondary" type="button"${ssrIncludeBooleanAttr(!__props.canCancel && !__props.repeatActive) ? " disabled" : ""} data-v-50a265c9>${ssrInterpolate(unref(t)("generation.stop"))}</button><button class="generate-action-strip__secondary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canRetry) ? " disabled" : ""} data-v-50a265c9>${ssrInterpolate(unref(t)("generation.retry"))}</button>`);
+      _push(`<button class="generate-action-strip__secondary" type="button"${ssrIncludeBooleanAttr(!__props.canCancel && !__props.repeatActive) ? " disabled" : ""} data-v-f02894c0>${ssrInterpolate(unref(t)("generation.stop"))}</button><button class="generate-action-strip__secondary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canRetry) ? " disabled" : ""} data-v-f02894c0>${ssrInterpolate(unref(t)("generation.retry"))}</button>`);
       if (__props.discordPublishError) {
-        _push(`<small class="generate-action-strip__discord-error" data-v-50a265c9>${ssrInterpolate(__props.discordPublishError)}</small>`);
+        _push(`<small class="generate-action-strip__discord-error" data-v-f02894c0>${ssrInterpolate(__props.discordPublishError)}</small>`);
       } else {
         _push(`<!---->`);
       }
@@ -7243,7 +7244,7 @@ _sfc_main$2o.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerateActionStrip.vue");
   return _sfc_setup$2o ? _sfc_setup$2o(props, ctx) : void 0;
 };
-const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2o, [["__scopeId", "data-v-50a265c9"]]), { __name: "StudioGenerateActionStrip" });
+const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2o, [["__scopeId", "data-v-f02894c0"]]), { __name: "StudioGenerateActionStrip" });
 function restorePromptPins(value) {
   if (!value || typeof value !== "object") return null;
   const data = value;
@@ -10272,6 +10273,7 @@ const useGenerationStore = defineStore("generation", {
     imageCheckEnabled: null,
     autoRepeatActive: false,
     stopRepeatRequested: false,
+    hardStopRequested: false,
     repeatRunCount: 0,
     repeatLimits: defaultRepeatLimits(),
     repeatStats: { attempted: 0, passed: 0, elapsedMs: 0 },
@@ -10292,6 +10294,9 @@ const useGenerationStore = defineStore("generation", {
     remasterLoading: false,
     remasterError: ""
   }),
+  getters: {
+    isBusy: (state) => state.loading || state.autoRepeatActive || state.restoringHistory || Boolean(state.currentJob && generationJobIsActive(state.currentJob.status))
+  },
   actions: {
     promptEditorState() {
       return {
@@ -10665,7 +10670,7 @@ const useGenerationStore = defineStore("generation", {
       }
     },
     async generate() {
-      if (this.loading || this.autoRepeatActive) return;
+      if (this.isBusy) return;
       const repeating = this.autoRepeatEnabled;
       let limits = defaultRepeatLimits();
       this.repeatStopReason = "";
@@ -10725,6 +10730,7 @@ const useGenerationStore = defineStore("generation", {
     async generateFromBranch(id, changes) {
       if (this.isBusy) return;
       this.loading = true;
+      this.hardStopRequested = false;
       this.error = "";
       this.result = null;
       try {
@@ -10735,15 +10741,18 @@ const useGenerationStore = defineStore("generation", {
           timeout: 3e4,
           retry: 0
         });
+        if (this.hardStopRequested && generationJobIsActive(this.currentJob.status)) await this.cancelCurrentJob();
         if (!await this.watchCurrentJobEvents()) await this.pollCurrentJob();
       } catch (error) {
         this.error = errorMessage$3(error);
       } finally {
         this.loading = false;
+        this.hardStopRequested = false;
       }
     },
     async generateOnce(batch) {
       this.loading = true;
+      this.hardStopRequested = false;
       this.error = "";
       this.result = null;
       try {
@@ -10868,6 +10877,7 @@ const useGenerationStore = defineStore("generation", {
           }
         });
         this.currentJob = response;
+        if (this.hardStopRequested && generationJobIsActive(this.currentJob.status)) await this.cancelCurrentJob();
         if (!await this.watchCurrentJobEvents()) {
           await this.pollCurrentJob();
         }
@@ -10875,6 +10885,7 @@ const useGenerationStore = defineStore("generation", {
         this.error = errorMessage$3(error);
       } finally {
         this.loading = false;
+        this.hardStopRequested = false;
       }
     },
     generationRequestBody() {
@@ -11164,11 +11175,9 @@ const useGenerationStore = defineStore("generation", {
     async stopGeneration() {
       this.stopRepeatRequested = true;
       this.autoRepeatEnabled = false;
-      this.autoRepeatActive = false;
+      this.hardStopRequested = true;
       if (this.currentJob && generationJobIsActive(this.currentJob.status)) {
         await this.cancelCurrentJob();
-      } else {
-        this.loading = false;
       }
     },
     async retryCurrentJob() {
@@ -13568,15 +13577,21 @@ const useAppSettingsStore = defineStore("appSettings", {
   }
 });
 const usePromptMaterialsStore = defineStore("prompt-materials", {
-  state: () => ({ items: [], selectedIds: [] }),
+  state: () => ({ items: [], selectedIds: [], refreshSerial: 0 }),
   getters: {
     selected: (state) => state.selectedIds.map((id) => state.items.find((item) => item.id === id)).filter((item) => Boolean(item))
   },
   actions: {
     async refresh() {
-      const result = await $fetch(`${useApiBase()}/api/prompt-materials`, { retry: 0 });
-      this.items = result.items;
-      this.selectedIds = this.selectedIds.filter((id) => this.items.some((item) => item.id === id));
+      const serial = ++this.refreshSerial;
+      try {
+        const result = await $fetch(`${useApiBase()}/api/prompt-materials`, { retry: 0 });
+        if (serial !== this.refreshSerial) return;
+        this.items = result.items;
+        this.selectedIds = this.selectedIds.filter((id) => this.items.some((item) => item.id === id));
+      } catch (error) {
+        if (serial === this.refreshSerial) throw error;
+      }
     },
     toggle(id) {
       if (this.selectedIds.includes(id)) this.selectedIds = this.selectedIds.filter((item) => item !== id);
@@ -51723,7 +51738,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       subseedStrength: generation.subseedStrength
     }));
     const canGenerate = computed(() => {
-      return Boolean(generation.prompt.trim()) && (generation.mode === "txt2img" || Boolean(generation.initImagePath.trim())) && (generation.mode !== "inpaint" || Boolean(generation.maskImagePath.trim())) && seedResizeSubmission.value.allowed;
+      return Boolean(generation.prompt.trim()) && (generation.mode === "txt2img" || Boolean(generation.initImagePath.trim())) && (generation.mode !== "inpaint" || Boolean(generation.maskImagePath.trim())) && seedResizeSubmission.value.allowed && !generation.isBusy;
     });
     const generationReadinessItems = computed(() => {
       const hasPrompt = Boolean(generation.prompt.trim());
@@ -52004,6 +52019,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 "image-check-summary": unref(checkedImageSummary),
                 "repeat-active": unref(generation).autoRepeatActive,
                 "repeat-stop-requested": unref(generation).stopRepeatRequested,
+                "hard-stop-requested": unref(generation).hardStopRequested,
                 "repeat-count": unref(generation).repeatRunCount,
                 "repeat-summary": unref(repeatSummary),
                 seed: unref(generation).seed,
@@ -52054,6 +52070,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 "image-check-summary": unref(checkedImageSummary),
                 "repeat-active": unref(generation).autoRepeatActive,
                 "repeat-stop-requested": unref(generation).stopRepeatRequested,
+                "hard-stop-requested": unref(generation).hardStopRequested,
                 "repeat-count": unref(generation).repeatRunCount,
                 "repeat-summary": unref(repeatSummary),
                 seed: unref(generation).seed,
@@ -52075,7 +52092,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 onCancel: unref(generation).stopGeneration,
                 onRetry: unref(generation).retryCurrentJob,
                 onPublishDiscord: publishGenerateSettingsToDiscord
-              }, null, 8, ["loading", "can-generate", "can-cancel", "can-retry", "auto-repeat", "image-check", "image-check-summary", "repeat-active", "repeat-stop-requested", "repeat-count", "repeat-summary", "seed", "status", "mode", "size-label", "readiness-items", "disabled-reason", "can-publish-discord", "discord-publishing", "discord-published-revision", "discord-publish-error", "onUpdate:imageCheck", "onRepeatLimits", "onStopRepeat", "onCancel", "onRetry"])) : createCommentVNode("", true)
+              }, null, 8, ["loading", "can-generate", "can-cancel", "can-retry", "auto-repeat", "image-check", "image-check-summary", "repeat-active", "repeat-stop-requested", "hard-stop-requested", "repeat-count", "repeat-summary", "seed", "status", "mode", "size-label", "readiness-items", "disabled-reason", "can-publish-discord", "discord-publishing", "discord-published-revision", "discord-publish-error", "onUpdate:imageCheck", "onRepeatLimits", "onStopRepeat", "onCancel", "onRetry"])) : createCommentVNode("", true)
             ];
           }
         }),
@@ -52094,7 +52111,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
               _push2(`<!---->`);
             }
             if (unref(imageWorkspaceMounted)) {
-              _push2(`<div class="image-workspace-mount" style="${ssrRenderStyle(unref(activeWorkspace) === "image" ? null : { display: "none" })}" data-v-2626bea0${_scopeId}>`);
+              _push2(`<div class="image-workspace-mount" style="${ssrRenderStyle(unref(activeWorkspace) === "image" ? null : { display: "none" })}" data-v-7b954cf1${_scopeId}>`);
               _push2(ssrRenderComponent(ImageWorkspace, {
                 ref_key: "imageWorkspaceRef",
                 ref: imageWorkspaceRef,
@@ -52362,7 +52379,7 @@ _sfc_main$3.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/GenerateStudio.vue");
   return _sfc_setup$3 ? _sfc_setup$3(props, ctx) : void 0;
 };
-const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-2626bea0"]]), { __name: "GenerateStudio" });
+const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-7b954cf1"]]), { __name: "GenerateStudio" });
 const _sfc_main$2 = /* @__PURE__ */ defineComponent({
   __name: "app",
   __ssrInlineRender: true,
