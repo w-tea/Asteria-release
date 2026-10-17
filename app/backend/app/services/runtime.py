@@ -521,6 +521,9 @@ class ComfyTxt2ImgWorkflowBuilder:
             if branch_operation and settings.get('mode', 'txt2img') == 'txt2img' and settings.get('_prompt_trace_stage') != 'hires':
                 from app.services.comfy_generation_branch import attach_branch
                 attach_branch(workflow, settings['_branch_sample_node'], branch_operation, self._mapping(profile))
+            if request.get('_comparison_sampling') is not None:
+                from app.services.comparison_sampling import attach_comparison_sampling
+                attach_comparison_sampling(workflow, request['_comparison_sampling'], self._mapping(profile))
             append_stage_outputs(workflow, settings, self._mapping(profile))
             if capture:
                 boundary = settings.pop("_image_check_boundary")

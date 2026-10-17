@@ -3610,6 +3610,7 @@ def _generate(
     comfy_admission_lease_token: str | None = None,
     merge_xyz_metadata: dict[str, Any] | None = None,
     comparison_metadata: dict[str, Any] | None = None,
+    comparison_session=None,
 ) -> GenerationResponse:
     from contextlib import ExitStack, nullcontext
     from app.services.making_video import MakingRecorder
@@ -3624,6 +3625,7 @@ def _generate(
             request, mode, job_id, making=making, branch=branch, word_maps=word_maps, merge_runtime_context=merge_runtime_context,
             comfy_admission_lease_token=comfy_admission_lease_token,
             merge_xyz_metadata=merge_xyz_metadata, comparison_metadata=comparison_metadata,
+            comparison_session=comparison_session,
             finalization_stack=finalization_stack,
         )
 
@@ -3640,6 +3642,7 @@ def _generate_with_recording(
     comfy_admission_lease_token: str | None = None,
     merge_xyz_metadata: dict[str, Any] | None = None,
     comparison_metadata: dict[str, Any] | None = None,
+    comparison_session=None,
     finalization_stack=None,
 ) -> GenerationResponse:
     from contextlib import nullcontext
@@ -3931,7 +3934,7 @@ def _generate_with_recording(
         get_model_library(_model_root(config), config=config),
         ModelFingerprintService(config.data_dir / "config" / "model-fingerprints.json"),
         slot_types={slot.id: slot.type for slot in profile_contract.model_slots} if profile_contract else {},
-        allow_identical_aliases=branch is not None,
+        allow_identical_aliases=branch is not None or comparison_session is not None,
     )
     runtime_settings = dict(settings)
     runtime_settings.pop("prompt_input", None)
@@ -3950,6 +3953,10 @@ def _generate_with_recording(
         "prompt_syntax": prompt_syntax_record["semantic_plans"],
         "topaz_settings": _topaz_settings_from_request(request).model_dump(),
     }
+    if comparison_session is not None:
+        if selected_runtime != 'comfy_workflow':
+            raise HTTPException(409, detail={'code': 'comparison_sampling_unavailable'})
+        comparison_session.prepare(check_operation.output_root, comparison_metadata, runtime_request)
     if word_maps is not None and request.profile in {'sdxl', 'anima'} and selected_runtime == 'comfy_workflow':
         runtime_request['_word_maps'] = word_maps.begin(check_operation.output_root, request.profile)
     if branch is not None:
@@ -4094,6 +4101,8 @@ def _generate_with_recording(
     output_settings = check_operation.output_settings
     settings["output_directory"] = str(final_output_dir)
     settings["output_root"] = str(check_operation.output_root)
+    if comparison_session is not None and result['status'] == 'completed':
+        settings['prompt_comparison']['sampling'] = comparison_session.finish(settings)
     settings["filename_template"] = output_settings.filename_template
     settings["output_image_format"] = output_settings.image_format
     record_hires_metadata(settings)

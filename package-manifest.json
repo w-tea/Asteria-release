@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "62abd959e76e7ddc36a841514f651bc81286157a",
-  "build_timestamp_utc": "2026-10-17T05:48:58Z",
+  "source_commit": "dda851f12d18349e3bbc92cf0ffd299af0bcab5e",
+  "build_timestamp_utc": "2026-10-17T11:34:18Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -133,8 +133,8 @@
     },
     {
       "path": "app/backend/app/api/generation.py",
-      "size_bytes": 250004,
-      "sha256": "c16b0ebc86e3ad319abe241a8c784888fc8e6e1b9a64a206a09c9f3bb6c851b9"
+      "size_bytes": 250598,
+      "sha256": "e1960e511150a5f61915b38b28b3fb3093be9aee910ef443cbefd8ff37c1f96a"
     },
     {
       "path": "app/backend/app/api/image_conditions.py",
@@ -620,6 +620,11 @@
       "path": "app/backend/app/services/comfy_word_masks.py",
       "size_bytes": 1045,
       "sha256": "cc6bf51a73edb79007e93c12898607af13c5a3450e0a8bc797d19cf2a058e9b7"
+    },
+    {
+      "path": "app/backend/app/services/comparison_sampling.py",
+      "size_bytes": 5559,
+      "sha256": "8350096a4db1ab3335af0ba8c3613baa32be310f5a2a97468da58239f7ddb206"
     },
     {
       "path": "app/backend/app/services/controlnet_mode.py",
@@ -1158,8 +1163,8 @@
     },
     {
       "path": "app/backend/app/services/prompt_comparison_jobs.py",
-      "size_bytes": 6307,
-      "sha256": "120da9e9b7281c86c21cc38ef00804e1d968f713cf688a25031a148dec4f71ee"
+      "size_bytes": 6479,
+      "sha256": "abbe40448d95e1f59c90a961fa8c451482d68d960f4d94a93a1cd73a982bcc01"
     },
     {
       "path": "app/backend/app/services/prompt_comparison_repository.py",
@@ -1248,8 +1253,8 @@
     },
     {
       "path": "app/backend/app/services/runtime.py",
-      "size_bytes": 292835,
-      "sha256": "f0f82f8a6b7ab5046282fc02c666f316f10cbaf8b72d417ca08f12ca35251b56"
+      "size_bytes": 293100,
+      "sha256": "1e098022249b0a6e1b2fa9b2442296bb2e2b6ed7f4df14947a835ca5fde2782a"
     },
     {
       "path": "app/backend/app/services/runtime_adapters.py",
@@ -1534,12 +1539,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "515103f8e10ef65edf40eba2fd4cb0a86132cd8899cb7bb9104c0e7680c9bfe6"
+      "sha256": "dc0da2f8e2a6e4457fc1f19e1b2e944ba91d109f9e124655cb4959e0047b4322"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/58d85457-c476-488c-b90a-8ba0fbe4602d.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/9f092b02-e60e-41fe-bf41-cf96257baac8.json",
       "size_bytes": 88,
-      "sha256": "f43a38244b15f009431a22cdc4c8818fe069e24132ec3dc8d559a458c6f4c2b7"
+      "sha256": "5ff883206719116b355d94cacc57a78c3c11a32fb12b0b1c4e2d607dca58057a"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.DgQ3DiCn.css",
@@ -1584,7 +1589,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "6e56108a83f7d5ace69e983ac55cf9a004d8d5849f6b3a9161bfcaa648b6b719"
+      "sha256": "95842c476d0d6b6f339c6f8f7a8316fbec5cc1da2c8735f66677445a44dbccdb"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.DP0oR7hC.mjs",
@@ -2364,7 +2369,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 20343,
-      "sha256": "a1254b22990e8a1b946fe86ce7521836efd3afe6775afcfbcfb0916f0f3222e8"
+      "sha256": "51b9b74df7840a97890aa5746116e28c22a7948fc508e58f7a198f76dbd197fa"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -3093,8 +3098,8 @@
     },
     {
       "path": "runtime-components/comfyui/Asteria-Generation-Stage/__init__.py",
-      "size_bytes": 378,
-      "sha256": "3342344d1e00374ae3bef17849661799279256384e1c0785da4cb1139b89474d"
+      "size_bytes": 487,
+      "sha256": "3fb6eddb3e65f4d4f01caaa5c9efbf7cec70ead5c88be3b4f601aae2012c3db6"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Generation-Stage/branch_nodes.py",
@@ -3105,6 +3110,11 @@
       "path": "runtime-components/comfyui/Asteria-Generation-Stage/branching.py",
       "size_bytes": 10906,
       "sha256": "89772fa64789d6bc0c95bb170b92d61a1b04fdbb7efd5a82dbc8f67e4395a2c1"
+    },
+    {
+      "path": "runtime-components/comfyui/Asteria-Generation-Stage/comparison.py",
+      "size_bytes": 6447,
+      "sha256": "9f96f7b5e64239413f01fcbd3b75c35c6ea18c3d13e18a307b30ac3e24345084"
     },
     {
       "path": "runtime-components/comfyui/Asteria-Generation-Stage/nodes.py",
@@ -3239,7 +3249,7 @@
     {
       "path": "runtime-dependencies.yaml",
       "size_bytes": 14554,
-      "sha256": "6a133704e35f6a143bc0ad4680e6a439ef745fdde4ece3614b053ec3154663af"
+      "sha256": "e8bc06cafac435730f7443684112f4a6d59990d6f73c2582262ba5ab42684935"
     },
     {
       "path": "schemas/anima_txt2img.yaml",

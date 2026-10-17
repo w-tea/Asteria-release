@@ -47,8 +47,8 @@ dependencies:
       provenance_url: bundled://asteria/generation-stage/v1
     target:
       relative_path: custom_nodes/Asteria-Generation-Stage
-    size_bytes: 50792
-    checksum_sha256: 747ad749b35b976c14678dbb7e536541d0644ed6977548698b83a359645ad283
+    size_bytes: 57348
+    checksum_sha256: 54477c246c3214e812c7a3ff3a4ba77c6075ebfdb7d261ea17a244a3bdcaa987
     license:
       id: mit
       url: bundled://asteria/license

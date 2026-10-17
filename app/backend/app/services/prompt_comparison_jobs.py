@@ -42,6 +42,8 @@ class PromptComparisonExecutor:
                 'cancelled': context.cancel_requested,
             }
         lease = generation.reference_mutation_coordinator.acquire_publisher()
+        from app.services.comparison_sampling import ComparisonSamplingSession
+        sampling_session = ComparisonSamplingSession()
         try:
             if plan.get('lora_test'):
                 from app.api.lora_training import _run_repository
@@ -64,8 +66,9 @@ class PromptComparisonExecutor:
                     metadata['lora_test'] = {'run_id': trial['run_id'], 'training_fingerprint': trial['training']['fingerprint'],
                         'scene': trial['scenes'][trial['pairs'][cell['pair']]['scene']], 'learned_features': trial['learned_features'],
                         'model_sha256': next((asset['sha256'] for asset in trial['assets'] if asset.get('role') == 'lora:0'), None)}
-                result = generation._generate(request, plan['mode'], job_id=job_id, comparison_metadata=metadata)
-                artifacts.extend(str(path) for path in result.output_paths)
+                result = generation._generate(request, plan['mode'], job_id=job_id, comparison_metadata=metadata,
+                    comparison_session=sampling_session)
+                artifacts.append(f'history:{result.id}')
                 self.repository.update_cell(comparison_id, active_index, status=result.status, generation_id=result.id,
                                             output_paths=[str(item.path) for item in getattr(result, 'primary_outputs', [])]
                                             or [str(path) for path in result.output_paths])
