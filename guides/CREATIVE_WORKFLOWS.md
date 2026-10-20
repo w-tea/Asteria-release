@@ -87,6 +87,22 @@ Media Libraryの「画像の条件チェック」では、人数、髪・服、�
 
 SDXLでは対応するControlNet、Animaでは対応するLLLiteと制御画像を使います。必要なモデルは利用者が用意してください。AnimaのLLLiteは制御画像が結果に作用しても、任意のポーズに追従するとは限りません。ポーズや複数人の描き分けを保証する機能ではありません。
 
+### 人体部位レビューと再生成条件の差を確認する
+
+Media Libraryの画像詳細、またはImage Editのマスク欄で「人体部位レビュー」を開きます。「探す部位」を選んで「部位候補を検出」を押すと、矩形候補と部位の拡大一覧を表示します。候補には重複・誤検出・見逃し・人物の混在があります。人体の正常性や部位の所属は判定しません。
+
+候補の画像を押すと、その矩形の端を修正できます。不要な候補は「除外」で外し、「戻す」で復帰できます。「修正・選択を保存」で次回にも残します。二つ選ぶと同じ表示部品で拡大比較できます。マスク化は一度に16部位までです。
+
+複数画像の同じ部位を見る場合は、LibraryでCtrl＋クリック、またはCtrl＋Enterで2〜32画像を選び、「部位を比較」を開きます。「手」などの種類を選び、各画像から一候補を選ぶと、切り出した部位を横並びで比較できます。拡大率は共通です。横へスクロールすると残りの画像も確認できます。候補のない画像も空欄として残り、「不足候補を検出」を明示的に押した場合だけ検出します。各列の「人体部位レビュー」で候補の修正・除外や既存のマスク編集へ進めます。
+
+SAMが利用できる場合は「選択部位をマスク化」を押し、色付きの実マスクを確認して「マスクを画像編集へ」を使います。矩形だけの候補をマスクとして転送することはありません。Image Editのブラシ・消しゴムで修正し、既存の「マスクを保存」から生成へ進んでください。未保存の手動マスクがある場合は先に保存します。元画像は上書きしません。
+
+検出とマスク作成は任意導入で、利用者が操作したときだけCPUで実行します。モデルがなければ対応ボタンが無効になりますが、手動編集は使えます。[Grounding DINO tiny](https://huggingface.co/IDEA-Research/grounding-dino-tiny/tree/a2bb814dd30d776dcf7e30523b00659f4f141c71)のモデル・設定・tokenizerをモデル保存先の`body_review/grounding-dino-tiny/`へ、[SAM ViT-B](https://github.com/facebookresearch/segment-anything#model-checkpoints)を`sams/sam_vit_b_01ec64.pth`へ配置してください。AsteriaのPython環境にはTransformersとsegment-anythingも必要です。両モデルはApache-2.0ですが、提供元の利用条件も確認してください。モデルの自動取得は行いません。
+
+「再生成アシスト」の「記録された数値の差」では、比較する履歴を選んで保存値を照合できます。Seed、Sampler、実入力、モデル・VAE・Embedding等の記録済みhashに加え、今後の通常生成でも、実際に使ったsigma列、初期noiseと入力latentのhash、入力の配置先、samplingの計算先を記録します。Hires等の工程やbatchも分けて確認できます。tensor本体は保存しません。
+
+対応する実行経路で取得できた値だけを表示します。1tensorが16MiBを超える場合のhashや、合計512KiBの記録上限を超えた分は省略します。過去の欠損を推測で補わず「未記録」のままにします。runtimeの計算結果を再利用した場合は、その記録も再利用と表示し、今回新しくsamplingした値とは区別します。記録の一致は画素一致や相違の原因を保証しません。通常生成の計算方式・乱数・再生成処理は変更しません。
+
 ### 8. LoRAの素材と実用性を点検する
 
 LoRA学習では、学習画像とcaptionの対応、トリガー、特徴の偏り、似た画像や混入候補を確認できます。画像対応AIの注釈は確認用の候補です。既存captionを自動で置き換えたり、この確認だけで学習を始めたりしません。
@@ -152,6 +168,22 @@ Anatomy checking runs once after all generation and enhancement steps, including
 Images with recorded word-reference maps can suggest edit regions for words such as hair or clothing. Refine the region with add/remove brush strokes before sending it to inpaint. Do not treat it as an exact segmentation mask. Editing uses the image's final size, including Hires output.
 
 In the pose editor, add people and drag their joints or move an entire person. One control image includes every person, not just the selected one; this is not a composition of separately generated people. Use a compatible SDXL ControlNet or Anima LLLite model and supply the required weights yourself. Anima LLLite can influence the result without following an arbitrary pose. Pose following and multi-person attribute separation are not guaranteed.
+
+### Review body parts and recorded regeneration differences
+
+Open **Body-part review** in Media Library image details or the Image Edit mask inspector. Select the parts to look for and explicitly run **Find candidates**. Box overlays and enlarged crops may contain duplicates, false detections, missing parts or mixed people; they do not judge anatomical correctness or ownership.
+
+Click a crop to adjust its box edges. Exclude or restore candidates, and use **Save review** to retain corrections and selections. Select two crops for comparison using the shared image viewer. Up to 16 selected regions can be masked at once.
+
+For the same part across multiple images, select 2–32 Library images using Ctrl+click or Ctrl+Enter, then open **Compare body parts**. Choose a part type and one candidate per image. Crops appear side by side with shared zoom; scroll horizontally to reach the other images. Missing candidates remain as empty columns. Only **Detect missing candidates** explicitly starts detection. Each column's **Body-part review** reuses the existing correction, exclusion and mask-editing workflow.
+
+When SAM is available, create a mask and inspect its colored area before sending it to Image Edit. Rectangles are never presented as segmentation masks. Refine the real mask with the existing brush/eraser, save it, then continue through Generate. Save an unsaved manual mask before opening another review. Original images are not overwritten.
+
+Detection and masking are optional, CPU-only and explicitly invoked; they do not run after each generation. Missing models disable only their respective operations, not manual editing. Put the pinned [Grounding DINO tiny](https://huggingface.co/IDEA-Research/grounding-dino-tiny/tree/a2bb814dd30d776dcf7e30523b00659f4f141c71) model/config/tokenizer files in `body_review/grounding-dino-tiny/` under model storage, and the official [SAM ViT-B](https://github.com/facebookresearch/segment-anything#model-checkpoints) checkpoint in `sams/sam_vit_b_01ec64.pth`. Asteria's Python environment also needs Transformers and segment-anything. Both models declare Apache-2.0; check their provider terms. Models are not downloaded automatically.
+
+In **Regeneration assist → Recorded numerical differences**, choose another history entry and compare its saved inputs, Seed, Sampler and model/VAE/Embedding hashes. Future ordinary generations also record actual sigma values, initial noise and input-latent hashes, input devices and sampling compute devices. Hires stages and batches remain distinct. Tensors themselves are not saved.
+
+Only observed values from supported execution paths are displayed. Hashing is skipped above 16 MiB per tensor, and records are bounded to 512 KiB in total. Missing historical values stay **Not recorded** rather than being reconstructed. Reused runtime results are labeled as reused observations, not fresh sampling. Matching records do not guarantee identical pixels or establish the cause of a difference. Ordinary generation arithmetic, RNG and regeneration behavior are unchanged.
 
 ### 8. Review LoRA data and practical behavior
 

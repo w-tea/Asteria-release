@@ -106,10 +106,15 @@ def sample_pair(executor, config, index, noise, latent, sampler, sigmas, *args, 
         noise = restored['noise'].to(device=noise.device)
         sigmas = restored['sigmas'].to(device=sigmas.device)
     used = {'noise': _identity(noise), 'sigmas': _identity(sigmas)}
+    # Lightweight observations of the actual inputs, not a reconstructed schedule.
+    # No RNG calls or tensor modification; ordinary sampling never enters this node.
+    sigma_values = sigmas.detach().to(device='cpu').tolist() if sigmas.ndim == 1 and sigmas.numel() <= 10001 else None
+    devices = {'noise': str(noise.device), 'sigmas': str(sigmas.device), 'latent': str(latent.device)}
     # The native executor still owns sampling, RNG for intermediate draws and callbacks.
     result = executor(noise, latent, sampler, sigmas, *args, **kwargs)
     _write(directory / f'{arm}-{name}.json', {'status': 'completed', 'contract': contract,
         'stage': stage, 'index': index, 'incoming': incoming, 'used': used, 'latent': latent_id,
+        'sigma_values': sigma_values, 'devices': devices,
         'source': source['used'] if source else used,
         'archive_sha256': sha256(archive.read_bytes()).hexdigest(),
         'noise_replaced': incoming['noise'] != used['noise'],

@@ -10,6 +10,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.api.advanced_styles import router as advanced_styles_router
 from app.api.assets import router as assets_router
+from app.api.body_review import router as body_review_router
 from app.api.eagle import router as eagle_router
 from app.api.external_models import router as external_models_router
 from app.api.extensions import router as extensions_router
@@ -164,6 +165,7 @@ def create_app(*, config: AppConfig | None = None) -> FastAPI:
     app.include_router(merge_router)
     app.include_router(maintenance_router)
     app.include_router(assets_router)
+    app.include_router(body_review_router)
     app.include_router(filesystem_router)
     app.include_router(image_metadata_router)
     app.include_router(models_router)

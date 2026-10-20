@@ -4196,6 +4196,10 @@ class ComfyGenerationRuntime:
                 from app.services.comfy_prompt_trace import instrument_prompt_encoders, record_prompt_execution
                 if request.get("_record_prompt_inputs", True):
                     instrument_prompt_encoders(workflow, capture_words=bool(request.get('_word_maps')))
+                from app.services.comfy_sampling_receipts import instrument_sampling_inputs, record_sampling_execution
+                if request.get('_record_sampling_inputs', True):
+                    mapping = getattr(self.workflow_builder, '_mapping', lambda profile: None)(request['profile'])
+                    instrument_sampling_inputs(workflow, mapping)
                 prompt_id = self.client.queue_prompt(workflow)
                 prompt_ids.append(prompt_id)
                 from app.services.comfy_sampler_receipts import sampler_noise_receipts
@@ -4217,6 +4221,10 @@ class ComfyGenerationRuntime:
                 else:
                     history = self.client.wait_for_history(prompt_id)
                 self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
+                if request.get('_record_sampling_inputs', True):
+                    record_sampling_execution(iteration_request, workflow, history, prompt_id,
+                        batch_index=batch_index + int(request.get('_sampling_batch_index_offset', request.get('_batch_index_offset', 0))))
+                    self._merge_builder_runtime_settings(request, iteration_request)
                 if request.get("_record_prompt_inputs", True):
                     record_prompt_execution(iteration_request, workflow, history, prompt_id,
                                             batch_index=batch_index + int(request.get('_batch_index_offset', 0)))
@@ -4412,6 +4420,7 @@ class ComfyGenerationRuntime:
             "sampler_noise_runtime",
             "prompt_execution",
             "prompt_execution_truncated",
+            "sampling_execution",
         ):
             if key in iteration_settings:
                 target_settings[key] = iteration_settings[key]
@@ -4646,6 +4655,7 @@ class ComfyGenerationRuntime:
             )
             second_request = deepcopy(request)
             second_request["_spatial_runtime_stage"] = "hires"
+            second_request['_sampling_batch_index_offset'] = index
             second_settings = second_request.setdefault("settings", {})
             second_settings["_prompt_trace_stage"] = "hires"
             second_width, second_height = topaz_sizes[index]
@@ -4720,7 +4730,7 @@ class ComfyGenerationRuntime:
             )
             if request.get("profile") == "anima":
                 self._merge_builder_runtime_settings(request, second_request)
-            for trace_key in ("prompt_execution", "prompt_execution_truncated"):
+            for trace_key in ("prompt_execution", "prompt_execution_truncated", "sampling_execution"):
                 if trace_key in second_settings:
                     settings[trace_key] = deepcopy(second_settings[trace_key])
             if source_mode == "inpaint":
@@ -4765,6 +4775,8 @@ class ComfyGenerationRuntime:
         settings["topaz_source_output_paths"] = [str(path) for path in first_paths]
         settings["topaz_upscaled_paths"] = [str(path) for path in topaz_paths]
         settings["generated_seeds"] = generated_seeds
+        if int(settings.get("seed", -1)) < 0 and generated_seeds:
+            settings["seed"] = generated_seeds[0]
         if not settings.get("hires_keep_first_pass"):
             skipped_deletes = []
             for path in first_paths:

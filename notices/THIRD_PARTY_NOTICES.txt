@@ -1,5 +1,11 @@
 Asteria V1.2.0 Third-Party Notices
 
+The optional body-part review uses Grounding DINO tiny (IDEA Research) and
+Segment Anything ViT-B (Meta Platforms, Inc. and affiliates), whose reviewed
+code/model declarations are Apache-2.0. Asteria's bounded SAM attention adapter
+adapts the upstream equations using bounded query chunks. See the included
+licenses/body-review/Apache-2.0.txt. Weights are not bundled or required.
+
 Asteria downloads and uses third-party runtimes, packages, custom nodes, and
 model assets. The authoritative pinned identities, provider URLs, provenance
 links, and license URLs are recorded in release-manifest.yaml,

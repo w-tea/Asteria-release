@@ -1584,6 +1584,72 @@ const plugins = [
   asteria_tooltip_fSFARtpwGbHlO1KB4At5caYKXgNivLM9kmiwguLVh5w
 ];
 const messages = {
+  "bodyCompare.open": { en: "Compare body parts…", ja: "部位を比較…" },
+  "bodyCompare.title": { en: "Compare parts across images", ja: "複数画像の部位を比較" },
+  "bodyCompare.help": { en: "Compare the same kind of part from 2–32 selected Library images. Choose one candidate per image. Saved corrections and exclusions are respected; opening this view does not run detection.", ja: "Libraryで選択した2〜32画像から、同じ種類の部位を比較します。各画像で候補を一つ選んでください。保存済みの修正・除外を反映し、開くだけでは検出しません。" },
+  "bodyCompare.kind": { en: "Part to compare", ja: "比較する部位" },
+  "bodyCompare.candidate": { en: "Candidate", ja: "比較する候補" },
+  "bodyCompare.choose": { en: "Candidate from image {id}", ja: "画像{id}の比較候補" },
+  "bodyCompare.select": { en: "Choose a candidate", ja: "候補を選択してください" },
+  "bodyCompare.loading": { en: "Reading saved candidates…", ja: "保存済みの候補を読込中…" },
+  "bodyCompare.missing": { en: "No saved candidate of this kind. Run detection or open body-part review.", ja: "この部位の保存候補がありません。検出するか、人体部位レビューを開いてください。" },
+  "bodyCompare.detectMissing": { en: "Detect missing candidates ({count} images)", ja: "候補のない{count}画像を検出" },
+  "bodyCompare.progress": { en: "Detecting in order · {count} images finished", ja: "順番に検出中・{count}画像完了" },
+  "bodyCompare.count": { en: "{count} images · Select a candidate in each column.", ja: "{count}画像・各列で候補を選択してください。" },
+  "bodyCompare.scrollHelp": { en: "Scroll horizontally to compare the remaining images. Missing candidates stay visible as empty columns.", ja: "横にスクロールすると残りの画像を確認できます。候補がない画像も空の列として残します。" },
+  "bodyCompare.rail": { en: "Horizontal part comparison", ja: "部位の横並び比較" },
+  "bodyCompare.crop": { en: "{part} from image {id}", ja: "画像{id}の{part}" },
+  "bodyReview.open": { en: "Review body parts…", ja: "人体部位レビュー…" },
+  "bodyReview.title": { en: "Body-part review", ja: "人体部位レビュー" },
+  "bodyReview.help": { en: "Inspect suggested regions before editing. Duplicates, missing parts, mixed people and false detections can occur. These candidates do not judge anatomy, normality or person ownership.", ja: "編集したい部位の候補を確認します。重複、見逃し、人物の混在、誤検出があります。人体の異常・正常や、どの人物の部位かは判定しません。" },
+  "bodyReview.parts": { en: "Parts to look for", ja: "探す部位" },
+  "bodyReview.part.person": { en: "Person", ja: "人物" },
+  "bodyReview.part.head": { en: "Head", ja: "頭" },
+  "bodyReview.part.arm": { en: "Arm", ja: "腕" },
+  "bodyReview.part.hand": { en: "Hand", ja: "手" },
+  "bodyReview.part.torso": { en: "Torso", ja: "胴体" },
+  "bodyReview.part.leg": { en: "Leg", ja: "脚" },
+  "bodyReview.part.foot": { en: "Foot", ja: "足先" },
+  "bodyReview.detect": { en: "Find candidates", ja: "部位候補を検出" },
+  "bodyReview.stop": { en: "Stop", ja: "中止" },
+  "bodyReview.working": { en: "Processing on CPU. You can stop or close this review.", ja: "CPUで処理しています。中止するか、この画面を閉じられます。" },
+  "bodyReview.noDetector": { en: "The optional detector is not installed. See the body-part review guide for setup, or use the manual mask brush.", ja: "任意導入の検出モデルがありません。人体部位レビューのガイドで導入方法を確認するか、手動マスクを使ってください。" },
+  "bodyReview.noSam": { en: "The optional mask model is not installed. Boxes can still be reviewed; use the manual brush to make a mask.", ja: "マスク作成用のモデルがありません。矩形の確認はできます。マスクは手動ブラシで作成してください。" },
+  "bodyReview.loadError": { en: "The image or saved review is unavailable. Reopen the image and check its saved files.", ja: "画像または保存済みの候補を読み込めません。画像を開き直し、保存先を確認してください。" },
+  "bodyReview.runError": { en: "Processing stopped or failed. Check the optional models and try again. Manual editing is still available.", ja: "処理を完了できませんでした。導入したモデルを確認し、もう一度お試しください。手動編集は引き続き使えます。" },
+  "bodyReview.changed": { en: "The source image changed. Reopen it and find candidates again.", ja: "元画像が変更されています。画像を開き直し、部位候補を検出し直してください。" },
+  "bodyReview.transferError": { en: "The mask could not be transferred. Check the source image and selection before trying again.", ja: "マスクを転送できません。元画像と選択範囲を確認して、もう一度お試しください。" },
+  "bodyReview.count": { en: "{count} box candidates. Scores are detection confidence, not anatomical correctness.", ja: "矩形候補は{count}件です。表示率は検出の確信度であり、人体の正しさを示すものではありません。" },
+  "bodyReview.limit": { en: "Showing the top 96 candidates.", ja: "上位96件を表示しています。" },
+  "bodyReview.source": { en: "Source image", ja: "元画像" },
+  "bodyReview.candidates": { en: "Candidate rectangles", ja: "部位候補の矩形" },
+  "bodyReview.list": { en: "Crops", ja: "拡大一覧" },
+  "bodyReview.compare": { en: "Compare two selected crops", ja: "選択した2部位を比較" },
+  "bodyReview.exclude": { en: "Exclude", ja: "除外" },
+  "bodyReview.restore": { en: "Restore", ja: "戻す" },
+  "bodyReview.save": { en: "Save review", ja: "修正・選択を保存" },
+  "bodyReview.saved": { en: "Your box corrections and selection were saved.", ja: "矩形の修正と選択を保存しました。" },
+  "bodyReview.rectangle": { en: "Adjust this box", ja: "この矩形を修正" },
+  "bodyReview.left": { en: "Left", ja: "左端" },
+  "bodyReview.top": { en: "Top", ja: "上端" },
+  "bodyReview.right": { en: "Right", ja: "右端" },
+  "bodyReview.bottom": { en: "Bottom", ja: "下端" },
+  "bodyReview.selectionLimit": { en: "Select at most 16 regions per mask.", ja: "一度にマスク化できる範囲は16件までです。" },
+  "bodyReview.makeMask": { en: "Create mask from selection", ja: "選択部位をマスク化" },
+  "bodyReview.edit": { en: "Use mask in Image Edit", ja: "マスクを画像編集へ" },
+  "bodyReview.maskHelp": { en: "Only the colored SAM mask is transferred, not the rectangles. Refine it with the existing brush before generating. Unselected or missed regions can be painted manually.", ja: "転送されるのは色付きのSAMマスクで、矩形そのものではありません。生成前に既存のブラシで修正してください。未選択・見逃しの部位も手動で追加できます。" },
+  "reproduction.numbers": { en: "Recorded numerical differences", ja: "記録された数値の差" },
+  "reproduction.originFresh": { en: "Sampling values were recorded during this generation.", ja: "この生成の実行時に数値を記録しました。" },
+  "reproduction.originReused": { en: "Includes values from a previously computed result reused without sampling again.", ja: "再計算せずに利用した、以前の計算結果の記録を含みます。" },
+  "reproduction.numbersHelp": { en: "Compare saved inputs and asset hashes. Noise and sigma are compared only when actually recorded. Missing data is not a match; equal records do not guarantee identical pixels or explain a difference.", ja: "保存された実入力と資産hashを比較します。noise・sigmaは実記録がある場合だけ比較します。未記録は一致と数えません。記録の一致は画素の一致を保証せず、相違の原因も断定しません。" },
+  "reproduction.other": { en: "Compare with history", ja: "比較する履歴" },
+  "reproduction.numbersRun": { en: "Compare records", ja: "保存値を比較" },
+  "reproduction.records": { en: "Show recorded values", ja: "記録の詳細を表示" },
+  "reproduction.summary": { en: "Matching: {same} · Different: {different} · Not recorded on one or both sides: {missing}", ja: "一致 {same}件・相違 {different}件・片方または両方が未記録 {missing}件" },
+  "reproduction.different": { en: "Different", ja: "相違" },
+  "reproduction.valueMissing": { en: "Not recorded", ja: "未記録" },
+  "reproduction.left": { en: "This history", ja: "この履歴" },
+  "reproduction.right": { en: "Comparison history", ja: "比較先" },
   "wordMask.record": { en: "Record word selection ranges", ja: "言葉で選ぶ範囲を記録" },
   "wordMask.recordHelp": { en: "Record where the image refers to prompt words, for later masking. This adds processing time and saved data.", ja: "画像がプロンプトのどの語句を参照したか記録し、後から編集範囲を選べます。処理時間と保存容量が増えます。" },
   "wordMask.open": { en: "Select a range by words…", ja: "言葉で範囲を選ぶ…" },
@@ -7072,7 +7138,7 @@ const useAsteriaI18n = () => {
     vocabularyTerm
   };
 };
-const _sfc_main$2p = /* @__PURE__ */ defineComponent({
+const _sfc_main$2s = /* @__PURE__ */ defineComponent({
   __name: "AssetRefreshIndicator",
   __ssrInlineRender: true,
   props: {
@@ -7130,14 +7196,14 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const _sfc_setup$2p = _sfc_main$2p.setup;
-_sfc_main$2p.setup = (props, ctx) => {
+const _sfc_setup$2s = _sfc_main$2s.setup;
+_sfc_main$2s.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AssetRefreshIndicator.vue");
-  return _sfc_setup$2p ? _sfc_setup$2p(props, ctx) : void 0;
+  return _sfc_setup$2s ? _sfc_setup$2s(props, ctx) : void 0;
 };
-const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2p, [["__scopeId", "data-v-580e201b"]]), { __name: "StudioAssetRefreshIndicator" });
-const _sfc_main$2o = /* @__PURE__ */ defineComponent({
+const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2s, [["__scopeId", "data-v-580e201b"]]), { __name: "StudioAssetRefreshIndicator" });
+const _sfc_main$2r = /* @__PURE__ */ defineComponent({
   __name: "GenerateActionStrip",
   __ssrInlineRender: true,
   props: {
@@ -7238,13 +7304,13 @@ const _sfc_main$2o = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2o = _sfc_main$2o.setup;
-_sfc_main$2o.setup = (props, ctx) => {
+const _sfc_setup$2r = _sfc_main$2r.setup;
+_sfc_main$2r.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerateActionStrip.vue");
-  return _sfc_setup$2o ? _sfc_setup$2o(props, ctx) : void 0;
+  return _sfc_setup$2r ? _sfc_setup$2r(props, ctx) : void 0;
 };
-const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2o, [["__scopeId", "data-v-f02894c0"]]), { __name: "StudioGenerateActionStrip" });
+const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2r, [["__scopeId", "data-v-f02894c0"]]), { __name: "StudioGenerateActionStrip" });
 function restorePromptPins(value) {
   if (!value || typeof value !== "object") return null;
   const data = value;
@@ -12133,7 +12199,7 @@ const useGenerationStore = defineStore("generation", {
     }
   }
 });
-const _sfc_main$2n = /* @__PURE__ */ defineComponent({
+const _sfc_main$2q = /* @__PURE__ */ defineComponent({
   __name: "GenerationPresetBar",
   __ssrInlineRender: true,
   setup(__props) {
@@ -12176,13 +12242,13 @@ const _sfc_main$2n = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2n = _sfc_main$2n.setup;
-_sfc_main$2n.setup = (props, ctx) => {
+const _sfc_setup$2q = _sfc_main$2q.setup;
+_sfc_main$2q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationPresetBar.vue");
-  return _sfc_setup$2n ? _sfc_setup$2n(props, ctx) : void 0;
+  return _sfc_setup$2q ? _sfc_setup$2q(props, ctx) : void 0;
 };
-const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2n, [["__scopeId", "data-v-357041a8"]]), { __name: "StudioGenerateGenerationPresetBar" });
+const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2q, [["__scopeId", "data-v-357041a8"]]), { __name: "StudioGenerateGenerationPresetBar" });
 const dependencyNeedsAttention = (dependency, selections) => {
   if (dependency.status === "installed") {
     return false;
@@ -12262,7 +12328,7 @@ const useMediaModelCatalog = (domain) => {
     refresh
   };
 };
-const _sfc_main$2m = /* @__PURE__ */ defineComponent({
+const _sfc_main$2p = /* @__PURE__ */ defineComponent({
   __name: "ModelSettingsPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -12440,14 +12506,14 @@ const _sfc_main$2m = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2m = _sfc_main$2m.setup;
-_sfc_main$2m.setup = (props, ctx) => {
+const _sfc_setup$2p = _sfc_main$2p.setup;
+_sfc_main$2p.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ModelSettingsPanel.vue");
-  return _sfc_setup$2m ? _sfc_setup$2m(props, ctx) : void 0;
+  return _sfc_setup$2p ? _sfc_setup$2p(props, ctx) : void 0;
 };
-const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2m, [["__scopeId", "data-v-21e4673d"]]), { __name: "StudioModelSettingsPanel" });
-const _sfc_main$2l = /* @__PURE__ */ defineComponent({
+const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2p, [["__scopeId", "data-v-21e4673d"]]), { __name: "StudioModelSettingsPanel" });
+const _sfc_main$2o = /* @__PURE__ */ defineComponent({
   __name: "PromptChoicesPreview",
   __ssrInlineRender: true,
   setup(__props) {
@@ -12502,13 +12568,13 @@ const _sfc_main$2l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2l = _sfc_main$2l.setup;
-_sfc_main$2l.setup = (props, ctx) => {
+const _sfc_setup$2o = _sfc_main$2o.setup;
+_sfc_main$2o.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptChoicesPreview.vue");
-  return _sfc_setup$2l ? _sfc_setup$2l(props, ctx) : void 0;
+  return _sfc_setup$2o ? _sfc_setup$2o(props, ctx) : void 0;
 };
-const PromptChoicesPreview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2l, [["__scopeId", "data-v-848bf7df"]]), { __name: "StudioPromptChoicesPreview" });
+const PromptChoicesPreview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2o, [["__scopeId", "data-v-848bf7df"]]), { __name: "StudioPromptChoicesPreview" });
 const promptAssistStructurePayload = (snapshot2) => ({
   prompt: snapshot2.prompt,
   prompt_input: structuredClone(snapshot2.promptInput),
@@ -12728,9 +12794,9 @@ const normalizePromptAssistProtectedTokens = (values2) => {
     const value = String(rawValue ?? "").trim();
     const length = [...value].length;
     if (length < 1 || length > 120 || /[\p{Cc}]/u.test(value)) continue;
-    const identity = value.toLocaleLowerCase("en-US");
-    if (seen.has(identity)) continue;
-    seen.add(identity);
+    const identity2 = value.toLocaleLowerCase("en-US");
+    if (seen.has(identity2)) continue;
+    seen.add(identity2);
     result.push(value);
     if (result.length === 16) break;
   }
@@ -12845,7 +12911,7 @@ const adjustPromptWeight = (value, selectionStart, selectionEnd, direction) => {
   }
   return replacePromptSelection(value, span.start, span.end, replacement);
 };
-const _sfc_main$2k = /* @__PURE__ */ defineComponent({
+const _sfc_main$2n = /* @__PURE__ */ defineComponent({
   __name: "StyleChain",
   __ssrInlineRender: true,
   props: {
@@ -12906,14 +12972,14 @@ const _sfc_main$2k = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2k = _sfc_main$2k.setup;
-_sfc_main$2k.setup = (props, ctx) => {
+const _sfc_setup$2n = _sfc_main$2n.setup;
+_sfc_main$2n.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StyleChain.vue");
-  return _sfc_setup$2k ? _sfc_setup$2k(props, ctx) : void 0;
+  return _sfc_setup$2n ? _sfc_setup$2n(props, ctx) : void 0;
 };
-const StyleChain = Object.assign(_sfc_main$2k, { __name: "StudioStyleChain" });
-const _sfc_main$2j = /* @__PURE__ */ defineComponent({
+const StyleChain = Object.assign(_sfc_main$2n, { __name: "StudioStyleChain" });
+const _sfc_main$2m = /* @__PURE__ */ defineComponent({
   __name: "AdvancedStylesPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -13002,14 +13068,14 @@ const _sfc_main$2j = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2j = _sfc_main$2j.setup;
-_sfc_main$2j.setup = (props, ctx) => {
+const _sfc_setup$2m = _sfc_main$2m.setup;
+_sfc_main$2m.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AdvancedStylesPanel.vue");
-  return _sfc_setup$2j ? _sfc_setup$2j(props, ctx) : void 0;
+  return _sfc_setup$2m ? _sfc_setup$2m(props, ctx) : void 0;
 };
-const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2j, [["__scopeId", "data-v-452b14c6"]]), { __name: "StudioAdvancedStylesPanel" });
-const _sfc_main$2i = /* @__PURE__ */ defineComponent({
+const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2m, [["__scopeId", "data-v-452b14c6"]]), { __name: "StudioAdvancedStylesPanel" });
+const _sfc_main$2l = /* @__PURE__ */ defineComponent({
   __name: "SelectedLoRAStack",
   __ssrInlineRender: true,
   props: {
@@ -13155,14 +13221,14 @@ const _sfc_main$2i = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2i = _sfc_main$2i.setup;
-_sfc_main$2i.setup = (props, ctx) => {
+const _sfc_setup$2l = _sfc_main$2l.setup;
+_sfc_main$2l.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/SelectedLoRAStack.vue");
-  return _sfc_setup$2i ? _sfc_setup$2i(props, ctx) : void 0;
+  return _sfc_setup$2l ? _sfc_setup$2l(props, ctx) : void 0;
 };
-const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2i, [["__scopeId", "data-v-4551efdb"]]), { __name: "StudioSelectedLoRAStack" });
-const _sfc_main$2h = /* @__PURE__ */ defineComponent({
+const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2l, [["__scopeId", "data-v-4551efdb"]]), { __name: "StudioSelectedLoRAStack" });
+const _sfc_main$2k = /* @__PURE__ */ defineComponent({
   __name: "LoRABrowser",
   __ssrInlineRender: true,
   props: {
@@ -13289,14 +13355,14 @@ const _sfc_main$2h = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2h = _sfc_main$2h.setup;
-_sfc_main$2h.setup = (props, ctx) => {
+const _sfc_setup$2k = _sfc_main$2k.setup;
+_sfc_main$2k.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/LoRABrowser.vue");
-  return _sfc_setup$2h ? _sfc_setup$2h(props, ctx) : void 0;
+  return _sfc_setup$2k ? _sfc_setup$2k(props, ctx) : void 0;
 };
-const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2h, [["__scopeId", "data-v-75d22a01"]]), { __name: "StudioLoRABrowser" });
-const _sfc_main$2g = /* @__PURE__ */ defineComponent({
+const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2k, [["__scopeId", "data-v-75d22a01"]]), { __name: "StudioLoRABrowser" });
+const _sfc_main$2j = /* @__PURE__ */ defineComponent({
   __name: "PromptAssetsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -13349,14 +13415,14 @@ const _sfc_main$2g = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2g = _sfc_main$2g.setup;
-_sfc_main$2g.setup = (props, ctx) => {
+const _sfc_setup$2j = _sfc_main$2j.setup;
+_sfc_main$2j.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptAssetsDrawer.vue");
-  return _sfc_setup$2g ? _sfc_setup$2g(props, ctx) : void 0;
+  return _sfc_setup$2j ? _sfc_setup$2j(props, ctx) : void 0;
 };
-const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2g, [["__scopeId", "data-v-4c767174"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
-const _sfc_main$2f = /* @__PURE__ */ defineComponent({
+const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2j, [["__scopeId", "data-v-4c767174"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
+const _sfc_main$2i = /* @__PURE__ */ defineComponent({
   __name: "PromptSectionsEditor",
   __ssrInlineRender: true,
   props: {
@@ -13398,13 +13464,13 @@ const _sfc_main$2f = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2f = _sfc_main$2f.setup;
-_sfc_main$2f.setup = (props, ctx) => {
+const _sfc_setup$2i = _sfc_main$2i.setup;
+_sfc_main$2i.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptSectionsEditor.vue");
-  return _sfc_setup$2f ? _sfc_setup$2f(props, ctx) : void 0;
+  return _sfc_setup$2i ? _sfc_setup$2i(props, ctx) : void 0;
 };
-const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2f, [["__scopeId", "data-v-447c0d5a"]]), { __name: "StudioGeneratePromptSectionsEditor" });
+const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2i, [["__scopeId", "data-v-447c0d5a"]]), { __name: "StudioGeneratePromptSectionsEditor" });
 const useAppSettingsStore = defineStore("appSettings", {
   state: () => ({
     outputRoot: "",
@@ -13599,7 +13665,7 @@ const usePromptMaterialsStore = defineStore("prompt-materials", {
     }
   }
 });
-const _sfc_main$2e = /* @__PURE__ */ defineComponent({
+const _sfc_main$2h = /* @__PURE__ */ defineComponent({
   __name: "PromptWorkshopPanel",
   __ssrInlineRender: true,
   props: {
@@ -13743,14 +13809,14 @@ const _sfc_main$2e = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2e = _sfc_main$2e.setup;
-_sfc_main$2e.setup = (props, ctx) => {
+const _sfc_setup$2h = _sfc_main$2h.setup;
+_sfc_main$2h.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptWorkshopPanel.vue");
-  return _sfc_setup$2e ? _sfc_setup$2e(props, ctx) : void 0;
+  return _sfc_setup$2h ? _sfc_setup$2h(props, ctx) : void 0;
 };
-const PromptWorkshopPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2e, [["__scopeId", "data-v-d9dd8e6e"]]), { __name: "StudioGeneratePromptWorkshopPanel" });
-const _sfc_main$2d = /* @__PURE__ */ defineComponent({
+const PromptWorkshopPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2h, [["__scopeId", "data-v-d9dd8e6e"]]), { __name: "StudioGeneratePromptWorkshopPanel" });
+const _sfc_main$2g = /* @__PURE__ */ defineComponent({
   __name: "PromptMaterialsPanel",
   __ssrInlineRender: true,
   emits: ["scene"],
@@ -13921,14 +13987,14 @@ const _sfc_main$2d = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2d = _sfc_main$2d.setup;
-_sfc_main$2d.setup = (props, ctx) => {
+const _sfc_setup$2g = _sfc_main$2g.setup;
+_sfc_main$2g.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptMaterialsPanel.vue");
-  return _sfc_setup$2d ? _sfc_setup$2d(props, ctx) : void 0;
+  return _sfc_setup$2g ? _sfc_setup$2g(props, ctx) : void 0;
 };
-const PromptMaterialsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2d, [["__scopeId", "data-v-6ea2d97b"]]), { __name: "StudioGeneratePromptMaterialsPanel" });
-const _sfc_main$2c = /* @__PURE__ */ defineComponent({
+const PromptMaterialsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2g, [["__scopeId", "data-v-6ea2d97b"]]), { __name: "StudioGeneratePromptMaterialsPanel" });
+const _sfc_main$2f = /* @__PURE__ */ defineComponent({
   __name: "PromptPane",
   __ssrInlineRender: true,
   emits: ["open-help", "open-image-metadata"],
@@ -15131,13 +15197,13 @@ ${generation.negativePrompt}`;
     };
   }
 });
-const _sfc_setup$2c = _sfc_main$2c.setup;
-_sfc_main$2c.setup = (props, ctx) => {
+const _sfc_setup$2f = _sfc_main$2f.setup;
+_sfc_main$2f.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptPane.vue");
-  return _sfc_setup$2c ? _sfc_setup$2c(props, ctx) : void 0;
+  return _sfc_setup$2f ? _sfc_setup$2f(props, ctx) : void 0;
 };
-const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2c, [["__scopeId", "data-v-26a39074"]]), { __name: "StudioPromptPane" });
+const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2f, [["__scopeId", "data-v-26a39074"]]), { __name: "StudioPromptPane" });
 const normalizeEagleFolderSelection = (folders, selectedId) => selectedId && folders.some((folder) => folder.id === selectedId) ? selectedId : "";
 const errorMessage$2 = (error) => {
   return userFacingErrorMessage(error, "common.error.external");
@@ -15443,7 +15509,7 @@ const useExternalIntegrationsStore = defineStore("externalIntegrations", {
     }
   }
 });
-const _sfc_main$2b = /* @__PURE__ */ defineComponent({
+const _sfc_main$2e = /* @__PURE__ */ defineComponent({
   __name: "EagleFolderSelect",
   __ssrInlineRender: true,
   setup(__props) {
@@ -15473,13 +15539,13 @@ const _sfc_main$2b = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2b = _sfc_main$2b.setup;
-_sfc_main$2b.setup = (props, ctx) => {
+const _sfc_setup$2e = _sfc_main$2e.setup;
+_sfc_main$2e.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/EagleFolderSelect.vue");
-  return _sfc_setup$2b ? _sfc_setup$2b(props, ctx) : void 0;
+  return _sfc_setup$2e ? _sfc_setup$2e(props, ctx) : void 0;
 };
-const __nuxt_component_0$1 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2b, [["__scopeId", "data-v-aa9affef"]]), { __name: "StudioEagleFolderSelect" });
+const __nuxt_component_0$1 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2e, [["__scopeId", "data-v-aa9affef"]]), { __name: "StudioEagleFolderSelect" });
 const object$1 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 const list = (value) => Array.isArray(value) ? value : [];
 const string = (value) => typeof value === "string" ? value : "";
@@ -15529,7 +15595,7 @@ function promptInterpretation(settings) {
   }));
   return { partial: Boolean(settings.prompt_execution_truncated) || records.some((x) => x.status === "partial"), encodings };
 }
-const _sfc_main$2a = /* @__PURE__ */ defineComponent({
+const _sfc_main$2d = /* @__PURE__ */ defineComponent({
   __name: "PromptInterpretation",
   __ssrInlineRender: true,
   props: {
@@ -15654,14 +15720,14 @@ const _sfc_main$2a = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2a = _sfc_main$2a.setup;
-_sfc_main$2a.setup = (props, ctx) => {
+const _sfc_setup$2d = _sfc_main$2d.setup;
+_sfc_main$2d.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptInterpretation.vue");
-  return _sfc_setup$2a ? _sfc_setup$2a(props, ctx) : void 0;
+  return _sfc_setup$2d ? _sfc_setup$2d(props, ctx) : void 0;
 };
-const PromptInterpretation = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2a, [["__scopeId", "data-v-8bdc27f8"]]), { __name: "StudioPromptInterpretation" });
-const _sfc_main$29 = /* @__PURE__ */ defineComponent({
+const PromptInterpretation = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2d, [["__scopeId", "data-v-8bdc27f8"]]), { __name: "StudioPromptInterpretation" });
+const _sfc_main$2c = /* @__PURE__ */ defineComponent({
   __name: "GenerationReproduction",
   __ssrInlineRender: true,
   props: {
@@ -15670,17 +15736,32 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
   },
   emits: ["applied"],
   setup(__props, { emit: __emit }) {
+    const props = __props;
     const { t } = useAsteriaI18n();
     const generation = useGenerationStore();
     useModelDependenciesStore();
     useAdvancedStylesStore();
-    ref(null);
+    const dialog = ref(null);
     const open = ref(false);
     const loading = ref(false);
     const applying = ref(false);
     const error = ref("");
     const comparison = ref(null);
+    const histories = ref([]);
+    const other = ref(0), numbers = ref(null);
+    const close = () => {
+      open.value = false;
+      loading.value = false;
+      numbers.value = null;
+      comparison.value = null;
+      dialog.value?.close();
+    };
+    const display = (value, recorded) => recorded ? JSON.stringify(value, null, 2) : t("reproduction.valueMissing");
     const busy = computed(() => applying.value || generation.restoringHistory || ["queued", "running", "cancelling"].includes(generation.currentJob?.status ?? ""));
+    watch(other, () => {
+      numbers.value = null;
+    });
+    watch(() => props.item.id, close);
     const status = (value) => t(`reproduction.${["same", "changed", "missing", "ambiguous", "unknown"].includes(value) ? value : "unknown"}`);
     const assetRole = (role) => {
       const [key, index] = role.split(":");
@@ -15689,19 +15770,19 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
       return kind ? `${kind} ${Number(index) + 1}` : label === `reproduction.role.${key}` ? t("reproduction.role.model") : label;
     };
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<!--[--><button type="button" data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.title"))}</button>`);
+      _push(`<!--[--><button type="button" data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.title"))}</button>`);
       ssrRenderTeleport(_push, (_push2) => {
-        _push2(`<dialog class="generation-reproduction"${ssrRenderAttr("aria-label", unref(t)("reproduction.title"))} data-v-f84ac02a>`);
+        _push2(`<dialog class="generation-reproduction"${ssrRenderAttr("aria-label", unref(t)("reproduction.title"))} data-v-4868d445>`);
         if (unref(open)) {
-          _push2(`<!--[--><header data-v-f84ac02a><h2 data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.title"))} #${ssrInterpolate(__props.item.id)}</h2><button type="button" data-v-f84ac02a>${ssrInterpolate(unref(t)("promptInterpretation.close"))}</button></header><p data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.help"))}</p><section${ssrRenderAttr("aria-label", unref(t)("reproduction.assets"))} data-v-f84ac02a><h3 data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.assets"))}</h3><p data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.hashHelp"))}</p><button type="button"${ssrIncludeBooleanAttr(unref(loading)) ? " disabled" : ""} data-v-f84ac02a>${ssrInterpolate(unref(t)(unref(loading) ? "reproduction.checking" : "reproduction.check"))}</button>`);
+          _push2(`<!--[--><header data-v-4868d445><h2 data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.title"))} #${ssrInterpolate(__props.item.id)}</h2><button type="button"${ssrRenderAttr("aria-label", unref(t)("promptInterpretation.close"))} data-v-4868d445>×</button></header><p data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.help"))}</p><section${ssrRenderAttr("aria-label", unref(t)("reproduction.assets"))} data-v-4868d445><h3 data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.assets"))}</h3><p data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.hashHelp"))}</p><button type="button"${ssrIncludeBooleanAttr(unref(loading)) ? " disabled" : ""} data-v-4868d445>${ssrInterpolate(unref(t)(unref(loading) ? "reproduction.checking" : "reproduction.check"))}</button>`);
           if (unref(comparison)?.status === "unrecorded") {
-            _push2(`<p data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.unrecorded"))}</p>`);
+            _push2(`<p data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.unrecorded"))}</p>`);
           } else if (unref(comparison)) {
-            _push2(`<ul data-v-f84ac02a><!--[-->`);
+            _push2(`<ul data-v-4868d445><!--[-->`);
             ssrRenderList(unref(comparison).assets, (asset, index) => {
-              _push2(`<li data-v-f84ac02a><strong data-v-f84ac02a>${ssrInterpolate(status(asset.status))}</strong> · ${ssrInterpolate(assetRole(asset.role))}<p data-v-f84ac02a>${ssrInterpolate(asset.reference)}</p>`);
+              _push2(`<li data-v-4868d445><strong data-v-4868d445>${ssrInterpolate(status(asset.status))}</strong> · ${ssrInterpolate(assetRole(asset.role))}<p data-v-4868d445>${ssrInterpolate(asset.reference)}</p>`);
               if (asset.recorded_sha256 || asset.current_sha256) {
-                _push2(`<details data-v-f84ac02a><summary data-v-f84ac02a>SHA-256</summary><p data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.saved"))}: ${ssrInterpolate(asset.recorded_sha256 || "—")}</p><p data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.current"))}: ${ssrInterpolate(asset.current_sha256 || "—")}</p></details>`);
+                _push2(`<details data-v-4868d445><summary data-v-4868d445>SHA-256</summary><p data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.saved"))}: ${ssrInterpolate(asset.recorded_sha256 || "—")}</p><p data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.current"))}: ${ssrInterpolate(asset.current_sha256 || "—")}</p></details>`);
               } else {
                 _push2(`<!---->`);
               }
@@ -15711,9 +15792,39 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
           } else {
             _push2(`<!---->`);
           }
-          _push2(`</section><section${ssrRenderAttr("aria-label", unref(t)("reproduction.input"))} data-v-f84ac02a><h3 data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.input"))}</h3><p data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.expandedHelp"))}</p><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.expanded"))}</button><p data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.originalHelp"))}</p><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-f84ac02a>${ssrInterpolate(unref(t)("reproduction.original"))}</button></section>`);
+          _push2(`</section><section${ssrRenderAttr("aria-label", unref(t)("reproduction.input"))} data-v-4868d445><h3 data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.input"))}</h3><p data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.expandedHelp"))}</p><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.expanded"))}</button><p data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.originalHelp"))}</p><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.original"))}</button></section><section${ssrRenderAttr("aria-label", unref(t)("reproduction.numbers"))} data-v-4868d445><h3 data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.numbers"))}</h3><p data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.numbersHelp"))}</p><label class="field" data-v-4868d445><span data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.other"))}</span><select${ssrIncludeBooleanAttr(unref(loading)) ? " disabled" : ""} data-v-4868d445><option${ssrRenderAttr("value", 0)} data-v-4868d445${ssrIncludeBooleanAttr(Array.isArray(unref(other)) ? ssrLooseContain(unref(other), 0) : ssrLooseEqual(unref(other), 0)) ? " selected" : ""}>—</option><!--[-->`);
+          ssrRenderList(unref(histories), (entry2) => {
+            _push2(`<option${ssrRenderAttr("value", entry2.id)} data-v-4868d445${ssrIncludeBooleanAttr(Array.isArray(unref(other)) ? ssrLooseContain(unref(other), entry2.id) : ssrLooseEqual(unref(other), entry2.id)) ? " selected" : ""}>#${ssrInterpolate(entry2.id)} · ${ssrInterpolate(entry2.profile)} · ${ssrInterpolate((entry2.expanded_prompt || entry2.prompt || "").slice(0, 65))}</option>`);
+          });
+          _push2(`<!--]--></select></label><button type="button"${ssrIncludeBooleanAttr(unref(loading) || !unref(other)) ? " disabled" : ""} data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.numbersRun"))}</button>`);
+          if (unref(numbers)) {
+            _push2(`<!--[--><p role="status" data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.summary", { same: unref(numbers).rows.filter((r) => r.status === "same").length, different: unref(numbers).rows.filter((r) => r.status === "different").length, missing: unref(numbers).rows.filter((r) => r.status === "unrecorded").length }))}</p>`);
+            if (unref(numbers).sampling_origins) {
+              _push2(`<!--[-->`);
+              ssrRenderList(["left", "right"], (side) => {
+                _push2(`<p data-v-4868d445>`);
+                if (unref(numbers).sampling_origins[side].fresh || unref(numbers).sampling_origins[side].reused) {
+                  _push2(`<!--[--><strong data-v-4868d445>${ssrInterpolate(unref(t)(`reproduction.${side}`))}</strong> · ${ssrInterpolate(unref(t)(unref(numbers).sampling_origins[side].reused ? "reproduction.originReused" : "reproduction.originFresh"))}<!--]-->`);
+                } else {
+                  _push2(`<!---->`);
+                }
+                _push2(`</p>`);
+              });
+              _push2(`<!--]-->`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`<details data-v-4868d445><summary data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.records"))}</summary><dl class="reproduction-numbers" data-v-4868d445><!--[-->`);
+            ssrRenderList(unref(numbers).rows, (row) => {
+              _push2(`<div data-v-4868d445><dt data-v-4868d445>${ssrInterpolate(row.key)} · ${ssrInterpolate(unref(t)(row.status === "unrecorded" ? "reproduction.valueMissing" : `reproduction.${row.status}`))}</dt><dd data-v-4868d445><strong data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.left"))}</strong><pre data-v-4868d445>${ssrInterpolate(display(row.left, row.left_recorded))}</pre><strong data-v-4868d445>${ssrInterpolate(unref(t)("reproduction.right"))}</strong><pre data-v-4868d445>${ssrInterpolate(display(row.right, row.right_recorded))}</pre></dd></div>`);
+            });
+            _push2(`<!--]--></dl></details><!--]-->`);
+          } else {
+            _push2(`<!---->`);
+          }
+          _push2(`</section>`);
           if (unref(error)) {
-            _push2(`<p role="alert" data-v-f84ac02a>${ssrInterpolate(unref(error))}</p>`);
+            _push2(`<p role="alert" data-v-4868d445>${ssrInterpolate(unref(error))}</p>`);
           } else {
             _push2(`<!---->`);
           }
@@ -15727,13 +15838,13 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$29 = _sfc_main$29.setup;
-_sfc_main$29.setup = (props, ctx) => {
+const _sfc_setup$2c = _sfc_main$2c.setup;
+_sfc_main$2c.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerationReproduction.vue");
-  return _sfc_setup$29 ? _sfc_setup$29(props, ctx) : void 0;
+  return _sfc_setup$2c ? _sfc_setup$2c(props, ctx) : void 0;
 };
-const GenerationReproduction = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$29, [["__scopeId", "data-v-f84ac02a"]]), { __name: "StudioGenerationReproduction" });
+const GenerationReproduction = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2c, [["__scopeId", "data-v-4868d445"]]), { __name: "StudioGenerationReproduction" });
 const notSent = () => ({ status: "not_sent", createdAt: "", folderId: "" });
 const normalizedArtifactPath = (path) => path.trim().replace(/\\/g, "/").replace(/\/{2,}/g, "/").toLocaleLowerCase();
 const resolveEagleRegistration = (settings, selectedPath, selectedSha256 = "") => {
@@ -15758,7 +15869,7 @@ const resolveEagleRegistration = (settings, selectedPath, selectedSha256 = "") =
   }
   return notSent();
 };
-const _sfc_main$28 = /* @__PURE__ */ defineComponent({
+const _sfc_main$2b = /* @__PURE__ */ defineComponent({
   __name: "HistoryPanel",
   __ssrInlineRender: true,
   emits: ["openImage"],
@@ -15941,13 +16052,13 @@ const _sfc_main$28 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$28 = _sfc_main$28.setup;
-_sfc_main$28.setup = (props, ctx) => {
+const _sfc_setup$2b = _sfc_main$2b.setup;
+_sfc_main$2b.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/HistoryPanel.vue");
-  return _sfc_setup$28 ? _sfc_setup$28(props, ctx) : void 0;
+  return _sfc_setup$2b ? _sfc_setup$2b(props, ctx) : void 0;
 };
-const HistoryPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$28, [["__scopeId", "data-v-636c05c7"]]), { __name: "StudioHistoryPanel" });
+const HistoryPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2b, [["__scopeId", "data-v-636c05c7"]]), { __name: "StudioHistoryPanel" });
 const object = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 function makingVideo(item) {
   const settings = item.settings ?? {};
@@ -15971,7 +16082,7 @@ function makingVideo(item) {
   };
 }
 const makingArtifactUrl = (base, id, artifact, download = false) => `${base}/api/generations/history/${id}/artifacts/${encodeURIComponent(artifact)}${download ? "?download=true" : ""}`;
-const _sfc_main$27 = /* @__PURE__ */ defineComponent({
+const _sfc_main$2a = /* @__PURE__ */ defineComponent({
   __name: "MakingVideo",
   __ssrInlineRender: true,
   props: {
@@ -16030,13 +16141,13 @@ const _sfc_main$27 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$27 = _sfc_main$27.setup;
-_sfc_main$27.setup = (props, ctx) => {
+const _sfc_setup$2a = _sfc_main$2a.setup;
+_sfc_main$2a.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/MakingVideo.vue");
-  return _sfc_setup$27 ? _sfc_setup$27(props, ctx) : void 0;
+  return _sfc_setup$2a ? _sfc_setup$2a(props, ctx) : void 0;
 };
-const MakingVideo = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$27, [["__scopeId", "data-v-d1463e28"]]), { __name: "StudioMakingVideo" });
+const MakingVideo = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2a, [["__scopeId", "data-v-d1463e28"]]), { __name: "StudioMakingVideo" });
 function branchInfo(item) {
   const value = item.settings?.generation_branch;
   const receipt = value && typeof value === "object" ? value : {};
@@ -16052,7 +16163,7 @@ function branchInfo(item) {
 function branchCaptureSupported(state) {
   return ["sdxl", "anima"].includes(state.profile) && state.mode === "txt2img" && state.batchSize === 1 && state.batchCount === 1 && state.steps > 1 && ["Euler", "Euler a", "DPM++ 2M", "DPM++ 2M SDE", "DPM++ 3M SDE", "ER SDE"].includes(state.sampler);
 }
-const _sfc_main$26 = /* @__PURE__ */ defineComponent({
+const _sfc_main$29 = /* @__PURE__ */ defineComponent({
   __name: "GenerationBranch",
   __ssrInlineRender: true,
   props: {
@@ -16123,13 +16234,13 @@ const _sfc_main$26 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$26 = _sfc_main$26.setup;
-_sfc_main$26.setup = (props, ctx) => {
+const _sfc_setup$29 = _sfc_main$29.setup;
+_sfc_main$29.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerationBranch.vue");
-  return _sfc_setup$26 ? _sfc_setup$26(props, ctx) : void 0;
+  return _sfc_setup$29 ? _sfc_setup$29(props, ctx) : void 0;
 };
-const GenerationBranch = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$26, [["__scopeId", "data-v-924b88a3"]]), { __name: "StudioGenerationBranch" });
+const GenerationBranch = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$29, [["__scopeId", "data-v-924b88a3"]]), { __name: "StudioGenerationBranch" });
 const wordMaskInfo = (item) => {
   const record = item.settings?.word_masks;
   return { available: record?.status === "recorded", failed: record?.status === "not_saved" };
@@ -16138,7 +16249,7 @@ const wordLabel = (column) => {
   const values2 = Object.values(column.labels);
   return new Set(values2).size === 1 ? values2[0] ?? "" : Object.entries(column.labels).map(([encoder, text]) => `${encoder.toUpperCase()}: ${text}`).join(" / ");
 };
-const _sfc_main$25 = /* @__PURE__ */ defineComponent({
+const _sfc_main$28 = /* @__PURE__ */ defineComponent({
   __name: "WordMaskEdit",
   __ssrInlineRender: true,
   props: {
@@ -16243,14 +16354,14 @@ const _sfc_main$25 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$25 = _sfc_main$25.setup;
-_sfc_main$25.setup = (props, ctx) => {
+const _sfc_setup$28 = _sfc_main$28.setup;
+_sfc_main$28.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/WordMaskEdit.vue");
-  return _sfc_setup$25 ? _sfc_setup$25(props, ctx) : void 0;
+  return _sfc_setup$28 ? _sfc_setup$28(props, ctx) : void 0;
 };
-const WordMaskEdit = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$25, [["__scopeId", "data-v-90b4c153"]]), { __name: "StudioWordMaskEdit" });
-const _sfc_main$24 = /* @__PURE__ */ defineComponent({
+const WordMaskEdit = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$28, [["__scopeId", "data-v-90b4c153"]]), { __name: "StudioWordMaskEdit" });
+const _sfc_main$27 = /* @__PURE__ */ defineComponent({
   __name: "ResultPane",
   __ssrInlineRender: true,
   emits: ["openImage", "openImageMask", "openDetails", "openSettings"],
@@ -16591,14 +16702,14 @@ const _sfc_main$24 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$24 = _sfc_main$24.setup;
-_sfc_main$24.setup = (props, ctx) => {
+const _sfc_setup$27 = _sfc_main$27.setup;
+_sfc_main$27.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ResultPane.vue");
-  return _sfc_setup$24 ? _sfc_setup$24(props, ctx) : void 0;
+  return _sfc_setup$27 ? _sfc_setup$27(props, ctx) : void 0;
 };
-const ResultPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$24, [["__scopeId", "data-v-3a2ad367"]]), { __name: "StudioResultPane" });
-const _sfc_main$23 = /* @__PURE__ */ defineComponent({
+const ResultPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$27, [["__scopeId", "data-v-3a2ad367"]]), { __name: "StudioResultPane" });
+const _sfc_main$26 = /* @__PURE__ */ defineComponent({
   __name: "AnimaLLLitePanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -16682,14 +16793,14 @@ const _sfc_main$23 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$23 = _sfc_main$23.setup;
-_sfc_main$23.setup = (props, ctx) => {
+const _sfc_setup$26 = _sfc_main$26.setup;
+_sfc_main$26.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AnimaLLLitePanel.vue");
-  return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
+  return _sfc_setup$26 ? _sfc_setup$26(props, ctx) : void 0;
 };
-const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-ea5b65b4"]]), { __name: "StudioAnimaLLLitePanel" });
-const _sfc_main$22 = /* @__PURE__ */ defineComponent({
+const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$26, [["__scopeId", "data-v-ea5b65b4"]]), { __name: "StudioAnimaLLLitePanel" });
+const _sfc_main$25 = /* @__PURE__ */ defineComponent({
   __name: "ControlNetPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -16802,14 +16913,14 @@ const _sfc_main$22 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$22 = _sfc_main$22.setup;
-_sfc_main$22.setup = (props, ctx) => {
+const _sfc_setup$25 = _sfc_main$25.setup;
+_sfc_main$25.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ControlNetPanel.vue");
-  return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
+  return _sfc_setup$25 ? _sfc_setup$25(props, ctx) : void 0;
 };
-const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-053fa231"]]), { __name: "StudioControlNetPanel" });
-const _sfc_main$21 = /* @__PURE__ */ defineComponent({
+const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$25, [["__scopeId", "data-v-053fa231"]]), { __name: "StudioControlNetPanel" });
+const _sfc_main$24 = /* @__PURE__ */ defineComponent({
   __name: "DetailerPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -16966,14 +17077,14 @@ const _sfc_main$21 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$21 = _sfc_main$21.setup;
-_sfc_main$21.setup = (props, ctx) => {
+const _sfc_setup$24 = _sfc_main$24.setup;
+_sfc_main$24.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/DetailerPanel.vue");
-  return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
+  return _sfc_setup$24 ? _sfc_setup$24(props, ctx) : void 0;
 };
-const DetailerPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-cf71cbef"]]), { __name: "StudioDetailerPanel" });
-const _sfc_main$20 = /* @__PURE__ */ defineComponent({
+const DetailerPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$24, [["__scopeId", "data-v-cf71cbef"]]), { __name: "StudioDetailerPanel" });
+const _sfc_main$23 = /* @__PURE__ */ defineComponent({
   __name: "ControlModulesInspector",
   __ssrInlineRender: true,
   setup(__props) {
@@ -17038,14 +17149,14 @@ const _sfc_main$20 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$20 = _sfc_main$20.setup;
-_sfc_main$20.setup = (props, ctx) => {
+const _sfc_setup$23 = _sfc_main$23.setup;
+_sfc_main$23.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ControlModulesInspector.vue");
-  return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
+  return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
 };
-const ControlModulesInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-cde96a15"]]), { __name: "StudioGenerateControlModulesInspector" });
-const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
+const ControlModulesInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-cde96a15"]]), { __name: "StudioGenerateControlModulesInspector" });
+const _sfc_main$22 = /* @__PURE__ */ defineComponent({
   __name: "EnhancementInspector",
   __ssrInlineRender: true,
   props: {
@@ -17073,14 +17184,14 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1$ = _sfc_main$1$.setup;
-_sfc_main$1$.setup = (props, ctx) => {
+const _sfc_setup$22 = _sfc_main$22.setup;
+_sfc_main$22.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/EnhancementInspector.vue");
-  return _sfc_setup$1$ ? _sfc_setup$1$(props, ctx) : void 0;
+  return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
 };
-const EnhancementInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-7c52dd87"]]), { __name: "StudioGenerateEnhancementInspector" });
-const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
+const EnhancementInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-7c52dd87"]]), { __name: "StudioGenerateEnhancementInspector" });
+const _sfc_main$21 = /* @__PURE__ */ defineComponent({
   __name: "RemasterSettingsPanel",
   __ssrInlineRender: true,
   props: {
@@ -17143,13 +17254,13 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1_ = _sfc_main$1_.setup;
-_sfc_main$1_.setup = (props, ctx) => {
+const _sfc_setup$21 = _sfc_main$21.setup;
+_sfc_main$21.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RemasterSettingsPanel.vue");
-  return _sfc_setup$1_ ? _sfc_setup$1_(props, ctx) : void 0;
+  return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
 };
-const RemasterSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-58b39268"]]), { __name: "StudioRemasterSettingsPanel" });
+const RemasterSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-58b39268"]]), { __name: "StudioRemasterSettingsPanel" });
 const comparisonIsActive = (status) => ["queued", "running"].includes(status);
 const comparisonPair = (plan, pair) => (plan.display_orders[pair] ?? []).map((arm) => plan.cells.find((cell) => cell.pair === pair && cell.arm === arm)).filter((cell) => Boolean(cell));
 const comparisonImage = (cell) => cell.output_paths?.filter((path) => /\.(png|jpe?g|webp|avif)$/i.test(path)).at(-1) ?? "";
@@ -17590,7 +17701,7 @@ const useImageLibraryStore = defineStore("imageLibrary", {
     }
   }
 });
-const _sfc_main$1Z = /* @__PURE__ */ defineComponent({
+const _sfc_main$20 = /* @__PURE__ */ defineComponent({
   __name: "PromptComparisonPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -17798,14 +17909,14 @@ const _sfc_main$1Z = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1Z = _sfc_main$1Z.setup;
-_sfc_main$1Z.setup = (props, ctx) => {
+const _sfc_setup$20 = _sfc_main$20.setup;
+_sfc_main$20.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptComparisonPanel.vue");
-  return _sfc_setup$1Z ? _sfc_setup$1Z(props, ctx) : void 0;
+  return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
 };
-const PromptComparisonPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Z, [["__scopeId", "data-v-4377f552"]]), { __name: "StudioGeneratePromptComparisonPanel" });
-const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
+const PromptComparisonPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-4377f552"]]), { __name: "StudioGeneratePromptComparisonPanel" });
+const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
   __name: "ExpertToolsInspector",
   __ssrInlineRender: true,
   setup(__props) {
@@ -17884,14 +17995,14 @@ const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1Y = _sfc_main$1Y.setup;
-_sfc_main$1Y.setup = (props, ctx) => {
+const _sfc_setup$1$ = _sfc_main$1$.setup;
+_sfc_main$1$.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ExpertToolsInspector.vue");
-  return _sfc_setup$1Y ? _sfc_setup$1Y(props, ctx) : void 0;
+  return _sfc_setup$1$ ? _sfc_setup$1$(props, ctx) : void 0;
 };
-const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Y, [["__scopeId", "data-v-5921350b"]]), { __name: "StudioGenerateExpertToolsInspector" });
-const _sfc_main$1X = /* @__PURE__ */ defineComponent({
+const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-5921350b"]]), { __name: "StudioGenerateExpertToolsInspector" });
+const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
   __name: "GenerateBaseControlsPanel",
   __ssrInlineRender: true,
   props: {
@@ -17983,13 +18094,13 @@ const _sfc_main$1X = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1X = _sfc_main$1X.setup;
-_sfc_main$1X.setup = (props, ctx) => {
+const _sfc_setup$1_ = _sfc_main$1_.setup;
+_sfc_main$1_.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateBaseControlsPanel.vue");
-  return _sfc_setup$1X ? _sfc_setup$1X(props, ctx) : void 0;
+  return _sfc_setup$1_ ? _sfc_setup$1_(props, ctx) : void 0;
 };
-const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1X, [["__scopeId", "data-v-7ed28896"]]), { __name: "StudioGenerateBaseControlsPanel" });
+const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-7ed28896"]]), { __name: "StudioGenerateBaseControlsPanel" });
 const modeSourceState = (mode, initImagePath, maskImagePath) => {
   if (mode === "txt2img") {
     return "not-required";
@@ -18013,7 +18124,7 @@ const modeSourceSummaryKey = (state) => ({
   "mask-ready": "modeSource.maskReady"
 })[state];
 const modeSourceSummary = (mode, initImagePath, maskImagePath, translate) => `${mode} · ${translate(modeSourceSummaryKey(modeSourceState(mode, initImagePath, maskImagePath)))}`;
-const _sfc_main$1W = /* @__PURE__ */ defineComponent({
+const _sfc_main$1Z = /* @__PURE__ */ defineComponent({
   __name: "GenerateModeSourcePanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -18100,13 +18211,13 @@ const _sfc_main$1W = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1W = _sfc_main$1W.setup;
-_sfc_main$1W.setup = (props, ctx) => {
+const _sfc_setup$1Z = _sfc_main$1Z.setup;
+_sfc_main$1Z.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateModeSourcePanel.vue");
-  return _sfc_setup$1W ? _sfc_setup$1W(props, ctx) : void 0;
+  return _sfc_setup$1Z ? _sfc_setup$1Z(props, ctx) : void 0;
 };
-const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-6520248c"]]), { __name: "StudioGenerateModeSourcePanel" });
+const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Z, [["__scopeId", "data-v-6520248c"]]), { __name: "StudioGenerateModeSourcePanel" });
 const HIRES_TARGET_MAX = 8192;
 const HIRES_TARGET_STEP = 8;
 const positiveNumber = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
@@ -18139,7 +18250,7 @@ const hiresTargetSummary = (scale, width, height) => {
 const HIRES_SAME_CHECKPOINT = "Use same checkpoint";
 const HIRES_SAME_SAMPLER = "Use same sampler";
 const HIRES_SAME_SCHEDULER = "Use same scheduler";
-const _sfc_main$1V = /* @__PURE__ */ defineComponent({
+const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
   __name: "RuntimeSettingsPane",
   __ssrInlineRender: true,
   props: {
@@ -18578,14 +18689,14 @@ const _sfc_main$1V = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1V = _sfc_main$1V.setup;
-_sfc_main$1V.setup = (props, ctx) => {
+const _sfc_setup$1Y = _sfc_main$1Y.setup;
+_sfc_main$1Y.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RuntimeSettingsPane.vue");
-  return _sfc_setup$1V ? _sfc_setup$1V(props, ctx) : void 0;
+  return _sfc_setup$1Y ? _sfc_setup$1Y(props, ctx) : void 0;
 };
-const RuntimeSettingsPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1V, [["__scopeId", "data-v-f6a631ff"]]), { __name: "StudioRuntimeSettingsPane" });
-const _sfc_main$1U = /* @__PURE__ */ defineComponent({
+const RuntimeSettingsPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Y, [["__scopeId", "data-v-f6a631ff"]]), { __name: "StudioRuntimeSettingsPane" });
+const _sfc_main$1X = /* @__PURE__ */ defineComponent({
   __name: "GenerationInspector",
   __ssrInlineRender: true,
   props: {
@@ -18629,14 +18740,14 @@ const _sfc_main$1U = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1U = _sfc_main$1U.setup;
-_sfc_main$1U.setup = (props, ctx) => {
+const _sfc_setup$1X = _sfc_main$1X.setup;
+_sfc_main$1X.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationInspector.vue");
-  return _sfc_setup$1U ? _sfc_setup$1U(props, ctx) : void 0;
+  return _sfc_setup$1X ? _sfc_setup$1X(props, ctx) : void 0;
 };
-const GenerationInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1U, [["__scopeId", "data-v-56e36a03"]]), { __name: "StudioGenerateGenerationInspector" });
-const _sfc_main$1T = /* @__PURE__ */ defineComponent({
+const GenerationInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1X, [["__scopeId", "data-v-56e36a03"]]), { __name: "StudioGenerateGenerationInspector" });
+const _sfc_main$1W = /* @__PURE__ */ defineComponent({
   __name: "ResultDetailsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -18722,13 +18833,13 @@ const _sfc_main$1T = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1T = _sfc_main$1T.setup;
-_sfc_main$1T.setup = (props, ctx) => {
+const _sfc_setup$1W = _sfc_main$1W.setup;
+_sfc_main$1W.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ResultDetailsDrawer.vue");
-  return _sfc_setup$1T ? _sfc_setup$1T(props, ctx) : void 0;
+  return _sfc_setup$1W ? _sfc_setup$1W(props, ctx) : void 0;
 };
-const ResultDetailsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1T, [["__scopeId", "data-v-b9df029b"]]), { __name: "StudioGenerateResultDetailsDrawer" });
+const ResultDetailsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-b9df029b"]]), { __name: "StudioGenerateResultDetailsDrawer" });
 const ASTERIA_EXTENSION_FRONTEND_CONTRACT = "asteria.extension.frontend.v1";
 class ExtensionModuleLoadError extends Error {
   constructor(code) {
@@ -18822,7 +18933,7 @@ const STUDIO_WORKSPACE_IDS = [
   "settings"
 ];
 const isStudioWorkspaceId = (value) => STUDIO_WORKSPACE_IDS.some((id) => id === value);
-const _sfc_main$1S = /* @__PURE__ */ defineComponent({
+const _sfc_main$1V = /* @__PURE__ */ defineComponent({
   __name: "FullAccessExtensionHost",
   __ssrInlineRender: true,
   props: {
@@ -18909,13 +19020,13 @@ const _sfc_main$1S = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1S = _sfc_main$1S.setup;
-_sfc_main$1S.setup = (props, ctx) => {
+const _sfc_setup$1V = _sfc_main$1V.setup;
+_sfc_main$1V.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/FullAccessExtensionHost.vue");
-  return _sfc_setup$1S ? _sfc_setup$1S(props, ctx) : void 0;
+  return _sfc_setup$1V ? _sfc_setup$1V(props, ctx) : void 0;
 };
-const FullAccessExtensionHost = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1S, [["__scopeId", "data-v-b387b4b0"]]), { __name: "StudioExtensionsFullAccessExtensionHost" });
+const FullAccessExtensionHost = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1V, [["__scopeId", "data-v-b387b4b0"]]), { __name: "StudioExtensionsFullAccessExtensionHost" });
 const STANDARD_EXTENSION_FRAME_PATH_PREFIX = "/api/extensions/standard-frame/";
 const NONCE = /^[a-f0-9]{64}$/;
 const createStandardExtensionNonce = () => {
@@ -18964,7 +19075,7 @@ const useAsteriaTheme = () => {
     initialize
   };
 };
-const _sfc_main$1R = /* @__PURE__ */ defineComponent({
+const _sfc_main$1U = /* @__PURE__ */ defineComponent({
   __name: "StandardExtensionFrame",
   __ssrInlineRender: true,
   props: {
@@ -19046,14 +19157,14 @@ const _sfc_main$1R = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1R = _sfc_main$1R.setup;
-_sfc_main$1R.setup = (props, ctx) => {
+const _sfc_setup$1U = _sfc_main$1U.setup;
+_sfc_main$1U.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/StandardExtensionFrame.vue");
-  return _sfc_setup$1R ? _sfc_setup$1R(props, ctx) : void 0;
+  return _sfc_setup$1U ? _sfc_setup$1U(props, ctx) : void 0;
 };
-const StandardExtensionFrame = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1R, [["__scopeId", "data-v-c06c0cbd"]]), { __name: "StudioExtensionsStandardExtensionFrame" });
-const _sfc_main$1Q = /* @__PURE__ */ defineComponent({
+const StandardExtensionFrame = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1U, [["__scopeId", "data-v-c06c0cbd"]]), { __name: "StudioExtensionsStandardExtensionFrame" });
+const _sfc_main$1T = /* @__PURE__ */ defineComponent({
   __name: "ExtensionContributionHost",
   __ssrInlineRender: true,
   props: {
@@ -19087,13 +19198,13 @@ const _sfc_main$1Q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1Q = _sfc_main$1Q.setup;
-_sfc_main$1Q.setup = (props, ctx) => {
+const _sfc_setup$1T = _sfc_main$1T.setup;
+_sfc_main$1T.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/ExtensionContributionHost.vue");
-  return _sfc_setup$1Q ? _sfc_setup$1Q(props, ctx) : void 0;
+  return _sfc_setup$1T ? _sfc_setup$1T(props, ctx) : void 0;
 };
-const ExtensionContributionHost = Object.assign(_sfc_main$1Q, { __name: "StudioExtensionsExtensionContributionHost" });
+const ExtensionContributionHost = Object.assign(_sfc_main$1T, { __name: "StudioExtensionsExtensionContributionHost" });
 const EXTENSION_PANEL_SURFACES = [
   "generate.inspector_panel",
   "image_edit.inspector_panel",
@@ -19201,8 +19312,8 @@ const projectExtensionWorkspaceItems = (statuses) => {
         valid = false;
         break;
       }
-      const identity = `${extensionId}:${value.id}`.toLowerCase();
-      if (seen.has(identity) || projected.some((item) => item.id.toLowerCase() === `extension:${identity}`)) {
+      const identity2 = `${extensionId}:${value.id}`.toLowerCase();
+      if (seen.has(identity2) || projected.some((item) => item.id.toLowerCase() === `extension:${identity2}`)) {
         valid = false;
         break;
       }
@@ -19244,9 +19355,9 @@ const projectExtensionSurfaceItems = (statuses, surface) => {
     const contributions = kind === "panel" ? validated.panels : validated.actions;
     for (const contribution of contributions) {
       if (contribution.surface !== surface) continue;
-      const identity = `${validated.extensionId}:${contribution.id}`.toLowerCase();
-      if (seen.has(identity)) continue;
-      seen.add(identity);
+      const identity2 = `${validated.extensionId}:${contribution.id}`.toLowerCase();
+      if (seen.has(identity2)) continue;
+      seen.add(identity2);
       const shared = {
         id: `extension-surface:${validated.extensionId}:${contribution.id}`,
         label: contribution.name,
@@ -19445,7 +19556,7 @@ const useExtensionsStore = defineStore("extensions", {
     }
   }
 });
-const _sfc_main$1P = /* @__PURE__ */ defineComponent({
+const _sfc_main$1S = /* @__PURE__ */ defineComponent({
   __name: "ExtensionSurfaceDock",
   __ssrInlineRender: true,
   props: {
@@ -19478,14 +19589,14 @@ const _sfc_main$1P = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1P = _sfc_main$1P.setup;
-_sfc_main$1P.setup = (props, ctx) => {
+const _sfc_setup$1S = _sfc_main$1S.setup;
+_sfc_main$1S.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/ExtensionSurfaceDock.vue");
-  return _sfc_setup$1P ? _sfc_setup$1P(props, ctx) : void 0;
+  return _sfc_setup$1S ? _sfc_setup$1S(props, ctx) : void 0;
 };
-const ExtensionSurfaceDock = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1P, [["__scopeId", "data-v-36278985"]]), { __name: "StudioExtensionsExtensionSurfaceDock" });
-const _sfc_main$1O = /* @__PURE__ */ defineComponent({
+const ExtensionSurfaceDock = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1S, [["__scopeId", "data-v-36278985"]]), { __name: "StudioExtensionsExtensionSurfaceDock" });
+const _sfc_main$1R = /* @__PURE__ */ defineComponent({
   __name: "GenerateWorkspace",
   __ssrInlineRender: true,
   emits: ["openHelp", "openImage", "openImageMask", "openSettings", "openImageMetadata"],
@@ -19564,14 +19675,14 @@ const _sfc_main$1O = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1O = _sfc_main$1O.setup;
-_sfc_main$1O.setup = (props, ctx) => {
+const _sfc_setup$1R = _sfc_main$1R.setup;
+_sfc_main$1R.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateWorkspace.vue");
-  return _sfc_setup$1O ? _sfc_setup$1O(props, ctx) : void 0;
+  return _sfc_setup$1R ? _sfc_setup$1R(props, ctx) : void 0;
 };
-const GenerateWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1O, [["__scopeId", "data-v-31119163"]]), { __name: "StudioGenerateWorkspace" });
-const _sfc_main$1N = /* @__PURE__ */ defineComponent({
+const GenerateWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1R, [["__scopeId", "data-v-31119163"]]), { __name: "StudioGenerateWorkspace" });
+const _sfc_main$1Q = /* @__PURE__ */ defineComponent({
   __name: "RepeatLimitsDialog",
   __ssrInlineRender: true,
   props: {
@@ -19601,14 +19712,14 @@ const _sfc_main$1N = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1N = _sfc_main$1N.setup;
-_sfc_main$1N.setup = (props, ctx) => {
+const _sfc_setup$1Q = _sfc_main$1Q.setup;
+_sfc_main$1Q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/RepeatLimitsDialog.vue");
-  return _sfc_setup$1N ? _sfc_setup$1N(props, ctx) : void 0;
+  return _sfc_setup$1Q ? _sfc_setup$1Q(props, ctx) : void 0;
 };
-const RepeatLimitsDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1N, [["__scopeId", "data-v-243640f8"]]), { __name: "StudioGenerateRepeatLimitsDialog" });
-const _sfc_main$1M = /* @__PURE__ */ defineComponent({
+const RepeatLimitsDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Q, [["__scopeId", "data-v-243640f8"]]), { __name: "StudioGenerateRepeatLimitsDialog" });
+const _sfc_main$1P = /* @__PURE__ */ defineComponent({
   __name: "HelpArticleCanvas",
   __ssrInlineRender: true,
   props: {
@@ -19633,14 +19744,14 @@ const _sfc_main$1M = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1M = _sfc_main$1M.setup;
-_sfc_main$1M.setup = (props, ctx) => {
+const _sfc_setup$1P = _sfc_main$1P.setup;
+_sfc_main$1P.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpArticleCanvas.vue");
-  return _sfc_setup$1M ? _sfc_setup$1M(props, ctx) : void 0;
+  return _sfc_setup$1P ? _sfc_setup$1P(props, ctx) : void 0;
 };
-const HelpArticleCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1M, [["__scopeId", "data-v-5bed5522"]]), { __name: "StudioHelpArticleCanvas" });
-const _sfc_main$1L = /* @__PURE__ */ defineComponent({
+const HelpArticleCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1P, [["__scopeId", "data-v-5bed5522"]]), { __name: "StudioHelpArticleCanvas" });
+const _sfc_main$1O = /* @__PURE__ */ defineComponent({
   __name: "HelpRelatedActions",
   __ssrInlineRender: true,
   emits: ["open-related-action"],
@@ -19654,14 +19765,14 @@ const _sfc_main$1L = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1L = _sfc_main$1L.setup;
-_sfc_main$1L.setup = (props, ctx) => {
+const _sfc_setup$1O = _sfc_main$1O.setup;
+_sfc_main$1O.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpRelatedActions.vue");
-  return _sfc_setup$1L ? _sfc_setup$1L(props, ctx) : void 0;
+  return _sfc_setup$1O ? _sfc_setup$1O(props, ctx) : void 0;
 };
-const HelpRelatedActions = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1L, [["__scopeId", "data-v-7f413803"]]), { __name: "StudioHelpRelatedActions" });
-const _sfc_main$1K = /* @__PURE__ */ defineComponent({
+const HelpRelatedActions = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1O, [["__scopeId", "data-v-7f413803"]]), { __name: "StudioHelpRelatedActions" });
+const _sfc_main$1N = /* @__PURE__ */ defineComponent({
   __name: "HelpTopicRail",
   __ssrInlineRender: true,
   props: {
@@ -19683,13 +19794,13 @@ const _sfc_main$1K = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1K = _sfc_main$1K.setup;
-_sfc_main$1K.setup = (props, ctx) => {
+const _sfc_setup$1N = _sfc_main$1N.setup;
+_sfc_main$1N.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpTopicRail.vue");
-  return _sfc_setup$1K ? _sfc_setup$1K(props, ctx) : void 0;
+  return _sfc_setup$1N ? _sfc_setup$1N(props, ctx) : void 0;
 };
-const HelpTopicRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1K, [["__scopeId", "data-v-6e5de24e"]]), { __name: "StudioHelpTopicRail" });
+const HelpTopicRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1N, [["__scopeId", "data-v-6e5de24e"]]), { __name: "StudioHelpTopicRail" });
 const helpTopicsByLocale = {
   en: [
     {
@@ -20157,7 +20268,7 @@ const useAsteriaHelpTopics = () => {
     topics
   };
 };
-const _sfc_main$1J = /* @__PURE__ */ defineComponent({
+const _sfc_main$1M = /* @__PURE__ */ defineComponent({
   __name: "HelpView",
   __ssrInlineRender: true,
   props: {
@@ -20190,14 +20301,14 @@ const _sfc_main$1J = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1J = _sfc_main$1J.setup;
-_sfc_main$1J.setup = (props, ctx) => {
+const _sfc_setup$1M = _sfc_main$1M.setup;
+_sfc_main$1M.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/HelpView.vue");
-  return _sfc_setup$1J ? _sfc_setup$1J(props, ctx) : void 0;
+  return _sfc_setup$1M ? _sfc_setup$1M(props, ctx) : void 0;
 };
-const HelpView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1J, [["__scopeId", "data-v-824e84f1"]]), { __name: "StudioHelpView" });
-const _sfc_main$1I = /* @__PURE__ */ defineComponent({
+const HelpView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1M, [["__scopeId", "data-v-824e84f1"]]), { __name: "StudioHelpView" });
+const _sfc_main$1L = /* @__PURE__ */ defineComponent({
   __name: "HelpGuideDrawer",
   __ssrInlineRender: true,
   props: {
@@ -20227,13 +20338,13 @@ const _sfc_main$1I = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1I = _sfc_main$1I.setup;
-_sfc_main$1I.setup = (props, ctx) => {
+const _sfc_setup$1L = _sfc_main$1L.setup;
+_sfc_main$1L.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpGuideDrawer.vue");
-  return _sfc_setup$1I ? _sfc_setup$1I(props, ctx) : void 0;
+  return _sfc_setup$1L ? _sfc_setup$1L(props, ctx) : void 0;
 };
-const HelpGuideDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1I, [["__scopeId", "data-v-6cfdf912"]]), { __name: "StudioHelpGuideDrawer" });
+const HelpGuideDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1L, [["__scopeId", "data-v-6cfdf912"]]), { __name: "StudioHelpGuideDrawer" });
 const MIN_CANVAS_ZOOM = 0.25;
 const MAX_CANVAS_ZOOM = 4;
 const CANVAS_ZOOM_STEP = 0.25;
@@ -20884,7 +20995,7 @@ function drawPoseMap(context, people, width, height) {
     context.fill();
   }
 }
-const _sfc_main$1H = /* @__PURE__ */ defineComponent({
+const _sfc_main$1K = /* @__PURE__ */ defineComponent({
   __name: "ImageEditWorkspaceBody",
   __ssrInlineRender: true,
   props: {
@@ -20925,14 +21036,14 @@ const _sfc_main$1H = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1H = _sfc_main$1H.setup;
-_sfc_main$1H.setup = (props, ctx) => {
+const _sfc_setup$1K = _sfc_main$1K.setup;
+_sfc_main$1K.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditWorkspaceBody.vue");
-  return _sfc_setup$1H ? _sfc_setup$1H(props, ctx) : void 0;
+  return _sfc_setup$1K ? _sfc_setup$1K(props, ctx) : void 0;
 };
-const ImageEditWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1H, [["__scopeId", "data-v-7c84f1f4"]]), { __name: "StudioImageEditWorkspaceBody" });
-const _sfc_main$1G = /* @__PURE__ */ defineComponent({
+const ImageEditWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1K, [["__scopeId", "data-v-7c84f1f4"]]), { __name: "StudioImageEditWorkspaceBody" });
+const _sfc_main$1J = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSummaryBar",
   __ssrInlineRender: true,
   props: {
@@ -20963,14 +21074,14 @@ const _sfc_main$1G = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1G = _sfc_main$1G.setup;
-_sfc_main$1G.setup = (props, ctx) => {
+const _sfc_setup$1J = _sfc_main$1J.setup;
+_sfc_main$1J.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSummaryBar.vue");
-  return _sfc_setup$1G ? _sfc_setup$1G(props, ctx) : void 0;
+  return _sfc_setup$1J ? _sfc_setup$1J(props, ctx) : void 0;
 };
-const ImageEditSummaryBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1G, [["__scopeId", "data-v-2ffd1d76"]]), { __name: "StudioImageEditSummaryBar" });
-const _sfc_main$1F = /* @__PURE__ */ defineComponent({
+const ImageEditSummaryBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1J, [["__scopeId", "data-v-2ffd1d76"]]), { __name: "StudioImageEditSummaryBar" });
+const _sfc_main$1I = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSourceInspector",
   __ssrInlineRender: true,
   props: {
@@ -21020,14 +21131,14 @@ const _sfc_main$1F = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1F = _sfc_main$1F.setup;
-_sfc_main$1F.setup = (props, ctx) => {
+const _sfc_setup$1I = _sfc_main$1I.setup;
+_sfc_main$1I.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSourceInspector.vue");
-  return _sfc_setup$1F ? _sfc_setup$1F(props, ctx) : void 0;
+  return _sfc_setup$1I ? _sfc_setup$1I(props, ctx) : void 0;
 };
-const ImageEditSourceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1F, [["__scopeId", "data-v-24aa0984"]]), { __name: "StudioImageEditSourceInspector" });
-const _sfc_main$1E = /* @__PURE__ */ defineComponent({
+const ImageEditSourceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1I, [["__scopeId", "data-v-24aa0984"]]), { __name: "StudioImageEditSourceInspector" });
+const _sfc_main$1H = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSourceRemasterInspector",
   __ssrInlineRender: true,
   props: {
@@ -21130,14 +21241,14 @@ const _sfc_main$1E = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1E = _sfc_main$1E.setup;
-_sfc_main$1E.setup = (props, ctx) => {
+const _sfc_setup$1H = _sfc_main$1H.setup;
+_sfc_main$1H.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSourceRemasterInspector.vue");
-  return _sfc_setup$1E ? _sfc_setup$1E(props, ctx) : void 0;
+  return _sfc_setup$1H ? _sfc_setup$1H(props, ctx) : void 0;
 };
-const ImageEditSourceRemasterInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1E, [["__scopeId", "data-v-80e75218"]]), { __name: "StudioImageEditSourceRemasterInspector" });
-const _sfc_main$1D = /* @__PURE__ */ defineComponent({
+const ImageEditSourceRemasterInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1H, [["__scopeId", "data-v-80e75218"]]), { __name: "StudioImageEditSourceRemasterInspector" });
+const _sfc_main$1G = /* @__PURE__ */ defineComponent({
   __name: "ImageEditCanvasToolbar",
   __ssrInlineRender: true,
   props: {
@@ -21178,14 +21289,14 @@ const _sfc_main$1D = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1D = _sfc_main$1D.setup;
-_sfc_main$1D.setup = (props, ctx) => {
+const _sfc_setup$1G = _sfc_main$1G.setup;
+_sfc_main$1G.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditCanvasToolbar.vue");
-  return _sfc_setup$1D ? _sfc_setup$1D(props, ctx) : void 0;
+  return _sfc_setup$1G ? _sfc_setup$1G(props, ctx) : void 0;
 };
-const ImageEditCanvasToolbar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1D, [["__scopeId", "data-v-860cb3b6"]]), { __name: "StudioImageEditCanvasToolbar" });
-const _sfc_main$1C = /* @__PURE__ */ defineComponent({
+const ImageEditCanvasToolbar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1G, [["__scopeId", "data-v-860cb3b6"]]), { __name: "StudioImageEditCanvasToolbar" });
+const _sfc_main$1F = /* @__PURE__ */ defineComponent({
   __name: "ImageEditMaskInspector",
   __ssrInlineRender: true,
   props: {
@@ -21232,14 +21343,220 @@ const _sfc_main$1C = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1C = _sfc_main$1C.setup;
-_sfc_main$1C.setup = (props, ctx) => {
+const _sfc_setup$1F = _sfc_main$1F.setup;
+_sfc_main$1F.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditMaskInspector.vue");
-  return _sfc_setup$1C ? _sfc_setup$1C(props, ctx) : void 0;
+  return _sfc_setup$1F ? _sfc_setup$1F(props, ctx) : void 0;
 };
-const ImageEditMaskInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1C, [["__scopeId", "data-v-c647c1d2"]]), { __name: "StudioImageEditMaskInspector" });
-const _sfc_main$1B = /* @__PURE__ */ defineComponent({
+const ImageEditMaskInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1F, [["__scopeId", "data-v-c647c1d2"]]), { __name: "StudioImageEditMaskInspector" });
+const identity = (path) => path.replaceAll("\\", "/").toLowerCase();
+const reviewMatchesSource = (review, path) => identity(review.source_path) === identity(path);
+const validCandidateBox = (box) => box.length === 4 && box.every((v) => Number.isFinite(v) && v >= 0 && v <= 1) && box[0] < box[2] && box[1] < box[3];
+const candidateSelection = (rows, ids, excluded) => rows.filter((row) => ids.includes(row.id) && !excluded.includes(row.id) && validCandidateBox(row.box));
+const cropViewBox = (box, width, height) => [box[0] * width, box[1] * height, (box[2] - box[0]) * width, (box[3] - box[1]) * height].map((v) => Number(v.toFixed(3))).join(" ");
+const comparisonCandidates = (review, part) => (review.edits?.candidates ?? review.candidates).filter((row) => row.label === part && !review.edits?.excluded.includes(row.id) && validCandidateBox(row.box));
+const initialComparisonCandidate = (review, part) => comparisonCandidates(review, part).find((row) => review.edits?.selected.includes(row.id))?.id ?? "";
+const _sfc_main$1E = /* @__PURE__ */ defineComponent({
+  __name: "ImageReviewStage",
+  __ssrInlineRender: true,
+  props: {
+    src: {},
+    label: {},
+    zoom: {},
+    region: {},
+    width: {},
+    height: {}
+  },
+  emits: ["load", "error"],
+  setup(__props, { emit: __emit }) {
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "image-review-stage" }, _attrs))} data-v-13cba0df>`);
+      if (__props.region && __props.width && __props.height) {
+        _push(`<svg${ssrRenderAttr("viewBox", unref(cropViewBox)(__props.region, __props.width, __props.height))}${ssrRenderAttr("aria-label", __props.label)} role="img" style="${ssrRenderStyle({ transform: `scale(${__props.zoom})` })}" data-v-13cba0df><image${ssrRenderAttr("href", __props.src)}${ssrRenderAttr("width", __props.width)}${ssrRenderAttr("height", __props.height)} data-v-13cba0df></image></svg>`);
+      } else {
+        _push(`<img${ssrRenderAttr("src", __props.src)}${ssrRenderAttr("alt", __props.label)} style="${ssrRenderStyle({ transform: `scale(${__props.zoom})` })}" data-v-13cba0df>`);
+      }
+      ssrRenderSlot(_ctx.$slots, "default", {}, null, _push, _parent);
+      _push(`</div>`);
+    };
+  }
+});
+const _sfc_setup$1E = _sfc_main$1E.setup;
+_sfc_main$1E.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageReviewStage.vue");
+  return _sfc_setup$1E ? _sfc_setup$1E(props, ctx) : void 0;
+};
+const ImageReviewStage = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1E, [["__scopeId", "data-v-13cba0df"]]), { __name: "StudioImageReviewStage" });
+const _sfc_main$1D = /* @__PURE__ */ defineComponent({
+  __name: "BodyPartReview",
+  __ssrInlineRender: true,
+  props: {
+    path: {},
+    disabled: { type: Boolean }
+  },
+  emits: ["edit", "reviewed"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const { t } = useAsteriaI18n();
+    const dialog = ref(null);
+    const opened = ref(false), busy = ref(false), saving = ref(false), reviewSaved = ref(false), error = ref("");
+    const capability = ref(null);
+    const review = ref(null);
+    const rows = ref([]), selected = ref([]), excluded = ref([]);
+    const parts = ref(["arm", "hand", "torso"]);
+    const partOptions = ["person", "head", "arm", "hand", "torso", "leg", "foot"];
+    const active = ref(""), mode = ref("list"), zoom = ref(1);
+    const maskUrl = ref("");
+    let operation = "", controller = null;
+    const selection = computed(() => candidateSelection(rows.value, selected.value, excluded.value));
+    const current = computed(() => rows.value.find((row) => row.id === active.value));
+    const sourceUrl = computed(() => review.value ? useApiUrl(`/api/body-review/${review.value.id}/source`) : "");
+    const clearMask = () => {
+      if (maskUrl.value) URL.revokeObjectURL(maskUrl.value);
+      maskUrl.value = "";
+    };
+    const api = (url, options = {}) => $fetch(url, { baseURL: useApiBase(), retry: 0, timeout: 195e3, ...options });
+    const stop = () => {
+      const id = operation;
+      operation = "";
+      controller?.abort();
+      controller = null;
+      if (id) void api(`/api/body-review/cancel/${id}`, { method: "POST", timeout: 1e4 }).catch(() => {
+      });
+      busy.value = false;
+    };
+    const close = () => {
+      stop();
+      opened.value = false;
+      saving.value = false;
+      clearMask();
+      dialog.value?.close();
+    };
+    watch([rows, selected, excluded], () => {
+      clearMask();
+      reviewSaved.value = false;
+    }, { deep: true, flush: "sync" });
+    watch(() => props.path, close);
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<!--[--><button type="button"${ssrIncludeBooleanAttr(!__props.path || __props.disabled) ? " disabled" : ""} data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.open"))}</button>`);
+      ssrRenderTeleport(_push, (_push2) => {
+        _push2(`<dialog class="body-review"${ssrRenderAttr("aria-label", unref(t)("bodyReview.title"))} data-v-95f568be>`);
+        if (unref(opened)) {
+          _push2(`<!--[--><header data-v-95f568be><h2 data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.title"))}</h2><button type="button"${ssrIncludeBooleanAttr(unref(saving)) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("promptInterpretation.close"))} data-v-95f568be>×</button></header><p data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.help"))}</p>`);
+          if (unref(error)) {
+            _push2(`<p role="alert" data-v-95f568be>${ssrInterpolate(unref(error))}</p>`);
+          } else {
+            _push2(`<!---->`);
+          }
+          if (unref(capability) && !unref(capability).detector) {
+            _push2(`<p role="status" data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.noDetector"))}</p>`);
+          } else {
+            _push2(`<!---->`);
+          }
+          if (unref(capability) && !unref(capability).sam) {
+            _push2(`<p role="status" data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.noSam"))}</p>`);
+          } else {
+            _push2(`<!---->`);
+          }
+          _push2(`<fieldset${ssrIncludeBooleanAttr(unref(busy) || unref(saving)) ? " disabled" : ""} data-v-95f568be><legend data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.parts"))}</legend><!--[-->`);
+          ssrRenderList(partOptions, (part) => {
+            _push2(`<label data-v-95f568be><input${ssrIncludeBooleanAttr(Array.isArray(unref(parts)) ? ssrLooseContain(unref(parts), part) : unref(parts)) ? " checked" : ""} type="checkbox"${ssrRenderAttr("value", part)} data-v-95f568be>${ssrInterpolate(unref(t)(`bodyReview.part.${part}`))}</label>`);
+          });
+          _push2(`<!--]--></fieldset><div class="body-review-actions" data-v-95f568be><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(busy) || unref(saving) || __props.disabled || !unref(capability)?.detector || !unref(parts).length) ? " disabled" : ""} data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.detect"))}</button>`);
+          if (unref(busy)) {
+            _push2(`<button type="button" data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.stop"))}</button>`);
+          } else {
+            _push2(`<!---->`);
+          }
+          _push2(`</div>`);
+          if (unref(busy)) {
+            _push2(`<p role="status" data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.working"))}</p>`);
+          } else {
+            _push2(`<!---->`);
+          }
+          if (unref(review)) {
+            _push2(`<!--[--><p data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.count", { count: unref(rows).length }))} `);
+            if (unref(review).truncated) {
+              _push2(`<span data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.limit"))}</span>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`</p><div class="body-review-stage" data-v-95f568be><img${ssrRenderAttr("src", unref(sourceUrl))}${ssrRenderAttr("alt", unref(t)("bodyReview.source"))} data-v-95f568be><svg${ssrRenderAttr("viewBox", `0 0 ${unref(review).width} ${unref(review).height}`)}${ssrRenderAttr("aria-label", unref(t)("bodyReview.candidates"))} data-v-95f568be><!--[-->`);
+            ssrRenderList(unref(rows), (row) => {
+              _push2(`<g${ssrRenderAttr("opacity", unref(excluded).includes(row.id) ? 0.18 : 1)} data-v-95f568be><rect${ssrRenderAttr("x", row.box[0] * unref(review).width)}${ssrRenderAttr("y", row.box[1] * unref(review).height)}${ssrRenderAttr("width", Math.max(0, (row.box[2] - row.box[0]) * unref(review).width))}${ssrRenderAttr("height", Math.max(0, (row.box[3] - row.box[1]) * unref(review).height))} class="${ssrRenderClass({ chosen: unref(selected).includes(row.id), active: unref(active) === row.id })}" data-v-95f568be></rect><text${ssrRenderAttr("x", row.box[0] * unref(review).width)}${ssrRenderAttr("y", row.box[1] * unref(review).height + 16)} data-v-95f568be>${ssrInterpolate(unref(rows).indexOf(row) + 1)}</text></g>`);
+            });
+            _push2(`<!--]--></svg>`);
+            if (unref(maskUrl)) {
+              _push2(`<div class="body-review-mask" style="${ssrRenderStyle({ maskImage: `url('${unref(maskUrl)}')` })}" data-v-95f568be></div>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`</div><div class="body-review-actions" data-v-95f568be><button type="button"${ssrRenderAttr("aria-pressed", unref(mode) === "list")} data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.list"))}</button><button type="button"${ssrRenderAttr("aria-pressed", unref(mode) === "compare")}${ssrIncludeBooleanAttr(unref(selection).length < 2) ? " disabled" : ""} data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.compare"))}</button></div>`);
+            if (unref(mode) === "list") {
+              _push2(`<div class="body-review-candidates" data-v-95f568be><!--[-->`);
+              ssrRenderList(unref(rows), (row, index) => {
+                _push2(`<article class="${ssrRenderClass({ excluded: unref(excluded).includes(row.id), active: unref(active) === row.id })}" data-v-95f568be><button type="button"${ssrRenderAttr("aria-label", `${index + 1} ${unref(t)(`bodyReview.part.${row.label}`)}`)} data-v-95f568be><svg${ssrRenderAttr("viewBox", unref(cropViewBox)(row.box, unref(review).width, unref(review).height))} data-v-95f568be><image${ssrRenderAttr("href", unref(sourceUrl))}${ssrRenderAttr("width", unref(review).width)}${ssrRenderAttr("height", unref(review).height)} data-v-95f568be></image></svg></button><label data-v-95f568be><input${ssrIncludeBooleanAttr(Array.isArray(unref(selected)) ? ssrLooseContain(unref(selected), row.id) : unref(selected)) ? " checked" : ""} type="checkbox"${ssrRenderAttr("value", row.id)}${ssrIncludeBooleanAttr(unref(busy) || unref(saving) || unref(excluded).includes(row.id)) ? " disabled" : ""} data-v-95f568be>${ssrInterpolate(index + 1)} · ${ssrInterpolate(unref(t)(`bodyReview.part.${row.label}`))} ${ssrInterpolate(row.score == null ? "" : Math.round(row.score * 100) + "%")}</label><button type="button"${ssrIncludeBooleanAttr(unref(busy) || unref(saving)) ? " disabled" : ""} data-v-95f568be>${ssrInterpolate(unref(t)(unref(excluded).includes(row.id) ? "bodyReview.restore" : "bodyReview.exclude"))}</button></article>`);
+              });
+              _push2(`<!--]--></div>`);
+            } else {
+              _push2(`<!--[--><label class="field" data-v-95f568be><span data-v-95f568be>${ssrInterpolate(unref(t)("library.zoom"))}</span><input${ssrRenderAttr("value", unref(zoom))} type="range" min=".5" max="3" step=".1" data-v-95f568be></label><div class="body-review-comparison" data-v-95f568be><!--[-->`);
+              ssrRenderList(unref(selection).slice(0, 2), (row) => {
+                _push2(`<article data-v-95f568be><strong data-v-95f568be>${ssrInterpolate(unref(rows).findIndex((c) => c.id === row.id) + 1)} · ${ssrInterpolate(unref(t)(`bodyReview.part.${row.label}`))}</strong>`);
+                _push2(ssrRenderComponent(ImageReviewStage, {
+                  src: unref(sourceUrl),
+                  label: unref(t)(`bodyReview.part.${row.label}`),
+                  zoom: unref(zoom),
+                  region: row.box,
+                  width: unref(review).width,
+                  height: unref(review).height
+                }, null, _parent));
+                _push2(`</article>`);
+              });
+              _push2(`<!--]--></div><!--]-->`);
+            }
+            if (unref(current)) {
+              _push2(`<fieldset${ssrIncludeBooleanAttr(unref(busy) || unref(saving)) ? " disabled" : ""} data-v-95f568be><legend data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.rectangle"))} · ${ssrInterpolate(unref(rows).findIndex((row) => row.id === unref(current)?.id) + 1)}</legend><!--[-->`);
+              ssrRenderList(["left", "top", "right", "bottom"], (name, index) => {
+                _push2(`<label data-v-95f568be>${ssrInterpolate(unref(t)(`bodyReview.${name}`))}<input type="number" min="0" max="100" step=".1"${ssrRenderAttr("value", Number((unref(current).box[index] * 100).toFixed(1)))} data-v-95f568be>%</label>`);
+              });
+              _push2(`<!--]--></fieldset>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            if (unref(selection).length > 16) {
+              _push2(`<p role="alert" data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.selectionLimit"))}</p>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            if (unref(reviewSaved)) {
+              _push2(`<p role="status" data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.saved"))}</p>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`<footer data-v-95f568be><button type="button"${ssrIncludeBooleanAttr(unref(busy) || unref(saving) || unref(selection).length > 16) ? " disabled" : ""} data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.save"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(busy) || unref(saving) || __props.disabled || !unref(capability)?.sam || !unref(selection).length || unref(selection).length > 16) ? " disabled" : ""} data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.makeMask"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(busy) || unref(saving) || __props.disabled || !unref(maskUrl)) ? " disabled" : ""} data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.edit"))}</button></footer><p data-v-95f568be>${ssrInterpolate(unref(t)("bodyReview.maskHelp"))}</p><!--]-->`);
+          } else {
+            _push2(`<!---->`);
+          }
+          _push2(`<!--]-->`);
+        } else {
+          _push2(`<!---->`);
+        }
+        _push2(`</dialog>`);
+      }, "body", false, _parent);
+      _push(`<!--]-->`);
+    };
+  }
+});
+const _sfc_setup$1D = _sfc_main$1D.setup;
+_sfc_main$1D.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/BodyPartReview.vue");
+  return _sfc_setup$1D ? _sfc_setup$1D(props, ctx) : void 0;
+};
+const BodyPartReview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1D, [["__scopeId", "data-v-95f568be"]]), { __name: "StudioBodyPartReview" });
+const _sfc_main$1C = /* @__PURE__ */ defineComponent({
   __name: "ImageEditCropInspector",
   __ssrInlineRender: true,
   props: {
@@ -21283,14 +21600,14 @@ const _sfc_main$1B = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1B = _sfc_main$1B.setup;
-_sfc_main$1B.setup = (props, ctx) => {
+const _sfc_setup$1C = _sfc_main$1C.setup;
+_sfc_main$1C.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditCropInspector.vue");
-  return _sfc_setup$1B ? _sfc_setup$1B(props, ctx) : void 0;
+  return _sfc_setup$1C ? _sfc_setup$1C(props, ctx) : void 0;
 };
-const ImageEditCropInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1B, [["__scopeId", "data-v-1d66ae27"]]), { __name: "StudioImageEditCropInspector" });
-const _sfc_main$1A = /* @__PURE__ */ defineComponent({
+const ImageEditCropInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1C, [["__scopeId", "data-v-1d66ae27"]]), { __name: "StudioImageEditCropInspector" });
+const _sfc_main$1B = /* @__PURE__ */ defineComponent({
   __name: "ImageEditReferenceInspector",
   __ssrInlineRender: true,
   props: {
@@ -21354,14 +21671,14 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1A = _sfc_main$1A.setup;
-_sfc_main$1A.setup = (props, ctx) => {
+const _sfc_setup$1B = _sfc_main$1B.setup;
+_sfc_main$1B.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditReferenceInspector.vue");
-  return _sfc_setup$1A ? _sfc_setup$1A(props, ctx) : void 0;
+  return _sfc_setup$1B ? _sfc_setup$1B(props, ctx) : void 0;
 };
-const ImageEditReferenceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1A, [["__scopeId", "data-v-6340eee7"]]), { __name: "StudioImageEditReferenceInspector" });
-const _sfc_main$1z = /* @__PURE__ */ defineComponent({
+const ImageEditReferenceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1B, [["__scopeId", "data-v-6340eee7"]]), { __name: "StudioImageEditReferenceInspector" });
+const _sfc_main$1A = /* @__PURE__ */ defineComponent({
   __name: "ImageEditOpenPoseInspector",
   __ssrInlineRender: true,
   props: {
@@ -21435,14 +21752,14 @@ const _sfc_main$1z = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1z = _sfc_main$1z.setup;
-_sfc_main$1z.setup = (props, ctx) => {
+const _sfc_setup$1A = _sfc_main$1A.setup;
+_sfc_main$1A.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditOpenPoseInspector.vue");
-  return _sfc_setup$1z ? _sfc_setup$1z(props, ctx) : void 0;
+  return _sfc_setup$1A ? _sfc_setup$1A(props, ctx) : void 0;
 };
-const ImageEditOpenPoseInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1z, [["__scopeId", "data-v-0f427267"]]), { __name: "StudioImageEditOpenPoseInspector" });
-const _sfc_main$1y = /* @__PURE__ */ defineComponent({
+const ImageEditOpenPoseInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1A, [["__scopeId", "data-v-0f427267"]]), { __name: "StudioImageEditOpenPoseInspector" });
+const _sfc_main$1z = /* @__PURE__ */ defineComponent({
   __name: "ImageEditControlNetPresets",
   __ssrInlineRender: true,
   props: {
@@ -21484,14 +21801,14 @@ const _sfc_main$1y = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1y = _sfc_main$1y.setup;
-_sfc_main$1y.setup = (props, ctx) => {
+const _sfc_setup$1z = _sfc_main$1z.setup;
+_sfc_main$1z.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditControlNetPresets.vue");
-  return _sfc_setup$1y ? _sfc_setup$1y(props, ctx) : void 0;
+  return _sfc_setup$1z ? _sfc_setup$1z(props, ctx) : void 0;
 };
-const ImageEditControlNetPresets = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1y, [["__scopeId", "data-v-823ab604"]]), { __name: "StudioImageEditControlNetPresets" });
-const _sfc_main$1x = /* @__PURE__ */ defineComponent({
+const ImageEditControlNetPresets = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1z, [["__scopeId", "data-v-823ab604"]]), { __name: "StudioImageEditControlNetPresets" });
+const _sfc_main$1y = /* @__PURE__ */ defineComponent({
   __name: "ImageWorkspace",
   __ssrInlineRender: true,
   emits: ["openGenerate", "openLibrary"],
@@ -22772,7 +23089,7 @@ const _sfc_main$1x = /* @__PURE__ */ defineComponent({
       hasPendingDraft
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<!--[--><input hidden type="file" accept="image/*" data-v-ab30d432><input hidden type="file" accept="image/*" data-v-ab30d432>`);
+      _push(`<!--[--><input hidden type="file" accept="image/*" data-v-6cc13605><input hidden type="file" accept="image/*" data-v-6cc13605>`);
       _push(ssrRenderComponent(ImageEditWorkspaceBody, {
         "aria-label": unref(t)("imageEditor.workspaceAria"),
         "inspector-placement": unref(inspectorPlacement)
@@ -22813,7 +23130,7 @@ const _sfc_main$1x = /* @__PURE__ */ defineComponent({
         }),
         inspector: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<aside class="image-workspace__panel image-workspace__panel--inspector" style="${ssrRenderStyle(!unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-ab30d432${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-ab30d432${_scopeId}><span data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.editWorkflow"))}</span><small data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(editModeLabel))}</small></div>`);
+            _push2(`<aside class="image-workspace__panel image-workspace__panel--inspector" style="${ssrRenderStyle(!unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-6cc13605${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-6cc13605${_scopeId}><span data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.editWorkflow"))}</span><small data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(editModeLabel))}</small></div>`);
             _push2(ssrRenderComponent(ImageEditSourceInspector, {
               style: unref(activeInspectorSection) === "source" ? null : { display: "none" },
               mode: unref(generation).mode,
@@ -22857,6 +23174,16 @@ const _sfc_main$1x = /* @__PURE__ */ defineComponent({
               onUseAsSource: ($event) => useRemasterAsSource(false),
               onSendToGenerate: ($event) => useRemasterAsSource(true)
             }, null, _parent2, _scopeId));
+            _push2(`<div style="${ssrRenderStyle(unref(activeInspectorSection) === "mask" ? null : { display: "none" })}" data-v-6cc13605${_scopeId}>`);
+            _push2(ssrRenderComponent(BodyPartReview, {
+              path: unref(generation).initImagePath,
+              disabled: !unref(canEdit) || unref(maskDirty) || unref(maskSaving) || unref(generation).isBusy,
+              onEdit: ($event) => {
+                unref(generation).maskImagePath = $event.maskPath;
+                unref(generation).mode = "inpaint";
+              }
+            }, null, _parent2, _scopeId));
+            _push2(`</div>`);
             _push2(ssrRenderComponent(ImageEditMaskInspector, {
               style: unref(activeInspectorSection) === "mask" ? null : { display: "none" },
               "can-edit": unref(canEdit),
@@ -22939,6 +23266,18 @@ const _sfc_main$1x = /* @__PURE__ */ defineComponent({
                 }, null, 8, ["source-ready", "source-url", "output-url", "contact-sheet-url", "report-url", "job-status", "result-status", "warnings", "error", "loading", "active", "job-matches-source", "can-retry-live", "can-retry-result", "run-disabled", "onBack", "onCancel", "onRetryLive", "onRetryResult", "onUseAsSource", "onSendToGenerate"]), [
                   [vShow, unref(activeInspectorSection) === "source-remaster"]
                 ]),
+                withDirectives(createVNode("div", null, [
+                  createVNode(BodyPartReview, {
+                    path: unref(generation).initImagePath,
+                    disabled: !unref(canEdit) || unref(maskDirty) || unref(maskSaving) || unref(generation).isBusy,
+                    onEdit: ($event) => {
+                      unref(generation).maskImagePath = $event.maskPath;
+                      unref(generation).mode = "inpaint";
+                    }
+                  }, null, 8, ["path", "disabled", "onEdit"])
+                ], 512), [
+                  [vShow, unref(activeInspectorSection) === "mask"]
+                ]),
                 withDirectives(createVNode(ImageEditMaskInspector, {
                   "can-edit": unref(canEdit),
                   "mask-status": unref(maskStatus),
@@ -22978,7 +23317,7 @@ const _sfc_main$1x = /* @__PURE__ */ defineComponent({
         }),
         canvas: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<main class="image-workspace__preview" data-v-ab30d432${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-ab30d432${_scopeId}><span data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.canvas"))}</span><small data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(generation).initImagePath ? outputFilename(unref(generation).initImagePath) : unref(t)("imageEditor.empty"))}</small></div>`);
+            _push2(`<main class="image-workspace__preview" data-v-6cc13605${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-6cc13605${_scopeId}><span data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.canvas"))}</span><small data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(generation).initImagePath ? outputFilename(unref(generation).initImagePath) : unref(t)("imageEditor.empty"))}</small></div>`);
             _push2(ssrRenderComponent(ImageEditCanvasToolbar, {
               tool: unref(editTool),
               "brush-size": unref(brushSize),
@@ -23004,26 +23343,26 @@ const _sfc_main$1x = /* @__PURE__ */ defineComponent({
               "image-preview-stage--empty": !unref(canEdit),
               "image-preview-stage--pan": unref(canEdit) && (unref(editTool) === "pan" || unref(spacePressed)),
               "image-preview-stage--panning": unref(isPanning)
-            }, "image-preview-stage"])}" tabindex="0" role="region"${ssrRenderAttr("aria-label", unref(t)("imageEditor.canvasNavigationAria"))} data-v-ab30d432${_scopeId}>`);
+            }, "image-preview-stage"])}" tabindex="0" role="region"${ssrRenderAttr("aria-label", unref(t)("imageEditor.canvasNavigationAria"))} data-v-6cc13605${_scopeId}>`);
             if (unref(canEdit)) {
-              _push2(`<div class="canvas-stack" style="${ssrRenderStyle(unref(canvasStackStyle))}" data-v-ab30d432${_scopeId}><canvas class="edit-canvas"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sourceCanvas"))} data-v-ab30d432${_scopeId}></canvas><canvas class="edit-canvas edit-canvas--mask"${ssrRenderAttr("aria-label", unref(t)("imageEditor.maskCanvas"))} style="${ssrRenderStyle(unref(showMask) ? null : { display: "none" })}" data-v-ab30d432${_scopeId}></canvas>`);
+              _push2(`<div class="canvas-stack" style="${ssrRenderStyle(unref(canvasStackStyle))}" data-v-6cc13605${_scopeId}><canvas class="edit-canvas"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sourceCanvas"))} data-v-6cc13605${_scopeId}></canvas><canvas class="edit-canvas edit-canvas--mask"${ssrRenderAttr("aria-label", unref(t)("imageEditor.maskCanvas"))} style="${ssrRenderStyle(unref(showMask) ? null : { display: "none" })}" data-v-6cc13605${_scopeId}></canvas>`);
               if (unref(cropRect)) {
-                _push2(`<div class="crop-rect" style="${ssrRenderStyle(unref(cropStyle))}" data-v-ab30d432${_scopeId}></div>`);
+                _push2(`<div class="crop-rect" style="${ssrRenderStyle(unref(cropStyle))}" data-v-6cc13605${_scopeId}></div>`);
               } else {
                 _push2(`<!---->`);
               }
               _push2(`</div>`);
             } else {
-              _push2(`<div class="image-empty-state" data-v-ab30d432${_scopeId}><span class="image-empty-state__label" data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.noSource"))}</span><strong data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openToStart"))}</strong><p data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.emptyHelp"))}</p><div class="image-empty-state__actions" data-v-ab30d432${_scopeId}><button class="primary-button" type="button" data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openLibrary"))}</button><button type="button" data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.uploadImage"))}</button></div></div>`);
+              _push2(`<div class="image-empty-state" data-v-6cc13605${_scopeId}><span class="image-empty-state__label" data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.noSource"))}</span><strong data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openToStart"))}</strong><p data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.emptyHelp"))}</p><div class="image-empty-state__actions" data-v-6cc13605${_scopeId}><button class="primary-button" type="button" data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openLibrary"))}</button><button type="button" data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.uploadImage"))}</button></div></div>`);
             }
             _push2(`</div>`);
             if (unref(historyWarning)) {
-              _push2(`<p class="warning" aria-live="polite" data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(historyWarning))}</p>`);
+              _push2(`<p class="warning" aria-live="polite" data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(historyWarning))}</p>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(editorError)) {
-              _push2(`<p class="error" aria-live="assertive" data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(editorError))}</p>`);
+              _push2(`<p class="error" aria-live="assertive" data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(editorError))}</p>`);
             } else {
               _push2(`<!---->`);
             }
@@ -23139,7 +23478,7 @@ const _sfc_main$1x = /* @__PURE__ */ defineComponent({
         }),
         handoff: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="image-send-panel"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sendAria"))} data-v-ab30d432${_scopeId}><div class="image-step-header image-step-header--compact" data-v-ab30d432${_scopeId}><span data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.send"))}</span><small data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendHelp"))}</small></div><div class="image-workspace__actions" data-v-ab30d432${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(generation).mode !== "txt2img" && !unref(generation).initImagePath) ? " disabled" : ""} data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendToGenerate"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(generation).initImagePath) ? " disabled" : ""} data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.useSourceAsControlNet"))}</button></div></div>`);
+            _push2(`<div class="image-send-panel"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sendAria"))} data-v-6cc13605${_scopeId}><div class="image-step-header image-step-header--compact" data-v-6cc13605${_scopeId}><span data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.send"))}</span><small data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendHelp"))}</small></div><div class="image-workspace__actions" data-v-6cc13605${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(generation).mode !== "txt2img" && !unref(generation).initImagePath) ? " disabled" : ""} data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendToGenerate"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(generation).initImagePath) ? " disabled" : ""} data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.useSourceAsControlNet"))}</button></div></div>`);
           } else {
             return [
               createVNode("div", {
@@ -23169,13 +23508,13 @@ const _sfc_main$1x = /* @__PURE__ */ defineComponent({
         }),
         reference: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<aside class="image-workspace__panel image-workspace__panel--reference" style="${ssrRenderStyle(unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-ab30d432${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-ab30d432${_scopeId}><span data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.referenceWorkflow"))}</span>`);
+            _push2(`<aside class="image-workspace__panel image-workspace__panel--reference" style="${ssrRenderStyle(unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-6cc13605${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-6cc13605${_scopeId}><span data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.referenceWorkflow"))}</span>`);
             if (unref(generation).controlNetUnits.length > 0) {
-              _push2(`<button type="button" data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.add"))}</button>`);
+              _push2(`<button type="button" data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.add"))}</button>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</div><nav class="reference-focus-tabs"${ssrRenderAttr("aria-label", unref(t)("imageEditor.referenceTabsAria"))} data-v-ab30d432${_scopeId}><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "reference" }, "icon-button"])}" data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.reference"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "openpose" }, "icon-button"])}" data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openPose"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "presets" }, "icon-button"])}" data-v-ab30d432${_scopeId}>${ssrInterpolate(unref(t)("controlNet.presets"))}</button></nav>`);
+            _push2(`</div><nav class="reference-focus-tabs"${ssrRenderAttr("aria-label", unref(t)("imageEditor.referenceTabsAria"))} data-v-6cc13605${_scopeId}><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "reference" }, "icon-button"])}" data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.reference"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "openpose" }, "icon-button"])}" data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openPose"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "presets" }, "icon-button"])}" data-v-6cc13605${_scopeId}>${ssrInterpolate(unref(t)("controlNet.presets"))}</button></nav>`);
             _push2(ssrRenderComponent(ImageEditReferenceInspector, {
               style: unref(activeInspectorSection) === "reference" ? null : { display: "none" },
               units: unref(generation).controlNetUnits,
@@ -23355,14 +23694,14 @@ const _sfc_main$1x = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1x = _sfc_main$1x.setup;
-_sfc_main$1x.setup = (props, ctx) => {
+const _sfc_setup$1y = _sfc_main$1y.setup;
+_sfc_main$1y.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageWorkspace.vue");
-  return _sfc_setup$1x ? _sfc_setup$1x(props, ctx) : void 0;
+  return _sfc_setup$1y ? _sfc_setup$1y(props, ctx) : void 0;
 };
-const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1x, [["__scopeId", "data-v-ab30d432"]]), { __name: "StudioImageWorkspace" });
-const _sfc_main$1w = /* @__PURE__ */ defineComponent({
+const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1y, [["__scopeId", "data-v-6cc13605"]]), { __name: "StudioImageWorkspace" });
+const _sfc_main$1x = /* @__PURE__ */ defineComponent({
   __name: "ImageEditDraftNavigationDialog",
   __ssrInlineRender: true,
   props: {
@@ -23391,14 +23730,14 @@ const _sfc_main$1w = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1w = _sfc_main$1w.setup;
-_sfc_main$1w.setup = (props, ctx) => {
+const _sfc_setup$1x = _sfc_main$1x.setup;
+_sfc_main$1x.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditDraftNavigationDialog.vue");
-  return _sfc_setup$1w ? _sfc_setup$1w(props, ctx) : void 0;
+  return _sfc_setup$1x ? _sfc_setup$1x(props, ctx) : void 0;
 };
-const ImageEditDraftNavigationDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1w, [["__scopeId", "data-v-81770717"]]), { __name: "StudioImageEditDraftNavigationDialog" });
-const _sfc_main$1v = /* @__PURE__ */ defineComponent({
+const ImageEditDraftNavigationDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1x, [["__scopeId", "data-v-81770717"]]), { __name: "StudioImageEditDraftNavigationDialog" });
+const _sfc_main$1w = /* @__PURE__ */ defineComponent({
   __name: "ImageMetadataImportDialog",
   __ssrInlineRender: true,
   props: {
@@ -23549,14 +23888,14 @@ const _sfc_main$1v = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1v = _sfc_main$1v.setup;
-_sfc_main$1v.setup = (props, ctx) => {
+const _sfc_setup$1w = _sfc_main$1w.setup;
+_sfc_main$1w.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageMetadataImportDialog.vue");
-  return _sfc_setup$1v ? _sfc_setup$1v(props, ctx) : void 0;
+  return _sfc_setup$1w ? _sfc_setup$1w(props, ctx) : void 0;
 };
-const ImageMetadataImportDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1v, [["__scopeId", "data-v-e2edb952"]]), { __name: "StudioImageMetadataImportDialog" });
-const _sfc_main$1u = /* @__PURE__ */ defineComponent({
+const ImageMetadataImportDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1w, [["__scopeId", "data-v-e2edb952"]]), { __name: "StudioImageMetadataImportDialog" });
+const _sfc_main$1v = /* @__PURE__ */ defineComponent({
   __name: "ImageMetadataImportFlow",
   __ssrInlineRender: true,
   emits: ["applied"],
@@ -23722,14 +24061,14 @@ const _sfc_main$1u = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1u = _sfc_main$1u.setup;
-_sfc_main$1u.setup = (props, ctx) => {
+const _sfc_setup$1v = _sfc_main$1v.setup;
+_sfc_main$1v.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageMetadataImportFlow.vue");
-  return _sfc_setup$1u ? _sfc_setup$1u(props, ctx) : void 0;
+  return _sfc_setup$1v ? _sfc_setup$1v(props, ctx) : void 0;
 };
-const ImageMetadataImportFlow = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1u, [["__scopeId", "data-v-30855332"]]), { __name: "StudioImageMetadataImportFlow" });
-const _sfc_main$1t = {};
+const ImageMetadataImportFlow = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1v, [["__scopeId", "data-v-30855332"]]), { __name: "StudioImageMetadataImportFlow" });
+const _sfc_main$1u = {};
 function _sfc_ssrRender$1(_ctx, _push, _parent, _attrs) {
   _push(`<div${ssrRenderAttrs(mergeProps({ class: "library-workspace-body" }, _attrs))} data-v-11fe10a6>`);
   ssrRenderSlot(_ctx.$slots, "folders", {}, null, _push, _parent);
@@ -23737,14 +24076,14 @@ function _sfc_ssrRender$1(_ctx, _push, _parent, _attrs) {
   ssrRenderSlot(_ctx.$slots, "inspector", {}, null, _push, _parent);
   _push(`</div>`);
 }
-const _sfc_setup$1t = _sfc_main$1t.setup;
-_sfc_main$1t.setup = (props, ctx) => {
+const _sfc_setup$1u = _sfc_main$1u.setup;
+_sfc_main$1u.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryWorkspaceBody.vue");
-  return _sfc_setup$1t ? _sfc_setup$1t(props, ctx) : void 0;
+  return _sfc_setup$1u ? _sfc_setup$1u(props, ctx) : void 0;
 };
-const LibraryWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1t, [["ssrRender", _sfc_ssrRender$1], ["__scopeId", "data-v-11fe10a6"]]), { __name: "StudioLibraryWorkspaceBody" });
-const _sfc_main$1s = /* @__PURE__ */ defineComponent({
+const LibraryWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1u, [["ssrRender", _sfc_ssrRender$1], ["__scopeId", "data-v-11fe10a6"]]), { __name: "StudioLibraryWorkspaceBody" });
+const _sfc_main$1t = /* @__PURE__ */ defineComponent({
   __name: "LibraryFolderRail",
   __ssrInlineRender: true,
   props: {
@@ -23788,14 +24127,14 @@ const _sfc_main$1s = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1s = _sfc_main$1s.setup;
-_sfc_main$1s.setup = (props, ctx) => {
+const _sfc_setup$1t = _sfc_main$1t.setup;
+_sfc_main$1t.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryFolderRail.vue");
-  return _sfc_setup$1s ? _sfc_setup$1s(props, ctx) : void 0;
+  return _sfc_setup$1t ? _sfc_setup$1t(props, ctx) : void 0;
 };
-const LibraryFolderRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1s, [["__scopeId", "data-v-025ab107"]]), { __name: "StudioLibraryFolderRail" });
-const _sfc_main$1r = /* @__PURE__ */ defineComponent({
+const LibraryFolderRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1t, [["__scopeId", "data-v-025ab107"]]), { __name: "StudioLibraryFolderRail" });
+const _sfc_main$1s = /* @__PURE__ */ defineComponent({
   __name: "LibraryFilterBar",
   __ssrInlineRender: true,
   props: {
@@ -23836,105 +24175,105 @@ const _sfc_main$1r = /* @__PURE__ */ defineComponent({
     const { t } = useAsteriaI18n();
     return (_ctx, _push, _parent, _attrs) => {
       const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
-      _push(`<header${ssrRenderAttrs(mergeProps({ class: "library-filter-bar" }, _attrs))} data-v-4721da8c><nav class="library-task-switch"${ssrRenderAttr("aria-label", unref(t)("library.tasksAria"))} data-v-4721da8c><!--[-->`);
+      _push(`<header${ssrRenderAttrs(mergeProps({ class: "library-filter-bar" }, _attrs))} data-v-2a8e9368><nav class="library-task-switch"${ssrRenderAttr("aria-label", unref(t)("library.tasksAria"))} data-v-2a8e9368><!--[-->`);
       ssrRenderList(__props.taskOptions, (task) => {
-        _push(`<button class="${ssrRenderClass([{ "library-task-button--active": __props.activeTask === task.id }, "library-task-button"])}" type="button"${ssrRenderAttr("aria-pressed", __props.activeTask === task.id)}${ssrIncludeBooleanAttr(task.id === "compare" && __props.compareItemCount < 2) ? " disabled" : ""} data-v-4721da8c><span data-v-4721da8c>${ssrInterpolate(task.label)}</span><small data-v-4721da8c>${ssrInterpolate(task.metric)}</small></button>`);
+        _push(`<button class="${ssrRenderClass([{ "library-task-button--active": __props.activeTask === task.id }, "library-task-button"])}" type="button"${ssrRenderAttr("aria-pressed", __props.activeTask === task.id)}${ssrIncludeBooleanAttr(task.id === "compare" && __props.compareItemCount < 2) ? " disabled" : ""} data-v-2a8e9368><span data-v-2a8e9368>${ssrInterpolate(task.label)}</span><small data-v-2a8e9368>${ssrInterpolate(task.metric)}</small></button>`);
       });
-      _push(`<!--]--></nav><div class="library-filter-bar__context" data-v-4721da8c><div data-v-4721da8c><strong data-v-4721da8c>${ssrInterpolate(__props.activeFolderLabel)}</strong><small data-v-4721da8c>${ssrInterpolate(unref(t)("library.summary", { images: __props.itemCount, selected: __props.selectedCount, task: __props.taskOptions.find((task) => task.id === __props.activeTask)?.label ?? "" }))}</small><small data-v-4721da8c>${ssrInterpolate(__props.taskStatus)}</small>`);
+      _push(`<!--]--></nav><div class="library-filter-bar__context" data-v-2a8e9368><div data-v-2a8e9368><strong data-v-2a8e9368>${ssrInterpolate(__props.activeFolderLabel)}</strong><small data-v-2a8e9368>${ssrInterpolate(unref(t)("library.summary", { images: __props.itemCount, selected: __props.selectedCount, task: __props.taskOptions.find((task) => task.id === __props.activeTask)?.label ?? "" }))}</small><small data-v-2a8e9368>${ssrInterpolate(__props.taskStatus)}</small>`);
       if (__props.refreshing) {
-        _push(`<small class="library-filter-bar__refreshing" aria-live="polite" data-v-4721da8c>${ssrInterpolate(unref(t)("library.checkingLatest"))}</small>`);
+        _push(`<small class="library-filter-bar__refreshing" aria-live="polite" data-v-2a8e9368>${ssrInterpolate(unref(t)("library.checkingLatest"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.refreshError) {
-        _push(`<small class="library-filter-bar__warning" role="alert" data-v-4721da8c>${ssrInterpolate(unref(t)("library.latestRefreshFailed"))}</small>`);
+        _push(`<small class="library-filter-bar__warning" role="alert" data-v-2a8e9368>${ssrInterpolate(unref(t)("library.latestRefreshFailed"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.bulkDeleteResultMessage) {
-        _push(`<small class="library-filter-bar__result" aria-live="polite" data-v-4721da8c>${ssrInterpolate(__props.bulkDeleteResultMessage)}</small>`);
+        _push(`<small class="library-filter-bar__result" aria-live="polite" data-v-2a8e9368>${ssrInterpolate(__props.bulkDeleteResultMessage)}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.bulkDeleteRefreshWarning) {
-        _push(`<small class="library-filter-bar__warning" aria-live="polite" data-v-4721da8c>${ssrInterpolate(__props.bulkDeleteRefreshWarning)}</small>`);
+        _push(`<small class="library-filter-bar__warning" aria-live="polite" data-v-2a8e9368>${ssrInterpolate(__props.bulkDeleteRefreshWarning)}</small>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</div>`);
       ssrRenderSlot(_ctx.$slots, "task-actions", {}, null, _push, _parent);
-      _push(`</div><div class="library-filter-bar__commands" data-v-4721da8c><select${ssrRenderAttr("value", __props.conditionVerdict)}${ssrRenderAttr("aria-label", unref(t)("conditions.filter"))} data-v-4721da8c><option value="" data-v-4721da8c>${ssrInterpolate(unref(t)("conditions.all"))}</option><!--[-->`);
+      _push(`</div><div class="library-filter-bar__commands" data-v-2a8e9368><select${ssrRenderAttr("value", __props.conditionVerdict)}${ssrRenderAttr("aria-label", unref(t)("conditions.filter"))} data-v-2a8e9368><option value="" data-v-2a8e9368>${ssrInterpolate(unref(t)("conditions.all"))}</option><!--[-->`);
       ssrRenderList(["match", "mismatch", "unknown", "unchecked"], (value) => {
-        _push(`<option${ssrRenderAttr("value", value)} data-v-4721da8c>${ssrInterpolate(unref(t)(`conditions.filter.${value}`))}</option>`);
+        _push(`<option${ssrRenderAttr("value", value)} data-v-2a8e9368>${ssrInterpolate(unref(t)(`conditions.filter.${value}`))}</option>`);
       });
-      _push(`<!--]--></select><div class="library-media-filter"${ssrRenderAttr("aria-label", unref(t)("library.mediaFilterAria"))} role="group" data-v-4721da8c><button value="all" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "all")} data-v-4721da8c>${ssrInterpolate(unref(t)("library.mediaFilter.all"))}</button><button value="image" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "image")} data-v-4721da8c>${ssrInterpolate(unref(t)("library.mediaFilter.image"))}</button><button value="video" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "video")} data-v-4721da8c>${ssrInterpolate(unref(t)("library.mediaFilter.video"))}</button><button value="audio" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "audio")} data-v-4721da8c>${ssrInterpolate(unref(t)("library.mediaFilter.audio"))}</button></div><input class="library-filter-bar__search"${ssrRenderAttr("value", __props.query)}${ssrRenderAttr("aria-label", unref(t)("library.searchAria"))}${ssrRenderAttr("placeholder", unref(t)("library.searchPlaceholder"))} data-v-4721da8c><select${ssrRenderAttr("value", __props.profile)}${ssrRenderAttr("aria-label", unref(t)("library.profileFilter"))} data-v-4721da8c><option value="" data-v-4721da8c>${ssrInterpolate(unref(t)("library.allProfiles"))}</option><option value="sdxl" data-v-4721da8c>SDXL</option><option value="anima" data-v-4721da8c>Anima</option><option value="flux1" data-v-4721da8c>Flux.1</option><option value="flux2" data-v-4721da8c>Flux.2</option></select><select${ssrRenderAttr("value", __props.tagSource)}${ssrRenderAttr("aria-label", unref(t)("library.tagSource"))} data-v-4721da8c><!--[-->`);
+      _push(`<!--]--></select><div class="library-media-filter"${ssrRenderAttr("aria-label", unref(t)("library.mediaFilterAria"))} role="group" data-v-2a8e9368><button value="all" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "all")} data-v-2a8e9368>${ssrInterpolate(unref(t)("library.mediaFilter.all"))}</button><button value="image" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "image")} data-v-2a8e9368>${ssrInterpolate(unref(t)("library.mediaFilter.image"))}</button><button value="video" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "video")} data-v-2a8e9368>${ssrInterpolate(unref(t)("library.mediaFilter.video"))}</button><button value="audio" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "audio")} data-v-2a8e9368>${ssrInterpolate(unref(t)("library.mediaFilter.audio"))}</button></div><input class="library-filter-bar__search"${ssrRenderAttr("value", __props.query)}${ssrRenderAttr("aria-label", unref(t)("library.searchAria"))}${ssrRenderAttr("placeholder", unref(t)("library.searchPlaceholder"))} data-v-2a8e9368><select${ssrRenderAttr("value", __props.profile)}${ssrRenderAttr("aria-label", unref(t)("library.profileFilter"))} data-v-2a8e9368><option value="" data-v-2a8e9368>${ssrInterpolate(unref(t)("library.allProfiles"))}</option><option value="sdxl" data-v-2a8e9368>SDXL</option><option value="anima" data-v-2a8e9368>Anima</option><option value="flux1" data-v-2a8e9368>Flux.1</option><option value="flux2" data-v-2a8e9368>Flux.2</option></select><select${ssrRenderAttr("value", __props.tagSource)}${ssrRenderAttr("aria-label", unref(t)("library.tagSource"))} data-v-2a8e9368><!--[-->`);
       ssrRenderList(__props.tagSourceOptions, (source) => {
-        _push(`<option${ssrRenderAttr("value", source.id)} data-v-4721da8c>${ssrInterpolate(source.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", source.id)} data-v-2a8e9368>${ssrInterpolate(source.label)}</option>`);
       });
-      _push(`<!--]--></select><select${ssrRenderAttr("value", __props.tag)}${ssrRenderAttr("aria-label", unref(t)("library.tagFilter"))} data-v-4721da8c><option value="" data-v-4721da8c>${ssrInterpolate(unref(t)("library.allTags"))}</option>`);
+      _push(`<!--]--></select><select${ssrRenderAttr("value", __props.tag)}${ssrRenderAttr("aria-label", unref(t)("library.tagFilter"))} data-v-2a8e9368><option value="" data-v-2a8e9368>${ssrInterpolate(unref(t)("library.allTags"))}</option>`);
       if (__props.selectedTagIsHidden) {
-        _push(`<option${ssrRenderAttr("value", __props.tag)} data-v-4721da8c>${ssrInterpolate(__props.tag)} (${ssrInterpolate(unref(t)("library.activeHiddenTag"))})</option>`);
+        _push(`<option${ssrRenderAttr("value", __props.tag)} data-v-2a8e9368>${ssrInterpolate(__props.tag)} (${ssrInterpolate(unref(t)("library.activeHiddenTag"))})</option>`);
       } else {
         _push(`<!---->`);
       }
       _push(`<!--[-->`);
       ssrRenderList(__props.visibleTagOptions, (option) => {
-        _push(`<option${ssrRenderAttr("value", option)} data-v-4721da8c>${ssrInterpolate(option)}</option>`);
+        _push(`<option${ssrRenderAttr("value", option)} data-v-2a8e9368>${ssrInterpolate(option)}</option>`);
       });
-      _push(`<!--]--></select><label class="library-filter-bar__check" data-v-4721da8c><input${ssrIncludeBooleanAttr(__props.favoriteOnly) ? " checked" : ""} type="checkbox" data-v-4721da8c><span data-v-4721da8c>${ssrInterpolate(unref(t)("library.favorites"))}</span></label><button type="button"${ssrRenderAttr("aria-expanded", __props.savedFiltersOpen)} data-v-4721da8c>${ssrInterpolate(unref(t)("library.filters"))}</button></div><div class="library-filter-bar__chips" data-v-4721da8c><!--[-->`);
+      _push(`<!--]--></select><label class="library-filter-bar__check" data-v-2a8e9368><input${ssrIncludeBooleanAttr(__props.favoriteOnly) ? " checked" : ""} type="checkbox" data-v-2a8e9368><span data-v-2a8e9368>${ssrInterpolate(unref(t)("library.favorites"))}</span></label><button type="button"${ssrRenderAttr("aria-expanded", __props.savedFiltersOpen)} data-v-2a8e9368>${ssrInterpolate(unref(t)("library.filters"))}</button></div><div class="library-filter-bar__chips" data-v-2a8e9368><!--[-->`);
       ssrRenderList(__props.activeFilterChips, (chip) => {
         _push(`<button${ssrRenderAttrs(mergeProps({
           key: chip.key,
           class: "library-filter-chip",
           type: "button"
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("library.clearChip", { label: chip.label }))))} data-v-4721da8c>${ssrInterpolate(chip.label)} × </button>`);
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("library.clearChip", { label: chip.label }))))} data-v-2a8e9368>${ssrInterpolate(chip.label)} × </button>`);
       });
       _push(`<!--]-->`);
       if (!__props.activeFilterChips.length) {
-        _push(`<small class="muted" data-v-4721da8c>${ssrInterpolate(unref(t)("library.noFiltersActive"))}</small>`);
+        _push(`<small class="muted" data-v-2a8e9368>${ssrInterpolate(unref(t)("library.noFiltersActive"))}</small>`);
       } else {
-        _push(`<button class="library-filter-bar__clear" type="button" data-v-4721da8c>${ssrInterpolate(unref(t)("library.clearFilters"))}</button>`);
+        _push(`<button class="library-filter-bar__clear" type="button" data-v-2a8e9368>${ssrInterpolate(unref(t)("library.clearFilters"))}</button>`);
       }
-      _push(`<small class="library-filter-bar__tag-summary" data-v-4721da8c>${ssrInterpolate(__props.tagFilterSummary)}</small><label class="library-filter-bar__check library-filter-bar__check--internal" data-v-4721da8c><input${ssrIncludeBooleanAttr(__props.showInternalTags) ? " checked" : ""} type="checkbox" data-v-4721da8c><span data-v-4721da8c>${ssrInterpolate(unref(t)("library.internalTags"))}</span></label></div>`);
+      _push(`<small class="library-filter-bar__tag-summary" data-v-2a8e9368>${ssrInterpolate(__props.tagFilterSummary)}</small><label class="library-filter-bar__check library-filter-bar__check--internal" data-v-2a8e9368><input${ssrIncludeBooleanAttr(__props.showInternalTags) ? " checked" : ""} type="checkbox" data-v-2a8e9368><span data-v-2a8e9368>${ssrInterpolate(unref(t)("library.internalTags"))}</span></label></div>`);
       if (__props.savedFiltersOpen) {
-        _push(`<section class="library-filter-bar__saved"${ssrRenderAttr("aria-label", unref(t)("library.savedFiltersAria"))} data-v-4721da8c><div class="library-filter-bar__saved-heading" data-v-4721da8c><div data-v-4721da8c><strong data-v-4721da8c>${ssrInterpolate(unref(t)("library.savedFilters"))}</strong><small data-v-4721da8c>${ssrInterpolate(__props.currentFilterSummary)}</small></div><small data-v-4721da8c>${ssrInterpolate(unref(t)("library.savedFilterCount", { count: __props.savedFilters.length, max: 12 }))}</small></div><div class="library-filter-bar__save-row" data-v-4721da8c><input${ssrRenderAttr("value", __props.filterName)}${ssrRenderAttr("aria-label", unref(t)("library.savedFilterName"))}${ssrRenderAttr("placeholder", unref(t)("library.filterNamePlaceholder"))} data-v-4721da8c><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!__props.canSaveFilter || __props.savedFilterAtLimit) ? " disabled" : ""} data-v-4721da8c>${ssrInterpolate(unref(t)("library.saveFilter"))}</button></div>`);
+        _push(`<section class="library-filter-bar__saved"${ssrRenderAttr("aria-label", unref(t)("library.savedFiltersAria"))} data-v-2a8e9368><div class="library-filter-bar__saved-heading" data-v-2a8e9368><div data-v-2a8e9368><strong data-v-2a8e9368>${ssrInterpolate(unref(t)("library.savedFilters"))}</strong><small data-v-2a8e9368>${ssrInterpolate(__props.currentFilterSummary)}</small></div><small data-v-2a8e9368>${ssrInterpolate(unref(t)("library.savedFilterCount", { count: __props.savedFilters.length, max: 12 }))}</small></div><div class="library-filter-bar__save-row" data-v-2a8e9368><input${ssrRenderAttr("value", __props.filterName)}${ssrRenderAttr("aria-label", unref(t)("library.savedFilterName"))}${ssrRenderAttr("placeholder", unref(t)("library.filterNamePlaceholder"))} data-v-2a8e9368><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!__props.canSaveFilter || __props.savedFilterAtLimit) ? " disabled" : ""} data-v-2a8e9368>${ssrInterpolate(unref(t)("library.saveFilter"))}</button></div>`);
         if (__props.savedFilterAtLimit) {
-          _push(`<p class="error" data-v-4721da8c>${ssrInterpolate(unref(t)("library.savedFilterLimit"))}</p>`);
+          _push(`<p class="error" data-v-2a8e9368>${ssrInterpolate(unref(t)("library.savedFilterLimit"))}</p>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.savedFilterError) {
-          _push(`<p class="error" aria-live="assertive" data-v-4721da8c>${ssrInterpolate(__props.savedFilterError)}</p>`);
+          _push(`<p class="error" aria-live="assertive" data-v-2a8e9368>${ssrInterpolate(__props.savedFilterError)}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="library-filter-bar__saved-list" data-v-4721da8c>`);
+        _push(`<div class="library-filter-bar__saved-list" data-v-2a8e9368>`);
         if (!__props.savedFilters.length) {
-          _push(`<small class="muted" data-v-4721da8c>${ssrInterpolate(unref(t)("library.noSavedFilters"))}</small>`);
+          _push(`<small class="muted" data-v-2a8e9368>${ssrInterpolate(unref(t)("library.noSavedFilters"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         _push(`<!--[-->`);
         ssrRenderList(__props.savedFilters, (filter) => {
-          _push(`<span class="library-saved-filter" data-v-4721da8c><button type="button" data-v-4721da8c>${ssrInterpolate(filter.label)}</button><button class="destructive-button" type="button"${ssrRenderAttr("aria-label", unref(t)("library.deleteSavedFilter", { label: filter.label }))} data-v-4721da8c>×</button></span>`);
+          _push(`<span class="library-saved-filter" data-v-2a8e9368><button type="button" data-v-2a8e9368>${ssrInterpolate(filter.label)}</button><button class="destructive-button" type="button"${ssrRenderAttr("aria-label", unref(t)("library.deleteSavedFilter", { label: filter.label }))} data-v-2a8e9368>×</button></span>`);
         });
         _push(`<!--]--></div></section>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="library-filter-bar__bulk-actions" data-v-4721da8c>`);
+      _push(`<div class="library-filter-bar__bulk-actions" data-v-2a8e9368>`);
       ssrRenderSlot(_ctx.$slots, "bulk-actions", {}, null, _push, _parent);
       _push(`</div></header>`);
     };
   }
 });
-const _sfc_setup$1r = _sfc_main$1r.setup;
-_sfc_main$1r.setup = (props, ctx) => {
+const _sfc_setup$1s = _sfc_main$1s.setup;
+_sfc_main$1s.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryFilterBar.vue");
-  return _sfc_setup$1r ? _sfc_setup$1r(props, ctx) : void 0;
+  return _sfc_setup$1s ? _sfc_setup$1s(props, ctx) : void 0;
 };
-const LibraryFilterBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1r, [["__scopeId", "data-v-4721da8c"]]), { __name: "StudioLibraryFilterBar" });
+const LibraryFilterBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1s, [["__scopeId", "data-v-2a8e9368"]]), { __name: "StudioLibraryFilterBar" });
 const artifactKindFor = (item) => {
   if (item.media_kind === "video" || item.media_kind === "audio") return item.media_kind;
   return "image";
@@ -24098,7 +24437,7 @@ const musicRegenerationForMedia = (item) => {
     tiledDecode: typeof options.tiled_decode === "boolean" ? options.tiled_decode : true
   });
 };
-const _sfc_main$1q = /* @__PURE__ */ defineComponent({
+const _sfc_main$1r = /* @__PURE__ */ defineComponent({
   __name: "LibraryMediaCard",
   __ssrInlineRender: true,
   props: {
@@ -24159,14 +24498,14 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1q = _sfc_main$1q.setup;
-_sfc_main$1q.setup = (props, ctx) => {
+const _sfc_setup$1r = _sfc_main$1r.setup;
+_sfc_main$1r.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryMediaCard.vue");
-  return _sfc_setup$1q ? _sfc_setup$1q(props, ctx) : void 0;
+  return _sfc_setup$1r ? _sfc_setup$1r(props, ctx) : void 0;
 };
-const LibraryMediaCard = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1q, [["__scopeId", "data-v-20920072"]]), { __name: "StudioLibraryMediaCard" });
-const _sfc_main$1p = /* @__PURE__ */ defineComponent({
+const LibraryMediaCard = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1r, [["__scopeId", "data-v-20920072"]]), { __name: "StudioLibraryMediaCard" });
+const _sfc_main$1q = /* @__PURE__ */ defineComponent({
   __name: "LibraryImageGrid",
   __ssrInlineRender: true,
   props: {
@@ -24225,14 +24564,14 @@ const _sfc_main$1p = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1p = _sfc_main$1p.setup;
-_sfc_main$1p.setup = (props, ctx) => {
+const _sfc_setup$1q = _sfc_main$1q.setup;
+_sfc_main$1q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryImageGrid.vue");
-  return _sfc_setup$1p ? _sfc_setup$1p(props, ctx) : void 0;
+  return _sfc_setup$1q ? _sfc_setup$1q(props, ctx) : void 0;
 };
-const LibraryImageGrid = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1p, [["__scopeId", "data-v-84a421b9"]]), { __name: "StudioLibraryImageGrid" });
-const _sfc_main$1o = /* @__PURE__ */ defineComponent({
+const LibraryImageGrid = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1q, [["__scopeId", "data-v-84a421b9"]]), { __name: "StudioLibraryImageGrid" });
+const _sfc_main$1p = /* @__PURE__ */ defineComponent({
   __name: "LibraryAudioPlayer",
   __ssrInlineRender: true,
   props: {
@@ -24254,13 +24593,13 @@ const _sfc_main$1o = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1o = _sfc_main$1o.setup;
-_sfc_main$1o.setup = (props, ctx) => {
+const _sfc_setup$1p = _sfc_main$1p.setup;
+_sfc_main$1p.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryAudioPlayer.vue");
-  return _sfc_setup$1o ? _sfc_setup$1o(props, ctx) : void 0;
+  return _sfc_setup$1p ? _sfc_setup$1p(props, ctx) : void 0;
 };
-const LibraryAudioPlayer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1o, [["__scopeId", "data-v-9d276b4b"]]), { __name: "StudioLibraryAudioPlayer" });
+const LibraryAudioPlayer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1p, [["__scopeId", "data-v-9d276b4b"]]), { __name: "StudioLibraryAudioPlayer" });
 function criteriaFromLines(text) {
   const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (!lines.length || lines.length > 16 || lines.some((line) => line.length > 500)) throw new Error("invalid_image_criteria");
@@ -24271,7 +24610,7 @@ function effectiveCondition(report, id) {
   const correction = report.corrections.findLast((item) => item.criterion_id === id);
   return { ...original, originalVerdict: original.verdict, verdict: correction?.verdict ?? original.verdict, correction };
 }
-const _sfc_main$1n = /* @__PURE__ */ defineComponent({
+const _sfc_main$1o = /* @__PURE__ */ defineComponent({
   __name: "ImageConditionCheck",
   __ssrInlineRender: true,
   props: {
@@ -24400,19 +24739,19 @@ const _sfc_main$1n = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1n = _sfc_main$1n.setup;
-_sfc_main$1n.setup = (props, ctx) => {
+const _sfc_setup$1o = _sfc_main$1o.setup;
+_sfc_main$1o.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/ImageConditionCheck.vue");
-  return _sfc_setup$1n ? _sfc_setup$1n(props, ctx) : void 0;
+  return _sfc_setup$1o ? _sfc_setup$1o(props, ctx) : void 0;
 };
-const ImageConditionCheck = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1n, [["__scopeId", "data-v-ad0435b7"]]), { __name: "StudioLibraryImageConditionCheck" });
+const ImageConditionCheck = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1o, [["__scopeId", "data-v-ad0435b7"]]), { __name: "StudioLibraryImageConditionCheck" });
 const stageGroup = (stage) => `${stage.batch_index}:${stage.image_index}:${stage.seed}`;
 const availableStages = (settings, paths) => {
   if (!Array.isArray(settings.enhancement_stages)) return [];
   return settings.enhancement_stages.filter((x) => Boolean(x && typeof x === "object" && paths.includes(x.path) && typeof x.kind === "string" && Number.isInteger(x.batch_index) && Number.isInteger(x.image_index))).sort((a, b) => a.batch_index - b.batch_index || a.image_index - b.image_index || a.ordinal - b.ordinal);
 };
-const _sfc_main$1m = /* @__PURE__ */ defineComponent({
+const _sfc_main$1n = /* @__PURE__ */ defineComponent({
   __name: "EnhancementComparison",
   __ssrInlineRender: true,
   props: {
@@ -24522,14 +24861,14 @@ const _sfc_main$1m = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1m = _sfc_main$1m.setup;
-_sfc_main$1m.setup = (props, ctx) => {
+const _sfc_setup$1n = _sfc_main$1n.setup;
+_sfc_main$1n.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/EnhancementComparison.vue");
-  return _sfc_setup$1m ? _sfc_setup$1m(props, ctx) : void 0;
+  return _sfc_setup$1n ? _sfc_setup$1n(props, ctx) : void 0;
 };
-const EnhancementComparison = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1m, [["__scopeId", "data-v-b77dc0e4"]]), { __name: "StudioLibraryEnhancementComparison" });
-const _sfc_main$1l = /* @__PURE__ */ defineComponent({
+const EnhancementComparison = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1n, [["__scopeId", "data-v-b77dc0e4"]]), { __name: "StudioLibraryEnhancementComparison" });
+const _sfc_main$1m = /* @__PURE__ */ defineComponent({
   __name: "LibraryVideoPlayer",
   __ssrInlineRender: true,
   props: {
@@ -24555,14 +24894,14 @@ const _sfc_main$1l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1l = _sfc_main$1l.setup;
-_sfc_main$1l.setup = (props, ctx) => {
+const _sfc_setup$1m = _sfc_main$1m.setup;
+_sfc_main$1m.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryVideoPlayer.vue");
-  return _sfc_setup$1l ? _sfc_setup$1l(props, ctx) : void 0;
+  return _sfc_setup$1m ? _sfc_setup$1m(props, ctx) : void 0;
 };
-const LibraryVideoPlayer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1l, [["__scopeId", "data-v-28bede13"]]), { __name: "StudioLibraryVideoPlayer" });
-const _sfc_main$1k = /* @__PURE__ */ defineComponent({
+const LibraryVideoPlayer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1m, [["__scopeId", "data-v-28bede13"]]), { __name: "StudioLibraryVideoPlayer" });
+const _sfc_main$1l = /* @__PURE__ */ defineComponent({
   __name: "LibraryVideoSequenceDetails",
   __ssrInlineRender: true,
   props: {
@@ -24622,14 +24961,14 @@ const _sfc_main$1k = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1k = _sfc_main$1k.setup;
-_sfc_main$1k.setup = (props, ctx) => {
+const _sfc_setup$1l = _sfc_main$1l.setup;
+_sfc_main$1l.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryVideoSequenceDetails.vue");
-  return _sfc_setup$1k ? _sfc_setup$1k(props, ctx) : void 0;
+  return _sfc_setup$1l ? _sfc_setup$1l(props, ctx) : void 0;
 };
-const LibraryVideoSequenceDetails = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1k, [["__scopeId", "data-v-1cc196d1"]]), { __name: "StudioLibraryVideoSequenceDetails" });
-const _sfc_main$1j = /* @__PURE__ */ defineComponent({
+const LibraryVideoSequenceDetails = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1l, [["__scopeId", "data-v-1cc196d1"]]), { __name: "StudioLibraryVideoSequenceDetails" });
+const _sfc_main$1k = /* @__PURE__ */ defineComponent({
   __name: "LibraryDetailsInspector",
   __ssrInlineRender: true,
   props: {
@@ -24661,7 +25000,7 @@ const _sfc_main$1j = /* @__PURE__ */ defineComponent({
       _push(`<aside${ssrRenderAttrs(mergeProps({
         class: "library-details-inspector library-detail",
         "aria-label": unref(t)("library.selectedMediaDetailsAria")
-      }, _attrs))} data-v-b704613d><div class="library-panel-title library-panel-title--sticky" data-v-b704613d><span data-v-b704613d>${ssrInterpolate(unref(t)("library.details"))}</span><small data-v-b704613d>${ssrInterpolate(unref(t)("library.selectedCount", { count: __props.selectedCount }))}</small></div>`);
+      }, _attrs))} data-v-1c1deff6><div class="library-panel-title library-panel-title--sticky" data-v-1c1deff6><span data-v-1c1deff6>${ssrInterpolate(unref(t)("library.details"))}</span><small data-v-1c1deff6>${ssrInterpolate(unref(t)("library.selectedCount", { count: __props.selectedCount }))}</small></div>`);
       if (__props.item) {
         _push(`<!--[-->`);
         _push(ssrRenderComponent(MakingVideo, { item: __props.item }, null, _parent));
@@ -24670,24 +25009,24 @@ const _sfc_main$1j = /* @__PURE__ */ defineComponent({
           onStarted: ($event) => emit("open-generate")
         }, null, _parent));
         if (__props.selectableOutputs.length > 1) {
-          _push(`<label class="field library-output-picker" data-v-b704613d><span data-v-b704613d>${ssrInterpolate(unref(t)("library.output"))}</span><select${ssrRenderAttr("value", __props.currentOutputPath)}${ssrRenderAttr("aria-label", unref(t)("library.output"))} data-v-b704613d><!--[-->`);
+          _push(`<label class="field library-output-picker" data-v-1c1deff6><span data-v-1c1deff6>${ssrInterpolate(unref(t)("library.output"))}</span><select${ssrRenderAttr("value", __props.currentOutputPath)}${ssrRenderAttr("aria-label", unref(t)("library.output"))} data-v-1c1deff6><!--[-->`);
           ssrRenderList(__props.selectableOutputs, (output) => {
-            _push(`<option${ssrRenderAttr("value", output.path)} data-v-b704613d>${ssrInterpolate(unref(t)(`outputKind.${output.kind}`))} · ${ssrInterpolate(__props.outputFilename(output.path))}</option>`);
+            _push(`<option${ssrRenderAttr("value", output.path)} data-v-1c1deff6>${ssrInterpolate(unref(t)(`outputKind.${output.kind}`))} · ${ssrInterpolate(__props.outputFilename(output.path))}</option>`);
           });
           _push(`<!--]--></select></label>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.mediaView?.kind === "image" && __props.currentOutputPath) {
-          _push(`<button class="library-detail__preview-button" type="button"${ssrRenderAttr("aria-label", unref(t)("library.expand"))} data-v-b704613d><img class="library-detail__preview"${ssrRenderAttr("src", __props.outputUrl(__props.currentOutputPath))}${ssrRenderAttr("alt", __props.outputFilename(__props.currentOutputPath))} data-v-b704613d></button>`);
+          _push(`<button class="library-detail__preview-button" type="button"${ssrRenderAttr("aria-label", unref(t)("library.expand"))} data-v-1c1deff6><img class="library-detail__preview"${ssrRenderAttr("src", __props.outputUrl(__props.currentOutputPath))}${ssrRenderAttr("alt", __props.outputFilename(__props.currentOutputPath))} data-v-1c1deff6></button>`);
         } else if (__props.mediaView?.kind === "video" && __props.mediaSrc) {
-          _push(`<button class="library-detail__video-preview" type="button"${ssrRenderAttr("aria-label", unref(t)("library.playVideo"))} data-v-b704613d>`);
+          _push(`<button class="library-detail__video-preview" type="button"${ssrRenderAttr("aria-label", unref(t)("library.playVideo"))} data-v-1c1deff6>`);
           if (__props.posterSrc) {
-            _push(`<img${ssrRenderAttr("src", __props.posterSrc)}${ssrRenderAttr("alt", unref(t)("library.videoPosterAlt", { id: __props.item.id }))} data-v-b704613d>`);
+            _push(`<img${ssrRenderAttr("src", __props.posterSrc)}${ssrRenderAttr("alt", unref(t)("library.videoPosterAlt", { id: __props.item.id }))} data-v-1c1deff6>`);
           } else {
-            _push(`<span class="library-detail__video-placeholder" aria-hidden="true" data-v-b704613d>▶</span>`);
+            _push(`<span class="library-detail__video-placeholder" aria-hidden="true" data-v-1c1deff6>▶</span>`);
           }
-          _push(`<span class="library-detail__video-action" data-v-b704613d><span aria-hidden="true" data-v-b704613d>▶</span>${ssrInterpolate(unref(t)("library.playVideo"))}</span></button>`);
+          _push(`<span class="library-detail__video-action" data-v-1c1deff6><span aria-hidden="true" data-v-1c1deff6>▶</span>${ssrInterpolate(unref(t)("library.playVideo"))}</span></button>`);
         } else if (__props.mediaView?.kind === "audio" && __props.mediaSrc) {
           _push(ssrRenderComponent(LibraryAudioPlayer, {
             src: __props.mediaSrc,
@@ -24697,7 +25036,7 @@ const _sfc_main$1j = /* @__PURE__ */ defineComponent({
           _push(`<!---->`);
         }
         if (__props.mediaView && __props.mediaView.kind !== "image") {
-          _push(`<section class="library-detail-section library-detail-media" data-v-b704613d><div class="library-detail-section__heading" data-v-b704613d><strong data-v-b704613d>${ssrInterpolate(unref(t)("library.mediaDetails"))}</strong><small data-v-b704613d>${ssrInterpolate(unref(t)(`library.mediaKind.${__props.mediaView.kind}`))}</small></div><dl class="library-detail-list" data-v-b704613d><dt data-v-b704613d>${ssrInterpolate(unref(t)("library.duration"))}</dt><dd data-v-b704613d>${ssrInterpolate(__props.mediaView.durationLabel || unref(t)("library.notAvailable"))}</dd><dt data-v-b704613d>${ssrInterpolate(unref(t)("library.resolution"))}</dt><dd data-v-b704613d>${ssrInterpolate(__props.mediaView.resolutionLabel || unref(t)("library.notAvailable"))}</dd><dt data-v-b704613d>${ssrInterpolate(unref(t)("library.encoding"))}</dt><dd data-v-b704613d>${ssrInterpolate(__props.mediaView.detailLabel || unref(t)("library.notAvailable"))}</dd></dl></section>`);
+          _push(`<section class="library-detail-section library-detail-media" data-v-1c1deff6><div class="library-detail-section__heading" data-v-1c1deff6><strong data-v-1c1deff6>${ssrInterpolate(unref(t)("library.mediaDetails"))}</strong><small data-v-1c1deff6>${ssrInterpolate(unref(t)(`library.mediaKind.${__props.mediaView.kind}`))}</small></div><dl class="library-detail-list" data-v-1c1deff6><dt data-v-1c1deff6>${ssrInterpolate(unref(t)("library.duration"))}</dt><dd data-v-1c1deff6>${ssrInterpolate(__props.mediaView.durationLabel || unref(t)("library.notAvailable"))}</dd><dt data-v-1c1deff6>${ssrInterpolate(unref(t)("library.resolution"))}</dt><dd data-v-1c1deff6>${ssrInterpolate(__props.mediaView.resolutionLabel || unref(t)("library.notAvailable"))}</dd><dt data-v-1c1deff6>${ssrInterpolate(unref(t)("library.encoding"))}</dt><dd data-v-1c1deff6>${ssrInterpolate(__props.mediaView.detailLabel || unref(t)("library.notAvailable"))}</dd></dl></section>`);
         } else {
           _push(`<!---->`);
         }
@@ -24710,15 +25049,15 @@ const _sfc_main$1j = /* @__PURE__ */ defineComponent({
           _push(`<!---->`);
         }
         if (__props.videoSequenceError) {
-          _push(`<p class="error" role="alert" data-v-b704613d>${ssrInterpolate(__props.videoSequenceError)}</p>`);
+          _push(`<p class="error" role="alert" data-v-1c1deff6>${ssrInterpolate(__props.videoSequenceError)}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<section class="library-detail-section" data-v-b704613d><div class="library-detail-section__heading" data-v-b704613d><strong data-v-b704613d>${ssrInterpolate(unref(t)("library.detailGeneration"))}</strong><small data-v-b704613d>${ssrInterpolate(unref(t)("library.detailGenerationHelp"))}</small></div><dl class="library-detail-list" data-v-b704613d><!--[-->`);
+        _push(`<section class="library-detail-section" data-v-1c1deff6><div class="library-detail-section__heading" data-v-1c1deff6><strong data-v-1c1deff6>${ssrInterpolate(unref(t)("library.detailGeneration"))}</strong><small data-v-1c1deff6>${ssrInterpolate(unref(t)("library.detailGenerationHelp"))}</small></div><dl class="library-detail-list" data-v-1c1deff6><!--[-->`);
         ssrRenderList(__props.detailRows, (row) => {
-          _push(`<!--[--><dt data-v-b704613d>${ssrInterpolate(row.label)}</dt><dd data-v-b704613d>${ssrInterpolate(row.value)}</dd><!--]-->`);
+          _push(`<!--[--><dt data-v-1c1deff6>${ssrInterpolate(row.label)}</dt><dd data-v-1c1deff6>${ssrInterpolate(row.value)}</dd><!--]-->`);
         });
-        _push(`<!--]--></dl></section><section class="library-detail-section" data-v-b704613d><div class="library-detail-section__heading" data-v-b704613d><strong data-v-b704613d>${ssrInterpolate(unref(t)("library.detailPrompt"))}</strong><small data-v-b704613d>${ssrInterpolate(unref(t)("library.detailPromptHelp"))}</small></div>`);
+        _push(`<!--]--></dl></section><section class="library-detail-section" data-v-1c1deff6><div class="library-detail-section__heading" data-v-1c1deff6><strong data-v-1c1deff6>${ssrInterpolate(unref(t)("library.detailPrompt"))}</strong><small data-v-1c1deff6>${ssrInterpolate(unref(t)("library.detailPromptHelp"))}</small></div>`);
         _push(ssrRenderComponent(PromptInterpretation, { item: __props.item }, null, _parent));
         _push(ssrRenderComponent(WordMaskEdit, {
           item: __props.item,
@@ -24730,12 +25069,20 @@ const _sfc_main$1j = /* @__PURE__ */ defineComponent({
           output: __props.selectableOutputs.find((output) => output.path === __props.currentOutputPath),
           onApplied: ($event) => emit("open-generate")
         }, null, _parent));
-        _push(`<label class="field library-detail-field" data-v-b704613d><span data-v-b704613d>${ssrInterpolate(unref(t)("library.expandedPrompt"))}</span><textarea readonly rows="6" data-v-b704613d>${ssrInterpolate(__props.item.expanded_prompt || __props.item.prompt)}</textarea></label></section><section class="library-detail-section" data-v-b704613d><div class="library-detail-section__heading" data-v-b704613d><strong data-v-b704613d>${ssrInterpolate(unref(t)("library.detailCuration"))}</strong><small data-v-b704613d>${ssrInterpolate(unref(t)("library.detailCurationHelp"))}</small></div>`);
+        _push(`<label class="field library-detail-field" data-v-1c1deff6><span data-v-1c1deff6>${ssrInterpolate(unref(t)("library.expandedPrompt"))}</span><textarea readonly rows="6" data-v-1c1deff6>${ssrInterpolate(__props.item.expanded_prompt || __props.item.prompt)}</textarea></label></section><section class="library-detail-section" data-v-1c1deff6><div class="library-detail-section__heading" data-v-1c1deff6><strong data-v-1c1deff6>${ssrInterpolate(unref(t)("library.detailCuration"))}</strong><small data-v-1c1deff6>${ssrInterpolate(unref(t)("library.detailCurationHelp"))}</small></div>`);
         if (__props.mediaView?.kind === "image" && __props.currentOutputPath) {
           _push(ssrRenderComponent(ImageConditionCheck, {
             "generation-id": __props.item.id,
             "output-path": __props.currentOutputPath,
             "image-url": __props.outputUrl(__props.currentOutputPath)
+          }, null, _parent));
+        } else {
+          _push(`<!---->`);
+        }
+        if (__props.mediaView?.kind === "image" && __props.currentOutputPath) {
+          _push(ssrRenderComponent(BodyPartReview, {
+            path: __props.currentOutputPath,
+            onEdit: ($event) => emit("open-image-mask", $event)
           }, null, _parent));
         } else {
           _push(`<!---->`);
@@ -24749,58 +25096,58 @@ const _sfc_main$1j = /* @__PURE__ */ defineComponent({
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="library-detail-curation-row" data-v-b704613d><label class="field" data-v-b704613d><span data-v-b704613d>${ssrInterpolate(unref(t)("library.rating"))}</span><select${ssrRenderAttr("value", __props.item.rating || 0)}${ssrRenderAttr("aria-label", unref(t)("library.rating"))} data-v-b704613d><!--[-->`);
+        _push(`<div class="library-detail-curation-row" data-v-1c1deff6><label class="field" data-v-1c1deff6><span data-v-1c1deff6>${ssrInterpolate(unref(t)("library.rating"))}</span><select${ssrRenderAttr("value", __props.item.rating || 0)}${ssrRenderAttr("aria-label", unref(t)("library.rating"))} data-v-1c1deff6><!--[-->`);
         ssrRenderList([0, 1, 2, 3, 4, 5], (rating) => {
-          _push(`<option${ssrRenderAttr("value", rating)} data-v-b704613d>${ssrInterpolate(rating)}</option>`);
+          _push(`<option${ssrRenderAttr("value", rating)} data-v-1c1deff6>${ssrInterpolate(rating)}</option>`);
         });
-        _push(`<!--]--></select></label><label class="check-field library-detail-check" data-v-b704613d><input${ssrIncludeBooleanAttr(__props.item.favorite) ? " checked" : ""} type="checkbox" data-v-b704613d><span data-v-b704613d>${ssrInterpolate(unref(t)("library.favorite"))}</span></label></div><label class="field library-detail-field" data-v-b704613d><span data-v-b704613d>${ssrInterpolate(unref(t)("library.creatorTags"))}</span><input${ssrRenderAttr("value", __props.tags)}${ssrRenderAttr("placeholder", unref(t)("library.tagsPlaceholder"))} data-v-b704613d></label><div class="library-tag-board" data-v-b704613d><div data-v-b704613d><span data-v-b704613d>${ssrInterpolate(unref(t)("library.savedCreatorTags"))}</span><div data-v-b704613d><!--[-->`);
+        _push(`<!--]--></select></label><label class="check-field library-detail-check" data-v-1c1deff6><input${ssrIncludeBooleanAttr(__props.item.favorite) ? " checked" : ""} type="checkbox" data-v-1c1deff6><span data-v-1c1deff6>${ssrInterpolate(unref(t)("library.favorite"))}</span></label></div><label class="field library-detail-field" data-v-1c1deff6><span data-v-1c1deff6>${ssrInterpolate(unref(t)("library.creatorTags"))}</span><input${ssrRenderAttr("value", __props.tags)}${ssrRenderAttr("placeholder", unref(t)("library.tagsPlaceholder"))} data-v-1c1deff6></label><div class="library-tag-board" data-v-1c1deff6><div data-v-1c1deff6><span data-v-1c1deff6>${ssrInterpolate(unref(t)("library.savedCreatorTags"))}</span><div data-v-1c1deff6><!--[-->`);
         ssrRenderList(__props.creatorTags, (tag) => {
-          _push(`<small class="library-tag-chip" data-v-b704613d>${ssrInterpolate(tag)}</small>`);
+          _push(`<small class="library-tag-chip" data-v-1c1deff6>${ssrInterpolate(tag)}</small>`);
         });
         _push(`<!--]-->`);
         if (!__props.creatorTags.length) {
-          _push(`<small class="library-tag-chip library-tag-chip--empty" data-v-b704613d>${ssrInterpolate(unref(t)("library.none"))}</small>`);
+          _push(`<small class="library-tag-chip library-tag-chip--empty" data-v-1c1deff6>${ssrInterpolate(unref(t)("library.none"))}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</div></div><div data-v-b704613d><span data-v-b704613d>${ssrInterpolate(unref(t)("library.promptTags"))}</span><div data-v-b704613d><!--[-->`);
+        _push(`</div></div><div data-v-1c1deff6><span data-v-1c1deff6>${ssrInterpolate(unref(t)("library.promptTags"))}</span><div data-v-1c1deff6><!--[-->`);
         ssrRenderList(__props.promptTags, (tag) => {
-          _push(`<small class="library-tag-chip" data-v-b704613d>${ssrInterpolate(tag)}</small>`);
+          _push(`<small class="library-tag-chip" data-v-1c1deff6>${ssrInterpolate(tag)}</small>`);
         });
         _push(`<!--]-->`);
         if (!__props.promptTags.length) {
-          _push(`<small class="library-tag-chip library-tag-chip--empty" data-v-b704613d>${ssrInterpolate(unref(t)("library.none"))}</small>`);
+          _push(`<small class="library-tag-chip library-tag-chip--empty" data-v-1c1deff6>${ssrInterpolate(unref(t)("library.none"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.hiddenPromptTagCount) {
-          _push(`<small class="library-tag-chip library-tag-chip--muted" data-v-b704613d>${ssrInterpolate(unref(t)("library.moreTags", { count: __props.hiddenPromptTagCount }))}</small>`);
+          _push(`<small class="library-tag-chip library-tag-chip--muted" data-v-1c1deff6>${ssrInterpolate(unref(t)("library.moreTags", { count: __props.hiddenPromptTagCount }))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.internalPromptTagCount) {
-          _push(`<small class="library-tag-chip library-tag-chip--muted" data-v-b704613d>${ssrInterpolate(unref(t)("library.internalHidden", { count: __props.internalPromptTagCount }))}</small>`);
+          _push(`<small class="library-tag-chip library-tag-chip--muted" data-v-1c1deff6>${ssrInterpolate(unref(t)("library.internalHidden", { count: __props.internalPromptTagCount }))}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</div></div></div><label class="field library-detail-field" data-v-b704613d><span data-v-b704613d>${ssrInterpolate(unref(t)("library.notes"))}</span><textarea rows="4" data-v-b704613d>${ssrInterpolate(__props.notes)}</textarea></label></section><details class="library-detail-section library-metadata" data-v-b704613d><summary data-v-b704613d>${ssrInterpolate(unref(t)("library.metadata"))}</summary><pre data-v-b704613d>${ssrInterpolate(__props.metadataText)}</pre></details>`);
+        _push(`</div></div></div><label class="field library-detail-field" data-v-1c1deff6><span data-v-1c1deff6>${ssrInterpolate(unref(t)("library.notes"))}</span><textarea rows="4" data-v-1c1deff6>${ssrInterpolate(__props.notes)}</textarea></label></section><details class="library-detail-section library-metadata" data-v-1c1deff6><summary data-v-1c1deff6>${ssrInterpolate(unref(t)("library.metadata"))}</summary><pre data-v-1c1deff6>${ssrInterpolate(__props.metadataText)}</pre></details>`);
         ssrRenderSlot(_ctx.$slots, "actions", {}, null, _push, _parent);
         _push(`<!--]-->`);
       } else {
-        _push(`<div class="empty" data-v-b704613d>${ssrInterpolate(unref(t)("library.selectMedia"))}</div>`);
+        _push(`<div class="empty" data-v-1c1deff6>${ssrInterpolate(unref(t)("library.selectMedia"))}</div>`);
       }
       _push(`</aside>`);
     };
   }
 });
-const _sfc_setup$1j = _sfc_main$1j.setup;
-_sfc_main$1j.setup = (props, ctx) => {
+const _sfc_setup$1k = _sfc_main$1k.setup;
+_sfc_main$1k.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryDetailsInspector.vue");
-  return _sfc_setup$1j ? _sfc_setup$1j(props, ctx) : void 0;
+  return _sfc_setup$1k ? _sfc_setup$1k(props, ctx) : void 0;
 };
-const LibraryDetailsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1j, [["__scopeId", "data-v-b704613d"]]), { __name: "StudioLibraryDetailsInspector" });
-const _sfc_main$1i = /* @__PURE__ */ defineComponent({
+const LibraryDetailsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1k, [["__scopeId", "data-v-1c1deff6"]]), { __name: "StudioLibraryDetailsInspector" });
+const _sfc_main$1j = /* @__PURE__ */ defineComponent({
   __name: "LibrarySelectionInspector",
   __ssrInlineRender: true,
   props: {
@@ -24881,13 +25228,13 @@ const _sfc_main$1i = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1i = _sfc_main$1i.setup;
-_sfc_main$1i.setup = (props, ctx) => {
+const _sfc_setup$1j = _sfc_main$1j.setup;
+_sfc_main$1j.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibrarySelectionInspector.vue");
-  return _sfc_setup$1i ? _sfc_setup$1i(props, ctx) : void 0;
+  return _sfc_setup$1j ? _sfc_setup$1j(props, ctx) : void 0;
 };
-const LibrarySelectionInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1i, [["__scopeId", "data-v-c794b356"]]), { __name: "StudioLibrarySelectionInspector" });
+const LibrarySelectionInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1j, [["__scopeId", "data-v-c794b356"]]), { __name: "StudioLibrarySelectionInspector" });
 function seriesRequest(images, reference, text, providerId, language) {
   if (images.length < 2 || images.length > 24 || !Number.isInteger(reference) || !images[reference] || new Set(images.map((x) => x.output_path.toLowerCase().replaceAll("\\", "/"))).size !== images.length) throw new Error("invalid_series_selection");
   return {
@@ -24898,7 +25245,7 @@ function seriesRequest(images, reference, text, providerId, language) {
     language
   };
 }
-const _sfc_main$1h = /* @__PURE__ */ defineComponent({
+const _sfc_main$1i = /* @__PURE__ */ defineComponent({
   __name: "SeriesConsistency",
   __ssrInlineRender: true,
   props: {
@@ -25038,13 +25385,137 @@ const _sfc_main$1h = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const _sfc_setup$1i = _sfc_main$1i.setup;
+_sfc_main$1i.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/SeriesConsistency.vue");
+  return _sfc_setup$1i ? _sfc_setup$1i(props, ctx) : void 0;
+};
+const SeriesConsistency = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1i, [["__scopeId", "data-v-44b3aa28"]]), { __name: "StudioLibrarySeriesConsistency" });
+const _sfc_main$1h = /* @__PURE__ */ defineComponent({
+  __name: "BodyPartComparison",
+  __ssrInlineRender: true,
+  props: {
+    images: {}
+  },
+  emits: ["edit"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const emit = __emit;
+    const { t } = useAsteriaI18n();
+    const dialog = ref(null), opened = ref(false), loading = ref(false), busy = ref(false);
+    const rows = ref([]), part = ref("hand"), zoom = ref(1), error = ref(""), progress = ref(0);
+    const detector = ref(false);
+    let operation = "", controller = null;
+    const candidates = (row) => row.review ? comparisonCandidates(row.review, part.value) : [];
+    const candidate = (row) => candidates(row).find((value) => value.id === row.choice);
+    const missing = computed(() => rows.value.filter((row) => !candidates(row).length));
+    const api = (path, options = {}) => $fetch(path, { baseURL: useApiBase(), timeout: 195e3, retry: 0, ...options });
+    const stop = () => {
+      const id = operation;
+      operation = "";
+      controller?.abort();
+      controller = null;
+      busy.value = false;
+      loading.value = false;
+      if (id) void api(`/api/body-review/cancel/${id}`, { method: "POST", timeout: 1e4 }).catch(() => {
+      });
+    };
+    const close = () => {
+      stop();
+      opened.value = false;
+      dialog.value?.close();
+    };
+    const accept = (row, value) => {
+      if (!reviewMatchesSource(value, row.path)) throw new Error("source mismatch");
+      row.review = value;
+      row.state = "ready";
+      if (!candidates(row).some((item) => item.id === row.choice)) row.choice = initialComparisonCandidate(value, part.value);
+    };
+    const imageFailed = (row) => {
+      row.review = null;
+      row.choice = "";
+      row.state = "error";
+    };
+    const edit = (value) => {
+      close();
+      emit("edit", value);
+    };
+    watch(part, () => {
+      for (const row of rows.value) row.choice = row.review ? initialComparisonCandidate(row.review, part.value) : "";
+    });
+    watch(() => props.images.map((row) => `${row.id}:${row.path}`).join("|"), close);
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<!--[--><button type="button"${ssrIncludeBooleanAttr(__props.images.length < 2 || __props.images.length > 32) ? " disabled" : ""} data-v-90353210>${ssrInterpolate(unref(t)("bodyCompare.open"))}</button>`);
+      ssrRenderTeleport(_push, (_push2) => {
+        _push2(`<dialog class="body-comparison"${ssrRenderAttr("aria-label", unref(t)("bodyCompare.title"))} data-v-90353210>`);
+        if (unref(opened)) {
+          _push2(`<!--[--><header data-v-90353210><h2 data-v-90353210>${ssrInterpolate(unref(t)("bodyCompare.title"))}</h2><button type="button"${ssrRenderAttr("aria-label", unref(t)("promptInterpretation.close"))} data-v-90353210>×</button></header><p data-v-90353210>${ssrInterpolate(unref(t)("bodyCompare.help"))}</p><div class="body-comparison-controls" data-v-90353210><label data-v-90353210>${ssrInterpolate(unref(t)("bodyCompare.kind"))}<select${ssrIncludeBooleanAttr(unref(busy) || unref(loading)) ? " disabled" : ""} data-v-90353210><!--[-->`);
+          ssrRenderList(["hand", "arm", "torso", "head", "leg", "foot", "person"], (value) => {
+            _push2(`<option${ssrRenderAttr("value", value)} data-v-90353210${ssrIncludeBooleanAttr(Array.isArray(unref(part)) ? ssrLooseContain(unref(part), value) : ssrLooseEqual(unref(part), value)) ? " selected" : ""}>${ssrInterpolate(unref(t)(`bodyReview.part.${value}`))}</option>`);
+          });
+          _push2(`<!--]--></select></label><label data-v-90353210>${ssrInterpolate(unref(t)("library.zoom"))}<input${ssrRenderAttr("value", unref(zoom))} type="range" min=".5" max="3" step=".1" data-v-90353210></label><button type="button"${ssrIncludeBooleanAttr(unref(busy) || unref(loading) || !unref(detector) || !unref(missing).length) ? " disabled" : ""} data-v-90353210>${ssrInterpolate(unref(t)("bodyCompare.detectMissing", { count: unref(missing).length }))}</button>`);
+          if (unref(busy)) {
+            _push2(`<button type="button" data-v-90353210>${ssrInterpolate(unref(t)("bodyReview.stop"))}</button>`);
+          } else {
+            _push2(`<!---->`);
+          }
+          _push2(`</div><p role="status" data-v-90353210>${ssrInterpolate(unref(loading) ? unref(t)("bodyCompare.loading") : unref(busy) ? unref(t)("bodyCompare.progress", { count: unref(progress) }) : unref(t)("bodyCompare.count", { count: unref(rows).length }))}</p>`);
+          if (!unref(detector) && !unref(loading)) {
+            _push2(`<p data-v-90353210>${ssrInterpolate(unref(t)("bodyReview.noDetector"))}</p>`);
+          } else {
+            _push2(`<!---->`);
+          }
+          if (unref(error)) {
+            _push2(`<p role="alert" data-v-90353210>${ssrInterpolate(unref(error))}</p>`);
+          } else {
+            _push2(`<!---->`);
+          }
+          _push2(`<p data-v-90353210>${ssrInterpolate(unref(t)("bodyCompare.scrollHelp"))}</p><div class="body-comparison-rail" tabindex="0"${ssrRenderAttr("aria-label", unref(t)("bodyCompare.rail"))} data-v-90353210><!--[-->`);
+          ssrRenderList(unref(rows), (row) => {
+            _push2(`<article class="body-comparison-card" data-v-90353210><h3 data-v-90353210>#${ssrInterpolate(row.id)} · ${ssrInterpolate(row.profile)}</h3><small data-v-90353210>${ssrInterpolate(row.path.replaceAll("\\", "/").split("/").pop())}</small><label data-v-90353210>${ssrInterpolate(unref(t)("bodyCompare.candidate"))}<select${ssrIncludeBooleanAttr(unref(busy) || unref(loading) || !candidates(row).length) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("bodyCompare.choose", { id: row.id }))} data-v-90353210><option value="" data-v-90353210${ssrIncludeBooleanAttr(Array.isArray(row.choice) ? ssrLooseContain(row.choice, "") : ssrLooseEqual(row.choice, "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("bodyCompare.select"))}</option><!--[-->`);
+            ssrRenderList(candidates(row), (value, index) => {
+              _push2(`<option${ssrRenderAttr("value", value.id)} data-v-90353210${ssrIncludeBooleanAttr(Array.isArray(row.choice) ? ssrLooseContain(row.choice, value.id) : ssrLooseEqual(row.choice, value.id)) ? " selected" : ""}>${ssrInterpolate(index + 1)} · ${ssrInterpolate(unref(t)(`bodyReview.part.${value.label}`))} ${ssrInterpolate(value.score == null ? "" : Math.round(value.score * 100) + "%")}</option>`);
+            });
+            _push2(`<!--]--></select></label>`);
+            if (row.review && candidate(row)) {
+              _push2(ssrRenderComponent(ImageReviewStage, {
+                src: ("useApiUrl" in _ctx ? _ctx.useApiUrl : unref(useApiUrl))(`/api/body-review/${row.review.id}/source`),
+                label: unref(t)("bodyCompare.crop", { id: row.id, part: unref(t)(`bodyReview.part.${unref(part)}`) }),
+                zoom: unref(zoom),
+                region: candidate(row).box,
+                width: row.review.width,
+                height: row.review.height,
+                onError: ($event) => imageFailed(row)
+              }, null, _parent));
+            } else {
+              _push2(`<div class="body-comparison-empty" data-v-90353210>${ssrInterpolate(row.state === "loading" ? unref(t)("bodyCompare.loading") : row.state === "error" ? unref(t)("bodyReview.loadError") : !candidates(row).length ? unref(t)("bodyCompare.missing") : unref(t)("bodyCompare.select"))}</div>`);
+            }
+            _push2(ssrRenderComponent(BodyPartReview, {
+              path: row.path,
+              disabled: unref(busy) || unref(loading),
+              onReviewed: ($event) => accept(row, $event),
+              onEdit: edit
+            }, null, _parent));
+            _push2(`</article>`);
+          });
+          _push2(`<!--]--></div><!--]-->`);
+        } else {
+          _push2(`<!---->`);
+        }
+        _push2(`</dialog>`);
+      }, "body", false, _parent);
+      _push(`<!--]-->`);
+    };
+  }
+});
 const _sfc_setup$1h = _sfc_main$1h.setup;
 _sfc_main$1h.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/SeriesConsistency.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/BodyPartComparison.vue");
   return _sfc_setup$1h ? _sfc_setup$1h(props, ctx) : void 0;
 };
-const SeriesConsistency = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1h, [["__scopeId", "data-v-44b3aa28"]]), { __name: "StudioLibrarySeriesConsistency" });
+const BodyPartComparison = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1h, [["__scopeId", "data-v-90353210"]]), { __name: "StudioBodyPartComparison" });
 const _sfc_main$1g = /* @__PURE__ */ defineComponent({
   __name: "LibraryActionQueueDrawer",
   __ssrInlineRender: true,
@@ -25325,72 +25796,87 @@ const _sfc_main$1d = /* @__PURE__ */ defineComponent({
       const path = props.currentOutputPath(item);
       return Boolean(path && !failedOutputPaths.has(path));
     };
+    const onOutputLoad = (item) => {
+      failedOutputPaths.delete(props.currentOutputPath(item));
+    };
+    const onOutputError = (item) => {
+      const path = props.currentOutputPath(item);
+      if (path) {
+        failedOutputPaths.add(path);
+      }
+    };
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "library-compare",
         "aria-label": unref(t)("library.imageCompareAria")
-      }, _attrs))} data-v-2050c1a2>`);
+      }, _attrs))} data-v-4bfcf40b>`);
       if (__props.items.length >= 2) {
-        _push(`<!--[--><header class="library-compare__toolbar" data-v-2050c1a2><div data-v-2050c1a2><strong data-v-2050c1a2>${ssrInterpolate(unref(t)("library.compareTitle"))}</strong><small data-v-2050c1a2>${ssrInterpolate(unref(t)("library.compareSelectionSummary", { count: __props.items.length, zoom: __props.zoomLabel }))}</small></div></header>`);
+        _push(`<!--[--><header class="library-compare__toolbar" data-v-4bfcf40b><div data-v-4bfcf40b><strong data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.compareTitle"))}</strong><small data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.compareSelectionSummary", { count: __props.items.length, zoom: __props.zoomLabel }))}</small></div></header>`);
         if (__props.exportMessage) {
-          _push(`<small class="muted library-export-message" data-v-2050c1a2>${ssrInterpolate(__props.exportMessage)}</small>`);
+          _push(`<small class="muted library-export-message" data-v-4bfcf40b>${ssrInterpolate(__props.exportMessage)}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="library-compare__sides" data-v-2050c1a2><!--[-->`);
+        _push(`<div class="library-compare__sides" data-v-4bfcf40b><!--[-->`);
         ssrRenderList(__props.items, (item, index) => {
-          _push(`<article class="library-compare__side" data-v-2050c1a2><header class="library-compare__side-header" data-v-2050c1a2><div data-v-2050c1a2><strong data-v-2050c1a2>${ssrInterpolate(unref(t)(`library.compareSide.${sideKey(index)}`))}</strong><small data-v-2050c1a2>#${ssrInterpolate(item.id)} / ${ssrInterpolate(item.profile)}</small></div>`);
+          _push(`<article class="library-compare__side" data-v-4bfcf40b><header class="library-compare__side-header" data-v-4bfcf40b><div data-v-4bfcf40b><strong data-v-4bfcf40b>${ssrInterpolate(unref(t)(`library.compareSide.${sideKey(index)}`))}</strong><small data-v-4bfcf40b>#${ssrInterpolate(item.id)} / ${ssrInterpolate(item.profile)}</small></div>`);
           if (__props.selectableOutputs(item).length > 1) {
-            _push(`<label class="field library-compare__output" data-v-2050c1a2><span data-v-2050c1a2>${ssrInterpolate(unref(t)("library.output"))}</span><select${ssrRenderAttr("value", __props.currentOutputPath(item))}${ssrRenderAttr("aria-label", unref(t)("library.compareOutputAria", { side: unref(t)(`library.compareSide.${sideKey(index)}`) }))} data-v-2050c1a2><!--[-->`);
+            _push(`<label class="field library-compare__output" data-v-4bfcf40b><span data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.output"))}</span><select${ssrRenderAttr("value", __props.currentOutputPath(item))}${ssrRenderAttr("aria-label", unref(t)("library.compareOutputAria", { side: unref(t)(`library.compareSide.${sideKey(index)}`) }))} data-v-4bfcf40b><!--[-->`);
             ssrRenderList(__props.selectableOutputs(item), (output) => {
-              _push(`<option${ssrRenderAttr("value", output.path)} data-v-2050c1a2>${ssrInterpolate(unref(t)(`outputKind.${output.kind}`))} · ${ssrInterpolate(__props.outputFilename(output.path))}</option>`);
+              _push(`<option${ssrRenderAttr("value", output.path)} data-v-4bfcf40b>${ssrInterpolate(unref(t)(`outputKind.${output.kind}`))} · ${ssrInterpolate(__props.outputFilename(output.path))}</option>`);
             });
             _push(`<!--]--></select></label>`);
           } else {
             _push(`<!---->`);
           }
-          _push(`</header><div class="library-compare__stage" data-v-2050c1a2>`);
+          _push(`</header><div class="library-compare__stage" data-v-4bfcf40b>`);
           if (outputIsAvailable(item)) {
-            _push(`<img${ssrRenderAttr("src", __props.outputUrl(__props.currentOutputPath(item)))}${ssrRenderAttr("alt", unref(t)("library.generationAlt", { id: item.id }))} style="${ssrRenderStyle({ transform: `scale(${__props.zoom})` })}" data-v-2050c1a2>`);
+            _push(ssrRenderComponent(ImageReviewStage, {
+              src: __props.outputUrl(__props.currentOutputPath(item)),
+              label: unref(t)("library.generationAlt", { id: item.id }),
+              zoom: __props.zoom,
+              onLoad: ($event) => onOutputLoad(item),
+              onError: ($event) => onOutputError(item)
+            }, null, _parent));
           } else {
-            _push(`<div class="library-compare__missing" data-v-2050c1a2><strong data-v-2050c1a2>${ssrInterpolate(unref(t)("library.compareOutputMissing"))}</strong><small data-v-2050c1a2>${ssrInterpolate(unref(t)("library.compareOutputMissingHelp"))}</small></div>`);
+            _push(`<div class="library-compare__missing" data-v-4bfcf40b><strong data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.compareOutputMissing"))}</strong><small data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.compareOutputMissingHelp"))}</small></div>`);
           }
-          _push(`</div><div class="library-compare__identity" data-v-2050c1a2><strong data-v-2050c1a2>#${ssrInterpolate(item.id)} / ${ssrInterpolate(item.profile)}</strong><small data-v-2050c1a2>${ssrInterpolate(unref(t)("library.seed"))} ${ssrInterpolate(item.settings.seed ?? unref(t)("library.notAvailable"))} / ${ssrInterpolate(item.settings.width ?? "?")}×${ssrInterpolate(item.settings.height ?? "?")}</small></div><section class="library-compare__actions library-compare__actions--primary" data-v-2050c1a2><div data-v-2050c1a2><strong data-v-2050c1a2>${ssrInterpolate(unref(t)("library.reuse"))}</strong><small data-v-2050c1a2>${ssrInterpolate(unref(t)("library.reuseCompareHelp"))}</small></div><div data-v-2050c1a2><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!outputIsAvailable(item)) ? " disabled" : ""} data-v-2050c1a2>${ssrInterpolate(unref(t)("library.useAsImg2Img"))}</button><button type="button"${ssrIncludeBooleanAttr(!outputIsAvailable(item)) ? " disabled" : ""} data-v-2050c1a2>${ssrInterpolate(unref(t)("library.openInImage"))}</button><button type="button"${ssrIncludeBooleanAttr(!outputIsAvailable(item)) ? " disabled" : ""} data-v-2050c1a2>${ssrInterpolate(unref(t)("library.expand"))}</button></div></section><section class="library-compare__actions" data-v-2050c1a2><div data-v-2050c1a2><strong data-v-2050c1a2>${ssrInterpolate(unref(t)("library.compareDelivery"))}</strong><small data-v-2050c1a2>${ssrInterpolate(unref(t)("library.exportCompareHelp"))}</small><small data-v-2050c1a2>${ssrInterpolate(__props.eagleStatusLabel(item))}</small></div><div data-v-2050c1a2><button type="button"${ssrIncludeBooleanAttr(__props.exportingId === item.id) ? " disabled" : ""} data-v-2050c1a2>${ssrInterpolate(__props.exportingId === item.id ? unref(t)("library.exporting") : unref(t)("library.exportBundle"))}</button><button type="button"${ssrIncludeBooleanAttr(__props.eagleLoading || !__props.eagleConnected || !outputIsAvailable(item)) ? " disabled" : ""} data-v-2050c1a2>${ssrInterpolate(__props.eagleLoading ? unref(t)("library.sending") : __props.eagleActionLabel(item))}</button><button type="button"${ssrIncludeBooleanAttr(__props.topazLoading || !__props.topazInstalled || !outputIsAvailable(item)) ? " disabled" : ""} data-v-2050c1a2>${ssrInterpolate(__props.topazProcessingPath === __props.currentOutputPath(item) ? unref(t)("library.processing") : unref(t)("library.sendToTopaz"))}</button></div></section></article>`);
+          _push(`</div><div class="library-compare__identity" data-v-4bfcf40b><strong data-v-4bfcf40b>#${ssrInterpolate(item.id)} / ${ssrInterpolate(item.profile)}</strong><small data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.seed"))} ${ssrInterpolate(item.settings.seed ?? unref(t)("library.notAvailable"))} / ${ssrInterpolate(item.settings.width ?? "?")}×${ssrInterpolate(item.settings.height ?? "?")}</small></div><section class="library-compare__actions library-compare__actions--primary" data-v-4bfcf40b><div data-v-4bfcf40b><strong data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.reuse"))}</strong><small data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.reuseCompareHelp"))}</small></div><div data-v-4bfcf40b><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!outputIsAvailable(item)) ? " disabled" : ""} data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.useAsImg2Img"))}</button><button type="button"${ssrIncludeBooleanAttr(!outputIsAvailable(item)) ? " disabled" : ""} data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.openInImage"))}</button><button type="button"${ssrIncludeBooleanAttr(!outputIsAvailable(item)) ? " disabled" : ""} data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.expand"))}</button></div></section><section class="library-compare__actions" data-v-4bfcf40b><div data-v-4bfcf40b><strong data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.compareDelivery"))}</strong><small data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.exportCompareHelp"))}</small><small data-v-4bfcf40b>${ssrInterpolate(__props.eagleStatusLabel(item))}</small></div><div data-v-4bfcf40b><button type="button"${ssrIncludeBooleanAttr(__props.exportingId === item.id) ? " disabled" : ""} data-v-4bfcf40b>${ssrInterpolate(__props.exportingId === item.id ? unref(t)("library.exporting") : unref(t)("library.exportBundle"))}</button><button type="button"${ssrIncludeBooleanAttr(__props.eagleLoading || !__props.eagleConnected || !outputIsAvailable(item)) ? " disabled" : ""} data-v-4bfcf40b>${ssrInterpolate(__props.eagleLoading ? unref(t)("library.sending") : __props.eagleActionLabel(item))}</button><button type="button"${ssrIncludeBooleanAttr(__props.topazLoading || !__props.topazInstalled || !outputIsAvailable(item)) ? " disabled" : ""} data-v-4bfcf40b>${ssrInterpolate(__props.topazProcessingPath === __props.currentOutputPath(item) ? unref(t)("library.processing") : unref(t)("library.sendToTopaz"))}</button></div></section></article>`);
         });
-        _push(`<!--]--></div><div class="library-compare__zoom"${ssrRenderAttr("aria-label", unref(t)("library.zoomControlsAria"))} data-v-2050c1a2><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.zoom <= 0.5) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.zoomOut"))} data-v-2050c1a2>−</button><label data-v-2050c1a2><span data-v-2050c1a2>${ssrInterpolate(unref(t)("library.zoom"))}</span><input${ssrRenderAttr("value", __props.zoom)}${ssrRenderAttr("aria-label", unref(t)("library.zoom"))} type="range" min="0.5" max="3" step="0.1" data-v-2050c1a2></label><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.zoom >= 3) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.zoomIn"))} data-v-2050c1a2>+</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.zoom === 1) ? " disabled" : ""} data-v-2050c1a2>${ssrInterpolate(unref(t)("library.zoomFit"))}</button></div>`);
+        _push(`<!--]--></div><div class="library-compare__zoom"${ssrRenderAttr("aria-label", unref(t)("library.zoomControlsAria"))} data-v-4bfcf40b><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.zoom <= 0.5) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.zoomOut"))} data-v-4bfcf40b>−</button><label data-v-4bfcf40b><span data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.zoom"))}</span><input${ssrRenderAttr("value", __props.zoom)}${ssrRenderAttr("aria-label", unref(t)("library.zoom"))} type="range" min="0.5" max="3" step="0.1" data-v-4bfcf40b></label><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.zoom >= 3) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.zoomIn"))} data-v-4bfcf40b>+</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(__props.zoom === 1) ? " disabled" : ""} data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.zoomFit"))}</button></div>`);
         if (__props.eagleError) {
-          _push(`<p class="error" aria-live="assertive" data-v-2050c1a2>${ssrInterpolate(__props.eagleError)}</p>`);
+          _push(`<p class="error" aria-live="assertive" data-v-4bfcf40b>${ssrInterpolate(__props.eagleError)}</p>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.topazError) {
-          _push(`<p class="error" aria-live="assertive" data-v-2050c1a2>${ssrInterpolate(__props.topazError)}</p>`);
+          _push(`<p class="error" aria-live="assertive" data-v-4bfcf40b>${ssrInterpolate(__props.topazError)}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<section class="library-compare__diff"${ssrRenderAttr("aria-label", unref(t)("library.compareDifferenceAria"))} data-v-2050c1a2><div data-v-2050c1a2><strong data-v-2050c1a2>${ssrInterpolate(unref(t)("library.promptDiff"))}</strong>`);
+        _push(`<section class="library-compare__diff"${ssrRenderAttr("aria-label", unref(t)("library.compareDifferenceAria"))} data-v-4bfcf40b><div data-v-4bfcf40b><strong data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.promptDiff"))}</strong>`);
         if (unref(hasPromptDiff)) {
           _push(`<!--[-->`);
           ssrRenderList(__props.promptDiff, (group) => {
-            _push(`<dl data-v-2050c1a2><dt data-v-2050c1a2>${ssrInterpolate(unref(t)(`library.only${group.side === "left" ? "Left" : "Right"}`))}</dt><dd data-v-2050c1a2>${ssrInterpolate(group.values.join(", ") || unref(t)("library.none"))}</dd></dl>`);
+            _push(`<dl data-v-4bfcf40b><dt data-v-4bfcf40b>${ssrInterpolate(unref(t)(`library.only${group.side === "left" ? "Left" : "Right"}`))}</dt><dd data-v-4bfcf40b>${ssrInterpolate(group.values.join(", ") || unref(t)("library.none"))}</dd></dl>`);
           });
           _push(`<!--]-->`);
         } else {
-          _push(`<small data-v-2050c1a2>${ssrInterpolate(unref(t)("library.compareNoPromptDiff"))}</small>`);
+          _push(`<small data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.compareNoPromptDiff"))}</small>`);
         }
-        _push(`</div><div data-v-2050c1a2><strong data-v-2050c1a2>${ssrInterpolate(unref(t)("library.settingsDiff"))}</strong>`);
+        _push(`</div><div data-v-4bfcf40b><strong data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.settingsDiff"))}</strong>`);
         if (__props.settingsDiff.length) {
-          _push(`<div class="library-compare__settings-table" data-v-2050c1a2><div class="library-compare__settings-heading" data-v-2050c1a2><span data-v-2050c1a2>${ssrInterpolate(unref(t)("library.setting"))}</span><span data-v-2050c1a2>${ssrInterpolate(unref(t)("library.compareSide.left"))}</span><span data-v-2050c1a2>${ssrInterpolate(unref(t)("library.compareSide.right"))}</span></div><!--[-->`);
+          _push(`<div class="library-compare__settings-table" data-v-4bfcf40b><div class="library-compare__settings-heading" data-v-4bfcf40b><span data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.setting"))}</span><span data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.compareSide.left"))}</span><span data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.compareSide.right"))}</span></div><!--[-->`);
           ssrRenderList(__props.settingsDiff, (row) => {
-            _push(`<dl data-v-2050c1a2><dt data-v-2050c1a2>${ssrInterpolate(row.key)}</dt><dd data-v-2050c1a2>${ssrInterpolate(row.left)}</dd><dd data-v-2050c1a2>${ssrInterpolate(row.right)}</dd></dl>`);
+            _push(`<dl data-v-4bfcf40b><dt data-v-4bfcf40b>${ssrInterpolate(row.key)}</dt><dd data-v-4bfcf40b>${ssrInterpolate(row.left)}</dd><dd data-v-4bfcf40b>${ssrInterpolate(row.right)}</dd></dl>`);
           });
           _push(`<!--]--></div>`);
         } else {
-          _push(`<small data-v-2050c1a2>${ssrInterpolate(unref(t)("library.compareNoSettingsDiff"))}</small>`);
+          _push(`<small data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.compareNoSettingsDiff"))}</small>`);
         }
         _push(`</div></section><!--]-->`);
       } else {
-        _push(`<div class="library-compare__empty" data-v-2050c1a2><strong data-v-2050c1a2>${ssrInterpolate(unref(t)("library.selectTwoImages"))}</strong><small data-v-2050c1a2>${ssrInterpolate(unref(t)("library.statusCompareNeedsTwo"))}</small></div>`);
+        _push(`<div class="library-compare__empty" data-v-4bfcf40b><strong data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.selectTwoImages"))}</strong><small data-v-4bfcf40b>${ssrInterpolate(unref(t)("library.statusCompareNeedsTwo"))}</small></div>`);
       }
       _push(`</section>`);
     };
@@ -25402,7 +25888,7 @@ _sfc_main$1d.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryCompareView.vue");
   return _sfc_setup$1d ? _sfc_setup$1d(props, ctx) : void 0;
 };
-const LibraryCompareView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1d, [["__scopeId", "data-v-2050c1a2"]]), { __name: "StudioLibraryCompareView" });
+const LibraryCompareView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1d, [["__scopeId", "data-v-4bfcf40b"]]), { __name: "StudioLibraryCompareView" });
 const libraryExportMessage = (result, fallbackMessage, t) => {
   if (!result) {
     return fallbackMessage;
@@ -30293,7 +30779,7 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
         }],
         tabindex: "0",
         "aria-label": unref(t)("library.workspaceAria")
-      }, _attrs))} data-v-e6ef3eaa>`);
+      }, _attrs))} data-v-58ba11f0>`);
       _push(ssrRenderComponent(LibraryWorkspaceBody, null, {
         folders: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
@@ -30336,7 +30822,7 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
         }),
         workspace: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<main class="${ssrRenderClass([{ "library-grid-pane--compare": unref(activeLibraryTask) === "compare" }, "library-grid-pane"])}"${ssrRenderAttr("aria-label", unref(t)("library.mediaAria"))} data-v-e6ef3eaa${_scopeId}>`);
+            _push2(`<main class="${ssrRenderClass([{ "library-grid-pane--compare": unref(activeLibraryTask) === "compare" }, "library-grid-pane"])}"${ssrRenderAttr("aria-label", unref(t)("library.mediaAria"))} data-v-58ba11f0${_scopeId}>`);
             _push2(ssrRenderComponent(LibraryFilterBar, {
               "task-options": unref(libraryTaskOptions),
               "active-task": unref(activeLibraryTask),
@@ -30395,23 +30881,27 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
               "task-actions": withCtx((_2, _push3, _parent3, _scopeId2) => {
                 if (_push3) {
                   if (unref(activeLibraryTask) !== "board") {
-                    _push3(`<div class="library-task-context__actions" data-v-e6ef3eaa${_scopeId2}>`);
+                    _push3(`<div class="library-task-context__actions" data-v-58ba11f0${_scopeId2}>`);
                     _push3(ssrRenderComponent(SeriesConsistency, {
                       images: unref(selectedImageItems).map((item) => ({ generation_id: item.id, output_path: selectedImageOutput(item) })),
                       "output-url": outputUrl
                     }, null, _parent3, _scopeId2));
+                    _push3(ssrRenderComponent(BodyPartComparison, {
+                      images: unref(selectedImageItems).map((item) => ({ id: item.id, path: selectedImageOutput(item), profile: item.profile })),
+                      onEdit: ($event) => emit("openImageMask", $event)
+                    }, null, _parent3, _scopeId2));
                     if (unref(activeLibraryTask) === "browse") {
-                      _push3(`<button class="icon-button" type="button" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.previewExternalImage"))}</button>`);
+                      _push3(`<button class="icon-button" type="button" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.previewExternalImage"))}</button>`);
                     } else {
                       _push3(`<!---->`);
                     }
                     if (unref(activeLibraryTask) === "organize") {
-                      _push3(`<!--[--><button class="icon-button" type="button" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.selectAllVisible"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(selectedIds).length) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.clearSelection"))}</button><!--]-->`);
+                      _push3(`<!--[--><button class="icon-button" type="button" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.selectAllVisible"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(selectedIds).length) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.clearSelection"))}</button><!--]-->`);
                     } else {
                       _push3(`<!---->`);
                     }
                     if (unref(activeLibraryTask) === "compare") {
-                      _push3(`<button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(imageItems).length < 2) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.refreshPair"))}</button>`);
+                      _push3(`<button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(imageItems).length < 2) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.refreshPair"))}</button>`);
                     } else {
                       _push3(`<!---->`);
                     }
@@ -30429,6 +30919,10 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
                         images: unref(selectedImageItems).map((item) => ({ generation_id: item.id, output_path: selectedImageOutput(item) })),
                         "output-url": outputUrl
                       }, null, 8, ["images"]),
+                      createVNode(BodyPartComparison, {
+                        images: unref(selectedImageItems).map((item) => ({ id: item.id, path: selectedImageOutput(item), profile: item.profile })),
+                        onEdit: ($event) => emit("openImageMask", $event)
+                      }, null, 8, ["images", "onEdit"]),
                       unref(activeLibraryTask) === "browse" ? (openBlock(), createBlock("button", {
                         key: 0,
                         class: "icon-button",
@@ -30462,19 +30956,19 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
               "bulk-actions": withCtx((_2, _push3, _parent3, _scopeId2) => {
                 if (_push3) {
                   if (unref(activeLibraryTask) === "organize" && unref(organizeInspectorMode) === "organize") {
-                    _push3(`<!--[--><button type="button" aria-haspopup="dialog"${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving || unref(bulkCurationSelectionLimitExceeded)) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.bulkCuration"))}</button>`);
+                    _push3(`<!--[--><button type="button" aria-haspopup="dialog"${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving || unref(bulkCurationSelectionLimitExceeded)) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.bulkCuration"))}</button>`);
                     if (unref(bulkCurationSelectionLimitExceeded)) {
-                      _push3(`<small class="library-toolbar__limit error" aria-live="polite" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.bulkCurationSelectionLimit"))}</small>`);
+                      _push3(`<small class="library-toolbar__limit error" aria-live="polite" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.bulkCurationSelectionLimit"))}</small>`);
                     } else {
                       _push3(`<!---->`);
                     }
-                    _push3(`<select${ssrRenderAttr("value", unref(selectedRating))}${ssrRenderAttr("aria-label", unref(t)("library.bulkRating"))}${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}><option value="" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.rating"))}</option><!--[-->`);
+                    _push3(`<select${ssrRenderAttr("value", unref(selectedRating))}${ssrRenderAttr("aria-label", unref(t)("library.bulkRating"))}${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}><option value="" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.rating"))}</option><!--[-->`);
                     ssrRenderList([0, 1, 2, 3, 4, 5], (rating) => {
-                      _push3(`<option${ssrRenderAttr("value", rating)} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(rating)}</option>`);
+                      _push3(`<option${ssrRenderAttr("value", rating)} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(rating)}</option>`);
                     });
-                    _push3(`<!--]--></select><select${ssrRenderAttr("aria-label", unref(t)("library.moveSelectedToFolder"))}${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}><option value="" data-v-e6ef3eaa${ssrIncludeBooleanAttr(Array.isArray(unref(selectedMoveFolder)) ? ssrLooseContain(unref(selectedMoveFolder), "") : ssrLooseEqual(unref(selectedMoveFolder), "")) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(unref(t)("library.moveTo"))}</option><!--[-->`);
+                    _push3(`<!--]--></select><select${ssrRenderAttr("aria-label", unref(t)("library.moveSelectedToFolder"))}${ssrIncludeBooleanAttr(!unref(selectedIds).length || unref(library).saving) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}><option value="" data-v-58ba11f0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedMoveFolder)) ? ssrLooseContain(unref(selectedMoveFolder), "") : ssrLooseEqual(unref(selectedMoveFolder), "")) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(unref(t)("library.moveTo"))}</option><!--[-->`);
                     ssrRenderList(unref(movableFolders), (folder) => {
-                      _push3(`<option${ssrRenderAttr("value", folderKey(folder))} data-v-e6ef3eaa${ssrIncludeBooleanAttr(Array.isArray(unref(selectedMoveFolder)) ? ssrLooseContain(unref(selectedMoveFolder), folderKey(folder)) : ssrLooseEqual(unref(selectedMoveFolder), folderKey(folder))) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(folder.name)}</option>`);
+                      _push3(`<option${ssrRenderAttr("value", folderKey(folder))} data-v-58ba11f0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedMoveFolder)) ? ssrLooseContain(unref(selectedMoveFolder), folderKey(folder)) : ssrLooseEqual(unref(selectedMoveFolder), folderKey(folder))) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(folder.name)}</option>`);
                     });
                     _push3(`<!--]--></select><!--]-->`);
                   } else {
@@ -30660,6 +31154,10 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
                         images: unref(selectedImageItems).map((item) => ({ generation_id: item.id, output_path: selectedImageOutput(item) })),
                         "output-url": outputUrl
                       }, null, 8, ["images"]),
+                      createVNode(BodyPartComparison, {
+                        images: unref(selectedImageItems).map((item) => ({ id: item.id, path: selectedImageOutput(item), profile: item.profile })),
+                        onEdit: ($event) => emit("openImageMask", $event)
+                      }, null, 8, ["images", "onEdit"]),
                       unref(activeLibraryTask) === "browse" ? (openBlock(), createBlock("button", {
                         key: 0,
                         class: "icon-button",
@@ -30948,48 +31446,48 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
                 actions: withCtx((_2, _push3, _parent3, _scopeId2) => {
                   if (_push3) {
                     _push3(ssrRenderComponent(ExtensionSurfaceDock, { surface: "media_library.context_action" }, null, _parent3, _scopeId2));
-                    _push3(`<div class="library-action-stack"${ssrRenderAttr("aria-label", unref(t)("library.selectedMediaActionsAria"))} data-v-e6ef3eaa${_scopeId2}><section class="library-action-group library-action-group--primary" data-v-e6ef3eaa${_scopeId2}><div data-v-e6ef3eaa${_scopeId2}><strong data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.reuse"))}</strong><small data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.reuseDetailHelp"))}</small></div><div class="asset-actions library-action-row" data-v-e6ef3eaa${_scopeId2}><button data-library-reuse="prompts" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.usePromptsFromImage"))}</button><button data-library-reuse="settings" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.reuseSettingsFromImage"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(reusableGenerationSeed)(selectedOutput(unref(primarySelection))) === null) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("generation.useSeed", { seed: unref(reusableGenerationSeed)(selectedOutput(unref(primarySelection))) ?? "—" }))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(isImageGeneration)(unref(primarySelection)) || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.useAsImg2Img"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(isImageGeneration)(unref(primarySelection)) || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.openInImage"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(isImageGeneration)(unref(primarySelection)) || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.expand"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(primaryMediaArtifact)(unref(primarySelection))) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.useInVideo"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(musicRegenerationForMedia)(unref(primarySelection))) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.regenerateInMusic"))}</button></div>`);
+                    _push3(`<div class="library-action-stack"${ssrRenderAttr("aria-label", unref(t)("library.selectedMediaActionsAria"))} data-v-58ba11f0${_scopeId2}><section class="library-action-group library-action-group--primary" data-v-58ba11f0${_scopeId2}><div data-v-58ba11f0${_scopeId2}><strong data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.reuse"))}</strong><small data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.reuseDetailHelp"))}</small></div><div class="asset-actions library-action-row" data-v-58ba11f0${_scopeId2}><button data-library-reuse="prompts" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.usePromptsFromImage"))}</button><button data-library-reuse="settings" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.reuseSettingsFromImage"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(reusableGenerationSeed)(selectedOutput(unref(primarySelection))) === null) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("generation.useSeed", { seed: unref(reusableGenerationSeed)(selectedOutput(unref(primarySelection))) ?? "—" }))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(isImageGeneration)(unref(primarySelection)) || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.useAsImg2Img"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(isImageGeneration)(unref(primarySelection)) || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.openInImage"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(isImageGeneration)(unref(primarySelection)) || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.expand"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(primaryMediaArtifact)(unref(primarySelection))) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.useInVideo"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(musicRegenerationForMedia)(unref(primarySelection))) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.regenerateInMusic"))}</button></div>`);
                     if (!unref(isImageGeneration)(unref(primarySelection))) {
-                      _push3(`<small class="muted" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.imageToolsUnavailableForMedia"))}</small>`);
+                      _push3(`<small class="muted" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.imageToolsUnavailableForMedia"))}</small>`);
                     } else {
                       _push3(`<!---->`);
                     }
-                    _push3(`</section><section class="library-action-group" data-v-e6ef3eaa${_scopeId2}><div data-v-e6ef3eaa${_scopeId2}><strong data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.externalTools"))}</strong><small data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.externalToolsHelp"))}</small></div>`);
+                    _push3(`</section><section class="library-action-group" data-v-58ba11f0${_scopeId2}><div data-v-58ba11f0${_scopeId2}><strong data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.externalTools"))}</strong><small data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.externalToolsHelp"))}</small></div>`);
                     _push3(ssrRenderComponent(_component_StudioEagleFolderSelect, null, null, _parent3, _scopeId2));
-                    _push3(`<small class="${ssrRenderClass({ error: eagleRegistration(unref(primarySelection)).status === "failed" })}" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(eagleRegistrationLabel(unref(primarySelection)))}</small><label class="field library-topaz-preset" data-v-e6ef3eaa${_scopeId2}><span data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.topazPreset"))}</span><select${ssrRenderAttr("aria-label", unref(t)("library.topazPreset"))} data-v-e6ef3eaa${_scopeId2}><option value="" data-v-e6ef3eaa${ssrIncludeBooleanAttr(Array.isArray(unref(selectedTopazPresetId)) ? ssrLooseContain(unref(selectedTopazPresetId), "") : ssrLooseEqual(unref(selectedTopazPresetId), "")) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(unref(t)("library.defaultTopazSettings"))}</option><!--[-->`);
+                    _push3(`<small class="${ssrRenderClass({ error: eagleRegistration(unref(primarySelection)).status === "failed" })}" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(eagleRegistrationLabel(unref(primarySelection)))}</small><label class="field library-topaz-preset" data-v-58ba11f0${_scopeId2}><span data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.topazPreset"))}</span><select${ssrRenderAttr("aria-label", unref(t)("library.topazPreset"))} data-v-58ba11f0${_scopeId2}><option value="" data-v-58ba11f0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedTopazPresetId)) ? ssrLooseContain(unref(selectedTopazPresetId), "") : ssrLooseEqual(unref(selectedTopazPresetId), "")) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(unref(t)("library.defaultTopazSettings"))}</option><!--[-->`);
                     ssrRenderList(unref(topazPresets), (preset) => {
-                      _push3(`<option${ssrRenderAttr("value", preset.id)} data-v-e6ef3eaa${ssrIncludeBooleanAttr(Array.isArray(unref(selectedTopazPresetId)) ? ssrLooseContain(unref(selectedTopazPresetId), preset.id) : ssrLooseEqual(unref(selectedTopazPresetId), preset.id)) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(preset.name)}</option>`);
+                      _push3(`<option${ssrRenderAttr("value", preset.id)} data-v-58ba11f0${ssrIncludeBooleanAttr(Array.isArray(unref(selectedTopazPresetId)) ? ssrLooseContain(unref(selectedTopazPresetId), preset.id) : ssrLooseEqual(unref(selectedTopazPresetId), preset.id)) ? " selected" : ""}${_scopeId2}>${ssrInterpolate(preset.name)}</option>`);
                     });
-                    _push3(`<!--]--></select><small data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(topazPresetSummary))}</small></label><div class="asset-actions library-action-row" data-v-e6ef3eaa${_scopeId2}><button type="button"${ssrIncludeBooleanAttr(!unref(isImageGeneration)(unref(primarySelection)) || unref(externalIntegrations).eagleLoading || !unref(externalIntegrations).eagleStatus?.connected || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(eagleActionLabel(unref(primarySelection)))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(isImageGeneration)(unref(primarySelection)) || unref(externalIntegrations).topazLoading || !unref(externalIntegrations).topazStatus?.installed || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).topazLoading ? unref(t)("library.processing") : unref(t)("library.sendToTopaz"))}</button></div>`);
+                    _push3(`<!--]--></select><small data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(topazPresetSummary))}</small></label><div class="asset-actions library-action-row" data-v-58ba11f0${_scopeId2}><button type="button"${ssrIncludeBooleanAttr(!unref(isImageGeneration)(unref(primarySelection)) || unref(externalIntegrations).eagleLoading || !unref(externalIntegrations).eagleStatus?.connected || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(eagleActionLabel(unref(primarySelection)))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(isImageGeneration)(unref(primarySelection)) || unref(externalIntegrations).topazLoading || !unref(externalIntegrations).topazStatus?.installed || !selectedImageOutput(unref(primarySelection))) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).topazLoading ? unref(t)("library.processing") : unref(t)("library.sendToTopaz"))}</button></div>`);
                     if (unref(externalIntegrations).eagleError) {
-                      _push3(`<p class="error" aria-live="assertive" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).eagleError)}</p>`);
+                      _push3(`<p class="error" aria-live="assertive" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).eagleError)}</p>`);
                     } else {
                       _push3(`<!---->`);
                     }
                     if (unref(externalIntegrations).topazError) {
-                      _push3(`<p class="error" aria-live="assertive" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).topazError)}</p>`);
+                      _push3(`<p class="error" aria-live="assertive" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(externalIntegrations).topazError)}</p>`);
                     } else {
                       _push3(`<!---->`);
                     }
-                    _push3(`</section><section class="library-action-group" data-v-e6ef3eaa${_scopeId2}><div data-v-e6ef3eaa${_scopeId2}><strong data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.export"))}</strong><small data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.exportDetailHelp"))}</small></div><div class="asset-actions library-action-row" data-v-e6ef3eaa${_scopeId2}><button type="button"${ssrIncludeBooleanAttr(unref(library).exportingId !== null) ? " disabled" : ""} data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(library).exportingId === unref(primarySelection).id ? unref(t)("library.exporting") : unref(t)("library.exportBundle"))}</button></div>`);
+                    _push3(`</section><section class="library-action-group" data-v-58ba11f0${_scopeId2}><div data-v-58ba11f0${_scopeId2}><strong data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.export"))}</strong><small data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.exportDetailHelp"))}</small></div><div class="asset-actions library-action-row" data-v-58ba11f0${_scopeId2}><button type="button"${ssrIncludeBooleanAttr(unref(library).exportingId !== null) ? " disabled" : ""} data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(library).exportingId === unref(primarySelection).id ? unref(t)("library.exporting") : unref(t)("library.exportBundle"))}</button></div>`);
                     if (unref(libraryExportError)) {
-                      _push3(`<p class="error" aria-live="assertive" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(libraryExportError))}</p>`);
+                      _push3(`<p class="error" aria-live="assertive" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(libraryExportError))}</p>`);
                     } else {
                       _push3(`<!---->`);
                     }
-                    _push3(`</section></div><small class="muted" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.eagleStatus", { status: unref(externalIntegrations).eagleStatus?.connected ? unref(t)("library.connected") : unref(t)("library.notConnected") }))}</small><small class="muted" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(t)("library.topazStatus", { status: unref(externalIntegrations).topazStatus?.installed ? unref(t)("library.installed") : unref(t)("library.notInstalled") }))}</small>`);
+                    _push3(`</section></div><small class="muted" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.eagleStatus", { status: unref(externalIntegrations).eagleStatus?.connected ? unref(t)("library.connected") : unref(t)("library.notConnected") }))}</small><small class="muted" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(t)("library.topazStatus", { status: unref(externalIntegrations).topazStatus?.installed ? unref(t)("library.installed") : unref(t)("library.notInstalled") }))}</small>`);
                     if (unref(eagleIntegrationMessage)) {
-                      _push3(`<small class="muted" aria-live="polite" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(eagleIntegrationMessage))}</small>`);
+                      _push3(`<small class="muted" aria-live="polite" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(eagleIntegrationMessage))}</small>`);
                     } else {
                       _push3(`<!---->`);
                     }
                     if (unref(topazIntegrationMessage)) {
-                      _push3(`<small class="muted" aria-live="polite" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(topazIntegrationMessage))}</small>`);
+                      _push3(`<small class="muted" aria-live="polite" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(topazIntegrationMessage))}</small>`);
                     } else {
                       _push3(`<!---->`);
                     }
                     if (unref(libraryExportMessage$1)) {
-                      _push3(`<small class="muted library-export-message" data-v-e6ef3eaa${_scopeId2}>${ssrInterpolate(unref(libraryExportMessage$1))}</small>`);
+                      _push3(`<small class="muted library-export-message" data-v-58ba11f0${_scopeId2}>${ssrInterpolate(unref(libraryExportMessage$1))}</small>`);
                     } else {
                       _push3(`<!---->`);
                     }
@@ -31438,75 +31936,75 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
         _: 1
       }, _parent));
       if (unref(contextMenu).open) {
-        _push(`<div class="library-context-menu" role="menu" tabindex="-1"${ssrRenderAttr("aria-label", unref(t)("library.selectedCount", { count: unref(contextMenu).ids.length }))} style="${ssrRenderStyle({ left: `${unref(contextMenu).x}px`, top: `${unref(contextMenu).y}px` })}" data-v-e6ef3eaa><strong data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.selectedCount", { count: unref(contextMenu).ids.length }))}</strong><span data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.rating"))}</span><div class="library-context-menu__row" data-v-e6ef3eaa><!--[-->`);
+        _push(`<div class="library-context-menu" role="menu" tabindex="-1"${ssrRenderAttr("aria-label", unref(t)("library.selectedCount", { count: unref(contextMenu).ids.length }))} style="${ssrRenderStyle({ left: `${unref(contextMenu).x}px`, top: `${unref(contextMenu).y}px` })}" data-v-58ba11f0><strong data-v-58ba11f0>${ssrInterpolate(unref(t)("library.selectedCount", { count: unref(contextMenu).ids.length }))}</strong><span data-v-58ba11f0>${ssrInterpolate(unref(t)("library.rating"))}</span><div class="library-context-menu__row" data-v-58ba11f0><!--[-->`);
         ssrRenderList([0, 1, 2, 3, 4, 5], (rating) => {
-          _push(`<button role="menuitem" type="button" data-v-e6ef3eaa>${ssrInterpolate(rating)}</button>`);
+          _push(`<button role="menuitem" type="button" data-v-58ba11f0>${ssrInterpolate(rating)}</button>`);
         });
-        _push(`<!--]--></div><span data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.moveToFolder"))}</span><!--[-->`);
+        _push(`<!--]--></div><span data-v-58ba11f0>${ssrInterpolate(unref(t)("library.moveToFolder"))}</span><!--[-->`);
         ssrRenderList(unref(movableFolders), (folder) => {
-          _push(`<button class="library-context-menu__item" role="menuitem" type="button" data-v-e6ef3eaa>${ssrInterpolate(folderNameForKey(folderKey(folder)))}</button>`);
+          _push(`<button class="library-context-menu__item" role="menuitem" type="button" data-v-58ba11f0>${ssrInterpolate(folderNameForKey(folderKey(folder)))}</button>`);
         });
         _push(`<!--]--></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(bulkCurationOpen)) {
-        _push(`<div class="library-modal" data-v-e6ef3eaa><section class="library-modal__panel library-bulk-curation" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("library.bulkCuration"))} aria-describedby="library-bulk-curation-status" tabindex="-1" data-v-e6ef3eaa><header class="library-modal__header" data-v-e6ef3eaa><div data-v-e6ef3eaa><strong data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkCuration"))}</strong><small data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkCurationSelected", { count: unref(selectedIds).length }))}</small></div><button class="icon-button icon-button--close library-modal__close" type="button"${ssrRenderAttr("aria-label", unref(t)("library.close"))}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-e6ef3eaa>×</button></header><fieldset class="library-bulk-curation__group" data-v-e6ef3eaa><legend data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkFavorite"))}</legend><div class="library-bulk-curation__segments" data-v-e6ef3eaa><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "unchanged")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "unchanged" })}" data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkFavoriteUnchanged"))}</button><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "on")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "on" })}" data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkFavoriteOn"))}</button><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "off")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "off" })}" data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkFavoriteOff"))}</button></div></fieldset><div class="library-bulk-curation__fields" data-v-e6ef3eaa><label class="field" data-v-e6ef3eaa><span data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkTagsAdd"))}</span><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("library.bulkTagsPlaceholder"))}${ssrRenderAttr("aria-invalid", unref(bulkTagConflictValues).length || unref(bulkCurationOperationLimitExceeded) || unref(bulkCurationTagLimitExceeded) ? "true" : void 0)} aria-describedby="library-bulk-curation-status" data-v-e6ef3eaa>${ssrInterpolate(unref(bulkTagsAddDraft))}</textarea>`);
+        _push(`<div class="library-modal" data-v-58ba11f0><section class="library-modal__panel library-bulk-curation" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("library.bulkCuration"))} aria-describedby="library-bulk-curation-status" tabindex="-1" data-v-58ba11f0><header class="library-modal__header" data-v-58ba11f0><div data-v-58ba11f0><strong data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkCuration"))}</strong><small data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkCurationSelected", { count: unref(selectedIds).length }))}</small></div><button class="icon-button icon-button--close library-modal__close" type="button"${ssrRenderAttr("aria-label", unref(t)("library.close"))}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-58ba11f0>×</button></header><fieldset class="library-bulk-curation__group" data-v-58ba11f0><legend data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkFavorite"))}</legend><div class="library-bulk-curation__segments" data-v-58ba11f0><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "unchanged")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "unchanged" })}" data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkFavoriteUnchanged"))}</button><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "on")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "on" })}" data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkFavoriteOn"))}</button><button type="button"${ssrRenderAttr("aria-pressed", unref(bulkFavoriteMode) === "off")} class="${ssrRenderClass({ active: unref(bulkFavoriteMode) === "off" })}" data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkFavoriteOff"))}</button></div></fieldset><div class="library-bulk-curation__fields" data-v-58ba11f0><label class="field" data-v-58ba11f0><span data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkTagsAdd"))}</span><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("library.bulkTagsPlaceholder"))}${ssrRenderAttr("aria-invalid", unref(bulkTagConflictValues).length || unref(bulkCurationOperationLimitExceeded) || unref(bulkCurationTagLimitExceeded) ? "true" : void 0)} aria-describedby="library-bulk-curation-status" data-v-58ba11f0>${ssrInterpolate(unref(bulkTagsAddDraft))}</textarea>`);
         if (unref(bulkTagsAdd).length) {
-          _push(`<span class="library-bulk-curation__chips" data-v-e6ef3eaa><!--[-->`);
+          _push(`<span class="library-bulk-curation__chips" data-v-58ba11f0><!--[-->`);
           ssrRenderList(unref(bulkTagsAdd), (tag) => {
-            _push(`<span data-v-e6ef3eaa>+ ${ssrInterpolate(tag)}</span>`);
+            _push(`<span data-v-58ba11f0>+ ${ssrInterpolate(tag)}</span>`);
           });
           _push(`<!--]--></span>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</label><label class="field" data-v-e6ef3eaa><span data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkTagsRemove"))}</span><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("library.bulkTagsPlaceholder"))}${ssrRenderAttr("aria-invalid", unref(bulkTagConflictValues).length || unref(bulkCurationOperationLimitExceeded) || unref(bulkCurationTagLimitExceeded) ? "true" : void 0)} aria-describedby="library-bulk-curation-status" data-v-e6ef3eaa>${ssrInterpolate(unref(bulkTagsRemoveDraft))}</textarea>`);
+        _push(`</label><label class="field" data-v-58ba11f0><span data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkTagsRemove"))}</span><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("library.bulkTagsPlaceholder"))}${ssrRenderAttr("aria-invalid", unref(bulkTagConflictValues).length || unref(bulkCurationOperationLimitExceeded) || unref(bulkCurationTagLimitExceeded) ? "true" : void 0)} aria-describedby="library-bulk-curation-status" data-v-58ba11f0>${ssrInterpolate(unref(bulkTagsRemoveDraft))}</textarea>`);
         if (unref(bulkTagsRemove).length) {
-          _push(`<span class="library-bulk-curation__chips library-bulk-curation__chips--remove" data-v-e6ef3eaa><!--[-->`);
+          _push(`<span class="library-bulk-curation__chips library-bulk-curation__chips--remove" data-v-58ba11f0><!--[-->`);
           ssrRenderList(unref(bulkTagsRemove), (tag) => {
-            _push(`<span data-v-e6ef3eaa>− ${ssrInterpolate(tag)}</span>`);
+            _push(`<span data-v-58ba11f0>− ${ssrInterpolate(tag)}</span>`);
           });
           _push(`<!--]--></span>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</label></div><div id="library-bulk-curation-status" class="library-bulk-curation__status" aria-live="polite" data-v-e6ef3eaa>`);
+        _push(`</label></div><div id="library-bulk-curation-status" class="library-bulk-curation__status" aria-live="polite" data-v-58ba11f0>`);
         if (unref(bulkTagConflictValues).length) {
-          _push(`<p class="error" data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkCurationConflict", { tags: unref(bulkTagConflictValues).join(", ") }))}</p>`);
+          _push(`<p class="error" data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkCurationConflict", { tags: unref(bulkTagConflictValues).join(", ") }))}</p>`);
         } else if (unref(bulkCurationOperationLimitExceeded)) {
-          _push(`<p class="error" data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkCurationOperationLimit"))}</p>`);
+          _push(`<p class="error" data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkCurationOperationLimit"))}</p>`);
         } else if (unref(bulkCurationTagLimitExceeded)) {
-          _push(`<p class="error" data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkCurationTagLimit"))}</p>`);
+          _push(`<p class="error" data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkCurationTagLimit"))}</p>`);
         } else {
-          _push(`<small class="muted" data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkCurationHelp"))}</small>`);
+          _push(`<small class="muted" data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkCurationHelp"))}</small>`);
         }
-        _push(`<small class="muted" data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkCurationPreview", { count: unref(bulkCurationPreview).length, add: unref(bulkTagsAdd).length, remove: unref(bulkTagsRemove).length }))}</small></div><footer class="library-bulk-curation__actions" data-v-e6ef3eaa><button type="button"${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(bulkCurationCanApply)) ? " disabled" : ""} data-v-e6ef3eaa>${ssrInterpolate(unref(library).saving ? unref(t)("library.saving") : unref(t)("library.apply"))}</button></footer></section></div>`);
+        _push(`<small class="muted" data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkCurationPreview", { count: unref(bulkCurationPreview).length, add: unref(bulkTagsAdd).length, remove: unref(bulkTagsRemove).length }))}</small></div><footer class="library-bulk-curation__actions" data-v-58ba11f0><button type="button"${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-58ba11f0>${ssrInterpolate(unref(t)("library.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(bulkCurationCanApply)) ? " disabled" : ""} data-v-58ba11f0>${ssrInterpolate(unref(library).saving ? unref(t)("library.saving") : unref(t)("library.apply"))}</button></footer></section></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(bulkDeleteOpen)) {
-        _push(`<div class="library-modal" data-v-e6ef3eaa><section class="library-modal__panel library-bulk-delete" role="alertdialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("library.bulkDelete"))} aria-describedby="library-bulk-delete-description" tabindex="-1" data-v-e6ef3eaa><header class="library-modal__header" data-v-e6ef3eaa><div data-v-e6ef3eaa><strong data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkDelete"))}</strong><small data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkDeleteSelected", { count: unref(selectedIds).length }))}</small></div><button class="icon-button icon-button--close library-modal__close" type="button"${ssrRenderAttr("aria-label", unref(t)("library.close"))}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-e6ef3eaa>×</button></header><p id="library-bulk-delete-description" class="library-bulk-delete__description" data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkDeleteDescription"))}</p><fieldset class="library-bulk-delete__modes" data-v-e6ef3eaa><legend data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkDeleteMode"))}</legend><button type="button" class="${ssrRenderClass({ active: unref(bulkDeleteMode) === "history_only" })}"${ssrRenderAttr("aria-pressed", unref(bulkDeleteMode) === "history_only")}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-e6ef3eaa><strong data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkDeleteHistoryOnly"))}</strong><small data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkDeleteHistoryOnlyHelp"))}</small></button><button type="button" class="${ssrRenderClass({ active: unref(bulkDeleteMode) === "history_and_artifacts" })}"${ssrRenderAttr("aria-pressed", unref(bulkDeleteMode) === "history_and_artifacts")}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-e6ef3eaa><strong data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkDeleteWithArtifacts"))}</strong><small data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkDeleteWithArtifactsHelp"))}</small></button></fieldset>`);
+        _push(`<div class="library-modal" data-v-58ba11f0><section class="library-modal__panel library-bulk-delete" role="alertdialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("library.bulkDelete"))} aria-describedby="library-bulk-delete-description" tabindex="-1" data-v-58ba11f0><header class="library-modal__header" data-v-58ba11f0><div data-v-58ba11f0><strong data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkDelete"))}</strong><small data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkDeleteSelected", { count: unref(selectedIds).length }))}</small></div><button class="icon-button icon-button--close library-modal__close" type="button"${ssrRenderAttr("aria-label", unref(t)("library.close"))}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-58ba11f0>×</button></header><p id="library-bulk-delete-description" class="library-bulk-delete__description" data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkDeleteDescription"))}</p><fieldset class="library-bulk-delete__modes" data-v-58ba11f0><legend data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkDeleteMode"))}</legend><button type="button" class="${ssrRenderClass({ active: unref(bulkDeleteMode) === "history_only" })}"${ssrRenderAttr("aria-pressed", unref(bulkDeleteMode) === "history_only")}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-58ba11f0><strong data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkDeleteHistoryOnly"))}</strong><small data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkDeleteHistoryOnlyHelp"))}</small></button><button type="button" class="${ssrRenderClass({ active: unref(bulkDeleteMode) === "history_and_artifacts" })}"${ssrRenderAttr("aria-pressed", unref(bulkDeleteMode) === "history_and_artifacts")}${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-58ba11f0><strong data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkDeleteWithArtifacts"))}</strong><small data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkDeleteWithArtifactsHelp"))}</small></button></fieldset>`);
         if (unref(bulkDeleteMode) === "history_and_artifacts") {
-          _push(`<p class="library-bulk-delete__warning" data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.bulkDeleteArtifactsWarning"))}</p>`);
+          _push(`<p class="library-bulk-delete__warning" data-v-58ba11f0>${ssrInterpolate(unref(t)("library.bulkDeleteArtifactsWarning"))}</p>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(bulkDeleteError)) {
-          _push(`<p class="error" aria-live="assertive" data-v-e6ef3eaa>${ssrInterpolate(unref(bulkDeleteError))}</p>`);
+          _push(`<p class="error" aria-live="assertive" data-v-58ba11f0>${ssrInterpolate(unref(bulkDeleteError))}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<footer class="library-bulk-delete__actions" data-v-e6ef3eaa><button type="button"${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-e6ef3eaa>${ssrInterpolate(unref(t)("library.cancel"))}</button><button class="library-danger-button library-danger-button--filled" type="button"${ssrIncludeBooleanAttr(!unref(canSubmitBulkDelete)(unref(selectedIds).length, unref(library).saving)) ? " disabled" : ""} data-v-e6ef3eaa>${ssrInterpolate(unref(library).saving ? unref(t)("library.bulkDeleting") : unref(t)("library.bulkDeleteConfirm", { count: unref(selectedIds).length }))}</button></footer></section></div>`);
+        _push(`<footer class="library-bulk-delete__actions" data-v-58ba11f0><button type="button"${ssrIncludeBooleanAttr(unref(library).saving) ? " disabled" : ""} data-v-58ba11f0>${ssrInterpolate(unref(t)("library.cancel"))}</button><button class="library-danger-button library-danger-button--filled" type="button"${ssrIncludeBooleanAttr(!unref(canSubmitBulkDelete)(unref(selectedIds).length, unref(library).saving)) ? " disabled" : ""} data-v-58ba11f0>${ssrInterpolate(unref(library).saving ? unref(t)("library.bulkDeleting") : unref(t)("library.bulkDeleteConfirm", { count: unref(selectedIds).length }))}</button></footer></section></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(lightboxItem)) {
-        _push(`<div class="library-lightbox" role="dialog" aria-modal="true" tabindex="-1"${ssrRenderAttr("aria-label", unref(t)("library.mediaPreviewAria", { kind: unref(t)(`library.mediaKind.${unref(lightboxMediaView)?.kind ?? "image"}`) }))} data-v-e6ef3eaa>`);
+        _push(`<div class="library-lightbox" role="dialog" aria-modal="true" tabindex="-1"${ssrRenderAttr("aria-label", unref(t)("library.mediaPreviewAria", { kind: unref(t)(`library.mediaKind.${unref(lightboxMediaView)?.kind ?? "image"}`) }))} data-v-58ba11f0>`);
         if (unref(lightboxMediaView)?.kind === "image" && selectedImageOutput(unref(lightboxItem))) {
-          _push(`<img${ssrRenderAttr("src", outputUrl(selectedImageOutput(unref(lightboxItem))))}${ssrRenderAttr("alt", outputFilename(selectedImageOutput(unref(lightboxItem))))} data-v-e6ef3eaa>`);
+          _push(`<img${ssrRenderAttr("src", outputUrl(selectedImageOutput(unref(lightboxItem))))}${ssrRenderAttr("alt", outputFilename(selectedImageOutput(unref(lightboxItem))))} data-v-58ba11f0>`);
         } else if (unref(lightboxMediaView)?.kind === "video") {
-          _push(`<div class="library-lightbox__video" data-v-e6ef3eaa>`);
+          _push(`<div class="library-lightbox__video" data-v-58ba11f0>`);
           _push(ssrRenderComponent(LibraryVideoPlayer, {
             src: mediaUrl(unref(lightboxItem)),
             poster: posterUrl(unref(lightboxItem)),
@@ -31519,16 +32017,16 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
           _push(`<!---->`);
         }
         if (unref(lightboxMediaView)?.kind === "image") {
-          _push(`<button class="library-lightbox__nav library-lightbox__nav--previous" type="button"${ssrIncludeBooleanAttr(unref(previewableImageItems)[0]?.id === unref(lightboxItem).id) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.previousImage"))} data-v-e6ef3eaa> ‹ </button>`);
+          _push(`<button class="library-lightbox__nav library-lightbox__nav--previous" type="button"${ssrIncludeBooleanAttr(unref(previewableImageItems)[0]?.id === unref(lightboxItem).id) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.previousImage"))} data-v-58ba11f0> ‹ </button>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(lightboxMediaView)?.kind === "image") {
-          _push(`<button class="library-lightbox__nav library-lightbox__nav--next" type="button"${ssrIncludeBooleanAttr(unref(previewableImageItems)[unref(previewableImageItems).length - 1]?.id === unref(lightboxItem).id) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.nextImage"))} data-v-e6ef3eaa> › </button>`);
+          _push(`<button class="library-lightbox__nav library-lightbox__nav--next" type="button"${ssrIncludeBooleanAttr(unref(previewableImageItems)[unref(previewableImageItems).length - 1]?.id === unref(lightboxItem).id) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.nextImage"))} data-v-58ba11f0> › </button>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="library-lightbox__identity" data-v-e6ef3eaa><strong data-v-e6ef3eaa>#${ssrInterpolate(unref(lightboxItem).id)} / ${ssrInterpolate(unref(lightboxItem).profile)}</strong><small data-v-e6ef3eaa>${ssrInterpolate(unref(lightboxFilename))}</small></div><button class="library-lightbox__close icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("library.close"))} data-v-e6ef3eaa>×</button></div>`);
+        _push(`<div class="library-lightbox__identity" data-v-58ba11f0><strong data-v-58ba11f0>#${ssrInterpolate(unref(lightboxItem).id)} / ${ssrInterpolate(unref(lightboxItem).profile)}</strong><small data-v-58ba11f0>${ssrInterpolate(unref(lightboxFilename))}</small></div><button class="library-lightbox__close icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("library.close"))} data-v-58ba11f0>×</button></div>`);
       } else {
         _push(`<!---->`);
       }
@@ -31542,7 +32040,7 @@ _sfc_main$1c.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageLibraryView.vue");
   return _sfc_setup$1c ? _sfc_setup$1c(props, ctx) : void 0;
 };
-const ImageLibraryView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1c, [["__scopeId", "data-v-e6ef3eaa"]]), { __name: "StudioImageLibraryView" });
+const ImageLibraryView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1c, [["__scopeId", "data-v-58ba11f0"]]), { __name: "StudioImageLibraryView" });
 const canonicalDraft = (draft) => ({
   dataset_id: draft.dataset_id,
   dataset_updated_at: draft.dataset_updated_at,
@@ -44138,8 +44636,8 @@ const _sfc_main$z = /* @__PURE__ */ defineComponent({
       if (video.upscaleJobActive) scheduleUpscalePolling();
       else stopUpscalePolling();
     });
-    watch(() => video.resultArtifact ? `${video.resultArtifact.generationId}:${video.resultArtifact.artifactId}` : "", async (identity, previousIdentity) => {
-      if (!identity || identity === previousIdentity) return;
+    watch(() => video.resultArtifact ? `${video.resultArtifact.generationId}:${video.resultArtifact.artifactId}` : "", async (identity2, previousIdentity) => {
+      if (!identity2 || identity2 === previousIdentity) return;
       await video.refreshUpscaleSource();
     });
     return (_ctx, _push, _parent, _attrs) => {

@@ -3936,6 +3936,8 @@ def _generate_with_recording(
         slot_types={slot.id: slot.type for slot in profile_contract.model_slots} if profile_contract else {},
         allow_identical_aliases=branch is not None or comparison_session is not None,
     )
+    # Saved execution observations are outputs, never inputs to a new run.
+    settings.pop('sampling_execution', None)
     runtime_settings = dict(settings)
     runtime_settings.pop("prompt_input", None)
     runtime_settings.pop("prompt_layout", None)
@@ -5346,6 +5348,16 @@ def generation_reproduction(generation_id: int) -> dict:
         get_model_library(_model_root(config), config=config),
         ModelFingerprintService(config.data_dir / "config" / "model-fingerprints.json"),
     )
+
+
+@router.get('/history/{generation_id}/reproduction/numbers')
+def generation_reproduction_numbers(generation_id: int, other_id: int) -> dict:
+    from app.services.reproduction_numbers import compare_numbers
+    repository = HistoryRepository(_data_dir() / 'asteria.db')
+    left, right = repository.get(generation_id), repository.get(other_id)
+    if left is None or right is None:
+        raise HTTPException(404, detail={'code': 'generation_not_found'})
+    return compare_numbers(left, right)
 
 
 class WordMaskSelection(BaseModel):
