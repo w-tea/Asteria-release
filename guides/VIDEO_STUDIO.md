@@ -1,5 +1,9 @@
 # Video Studio / ビデオスタジオ
 
+![Darkモードの動画スタジオ。タスクと入力を選択 / Video Studio task and input selection](images/video-studio-dark-ja.jpg)
+
+入力設定と保存済みプレビューの表示例です。画質は設定やモデルによって異なります。 / Configuration and a previously saved preview are shown. Quality depends on the settings and model.
+
 ## 日本語
 
 Video Studio は、Asteriaが管理するComfyUIと **MiniMax H3** を使って動画を作るワークスペースです。V1.2.0ではAPI版を使用しないため、APIの選択やキー・課金設定はありません。

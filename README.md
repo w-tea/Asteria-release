@@ -2,9 +2,13 @@
 
 [日本語](#日本語) | [English](#english)
 
-> **dev版を利用する方へ（2026年10月14日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトを三欄に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
+![Darkモードの生成画面。左でプロンプト、右で生成条件を設定 / Generate in Dark mode](guides/images/generate-dark-ja.jpg)
+
+Darkモード・日本語表示の実画面です。起動後の操作は[画面付きクイックスタート](guides/QUICK_START.md)から確認できます。 / Japanese interface in Dark mode. Start with the illustrated [Quick start](guides/QUICK_START.md).
+
+> **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトを三欄に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
 >
-> **For dev users (October 14, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
+> **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
 
 ## 更新履歴 / Release history
 
@@ -26,10 +30,14 @@
 
 Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、Media Libraryで成果物を一か所に集めて確認・整理できるAI制作アプリです。入力を選び、生成や編集を実行し、結果を保存して再利用するまでを同じアプリで完了できます。画像生成用のモデルや任意の動画・音楽モデルは、用途に合わせて選択または用意してください。初回起動時には、Asteriaが必要な実行環境を取得します。
 
+画面例のテーマと言語は設定から変更できます。起動後の最初の操作は[画面付きクイックスタート](guides/QUICK_START.md)を参照してください。
+
 ### 主な機能
 
 - **画像を作る・整える**: txt2img／img2imgで新規画像を作ったり、元画像を変換したりできます。Hires.fix、ControlNet、Detailer、Topaz Photo AI連携で仕上がりも調整できます。
 - **画像・動画・音声を管理する**: マスクや切り抜きで編集した結果をMedia Libraryに保存し、画像・動画・音声の再生、比較、評価、タグ付けまで続けて行えます。
+- **人体部位を見比べて編集する**: 任意モデルによる人体部位レビューで矩形候補を確認・修正・除外できます。SAMがある場合だけ実マスクを作り、既存の画像編集へ渡せます。複数画像の同じ部位も並べて確認できます。人体異常や人物所属を自動判定する機能ではありません。
+- **再生成の条件差を調べる**: 再生成アシストの「記録された数値の差」で、資産、実入力、Seed、記録されたsigmaや初期ノイズの指紋を比較できます。過去に保存していない値は「未記録」と表示します。同Seedでも完成画像の画素一致は保証しません。
 - **Video Studioで動画を仕上げる**: MiniMax H3のText、Image、First / Last Frame、Reference / Video Edit、Sequenceを使い分けられます。Sequenceでは各クリップを確認してから続行または連結するため、採用した部分を保ったまま完成させられます。
 - **Music Studioで曲を作る**: MiniMax-Music3でVocalまたはInstrumentalを選び、用途に合う新しい曲を生成できます。
 - **設定を再利用する**: スタイル、ワイルドカード、Embedding、LoRA、生成プリセットを組み合わせ、PNG／JPEG／WebPからプロンプトや対応する生成設定を読み込んで次の生成に使えます。
@@ -57,6 +65,8 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - 日本語のシーン説明から三欄のプロンプトを組み立てるAI支援、人物・衣装などの素材保存、意味上の矛盾候補の確認を追加しました。提案は確認してから適用し、入力文を勝手に書き換えません。
 - HiresやDetailerの前後の画像、メイキング動画・GIF、生成途中の状態を任意で保存できます。対応する生成では、保存した途中状態から文章や条件を変えて別の候補を作れます。
 - Media Libraryで条件への一致やシリーズ内の変化を確認し、判定を訂正できます。再生成アシストでは、保存した設定と現在のモデルの違いを確認して再利用できます。画像対応AIの判定には見逃しや誤判定があります。
+- 人体部位レビュー、SAMで作成したマスクの編集転送、2〜32画像の同種部位比較を追加しました。検出とマスク作成は利用者が実行したときだけ動き、必要なモデルは任意導入です。
+- 通常生成でも、実際に使ったsigma列、初期ノイズと入力latentの指紋、計算先を小さな記録として残します。再生成アシストで確認でき、未記録の過去値は推測しません。通常の生成計算は変えません。
 - LoRA学習用の画像とcaptionを点検し、学習後は服・背景・ポーズを変えた生成で効果を比べられます。AIの注釈候補は確認用であり、勝手にcaptionを変更したり学習を始めたりしません。
 - 生成時に語句の参照範囲を記録し、手直しして部分編集へ渡せます。範囲は正確な部位の輪郭ではありません。複数人のポーズは一つの制御画像として編集できますが、AnimaのLLLiteではポーズへの追従を保証しません。
 - 生成画像のチェックを追加しました。生成・補正を終えた完成画像を、保存前に画像対応AIで一回確認し、不合格画像を保存するか選べます。Settingsでは履歴の画像を選び、設定を保存する前に判定を試せます。AIには見逃しや誤判定があり、独自の人体判定器は現在選べません。[操作と制約](guides/IMAGE_CHECK.md)を確認してください。
@@ -280,10 +290,16 @@ Asteria本体の利用条件は`LICENSE`で確認できます。
 
 Asteria is a Windows application for local AI creation. It combines image generation and editing, video generation, music generation, artifact comparison and organization, LoRA training, and model merging. Runtime components are acquired on first launch. Image checkpoints and optional video or music models are not bundled.
 
+![Generate in Dark mode: prompt input on the left and generation settings on the right](guides/images/generate-dark-ja.jpg)
+
+Screenshots show the Japanese interface in Dark mode. Language and theme are selectable in Settings. See the illustrated [Quick start](guides/QUICK_START.md) for your first steps after launch.
+
 ### Main features
 
 - **Generation and enhancement**: Use txt2img, img2img, Hires.fix, ControlNet, Detailer, and Topaz Photo AI integration.
 - **Image editing and Media Library**: Edit with masks and crops; browse and play images, video, and audio; compare images; and organize artifacts with ratings and tags.
+- **Body-part review**: Inspect, correct or exclude optional-model detections, and compare the same part across multiple images. With SAM available, create a real mask and send it to the existing editor. This does not judge anatomical correctness or person ownership.
+- **Recorded numerical differences**: Regeneration assist compares saved assets, actual inputs, Seed, sigma values and initial-noise hashes. Missing historical values remain **Not recorded**. Matching settings or Seeds do not guarantee identical output pixels.
 - **Video Studio**: Use five MiniMax H3 tasks, including a Sequence flow that pauses for review after every clip.
 - **Music Studio**: Generate new Vocal or Instrumental music locally with MiniMax-Music3.
 - **Reusable prompts and settings**: Reuse styles, wildcards, embeddings, LoRAs, generation presets, and compatible prompts or settings found in PNG, JPEG, and WebP images.
@@ -312,6 +328,8 @@ Asteria is a Windows application for local AI creation. It combines image genera
 - Added AI-assisted three-section prompt assembly from a scene description, reusable character and outfit materials, and semantic conflict suggestions. Suggestions require an explicit apply action and do not silently rewrite your prompt.
 - Added optional before/after images for Hires and Detailer, making-of videos and GIFs, and saved intermediate generation states. Supported runs can branch from a saved state with edited text or settings.
 - Media Library can review condition matches and consistency across a series, with editable judgments. Reproduction assistance compares recorded settings and assets with those currently available. Image-capable AI can miss problems or make incorrect judgments.
+- Added Body-part review, real SAM mask handoff to Image Edit, and same-part comparison across 2–32 images. Detection and masking run only on explicit request and require optional models.
+- Ordinary generation now keeps bounded observations of actual sigma values, initial-noise and input-latent hashes, and compute devices. Regeneration assist can compare these records without inferring missing historical values or changing ordinary generation arithmetic.
 - Added LoRA dataset review and practical generation comparisons using different outfits, backgrounds, and poses. AI annotations are review suggestions; they do not automatically change captions or start training.
 - You can record word-reference maps during generation, refine them, and send them to inpaint. These maps are not exact anatomical boundaries. Multi-person poses can be edited in one control image; Anima LLLite does not guarantee pose following.
 - Added generated-image checking through an image-capable AI once after generation and enhancement, before saving the completed image, with a choice to keep or discard rejected images. Settings can try a saved history image before saving the check configuration. AI judgements may be wrong; an Asteria-native anatomy classifier is not currently available. See the [operation and limits](guides/IMAGE_CHECK.md).

@@ -2,6 +2,10 @@
 
 [日本語](#日本語) | [English](#english)
 
+![Darkモードの画像チェック設定。判定方式と不合格画像の保存を選択 / Completed-image check settings](images/image-check-settings-dark-ja.jpg)
+
+画面例は設定方法を示すもので、人体異常の検出精度を示すものではありません。 / This configuration example does not demonstrate anatomy-detection accuracy.
+
 ## 日本語
 
 画像対応AIに、手足や身体の崩れを確認させる機能です。プロンプトどおりの人数、髪色、服装などを調べる機能とは別です。AIには見逃しや誤判定があるため、正常な身体を保証するものではありません。

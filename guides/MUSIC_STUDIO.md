@@ -1,5 +1,9 @@
 # Music Studio / ミュージックスタジオ
 
+![Darkモードの音楽スタジオ。準備状況と保存済み音声のプレーヤー / Music Studio setup and saved-audio player](images/music-studio-dark-ja.jpg)
+
+準備状況と保存済み音声の表示例です。新しい曲を作る場合は下へ進み、VocalかInstrumentalを選んでください。 / Setup and a previously saved audio result are shown. Continue below to select Vocal or Instrumental for a new track.
+
 ## 日本語
 
 Music Studioは、**MiniMax-Music3**で新しい曲を作る画面です。V1.2.0では**Vocal**と**Instrumental**の新規生成に対応します。カバー、リミックス、ステム分離、DAW連携、マスタリングは対象外です。

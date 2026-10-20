@@ -34,6 +34,8 @@ Wildcardsの「ツールを開く」から「展開プレビュー」を使う�
 
 生成結果の「プロンプトの解釈」では、元文と展開後の文章、重み、記法が適用される時期、モデルの文章変換に使った入力を確認できます。HiresやDetailerなど、記録のある段階も選べます。語句の重みは、画像に描かれた強さの測定値ではありません。入力記録のない過去の画像から、後付けで取得することもできません。
 
+![プロンプト解釈で実際に記録された文章と変換単位を確認する画面](images/prompt-interpretation-dark-ja.jpg)
+
 「語句の効き方比較」では、語句・ネガティブ・LoRA・Embedding・一欄の文章・スタイルのうち一つを変えて比べます。
 
 1. 変更する対象とBの値、比較する組数を指定します。
@@ -91,15 +93,23 @@ SDXLでは対応するControlNet、Animaでは対応するLLLiteと制御画像�
 
 Media Libraryの画像詳細、またはImage Editのマスク欄で「人体部位レビュー」を開きます。「探す部位」を選んで「部位候補を検出」を押すと、矩形候補と部位の拡大一覧を表示します。候補には重複・誤検出・見逃し・人物の混在があります。人体の正常性や部位の所属は判定しません。
 
+![Darkモードの人体部位レビュー。矩形は検出候補であり正常性の判定ではありません](images/body-review-dark-ja.jpg)
+
 候補の画像を押すと、その矩形の端を修正できます。不要な候補は「除外」で外し、「戻す」で復帰できます。「修正・選択を保存」で次回にも残します。二つ選ぶと同じ表示部品で拡大比較できます。マスク化は一度に16部位までです。
 
+![一候補を選択し、別の候補を除外して矩形を修正する画面](images/body-review-corrections-dark-ja.jpg)
+
 複数画像の同じ部位を見る場合は、LibraryでCtrl＋クリック、またはCtrl＋Enterで2〜32画像を選び、「部位を比較」を開きます。「手」などの種類を選び、各画像から一候補を選ぶと、切り出した部位を横並びで比較できます。拡大率は共通です。横へスクロールすると残りの画像も確認できます。候補のない画像も空欄として残り、「不足候補を検出」を明示的に押した場合だけ検出します。各列の「人体部位レビュー」で候補の修正・除外や既存のマスク編集へ進めます。
+
+![二画像の手候補を横並びにした部位比較。各列で候補を選び、共通の拡大率で確認できます](images/body-parts-comparison-dark-ja.jpg)
 
 SAMが利用できる場合は「選択部位をマスク化」を押し、色付きの実マスクを確認して「マスクを画像編集へ」を使います。矩形だけの候補をマスクとして転送することはありません。Image Editのブラシ・消しゴムで修正し、既存の「マスクを保存」から生成へ進んでください。未保存の手動マスクがある場合は先に保存します。元画像は上書きしません。
 
 検出とマスク作成は任意導入で、利用者が操作したときだけCPUで実行します。モデルがなければ対応ボタンが無効になりますが、手動編集は使えます。[Grounding DINO tiny](https://huggingface.co/IDEA-Research/grounding-dino-tiny/tree/a2bb814dd30d776dcf7e30523b00659f4f141c71)のモデル・設定・tokenizerをモデル保存先の`body_review/grounding-dino-tiny/`へ、[SAM ViT-B](https://github.com/facebookresearch/segment-anything#model-checkpoints)を`sams/sam_vit_b_01ec64.pth`へ配置してください。AsteriaのPython環境にはTransformersとsegment-anythingも必要です。両モデルはApache-2.0ですが、提供元の利用条件も確認してください。モデルの自動取得は行いません。
 
 「再生成アシスト」の「記録された数値の差」では、比較する履歴を選んで保存値を照合できます。Seed、Sampler、実入力、モデル・VAE・Embedding等の記録済みhashに加え、今後の通常生成でも、実際に使ったsigma列、初期noiseと入力latentのhash、入力の配置先、samplingの計算先を記録します。Hires等の工程やbatchも分けて確認できます。tensor本体は保存しません。
+
+![二つの保存履歴の数値を比較する画面。一致と相違、未記録を分けて表示します](images/regeneration-numbers-dark-ja.jpg)
 
 対応する実行経路で取得できた値だけを表示します。1tensorが16MiBを超える場合のhashや、合計512KiBの記録上限を超えた分は省略します。過去の欠損を推測で補わず「未記録」のままにします。runtimeの計算結果を再利用した場合は、その記録も再利用と表示し、今回新しくsamplingした値とは区別します。記録の一致は画素一致や相違の原因を保証しません。通常生成の計算方式・乱数・再生成処理は変更しません。
 
@@ -132,6 +142,8 @@ Supply your own wildcard files. The ordinary three-section editor and prompt-alt
 ### 3. Inspect interpretation and compare effects
 
 Prompt interpretation shows original and expanded text, weights, notation timing, and recorded text-encoder input. Recorded Hires and Detailer stages are selectable. A weight is not a measurement of how prominently a phrase appears in the image. Results without an input record cannot acquire it retrospectively.
+
+![Prompt interpretation showing recorded text-encoder input; Japanese UI in Dark mode](images/prompt-interpretation-dark-ja.jpg)
 
 Prompt-effect comparison changes one phrase, negative input, LoRA, Embedding, section, or style. Select the change and pair count, review the prepared inputs, then start the comparison. Each pair uses the same Seed for A and B to isolate the change from initial-noise differences. Seed `-1` draws seeds once during preparation. Each pair produces two images at batch size one.
 
@@ -173,15 +185,23 @@ In the pose editor, add people and drag their joints or move an entire person. O
 
 Open **Body-part review** in Media Library image details or the Image Edit mask inspector. Select the parts to look for and explicitly run **Find candidates**. Box overlays and enlarged crops may contain duplicates, false detections, missing parts or mixed people; they do not judge anatomical correctness or ownership.
 
+![Body-part review with candidate rectangles, not anatomy judgments](images/body-review-dark-ja.jpg)
+
 Click a crop to adjust its box edges. Exclude or restore candidates, and use **Save review** to retain corrections and selections. Select two crops for comparison using the shared image viewer. Up to 16 selected regions can be masked at once.
 
+![Selecting a candidate, excluding a duplicate and correcting rectangle edges](images/body-review-corrections-dark-ja.jpg)
+
 For the same part across multiple images, select 2–32 Library images using Ctrl+click or Ctrl+Enter, then open **Compare body parts**. Choose a part type and one candidate per image. Crops appear side by side with shared zoom; scroll horizontally to reach the other images. Missing candidates remain as empty columns. Only **Detect missing candidates** explicitly starts detection. Each column's **Body-part review** reuses the existing correction, exclusion and mask-editing workflow.
+
+![Same-part comparison across two images, with a candidate selector for each column](images/body-parts-comparison-dark-ja.jpg)
 
 When SAM is available, create a mask and inspect its colored area before sending it to Image Edit. Rectangles are never presented as segmentation masks. Refine the real mask with the existing brush/eraser, save it, then continue through Generate. Save an unsaved manual mask before opening another review. Original images are not overwritten.
 
 Detection and masking are optional, CPU-only and explicitly invoked; they do not run after each generation. Missing models disable only their respective operations, not manual editing. Put the pinned [Grounding DINO tiny](https://huggingface.co/IDEA-Research/grounding-dino-tiny/tree/a2bb814dd30d776dcf7e30523b00659f4f141c71) model/config/tokenizer files in `body_review/grounding-dino-tiny/` under model storage, and the official [SAM ViT-B](https://github.com/facebookresearch/segment-anything#model-checkpoints) checkpoint in `sams/sam_vit_b_01ec64.pth`. Asteria's Python environment also needs Transformers and segment-anything. Both models declare Apache-2.0; check their provider terms. Models are not downloaded automatically.
 
 In **Regeneration assist → Recorded numerical differences**, choose another history entry and compare its saved inputs, Seed, Sampler and model/VAE/Embedding hashes. Future ordinary generations also record actual sigma values, initial noise and input-latent hashes, input devices and sampling compute devices. Hires stages and batches remain distinct. Tensors themselves are not saved.
+
+![Comparing saved execution observations while separating matches, differences and missing records](images/regeneration-numbers-dark-ja.jpg)
 
 Only observed values from supported execution paths are displayed. Hashing is skipped above 16 MiB per tensor, and records are bounded to 512 KiB in total. Missing historical values stay **Not recorded** rather than being reconstructed. Reused runtime results are labeled as reused observations, not fresh sampling. Matching records do not guarantee identical pixels or establish the cause of a difference. Ordinary generation arithmetic, RNG and regeneration behavior are unchanged.
 

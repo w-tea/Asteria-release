@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "7d2cb9ff72686748dc10b933903aef40e2f39444",
-  "build_timestamp_utc": "2026-10-20T12:56:27Z",
+  "source_commit": "95dc6ad01e25a5ae99767b95cb33267f03156eb1",
+  "build_timestamp_utc": "2026-10-20T16:26:44Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 58373,
-      "sha256": "9d7bbdc60f0399265fb7c7766da71d6d306bc38971730291ffb56d9a367eb4d2"
+      "size_bytes": 61535,
+      "sha256": "1e080c791882bc3491535b9cedb0abdb12dc26d7e55b1b0b2fae764f30f5eddf"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -1569,12 +1569,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "d93d94b996b87f08df9a8433fbc7a4db3d7104bab8d5fb345f49255466e31554"
+      "sha256": "1c5c300c701cb65b3e2cd96086d21324819260e94eb2a2506f5a1f38836e444c"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/45fde447-e6a3-4621-9cfa-cd0180f06047.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/bf6abef7-7f3d-44ac-b509-2a03a87728c4.json",
       "size_bytes": 88,
-      "sha256": "3ab89128d7f4bdf3a6b456d31d37dfbbbbfb1d5c29f85c596103d6bcac780226"
+      "sha256": "b6e1400700a4c8c4db3c0149dcfcd7db333e1c979a5ef58237deca1ba46df955"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.CF5z6LFL.css",
@@ -1619,7 +1619,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "5cb3e932a9c867fd51975828e814da98c121b6a6e4b0bf050916bb17ca0950c3"
+      "sha256": "8e83222d5f4b0d5f3a22d4193a04e8df39677fd03960288353750d4fea1b24d9"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.DP0oR7hC.mjs",
@@ -2414,7 +2414,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 20706,
-      "sha256": "8c9985d7ecfe126f67fc29465a90af437c90e7e4be2ed88ae2ef144753f0664c"
+      "sha256": "bf55020f29a8446434f6c1e7a1581d756d82165143203c8267d7dcb282d52c54"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -2953,33 +2953,38 @@
     },
     {
       "path": "guides/CREATIVE_WORKFLOWS.md",
-      "size_bytes": 26219,
-      "sha256": "7a0287eaf81bf1646bce74bb08ec4e4149c9abf2abe060ceb044aa97c3253db5"
+      "size_bytes": 27582,
+      "sha256": "766acdb90666d1ba1f734e8e24fea42c3418678500fd09c067788f27b8229d5e"
     },
     {
       "path": "guides/EXTENSIONS.md",
-      "size_bytes": 5489,
-      "sha256": "d559594d4e4d851eaac7779157ed57cbf11b05d2cd7f584d1ec55754c97e6992"
+      "size_bytes": 5787,
+      "sha256": "463b393c69706dbc56084a2bafdf00a8ffc30ae99ec96aecd3c346d375aa08eb"
     },
     {
       "path": "guides/IMAGE_CHECK.md",
-      "size_bytes": 8309,
-      "sha256": "761feadb22da04c1aa122c7f4202c2c758c0660628f15274301003fa74edaf5c"
+      "size_bytes": 8670,
+      "sha256": "edb526355dd4a90d9fd74c35aa7fec8c01203e6eababd5a567ebeb22e7be0249"
     },
     {
       "path": "guides/MEDIA_LIBRARY.md",
-      "size_bytes": 3517,
-      "sha256": "6d28f51fc4ee278d45f7eef4ccf5115f634860c98187841516c9fc068798f32d"
+      "size_bytes": 5054,
+      "sha256": "50ed18daf9d3b89539d86f11edb140baf981c9facf53e86181d88329693b8ef6"
     },
     {
       "path": "guides/MUSIC_STUDIO.md",
-      "size_bytes": 3456,
-      "sha256": "03790e81710ff2e52633821944e4c277736bbb9fcbcaea14cc1641e5722f458c"
+      "size_bytes": 3897,
+      "sha256": "4a4668e96261c1b33c5d0520e675bc4d4e43df4d32d2fbd9ec058fe8624a78a1"
+    },
+    {
+      "path": "guides/QUICK_START.md",
+      "size_bytes": 8369,
+      "sha256": "4dc630d6359c7b88c3650663dce5495bf24e353b3bffc286b7dc356a056b890e"
     },
     {
       "path": "guides/VIDEO_STUDIO.md",
-      "size_bytes": 5220,
-      "sha256": "cb0a792d47af7c1b52b7f5f26ef0ee4b8adbf771bd39dcbe486457b1e812826f"
+      "size_bytes": 5589,
+      "sha256": "a69243273f23d3a29ef2f9a734135f66706897c1e0a3eedc3f16d4119c286503"
     },
     {
       "path": "guides/extensions/DEVELOPER_GUIDE.ja.md",
@@ -2990,6 +2995,81 @@
       "path": "guides/extensions/DEVELOPER_GUIDE.md",
       "size_bytes": 14162,
       "sha256": "383eab82052ba9d79f52afa44458c0c0552fa1ad8b6f164ab7c357326ad580e8"
+    },
+    {
+      "path": "guides/images/appearance-dark-ja.jpg",
+      "size_bytes": 65565,
+      "sha256": "4588cdad37785403d52c39ef9793de1e0adc1fbd139f527d2c1c951d9d31a692"
+    },
+    {
+      "path": "guides/images/body-parts-comparison-dark-ja.jpg",
+      "size_bytes": 83361,
+      "sha256": "50235a360115e62a2b396c01cb94b9ee59483e51a3e8d6d4e20e4be2cbfcaa2f"
+    },
+    {
+      "path": "guides/images/body-review-corrections-dark-ja.jpg",
+      "size_bytes": 79862,
+      "sha256": "6a6b97e808502ac01d0c248b2f7986802d19b1b5aa34197693907f9d5c102b5c"
+    },
+    {
+      "path": "guides/images/body-review-dark-ja.jpg",
+      "size_bytes": 86625,
+      "sha256": "b37984e78465c5d34b9476a7a4ff2ad653d68d30d4b53599f9194f47706d3281"
+    },
+    {
+      "path": "guides/images/extensions-dark-ja.jpg",
+      "size_bytes": 63968,
+      "sha256": "f4b4c7db15aac7b844ee2572665e53830f4bd9075bd33d87c453157579bfefc7"
+    },
+    {
+      "path": "guides/images/generate-dark-ja.jpg",
+      "size_bytes": 120883,
+      "sha256": "4df68d73ad35497d0d80a10d4b2704c9f519f72a65b76c177ea9ff01b6cefd1e"
+    },
+    {
+      "path": "guides/images/image-check-settings-dark-ja.jpg",
+      "size_bytes": 82980,
+      "sha256": "9626722cef1fd88089e7451ae42145aa596c217efe69fae4b5489841b0e9171c"
+    },
+    {
+      "path": "guides/images/image-edit-mask-dark-ja.jpg",
+      "size_bytes": 121008,
+      "sha256": "83af2b59332dd0450337c45971f85bc36dd1b2c584b92aa24c275774d4731e23"
+    },
+    {
+      "path": "guides/images/lora-training-dark-ja.jpg",
+      "size_bytes": 92695,
+      "sha256": "40ae63f32a745f5e9c89d4d3b28fc836fbcb6eadacbc9cca7a163a11a8579e3a"
+    },
+    {
+      "path": "guides/images/media-library-dark-ja.jpg",
+      "size_bytes": 142067,
+      "sha256": "529d99f13bfca8963db7215665a5af00504477b148b27404b2fcb868b1deb779"
+    },
+    {
+      "path": "guides/images/merge-dark-ja.jpg",
+      "size_bytes": 81656,
+      "sha256": "5119112a1026598bf59272258496ed92c2df40dd58e47d467900d606c46a1282"
+    },
+    {
+      "path": "guides/images/music-studio-dark-ja.jpg",
+      "size_bytes": 83593,
+      "sha256": "0bb258c7f8fc4909f68870643817c16a0f88258a1400d78fe0f6ccb9766e7fad"
+    },
+    {
+      "path": "guides/images/prompt-interpretation-dark-ja.jpg",
+      "size_bytes": 112166,
+      "sha256": "289a0d380e33cae3f5423473dd21636b153a92c30f5f99abb06fe3e3420fd9d3"
+    },
+    {
+      "path": "guides/images/regeneration-numbers-dark-ja.jpg",
+      "size_bytes": 101415,
+      "sha256": "605ce8a72558c6e1a867ff961b8e13dce32e5efb2c2e928c5b2711232183208d"
+    },
+    {
+      "path": "guides/images/video-studio-dark-ja.jpg",
+      "size_bytes": 96564,
+      "sha256": "6747abb280e2db5960cf69eb15a5ae049b9522d2441e8a4a2427abd7fb6abea4"
     },
     {
       "path": "licenses/body-review/Apache-2.0.txt",

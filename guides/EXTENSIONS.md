@@ -1,5 +1,9 @@
 # Extensions / 拡張機能
 
+![Darkモードの拡張機能管理画面 / Extensions management in Dark mode](images/extensions-dark-ja.jpg)
+
+画面例は日本語表示です。表示だけでは導入・更新は始まりません。 / Japanese interface shown; viewing the screen does not install or update extensions.
+
 ## 日本語
 
 AsteriaのExtensionsでは、画面、パネル、操作を追加できます。拡張機能には、分離された画面と申告済みの仲介機能だけを使う**標準拡張**と、Asteria本体と同じ権限でコードを動かす**フルアクセス拡張**があります。
