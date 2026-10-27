@@ -14,14 +14,14 @@
 
 ### 2. 一枚生成する
 
-1. 左の「生成」を開き、モデルプロファイル、Checkpoint、必要なVAEを選びます。未導入の場合はモデルを追加するか、「設定」→「起動準備」を確認してください。
+1. 左の「生成」を開き、モデルプロファイル、Checkpoint、必要なVAEを選びます。「モデルを検索」ではモデル名やフォルダー名で候補を絞り込めます。未導入の場合はモデルを追加するか、「設定」→「起動準備」を確認してください。
 2. 描きたい内容とネガティブプロンプトを入力します。「項目別に入力」は文章を三欄に整理する機能であり、人物の位置を指定するものではありません。
 3. 右の「基本設定」でサイズ、Samplingステップなどを選びます。通常はSeedを`-1`にして、毎回新しい値を使います。
 4. 「生成」を押し、完成画像を確認します。中断したいときは「停止」を押します。自動リピートをONにした場合は、終了条件も確認してください。
 
 ![プロンプトと基本設定、完成画像を表示する生成画面](images/generate-dark-ja.jpg)
 
-画面例は通常生成の完成画像です。再生成用のSeedや設定は履歴に残りますが、別の実行環境で画素まで同じになる保証はありません。詳しい比較や途中状態の保存は[制作支援ガイド](CREATIVE_WORKFLOWS.md)を参照してください。
+画面例は、保存済みの生成画像を履歴から読み込んだ状態です。再生成用のSeedや設定は履歴に残りますが、別の実行環境で画素まで同じになる保証はありません。詳しい比較や途中状態の保存は[制作支援ガイド](CREATIVE_WORKFLOWS.md)を参照してください。
 
 ### 3. メディアライブラリで選ぶ
 
@@ -45,7 +45,9 @@ LoRA学習では画像とキャプションを用意し、学習内容を確認�
 
 ![LoRA学習の入力と保存済み実行履歴を確認する画面](images/lora-training-dark-ja.jpg)
 
-Mergeでは、対象のモデルと方式を選び、設定を確認して実行します。プレビューや比較を使い、生成画像で結果を判断してください。以下は設定画面の例であり、Merge結果の品質を示す画像ではありません。
+Mergeでは、上部のページ内移動から「モデル・計算方式」→「詳細レシピ」→「候補スタジオ」→「レシピを保存」の順に進めます。モデル名やフォルダー名で候補を絞り込み、設定を確認してレシピを保存してください。PCの通常幅では、右上の「マージを実行」は設定や履歴をスクロールしても表示されたままです。未保存の変更がある場合は、最後に保存したレシピを実行します。変更も使いたいときは、先に「変更を保存」を押してください。
+
+プレビューや比較を使い、生成画像で結果を判断してください。以下は設定画面の例であり、Merge結果の品質を示す画像ではありません。
 
 ![Merge Studioでモデルと計算方法を選ぶ画面](images/merge-dark-ja.jpg)
 
@@ -72,14 +74,14 @@ Open Settings → Appearance and choose Light, Dark or System. The theme changes
 
 ### 2. Generate one image
 
-1. Open Generate and select the model profile, checkpoint and required VAE. Add a compatible model or review Ready to start in Settings if needed.
+1. Open Generate and select the model profile, checkpoint and required VAE. Use Search models to filter by model or folder name. Add a compatible model or review Ready to start in Settings if needed.
 2. Enter the positive and negative prompts. Sectioned input organizes text; it does not assign people to spatial regions.
 3. Choose dimensions and sampling settings in Basic settings. Use Seed `-1` for a fresh value during ordinary generation.
 4. Press Generate and inspect the completed image. Stop cancels an ongoing run. Review the stop conditions before enabling automatic repeat.
 
 ![Generate with prompt input, settings and a completed ordinary image](images/generate-dark-ja.jpg)
 
-History retains the Seed and settings, but pixel-identical output across execution environments is not guaranteed. See [Creative workflows](CREATIVE_WORKFLOWS.md) for comparisons and saved intermediate states.
+The screenshot shows a saved generation restored from history. History retains the Seed and settings, but pixel-identical output across execution environments is not guaranteed. See [Creative workflows](CREATIVE_WORKFLOWS.md) for comparisons and saved intermediate states.
 
 ### 3. Choose media in Library
 
@@ -103,7 +105,9 @@ Prepare images and captions in LoRA Training, inspect the configuration, then ex
 
 ![LoRA Training inputs and previously saved run history](images/lora-training-dark-ja.jpg)
 
-In Merge, choose the models and method, review the configuration and explicitly run it. Judge the result using generated images and comparisons. The screenshot shows configuration, not evidence of merge quality.
+In Merge, use the navigation at the top to move through Models & method → Advanced Recipe → Candidate Studio → Save recipe. Filter models by model or folder name, review the settings, then save the recipe. At normal desktop widths, Run merge stays at the top right while you scroll the settings or history. With unsaved changes, the action runs the last saved recipe. Use Save changes first if you want those changes included.
+
+Judge the result using generated images and comparisons. The screenshot shows configuration, not evidence of merge quality.
 
 ![Merge Studio model selection and calculation settings](images/merge-dark-ja.jpg)
 

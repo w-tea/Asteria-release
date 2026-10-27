@@ -5684,6 +5684,11 @@ const messages = {
   "merge.clearPreviewCache": { en: "Clear preview cache", ja: "プレビューキャッシュを削除" },
   "merge.working": { en: "Working", ja: "実行中" },
   "merge.runMerge": { en: "Run merge", ja: "マージを実行" },
+  "modelSettings.searchModels": { en: "Search models", ja: "モデルを検索" },
+  "modelSettings.searchModelsPlaceholder": { en: "Model name or folder name", ja: "モデル名・フォルダ名で絞り込み" },
+  "merge.modelSetupTitle": { en: "Models and method", ja: "モデル・計算方式" },
+  "merge.recipeSaveTitle": { en: "Save the recipe", ja: "レシピを保存" },
+  "merge.sectionNavigation": { en: "Go to a merge section", ja: "マージ設定の項目へ移動" },
   "merge.mergeTypeAria": { en: "Merge type", ja: "マージ種別" },
   "merge.modelFamily": { en: "Model family", ja: "モデルファミリー" },
   "merge.recipeName": { en: "Recipe name", ja: "レシピ名" },
@@ -7154,7 +7159,7 @@ const useAsteriaI18n = () => {
     vocabularyTerm
   };
 };
-const _sfc_main$2s = /* @__PURE__ */ defineComponent({
+const _sfc_main$2u = /* @__PURE__ */ defineComponent({
   __name: "AssetRefreshIndicator",
   __ssrInlineRender: true,
   props: {
@@ -7212,14 +7217,14 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const _sfc_setup$2s = _sfc_main$2s.setup;
-_sfc_main$2s.setup = (props, ctx) => {
+const _sfc_setup$2u = _sfc_main$2u.setup;
+_sfc_main$2u.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AssetRefreshIndicator.vue");
-  return _sfc_setup$2s ? _sfc_setup$2s(props, ctx) : void 0;
+  return _sfc_setup$2u ? _sfc_setup$2u(props, ctx) : void 0;
 };
-const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2s, [["__scopeId", "data-v-580e201b"]]), { __name: "StudioAssetRefreshIndicator" });
-const _sfc_main$2r = /* @__PURE__ */ defineComponent({
+const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2u, [["__scopeId", "data-v-580e201b"]]), { __name: "StudioAssetRefreshIndicator" });
+const _sfc_main$2t = /* @__PURE__ */ defineComponent({
   __name: "GenerateActionStrip",
   __ssrInlineRender: true,
   props: {
@@ -7320,13 +7325,13 @@ const _sfc_main$2r = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2r = _sfc_main$2r.setup;
-_sfc_main$2r.setup = (props, ctx) => {
+const _sfc_setup$2t = _sfc_main$2t.setup;
+_sfc_main$2t.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerateActionStrip.vue");
-  return _sfc_setup$2r ? _sfc_setup$2r(props, ctx) : void 0;
+  return _sfc_setup$2t ? _sfc_setup$2t(props, ctx) : void 0;
 };
-const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2r, [["__scopeId", "data-v-f02894c0"]]), { __name: "StudioGenerateActionStrip" });
+const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2t, [["__scopeId", "data-v-f02894c0"]]), { __name: "StudioGenerateActionStrip" });
 function restorePromptPins(value) {
   if (!value || typeof value !== "object") return null;
   const data = value;
@@ -12379,7 +12384,7 @@ const useGenerationStore = defineStore("generation", {
     }
   }
 });
-const _sfc_main$2q = /* @__PURE__ */ defineComponent({
+const _sfc_main$2s = /* @__PURE__ */ defineComponent({
   __name: "GenerationPresetBar",
   __ssrInlineRender: true,
   setup(__props) {
@@ -12422,13 +12427,23 @@ const _sfc_main$2q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2q = _sfc_main$2q.setup;
-_sfc_main$2q.setup = (props, ctx) => {
+const _sfc_setup$2s = _sfc_main$2s.setup;
+_sfc_main$2s.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationPresetBar.vue");
-  return _sfc_setup$2q ? _sfc_setup$2q(props, ctx) : void 0;
+  return _sfc_setup$2s ? _sfc_setup$2s(props, ctx) : void 0;
 };
-const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2q, [["__scopeId", "data-v-69e20fe6"]]), { __name: "StudioGenerateGenerationPresetBar" });
+const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2s, [["__scopeId", "data-v-69e20fe6"]]), { __name: "StudioGenerateGenerationPresetBar" });
+const searchableText = (value) => value.normalize("NFKC").toLowerCase().replace(/\\/g, "/");
+function filterModelOptions(items, query, selectedPath = "") {
+  const terms = searchableText(query).trim().split(/\s+/).filter(Boolean);
+  if (!terms.length) return items;
+  return items.filter((item) => {
+    if (item.path === selectedPath) return true;
+    const text = searchableText(`${item.name ?? ""} ${item.relative_path ?? ""} ${item.path}`);
+    return terms.every((term) => text.includes(term));
+  });
+}
 const dependencyNeedsAttention = (dependency, selections) => {
   if (dependency.status === "installed") {
     return false;
@@ -12508,7 +12523,7 @@ const useMediaModelCatalog = (domain) => {
     refresh
   };
 };
-const _sfc_main$2p = /* @__PURE__ */ defineComponent({
+const _sfc_main$2r = /* @__PURE__ */ defineComponent({
   __name: "ModelSettingsPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -12519,6 +12534,8 @@ const _sfc_main$2p = /* @__PURE__ */ defineComponent({
     const { t } = useAsteriaI18n();
     const modelAssetError = ref("");
     const refreshingModelAssets = ref(false);
+    const modelSearch = ref("");
+    const filteredSlotOptions = (slot) => filterModelOptions(slotOptions(slot), modelSearch.value, modelDependencies.selections[slot.id]);
     const activeProfile = computed(() => modelDependencies.selectedProfile(generation.profile));
     const modelSelectionReady = computed(() => modelDependencies.selectionReady(generation.profile));
     const activeProfileDependencyIds = computed(() => new Set(activeProfile.value?.dependency_ids ?? []));
@@ -12606,74 +12623,74 @@ const _sfc_main$2p = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "model-bar",
         "aria-label": unref(t)("modelSettings.aria")
-      }, _attrs))} data-v-21e4673d><div class="model-bar__primary" data-v-21e4673d><label class="field slot-field model-bar__field model-bar__profile" data-v-21e4673d><span data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select${ssrRenderAttr("value", unref(generation).profile)} data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-21e4673d><!--[-->`);
+      }, _attrs))} data-v-8536980a><label class="field model-bar__search" data-v-8536980a><span data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.searchModels"))}</span><input${ssrRenderAttr("value", unref(modelSearch))} type="search"${ssrRenderAttr("placeholder", unref(t)("modelSettings.searchModelsPlaceholder"))} data-v-8536980a></label><div class="model-bar__primary" data-v-8536980a><label class="field slot-field model-bar__field model-bar__profile" data-v-8536980a><span data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select${ssrRenderAttr("value", unref(generation).profile)} data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-8536980a><!--[-->`);
       ssrRenderList(unref(modelDependencies).profiles, (profile) => {
-        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-21e4673d>${ssrInterpolate(profile.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-8536980a>${ssrInterpolate(profile.label)}</option>`);
       });
       _push(`<!--]--></select></label><!--[-->`);
       ssrRenderList(unref(primaryModelSlots), (slot) => {
-        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-21e4673d><span data-v-21e4673d>${ssrInterpolate(slot.label)}</span>`);
+        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-8536980a><span data-v-8536980a>${ssrInterpolate(slot.label)}</span>`);
         if (usesModelSelect(slot)) {
-          _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || unref(generation).profile === "anima" && slot.id === "diffusion_model" && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-21e4673d><option value="" data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
-          ssrRenderList(slotOptions(slot), (item) => {
-            _push(`<option${ssrRenderAttr("value", item.path)} data-v-21e4673d>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
+          _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || unref(generation).profile === "anima" && slot.id === "diffusion_model" && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-8536980a><option value="" data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+          ssrRenderList(filteredSlotOptions(slot), (item) => {
+            _push(`<option${ssrRenderAttr("value", item.path)} data-v-8536980a>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
           });
           _push(`<!--]--></select>`);
         } else {
-          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-21e4673d>`);
+          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-8536980a>`);
         }
         _push(`</label>`);
       });
-      _push(`<!--]--><div class="model-bar__slot-status" data-v-21e4673d><span data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-21e4673d>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div><div class="model-bar__actions" data-v-21e4673d><button${ssrRenderAttrs(mergeProps({
+      _push(`<!--]--><div class="model-bar__slot-status" data-v-8536980a><span data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-8536980a>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div><div class="model-bar__actions" data-v-8536980a><button${ssrRenderAttrs(mergeProps({
         type: "button",
         disabled: unref(refreshingModelAssets) || unref(modelDependencies).loading || unref(runtime).loading
-      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("modelSettings.refreshHelp"))))} data-v-21e4673d>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
+      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("modelSettings.refreshHelp"))))} data-v-8536980a>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
       if (!unref(activeProfile)) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-21e4673d><strong data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-21e4673d>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
+        _push(`<div class="model-bar__recovery" role="status" data-v-8536980a><strong data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-8536980a>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(modelAssetError)) {
-        _push(`<div class="model-bar__message-row" data-v-21e4673d><p class="error" aria-live="assertive" data-v-21e4673d>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
+        _push(`<div class="model-bar__message-row" data-v-8536980a><p class="error" aria-live="assertive" data-v-8536980a>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).profile === "anima" && unref(imageModelCatalog).error.value) {
-        _push(`<div class="model-bar__message-row" data-v-21e4673d><p class="error" aria-live="assertive" data-v-21e4673d>${ssrInterpolate(unref(imageModelCatalog).error.value)}</p></div>`);
+        _push(`<div class="model-bar__message-row" data-v-8536980a><p class="error" aria-live="assertive" data-v-8536980a>${ssrInterpolate(unref(imageModelCatalog).error.value)}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(selectedAnimaDiffusion)) {
-        _push(`<div class="model-bar__message-row" role="status" data-v-21e4673d><p class="muted" data-v-21e4673d>${ssrInterpolate(animaVariantLabel(unref(selectedAnimaDiffusion).variant))}</p></div>`);
+        _push(`<div class="model-bar__message-row" role="status" data-v-8536980a><p class="muted" data-v-8536980a>${ssrInterpolate(animaVariantLabel(unref(selectedAnimaDiffusion).variant))}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(anima38MissingComponentLabels).length) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-21e4673d><strong data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsRequired"))}</strong><small data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsHelp", { components: unref(anima38MissingComponentLabels).join(" / ") }))}</small></div>`);
+        _push(`<div class="model-bar__recovery" role="status" data-v-8536980a><strong data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsRequired"))}</strong><small data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsHelp", { components: unref(anima38MissingComponentLabels).join(" / ") }))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(missingProfileDependencies).length) {
-        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-21e4673d><div data-v-21e4673d><strong data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-21e4673d><!--[-->`);
+        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-8536980a><div data-v-8536980a><strong data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-8536980a><!--[-->`);
         ssrRenderList(unref(missingProfileDependencies), (dependency) => {
-          _push(`<li data-v-21e4673d><span data-v-21e4673d><strong data-v-21e4673d>${ssrInterpolate(dependency.label)}</strong></span></li>`);
+          _push(`<li data-v-8536980a><span data-v-8536980a><strong data-v-8536980a>${ssrInterpolate(dependency.label)}</strong></span></li>`);
         });
         _push(`<!--]--></ul></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(secondaryModelSlots).length) {
-        _push(`<details class="model-bar__extra" data-v-21e4673d><summary data-v-21e4673d><span data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-21e4673d>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-21e4673d><!--[-->`);
+        _push(`<details class="model-bar__extra" data-v-8536980a><summary data-v-8536980a><span data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-8536980a>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-8536980a><!--[-->`);
         ssrRenderList(unref(secondaryModelSlots), (slot) => {
-          _push(`<label class="field slot-field model-bar__field" data-v-21e4673d><span data-v-21e4673d>${ssrInterpolate(slot.label)}</span>`);
+          _push(`<label class="field slot-field model-bar__field" data-v-8536980a><span data-v-8536980a>${ssrInterpolate(slot.label)}</span>`);
           if (usesModelSelect(slot)) {
-            _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-21e4673d><option value="" data-v-21e4673d>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
-            ssrRenderList(slotOptions(slot), (item) => {
-              _push(`<option${ssrRenderAttr("value", item.path)} data-v-21e4673d>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
+            _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-8536980a><option value="" data-v-8536980a>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+            ssrRenderList(filteredSlotOptions(slot), (item) => {
+              _push(`<option${ssrRenderAttr("value", item.path)} data-v-8536980a>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
             });
             _push(`<!--]--></select>`);
           } else {
-            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-21e4673d>`);
+            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-8536980a>`);
           }
           _push(`</label>`);
         });
@@ -12686,14 +12703,14 @@ const _sfc_main$2p = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2p = _sfc_main$2p.setup;
-_sfc_main$2p.setup = (props, ctx) => {
+const _sfc_setup$2r = _sfc_main$2r.setup;
+_sfc_main$2r.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ModelSettingsPanel.vue");
-  return _sfc_setup$2p ? _sfc_setup$2p(props, ctx) : void 0;
+  return _sfc_setup$2r ? _sfc_setup$2r(props, ctx) : void 0;
 };
-const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2p, [["__scopeId", "data-v-21e4673d"]]), { __name: "StudioModelSettingsPanel" });
-const _sfc_main$2o = /* @__PURE__ */ defineComponent({
+const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2r, [["__scopeId", "data-v-8536980a"]]), { __name: "StudioModelSettingsPanel" });
+const _sfc_main$2q = /* @__PURE__ */ defineComponent({
   __name: "PromptChoicesPreview",
   __ssrInlineRender: true,
   setup(__props) {
@@ -12748,13 +12765,13 @@ const _sfc_main$2o = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2o = _sfc_main$2o.setup;
-_sfc_main$2o.setup = (props, ctx) => {
+const _sfc_setup$2q = _sfc_main$2q.setup;
+_sfc_main$2q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptChoicesPreview.vue");
-  return _sfc_setup$2o ? _sfc_setup$2o(props, ctx) : void 0;
+  return _sfc_setup$2q ? _sfc_setup$2q(props, ctx) : void 0;
 };
-const PromptChoicesPreview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2o, [["__scopeId", "data-v-848bf7df"]]), { __name: "StudioPromptChoicesPreview" });
+const PromptChoicesPreview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2q, [["__scopeId", "data-v-848bf7df"]]), { __name: "StudioPromptChoicesPreview" });
 const promptAssistStructurePayload = (snapshot2) => ({
   prompt: snapshot2.prompt,
   prompt_input: structuredClone(snapshot2.promptInput),
@@ -13091,7 +13108,7 @@ const adjustPromptWeight = (value, selectionStart, selectionEnd, direction) => {
   }
   return replacePromptSelection(value, span.start, span.end, replacement);
 };
-const _sfc_main$2n = /* @__PURE__ */ defineComponent({
+const _sfc_main$2p = /* @__PURE__ */ defineComponent({
   __name: "StyleChain",
   __ssrInlineRender: true,
   props: {
@@ -13152,14 +13169,14 @@ const _sfc_main$2n = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2n = _sfc_main$2n.setup;
-_sfc_main$2n.setup = (props, ctx) => {
+const _sfc_setup$2p = _sfc_main$2p.setup;
+_sfc_main$2p.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StyleChain.vue");
-  return _sfc_setup$2n ? _sfc_setup$2n(props, ctx) : void 0;
+  return _sfc_setup$2p ? _sfc_setup$2p(props, ctx) : void 0;
 };
-const StyleChain = Object.assign(_sfc_main$2n, { __name: "StudioStyleChain" });
-const _sfc_main$2m = /* @__PURE__ */ defineComponent({
+const StyleChain = Object.assign(_sfc_main$2p, { __name: "StudioStyleChain" });
+const _sfc_main$2o = /* @__PURE__ */ defineComponent({
   __name: "AdvancedStylesPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -13179,58 +13196,58 @@ const _sfc_main$2m = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "asset-panel advanced-styles-panel",
         "aria-label": unref(t)("advancedStyles.aria")
-      }, _attrs))} data-v-452b14c6><div class="asset-panel__header" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.title"))}</span><button type="button"${ssrIncludeBooleanAttr(unref(generation).promptPreviewLoading) ? " disabled" : ""} data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.preview"))}</button></div><div class="advanced-styles-workspace" data-v-452b14c6><div class="advanced-styles-browser" data-v-452b14c6><div class="style-toolbar" data-v-452b14c6><select${ssrRenderAttr("aria-label", unref(t)("advancedStyles.styleGroup"))} data-v-452b14c6><option value="" data-v-452b14c6${ssrIncludeBooleanAttr(Array.isArray(unref(advancedStyles).selectedGroup) ? ssrLooseContain(unref(advancedStyles).selectedGroup, "") : ssrLooseEqual(unref(advancedStyles).selectedGroup, "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("advancedStyles.allGroups"))}</option><!--[-->`);
+      }, _attrs))} data-v-c7e97ed2><div class="asset-panel__header" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.title"))}</span><button type="button"${ssrIncludeBooleanAttr(unref(generation).promptPreviewLoading) ? " disabled" : ""} data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.preview"))}</button></div><div class="advanced-styles-workspace" data-v-c7e97ed2><div class="advanced-styles-browser" data-v-c7e97ed2><div class="style-toolbar" data-v-c7e97ed2><select${ssrRenderAttr("aria-label", unref(t)("advancedStyles.styleGroup"))} data-v-c7e97ed2><option value="" data-v-c7e97ed2${ssrIncludeBooleanAttr(Array.isArray(unref(advancedStyles).selectedGroup) ? ssrLooseContain(unref(advancedStyles).selectedGroup, "") : ssrLooseEqual(unref(advancedStyles).selectedGroup, "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("advancedStyles.allGroups"))}</option><!--[-->`);
       ssrRenderList(unref(advancedStyles).groups, (group) => {
-        _push(`<option${ssrRenderAttr("value", group)} data-v-452b14c6${ssrIncludeBooleanAttr(Array.isArray(unref(advancedStyles).selectedGroup) ? ssrLooseContain(unref(advancedStyles).selectedGroup, group) : ssrLooseEqual(unref(advancedStyles).selectedGroup, group)) ? " selected" : ""}>${ssrInterpolate(group)}</option>`);
+        _push(`<option${ssrRenderAttr("value", group)} data-v-c7e97ed2${ssrIncludeBooleanAttr(Array.isArray(unref(advancedStyles).selectedGroup) ? ssrLooseContain(unref(advancedStyles).selectedGroup, group) : ssrLooseEqual(unref(advancedStyles).selectedGroup, group)) ? " selected" : ""}>${ssrInterpolate(group)}</option>`);
       });
-      _push(`<!--]--></select><input${ssrRenderAttr("value", unref(advancedStyles).query)}${ssrRenderAttr("aria-label", unref(t)("advancedStyles.searchStyles"))}${ssrRenderAttr("placeholder", unref(t)("advancedStyles.searchStylesPlaceholder"))} data-v-452b14c6><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).filteredStyles.length) ? " disabled" : ""} data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.random"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading) ? " disabled" : ""} data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.reload"))}</button></div><div class="style-gallery"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.galleryAria"))} data-v-452b14c6><!--[-->`);
+      _push(`<!--]--></select><input${ssrRenderAttr("value", unref(advancedStyles).query)}${ssrRenderAttr("aria-label", unref(t)("advancedStyles.searchStyles"))}${ssrRenderAttr("placeholder", unref(t)("advancedStyles.searchStylesPlaceholder"))} data-v-c7e97ed2><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).filteredStyles.length) ? " disabled" : ""} data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.random"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading) ? " disabled" : ""} data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.reload"))}</button></div><div class="style-gallery"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.galleryAria"))} data-v-c7e97ed2><!--[-->`);
       ssrRenderList(unref(advancedStyles).filteredStyles, (style) => {
         _push(`<article${ssrRenderAttrs(mergeProps({
           key: style.id,
           class: ["style-card", { "style-card--selected": unref(selectedStyleId) === style.id }]
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, `${style.group} / ${style.name}`)))} data-v-452b14c6><button class="style-card__select" type="button" data-v-452b14c6>`);
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, `${style.group} / ${style.name}`)))} data-v-c7e97ed2><button class="style-card__select" type="button" data-v-c7e97ed2>`);
         if (unref(advancedStyles).thumbnailUrl(style)) {
-          _push(`<img${ssrRenderAttr("src", unref(advancedStyles).thumbnailUrl(style))}${ssrRenderAttr("alt", style.name)} data-v-452b14c6>`);
+          _push(`<img${ssrRenderAttr("src", unref(advancedStyles).thumbnailUrl(style))}${ssrRenderAttr("alt", style.name)} data-v-c7e97ed2>`);
         } else {
-          _push(`<span class="style-card__placeholder" data-v-452b14c6>${ssrInterpolate(style.name.slice(0, 2).toUpperCase())}</span>`);
+          _push(`<span class="style-card__placeholder" data-v-c7e97ed2>${ssrInterpolate(style.name.slice(0, 2).toUpperCase())}</span>`);
         }
-        _push(`<span data-v-452b14c6>${ssrInterpolate(style.name)}</span><small data-v-452b14c6>${ssrInterpolate(style.group)}</small></button><button class="style-card__edit" type="button" data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.edit"))}</button></article>`);
+        _push(`<span data-v-c7e97ed2>${ssrInterpolate(style.name)}</span><small data-v-c7e97ed2>${ssrInterpolate(style.group)}</small></button><button class="style-card__edit" type="button" data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.edit"))}</button></article>`);
       });
       _push(`<!--]-->`);
       if (unref(advancedStyles).loading) {
-        _push(`<span class="muted" data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.loadingStyles"))}</span>`);
+        _push(`<span class="muted" data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.loadingStyles"))}</span>`);
       } else if (!unref(advancedStyles).filteredStyles.length) {
-        _push(`<span class="muted" data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.noStylesFound"))}</span>`);
+        _push(`<span class="muted" data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.noStylesFound"))}</span>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</div></div><div class="advanced-styles-details" data-v-452b14c6>`);
+      _push(`</div></div><div class="advanced-styles-details" data-v-c7e97ed2>`);
       if (unref(selectedStyle)) {
-        _push(`<aside class="style-inspector"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.selectedStyle"))} data-v-452b14c6><div class="style-inspector__heading" data-v-452b14c6><span data-v-452b14c6><strong data-v-452b14c6>${ssrInterpolate(unref(selectedStyle).name)}</strong><small data-v-452b14c6>${ssrInterpolate(unref(selectedStyle).group)}</small></span><div class="style-inspector__actions" data-v-452b14c6>`);
+        _push(`<aside class="style-inspector"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.selectedStyle"))} data-v-c7e97ed2><div class="style-inspector__heading" data-v-c7e97ed2><span data-v-c7e97ed2><strong data-v-c7e97ed2>${ssrInterpolate(unref(selectedStyle).name)}</strong><small data-v-c7e97ed2>${ssrInterpolate(unref(selectedStyle).group)}</small></span><div class="style-inspector__actions" data-v-c7e97ed2>`);
         if (unref(selectedStyleChainIndex) >= 0) {
-          _push(`<small data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.chainPosition", { position: unref(selectedStyleChainIndex) + 1, total: unref(advancedStyles).activeChain.length }))}</small>`);
+          _push(`<small data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.chainPosition", { position: unref(selectedStyleChainIndex) + 1, total: unref(advancedStyles).activeChain.length }))}</small>`);
         } else {
-          _push(`<small data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.notInChain"))}</small>`);
+          _push(`<small data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.notInChain"))}</small>`);
         }
         if (unref(selectedStyleChainIndex) < 0) {
-          _push(`<button type="button" data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.addToChain"))}</button>`);
+          _push(`<button type="button" data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.addToChain"))}</button>`);
         } else {
-          _push(`<button class="destructive-button" type="button" data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.removeFromChain"))}</button>`);
+          _push(`<button class="destructive-button" type="button" data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.removeFromChain"))}</button>`);
         }
-        _push(`</div></div><div class="style-inspector__contributions" data-v-452b14c6><div data-v-452b14c6><small data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.positiveContribution"))}</small><p data-v-452b14c6>${ssrInterpolate(unref(selectedStyle).prompt || unref(t)("advancedStyles.noContribution"))}</p></div><div data-v-452b14c6><small data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.negativeContribution"))}</small><p data-v-452b14c6>${ssrInterpolate(unref(selectedStyle).negative || unref(t)("advancedStyles.noContribution"))}</p></div></div></aside>`);
+        _push(`</div></div><div class="style-inspector__contributions" data-v-c7e97ed2><div data-v-c7e97ed2><small data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.positiveContribution"))}</small><p data-v-c7e97ed2>${ssrInterpolate(unref(selectedStyle).prompt || unref(t)("advancedStyles.noContribution"))}</p></div><div data-v-c7e97ed2><small data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.negativeContribution"))}</small><p data-v-c7e97ed2>${ssrInterpolate(unref(selectedStyle).negative || unref(t)("advancedStyles.noContribution"))}</p></div></div></aside>`);
       } else {
         _push(`<!---->`);
       }
       _push(ssrRenderComponent(StyleChain, null, null, _parent));
-      _push(`<details class="style-custom-slot" data-v-452b14c6><summary data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.customPromptSlot"))}</summary><label class="field" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.customPrompt"))}</span><textarea rows="2" data-v-452b14c6>${ssrInterpolate(unref(advancedStyles).customPrompt)}</textarea></label><label class="field" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.customNegative"))}</span><textarea rows="2" data-v-452b14c6>${ssrInterpolate(unref(advancedStyles).customNegative)}</textarea></label><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).customPrompt.trim() && !unref(advancedStyles).customNegative.trim()) ? " disabled" : ""} data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.addCustom"))}</button></details></div></div>`);
+      _push(`<details class="style-custom-slot" data-v-c7e97ed2><summary data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.customPromptSlot"))}</summary><label class="field" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.customPrompt"))}</span><textarea rows="2" data-v-c7e97ed2>${ssrInterpolate(unref(advancedStyles).customPrompt)}</textarea></label><label class="field" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.customNegative"))}</span><textarea rows="2" data-v-c7e97ed2>${ssrInterpolate(unref(advancedStyles).customNegative)}</textarea></label><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).customPrompt.trim() && !unref(advancedStyles).customNegative.trim()) ? " disabled" : ""} data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.addCustom"))}</button></details></div></div>`);
       if (unref(advancedStyles).manageOpen) {
-        _push(`<section class="style-manage-panel"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.manageAria"))} data-v-452b14c6><div class="asset-panel__header" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.manageTitle"))}</span><button type="button" data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.new"))}</button></div><div class="field-grid" data-v-452b14c6><label class="field" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.group"))}</span><input${ssrRenderAttr("value", unref(advancedStyles).manageGroup)} list="advanced-style-groups" data-v-452b14c6></label><label class="field" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.name"))}</span><input${ssrRenderAttr("value", unref(advancedStyles).manageName)} data-v-452b14c6></label></div><datalist id="advanced-style-groups" data-v-452b14c6><!--[-->`);
+        _push(`<section class="style-manage-panel"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.manageAria"))} data-v-c7e97ed2><div class="asset-panel__header" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.manageTitle"))}</span><button type="button" data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.new"))}</button></div><div class="field-grid" data-v-c7e97ed2><label class="field" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.group"))}</span><input${ssrRenderAttr("value", unref(advancedStyles).manageGroup)} list="advanced-style-groups" data-v-c7e97ed2></label><label class="field" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.name"))}</span><input${ssrRenderAttr("value", unref(advancedStyles).manageName)} data-v-c7e97ed2></label></div><datalist id="advanced-style-groups" data-v-c7e97ed2><!--[-->`);
         ssrRenderList(unref(advancedStyles).groups, (group) => {
-          _push(`<option${ssrRenderAttr("value", group)} data-v-452b14c6></option>`);
+          _push(`<option${ssrRenderAttr("value", group)} data-v-c7e97ed2></option>`);
         });
-        _push(`<!--]--></datalist><label class="field" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.prompt"))}</span><textarea rows="3" data-v-452b14c6>${ssrInterpolate(unref(advancedStyles).managePrompt)}</textarea></label><label class="field" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.negativePrompt"))}</span><textarea rows="3" data-v-452b14c6>${ssrInterpolate(unref(advancedStyles).manageNegative)}</textarea></label><div class="asset-actions" data-v-452b14c6><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading || !unref(advancedStyles).manageGroup.trim() || !unref(advancedStyles).manageName.trim()) ? " disabled" : ""} data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.save"))}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading || !unref(advancedStyles).manageGroup.trim() || !unref(advancedStyles).manageName.trim()) ? " disabled" : ""} data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.delete"))}</button></div><div class="style-thumbnail-actions" data-v-452b14c6><label class="field" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.thumbnail"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrIncludeBooleanAttr(unref(advancedStyles).loading || !unref(advancedStyles).manageGroup.trim() || !unref(advancedStyles).manageName.trim()) ? " disabled" : ""} data-v-452b14c6></label><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading || !unref(advancedStyles).manageGroup.trim() || !unref(advancedStyles).manageName.trim()) ? " disabled" : ""} data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.clearThumbnail"))}</button></div><details class="style-import-panel" data-v-452b14c6><summary data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.importStylesCsv"))}</summary><label class="field" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.targetGroup"))}</span><input${ssrRenderAttr("value", unref(advancedStyles).csvImportGroup)} list="advanced-style-groups"${ssrRenderAttr("placeholder", unref(t)("advancedStyles.defaultPlaceholder"))} data-v-452b14c6></label><label class="field" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.csvContent"))}</span><textarea rows="5"${ssrRenderAttr("placeholder", unref(t)("advancedStyles.csvContentPlaceholder"))} data-v-452b14c6>${ssrInterpolate(unref(advancedStyles).csvImportText)}</textarea></label><label class="check-field" data-v-452b14c6><input${ssrIncludeBooleanAttr(Array.isArray(unref(advancedStyles).csvUpdateExisting) ? ssrLooseContain(unref(advancedStyles).csvUpdateExisting, null) : unref(advancedStyles).csvUpdateExisting) ? " checked" : ""} type="checkbox" data-v-452b14c6><span data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.updateExistingNames"))}</span></label><div class="asset-actions" data-v-452b14c6><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading || !unref(advancedStyles).csvImportText.trim()) ? " disabled" : ""} data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.import"))}</button>`);
+        _push(`<!--]--></datalist><label class="field" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.prompt"))}</span><textarea rows="3" data-v-c7e97ed2>${ssrInterpolate(unref(advancedStyles).managePrompt)}</textarea></label><label class="field" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.negativePrompt"))}</span><textarea rows="3" data-v-c7e97ed2>${ssrInterpolate(unref(advancedStyles).manageNegative)}</textarea></label><div class="asset-actions" data-v-c7e97ed2><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading || !unref(advancedStyles).manageGroup.trim() || !unref(advancedStyles).manageName.trim()) ? " disabled" : ""} data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.save"))}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading || !unref(advancedStyles).manageGroup.trim() || !unref(advancedStyles).manageName.trim()) ? " disabled" : ""} data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.delete"))}</button></div><div class="style-thumbnail-actions" data-v-c7e97ed2><label class="field" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.thumbnail"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrIncludeBooleanAttr(unref(advancedStyles).loading || !unref(advancedStyles).manageGroup.trim() || !unref(advancedStyles).manageName.trim()) ? " disabled" : ""} data-v-c7e97ed2></label><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading || !unref(advancedStyles).manageGroup.trim() || !unref(advancedStyles).manageName.trim()) ? " disabled" : ""} data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.clearThumbnail"))}</button></div><details class="style-import-panel" data-v-c7e97ed2><summary data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.importStylesCsv"))}</summary><label class="field" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.targetGroup"))}</span><input${ssrRenderAttr("value", unref(advancedStyles).csvImportGroup)} list="advanced-style-groups"${ssrRenderAttr("placeholder", unref(t)("advancedStyles.defaultPlaceholder"))} data-v-c7e97ed2></label><label class="field" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.csvContent"))}</span><textarea rows="5"${ssrRenderAttr("placeholder", unref(t)("advancedStyles.csvContentPlaceholder"))} data-v-c7e97ed2>${ssrInterpolate(unref(advancedStyles).csvImportText)}</textarea></label><label class="check-field" data-v-c7e97ed2><input${ssrIncludeBooleanAttr(Array.isArray(unref(advancedStyles).csvUpdateExisting) ? ssrLooseContain(unref(advancedStyles).csvUpdateExisting, null) : unref(advancedStyles).csvUpdateExisting) ? " checked" : ""} type="checkbox" data-v-c7e97ed2><span data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.updateExistingNames"))}</span></label><div class="asset-actions" data-v-c7e97ed2><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading || !unref(advancedStyles).csvImportText.trim()) ? " disabled" : ""} data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.import"))}</button>`);
         if (unref(advancedStyles).lastImportCount) {
-          _push(`<small data-v-452b14c6>${ssrInterpolate(unref(t)("advancedStyles.importedStyles", { count: unref(advancedStyles).lastImportCount }))}</small>`);
+          _push(`<small data-v-c7e97ed2>${ssrInterpolate(unref(t)("advancedStyles.importedStyles", { count: unref(advancedStyles).lastImportCount }))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -13239,7 +13256,7 @@ const _sfc_main$2m = /* @__PURE__ */ defineComponent({
         _push(`<!---->`);
       }
       if (unref(advancedStyles).error) {
-        _push(`<p class="error" aria-live="assertive" data-v-452b14c6>${ssrInterpolate(unref(advancedStyles).error)}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-c7e97ed2>${ssrInterpolate(unref(advancedStyles).error)}</p>`);
       } else {
         _push(`<!---->`);
       }
@@ -13248,14 +13265,14 @@ const _sfc_main$2m = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2m = _sfc_main$2m.setup;
-_sfc_main$2m.setup = (props, ctx) => {
+const _sfc_setup$2o = _sfc_main$2o.setup;
+_sfc_main$2o.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AdvancedStylesPanel.vue");
-  return _sfc_setup$2m ? _sfc_setup$2m(props, ctx) : void 0;
+  return _sfc_setup$2o ? _sfc_setup$2o(props, ctx) : void 0;
 };
-const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2m, [["__scopeId", "data-v-452b14c6"]]), { __name: "StudioAdvancedStylesPanel" });
-const _sfc_main$2l = /* @__PURE__ */ defineComponent({
+const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2o, [["__scopeId", "data-v-c7e97ed2"]]), { __name: "StudioAdvancedStylesPanel" });
+const _sfc_main$2n = /* @__PURE__ */ defineComponent({
   __name: "SelectedLoRAStack",
   __ssrInlineRender: true,
   props: {
@@ -13401,14 +13418,14 @@ const _sfc_main$2l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2l = _sfc_main$2l.setup;
-_sfc_main$2l.setup = (props, ctx) => {
+const _sfc_setup$2n = _sfc_main$2n.setup;
+_sfc_main$2n.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/SelectedLoRAStack.vue");
-  return _sfc_setup$2l ? _sfc_setup$2l(props, ctx) : void 0;
+  return _sfc_setup$2n ? _sfc_setup$2n(props, ctx) : void 0;
 };
-const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2l, [["__scopeId", "data-v-4551efdb"]]), { __name: "StudioSelectedLoRAStack" });
-const _sfc_main$2k = /* @__PURE__ */ defineComponent({
+const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2n, [["__scopeId", "data-v-4551efdb"]]), { __name: "StudioSelectedLoRAStack" });
+const _sfc_main$2m = /* @__PURE__ */ defineComponent({
   __name: "LoRABrowser",
   __ssrInlineRender: true,
   props: {
@@ -13535,14 +13552,14 @@ const _sfc_main$2k = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2k = _sfc_main$2k.setup;
-_sfc_main$2k.setup = (props, ctx) => {
+const _sfc_setup$2m = _sfc_main$2m.setup;
+_sfc_main$2m.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/LoRABrowser.vue");
-  return _sfc_setup$2k ? _sfc_setup$2k(props, ctx) : void 0;
+  return _sfc_setup$2m ? _sfc_setup$2m(props, ctx) : void 0;
 };
-const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2k, [["__scopeId", "data-v-75d22a01"]]), { __name: "StudioLoRABrowser" });
-const _sfc_main$2j = /* @__PURE__ */ defineComponent({
+const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2m, [["__scopeId", "data-v-75d22a01"]]), { __name: "StudioLoRABrowser" });
+const _sfc_main$2l = /* @__PURE__ */ defineComponent({
   __name: "PromptAssetsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -13595,14 +13612,14 @@ const _sfc_main$2j = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2j = _sfc_main$2j.setup;
-_sfc_main$2j.setup = (props, ctx) => {
+const _sfc_setup$2l = _sfc_main$2l.setup;
+_sfc_main$2l.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptAssetsDrawer.vue");
-  return _sfc_setup$2j ? _sfc_setup$2j(props, ctx) : void 0;
+  return _sfc_setup$2l ? _sfc_setup$2l(props, ctx) : void 0;
 };
-const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2j, [["__scopeId", "data-v-4c767174"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
-const _sfc_main$2i = /* @__PURE__ */ defineComponent({
+const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2l, [["__scopeId", "data-v-4c767174"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
+const _sfc_main$2k = /* @__PURE__ */ defineComponent({
   __name: "PromptSectionsEditor",
   __ssrInlineRender: true,
   props: {
@@ -13644,13 +13661,13 @@ const _sfc_main$2i = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2i = _sfc_main$2i.setup;
-_sfc_main$2i.setup = (props, ctx) => {
+const _sfc_setup$2k = _sfc_main$2k.setup;
+_sfc_main$2k.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptSectionsEditor.vue");
-  return _sfc_setup$2i ? _sfc_setup$2i(props, ctx) : void 0;
+  return _sfc_setup$2k ? _sfc_setup$2k(props, ctx) : void 0;
 };
-const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2i, [["__scopeId", "data-v-b5d45062"]]), { __name: "StudioGeneratePromptSectionsEditor" });
+const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2k, [["__scopeId", "data-v-b5d45062"]]), { __name: "StudioGeneratePromptSectionsEditor" });
 const useAppSettingsStore = defineStore("appSettings", {
   state: () => ({
     outputRoot: "",
@@ -13860,7 +13877,7 @@ const usePromptMaterialsStore = defineStore("prompt-materials", {
     }
   }
 });
-const _sfc_main$2h = /* @__PURE__ */ defineComponent({
+const _sfc_main$2j = /* @__PURE__ */ defineComponent({
   __name: "PromptWorkshopPanel",
   __ssrInlineRender: true,
   props: {
@@ -14004,14 +14021,14 @@ const _sfc_main$2h = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2h = _sfc_main$2h.setup;
-_sfc_main$2h.setup = (props, ctx) => {
+const _sfc_setup$2j = _sfc_main$2j.setup;
+_sfc_main$2j.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptWorkshopPanel.vue");
-  return _sfc_setup$2h ? _sfc_setup$2h(props, ctx) : void 0;
+  return _sfc_setup$2j ? _sfc_setup$2j(props, ctx) : void 0;
 };
-const PromptWorkshopPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2h, [["__scopeId", "data-v-d9dd8e6e"]]), { __name: "StudioGeneratePromptWorkshopPanel" });
-const _sfc_main$2g = /* @__PURE__ */ defineComponent({
+const PromptWorkshopPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2j, [["__scopeId", "data-v-d9dd8e6e"]]), { __name: "StudioGeneratePromptWorkshopPanel" });
+const _sfc_main$2i = /* @__PURE__ */ defineComponent({
   __name: "PromptMaterialsPanel",
   __ssrInlineRender: true,
   emits: ["scene"],
@@ -14068,128 +14085,128 @@ const _sfc_main$2g = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "prompt-materials",
         "aria-label": unref(t)("materials.title")
-      }, _attrs))} data-v-6ea2d97b><header data-v-6ea2d97b><h3 data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.title"))}</h3><p data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.help"))}</p></header>`);
+      }, _attrs))} data-v-17b1cd2b><header data-v-17b1cd2b><h3 data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.title"))}</h3><p data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.help"))}</p></header>`);
       if (unref(error)) {
-        _push(`<p role="alert" class="prompt-materials__error" data-v-6ea2d97b>${ssrInterpolate(unref(error))}</p>`);
+        _push(`<p role="alert" class="prompt-materials__error" data-v-17b1cd2b>${ssrInterpolate(unref(error))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(notice)) {
-        _push(`<p role="status" data-v-6ea2d97b>${ssrInterpolate(unref(notice))}</p>`);
+        _push(`<p role="status" data-v-17b1cd2b>${ssrInterpolate(unref(notice))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="prompt-materials__workspace" data-v-6ea2d97b><section class="prompt-materials__library"${ssrRenderAttr("aria-label", unref(t)("materials.savedList"))} data-v-6ea2d97b><div class="prompt-materials__filters" data-v-6ea2d97b><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.search"))}</span><input${ssrRenderAttr("value", unref(query))} type="search" data-v-6ea2d97b></label><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.category"))}</span><select data-v-6ea2d97b><option value="" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(category)) ? ssrLooseContain(unref(category), "") : ssrLooseEqual(unref(category), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("materials.all"))}</option><!--[-->`);
+      _push(`<div class="prompt-materials__workspace" data-v-17b1cd2b><section class="prompt-materials__library"${ssrRenderAttr("aria-label", unref(t)("materials.savedList"))} data-v-17b1cd2b><div class="prompt-materials__filters" data-v-17b1cd2b><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.search"))}</span><input${ssrRenderAttr("value", unref(query))} type="search" data-v-17b1cd2b></label><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.category"))}</span><select data-v-17b1cd2b><option value="" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(category)) ? ssrLooseContain(unref(category), "") : ssrLooseEqual(unref(category), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("materials.all"))}</option><!--[-->`);
       ssrRenderList(kindOptions, (value) => {
-        _push(`<option${ssrRenderAttr("value", value)} data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(category)) ? ssrLooseContain(unref(category), value) : ssrLooseEqual(unref(category), value)) ? " selected" : ""}>${ssrInterpolate(unref(t)(`materials.kind.${value}`))}</option>`);
+        _push(`<option${ssrRenderAttr("value", value)} data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(category)) ? ssrLooseContain(unref(category), value) : ssrLooseEqual(unref(category), value)) ? " selected" : ""}>${ssrInterpolate(unref(t)(`materials.kind.${value}`))}</option>`);
       });
-      _push(`<!--]--></select></label></div><div class="prompt-materials__actions" data-v-6ea2d97b><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.new"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.reload"))}</button></div>`);
+      _push(`<!--]--></select></label></div><div class="prompt-materials__actions" data-v-17b1cd2b><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.new"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.reload"))}</button></div>`);
       if (!unref(filtered).length) {
-        _push(`<p data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.empty"))}</p>`);
+        _push(`<p data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.empty"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="prompt-materials__list" data-v-6ea2d97b><!--[-->`);
+      _push(`<div class="prompt-materials__list" data-v-17b1cd2b><!--[-->`);
       ssrRenderList(unref(filtered), (item) => {
-        _push(`<article data-v-6ea2d97b><label class="prompt-materials__check" data-v-6ea2d97b><input type="checkbox"${ssrIncludeBooleanAttr(unref(store).selectedIds.includes(item.id)) ? " checked" : ""}${ssrIncludeBooleanAttr(!unref(store).selectedIds.includes(item.id) && unref(store).selectedIds.length >= 32) ? " disabled" : ""} data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(item.name)}</span></label><small data-v-6ea2d97b>${ssrInterpolate(unref(t)(`materials.kind.${item.kind}`))} · ${ssrInterpolate(item.profile === "any" ? unref(t)("materials.anyProfile") : item.profile)}</small><p data-v-6ea2d97b>${ssrInterpolate(item.prompt)}</p><div class="prompt-materials__actions" data-v-6ea2d97b><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.edit"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.delete"))}</button></div>`);
+        _push(`<article data-v-17b1cd2b><label class="prompt-materials__check" data-v-17b1cd2b><input type="checkbox"${ssrIncludeBooleanAttr(unref(store).selectedIds.includes(item.id)) ? " checked" : ""}${ssrIncludeBooleanAttr(!unref(store).selectedIds.includes(item.id) && unref(store).selectedIds.length >= 32) ? " disabled" : ""} data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(item.name)}</span></label><small data-v-17b1cd2b>${ssrInterpolate(unref(t)(`materials.kind.${item.kind}`))} · ${ssrInterpolate(item.profile === "any" ? unref(t)("materials.anyProfile") : item.profile)}</small><p data-v-17b1cd2b>${ssrInterpolate(item.prompt)}</p><div class="prompt-materials__actions" data-v-17b1cd2b><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.edit"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.delete"))}</button></div>`);
         if (unref(pendingDelete) === item.id) {
-          _push(`<div class="prompt-materials__confirm" data-v-6ea2d97b><p data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.deleteQuestion"))}</p><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.confirmDelete"))}</button><button type="button" data-v-6ea2d97b>${ssrInterpolate(unref(t)("common.cancel"))}</button></div>`);
+          _push(`<div class="prompt-materials__confirm" data-v-17b1cd2b><p data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.deleteQuestion"))}</p><button type="button"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.confirmDelete"))}</button><button type="button" data-v-17b1cd2b>${ssrInterpolate(unref(t)("common.cancel"))}</button></div>`);
         } else {
           _push(`<!---->`);
         }
         _push(`</article>`);
       });
-      _push(`<!--]--></div></section><fieldset class="prompt-materials__editor"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-6ea2d97b><legend data-v-6ea2d97b>${ssrInterpolate(unref(editing) ? unref(t)("materials.edit") : unref(t)("materials.new"))}</legend><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.name"))}</span><input${ssrRenderAttr("value", unref(name))} maxlength="120" data-v-6ea2d97b></label><div class="prompt-materials__filters" data-v-6ea2d97b><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.kindLabel"))}</span><select data-v-6ea2d97b><!--[-->`);
+      _push(`<!--]--></div></section><fieldset class="prompt-materials__editor"${ssrIncludeBooleanAttr(unref(busy)) ? " disabled" : ""} data-v-17b1cd2b><legend data-v-17b1cd2b>${ssrInterpolate(unref(editing) ? unref(t)("materials.edit") : unref(t)("materials.new"))}</legend><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.name"))}</span><input${ssrRenderAttr("value", unref(name))} maxlength="120" data-v-17b1cd2b></label><div class="prompt-materials__filters" data-v-17b1cd2b><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.kindLabel"))}</span><select data-v-17b1cd2b><!--[-->`);
       ssrRenderList(kindOptions, (value) => {
-        _push(`<option${ssrRenderAttr("value", value)} data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(kind)) ? ssrLooseContain(unref(kind), value) : ssrLooseEqual(unref(kind), value)) ? " selected" : ""}>${ssrInterpolate(unref(t)(`materials.kind.${value}`))}</option>`);
+        _push(`<option${ssrRenderAttr("value", value)} data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(kind)) ? ssrLooseContain(unref(kind), value) : ssrLooseEqual(unref(kind), value)) ? " selected" : ""}>${ssrInterpolate(unref(t)(`materials.kind.${value}`))}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.profile"))}</span><select data-v-6ea2d97b><option value="any" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(profile)) ? ssrLooseContain(unref(profile), "any") : ssrLooseEqual(unref(profile), "any")) ? " selected" : ""}>${ssrInterpolate(unref(t)("materials.anyProfile"))}</option><option value="sdxl" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(profile)) ? ssrLooseContain(unref(profile), "sdxl") : ssrLooseEqual(unref(profile), "sdxl")) ? " selected" : ""}>SDXL / Illustrious</option><option value="anima" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(profile)) ? ssrLooseContain(unref(profile), "anima") : ssrLooseEqual(unref(profile), "anima")) ? " selected" : ""}>Anima</option><option value="flux1" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(profile)) ? ssrLooseContain(unref(profile), "flux1") : ssrLooseEqual(unref(profile), "flux1")) ? " selected" : ""}>Flux.1</option><option value="flux2" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(profile)) ? ssrLooseContain(unref(profile), "flux2") : ssrLooseEqual(unref(profile), "flux2")) ? " selected" : ""}>Flux.2</option></select></label></div><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.prompt"))}</span><textarea rows="3" maxlength="2000" data-v-6ea2d97b>${ssrInterpolate(unref(prompt))}</textarea></label><details data-v-6ea2d97b><summary data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.links"))}</summary><div class="prompt-materials__asset-picker" data-v-6ea2d97b><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.assetKind"))}</span><select data-v-6ea2d97b><option value="lora" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(assetKind)) ? ssrLooseContain(unref(assetKind), "lora") : ssrLooseEqual(unref(assetKind), "lora")) ? " selected" : ""}>LoRA</option><option value="embedding" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(assetKind)) ? ssrLooseContain(unref(assetKind), "embedding") : ssrLooseEqual(unref(assetKind), "embedding")) ? " selected" : ""}>Embedding</option></select></label><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.asset"))}</span><select data-v-6ea2d97b><option value="" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(assetPath)) ? ssrLooseContain(unref(assetPath), "") : ssrLooseEqual(unref(assetPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("materials.select"))}</option><!--[-->`);
+      _push(`<!--]--></select></label><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.profile"))}</span><select data-v-17b1cd2b><option value="any" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(profile)) ? ssrLooseContain(unref(profile), "any") : ssrLooseEqual(unref(profile), "any")) ? " selected" : ""}>${ssrInterpolate(unref(t)("materials.anyProfile"))}</option><option value="sdxl" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(profile)) ? ssrLooseContain(unref(profile), "sdxl") : ssrLooseEqual(unref(profile), "sdxl")) ? " selected" : ""}>SDXL / Illustrious</option><option value="anima" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(profile)) ? ssrLooseContain(unref(profile), "anima") : ssrLooseEqual(unref(profile), "anima")) ? " selected" : ""}>Anima</option><option value="flux1" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(profile)) ? ssrLooseContain(unref(profile), "flux1") : ssrLooseEqual(unref(profile), "flux1")) ? " selected" : ""}>Flux.1</option><option value="flux2" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(profile)) ? ssrLooseContain(unref(profile), "flux2") : ssrLooseEqual(unref(profile), "flux2")) ? " selected" : ""}>Flux.2</option></select></label></div><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.prompt"))}</span><textarea rows="3" maxlength="2000" data-v-17b1cd2b>${ssrInterpolate(unref(prompt))}</textarea></label><details data-v-17b1cd2b><summary data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.links"))}</summary><div class="prompt-materials__asset-picker" data-v-17b1cd2b><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.assetKind"))}</span><select data-v-17b1cd2b><option value="lora" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(assetKind)) ? ssrLooseContain(unref(assetKind), "lora") : ssrLooseEqual(unref(assetKind), "lora")) ? " selected" : ""}>LoRA</option><option value="embedding" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(assetKind)) ? ssrLooseContain(unref(assetKind), "embedding") : ssrLooseEqual(unref(assetKind), "embedding")) ? " selected" : ""}>Embedding</option></select></label><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.asset"))}</span><select data-v-17b1cd2b><option value="" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(assetPath)) ? ssrLooseContain(unref(assetPath), "") : ssrLooseEqual(unref(assetPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("materials.select"))}</option><!--[-->`);
       ssrRenderList(unref(options), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.path)} data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(assetPath)) ? ssrLooseContain(unref(assetPath), item.path) : ssrLooseEqual(unref(assetPath), item.path)) ? " selected" : ""}>${ssrInterpolate(item.name)}</option>`);
+        _push(`<option${ssrRenderAttr("value", item.path)} data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(assetPath)) ? ssrLooseContain(unref(assetPath), item.path) : ssrLooseEqual(unref(assetPath), item.path)) ? " selected" : ""}>${ssrInterpolate(item.name)}</option>`);
       });
-      _push(`<!--]--></select></label><button type="button"${ssrIncludeBooleanAttr(!unref(assetPath) || unref(assets).length >= 16) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.link"))}</button></div><!--[-->`);
+      _push(`<!--]--></select></label><button type="button"${ssrIncludeBooleanAttr(!unref(assetPath) || unref(assets).length >= 16) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.link"))}</button></div><!--[-->`);
       ssrRenderList(unref(assets), (asset, index) => {
-        _push(`<div class="prompt-materials__asset" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(asset.kind)} · ${ssrInterpolate(asset.path.split(/[\\/]/).pop())}</span>`);
+        _push(`<div class="prompt-materials__asset" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(asset.kind)} · ${ssrInterpolate(asset.path.split(/[\\/]/).pop())}</span>`);
         if (asset.kind === "lora") {
-          _push(`<!--[--><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.weight"))}</span><input${ssrRenderAttr("value", asset.weight)} type="number" min="-10" max="10" step="0.05" data-v-6ea2d97b></label><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>CLIP</span><input${ssrRenderAttr("value", asset.clip_weight)} type="number" min="-10" max="10" step="0.05" data-v-6ea2d97b></label><!--]-->`);
+          _push(`<!--[--><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.weight"))}</span><input${ssrRenderAttr("value", asset.weight)} type="number" min="-10" max="10" step="0.05" data-v-17b1cd2b></label><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>CLIP</span><input${ssrRenderAttr("value", asset.clip_weight)} type="number" min="-10" max="10" step="0.05" data-v-17b1cd2b></label><!--]-->`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<button type="button" data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.unlink"))}</button></div>`);
+        _push(`<button type="button" data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.unlink"))}</button></div>`);
       });
-      _push(`<!--]--></details><details data-v-6ea2d97b><summary data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.fromImage"))}</summary><p data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.imageHelp"))}</p><label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.image"))}</span><input type="file" accept="image/png,image/jpeg,image/webp" data-v-6ea2d97b></label>`);
+      _push(`<!--]--></details><details data-v-17b1cd2b><summary data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.fromImage"))}</summary><p data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.imageHelp"))}</p><label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.image"))}</span><input type="file" accept="image/png,image/jpeg,image/webp" data-v-17b1cd2b></label>`);
       if (unref(preview)) {
-        _push(`<img${ssrRenderAttr("src", unref(preview))}${ssrRenderAttr("alt", unref(t)("materials.image"))} class="prompt-materials__preview" data-v-6ea2d97b>`);
+        _push(`<img${ssrRenderAttr("src", unref(preview))}${ssrRenderAttr("alt", unref(t)("materials.image"))} class="prompt-materials__preview" data-v-17b1cd2b>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("promptWorkshop.provider"))}</span><select data-v-6ea2d97b>`);
+      _push(`<label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("promptWorkshop.provider"))}</span><select data-v-17b1cd2b>`);
       if (!unref(providers).length) {
-        _push(`<option value="" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(providerId)) ? ssrLooseContain(unref(providerId), "") : ssrLooseEqual(unref(providerId), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("promptWorkshop.noProvider"))}</option>`);
+        _push(`<option value="" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(providerId)) ? ssrLooseContain(unref(providerId), "") : ssrLooseEqual(unref(providerId), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("promptWorkshop.noProvider"))}</option>`);
       } else {
         _push(`<!---->`);
       }
       _push(`<!--[-->`);
       ssrRenderList(unref(providers), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.id)} data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(providerId)) ? ssrLooseContain(unref(providerId), item.id) : ssrLooseEqual(unref(providerId), item.id)) ? " selected" : ""}>${ssrInterpolate(item.name)} · ${ssrInterpolate(item.model)}</option>`);
+        _push(`<option${ssrRenderAttr("value", item.id)} data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(providerId)) ? ssrLooseContain(unref(providerId), item.id) : ssrLooseEqual(unref(providerId), item.id)) ? " selected" : ""}>${ssrInterpolate(item.name)} · ${ssrInterpolate(item.model)}</option>`);
       });
-      _push(`<!--]--></select></label><button type="button"${ssrIncludeBooleanAttr(!unref(file) || !unref(provider) || unref(busy)) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.propose"))}</button></details>`);
+      _push(`<!--]--></select></label><button type="button"${ssrIncludeBooleanAttr(!unref(file) || !unref(provider) || unref(busy)) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.propose"))}</button></details>`);
       if (unref(busy)) {
-        _push(`<p role="status" data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.working"))}</p>`);
+        _push(`<p role="status" data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.working"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(notes).length) {
-        _push(`<ul data-v-6ea2d97b><!--[-->`);
+        _push(`<ul data-v-17b1cd2b><!--[-->`);
         ssrRenderList(unref(notes), (note, index) => {
-          _push(`<li data-v-6ea2d97b>${ssrInterpolate(note)}</li>`);
+          _push(`<li data-v-17b1cd2b>${ssrInterpolate(note)}</li>`);
         });
         _push(`<!--]--></ul>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(source)) {
-        _push(`<label class="prompt-materials__check" data-v-6ea2d97b><input${ssrIncludeBooleanAttr(Array.isArray(unref(confirmed)) ? ssrLooseContain(unref(confirmed), null) : unref(confirmed)) ? " checked" : ""} type="checkbox" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.confirmImage"))}</span></label>`);
+        _push(`<label class="prompt-materials__check" data-v-17b1cd2b><input${ssrIncludeBooleanAttr(Array.isArray(unref(confirmed)) ? ssrLooseContain(unref(confirmed), null) : unref(confirmed)) ? " checked" : ""} type="checkbox" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.confirmImage"))}</span></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canSave)) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.save"))}</button></fieldset></div><section class="prompt-materials__assembly"${ssrRenderAttr("aria-label", unref(t)("materials.assemble"))} data-v-6ea2d97b><h4 data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.assemble"))}</h4><p data-v-6ea2d97b>${ssrInterpolate(unref(store).selected.map((item) => item.name).join(" → ") || unref(t)("materials.selectHelp"))}</p>`);
+      _push(`<button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(canSave)) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.save"))}</button></fieldset></div><section class="prompt-materials__assembly"${ssrRenderAttr("aria-label", unref(t)("materials.assemble"))} data-v-17b1cd2b><h4 data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.assemble"))}</h4><p data-v-17b1cd2b>${ssrInterpolate(unref(store).selected.map((item) => item.name).join(" → ") || unref(t)("materials.selectHelp"))}</p>`);
       if (unref(store).selected.length) {
-        _push(`<p data-v-6ea2d97b>${ssrInterpolate(unref(insertion).text)}</p>`);
+        _push(`<p data-v-17b1cd2b>${ssrInterpolate(unref(insertion).text)}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="field" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.target"))}</span><select data-v-6ea2d97b>`);
+      _push(`<label class="field" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.target"))}</span><select data-v-17b1cd2b>`);
       if (unref(generation).promptInputMode === "single") {
-        _push(`<option value="single" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(target)) ? ssrLooseContain(unref(target), "single") : ssrLooseEqual(unref(target), "single")) ? " selected" : ""}>${ssrInterpolate(unref(t)("promptWorkshop.field.single"))}</option>`);
+        _push(`<option value="single" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(target)) ? ssrLooseContain(unref(target), "single") : ssrLooseEqual(unref(target), "single")) ? " selected" : ""}>${ssrInterpolate(unref(t)("promptWorkshop.field.single"))}</option>`);
       } else {
         _push(`<!--[-->`);
         ssrRenderList(unref(generation).promptSections, (item) => {
-          _push(`<option${ssrRenderAttr("value", item.id)} data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(target)) ? ssrLooseContain(unref(target), item.id) : ssrLooseEqual(unref(target), item.id)) ? " selected" : ""}>${ssrInterpolate(item.label)}</option>`);
+          _push(`<option${ssrRenderAttr("value", item.id)} data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(target)) ? ssrLooseContain(unref(target), item.id) : ssrLooseEqual(unref(target), item.id)) ? " selected" : ""}>${ssrInterpolate(item.label)}</option>`);
         });
         _push(`<!--]-->`);
       }
       if (unref(negativePromptRuntimeSupport)(unref(generation).profile)) {
-        _push(`<option value="negative" data-v-6ea2d97b${ssrIncludeBooleanAttr(Array.isArray(unref(target)) ? ssrLooseContain(unref(target), "negative") : ssrLooseEqual(unref(target), "negative")) ? " selected" : ""}>${ssrInterpolate(unref(t)("promptWorkshop.field.negative"))}</option>`);
+        _push(`<option value="negative" data-v-17b1cd2b${ssrIncludeBooleanAttr(Array.isArray(unref(target)) ? ssrLooseContain(unref(target), "negative") : ssrLooseEqual(unref(target), "negative")) ? " selected" : ""}>${ssrInterpolate(unref(t)("promptWorkshop.field.negative"))}</option>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</select></label><label class="prompt-materials__check" data-v-6ea2d97b><input${ssrIncludeBooleanAttr(Array.isArray(unref(withAssets)) ? ssrLooseContain(unref(withAssets), null) : unref(withAssets)) ? " checked" : ""} type="checkbox" data-v-6ea2d97b><span data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.applyAssets"))}</span></label><!--[-->`);
+      _push(`</select></label><label class="prompt-materials__check" data-v-17b1cd2b><input${ssrIncludeBooleanAttr(Array.isArray(unref(withAssets)) ? ssrLooseContain(unref(withAssets), null) : unref(withAssets)) ? " checked" : ""} type="checkbox" data-v-17b1cd2b><span data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.applyAssets"))}</span></label><!--[-->`);
       ssrRenderList(unref(insertion).issues, (issue2) => {
-        _push(`<p class="prompt-materials__error" data-v-6ea2d97b>${ssrInterpolate(unref(t)(`materials.issue.${issue2}`))}</p>`);
+        _push(`<p class="prompt-materials__error" data-v-17b1cd2b>${ssrInterpolate(unref(t)(`materials.issue.${issue2}`))}</p>`);
       });
-      _push(`<!--]--><div class="prompt-materials__actions" data-v-6ea2d97b><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(store).selected.length || unref(insertion).issues.length > 0 || unref(busy)) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.insert"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(store).selected.length) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.toScene"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(store).selected.length) ? " disabled" : ""} data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.clear"))}</button></div><p class="prompt-materials__muted" data-v-6ea2d97b>${ssrInterpolate(unref(t)("materials.sceneHelp"))}</p></section></section>`);
+      _push(`<!--]--><div class="prompt-materials__actions" data-v-17b1cd2b><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!unref(store).selected.length || unref(insertion).issues.length > 0 || unref(busy)) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.insert"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(store).selected.length) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.toScene"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(store).selected.length) ? " disabled" : ""} data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.clear"))}</button></div><p class="prompt-materials__muted" data-v-17b1cd2b>${ssrInterpolate(unref(t)("materials.sceneHelp"))}</p></section></section>`);
     };
   }
 });
-const _sfc_setup$2g = _sfc_main$2g.setup;
-_sfc_main$2g.setup = (props, ctx) => {
+const _sfc_setup$2i = _sfc_main$2i.setup;
+_sfc_main$2i.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptMaterialsPanel.vue");
-  return _sfc_setup$2g ? _sfc_setup$2g(props, ctx) : void 0;
+  return _sfc_setup$2i ? _sfc_setup$2i(props, ctx) : void 0;
 };
-const PromptMaterialsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2g, [["__scopeId", "data-v-6ea2d97b"]]), { __name: "StudioGeneratePromptMaterialsPanel" });
-const _sfc_main$2f = /* @__PURE__ */ defineComponent({
+const PromptMaterialsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2i, [["__scopeId", "data-v-17b1cd2b"]]), { __name: "StudioGeneratePromptMaterialsPanel" });
+const _sfc_main$2h = /* @__PURE__ */ defineComponent({
   __name: "PromptPane",
   __ssrInlineRender: true,
   emits: ["open-help", "open-image-metadata"],
@@ -15392,13 +15409,13 @@ ${generation.negativePrompt}`;
     };
   }
 });
-const _sfc_setup$2f = _sfc_main$2f.setup;
-_sfc_main$2f.setup = (props, ctx) => {
+const _sfc_setup$2h = _sfc_main$2h.setup;
+_sfc_main$2h.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptPane.vue");
-  return _sfc_setup$2f ? _sfc_setup$2f(props, ctx) : void 0;
+  return _sfc_setup$2h ? _sfc_setup$2h(props, ctx) : void 0;
 };
-const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2f, [["__scopeId", "data-v-26a39074"]]), { __name: "StudioPromptPane" });
+const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2h, [["__scopeId", "data-v-26a39074"]]), { __name: "StudioPromptPane" });
 const normalizeEagleFolderSelection = (folders, selectedId) => selectedId && folders.some((folder) => folder.id === selectedId) ? selectedId : "";
 const errorMessage$2 = (error) => {
   return userFacingErrorMessage(error, "common.error.external");
@@ -15704,7 +15721,7 @@ const useExternalIntegrationsStore = defineStore("externalIntegrations", {
     }
   }
 });
-const _sfc_main$2e = /* @__PURE__ */ defineComponent({
+const _sfc_main$2g = /* @__PURE__ */ defineComponent({
   __name: "EagleFolderSelect",
   __ssrInlineRender: true,
   setup(__props) {
@@ -15734,13 +15751,13 @@ const _sfc_main$2e = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2e = _sfc_main$2e.setup;
-_sfc_main$2e.setup = (props, ctx) => {
+const _sfc_setup$2g = _sfc_main$2g.setup;
+_sfc_main$2g.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/EagleFolderSelect.vue");
-  return _sfc_setup$2e ? _sfc_setup$2e(props, ctx) : void 0;
+  return _sfc_setup$2g ? _sfc_setup$2g(props, ctx) : void 0;
 };
-const __nuxt_component_0$1 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2e, [["__scopeId", "data-v-aa9affef"]]), { __name: "StudioEagleFolderSelect" });
+const __nuxt_component_0$1 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2g, [["__scopeId", "data-v-aa9affef"]]), { __name: "StudioEagleFolderSelect" });
 const object$1 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 const list = (value) => Array.isArray(value) ? value : [];
 const string = (value) => typeof value === "string" ? value : "";
@@ -15790,7 +15807,7 @@ function promptInterpretation(settings) {
   }));
   return { partial: Boolean(settings.prompt_execution_truncated) || records.some((x) => x.status === "partial"), encodings };
 }
-const _sfc_main$2d = /* @__PURE__ */ defineComponent({
+const _sfc_main$2f = /* @__PURE__ */ defineComponent({
   __name: "PromptInterpretation",
   __ssrInlineRender: true,
   props: {
@@ -15915,14 +15932,14 @@ const _sfc_main$2d = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2d = _sfc_main$2d.setup;
-_sfc_main$2d.setup = (props, ctx) => {
+const _sfc_setup$2f = _sfc_main$2f.setup;
+_sfc_main$2f.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptInterpretation.vue");
-  return _sfc_setup$2d ? _sfc_setup$2d(props, ctx) : void 0;
+  return _sfc_setup$2f ? _sfc_setup$2f(props, ctx) : void 0;
 };
-const PromptInterpretation = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2d, [["__scopeId", "data-v-8bdc27f8"]]), { __name: "StudioPromptInterpretation" });
-const _sfc_main$2c = /* @__PURE__ */ defineComponent({
+const PromptInterpretation = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2f, [["__scopeId", "data-v-8bdc27f8"]]), { __name: "StudioPromptInterpretation" });
+const _sfc_main$2e = /* @__PURE__ */ defineComponent({
   __name: "GenerationReproduction",
   __ssrInlineRender: true,
   props: {
@@ -16033,13 +16050,13 @@ const _sfc_main$2c = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2c = _sfc_main$2c.setup;
-_sfc_main$2c.setup = (props, ctx) => {
+const _sfc_setup$2e = _sfc_main$2e.setup;
+_sfc_main$2e.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerationReproduction.vue");
-  return _sfc_setup$2c ? _sfc_setup$2c(props, ctx) : void 0;
+  return _sfc_setup$2e ? _sfc_setup$2e(props, ctx) : void 0;
 };
-const GenerationReproduction = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2c, [["__scopeId", "data-v-e46e885e"]]), { __name: "StudioGenerationReproduction" });
+const GenerationReproduction = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2e, [["__scopeId", "data-v-e46e885e"]]), { __name: "StudioGenerationReproduction" });
 const notSent = () => ({ status: "not_sent", createdAt: "", folderId: "" });
 const normalizedArtifactPath = (path) => path.trim().replace(/\\/g, "/").replace(/\/{2,}/g, "/").toLocaleLowerCase();
 const resolveEagleRegistration = (settings, selectedPath, selectedSha256 = "") => {
@@ -16064,7 +16081,7 @@ const resolveEagleRegistration = (settings, selectedPath, selectedSha256 = "") =
   }
   return notSent();
 };
-const _sfc_main$2b = /* @__PURE__ */ defineComponent({
+const _sfc_main$2d = /* @__PURE__ */ defineComponent({
   __name: "HistoryPanel",
   __ssrInlineRender: true,
   emits: ["openImage"],
@@ -16247,13 +16264,13 @@ const _sfc_main$2b = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2b = _sfc_main$2b.setup;
-_sfc_main$2b.setup = (props, ctx) => {
+const _sfc_setup$2d = _sfc_main$2d.setup;
+_sfc_main$2d.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/HistoryPanel.vue");
-  return _sfc_setup$2b ? _sfc_setup$2b(props, ctx) : void 0;
+  return _sfc_setup$2d ? _sfc_setup$2d(props, ctx) : void 0;
 };
-const HistoryPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2b, [["__scopeId", "data-v-636c05c7"]]), { __name: "StudioHistoryPanel" });
+const HistoryPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2d, [["__scopeId", "data-v-636c05c7"]]), { __name: "StudioHistoryPanel" });
 const object = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 function makingVideo(item) {
   const settings = item.settings ?? {};
@@ -16277,7 +16294,7 @@ function makingVideo(item) {
   };
 }
 const makingArtifactUrl = (base, id, artifact, download = false) => `${base}/api/generations/history/${id}/artifacts/${encodeURIComponent(artifact)}${download ? "?download=true" : ""}`;
-const _sfc_main$2a = /* @__PURE__ */ defineComponent({
+const _sfc_main$2c = /* @__PURE__ */ defineComponent({
   __name: "MakingVideo",
   __ssrInlineRender: true,
   props: {
@@ -16336,13 +16353,13 @@ const _sfc_main$2a = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2a = _sfc_main$2a.setup;
-_sfc_main$2a.setup = (props, ctx) => {
+const _sfc_setup$2c = _sfc_main$2c.setup;
+_sfc_main$2c.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/MakingVideo.vue");
-  return _sfc_setup$2a ? _sfc_setup$2a(props, ctx) : void 0;
+  return _sfc_setup$2c ? _sfc_setup$2c(props, ctx) : void 0;
 };
-const MakingVideo = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2a, [["__scopeId", "data-v-d1463e28"]]), { __name: "StudioMakingVideo" });
+const MakingVideo = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2c, [["__scopeId", "data-v-d1463e28"]]), { __name: "StudioMakingVideo" });
 function branchInfo(item) {
   const value = item.settings?.generation_branch;
   const receipt = value && typeof value === "object" ? value : {};
@@ -16358,7 +16375,7 @@ function branchInfo(item) {
 function branchCaptureSupported(state) {
   return ["sdxl", "anima"].includes(state.profile) && state.mode === "txt2img" && state.batchSize === 1 && state.batchCount === 1 && state.steps > 1 && ["Euler", "Euler a", "DPM++ 2M", "DPM++ 2M SDE", "DPM++ 3M SDE", "ER SDE"].includes(state.sampler);
 }
-const _sfc_main$29 = /* @__PURE__ */ defineComponent({
+const _sfc_main$2b = /* @__PURE__ */ defineComponent({
   __name: "GenerationBranch",
   __ssrInlineRender: true,
   props: {
@@ -16429,13 +16446,13 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$29 = _sfc_main$29.setup;
-_sfc_main$29.setup = (props, ctx) => {
+const _sfc_setup$2b = _sfc_main$2b.setup;
+_sfc_main$2b.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerationBranch.vue");
-  return _sfc_setup$29 ? _sfc_setup$29(props, ctx) : void 0;
+  return _sfc_setup$2b ? _sfc_setup$2b(props, ctx) : void 0;
 };
-const GenerationBranch = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$29, [["__scopeId", "data-v-924b88a3"]]), { __name: "StudioGenerationBranch" });
+const GenerationBranch = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2b, [["__scopeId", "data-v-924b88a3"]]), { __name: "StudioGenerationBranch" });
 const wordMaskInfo = (item) => {
   const record = item.settings?.word_masks;
   return { available: record?.status === "recorded", failed: record?.status === "not_saved" };
@@ -16444,7 +16461,7 @@ const wordLabel = (column) => {
   const values2 = Object.values(column.labels);
   return new Set(values2).size === 1 ? values2[0] ?? "" : Object.entries(column.labels).map(([encoder, text]) => `${encoder.toUpperCase()}: ${text}`).join(" / ");
 };
-const _sfc_main$28 = /* @__PURE__ */ defineComponent({
+const _sfc_main$2a = /* @__PURE__ */ defineComponent({
   __name: "WordMaskEdit",
   __ssrInlineRender: true,
   props: {
@@ -16549,14 +16566,14 @@ const _sfc_main$28 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$28 = _sfc_main$28.setup;
-_sfc_main$28.setup = (props, ctx) => {
+const _sfc_setup$2a = _sfc_main$2a.setup;
+_sfc_main$2a.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/WordMaskEdit.vue");
-  return _sfc_setup$28 ? _sfc_setup$28(props, ctx) : void 0;
+  return _sfc_setup$2a ? _sfc_setup$2a(props, ctx) : void 0;
 };
-const WordMaskEdit = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$28, [["__scopeId", "data-v-33b8a7ad"]]), { __name: "StudioWordMaskEdit" });
-const _sfc_main$27 = /* @__PURE__ */ defineComponent({
+const WordMaskEdit = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2a, [["__scopeId", "data-v-33b8a7ad"]]), { __name: "StudioWordMaskEdit" });
+const _sfc_main$29 = /* @__PURE__ */ defineComponent({
   __name: "ResultPane",
   __ssrInlineRender: true,
   emits: ["openImage", "openImageMask", "openDetails", "openSettings"],
@@ -16897,14 +16914,14 @@ const _sfc_main$27 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$27 = _sfc_main$27.setup;
-_sfc_main$27.setup = (props, ctx) => {
+const _sfc_setup$29 = _sfc_main$29.setup;
+_sfc_main$29.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ResultPane.vue");
-  return _sfc_setup$27 ? _sfc_setup$27(props, ctx) : void 0;
+  return _sfc_setup$29 ? _sfc_setup$29(props, ctx) : void 0;
 };
-const ResultPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$27, [["__scopeId", "data-v-3a2ad367"]]), { __name: "StudioResultPane" });
-const _sfc_main$26 = /* @__PURE__ */ defineComponent({
+const ResultPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$29, [["__scopeId", "data-v-3a2ad367"]]), { __name: "StudioResultPane" });
+const _sfc_main$28 = /* @__PURE__ */ defineComponent({
   __name: "AnimaLLLitePanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -16988,14 +17005,14 @@ const _sfc_main$26 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$26 = _sfc_main$26.setup;
-_sfc_main$26.setup = (props, ctx) => {
+const _sfc_setup$28 = _sfc_main$28.setup;
+_sfc_main$28.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AnimaLLLitePanel.vue");
-  return _sfc_setup$26 ? _sfc_setup$26(props, ctx) : void 0;
+  return _sfc_setup$28 ? _sfc_setup$28(props, ctx) : void 0;
 };
-const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$26, [["__scopeId", "data-v-f2721048"]]), { __name: "StudioAnimaLLLitePanel" });
-const _sfc_main$25 = /* @__PURE__ */ defineComponent({
+const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$28, [["__scopeId", "data-v-f2721048"]]), { __name: "StudioAnimaLLLitePanel" });
+const _sfc_main$27 = /* @__PURE__ */ defineComponent({
   __name: "ControlNetPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -17108,14 +17125,14 @@ const _sfc_main$25 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$25 = _sfc_main$25.setup;
-_sfc_main$25.setup = (props, ctx) => {
+const _sfc_setup$27 = _sfc_main$27.setup;
+_sfc_main$27.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ControlNetPanel.vue");
-  return _sfc_setup$25 ? _sfc_setup$25(props, ctx) : void 0;
+  return _sfc_setup$27 ? _sfc_setup$27(props, ctx) : void 0;
 };
-const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$25, [["__scopeId", "data-v-053fa231"]]), { __name: "StudioControlNetPanel" });
-const _sfc_main$24 = /* @__PURE__ */ defineComponent({
+const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$27, [["__scopeId", "data-v-053fa231"]]), { __name: "StudioControlNetPanel" });
+const _sfc_main$26 = /* @__PURE__ */ defineComponent({
   __name: "DetailerPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -17272,14 +17289,14 @@ const _sfc_main$24 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$24 = _sfc_main$24.setup;
-_sfc_main$24.setup = (props, ctx) => {
+const _sfc_setup$26 = _sfc_main$26.setup;
+_sfc_main$26.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/DetailerPanel.vue");
-  return _sfc_setup$24 ? _sfc_setup$24(props, ctx) : void 0;
+  return _sfc_setup$26 ? _sfc_setup$26(props, ctx) : void 0;
 };
-const DetailerPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$24, [["__scopeId", "data-v-cf71cbef"]]), { __name: "StudioDetailerPanel" });
-const _sfc_main$23 = /* @__PURE__ */ defineComponent({
+const DetailerPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$26, [["__scopeId", "data-v-cf71cbef"]]), { __name: "StudioDetailerPanel" });
+const _sfc_main$25 = /* @__PURE__ */ defineComponent({
   __name: "ControlModulesInspector",
   __ssrInlineRender: true,
   setup(__props) {
@@ -17344,14 +17361,14 @@ const _sfc_main$23 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$23 = _sfc_main$23.setup;
-_sfc_main$23.setup = (props, ctx) => {
+const _sfc_setup$25 = _sfc_main$25.setup;
+_sfc_main$25.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ControlModulesInspector.vue");
-  return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
+  return _sfc_setup$25 ? _sfc_setup$25(props, ctx) : void 0;
 };
-const ControlModulesInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-cde96a15"]]), { __name: "StudioGenerateControlModulesInspector" });
-const _sfc_main$22 = /* @__PURE__ */ defineComponent({
+const ControlModulesInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$25, [["__scopeId", "data-v-cde96a15"]]), { __name: "StudioGenerateControlModulesInspector" });
+const _sfc_main$24 = /* @__PURE__ */ defineComponent({
   __name: "EnhancementInspector",
   __ssrInlineRender: true,
   props: {
@@ -17379,14 +17396,14 @@ const _sfc_main$22 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$22 = _sfc_main$22.setup;
-_sfc_main$22.setup = (props, ctx) => {
+const _sfc_setup$24 = _sfc_main$24.setup;
+_sfc_main$24.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/EnhancementInspector.vue");
-  return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
+  return _sfc_setup$24 ? _sfc_setup$24(props, ctx) : void 0;
 };
-const EnhancementInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-7c52dd87"]]), { __name: "StudioGenerateEnhancementInspector" });
-const _sfc_main$21 = /* @__PURE__ */ defineComponent({
+const EnhancementInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$24, [["__scopeId", "data-v-7c52dd87"]]), { __name: "StudioGenerateEnhancementInspector" });
+const _sfc_main$23 = /* @__PURE__ */ defineComponent({
   __name: "RemasterSettingsPanel",
   __ssrInlineRender: true,
   props: {
@@ -17449,13 +17466,13 @@ const _sfc_main$21 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$21 = _sfc_main$21.setup;
-_sfc_main$21.setup = (props, ctx) => {
+const _sfc_setup$23 = _sfc_main$23.setup;
+_sfc_main$23.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RemasterSettingsPanel.vue");
-  return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
+  return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
 };
-const RemasterSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-58b39268"]]), { __name: "StudioRemasterSettingsPanel" });
+const RemasterSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-58b39268"]]), { __name: "StudioRemasterSettingsPanel" });
 const comparisonIsActive = (status) => ["queued", "running"].includes(status);
 const comparisonPair = (plan, pair) => (plan.display_orders[pair] ?? []).map((arm) => plan.cells.find((cell) => cell.pair === pair && cell.arm === arm)).filter((cell) => Boolean(cell));
 const comparisonImage = (cell) => cell.output_paths?.filter((path) => /\.(png|jpe?g|webp|avif)$/i.test(path)).at(-1) ?? "";
@@ -17933,7 +17950,7 @@ const useImageLibraryStore = defineStore("imageLibrary", {
     }
   }
 });
-const _sfc_main$20 = /* @__PURE__ */ defineComponent({
+const _sfc_main$22 = /* @__PURE__ */ defineComponent({
   __name: "PromptComparisonPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -18141,14 +18158,14 @@ const _sfc_main$20 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$20 = _sfc_main$20.setup;
-_sfc_main$20.setup = (props, ctx) => {
+const _sfc_setup$22 = _sfc_main$22.setup;
+_sfc_main$22.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptComparisonPanel.vue");
-  return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
+  return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
 };
-const PromptComparisonPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-4377f552"]]), { __name: "StudioGeneratePromptComparisonPanel" });
-const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
+const PromptComparisonPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-4377f552"]]), { __name: "StudioGeneratePromptComparisonPanel" });
+const _sfc_main$21 = /* @__PURE__ */ defineComponent({
   __name: "ExpertToolsInspector",
   __ssrInlineRender: true,
   setup(__props) {
@@ -18227,14 +18244,14 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1$ = _sfc_main$1$.setup;
-_sfc_main$1$.setup = (props, ctx) => {
+const _sfc_setup$21 = _sfc_main$21.setup;
+_sfc_main$21.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ExpertToolsInspector.vue");
-  return _sfc_setup$1$ ? _sfc_setup$1$(props, ctx) : void 0;
+  return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
 };
-const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-5921350b"]]), { __name: "StudioGenerateExpertToolsInspector" });
-const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
+const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-5921350b"]]), { __name: "StudioGenerateExpertToolsInspector" });
+const _sfc_main$20 = /* @__PURE__ */ defineComponent({
   __name: "GenerateBaseControlsPanel",
   __ssrInlineRender: true,
   props: {
@@ -18326,13 +18343,13 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1_ = _sfc_main$1_.setup;
-_sfc_main$1_.setup = (props, ctx) => {
+const _sfc_setup$20 = _sfc_main$20.setup;
+_sfc_main$20.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateBaseControlsPanel.vue");
-  return _sfc_setup$1_ ? _sfc_setup$1_(props, ctx) : void 0;
+  return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
 };
-const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-7ed28896"]]), { __name: "StudioGenerateBaseControlsPanel" });
+const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-7ed28896"]]), { __name: "StudioGenerateBaseControlsPanel" });
 const modeSourceState = (mode, initImagePath, maskImagePath) => {
   if (mode === "txt2img") {
     return "not-required";
@@ -18356,7 +18373,7 @@ const modeSourceSummaryKey = (state) => ({
   "mask-ready": "modeSource.maskReady"
 })[state];
 const modeSourceSummary = (mode, initImagePath, maskImagePath, translate) => `${mode} · ${translate(modeSourceSummaryKey(modeSourceState(mode, initImagePath, maskImagePath)))}`;
-const _sfc_main$1Z = /* @__PURE__ */ defineComponent({
+const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
   __name: "GenerateModeSourcePanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -18443,13 +18460,13 @@ const _sfc_main$1Z = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1Z = _sfc_main$1Z.setup;
-_sfc_main$1Z.setup = (props, ctx) => {
+const _sfc_setup$1$ = _sfc_main$1$.setup;
+_sfc_main$1$.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateModeSourcePanel.vue");
-  return _sfc_setup$1Z ? _sfc_setup$1Z(props, ctx) : void 0;
+  return _sfc_setup$1$ ? _sfc_setup$1$(props, ctx) : void 0;
 };
-const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Z, [["__scopeId", "data-v-6520248c"]]), { __name: "StudioGenerateModeSourcePanel" });
+const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-6520248c"]]), { __name: "StudioGenerateModeSourcePanel" });
 const HIRES_TARGET_MAX = 8192;
 const HIRES_TARGET_STEP = 8;
 const positiveNumber = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
@@ -18482,7 +18499,7 @@ const hiresTargetSummary = (scale, width, height) => {
 const HIRES_SAME_CHECKPOINT = "Use same checkpoint";
 const HIRES_SAME_SAMPLER = "Use same sampler";
 const HIRES_SAME_SCHEDULER = "Use same scheduler";
-const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
+const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
   __name: "RuntimeSettingsPane",
   __ssrInlineRender: true,
   props: {
@@ -18921,14 +18938,14 @@ const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1Y = _sfc_main$1Y.setup;
-_sfc_main$1Y.setup = (props, ctx) => {
+const _sfc_setup$1_ = _sfc_main$1_.setup;
+_sfc_main$1_.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RuntimeSettingsPane.vue");
-  return _sfc_setup$1Y ? _sfc_setup$1Y(props, ctx) : void 0;
+  return _sfc_setup$1_ ? _sfc_setup$1_(props, ctx) : void 0;
 };
-const RuntimeSettingsPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Y, [["__scopeId", "data-v-f6a631ff"]]), { __name: "StudioRuntimeSettingsPane" });
-const _sfc_main$1X = /* @__PURE__ */ defineComponent({
+const RuntimeSettingsPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-f6a631ff"]]), { __name: "StudioRuntimeSettingsPane" });
+const _sfc_main$1Z = /* @__PURE__ */ defineComponent({
   __name: "GenerationInspector",
   __ssrInlineRender: true,
   props: {
@@ -18972,14 +18989,14 @@ const _sfc_main$1X = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1X = _sfc_main$1X.setup;
-_sfc_main$1X.setup = (props, ctx) => {
+const _sfc_setup$1Z = _sfc_main$1Z.setup;
+_sfc_main$1Z.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationInspector.vue");
-  return _sfc_setup$1X ? _sfc_setup$1X(props, ctx) : void 0;
+  return _sfc_setup$1Z ? _sfc_setup$1Z(props, ctx) : void 0;
 };
-const GenerationInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1X, [["__scopeId", "data-v-56e36a03"]]), { __name: "StudioGenerateGenerationInspector" });
-const _sfc_main$1W = /* @__PURE__ */ defineComponent({
+const GenerationInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Z, [["__scopeId", "data-v-56e36a03"]]), { __name: "StudioGenerateGenerationInspector" });
+const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
   __name: "ResultDetailsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -19065,13 +19082,13 @@ const _sfc_main$1W = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1W = _sfc_main$1W.setup;
-_sfc_main$1W.setup = (props, ctx) => {
+const _sfc_setup$1Y = _sfc_main$1Y.setup;
+_sfc_main$1Y.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ResultDetailsDrawer.vue");
-  return _sfc_setup$1W ? _sfc_setup$1W(props, ctx) : void 0;
+  return _sfc_setup$1Y ? _sfc_setup$1Y(props, ctx) : void 0;
 };
-const ResultDetailsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-b9df029b"]]), { __name: "StudioGenerateResultDetailsDrawer" });
+const ResultDetailsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Y, [["__scopeId", "data-v-b9df029b"]]), { __name: "StudioGenerateResultDetailsDrawer" });
 const ASTERIA_EXTENSION_FRONTEND_CONTRACT = "asteria.extension.frontend.v1";
 class ExtensionModuleLoadError extends Error {
   constructor(code) {
@@ -19165,7 +19182,7 @@ const STUDIO_WORKSPACE_IDS = [
   "settings"
 ];
 const isStudioWorkspaceId = (value) => STUDIO_WORKSPACE_IDS.some((id) => id === value);
-const _sfc_main$1V = /* @__PURE__ */ defineComponent({
+const _sfc_main$1X = /* @__PURE__ */ defineComponent({
   __name: "FullAccessExtensionHost",
   __ssrInlineRender: true,
   props: {
@@ -19252,13 +19269,13 @@ const _sfc_main$1V = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1V = _sfc_main$1V.setup;
-_sfc_main$1V.setup = (props, ctx) => {
+const _sfc_setup$1X = _sfc_main$1X.setup;
+_sfc_main$1X.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/FullAccessExtensionHost.vue");
-  return _sfc_setup$1V ? _sfc_setup$1V(props, ctx) : void 0;
+  return _sfc_setup$1X ? _sfc_setup$1X(props, ctx) : void 0;
 };
-const FullAccessExtensionHost = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1V, [["__scopeId", "data-v-b387b4b0"]]), { __name: "StudioExtensionsFullAccessExtensionHost" });
+const FullAccessExtensionHost = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1X, [["__scopeId", "data-v-b387b4b0"]]), { __name: "StudioExtensionsFullAccessExtensionHost" });
 const STANDARD_EXTENSION_FRAME_PATH_PREFIX = "/api/extensions/standard-frame/";
 const NONCE = /^[a-f0-9]{64}$/;
 const createStandardExtensionNonce = () => {
@@ -19307,7 +19324,7 @@ const useAsteriaTheme = () => {
     initialize
   };
 };
-const _sfc_main$1U = /* @__PURE__ */ defineComponent({
+const _sfc_main$1W = /* @__PURE__ */ defineComponent({
   __name: "StandardExtensionFrame",
   __ssrInlineRender: true,
   props: {
@@ -19389,14 +19406,14 @@ const _sfc_main$1U = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1U = _sfc_main$1U.setup;
-_sfc_main$1U.setup = (props, ctx) => {
+const _sfc_setup$1W = _sfc_main$1W.setup;
+_sfc_main$1W.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/StandardExtensionFrame.vue");
-  return _sfc_setup$1U ? _sfc_setup$1U(props, ctx) : void 0;
+  return _sfc_setup$1W ? _sfc_setup$1W(props, ctx) : void 0;
 };
-const StandardExtensionFrame = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1U, [["__scopeId", "data-v-c06c0cbd"]]), { __name: "StudioExtensionsStandardExtensionFrame" });
-const _sfc_main$1T = /* @__PURE__ */ defineComponent({
+const StandardExtensionFrame = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-c06c0cbd"]]), { __name: "StudioExtensionsStandardExtensionFrame" });
+const _sfc_main$1V = /* @__PURE__ */ defineComponent({
   __name: "ExtensionContributionHost",
   __ssrInlineRender: true,
   props: {
@@ -19430,13 +19447,13 @@ const _sfc_main$1T = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1T = _sfc_main$1T.setup;
-_sfc_main$1T.setup = (props, ctx) => {
+const _sfc_setup$1V = _sfc_main$1V.setup;
+_sfc_main$1V.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/ExtensionContributionHost.vue");
-  return _sfc_setup$1T ? _sfc_setup$1T(props, ctx) : void 0;
+  return _sfc_setup$1V ? _sfc_setup$1V(props, ctx) : void 0;
 };
-const ExtensionContributionHost = Object.assign(_sfc_main$1T, { __name: "StudioExtensionsExtensionContributionHost" });
+const ExtensionContributionHost = Object.assign(_sfc_main$1V, { __name: "StudioExtensionsExtensionContributionHost" });
 const EXTENSION_PANEL_SURFACES = [
   "generate.inspector_panel",
   "image_edit.inspector_panel",
@@ -19798,7 +19815,7 @@ const useExtensionsStore = defineStore("extensions", {
     }
   }
 });
-const _sfc_main$1S = /* @__PURE__ */ defineComponent({
+const _sfc_main$1U = /* @__PURE__ */ defineComponent({
   __name: "ExtensionSurfaceDock",
   __ssrInlineRender: true,
   props: {
@@ -19831,14 +19848,14 @@ const _sfc_main$1S = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1S = _sfc_main$1S.setup;
-_sfc_main$1S.setup = (props, ctx) => {
+const _sfc_setup$1U = _sfc_main$1U.setup;
+_sfc_main$1U.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/ExtensionSurfaceDock.vue");
-  return _sfc_setup$1S ? _sfc_setup$1S(props, ctx) : void 0;
+  return _sfc_setup$1U ? _sfc_setup$1U(props, ctx) : void 0;
 };
-const ExtensionSurfaceDock = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1S, [["__scopeId", "data-v-36278985"]]), { __name: "StudioExtensionsExtensionSurfaceDock" });
-const _sfc_main$1R = /* @__PURE__ */ defineComponent({
+const ExtensionSurfaceDock = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1U, [["__scopeId", "data-v-36278985"]]), { __name: "StudioExtensionsExtensionSurfaceDock" });
+const _sfc_main$1T = /* @__PURE__ */ defineComponent({
   __name: "GenerateWorkspace",
   __ssrInlineRender: true,
   emits: ["openHelp", "openImage", "openImageMask", "openSettings", "openImageMetadata"],
@@ -19917,14 +19934,14 @@ const _sfc_main$1R = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1R = _sfc_main$1R.setup;
-_sfc_main$1R.setup = (props, ctx) => {
+const _sfc_setup$1T = _sfc_main$1T.setup;
+_sfc_main$1T.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateWorkspace.vue");
-  return _sfc_setup$1R ? _sfc_setup$1R(props, ctx) : void 0;
+  return _sfc_setup$1T ? _sfc_setup$1T(props, ctx) : void 0;
 };
-const GenerateWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1R, [["__scopeId", "data-v-31119163"]]), { __name: "StudioGenerateWorkspace" });
-const _sfc_main$1Q = /* @__PURE__ */ defineComponent({
+const GenerateWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1T, [["__scopeId", "data-v-31119163"]]), { __name: "StudioGenerateWorkspace" });
+const _sfc_main$1S = /* @__PURE__ */ defineComponent({
   __name: "RepeatLimitsDialog",
   __ssrInlineRender: true,
   props: {
@@ -19954,14 +19971,14 @@ const _sfc_main$1Q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1Q = _sfc_main$1Q.setup;
-_sfc_main$1Q.setup = (props, ctx) => {
+const _sfc_setup$1S = _sfc_main$1S.setup;
+_sfc_main$1S.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/RepeatLimitsDialog.vue");
-  return _sfc_setup$1Q ? _sfc_setup$1Q(props, ctx) : void 0;
+  return _sfc_setup$1S ? _sfc_setup$1S(props, ctx) : void 0;
 };
-const RepeatLimitsDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Q, [["__scopeId", "data-v-243640f8"]]), { __name: "StudioGenerateRepeatLimitsDialog" });
-const _sfc_main$1P = /* @__PURE__ */ defineComponent({
+const RepeatLimitsDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1S, [["__scopeId", "data-v-243640f8"]]), { __name: "StudioGenerateRepeatLimitsDialog" });
+const _sfc_main$1R = /* @__PURE__ */ defineComponent({
   __name: "HelpArticleCanvas",
   __ssrInlineRender: true,
   props: {
@@ -19986,14 +20003,14 @@ const _sfc_main$1P = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1P = _sfc_main$1P.setup;
-_sfc_main$1P.setup = (props, ctx) => {
+const _sfc_setup$1R = _sfc_main$1R.setup;
+_sfc_main$1R.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpArticleCanvas.vue");
-  return _sfc_setup$1P ? _sfc_setup$1P(props, ctx) : void 0;
+  return _sfc_setup$1R ? _sfc_setup$1R(props, ctx) : void 0;
 };
-const HelpArticleCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1P, [["__scopeId", "data-v-5bed5522"]]), { __name: "StudioHelpArticleCanvas" });
-const _sfc_main$1O = /* @__PURE__ */ defineComponent({
+const HelpArticleCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1R, [["__scopeId", "data-v-5bed5522"]]), { __name: "StudioHelpArticleCanvas" });
+const _sfc_main$1Q = /* @__PURE__ */ defineComponent({
   __name: "HelpRelatedActions",
   __ssrInlineRender: true,
   emits: ["open-related-action"],
@@ -20007,14 +20024,14 @@ const _sfc_main$1O = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1O = _sfc_main$1O.setup;
-_sfc_main$1O.setup = (props, ctx) => {
+const _sfc_setup$1Q = _sfc_main$1Q.setup;
+_sfc_main$1Q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpRelatedActions.vue");
-  return _sfc_setup$1O ? _sfc_setup$1O(props, ctx) : void 0;
+  return _sfc_setup$1Q ? _sfc_setup$1Q(props, ctx) : void 0;
 };
-const HelpRelatedActions = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1O, [["__scopeId", "data-v-7f413803"]]), { __name: "StudioHelpRelatedActions" });
-const _sfc_main$1N = /* @__PURE__ */ defineComponent({
+const HelpRelatedActions = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Q, [["__scopeId", "data-v-7f413803"]]), { __name: "StudioHelpRelatedActions" });
+const _sfc_main$1P = /* @__PURE__ */ defineComponent({
   __name: "HelpTopicRail",
   __ssrInlineRender: true,
   props: {
@@ -20036,13 +20053,13 @@ const _sfc_main$1N = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1N = _sfc_main$1N.setup;
-_sfc_main$1N.setup = (props, ctx) => {
+const _sfc_setup$1P = _sfc_main$1P.setup;
+_sfc_main$1P.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpTopicRail.vue");
-  return _sfc_setup$1N ? _sfc_setup$1N(props, ctx) : void 0;
+  return _sfc_setup$1P ? _sfc_setup$1P(props, ctx) : void 0;
 };
-const HelpTopicRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1N, [["__scopeId", "data-v-6e5de24e"]]), { __name: "StudioHelpTopicRail" });
+const HelpTopicRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1P, [["__scopeId", "data-v-6e5de24e"]]), { __name: "StudioHelpTopicRail" });
 const helpTopicsByLocale = {
   en: [
     {
@@ -20510,7 +20527,7 @@ const useAsteriaHelpTopics = () => {
     topics
   };
 };
-const _sfc_main$1M = /* @__PURE__ */ defineComponent({
+const _sfc_main$1O = /* @__PURE__ */ defineComponent({
   __name: "HelpView",
   __ssrInlineRender: true,
   props: {
@@ -20543,14 +20560,14 @@ const _sfc_main$1M = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1M = _sfc_main$1M.setup;
-_sfc_main$1M.setup = (props, ctx) => {
+const _sfc_setup$1O = _sfc_main$1O.setup;
+_sfc_main$1O.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/HelpView.vue");
-  return _sfc_setup$1M ? _sfc_setup$1M(props, ctx) : void 0;
+  return _sfc_setup$1O ? _sfc_setup$1O(props, ctx) : void 0;
 };
-const HelpView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1M, [["__scopeId", "data-v-824e84f1"]]), { __name: "StudioHelpView" });
-const _sfc_main$1L = /* @__PURE__ */ defineComponent({
+const HelpView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1O, [["__scopeId", "data-v-824e84f1"]]), { __name: "StudioHelpView" });
+const _sfc_main$1N = /* @__PURE__ */ defineComponent({
   __name: "HelpGuideDrawer",
   __ssrInlineRender: true,
   props: {
@@ -20580,13 +20597,13 @@ const _sfc_main$1L = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1L = _sfc_main$1L.setup;
-_sfc_main$1L.setup = (props, ctx) => {
+const _sfc_setup$1N = _sfc_main$1N.setup;
+_sfc_main$1N.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpGuideDrawer.vue");
-  return _sfc_setup$1L ? _sfc_setup$1L(props, ctx) : void 0;
+  return _sfc_setup$1N ? _sfc_setup$1N(props, ctx) : void 0;
 };
-const HelpGuideDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1L, [["__scopeId", "data-v-6cfdf912"]]), { __name: "StudioHelpGuideDrawer" });
+const HelpGuideDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1N, [["__scopeId", "data-v-6cfdf912"]]), { __name: "StudioHelpGuideDrawer" });
 const MIN_CANVAS_ZOOM = 0.25;
 const MAX_CANVAS_ZOOM = 4;
 const CANVAS_ZOOM_STEP = 0.25;
@@ -21237,7 +21254,7 @@ function drawPoseMap(context, people, width, height) {
     context.fill();
   }
 }
-const _sfc_main$1K = /* @__PURE__ */ defineComponent({
+const _sfc_main$1M = /* @__PURE__ */ defineComponent({
   __name: "ImageEditWorkspaceBody",
   __ssrInlineRender: true,
   props: {
@@ -21278,14 +21295,14 @@ const _sfc_main$1K = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1K = _sfc_main$1K.setup;
-_sfc_main$1K.setup = (props, ctx) => {
+const _sfc_setup$1M = _sfc_main$1M.setup;
+_sfc_main$1M.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditWorkspaceBody.vue");
-  return _sfc_setup$1K ? _sfc_setup$1K(props, ctx) : void 0;
+  return _sfc_setup$1M ? _sfc_setup$1M(props, ctx) : void 0;
 };
-const ImageEditWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1K, [["__scopeId", "data-v-7c84f1f4"]]), { __name: "StudioImageEditWorkspaceBody" });
-const _sfc_main$1J = /* @__PURE__ */ defineComponent({
+const ImageEditWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1M, [["__scopeId", "data-v-7c84f1f4"]]), { __name: "StudioImageEditWorkspaceBody" });
+const _sfc_main$1L = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSummaryBar",
   __ssrInlineRender: true,
   props: {
@@ -21316,14 +21333,14 @@ const _sfc_main$1J = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1J = _sfc_main$1J.setup;
-_sfc_main$1J.setup = (props, ctx) => {
+const _sfc_setup$1L = _sfc_main$1L.setup;
+_sfc_main$1L.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSummaryBar.vue");
-  return _sfc_setup$1J ? _sfc_setup$1J(props, ctx) : void 0;
+  return _sfc_setup$1L ? _sfc_setup$1L(props, ctx) : void 0;
 };
-const ImageEditSummaryBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1J, [["__scopeId", "data-v-2ffd1d76"]]), { __name: "StudioImageEditSummaryBar" });
-const _sfc_main$1I = /* @__PURE__ */ defineComponent({
+const ImageEditSummaryBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1L, [["__scopeId", "data-v-2ffd1d76"]]), { __name: "StudioImageEditSummaryBar" });
+const _sfc_main$1K = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSourceInspector",
   __ssrInlineRender: true,
   props: {
@@ -21373,14 +21390,14 @@ const _sfc_main$1I = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1I = _sfc_main$1I.setup;
-_sfc_main$1I.setup = (props, ctx) => {
+const _sfc_setup$1K = _sfc_main$1K.setup;
+_sfc_main$1K.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSourceInspector.vue");
-  return _sfc_setup$1I ? _sfc_setup$1I(props, ctx) : void 0;
+  return _sfc_setup$1K ? _sfc_setup$1K(props, ctx) : void 0;
 };
-const ImageEditSourceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1I, [["__scopeId", "data-v-2aed6da7"]]), { __name: "StudioImageEditSourceInspector" });
-const _sfc_main$1H = /* @__PURE__ */ defineComponent({
+const ImageEditSourceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1K, [["__scopeId", "data-v-2aed6da7"]]), { __name: "StudioImageEditSourceInspector" });
+const _sfc_main$1J = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSourceRemasterInspector",
   __ssrInlineRender: true,
   props: {
@@ -21483,14 +21500,14 @@ const _sfc_main$1H = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1H = _sfc_main$1H.setup;
-_sfc_main$1H.setup = (props, ctx) => {
+const _sfc_setup$1J = _sfc_main$1J.setup;
+_sfc_main$1J.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSourceRemasterInspector.vue");
-  return _sfc_setup$1H ? _sfc_setup$1H(props, ctx) : void 0;
+  return _sfc_setup$1J ? _sfc_setup$1J(props, ctx) : void 0;
 };
-const ImageEditSourceRemasterInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1H, [["__scopeId", "data-v-80e75218"]]), { __name: "StudioImageEditSourceRemasterInspector" });
-const _sfc_main$1G = /* @__PURE__ */ defineComponent({
+const ImageEditSourceRemasterInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1J, [["__scopeId", "data-v-80e75218"]]), { __name: "StudioImageEditSourceRemasterInspector" });
+const _sfc_main$1I = /* @__PURE__ */ defineComponent({
   __name: "ImageEditCanvasToolbar",
   __ssrInlineRender: true,
   props: {
@@ -21531,14 +21548,14 @@ const _sfc_main$1G = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1G = _sfc_main$1G.setup;
-_sfc_main$1G.setup = (props, ctx) => {
+const _sfc_setup$1I = _sfc_main$1I.setup;
+_sfc_main$1I.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditCanvasToolbar.vue");
-  return _sfc_setup$1G ? _sfc_setup$1G(props, ctx) : void 0;
+  return _sfc_setup$1I ? _sfc_setup$1I(props, ctx) : void 0;
 };
-const ImageEditCanvasToolbar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1G, [["__scopeId", "data-v-860cb3b6"]]), { __name: "StudioImageEditCanvasToolbar" });
-const _sfc_main$1F = /* @__PURE__ */ defineComponent({
+const ImageEditCanvasToolbar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1I, [["__scopeId", "data-v-860cb3b6"]]), { __name: "StudioImageEditCanvasToolbar" });
+const _sfc_main$1H = /* @__PURE__ */ defineComponent({
   __name: "ImageEditMaskInspector",
   __ssrInlineRender: true,
   props: {
@@ -21585,13 +21602,13 @@ const _sfc_main$1F = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1F = _sfc_main$1F.setup;
-_sfc_main$1F.setup = (props, ctx) => {
+const _sfc_setup$1H = _sfc_main$1H.setup;
+_sfc_main$1H.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditMaskInspector.vue");
-  return _sfc_setup$1F ? _sfc_setup$1F(props, ctx) : void 0;
+  return _sfc_setup$1H ? _sfc_setup$1H(props, ctx) : void 0;
 };
-const ImageEditMaskInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1F, [["__scopeId", "data-v-1bbfd724"]]), { __name: "StudioImageEditMaskInspector" });
+const ImageEditMaskInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1H, [["__scopeId", "data-v-1bbfd724"]]), { __name: "StudioImageEditMaskInspector" });
 const identity = (path) => path.replaceAll("\\", "/").toLowerCase();
 const reviewMatchesSource = (review, path) => identity(review.source_path) === identity(path);
 const validCandidateBox = (box) => box.length === 4 && box.every((v) => Number.isFinite(v) && v >= 0 && v <= 1) && box[0] < box[2] && box[1] < box[3];
@@ -21599,7 +21616,7 @@ const candidateSelection = (rows, ids, excluded) => rows.filter((row) => ids.inc
 const cropViewBox = (box, width, height) => [box[0] * width, box[1] * height, (box[2] - box[0]) * width, (box[3] - box[1]) * height].map((v) => Number(v.toFixed(3))).join(" ");
 const comparisonCandidates = (review, part) => (review.edits?.candidates ?? review.candidates).filter((row) => row.label === part && !review.edits?.excluded.includes(row.id) && validCandidateBox(row.box));
 const initialComparisonCandidate = (review, part) => comparisonCandidates(review, part).find((row) => review.edits?.selected.includes(row.id))?.id ?? "";
-const _sfc_main$1E = /* @__PURE__ */ defineComponent({
+const _sfc_main$1G = /* @__PURE__ */ defineComponent({
   __name: "ImageReviewStage",
   __ssrInlineRender: true,
   props: {
@@ -21624,14 +21641,14 @@ const _sfc_main$1E = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1E = _sfc_main$1E.setup;
-_sfc_main$1E.setup = (props, ctx) => {
+const _sfc_setup$1G = _sfc_main$1G.setup;
+_sfc_main$1G.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageReviewStage.vue");
-  return _sfc_setup$1E ? _sfc_setup$1E(props, ctx) : void 0;
+  return _sfc_setup$1G ? _sfc_setup$1G(props, ctx) : void 0;
 };
-const ImageReviewStage = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1E, [["__scopeId", "data-v-13cba0df"]]), { __name: "StudioImageReviewStage" });
-const _sfc_main$1D = /* @__PURE__ */ defineComponent({
+const ImageReviewStage = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1G, [["__scopeId", "data-v-13cba0df"]]), { __name: "StudioImageReviewStage" });
+const _sfc_main$1F = /* @__PURE__ */ defineComponent({
   __name: "BodyPartReview",
   __ssrInlineRender: true,
   props: {
@@ -21791,14 +21808,14 @@ const _sfc_main$1D = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1D = _sfc_main$1D.setup;
-_sfc_main$1D.setup = (props, ctx) => {
+const _sfc_setup$1F = _sfc_main$1F.setup;
+_sfc_main$1F.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/BodyPartReview.vue");
-  return _sfc_setup$1D ? _sfc_setup$1D(props, ctx) : void 0;
+  return _sfc_setup$1F ? _sfc_setup$1F(props, ctx) : void 0;
 };
-const BodyPartReview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1D, [["__scopeId", "data-v-ce33f3f7"]]), { __name: "StudioBodyPartReview" });
-const _sfc_main$1C = /* @__PURE__ */ defineComponent({
+const BodyPartReview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1F, [["__scopeId", "data-v-ce33f3f7"]]), { __name: "StudioBodyPartReview" });
+const _sfc_main$1E = /* @__PURE__ */ defineComponent({
   __name: "ImageEditCropInspector",
   __ssrInlineRender: true,
   props: {
@@ -21842,14 +21859,14 @@ const _sfc_main$1C = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1C = _sfc_main$1C.setup;
-_sfc_main$1C.setup = (props, ctx) => {
+const _sfc_setup$1E = _sfc_main$1E.setup;
+_sfc_main$1E.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditCropInspector.vue");
-  return _sfc_setup$1C ? _sfc_setup$1C(props, ctx) : void 0;
+  return _sfc_setup$1E ? _sfc_setup$1E(props, ctx) : void 0;
 };
-const ImageEditCropInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1C, [["__scopeId", "data-v-1d66ae27"]]), { __name: "StudioImageEditCropInspector" });
-const _sfc_main$1B = /* @__PURE__ */ defineComponent({
+const ImageEditCropInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1E, [["__scopeId", "data-v-1d66ae27"]]), { __name: "StudioImageEditCropInspector" });
+const _sfc_main$1D = /* @__PURE__ */ defineComponent({
   __name: "ImageEditReferenceInspector",
   __ssrInlineRender: true,
   props: {
@@ -21913,14 +21930,14 @@ const _sfc_main$1B = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1B = _sfc_main$1B.setup;
-_sfc_main$1B.setup = (props, ctx) => {
+const _sfc_setup$1D = _sfc_main$1D.setup;
+_sfc_main$1D.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditReferenceInspector.vue");
-  return _sfc_setup$1B ? _sfc_setup$1B(props, ctx) : void 0;
+  return _sfc_setup$1D ? _sfc_setup$1D(props, ctx) : void 0;
 };
-const ImageEditReferenceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1B, [["__scopeId", "data-v-6340eee7"]]), { __name: "StudioImageEditReferenceInspector" });
-const _sfc_main$1A = /* @__PURE__ */ defineComponent({
+const ImageEditReferenceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1D, [["__scopeId", "data-v-6340eee7"]]), { __name: "StudioImageEditReferenceInspector" });
+const _sfc_main$1C = /* @__PURE__ */ defineComponent({
   __name: "ImageEditOpenPoseInspector",
   __ssrInlineRender: true,
   props: {
@@ -21994,14 +22011,14 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1A = _sfc_main$1A.setup;
-_sfc_main$1A.setup = (props, ctx) => {
+const _sfc_setup$1C = _sfc_main$1C.setup;
+_sfc_main$1C.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditOpenPoseInspector.vue");
-  return _sfc_setup$1A ? _sfc_setup$1A(props, ctx) : void 0;
+  return _sfc_setup$1C ? _sfc_setup$1C(props, ctx) : void 0;
 };
-const ImageEditOpenPoseInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1A, [["__scopeId", "data-v-0f427267"]]), { __name: "StudioImageEditOpenPoseInspector" });
-const _sfc_main$1z = /* @__PURE__ */ defineComponent({
+const ImageEditOpenPoseInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1C, [["__scopeId", "data-v-0f427267"]]), { __name: "StudioImageEditOpenPoseInspector" });
+const _sfc_main$1B = /* @__PURE__ */ defineComponent({
   __name: "ImageEditControlNetPresets",
   __ssrInlineRender: true,
   props: {
@@ -22043,13 +22060,13 @@ const _sfc_main$1z = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1z = _sfc_main$1z.setup;
-_sfc_main$1z.setup = (props, ctx) => {
+const _sfc_setup$1B = _sfc_main$1B.setup;
+_sfc_main$1B.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditControlNetPresets.vue");
-  return _sfc_setup$1z ? _sfc_setup$1z(props, ctx) : void 0;
+  return _sfc_setup$1B ? _sfc_setup$1B(props, ctx) : void 0;
 };
-const ImageEditControlNetPresets = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1z, [["__scopeId", "data-v-823ab604"]]), { __name: "StudioImageEditControlNetPresets" });
+const ImageEditControlNetPresets = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1B, [["__scopeId", "data-v-823ab604"]]), { __name: "StudioImageEditControlNetPresets" });
 const waitForImageEditorIo = (pending, hasError) => new Promise((resolve) => {
   const stop = watchPostEffect(() => {
     if (pending.some((value) => value.value)) return;
@@ -22057,7 +22074,7 @@ const waitForImageEditorIo = (pending, hasError) => new Promise((resolve) => {
     resolve(!hasError());
   });
 });
-const _sfc_main$1y = /* @__PURE__ */ defineComponent({
+const _sfc_main$1A = /* @__PURE__ */ defineComponent({
   __name: "ImageWorkspace",
   __ssrInlineRender: true,
   emits: ["openGenerate", "openLibrary"],
@@ -23967,14 +23984,14 @@ const _sfc_main$1y = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1y = _sfc_main$1y.setup;
-_sfc_main$1y.setup = (props, ctx) => {
+const _sfc_setup$1A = _sfc_main$1A.setup;
+_sfc_main$1A.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageWorkspace.vue");
-  return _sfc_setup$1y ? _sfc_setup$1y(props, ctx) : void 0;
+  return _sfc_setup$1A ? _sfc_setup$1A(props, ctx) : void 0;
 };
-const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1y, [["__scopeId", "data-v-f656616f"]]), { __name: "StudioImageWorkspace" });
-const _sfc_main$1x = /* @__PURE__ */ defineComponent({
+const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1A, [["__scopeId", "data-v-f656616f"]]), { __name: "StudioImageWorkspace" });
+const _sfc_main$1z = /* @__PURE__ */ defineComponent({
   __name: "ImageEditDraftNavigationDialog",
   __ssrInlineRender: true,
   props: {
@@ -24003,14 +24020,14 @@ const _sfc_main$1x = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1x = _sfc_main$1x.setup;
-_sfc_main$1x.setup = (props, ctx) => {
+const _sfc_setup$1z = _sfc_main$1z.setup;
+_sfc_main$1z.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditDraftNavigationDialog.vue");
-  return _sfc_setup$1x ? _sfc_setup$1x(props, ctx) : void 0;
+  return _sfc_setup$1z ? _sfc_setup$1z(props, ctx) : void 0;
 };
-const ImageEditDraftNavigationDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1x, [["__scopeId", "data-v-81770717"]]), { __name: "StudioImageEditDraftNavigationDialog" });
-const _sfc_main$1w = /* @__PURE__ */ defineComponent({
+const ImageEditDraftNavigationDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1z, [["__scopeId", "data-v-81770717"]]), { __name: "StudioImageEditDraftNavigationDialog" });
+const _sfc_main$1y = /* @__PURE__ */ defineComponent({
   __name: "ImageMetadataImportDialog",
   __ssrInlineRender: true,
   props: {
@@ -24161,14 +24178,14 @@ const _sfc_main$1w = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1w = _sfc_main$1w.setup;
-_sfc_main$1w.setup = (props, ctx) => {
+const _sfc_setup$1y = _sfc_main$1y.setup;
+_sfc_main$1y.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageMetadataImportDialog.vue");
-  return _sfc_setup$1w ? _sfc_setup$1w(props, ctx) : void 0;
+  return _sfc_setup$1y ? _sfc_setup$1y(props, ctx) : void 0;
 };
-const ImageMetadataImportDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1w, [["__scopeId", "data-v-b22c22e3"]]), { __name: "StudioImageMetadataImportDialog" });
-const _sfc_main$1v = /* @__PURE__ */ defineComponent({
+const ImageMetadataImportDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1y, [["__scopeId", "data-v-b22c22e3"]]), { __name: "StudioImageMetadataImportDialog" });
+const _sfc_main$1x = /* @__PURE__ */ defineComponent({
   __name: "ImageMetadataImportFlow",
   __ssrInlineRender: true,
   emits: ["applied"],
@@ -24334,14 +24351,14 @@ const _sfc_main$1v = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1v = _sfc_main$1v.setup;
-_sfc_main$1v.setup = (props, ctx) => {
+const _sfc_setup$1x = _sfc_main$1x.setup;
+_sfc_main$1x.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageMetadataImportFlow.vue");
-  return _sfc_setup$1v ? _sfc_setup$1v(props, ctx) : void 0;
+  return _sfc_setup$1x ? _sfc_setup$1x(props, ctx) : void 0;
 };
-const ImageMetadataImportFlow = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1v, [["__scopeId", "data-v-30855332"]]), { __name: "StudioImageMetadataImportFlow" });
-const _sfc_main$1u = {};
+const ImageMetadataImportFlow = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1x, [["__scopeId", "data-v-30855332"]]), { __name: "StudioImageMetadataImportFlow" });
+const _sfc_main$1w = {};
 function _sfc_ssrRender$1(_ctx, _push, _parent, _attrs) {
   _push(`<div${ssrRenderAttrs(mergeProps({ class: "library-workspace-body" }, _attrs))} data-v-11fe10a6>`);
   ssrRenderSlot(_ctx.$slots, "folders", {}, null, _push, _parent);
@@ -24349,14 +24366,14 @@ function _sfc_ssrRender$1(_ctx, _push, _parent, _attrs) {
   ssrRenderSlot(_ctx.$slots, "inspector", {}, null, _push, _parent);
   _push(`</div>`);
 }
-const _sfc_setup$1u = _sfc_main$1u.setup;
-_sfc_main$1u.setup = (props, ctx) => {
+const _sfc_setup$1w = _sfc_main$1w.setup;
+_sfc_main$1w.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryWorkspaceBody.vue");
-  return _sfc_setup$1u ? _sfc_setup$1u(props, ctx) : void 0;
+  return _sfc_setup$1w ? _sfc_setup$1w(props, ctx) : void 0;
 };
-const LibraryWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1u, [["ssrRender", _sfc_ssrRender$1], ["__scopeId", "data-v-11fe10a6"]]), { __name: "StudioLibraryWorkspaceBody" });
-const _sfc_main$1t = /* @__PURE__ */ defineComponent({
+const LibraryWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1w, [["ssrRender", _sfc_ssrRender$1], ["__scopeId", "data-v-11fe10a6"]]), { __name: "StudioLibraryWorkspaceBody" });
+const _sfc_main$1v = /* @__PURE__ */ defineComponent({
   __name: "LibraryFolderRail",
   __ssrInlineRender: true,
   props: {
@@ -24400,14 +24417,14 @@ const _sfc_main$1t = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1t = _sfc_main$1t.setup;
-_sfc_main$1t.setup = (props, ctx) => {
+const _sfc_setup$1v = _sfc_main$1v.setup;
+_sfc_main$1v.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryFolderRail.vue");
-  return _sfc_setup$1t ? _sfc_setup$1t(props, ctx) : void 0;
+  return _sfc_setup$1v ? _sfc_setup$1v(props, ctx) : void 0;
 };
-const LibraryFolderRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1t, [["__scopeId", "data-v-cdd1c1fc"]]), { __name: "StudioLibraryFolderRail" });
-const _sfc_main$1s = /* @__PURE__ */ defineComponent({
+const LibraryFolderRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1v, [["__scopeId", "data-v-cdd1c1fc"]]), { __name: "StudioLibraryFolderRail" });
+const _sfc_main$1u = /* @__PURE__ */ defineComponent({
   __name: "LibraryFilterBar",
   __ssrInlineRender: true,
   props: {
@@ -24541,13 +24558,13 @@ const _sfc_main$1s = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1s = _sfc_main$1s.setup;
-_sfc_main$1s.setup = (props, ctx) => {
+const _sfc_setup$1u = _sfc_main$1u.setup;
+_sfc_main$1u.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryFilterBar.vue");
-  return _sfc_setup$1s ? _sfc_setup$1s(props, ctx) : void 0;
+  return _sfc_setup$1u ? _sfc_setup$1u(props, ctx) : void 0;
 };
-const LibraryFilterBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1s, [["__scopeId", "data-v-8fba88ff"]]), { __name: "StudioLibraryFilterBar" });
+const LibraryFilterBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1u, [["__scopeId", "data-v-8fba88ff"]]), { __name: "StudioLibraryFilterBar" });
 const MUSIC_MODEL_COMPONENT_ROLES = ["diffusion_model", "text_encoder", "audio_vae"];
 const DRAFT_FIELDS$1 = /* @__PURE__ */ new Set([
   "mode",
@@ -24981,7 +24998,7 @@ const musicRegenerationForMedia = (item) => {
     modelSelection: musicModelSelectionForMedia(request.model_selection)
   });
 };
-const _sfc_main$1r = /* @__PURE__ */ defineComponent({
+const _sfc_main$1t = /* @__PURE__ */ defineComponent({
   __name: "LibraryMediaCard",
   __ssrInlineRender: true,
   props: {
@@ -25049,14 +25066,14 @@ const _sfc_main$1r = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1r = _sfc_main$1r.setup;
-_sfc_main$1r.setup = (props, ctx) => {
+const _sfc_setup$1t = _sfc_main$1t.setup;
+_sfc_main$1t.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryMediaCard.vue");
-  return _sfc_setup$1r ? _sfc_setup$1r(props, ctx) : void 0;
+  return _sfc_setup$1t ? _sfc_setup$1t(props, ctx) : void 0;
 };
-const LibraryMediaCard = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1r, [["__scopeId", "data-v-d6a2d3f0"]]), { __name: "StudioLibraryMediaCard" });
-const _sfc_main$1q = /* @__PURE__ */ defineComponent({
+const LibraryMediaCard = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1t, [["__scopeId", "data-v-d6a2d3f0"]]), { __name: "StudioLibraryMediaCard" });
+const _sfc_main$1s = /* @__PURE__ */ defineComponent({
   __name: "LibraryImageGrid",
   __ssrInlineRender: true,
   props: {
@@ -25121,14 +25138,14 @@ const _sfc_main$1q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1q = _sfc_main$1q.setup;
-_sfc_main$1q.setup = (props, ctx) => {
+const _sfc_setup$1s = _sfc_main$1s.setup;
+_sfc_main$1s.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryImageGrid.vue");
-  return _sfc_setup$1q ? _sfc_setup$1q(props, ctx) : void 0;
+  return _sfc_setup$1s ? _sfc_setup$1s(props, ctx) : void 0;
 };
-const LibraryImageGrid = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1q, [["__scopeId", "data-v-93977a9d"]]), { __name: "StudioLibraryImageGrid" });
-const _sfc_main$1p = /* @__PURE__ */ defineComponent({
+const LibraryImageGrid = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1s, [["__scopeId", "data-v-93977a9d"]]), { __name: "StudioLibraryImageGrid" });
+const _sfc_main$1r = /* @__PURE__ */ defineComponent({
   __name: "LibraryAudioPlayer",
   __ssrInlineRender: true,
   props: {
@@ -25150,13 +25167,13 @@ const _sfc_main$1p = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1p = _sfc_main$1p.setup;
-_sfc_main$1p.setup = (props, ctx) => {
+const _sfc_setup$1r = _sfc_main$1r.setup;
+_sfc_main$1r.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryAudioPlayer.vue");
-  return _sfc_setup$1p ? _sfc_setup$1p(props, ctx) : void 0;
+  return _sfc_setup$1r ? _sfc_setup$1r(props, ctx) : void 0;
 };
-const LibraryAudioPlayer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1p, [["__scopeId", "data-v-9d276b4b"]]), { __name: "StudioLibraryAudioPlayer" });
+const LibraryAudioPlayer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1r, [["__scopeId", "data-v-9d276b4b"]]), { __name: "StudioLibraryAudioPlayer" });
 function criteriaFromLines(text) {
   const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (!lines.length || lines.length > 16 || lines.some((line) => line.length > 500)) throw new Error("invalid_image_criteria");
@@ -25167,7 +25184,7 @@ function effectiveCondition(report, id) {
   const correction = report.corrections.findLast((item) => item.criterion_id === id);
   return { ...original, originalVerdict: original.verdict, verdict: correction?.verdict ?? original.verdict, correction };
 }
-const _sfc_main$1o = /* @__PURE__ */ defineComponent({
+const _sfc_main$1q = /* @__PURE__ */ defineComponent({
   __name: "ImageConditionCheck",
   __ssrInlineRender: true,
   props: {
@@ -25296,19 +25313,19 @@ const _sfc_main$1o = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1o = _sfc_main$1o.setup;
-_sfc_main$1o.setup = (props, ctx) => {
+const _sfc_setup$1q = _sfc_main$1q.setup;
+_sfc_main$1q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/ImageConditionCheck.vue");
-  return _sfc_setup$1o ? _sfc_setup$1o(props, ctx) : void 0;
+  return _sfc_setup$1q ? _sfc_setup$1q(props, ctx) : void 0;
 };
-const ImageConditionCheck = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1o, [["__scopeId", "data-v-ad0435b7"]]), { __name: "StudioLibraryImageConditionCheck" });
+const ImageConditionCheck = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1q, [["__scopeId", "data-v-ad0435b7"]]), { __name: "StudioLibraryImageConditionCheck" });
 const stageGroup = (stage) => `${stage.batch_index}:${stage.image_index}:${stage.seed}`;
 const availableStages = (settings, paths) => {
   if (!Array.isArray(settings.enhancement_stages)) return [];
   return settings.enhancement_stages.filter((x) => Boolean(x && typeof x === "object" && paths.includes(x.path) && typeof x.kind === "string" && Number.isInteger(x.batch_index) && Number.isInteger(x.image_index))).sort((a, b) => a.batch_index - b.batch_index || a.image_index - b.image_index || a.ordinal - b.ordinal);
 };
-const _sfc_main$1n = /* @__PURE__ */ defineComponent({
+const _sfc_main$1p = /* @__PURE__ */ defineComponent({
   __name: "EnhancementComparison",
   __ssrInlineRender: true,
   props: {
@@ -25418,14 +25435,14 @@ const _sfc_main$1n = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1n = _sfc_main$1n.setup;
-_sfc_main$1n.setup = (props, ctx) => {
+const _sfc_setup$1p = _sfc_main$1p.setup;
+_sfc_main$1p.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/EnhancementComparison.vue");
-  return _sfc_setup$1n ? _sfc_setup$1n(props, ctx) : void 0;
+  return _sfc_setup$1p ? _sfc_setup$1p(props, ctx) : void 0;
 };
-const EnhancementComparison = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1n, [["__scopeId", "data-v-b77dc0e4"]]), { __name: "StudioLibraryEnhancementComparison" });
-const _sfc_main$1m = /* @__PURE__ */ defineComponent({
+const EnhancementComparison = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1p, [["__scopeId", "data-v-b77dc0e4"]]), { __name: "StudioLibraryEnhancementComparison" });
+const _sfc_main$1o = /* @__PURE__ */ defineComponent({
   __name: "LibraryVideoPlayer",
   __ssrInlineRender: true,
   props: {
@@ -25451,14 +25468,14 @@ const _sfc_main$1m = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1m = _sfc_main$1m.setup;
-_sfc_main$1m.setup = (props, ctx) => {
+const _sfc_setup$1o = _sfc_main$1o.setup;
+_sfc_main$1o.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryVideoPlayer.vue");
-  return _sfc_setup$1m ? _sfc_setup$1m(props, ctx) : void 0;
+  return _sfc_setup$1o ? _sfc_setup$1o(props, ctx) : void 0;
 };
-const LibraryVideoPlayer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1m, [["__scopeId", "data-v-28bede13"]]), { __name: "StudioLibraryVideoPlayer" });
-const _sfc_main$1l = /* @__PURE__ */ defineComponent({
+const LibraryVideoPlayer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1o, [["__scopeId", "data-v-28bede13"]]), { __name: "StudioLibraryVideoPlayer" });
+const _sfc_main$1n = /* @__PURE__ */ defineComponent({
   __name: "LibraryVideoSequenceDetails",
   __ssrInlineRender: true,
   props: {
@@ -25518,14 +25535,14 @@ const _sfc_main$1l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1l = _sfc_main$1l.setup;
-_sfc_main$1l.setup = (props, ctx) => {
+const _sfc_setup$1n = _sfc_main$1n.setup;
+_sfc_main$1n.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryVideoSequenceDetails.vue");
-  return _sfc_setup$1l ? _sfc_setup$1l(props, ctx) : void 0;
+  return _sfc_setup$1n ? _sfc_setup$1n(props, ctx) : void 0;
 };
-const LibraryVideoSequenceDetails = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1l, [["__scopeId", "data-v-f23c888b"]]), { __name: "StudioLibraryVideoSequenceDetails" });
-const _sfc_main$1k = /* @__PURE__ */ defineComponent({
+const LibraryVideoSequenceDetails = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1n, [["__scopeId", "data-v-f23c888b"]]), { __name: "StudioLibraryVideoSequenceDetails" });
+const _sfc_main$1m = /* @__PURE__ */ defineComponent({
   __name: "LibraryDetailsInspector",
   __ssrInlineRender: true,
   props: {
@@ -25704,14 +25721,14 @@ const _sfc_main$1k = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1k = _sfc_main$1k.setup;
-_sfc_main$1k.setup = (props, ctx) => {
+const _sfc_setup$1m = _sfc_main$1m.setup;
+_sfc_main$1m.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryDetailsInspector.vue");
-  return _sfc_setup$1k ? _sfc_setup$1k(props, ctx) : void 0;
+  return _sfc_setup$1m ? _sfc_setup$1m(props, ctx) : void 0;
 };
-const LibraryDetailsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1k, [["__scopeId", "data-v-7bdf0ce0"]]), { __name: "StudioLibraryDetailsInspector" });
-const _sfc_main$1j = /* @__PURE__ */ defineComponent({
+const LibraryDetailsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1m, [["__scopeId", "data-v-7bdf0ce0"]]), { __name: "StudioLibraryDetailsInspector" });
+const _sfc_main$1l = /* @__PURE__ */ defineComponent({
   __name: "LibrarySelectionInspector",
   __ssrInlineRender: true,
   props: {
@@ -25792,13 +25809,13 @@ const _sfc_main$1j = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1j = _sfc_main$1j.setup;
-_sfc_main$1j.setup = (props, ctx) => {
+const _sfc_setup$1l = _sfc_main$1l.setup;
+_sfc_main$1l.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibrarySelectionInspector.vue");
-  return _sfc_setup$1j ? _sfc_setup$1j(props, ctx) : void 0;
+  return _sfc_setup$1l ? _sfc_setup$1l(props, ctx) : void 0;
 };
-const LibrarySelectionInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1j, [["__scopeId", "data-v-c794b356"]]), { __name: "StudioLibrarySelectionInspector" });
+const LibrarySelectionInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1l, [["__scopeId", "data-v-c794b356"]]), { __name: "StudioLibrarySelectionInspector" });
 function seriesRequest(images, reference, text, providerId, language) {
   if (images.length < 2 || images.length > 24 || !Number.isInteger(reference) || !images[reference] || new Set(images.map((x) => x.output_path.toLowerCase().replaceAll("\\", "/"))).size !== images.length) throw new Error("invalid_series_selection");
   return {
@@ -25809,7 +25826,7 @@ function seriesRequest(images, reference, text, providerId, language) {
     language
   };
 }
-const _sfc_main$1i = /* @__PURE__ */ defineComponent({
+const _sfc_main$1k = /* @__PURE__ */ defineComponent({
   __name: "SeriesConsistency",
   __ssrInlineRender: true,
   props: {
@@ -25949,14 +25966,14 @@ const _sfc_main$1i = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1i = _sfc_main$1i.setup;
-_sfc_main$1i.setup = (props, ctx) => {
+const _sfc_setup$1k = _sfc_main$1k.setup;
+_sfc_main$1k.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/SeriesConsistency.vue");
-  return _sfc_setup$1i ? _sfc_setup$1i(props, ctx) : void 0;
+  return _sfc_setup$1k ? _sfc_setup$1k(props, ctx) : void 0;
 };
-const SeriesConsistency = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1i, [["__scopeId", "data-v-44b3aa28"]]), { __name: "StudioLibrarySeriesConsistency" });
-const _sfc_main$1h = /* @__PURE__ */ defineComponent({
+const SeriesConsistency = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1k, [["__scopeId", "data-v-44b3aa28"]]), { __name: "StudioLibrarySeriesConsistency" });
+const _sfc_main$1j = /* @__PURE__ */ defineComponent({
   __name: "BodyPartComparison",
   __ssrInlineRender: true,
   props: {
@@ -26073,14 +26090,14 @@ const _sfc_main$1h = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1h = _sfc_main$1h.setup;
-_sfc_main$1h.setup = (props, ctx) => {
+const _sfc_setup$1j = _sfc_main$1j.setup;
+_sfc_main$1j.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/BodyPartComparison.vue");
-  return _sfc_setup$1h ? _sfc_setup$1h(props, ctx) : void 0;
+  return _sfc_setup$1j ? _sfc_setup$1j(props, ctx) : void 0;
 };
-const BodyPartComparison = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1h, [["__scopeId", "data-v-5e24465a"]]), { __name: "StudioBodyPartComparison" });
-const _sfc_main$1g = /* @__PURE__ */ defineComponent({
+const BodyPartComparison = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1j, [["__scopeId", "data-v-5e24465a"]]), { __name: "StudioBodyPartComparison" });
+const _sfc_main$1i = /* @__PURE__ */ defineComponent({
   __name: "LibraryActionQueueDrawer",
   __ssrInlineRender: true,
   props: {
@@ -26135,14 +26152,14 @@ const _sfc_main$1g = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1g = _sfc_main$1g.setup;
-_sfc_main$1g.setup = (props, ctx) => {
+const _sfc_setup$1i = _sfc_main$1i.setup;
+_sfc_main$1i.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryActionQueueDrawer.vue");
-  return _sfc_setup$1g ? _sfc_setup$1g(props, ctx) : void 0;
+  return _sfc_setup$1i ? _sfc_setup$1i(props, ctx) : void 0;
 };
-const LibraryActionQueueDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1g, [["__scopeId", "data-v-c1882929"]]), { __name: "StudioLibraryActionQueueDrawer" });
-const _sfc_main$1f = /* @__PURE__ */ defineComponent({
+const LibraryActionQueueDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1i, [["__scopeId", "data-v-c1882929"]]), { __name: "StudioLibraryActionQueueDrawer" });
+const _sfc_main$1h = /* @__PURE__ */ defineComponent({
   __name: "LibraryProcessDeliverInspector",
   __ssrInlineRender: true,
   props: {
@@ -26275,14 +26292,14 @@ const _sfc_main$1f = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1f = _sfc_main$1f.setup;
-_sfc_main$1f.setup = (props, ctx) => {
+const _sfc_setup$1h = _sfc_main$1h.setup;
+_sfc_main$1h.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryProcessDeliverInspector.vue");
-  return _sfc_setup$1f ? _sfc_setup$1f(props, ctx) : void 0;
+  return _sfc_setup$1h ? _sfc_setup$1h(props, ctx) : void 0;
 };
-const LibraryProcessDeliverInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1f, [["__scopeId", "data-v-9be72340"]]), { __name: "StudioLibraryProcessDeliverInspector" });
-const _sfc_main$1e = /* @__PURE__ */ defineComponent({
+const LibraryProcessDeliverInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1h, [["__scopeId", "data-v-9be72340"]]), { __name: "StudioLibraryProcessDeliverInspector" });
+const _sfc_main$1g = /* @__PURE__ */ defineComponent({
   __name: "LibraryBoardView",
   __ssrInlineRender: true,
   props: {
@@ -26317,14 +26334,14 @@ const _sfc_main$1e = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1e = _sfc_main$1e.setup;
-_sfc_main$1e.setup = (props, ctx) => {
+const _sfc_setup$1g = _sfc_main$1g.setup;
+_sfc_main$1g.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryBoardView.vue");
-  return _sfc_setup$1e ? _sfc_setup$1e(props, ctx) : void 0;
+  return _sfc_setup$1g ? _sfc_setup$1g(props, ctx) : void 0;
 };
-const LibraryBoardView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1e, [["__scopeId", "data-v-a933ac0b"]]), { __name: "StudioLibraryBoardView" });
-const _sfc_main$1d = /* @__PURE__ */ defineComponent({
+const LibraryBoardView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1g, [["__scopeId", "data-v-a933ac0b"]]), { __name: "StudioLibraryBoardView" });
+const _sfc_main$1f = /* @__PURE__ */ defineComponent({
   __name: "LibraryCompareView",
   __ssrInlineRender: true,
   props: {
@@ -26446,13 +26463,13 @@ const _sfc_main$1d = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1d = _sfc_main$1d.setup;
-_sfc_main$1d.setup = (props, ctx) => {
+const _sfc_setup$1f = _sfc_main$1f.setup;
+_sfc_main$1f.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryCompareView.vue");
-  return _sfc_setup$1d ? _sfc_setup$1d(props, ctx) : void 0;
+  return _sfc_setup$1f ? _sfc_setup$1f(props, ctx) : void 0;
 };
-const LibraryCompareView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1d, [["__scopeId", "data-v-4bfcf40b"]]), { __name: "StudioLibraryCompareView" });
+const LibraryCompareView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1f, [["__scopeId", "data-v-4bfcf40b"]]), { __name: "StudioLibraryCompareView" });
 const libraryExportMessage = (result, fallbackMessage, t) => {
   if (!result) {
     return fallbackMessage;
@@ -30167,7 +30184,7 @@ const useMusicStore = defineStore("music", {
     }
   }
 });
-const _sfc_main$1c = /* @__PURE__ */ defineComponent({
+const _sfc_main$1e = /* @__PURE__ */ defineComponent({
   __name: "ImageLibraryView",
   __ssrInlineRender: true,
   props: {
@@ -32575,13 +32592,13 @@ const _sfc_main$1c = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1c = _sfc_main$1c.setup;
-_sfc_main$1c.setup = (props, ctx) => {
+const _sfc_setup$1e = _sfc_main$1e.setup;
+_sfc_main$1e.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageLibraryView.vue");
-  return _sfc_setup$1c ? _sfc_setup$1c(props, ctx) : void 0;
+  return _sfc_setup$1e ? _sfc_setup$1e(props, ctx) : void 0;
 };
-const ImageLibraryView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1c, [["__scopeId", "data-v-dddc91f1"]]), { __name: "StudioImageLibraryView" });
+const ImageLibraryView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1e, [["__scopeId", "data-v-dddc91f1"]]), { __name: "StudioImageLibraryView" });
 const canonicalDraft = (draft) => ({
   dataset_id: draft.dataset_id,
   dataset_updated_at: draft.dataset_updated_at,
@@ -32649,7 +32666,7 @@ const projectLoRATrainingPlanState = (input) => {
   }
   return { state: "clean-draft", draft_state: draftState, inputs_locked: false, can_start: false };
 };
-const _sfc_main$1b = {};
+const _sfc_main$1d = {};
 function _sfc_ssrRender(_ctx, _push, _parent, _attrs) {
   _push(`<div${ssrRenderAttrs(mergeProps({ class: "lora-training-workspace-body" }, _attrs))} data-v-d51df664>`);
   ssrRenderSlot(_ctx.$slots, "header", {}, null, _push, _parent);
@@ -32660,13 +32677,13 @@ function _sfc_ssrRender(_ctx, _push, _parent, _attrs) {
   ssrRenderSlot(_ctx.$slots, "overlays", {}, null, _push, _parent);
   _push(`</div>`);
 }
-const _sfc_setup$1b = _sfc_main$1b.setup;
-_sfc_main$1b.setup = (props, ctx) => {
+const _sfc_setup$1d = _sfc_main$1d.setup;
+_sfc_main$1d.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRATrainingWorkspaceBody.vue");
-  return _sfc_setup$1b ? _sfc_setup$1b(props, ctx) : void 0;
+  return _sfc_setup$1d ? _sfc_setup$1d(props, ctx) : void 0;
 };
-const LoRATrainingWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1b, [["ssrRender", _sfc_ssrRender], ["__scopeId", "data-v-d51df664"]]), { __name: "StudioLoraTrainingLoRATrainingWorkspaceBody" });
+const LoRATrainingWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1d, [["ssrRender", _sfc_ssrRender], ["__scopeId", "data-v-d51df664"]]), { __name: "StudioLoraTrainingLoRATrainingWorkspaceBody" });
 const practicalCriteria = ["features", "clothing", "background", "pose", "quality"];
 const blankScores = () => ({ features: "unknown", clothing: "unknown", background: "unknown", pose: "unknown", quality: "unknown" });
 const blankPracticalRating = (pair) => ({ pair, left: blankScores(), right: blankScores(), note: "", revealed: false });
@@ -32692,7 +32709,7 @@ const practicalErrorKey = (code) => ({
   comparison_already_started: "alreadyStarted",
   comparison_interrupted: "interrupted"
 })[String(code)] ?? "requestFailed";
-const _sfc_main$1a = /* @__PURE__ */ defineComponent({
+const _sfc_main$1c = /* @__PURE__ */ defineComponent({
   __name: "LoRAPracticalTest",
   __ssrInlineRender: true,
   props: {
@@ -32900,14 +32917,14 @@ const _sfc_main$1a = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1a = _sfc_main$1a.setup;
-_sfc_main$1a.setup = (props, ctx) => {
+const _sfc_setup$1c = _sfc_main$1c.setup;
+_sfc_main$1c.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRAPracticalTest.vue");
-  return _sfc_setup$1a ? _sfc_setup$1a(props, ctx) : void 0;
+  return _sfc_setup$1c ? _sfc_setup$1c(props, ctx) : void 0;
 };
-const LoRAPracticalTest = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1a, [["__scopeId", "data-v-c1536eb6"]]), { __name: "StudioLoraTrainingLoRAPracticalTest" });
-const _sfc_main$19 = /* @__PURE__ */ defineComponent({
+const LoRAPracticalTest = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1c, [["__scopeId", "data-v-c1536eb6"]]), { __name: "StudioLoraTrainingLoRAPracticalTest" });
+const _sfc_main$1b = /* @__PURE__ */ defineComponent({
   __name: "LoRAStandardWorkspace",
   __ssrInlineRender: true,
   props: {
@@ -33127,14 +33144,14 @@ const _sfc_main$19 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$19 = _sfc_main$19.setup;
-_sfc_main$19.setup = (props, ctx) => {
+const _sfc_setup$1b = _sfc_main$1b.setup;
+_sfc_main$1b.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRAStandardWorkspace.vue");
-  return _sfc_setup$19 ? _sfc_setup$19(props, ctx) : void 0;
+  return _sfc_setup$1b ? _sfc_setup$1b(props, ctx) : void 0;
 };
-const LoRAStandardWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$19, [["__scopeId", "data-v-846089cf"]]), { __name: "StudioLoraTrainingLoRAStandardWorkspace" });
-const _sfc_main$18 = /* @__PURE__ */ defineComponent({
+const LoRAStandardWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1b, [["__scopeId", "data-v-846089cf"]]), { __name: "StudioLoraTrainingLoRAStandardWorkspace" });
+const _sfc_main$1a = /* @__PURE__ */ defineComponent({
   __name: "LoRADatasetRail",
   __ssrInlineRender: true,
   props: {
@@ -33159,14 +33176,14 @@ const _sfc_main$18 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$18 = _sfc_main$18.setup;
-_sfc_main$18.setup = (props, ctx) => {
+const _sfc_setup$1a = _sfc_main$1a.setup;
+_sfc_main$1a.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRADatasetRail.vue");
-  return _sfc_setup$18 ? _sfc_setup$18(props, ctx) : void 0;
+  return _sfc_setup$1a ? _sfc_setup$1a(props, ctx) : void 0;
 };
-const LoRADatasetRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$18, [["__scopeId", "data-v-fd860a32"]]), { __name: "StudioLoraTrainingLoRADatasetRail" });
-const _sfc_main$17 = /* @__PURE__ */ defineComponent({
+const LoRADatasetRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1a, [["__scopeId", "data-v-fd860a32"]]), { __name: "StudioLoraTrainingLoRADatasetRail" });
+const _sfc_main$19 = /* @__PURE__ */ defineComponent({
   __name: "LoRACaptionReviewBoard",
   __ssrInlineRender: true,
   props: {
@@ -33225,14 +33242,14 @@ const _sfc_main$17 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$17 = _sfc_main$17.setup;
-_sfc_main$17.setup = (props, ctx) => {
+const _sfc_setup$19 = _sfc_main$19.setup;
+_sfc_main$19.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRACaptionReviewBoard.vue");
-  return _sfc_setup$17 ? _sfc_setup$17(props, ctx) : void 0;
+  return _sfc_setup$19 ? _sfc_setup$19(props, ctx) : void 0;
 };
-const LoRACaptionReviewBoard = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$17, [["__scopeId", "data-v-0508e59c"]]), { __name: "StudioLoraTrainingLoRACaptionReviewBoard" });
-const _sfc_main$16 = /* @__PURE__ */ defineComponent({
+const LoRACaptionReviewBoard = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$19, [["__scopeId", "data-v-0508e59c"]]), { __name: "StudioLoraTrainingLoRACaptionReviewBoard" });
+const _sfc_main$18 = /* @__PURE__ */ defineComponent({
   __name: "LoRACaptionInspector",
   __ssrInlineRender: true,
   props: {
@@ -33300,13 +33317,13 @@ const _sfc_main$16 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$16 = _sfc_main$16.setup;
-_sfc_main$16.setup = (props, ctx) => {
+const _sfc_setup$18 = _sfc_main$18.setup;
+_sfc_main$18.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRACaptionInspector.vue");
-  return _sfc_setup$16 ? _sfc_setup$16(props, ctx) : void 0;
+  return _sfc_setup$18 ? _sfc_setup$18(props, ctx) : void 0;
 };
-const LoRACaptionInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$16, [["__scopeId", "data-v-f8b08829"]]), { __name: "StudioLoraTrainingLoRACaptionInspector" });
+const LoRACaptionInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$18, [["__scopeId", "data-v-f8b08829"]]), { __name: "StudioLoraTrainingLoRACaptionInspector" });
 const blankAnnotation = () => ({ person_count: null, persons: [], background: "", caption_findings: [] });
 const cloneAnnotation = (value) => JSON.parse(JSON.stringify(value));
 const reviewImageUrl = (base, datasetId, itemId, fingerprint2) => {
@@ -33317,7 +33334,7 @@ function reviewSaveBody(fingerprint2, previousId, annotation) {
   if (!/^[a-f0-9]{64}$/.test(fingerprint2) || annotation.persons.length > 16 || annotation.person_count !== null && (!Number.isInteger(annotation.person_count) || annotation.person_count < annotation.persons.length || annotation.person_count > 100) || annotation.caption_findings.some((x) => !x.claim.trim() || !x.evidence.trim())) throw new Error("invalid_dataset_review");
   return { fingerprint: fingerprint2, previous_id: previousId, annotation: cloneAnnotation(annotation) };
 }
-const _sfc_main$15 = /* @__PURE__ */ defineComponent({
+const _sfc_main$17 = /* @__PURE__ */ defineComponent({
   __name: "LoRADatasetReview",
   __ssrInlineRender: true,
   props: {
@@ -33526,14 +33543,14 @@ const _sfc_main$15 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$15 = _sfc_main$15.setup;
-_sfc_main$15.setup = (props, ctx) => {
+const _sfc_setup$17 = _sfc_main$17.setup;
+_sfc_main$17.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRADatasetReview.vue");
-  return _sfc_setup$15 ? _sfc_setup$15(props, ctx) : void 0;
+  return _sfc_setup$17 ? _sfc_setup$17(props, ctx) : void 0;
 };
-const LoRADatasetReview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$15, [["__scopeId", "data-v-e7955ce5"]]), { __name: "StudioLoraTrainingLoRADatasetReview" });
-const _sfc_main$14 = /* @__PURE__ */ defineComponent({
+const LoRADatasetReview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$17, [["__scopeId", "data-v-e7955ce5"]]), { __name: "StudioLoraTrainingLoRADatasetReview" });
+const _sfc_main$16 = /* @__PURE__ */ defineComponent({
   __name: "LoRADatasetCaptionStudio",
   __ssrInlineRender: true,
   props: {
@@ -33641,13 +33658,13 @@ const _sfc_main$14 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$14 = _sfc_main$14.setup;
-_sfc_main$14.setup = (props, ctx) => {
+const _sfc_setup$16 = _sfc_main$16.setup;
+_sfc_main$16.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRADatasetCaptionStudio.vue");
-  return _sfc_setup$14 ? _sfc_setup$14(props, ctx) : void 0;
+  return _sfc_setup$16 ? _sfc_setup$16(props, ctx) : void 0;
 };
-const LoRADatasetCaptionStudio = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$14, [["__scopeId", "data-v-32dccbbc"]]), { __name: "StudioLoraTrainingLoRADatasetCaptionStudio" });
+const LoRADatasetCaptionStudio = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$16, [["__scopeId", "data-v-32dccbbc"]]), { __name: "StudioLoraTrainingLoRADatasetCaptionStudio" });
 const sameDimensions = (left, right) => left.width === right.width && left.height === right.height;
 const pairState = (input) => {
   const session = input.session;
@@ -33686,7 +33703,7 @@ const copyMachineMechanicalQualityLabel = (status) => {
   if (status === "good" || status === "poor") return status;
   return "review";
 };
-const _sfc_main$13 = /* @__PURE__ */ defineComponent({
+const _sfc_main$15 = /* @__PURE__ */ defineComponent({
   __name: "LoRACopyMachineWorkspace",
   __ssrInlineRender: true,
   props: {
@@ -33868,13 +33885,13 @@ const _sfc_main$13 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$13 = _sfc_main$13.setup;
-_sfc_main$13.setup = (props, ctx) => {
+const _sfc_setup$15 = _sfc_main$15.setup;
+_sfc_main$15.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRACopyMachineWorkspace.vue");
-  return _sfc_setup$13 ? _sfc_setup$13(props, ctx) : void 0;
+  return _sfc_setup$15 ? _sfc_setup$15(props, ctx) : void 0;
 };
-const LoRACopyMachineWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$13, [["__scopeId", "data-v-5c4f982a"]]), { __name: "StudioLoraTrainingLoRACopyMachineWorkspace" });
+const LoRACopyMachineWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$15, [["__scopeId", "data-v-5c4f982a"]]), { __name: "StudioLoraTrainingLoRACopyMachineWorkspace" });
 const compactWhitespace = (value) => value.trim().replace(/\s+/g, " ");
 const normalizeCharacterCaptionPolicy = (policy) => {
   const seen = /* @__PURE__ */ new Set();
@@ -34069,7 +34086,7 @@ const intervalError = "[nuxt] `setInterval` should not be used on the server. Co
 const setInterval = (() => {
   console.error(intervalError);
 });
-const _sfc_main$12 = /* @__PURE__ */ defineComponent({
+const _sfc_main$14 = /* @__PURE__ */ defineComponent({
   __name: "LoRATrainingView",
   __ssrInlineRender: true,
   props: {
@@ -39053,14 +39070,14 @@ const _sfc_main$12 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$12 = _sfc_main$12.setup;
-_sfc_main$12.setup = (props, ctx) => {
+const _sfc_setup$14 = _sfc_main$14.setup;
+_sfc_main$14.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/LoRATrainingView.vue");
-  return _sfc_setup$12 ? _sfc_setup$12(props, ctx) : void 0;
+  return _sfc_setup$14 ? _sfc_setup$14(props, ctx) : void 0;
 };
-const LoRATrainingView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$12, [["__scopeId", "data-v-0a22d0d4"]]), { __name: "StudioLoRATrainingView" });
-const _sfc_main$11 = /* @__PURE__ */ defineComponent({
+const LoRATrainingView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$14, [["__scopeId", "data-v-0a22d0d4"]]), { __name: "StudioLoRATrainingView" });
+const _sfc_main$13 = /* @__PURE__ */ defineComponent({
   __name: "MergeWorkspaceBody",
   __ssrInlineRender: true,
   props: {
@@ -39072,13 +39089,15 @@ const _sfc_main$11 = /* @__PURE__ */ defineComponent({
         class: "merge-workspace",
         tabindex: "0",
         "aria-label": __props.ariaLabel
-      }, _attrs))} data-v-34982a22><div class="merge-workspace__main" data-v-34982a22>`);
+      }, _attrs))} data-v-e4c13046><div class="merge-workspace__main" data-v-e4c13046>`);
       ssrRenderSlot(_ctx.$slots, "headerTask", {}, null, _push, _parent);
-      _push(`<div class="merge-editor" data-v-34982a22>`);
+      _push(`<div class="merge-editor" data-v-e4c13046>`);
       ssrRenderSlot(_ctx.$slots, "editor", {}, null, _push, _parent);
       _push(`</div>`);
       ssrRenderSlot(_ctx.$slots, "extensions", {}, null, _push, _parent);
-      _push(`</div><aside class="merge-workspace__side" data-v-34982a22>`);
+      _push(`</div><div class="merge-workspace__execution" data-v-e4c13046>`);
+      ssrRenderSlot(_ctx.$slots, "execution", {}, null, _push, _parent);
+      _push(`</div><aside class="merge-workspace__side" data-v-e4c13046>`);
       ssrRenderSlot(_ctx.$slots, "outputHistory", {}, null, _push, _parent);
       _push(`</aside>`);
       ssrRenderSlot(_ctx.$slots, "overlays", {}, null, _push, _parent);
@@ -39086,14 +39105,14 @@ const _sfc_main$11 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$11 = _sfc_main$11.setup;
-_sfc_main$11.setup = (props, ctx) => {
+const _sfc_setup$13 = _sfc_main$13.setup;
+_sfc_main$13.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeWorkspaceBody.vue");
-  return _sfc_setup$11 ? _sfc_setup$11(props, ctx) : void 0;
+  return _sfc_setup$13 ? _sfc_setup$13(props, ctx) : void 0;
 };
-const MergeWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$11, [["__scopeId", "data-v-34982a22"]]), { __name: "StudioMergeWorkspaceBody" });
-const _sfc_main$10 = /* @__PURE__ */ defineComponent({
+const MergeWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$13, [["__scopeId", "data-v-e4c13046"]]), { __name: "StudioMergeWorkspaceBody" });
+const _sfc_main$12 = /* @__PURE__ */ defineComponent({
   __name: "MergeRecipeConsole",
   __ssrInlineRender: true,
   props: {
@@ -39111,20 +39130,16 @@ const _sfc_main$10 = /* @__PURE__ */ defineComponent({
     familyTone: {},
     missingDependencies: {},
     persistenceState: {},
-    runIntent: {},
     betaEnabled: { type: Boolean },
-    gammaEnabled: { type: Boolean },
-    loading: { type: Boolean },
-    runDisabled: { type: Boolean },
-    error: {}
+    gammaEnabled: { type: Boolean }
   },
-  emits: ["updateModelFamily", "updateName", "updateSource", "updateMergeMode", "updateCalculationMode", "updateAlpha", "updateBeta", "updateGamma", "updateCalculationParameter", "updateNotes", "save", "run", "newRecipe", "openAdvanced", "openCandidates", "refreshModels"],
+  emits: ["updateModelFamily", "updateSource", "updateMergeMode", "updateCalculationMode", "updateAlpha", "updateBeta", "updateGamma", "updateCalculationParameter", "refreshModels"],
   setup(__props, { emit: __emit }) {
     const props = __props;
     const { t } = useAsteriaI18n();
+    const modelSearch = ref("");
+    const filteredSources = (role) => filterModelOptions(props.sourceChoices[role] ?? [], modelSearch.value, source(role)?.path);
     const source = (role) => props.draft.sources.find((item) => item.role === role);
-    const saveLabel = computed(() => props.persistenceState === "saved-dirty" ? t("merge.saveChanges") : t("merge.saveRecipe"));
-    const runLabel = computed(() => props.runIntent === "run-saved-snapshot" ? t("merge.runSavedRecipe") : t("merge.runMerge"));
     const activeCalculationMode = computed(() => props.calculationModes.find((mode) => mode.id === props.draft.calc_mode));
     const advancedParameterModeIds = /* @__PURE__ */ new Set(["moment_weave", "log_weave", "dual_residual"]);
     const calculationParameters = computed(() => {
@@ -39148,29 +39163,29 @@ const _sfc_main$10 = /* @__PURE__ */ defineComponent({
       flatten: t("merge.calculationParameter.vectorModeFlatten")
     })[value] ?? value;
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "merge-recipe-console" }, _attrs))} data-v-1dbb7b55><section class="merge-console-panel merge-console-identity" data-merge-region="identity" data-v-1dbb7b55><div class="merge-console-heading" data-v-1dbb7b55><div data-v-1dbb7b55><span class="merge-console-kicker" data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.recipeIdentity"))}</span><strong data-v-1dbb7b55>${ssrInterpolate(__props.draft.name || unref(t)("merge.untitledMerge"))}</strong></div><span class="${ssrRenderClass([`merge-state-chip--${__props.persistenceState}`, "merge-state-chip"])}" data-v-1dbb7b55>${ssrInterpolate(unref(t)(`merge.recipeState.${__props.persistenceState}`))}</span></div><div class="merge-console-grid" data-v-1dbb7b55><label class="field" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.modelFamily"))}</span><select${ssrRenderAttr("value", __props.draft.model_family)} data-v-1dbb7b55><!--[-->`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "merge-recipe-console" }, _attrs))} data-v-7cea8fe6><section class="merge-console-panel merge-console-identity" data-merge-region="identity" data-v-7cea8fe6><div class="merge-console-heading" data-v-7cea8fe6><div data-v-7cea8fe6><span class="merge-console-kicker" data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.modelSetupTitle"))}</span><strong data-v-7cea8fe6>${ssrInterpolate(__props.draft.name || unref(t)("merge.untitledMerge"))}</strong></div><span class="${ssrRenderClass([`merge-state-chip--${__props.persistenceState}`, "merge-state-chip"])}" data-v-7cea8fe6>${ssrInterpolate(unref(t)(`merge.recipeState.${__props.persistenceState}`))}</span></div><div class="merge-console-grid" data-v-7cea8fe6><label class="field" data-v-7cea8fe6><span data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.modelFamily"))}</span><select${ssrRenderAttr("value", __props.draft.model_family)} data-v-7cea8fe6><!--[-->`);
       ssrRenderList(__props.modelFamilies, (family) => {
-        _push(`<option${ssrRenderAttr("value", family.id)} data-v-1dbb7b55>${ssrInterpolate(family.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", family.id)} data-v-7cea8fe6>${ssrInterpolate(family.label)}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.recipeName"))}</span><input${ssrRenderAttr("value", __props.draft.name)} data-v-1dbb7b55></label></div><div class="${ssrRenderClass([`merge-family-status--${__props.familyTone}`, "merge-family-status"])}" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(__props.familyLabel)}</span><small data-v-1dbb7b55>${ssrInterpolate(__props.familyStatus)}</small><button type="button" data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.refreshModels"))}</button></div>`);
+      _push(`<!--]--></select></label></div><div class="${ssrRenderClass([`merge-family-status--${__props.familyTone}`, "merge-family-status"])}" data-v-7cea8fe6><span data-v-7cea8fe6>${ssrInterpolate(__props.familyLabel)}</span><small data-v-7cea8fe6>${ssrInterpolate(__props.familyStatus)}</small><button type="button" data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.refreshModels"))}</button></div>`);
       if (__props.missingDependencies.length) {
-        _push(`<p class="merge-dependency-note" data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.requiredAssetsShort"))}: ${ssrInterpolate(__props.missingDependencies.map((item) => item.label).join(" / "))}</p>`);
+        _push(`<p class="merge-dependency-note" data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.requiredAssetsShort"))}: ${ssrInterpolate(__props.missingDependencies.map((item) => item.label).join(" / "))}</p>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</section>`);
       if (__props.showSources) {
-        _push(`<section class="merge-console-panel" data-merge-region="sources" data-v-1dbb7b55><div class="merge-console-heading" data-v-1dbb7b55><div data-v-1dbb7b55><span class="merge-console-kicker" data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.sources"))}</span><strong data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.sourceModels"))}</strong></div>`);
+        _push(`<section class="merge-console-panel" data-merge-region="sources" data-v-7cea8fe6><div class="merge-console-heading" data-v-7cea8fe6><div data-v-7cea8fe6><span class="merge-console-kicker" data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.sources"))}</span><strong data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.sourceModels"))}</strong></div>`);
         if (__props.missingSourceRoles.length) {
-          _push(`<small class="merge-missing" data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.sourceRequired", { roles: __props.missingSourceRoles.join(" / ") }))}</small>`);
+          _push(`<small class="merge-missing" data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.sourceRequired", { roles: __props.missingSourceRoles.join(" / ") }))}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</div><div class="merge-source-grid" data-v-1dbb7b55><!--[-->`);
+        _push(`</div><div class="merge-source-grid" data-v-7cea8fe6><label class="field merge-source-search" data-v-7cea8fe6><span data-v-7cea8fe6>${ssrInterpolate(unref(t)("modelSettings.searchModels"))}</span><input${ssrRenderAttr("value", unref(modelSearch))} type="search"${ssrRenderAttr("placeholder", unref(t)("modelSettings.searchModelsPlaceholder"))} data-v-7cea8fe6></label><!--[-->`);
         ssrRenderList(__props.visibleSourceRoles, (role) => {
-          _push(`<label class="field" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.sourceRole", { role }))}</span><select${ssrRenderAttr("value", source(role)?.path || "")} data-v-1dbb7b55><option value="" data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.selectSource"))}</option><!--[-->`);
-          ssrRenderList(__props.sourceChoices[role] ?? [], (item) => {
-            _push(`<option${ssrRenderAttr("value", item.path)} data-v-1dbb7b55>${ssrInterpolate(item.name)}</option>`);
+          _push(`<label class="field" data-v-7cea8fe6><span data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.sourceRole", { role }))}</span><select${ssrRenderAttr("value", source(role)?.path || "")} data-v-7cea8fe6><option value="" data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.selectSource"))}</option><!--[-->`);
+          ssrRenderList(filteredSources(role), (item) => {
+            _push(`<option${ssrRenderAttr("value", item.path)} data-v-7cea8fe6>${ssrInterpolate(item.name)}</option>`);
           });
           _push(`<!--]--></select></label>`);
         });
@@ -39178,52 +39193,113 @@ const _sfc_main$10 = /* @__PURE__ */ defineComponent({
       } else {
         _push(`<!---->`);
       }
-      _push(`<section class="merge-console-panel" data-merge-region="formula" data-v-1dbb7b55><div class="merge-console-heading" data-v-1dbb7b55><div data-v-1dbb7b55><span class="merge-console-kicker" data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.formula"))}</span><strong data-v-1dbb7b55>${ssrInterpolate(__props.formula)}</strong></div></div><div class="merge-console-grid merge-console-grid--formula" data-v-1dbb7b55><label class="field" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.mergeMode"))}</span><select${ssrRenderAttr("value", __props.draft.merge_mode)} data-v-1dbb7b55><!--[-->`);
+      _push(`<section class="merge-console-panel" data-merge-region="formula" data-v-7cea8fe6><div class="merge-console-heading" data-v-7cea8fe6><div data-v-7cea8fe6><span class="merge-console-kicker" data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.formula"))}</span><strong data-v-7cea8fe6>${ssrInterpolate(__props.formula)}</strong></div></div><div class="merge-console-grid merge-console-grid--formula" data-v-7cea8fe6><label class="field" data-v-7cea8fe6><span data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.mergeMode"))}</span><select${ssrRenderAttr("value", __props.draft.merge_mode)} data-v-7cea8fe6><!--[-->`);
       ssrRenderList(__props.mergeModes, (mode) => {
-        _push(`<option${ssrRenderAttr("value", mode.id)} data-v-1dbb7b55>${ssrInterpolate(mode.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", mode.id)} data-v-7cea8fe6>${ssrInterpolate(mode.label)}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.calcMode"))}</span><select${ssrRenderAttr("value", __props.draft.calc_mode)} data-v-1dbb7b55><!--[-->`);
+      _push(`<!--]--></select></label><label class="field" data-v-7cea8fe6><span data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.calcMode"))}</span><select${ssrRenderAttr("value", __props.draft.calc_mode)} data-v-7cea8fe6><!--[-->`);
       ssrRenderList(__props.calculationModes, (mode) => {
-        _push(`<option${ssrRenderAttr("value", mode.id)} data-v-1dbb7b55>${ssrInterpolate(calculationModeOptionLabel(mode.id, mode.label))}</option>`);
+        _push(`<option${ssrRenderAttr("value", mode.id)} data-v-7cea8fe6>${ssrInterpolate(calculationModeOptionLabel(mode.id, mode.label))}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.alpha"))}</span><input${ssrRenderAttr("value", __props.draft.alpha)} type="number" step="0.01" data-v-1dbb7b55></label><label class="field" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.beta"))}</span><input${ssrRenderAttr("value", __props.draft.beta)} type="number" step="0.01"${ssrIncludeBooleanAttr(!__props.betaEnabled) ? " disabled" : ""} data-v-1dbb7b55></label><label class="field" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.optionGamma"))}</span><input${ssrRenderAttr("value", __props.draft.calculation_option)} type="number" step="0.1"${ssrIncludeBooleanAttr(!__props.gammaEnabled) ? " disabled" : ""} data-v-1dbb7b55></label><!--[-->`);
+      _push(`<!--]--></select></label><label class="field" data-v-7cea8fe6><span data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.alpha"))}</span><input${ssrRenderAttr("value", __props.draft.alpha)} type="number" step="0.01" data-v-7cea8fe6></label><label class="field" data-v-7cea8fe6><span data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.beta"))}</span><input${ssrRenderAttr("value", __props.draft.beta)} type="number" step="0.01"${ssrIncludeBooleanAttr(!__props.betaEnabled) ? " disabled" : ""} data-v-7cea8fe6></label><label class="field" data-v-7cea8fe6><span data-v-7cea8fe6>${ssrInterpolate(unref(t)("merge.optionGamma"))}</span><input${ssrRenderAttr("value", __props.draft.calculation_option)} type="number" step="0.1"${ssrIncludeBooleanAttr(!__props.gammaEnabled) ? " disabled" : ""} data-v-7cea8fe6></label><!--[-->`);
       ssrRenderList(unref(calculationParameters), ([name, parameter]) => {
-        _push(`<label class="field" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(calculationParameterLabel(name))}</span>`);
+        _push(`<label class="field" data-v-7cea8fe6><span data-v-7cea8fe6>${ssrInterpolate(calculationParameterLabel(name))}</span>`);
         if (parameter.type === "string") {
-          _push(`<select${ssrRenderAttr("value", calculationParameterValue(name, parameter))} data-v-1dbb7b55><!--[-->`);
+          _push(`<select${ssrRenderAttr("value", calculationParameterValue(name, parameter))} data-v-7cea8fe6><!--[-->`);
           ssrRenderList(parameter.enum ?? [], (option) => {
-            _push(`<option${ssrRenderAttr("value", option)} data-v-1dbb7b55>${ssrInterpolate(calculationParameterOptionLabel(option))}</option>`);
+            _push(`<option${ssrRenderAttr("value", option)} data-v-7cea8fe6>${ssrInterpolate(calculationParameterOptionLabel(option))}</option>`);
           });
           _push(`<!--]--></select>`);
         } else {
-          _push(`<input${ssrRenderAttr("value", calculationParameterValue(name, parameter))} type="number"${ssrRenderAttr("min", parameter.minimum)}${ssrRenderAttr("max", parameter.maximum)} step="any" data-v-1dbb7b55>`);
+          _push(`<input${ssrRenderAttr("value", calculationParameterValue(name, parameter))} type="number"${ssrRenderAttr("min", parameter.minimum)}${ssrRenderAttr("max", parameter.maximum)} step="any" data-v-7cea8fe6>`);
         }
         _push(`</label>`);
       });
-      _push(`<!--]--></div></section><section class="merge-console-summaries" data-merge-region="summaries" data-v-1dbb7b55><button type="button" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.advancedRecipe"))}</span><small data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.advancedRecipeSummary"))}</small></button><button type="button" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.candidateStudio"))}</span><small data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.candidateStudioSummary"))}</small></button></section><label class="field merge-console-notes" data-v-1dbb7b55><span data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.notes"))}</span><textarea rows="3" data-v-1dbb7b55>${ssrInterpolate(__props.draft.notes)}</textarea></label><section class="merge-console-actions" data-merge-region="actions" data-v-1dbb7b55><div class="merge-console-action-row" data-v-1dbb7b55><button type="button"${ssrIncludeBooleanAttr(__props.loading) ? " disabled" : ""} data-v-1dbb7b55>${ssrInterpolate(unref(saveLabel))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.runDisabled) ? " disabled" : ""} data-v-1dbb7b55>${ssrInterpolate(unref(runLabel))}</button><button type="button"${ssrIncludeBooleanAttr(__props.loading) ? " disabled" : ""} data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.newRecipe"))}</button></div>`);
+      _push(`<!--]--></div></section></div>`);
+    };
+  }
+});
+const _sfc_setup$12 = _sfc_main$12.setup;
+_sfc_main$12.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeRecipeConsole.vue");
+  return _sfc_setup$12 ? _sfc_setup$12(props, ctx) : void 0;
+};
+const MergeRecipeConsole = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$12, [["__scopeId", "data-v-7cea8fe6"]]), { __name: "StudioMergeRecipeConsole" });
+const _sfc_main$11 = /* @__PURE__ */ defineComponent({
+  __name: "MergeExecutionBar",
+  __ssrInlineRender: true,
+  props: {
+    recipeName: {},
+    loading: { type: Boolean },
+    runDisabled: { type: Boolean },
+    runIntent: {},
+    error: {}
+  },
+  emits: ["run"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const { t } = useAsteriaI18n();
+    const runLabel = computed(() => props.runIntent === "run-saved-snapshot" ? t("merge.runSavedRecipe") : t("merge.runMerge"));
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<section${ssrRenderAttrs(mergeProps({
+        class: "merge-execution-bar",
+        "aria-label": unref(t)("merge.runMerge")
+      }, _attrs))} data-v-38a9cff7><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.runDisabled) ? " disabled" : ""} data-v-38a9cff7>${ssrInterpolate(__props.loading ? unref(t)("merge.working") : unref(runLabel))}</button><strong data-v-38a9cff7>${ssrInterpolate(__props.recipeName || unref(t)("merge.untitledMerge"))}</strong>`);
       if (__props.runIntent === "save-required") {
-        _push(`<small data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.saveBeforeRun"))}</small>`);
+        _push(`<small data-v-38a9cff7>${ssrInterpolate(unref(t)("merge.saveBeforeRun"))}</small>`);
       } else if (__props.runIntent === "run-saved-snapshot") {
-        _push(`<small data-v-1dbb7b55>${ssrInterpolate(unref(t)("merge.dirtyRunUsesSaved"))}</small>`);
+        _push(`<small data-v-38a9cff7>${ssrInterpolate(unref(t)("merge.dirtyRunUsesSaved"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.error) {
-        _push(`<p class="error" aria-live="assertive" data-v-1dbb7b55>${ssrInterpolate(__props.error)}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-38a9cff7>${ssrInterpolate(__props.error)}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</section></div>`);
+      _push(`</section>`);
+    };
+  }
+});
+const _sfc_setup$11 = _sfc_main$11.setup;
+_sfc_main$11.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeExecutionBar.vue");
+  return _sfc_setup$11 ? _sfc_setup$11(props, ctx) : void 0;
+};
+const MergeExecutionBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$11, [["__scopeId", "data-v-38a9cff7"]]), { __name: "StudioMergeExecutionBar" });
+const _sfc_main$10 = /* @__PURE__ */ defineComponent({
+  __name: "MergeRecipeSavePanel",
+  __ssrInlineRender: true,
+  props: {
+    name: {},
+    notes: {},
+    persistenceState: {},
+    loading: { type: Boolean }
+  },
+  emits: ["updateName", "updateNotes", "save", "newRecipe"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const { t } = useAsteriaI18n();
+    const saveLabel = computed(() => props.persistenceState === "saved-dirty" ? t("merge.saveChanges") : t("merge.saveRecipe"));
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<section${ssrRenderAttrs(mergeProps({
+        id: "merge-recipe-save",
+        class: "merge-recipe-save",
+        "data-merge-region": "actions",
+        "aria-label": unref(t)("merge.recipeSaveTitle")
+      }, _attrs))} data-v-0312d3b1><h2 data-v-0312d3b1>${ssrInterpolate(unref(t)("merge.recipeSaveTitle"))}</h2><label class="field" data-v-0312d3b1><span data-v-0312d3b1>${ssrInterpolate(unref(t)("merge.recipeName"))}</span><input${ssrRenderAttr("value", __props.name)} data-v-0312d3b1></label><label class="field" data-v-0312d3b1><span data-v-0312d3b1>${ssrInterpolate(unref(t)("merge.notes"))}</span><textarea rows="3" data-v-0312d3b1>${ssrInterpolate(__props.notes)}</textarea></label><div class="merge-recipe-save__actions" data-v-0312d3b1><button type="button"${ssrIncludeBooleanAttr(__props.loading) ? " disabled" : ""} data-v-0312d3b1>${ssrInterpolate(unref(saveLabel))}</button><button type="button"${ssrIncludeBooleanAttr(__props.loading) ? " disabled" : ""} data-v-0312d3b1>${ssrInterpolate(unref(t)("merge.newRecipe"))}</button></div></section>`);
     };
   }
 });
 const _sfc_setup$10 = _sfc_main$10.setup;
 _sfc_main$10.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeRecipeConsole.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeRecipeSavePanel.vue");
   return _sfc_setup$10 ? _sfc_setup$10(props, ctx) : void 0;
 };
-const MergeRecipeConsole = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$10, [["__scopeId", "data-v-1dbb7b55"]]), { __name: "StudioMergeRecipeConsole" });
+const MergeRecipeSavePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$10, [["__scopeId", "data-v-0312d3b1"]]), { __name: "StudioMergeRecipeSavePanel" });
 const _sfc_main$$ = /* @__PURE__ */ defineComponent({
   __name: "MergeOutputHistoryRail",
   __ssrInlineRender: true,
@@ -39330,7 +39406,10 @@ const _sfc_main$_ = /* @__PURE__ */ defineComponent({
   },
   emits: ["updateSource", "updateSourceField", "updateOperationField"],
   setup(__props, { emit: __emit }) {
+    const props = __props;
     const { t } = useAsteriaI18n();
+    const modelSearch = ref("");
+    const filteredSources = (role, selectedPath) => filterModelOptions(props.sourceChoices[role] ?? [], modelSearch.value, selectedPath);
     const sourceLabel = (sourceProjection2) => {
       if (sourceProjection2.semanticRole === "base") return t("merge.operationSource.baseCheckpoint");
       if (sourceProjection2.semanticRole === "target") return t("merge.operationSource.targetCheckpoint");
@@ -39340,22 +39419,22 @@ const _sfc_main$_ = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "merge-operation",
         "aria-label": unref(t)("merge.operationSetup")
-      }, _attrs))} data-v-e76a31ed><header class="merge-operation__header" data-v-e76a31ed><div data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.focusedOperation"))}</span><h2 data-v-e76a31ed>${ssrInterpolate(unref(t)(`merge.operationTask.${__props.state.task}`))}</h2></div><small data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.fixedSourceSlots"))}</small></header><div class="merge-operation__sources" data-merge-operation-region="sources" data-v-e76a31ed><!--[-->`);
+      }, _attrs))} data-v-c23f3462><header class="merge-operation__header" data-v-c23f3462><div data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.focusedOperation"))}</span><h2 data-v-c23f3462>${ssrInterpolate(unref(t)(`merge.operationTask.${__props.state.task}`))}</h2></div><small data-v-c23f3462>${ssrInterpolate(unref(t)("merge.fixedSourceSlots"))}</small></header><label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("modelSettings.searchModels"))}</span><input${ssrRenderAttr("value", unref(modelSearch))} type="search"${ssrRenderAttr("placeholder", unref(t)("modelSettings.searchModelsPlaceholder"))} data-v-c23f3462></label><div class="merge-operation__sources" data-merge-operation-region="sources" data-v-c23f3462><!--[-->`);
       ssrRenderList(__props.state.sources, (sourceProjection2) => {
-        _push(`<article class="merge-operation-source" data-v-e76a31ed><header data-v-e76a31ed><strong data-v-e76a31ed>${ssrInterpolate(sourceLabel(sourceProjection2))}</strong><span data-v-e76a31ed>${ssrInterpolate(sourceProjection2.required ? unref(t)("merge.required") : unref(t)("merge.optional"))}</span></header><label class="field" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(sourceProjection2.assetType === "lora" ? unref(t)("merge.loraAsset") : unref(t)("merge.checkpointAsset"))}</span><select${ssrRenderAttr("value", sourceProjection2.value.path)} data-v-e76a31ed><option value="" data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.selectSource"))}</option><!--[-->`);
-        ssrRenderList(__props.sourceChoices[sourceProjection2.role] ?? [], (item) => {
-          _push(`<option${ssrRenderAttr("value", item.path)} data-v-e76a31ed>${ssrInterpolate(item.name)}</option>`);
+        _push(`<article class="merge-operation-source" data-v-c23f3462><header data-v-c23f3462><strong data-v-c23f3462>${ssrInterpolate(sourceLabel(sourceProjection2))}</strong><span data-v-c23f3462>${ssrInterpolate(sourceProjection2.required ? unref(t)("merge.required") : unref(t)("merge.optional"))}</span></header><label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(sourceProjection2.assetType === "lora" ? unref(t)("merge.loraAsset") : unref(t)("merge.checkpointAsset"))}</span><select${ssrRenderAttr("value", sourceProjection2.value.path)} data-v-c23f3462><option value="" data-v-c23f3462>${ssrInterpolate(unref(t)("merge.selectSource"))}</option><!--[-->`);
+        ssrRenderList(filteredSources(sourceProjection2.role, sourceProjection2.value.path), (item) => {
+          _push(`<option${ssrRenderAttr("value", item.path)} data-v-c23f3462>${ssrInterpolate(item.name)}</option>`);
         });
         _push(`<!--]--></select></label>`);
         if (sourceProjection2.fields.modelStrength || sourceProjection2.fields.clipStrength) {
-          _push(`<div class="merge-operation-source__strengths" data-v-e76a31ed>`);
+          _push(`<div class="merge-operation-source__strengths" data-v-c23f3462>`);
           if (sourceProjection2.fields.modelStrength) {
-            _push(`<label class="field" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.modelStrength"))}</span><input${ssrRenderAttr("value", sourceProjection2.value.weight ?? "")} type="number" min="-10" max="10" step="0.05" data-v-e76a31ed></label>`);
+            _push(`<label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.modelStrength"))}</span><input${ssrRenderAttr("value", sourceProjection2.value.weight ?? "")} type="number" min="-10" max="10" step="0.05" data-v-c23f3462></label>`);
           } else {
             _push(`<!---->`);
           }
           if (sourceProjection2.fields.clipStrength) {
-            _push(`<label class="field" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.clipStrength"))}</span><input${ssrRenderAttr("value", sourceProjection2.value.clip_weight ?? "")} type="number" min="-10" max="10" step="0.05" data-v-e76a31ed></label>`);
+            _push(`<label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.clipStrength"))}</span><input${ssrRenderAttr("value", sourceProjection2.value.clip_weight ?? "")} type="number" min="-10" max="10" step="0.05" data-v-c23f3462></label>`);
           } else {
             _push(`<!---->`);
           }
@@ -39364,64 +39443,64 @@ const _sfc_main$_ = /* @__PURE__ */ defineComponent({
           _push(`<!---->`);
         }
         if (sourceProjection2.fields.blockWeights) {
-          _push(`<label class="field" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.sourceBlockOverride"))}</span><textarea rows="2"${ssrRenderAttr("placeholder", unref(t)("merge.sourceBlockOverridePlaceholder"))} data-v-e76a31ed>${ssrInterpolate(sourceProjection2.value.block_weights ?? "")}</textarea></label>`);
+          _push(`<label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.sourceBlockOverride"))}</span><textarea rows="2"${ssrRenderAttr("placeholder", unref(t)("merge.sourceBlockOverridePlaceholder"))} data-v-c23f3462>${ssrInterpolate(sourceProjection2.value.block_weights ?? "")}</textarea></label>`);
         } else {
           _push(`<!---->`);
         }
         _push(`</article>`);
       });
-      _push(`<!--]--></div><div class="merge-operation__setup" data-merge-operation-region="setup" data-v-e76a31ed><div class="merge-operation__grid" data-v-e76a31ed>`);
+      _push(`<!--]--></div><div class="merge-operation__setup" data-merge-operation-region="setup" data-v-c23f3462><div class="merge-operation__grid" data-v-c23f3462>`);
       if (__props.state.fields.overallStrength) {
-        _push(`<label class="field" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.overallLoraStrength"))}</span><input${ssrRenderAttr("value", __props.state.values.checkpointLoraStrength)} type="number" min="-10" max="10" step="0.05" data-v-e76a31ed></label>`);
+        _push(`<label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.overallLoraStrength"))}</span><input${ssrRenderAttr("value", __props.state.values.checkpointLoraStrength)} type="number" min="-10" max="10" step="0.05" data-v-c23f3462></label>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.state.fields.sourceRatio) {
-        _push(`<label class="field" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.extractSourceRatio"))}</span><input${ssrRenderAttr("value", __props.state.values.sourceRatio)} type="number" min="-10" max="10" step="0.05" data-v-e76a31ed></label>`);
+        _push(`<label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.extractSourceRatio"))}</span><input${ssrRenderAttr("value", __props.state.values.sourceRatio)} type="number" min="-10" max="10" step="0.05" data-v-c23f3462></label>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.state.fields.sharedRank) {
-        _push(`<label class="field" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.rank"))}</span><input${ssrRenderAttr("value", __props.state.values.rank ?? "")} type="number" min="1" data-v-e76a31ed></label>`);
+        _push(`<label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.rank"))}</span><input${ssrRenderAttr("value", __props.state.values.rank ?? "")} type="number" min="1" data-v-c23f3462></label>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.state.fields.sharedConvRank) {
-        _push(`<label class="field" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.convRank"))}</span><input${ssrRenderAttr("value", __props.state.values.convRank ?? "")} type="number" min="1" data-v-e76a31ed></label>`);
+        _push(`<label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.convRank"))}</span><input${ssrRenderAttr("value", __props.state.values.convRank ?? "")} type="number" min="1" data-v-c23f3462></label>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.state.fields.metadataMode) {
-        _push(`<label class="field" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.metadataMode"))}</span><select${ssrRenderAttr("value", __props.state.values.metadataMode)} data-v-e76a31ed><option value="create" data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.metadataCreate"))}</option><option value="merge" data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.metadataMerge"))}</option><option value="save_all" data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.metadataSaveAll"))}</option><option value="use_first" data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.metadataUseFirst"))}</option></select></label>`);
+        _push(`<label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.metadataMode"))}</span><select${ssrRenderAttr("value", __props.state.values.metadataMode)} data-v-c23f3462><option value="create" data-v-c23f3462>${ssrInterpolate(unref(t)("merge.metadataCreate"))}</option><option value="merge" data-v-c23f3462>${ssrInterpolate(unref(t)("merge.metadataMerge"))}</option><option value="save_all" data-v-c23f3462>${ssrInterpolate(unref(t)("merge.metadataSaveAll"))}</option><option value="use_first" data-v-c23f3462>${ssrInterpolate(unref(t)("merge.metadataUseFirst"))}</option></select></label>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.state.fields.sameAsStrength) {
-        _push(`<label class="field merge-operation__checkbox" data-v-e76a31ed><input${ssrIncludeBooleanAttr(__props.state.values.sameAsStrength) ? " checked" : ""} type="checkbox" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.sameAsStrength"))}</span></label>`);
+        _push(`<label class="field merge-operation__checkbox" data-v-c23f3462><input${ssrIncludeBooleanAttr(__props.state.values.sameAsStrength) ? " checked" : ""} type="checkbox" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.sameAsStrength"))}</span></label>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</div>`);
       if (__props.state.fields.promptRatio) {
-        _push(`<label class="field" data-v-e76a31ed><span data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.promptRatioSource"))}</span><small data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.promptRatioSourceHelp"))}</small><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("merge.promptRatioSourcePlaceholder"))} data-v-e76a31ed>${ssrInterpolate(__props.state.values.promptRatioSource)}</textarea></label>`);
+        _push(`<label class="field" data-v-c23f3462><span data-v-c23f3462>${ssrInterpolate(unref(t)("merge.promptRatioSource"))}</span><small data-v-c23f3462>${ssrInterpolate(unref(t)("merge.promptRatioSourceHelp"))}</small><textarea rows="3"${ssrRenderAttr("placeholder", unref(t)("merge.promptRatioSourcePlaceholder"))} data-v-c23f3462>${ssrInterpolate(__props.state.values.promptRatioSource)}</textarea></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</div><div data-merge-operation-region="capability" class="${ssrRenderClass([{ "merge-operation__capability--warning": __props.state.capability.status === "unsupported-format" }, "merge-operation__capability"])}" data-v-e76a31ed><strong data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.formatBoundary"))}</strong>`);
+      _push(`</div><div data-merge-operation-region="capability" class="${ssrRenderClass([{ "merge-operation__capability--warning": __props.state.capability.status === "unsupported-format" }, "merge-operation__capability"])}" data-v-c23f3462><strong data-v-c23f3462>${ssrInterpolate(unref(t)("merge.formatBoundary"))}</strong>`);
       if (__props.state.capability.status === "unsupported-format") {
-        _push(`<p data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.unsupportedLoraFormatRecovery"))}</p>`);
+        _push(`<p data-v-c23f3462>${ssrInterpolate(unref(t)("merge.unsupportedLoraFormatRecovery"))}</p>`);
       } else if (__props.state.capability.formatScope === "checkpoint-difference") {
-        _push(`<p data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.extractFormatBoundary"))}</p>`);
+        _push(`<p data-v-c23f3462>${ssrInterpolate(unref(t)("merge.extractFormatBoundary"))}</p>`);
       } else {
-        _push(`<p data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.supportedLoraFormats"))}</p>`);
+        _push(`<p data-v-c23f3462>${ssrInterpolate(unref(t)("merge.supportedLoraFormats"))}</p>`);
       }
       if (__props.state.capability.materializationApproximate) {
-        _push(`<p data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.materializationApproximate"))}</p>`);
+        _push(`<p data-v-c23f3462>${ssrInterpolate(unref(t)("merge.materializationApproximate"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.state.capability.visualReviewRequired) {
-        _push(`<p data-v-e76a31ed>${ssrInterpolate(unref(t)("merge.materializedVisualReview"))}</p>`);
+        _push(`<p data-v-c23f3462>${ssrInterpolate(unref(t)("merge.materializedVisualReview"))}</p>`);
       } else {
         _push(`<!---->`);
       }
@@ -39435,7 +39514,7 @@ _sfc_main$_.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/merge/MergeOperationSetup.vue");
   return _sfc_setup$_ ? _sfc_setup$_(props, ctx) : void 0;
 };
-const MergeOperationSetup = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$_, [["__scopeId", "data-v-e76a31ed"]]), { __name: "StudioMergeOperationSetup" });
+const MergeOperationSetup = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$_, [["__scopeId", "data-v-c23f3462"]]), { __name: "StudioMergeOperationSetup" });
 const _sfc_main$Z = /* @__PURE__ */ defineComponent({
   __name: "MergeAnalysisPanel",
   __ssrInlineRender: true,
@@ -40058,7 +40137,7 @@ const normalizeMergeRecipeSnapshot = (recipe) => {
   );
   const sources = snapshot2.sources;
   if (Array.isArray(sources)) {
-    snapshot2.sources = [...sources].sort((left, right) => {
+    snapshot2.sources = sources.filter((source) => !source || typeof source !== "object" || source.path !== "").sort((left, right) => {
       const leftRole = String(left.role ?? "");
       const rightRole = String(right.role ?? "");
       return leftRole.localeCompare(rightRole);
@@ -42617,17 +42696,17 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
       }, _attrs), {
         headerTask: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="merge-hero" data-v-b237f3ec${_scopeId}><div data-v-b237f3ec${_scopeId}><span class="eyebrow" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.eyebrow"))}</span><h1 data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.title"))}</h1><p data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.description"))}</p></div><div class="hero-actions" data-v-b237f3ec${_scopeId}><button type="button"${ssrIncludeBooleanAttr(unref(refreshingModels) || unref(modelDependencies).loading) ? " disabled" : ""} data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(refreshingModels) ? unref(t)("merge.refreshing") : unref(t)("merge.refreshModels"))}</button><button id="merge-clear-candidate-cache" class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(clearingCandidateCache)) ? " disabled" : ""} data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(runDisabled)) ? " disabled" : ""} data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(loading) ? unref(t)("merge.working") : unref(t)("merge.runMerge"))}</button></div></div>`);
+            _push2(`<div class="merge-hero" data-v-b801753f${_scopeId}><div data-v-b801753f${_scopeId}><span class="eyebrow" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.eyebrow"))}</span><h1 data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.title"))}</h1><p data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.description"))}</p></div><div class="hero-actions" data-v-b801753f${_scopeId}><button type="button"${ssrIncludeBooleanAttr(unref(refreshingModels) || unref(modelDependencies).loading) ? " disabled" : ""} data-v-b801753f${_scopeId}>${ssrInterpolate(unref(refreshingModels) ? unref(t)("merge.refreshing") : unref(t)("merge.refreshModels"))}</button><button id="merge-clear-candidate-cache" class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(clearingCandidateCache)) ? " disabled" : ""} data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button></div></div>`);
             if (unref(candidateCacheError)) {
-              _push2(`<p class="error merge-workspace-action-error" aria-live="assertive" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(candidateCacheError))}</p>`);
+              _push2(`<p class="error merge-workspace-action-error" aria-live="assertive" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(candidateCacheError))}</p>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<nav class="merge-tabs"${ssrRenderAttr("aria-label", unref(t)("merge.mergeTypeAria"))} data-v-b237f3ec${_scopeId}><!--[-->`);
+            _push2(`<nav class="merge-tabs"${ssrRenderAttr("aria-label", unref(t)("merge.mergeTypeAria"))} data-v-b801753f${_scopeId}><!--[-->`);
             ssrRenderList(unref(catalog)?.merge_types ?? [], (type) => {
-              _push2(`<button type="button" class="${ssrRenderClass({ active: unref(activeTab) === type.id })}" data-v-b237f3ec${_scopeId}>${ssrInterpolate(type.label)}</button>`);
+              _push2(`<button type="button" class="${ssrRenderClass({ active: unref(activeTab) === type.id })}" data-v-b801753f${_scopeId}>${ssrInterpolate(type.label)}</button>`);
             });
-            _push2(`<!--]--></nav>`);
+            _push2(`<!--]--></nav><nav class="merge-section-nav"${ssrRenderAttr("aria-label", unref(t)("merge.sectionNavigation"))} data-v-b801753f${_scopeId}><button type="button" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.modelSetupTitle"))}</button><button type="button" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.advancedRecipe"))}</button><button type="button" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.candidateStudio"))}</button><button type="button" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.recipeSaveTitle"))}</button></nav>`);
           } else {
             return [
               createVNode("div", { class: "merge-hero" }, [
@@ -42648,13 +42727,7 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
                     type: "button",
                     disabled: unref(clearingCandidateCache),
                     onClick: openCandidateCacheOverlay
-                  }, toDisplayString(unref(t)("merge.clearPreviewCache")), 9, ["disabled"]),
-                  createVNode("button", {
-                    class: "primary-button",
-                    type: "button",
-                    disabled: unref(runDisabled),
-                    onClick: runRecipe
-                  }, toDisplayString(unref(loading) ? unref(t)("merge.working") : unref(t)("merge.runMerge")), 9, ["disabled"])
+                  }, toDisplayString(unref(t)("merge.clearPreviewCache")), 9, ["disabled"])
                 ])
               ]),
               unref(candidateCacheError) ? (openBlock(), createBlock("p", {
@@ -42674,6 +42747,27 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
                     onClick: ($event) => setActiveTab(type.id)
                   }, toDisplayString(type.label), 11, ["onClick"]);
                 }), 128))
+              ], 8, ["aria-label"]),
+              createVNode("nav", {
+                class: "merge-section-nav",
+                "aria-label": unref(t)("merge.sectionNavigation")
+              }, [
+                createVNode("button", {
+                  type: "button",
+                  onClick: ($event) => scrollToMergeRegion("merge-model-setup")
+                }, toDisplayString(unref(t)("merge.modelSetupTitle")), 9, ["onClick"]),
+                createVNode("button", {
+                  type: "button",
+                  onClick: ($event) => scrollToMergeRegion("merge-advanced-recipe")
+                }, toDisplayString(unref(t)("merge.advancedRecipe")), 9, ["onClick"]),
+                createVNode("button", {
+                  type: "button",
+                  onClick: ($event) => scrollToMergeRegion("merge-candidate-studio")
+                }, toDisplayString(unref(t)("merge.candidateStudio")), 9, ["onClick"]),
+                createVNode("button", {
+                  type: "button",
+                  onClick: ($event) => scrollToMergeRegion("merge-recipe-save")
+                }, toDisplayString(unref(t)("merge.recipeSaveTitle")), 9, ["onClick"])
               ], 8, ["aria-label"])
             ];
           }
@@ -42681,6 +42775,7 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
         editor: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
             _push2(ssrRenderComponent(MergeRecipeConsole, {
+              id: "merge-model-setup",
               draft: unref(draft),
               "model-families": unref(modelFamilies),
               "merge-modes": unref(catalog)?.merge_modes ?? [],
@@ -42695,14 +42790,9 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
               "family-tone": unref(familyVerificationTone),
               "missing-dependencies": unref(activeMissingDependencies),
               "persistence-state": unref(recipeViewState).persistence,
-              "run-intent": unref(recipeDecision).runIntent,
               "beta-enabled": unref(recipeDecision).betaEnabled,
               "gamma-enabled": unref(recipeDecision).gammaEnabled,
-              loading: unref(loading),
-              "run-disabled": unref(runDisabled),
-              error: unref(workspaceError),
               onUpdateModelFamily: setRecipeModelFamily,
-              onUpdateName: ($event) => unref(draft).name = $event,
               onUpdateSource: setRecipeSource,
               onUpdateMergeMode: ($event) => unref(draft).merge_mode = $event,
               onUpdateCalculationMode: setCalculationMode,
@@ -42710,12 +42800,6 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
               onUpdateAlpha: ($event) => unref(draft).alpha = $event,
               onUpdateBeta: ($event) => unref(draft).beta = $event,
               onUpdateGamma: ($event) => unref(draft).calculation_option = $event,
-              onUpdateNotes: ($event) => unref(draft).notes = $event,
-              onSave: saveRecipe,
-              onRun: runRecipe,
-              onNewRecipe: ($event) => newRecipe(),
-              onOpenAdvanced: ($event) => scrollToMergeRegion("merge-advanced-recipe"),
-              onOpenCandidates: ($event) => scrollToMergeRegion("merge-candidate-studio"),
               onRefreshModels: refreshModels
             }, null, _parent2, _scopeId));
             if (unref(operationState).task !== "checkpoint") {
@@ -42866,9 +42950,20 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
               }),
               _: 1
             }, _parent2, _scopeId));
+            _push2(ssrRenderComponent(MergeRecipeSavePanel, {
+              name: unref(draft).name,
+              notes: unref(draft).notes,
+              "persistence-state": unref(recipeViewState).persistence,
+              loading: unref(loading),
+              onUpdateName: ($event) => unref(draft).name = $event,
+              onUpdateNotes: ($event) => unref(draft).notes = $event,
+              onSave: saveRecipe,
+              onNewRecipe: ($event) => newRecipe()
+            }, null, _parent2, _scopeId));
           } else {
             return [
               createVNode(MergeRecipeConsole, {
+                id: "merge-model-setup",
                 draft: unref(draft),
                 "model-families": unref(modelFamilies),
                 "merge-modes": unref(catalog)?.merge_modes ?? [],
@@ -42883,14 +42978,9 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
                 "family-tone": unref(familyVerificationTone),
                 "missing-dependencies": unref(activeMissingDependencies),
                 "persistence-state": unref(recipeViewState).persistence,
-                "run-intent": unref(recipeDecision).runIntent,
                 "beta-enabled": unref(recipeDecision).betaEnabled,
                 "gamma-enabled": unref(recipeDecision).gammaEnabled,
-                loading: unref(loading),
-                "run-disabled": unref(runDisabled),
-                error: unref(workspaceError),
                 onUpdateModelFamily: setRecipeModelFamily,
-                onUpdateName: ($event) => unref(draft).name = $event,
                 onUpdateSource: setRecipeSource,
                 onUpdateMergeMode: ($event) => unref(draft).merge_mode = $event,
                 onUpdateCalculationMode: setCalculationMode,
@@ -42898,14 +42988,8 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
                 onUpdateAlpha: ($event) => unref(draft).alpha = $event,
                 onUpdateBeta: ($event) => unref(draft).beta = $event,
                 onUpdateGamma: ($event) => unref(draft).calculation_option = $event,
-                onUpdateNotes: ($event) => unref(draft).notes = $event,
-                onSave: saveRecipe,
-                onRun: runRecipe,
-                onNewRecipe: ($event) => newRecipe(),
-                onOpenAdvanced: ($event) => scrollToMergeRegion("merge-advanced-recipe"),
-                onOpenCandidates: ($event) => scrollToMergeRegion("merge-candidate-studio"),
                 onRefreshModels: refreshModels
-              }, null, 8, ["draft", "model-families", "merge-modes", "calculation-modes", "source-choices", "show-sources", "visible-source-roles", "missing-source-roles", "formula", "family-label", "family-status", "family-tone", "missing-dependencies", "persistence-state", "run-intent", "beta-enabled", "gamma-enabled", "loading", "run-disabled", "error", "onUpdateName", "onUpdateMergeMode", "onUpdateAlpha", "onUpdateBeta", "onUpdateGamma", "onUpdateNotes", "onNewRecipe", "onOpenAdvanced", "onOpenCandidates"]),
+              }, null, 8, ["draft", "model-families", "merge-modes", "calculation-modes", "source-choices", "show-sources", "visible-source-roles", "missing-source-roles", "formula", "family-label", "family-status", "family-tone", "missing-dependencies", "persistence-state", "beta-enabled", "gamma-enabled", "onUpdateMergeMode", "onUpdateAlpha", "onUpdateBeta", "onUpdateGamma"]),
               unref(operationState).task !== "checkpoint" ? (openBlock(), createBlock(MergeOperationSetup, {
                 key: 0,
                 state: unref(operationState),
@@ -43032,7 +43116,17 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
                   }, null, 8, ["board-state", "rating-saving-index", "promoting-index", "action-error"])
                 ]),
                 _: 1
-              }, 8, ["axes", "target-options", "mbw-preset-options", "binding-state", "preflight", "studio-state", "history-input", "overrides", "recipe-name", "family-label", "base-label", "hires-label", "action-error", "asset-block-message", "completed-count", "saved-output-available", "estimate", "contact-sheet-url", "onUpdateHistoryInput"])
+              }, 8, ["axes", "target-options", "mbw-preset-options", "binding-state", "preflight", "studio-state", "history-input", "overrides", "recipe-name", "family-label", "base-label", "hires-label", "action-error", "asset-block-message", "completed-count", "saved-output-available", "estimate", "contact-sheet-url", "onUpdateHistoryInput"]),
+              createVNode(MergeRecipeSavePanel, {
+                name: unref(draft).name,
+                notes: unref(draft).notes,
+                "persistence-state": unref(recipeViewState).persistence,
+                loading: unref(loading),
+                onUpdateName: ($event) => unref(draft).name = $event,
+                onUpdateNotes: ($event) => unref(draft).notes = $event,
+                onSave: saveRecipe,
+                onNewRecipe: ($event) => newRecipe()
+              }, null, 8, ["name", "notes", "persistence-state", "loading", "onUpdateName", "onUpdateNotes", "onNewRecipe"])
             ];
           }
         }),
@@ -43044,6 +43138,29 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
             return [
               createVNode(ExtensionSurfaceDock, { surface: "merge_studio.tool" }),
               createVNode(ExtensionSurfaceDock, { surface: "merge_studio.action" })
+            ];
+          }
+        }),
+        execution: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(ssrRenderComponent(MergeExecutionBar, {
+              "recipe-name": unref(draft).name,
+              loading: unref(loading),
+              "run-disabled": unref(runDisabled),
+              "run-intent": unref(recipeDecision).runIntent,
+              error: unref(workspaceError),
+              onRun: runRecipe
+            }, null, _parent2, _scopeId));
+          } else {
+            return [
+              createVNode(MergeExecutionBar, {
+                "recipe-name": unref(draft).name,
+                loading: unref(loading),
+                "run-disabled": unref(runDisabled),
+                "run-intent": unref(recipeDecision).runIntent,
+                error: unref(workspaceError),
+                onRun: runRecipe
+              }, null, 8, ["recipe-name", "loading", "run-disabled", "run-intent", "error"])
             ];
           }
         }),
@@ -43105,82 +43222,82 @@ const _sfc_main$V = /* @__PURE__ */ defineComponent({
         overlays: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
             if (unref(pendingMergeXyzConfirmation)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-b237f3ec${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-xyz-confirmation-title" data-v-b237f3ec${_scopeId}><span class="eyebrow" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunEyebrow"))}</span><h2 id="merge-xyz-confirmation-title" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunTitle", { count: unref(pendingMergeXyzConfirmation).estimate.candidate_count }))}</h2><p data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunHelp"))}</p><ul data-v-b237f3ec${_scopeId}><li data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateOrder"))}</li><li data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDimensions", { width: unref(pendingMergeXyzConfirmation).estimate.final_width, height: unref(pendingMergeXyzConfirmation).estimate.final_height }))}</li><li data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateTemporary", { lower: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_lower_bound), upper: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_upper_bound) }))}</li><li data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDurationUnknown"))}</li></ul><div class="asset-actions" data-v-b237f3ec${_scopeId}><button type="button" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.continueLargeRun"))}</button></div></section></div>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-b801753f${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-xyz-confirmation-title" data-v-b801753f${_scopeId}><span class="eyebrow" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunEyebrow"))}</span><h2 id="merge-xyz-confirmation-title" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunTitle", { count: unref(pendingMergeXyzConfirmation).estimate.candidate_count }))}</h2><p data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzLargeRunHelp"))}</p><ul data-v-b801753f${_scopeId}><li data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateOrder"))}</li><li data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDimensions", { width: unref(pendingMergeXyzConfirmation).estimate.final_width, height: unref(pendingMergeXyzConfirmation).estimate.final_height }))}</li><li data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateTemporary", { lower: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_lower_bound), upper: formatMergeXyzBytes(unref(pendingMergeXyzConfirmation).estimate.temporary_bytes_upper_bound) }))}</li><li data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.xyzEstimateDurationUnknown"))}</li></ul><div class="asset-actions" data-v-b801753f${_scopeId}><button type="button" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.continueLargeRun"))}</button></div></section></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(pendingRecipeConfirmation)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-b237f3ec${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "merge-confirmation-title")} data-v-b237f3ec${_scopeId}><span class="eyebrow" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.confirmationEyebrow"))}</span><h2 id="merge-confirmation-title" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.confirmDeleteRecipe") : unref(t)("merge.confirmDiscardDraft"))}</h2>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-b801753f${_scopeId}><section class="merge-confirmation-dialog" role="alertdialog" aria-modal="true"${ssrRenderAttr("aria-labelledby", "merge-confirmation-title")} data-v-b801753f${_scopeId}><span class="eyebrow" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.confirmationEyebrow"))}</span><h2 id="merge-confirmation-title" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.confirmDeleteRecipe") : unref(t)("merge.confirmDiscardDraft"))}</h2>`);
               if (unref(pendingRecipeConfirmation).kind === "delete-recipe") {
-                _push2(`<p data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.deleteRecipeOnlyHelp", { name: unref(pendingRecipeConfirmation).recipeName }))}</p>`);
+                _push2(`<p data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.deleteRecipeOnlyHelp", { name: unref(pendingRecipeConfirmation).recipeName }))}</p>`);
               } else {
-                _push2(`<p data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.discardDraftHelp"))}</p>`);
+                _push2(`<p data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.discardDraftHelp"))}</p>`);
               }
-              _push2(`<div class="asset-actions" data-v-b237f3ec${_scopeId}><button type="button" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(loading)) ? " disabled" : ""} data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.deleteRecipeOnly") : unref(t)("merge.discardAndSwitch"))}</button></div></section></div>`);
+              _push2(`<div class="asset-actions" data-v-b801753f${_scopeId}><button type="button" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(loading)) ? " disabled" : ""} data-v-b801753f${_scopeId}>${ssrInterpolate(unref(pendingRecipeConfirmation).kind === "delete-recipe" ? unref(t)("merge.deleteRecipeOnly") : unref(t)("merge.discardAndSwitch"))}</button></div></section></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(lightboxCandidate)) {
-              _push2(`<div class="candidate-lightbox" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("merge.candidateLightbox"))} data-v-b237f3ec${_scopeId}><button class="candidate-lightbox__nav candidate-lightbox__nav--left" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.previousCandidate"))} data-v-b237f3ec${_scopeId}>‹</button><div class="candidate-lightbox__stage" data-v-b237f3ec${_scopeId}>`);
+              _push2(`<div class="candidate-lightbox" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("merge.candidateLightbox"))} data-v-b801753f${_scopeId}><button class="candidate-lightbox__nav candidate-lightbox__nav--left" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.previousCandidate"))} data-v-b801753f${_scopeId}>‹</button><div class="candidate-lightbox__stage" data-v-b801753f${_scopeId}>`);
               if (candidateImageUrl(unref(lightboxCandidate))) {
-                _push2(`<img${ssrRenderAttr("src", candidateImageUrl(unref(lightboxCandidate)))}${ssrRenderAttr("alt", candidateDisplayId(unref(lightboxCandidate)))} data-v-b237f3ec${_scopeId}>`);
+                _push2(`<img${ssrRenderAttr("src", candidateImageUrl(unref(lightboxCandidate)))}${ssrRenderAttr("alt", candidateDisplayId(unref(lightboxCandidate)))} data-v-b801753f${_scopeId}>`);
               } else {
-                _push2(`<div class="candidate-lightbox__empty" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.noImageOutput"))}</div>`);
+                _push2(`<div class="candidate-lightbox__empty" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.noImageOutput"))}</div>`);
               }
-              _push2(`</div><button class="candidate-lightbox__nav candidate-lightbox__nav--right" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.nextCandidate"))} data-v-b237f3ec${_scopeId}>›</button><div class="candidate-lightbox__bar" data-v-b237f3ec${_scopeId}><div data-v-b237f3ec${_scopeId}><strong data-v-b237f3ec${_scopeId}>${ssrInterpolate(candidateDisplayId(unref(lightboxCandidate)))}</strong><small data-v-b237f3ec${_scopeId}>${ssrInterpolate(candidateAxisSummary(unref(lightboxCandidate)))}</small></div><div class="candidate-rating" data-v-b237f3ec${_scopeId}><!--[-->`);
+              _push2(`</div><button class="candidate-lightbox__nav candidate-lightbox__nav--right" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.nextCandidate"))} data-v-b801753f${_scopeId}>›</button><div class="candidate-lightbox__bar" data-v-b801753f${_scopeId}><div data-v-b801753f${_scopeId}><strong data-v-b801753f${_scopeId}>${ssrInterpolate(candidateDisplayId(unref(lightboxCandidate)))}</strong><small data-v-b801753f${_scopeId}>${ssrInterpolate(candidateAxisSummary(unref(lightboxCandidate)))}</small></div><div class="candidate-rating" data-v-b801753f${_scopeId}><!--[-->`);
               ssrRenderList([1, 2, 3, 4, 5], (rating) => {
-                _push2(`<button type="button" class="${ssrRenderClass({ active: candidateRating(unref(lightboxCandidate)) >= rating })}"${ssrIncludeBooleanAttr(unref(candidateRatingSaving) === unref(lightboxCandidate).index) ? " disabled" : ""} data-v-b237f3ec${_scopeId}> ★ </button>`);
+                _push2(`<button type="button" class="${ssrRenderClass({ active: candidateRating(unref(lightboxCandidate)) >= rating })}"${ssrIncludeBooleanAttr(unref(candidateRatingSaving) === unref(lightboxCandidate).index) ? " disabled" : ""} data-v-b801753f${_scopeId}> ★ </button>`);
               });
-              _push2(`<!--]--></div><button class="primary-button" type="button" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.setToRecipe"))}</button><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.close"))} data-v-b237f3ec${_scopeId}>×</button></div></div>`);
+              _push2(`<!--]--></div><button class="primary-button" type="button" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.setToRecipe"))}</button><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.close"))} data-v-b801753f${_scopeId}>×</button></div></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(candidatePromotionIntent)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-b237f3ec${_scopeId}><section class="candidate-promotion-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-candidate-promotion-title" data-v-b237f3ec${_scopeId}><span class="eyebrow" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionEyebrow"))}</span><h2 id="merge-candidate-promotion-title" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionTitle"))}</h2><p data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionHelp", { name: unref(candidatePromotionIntent).outputName }))}</p>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-b801753f${_scopeId}><section class="candidate-promotion-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-candidate-promotion-title" data-v-b801753f${_scopeId}><span class="eyebrow" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionEyebrow"))}</span><h2 id="merge-candidate-promotion-title" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionTitle"))}</h2><p data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.promotionHelp", { name: unref(candidatePromotionIntent).outputName }))}</p>`);
               if (unref(candidateActionError)) {
-                _push2(`<p class="error" aria-live="assertive" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(candidateActionError))}</p>`);
+                _push2(`<p class="error" aria-live="assertive" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(candidateActionError))}</p>`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`<div class="asset-actions" data-v-b237f3ec${_scopeId}><button type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(promotingCandidateIndex) !== null ? unref(t)("merge.saving") : unref(t)("merge.promote"))}</button></div></section></div>`);
+              _push2(`<div class="asset-actions" data-v-b801753f${_scopeId}><button type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promotingCandidateIndex) !== null) ? " disabled" : ""} data-v-b801753f${_scopeId}>${ssrInterpolate(unref(promotingCandidateIndex) !== null ? unref(t)("merge.saving") : unref(t)("merge.promote"))}</button></div></section></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(candidateCacheOverlay)) {
-              _push2(`<div class="merge-confirmation-backdrop" data-v-b237f3ec${_scopeId}><section class="merge-confirmation-dialog cache-cleanup-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-cache-cleanup-title" data-v-b237f3ec${_scopeId}><span class="eyebrow" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupEyebrow"))}</span><h2 id="merge-cache-cleanup-title" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupTitle"))}</h2>`);
+              _push2(`<div class="merge-confirmation-backdrop" data-v-b801753f${_scopeId}><section class="merge-confirmation-dialog cache-cleanup-dialog" role="alertdialog" aria-modal="true" aria-labelledby="merge-cache-cleanup-title" data-v-b801753f${_scopeId}><span class="eyebrow" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupEyebrow"))}</span><h2 id="merge-cache-cleanup-title" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupTitle"))}</h2>`);
               if (unref(candidateCacheState).status === "confirming") {
-                _push2(`<!--[--><p data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupHelp"))}</p>`);
+                _push2(`<!--[--><p data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupHelp"))}</p>`);
                 if (unref(candidateCacheState).warningCurrentBoard) {
-                  _push2(`<p class="warning" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupBoardWarning"))}</p>`);
+                  _push2(`<p class="warning" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupBoardWarning"))}</p>`);
                 } else {
                   _push2(`<!---->`);
                 }
                 if (unref(candidateCacheState).warningUnpromoted) {
-                  _push2(`<p class="warning" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupPromotionWarning"))}</p>`);
+                  _push2(`<p class="warning" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupPromotionWarning"))}</p>`);
                 } else {
                   _push2(`<!---->`);
                 }
                 _push2(`<!--]-->`);
               } else if (unref(candidateCacheState).status === "working") {
-                _push2(`<p data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupWorking"))}</p>`);
+                _push2(`<p data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupWorking"))}</p>`);
               } else if (unref(candidateCacheState).status === "succeeded") {
-                _push2(`<p data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupSucceeded", { count: unref(candidateCacheState).deletedFiles }))}</p>`);
+                _push2(`<p data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupSucceeded", { count: unref(candidateCacheState).deletedFiles }))}</p>`);
               } else if (unref(candidateCacheState).status === "failed") {
-                _push2(`<!--[--><p class="error" aria-live="assertive" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(candidateCacheState).error)}</p><p data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupUnresolved", { count: unref(candidateCacheState).unresolvedCount }))}</p><p data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetryHelp"))}</p><!--]-->`);
+                _push2(`<!--[--><p class="error" aria-live="assertive" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(candidateCacheState).error)}</p><p data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupUnresolved", { count: unref(candidateCacheState).unresolvedCount }))}</p><p data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetryHelp"))}</p><!--]-->`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`<div class="cache-cleanup-dialog__retained" data-v-b237f3ec${_scopeId}><strong data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetained"))}</strong><ul data-v-b237f3ec${_scopeId}><!--[-->`);
+              _push2(`<div class="cache-cleanup-dialog__retained" data-v-b801753f${_scopeId}><strong data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cacheCleanupRetained"))}</strong><ul data-v-b801753f${_scopeId}><!--[-->`);
               ssrRenderList(unref(candidateCacheState).retainedCategories, (category) => {
-                _push2(`<li data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)(`merge.cacheRetained.${category}`))}</li>`);
+                _push2(`<li data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)(`merge.cacheRetained.${category}`))}</li>`);
               });
-              _push2(`<!--]--></ul></div><div class="asset-actions" data-v-b237f3ec${_scopeId}><button type="button"${ssrIncludeBooleanAttr(unref(candidateCacheState).locked) ? " disabled" : ""} data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button>`);
+              _push2(`<!--]--></ul></div><div class="asset-actions" data-v-b801753f${_scopeId}><button type="button"${ssrIncludeBooleanAttr(unref(candidateCacheState).locked) ? " disabled" : ""} data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.cancel"))}</button>`);
               if (unref(candidateCacheState).status === "confirming") {
-                _push2(`<button class="destructive-button" type="button" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button>`);
+                _push2(`<button class="destructive-button" type="button" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.clearPreviewCache"))}</button>`);
               } else if (unref(candidateCacheState).status === "failed") {
-                _push2(`<button class="primary-button" type="button" data-v-b237f3ec${_scopeId}>${ssrInterpolate(unref(t)("merge.retry"))}</button>`);
+                _push2(`<button class="primary-button" type="button" data-v-b801753f${_scopeId}>${ssrInterpolate(unref(t)("merge.retry"))}</button>`);
               } else if (unref(candidateCacheState).status !== "working") {
-                _push2(`<button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.close"))} data-v-b237f3ec${_scopeId}>×</button>`);
+                _push2(`<button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("merge.close"))} data-v-b801753f${_scopeId}>×</button>`);
               } else {
                 _push2(`<!---->`);
               }
@@ -43452,7 +43569,7 @@ _sfc_main$V.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/MergeStudioView.vue");
   return _sfc_setup$V ? _sfc_setup$V(props, ctx) : void 0;
 };
-const MergeStudioView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$V, [["__scopeId", "data-v-b237f3ec"]]), { __name: "StudioMergeStudioView" });
+const MergeStudioView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$V, [["__scopeId", "data-v-b801753f"]]), { __name: "StudioMergeStudioView" });
 const _sfc_main$U = /* @__PURE__ */ defineComponent({
   __name: "MusicGenerationForm",
   __ssrInlineRender: true,

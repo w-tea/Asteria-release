@@ -29,6 +29,16 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 
 > **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトを三欄に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
 
+### 今回の使いやすさの改善
+
+- GenerateとMergeに「モデルを検索」を追加しました。名前やフォルダー名で候補を絞り込み、選択中のモデルは検索語を変えても保持します。
+- Mergeはモデル・計算方式、詳細調整、候補比較、レシピ保存の順に操作できます。PCの通常幅では、右上の実行ボタンは設定や履歴をスクロールしても表示されたままです。
+- 詳細スタイルのカードをLoRAと同じサイズへそろえ、長い名称は省略表示にしました。素材の2カラム選択欄のずれも修正しました。
+
+![モデル検索と右上の実行欄、上部のページ内移動を備えたMerge画面](guides/images/merge-dark-ja.jpg)
+
+詳しい操作は[クイックスタート](guides/QUICK_START.md)を参照してください。自動リピートの終了条件は、初期値がすべて`0`（上限なし）です。以前に保存した条件は引き継ぐため、連続生成の前に確認してください。
+
 ### 主な機能
 
 V1.2.0では、次の制作の流れをまとめて扱えます。
@@ -333,6 +343,16 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
 
 > **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
+
+### Usability improvements in this build
+
+- Generate and Merge now include Search models. Filter by model or folder name without changing the selected model when you edit the search.
+- Merge follows models and method, advanced settings, candidate comparison, then recipe saving. At normal desktop widths, the execution button stays at the top right while settings and history scroll.
+- Advanced Style cards now match LoRA card sizing and shorten long names. Two-column Materials selectors are aligned consistently.
+
+![Merge with model search, top-right execution and section navigation; Japanese UI in Dark mode](guides/images/merge-dark-ja.jpg)
+
+See [Quick start](guides/QUICK_START.md) for the workflow. Automatic-repeat limits default to `0` (unlimited). Previously saved limits are retained, so review them before continuous generation.
 
 ### Main features
 

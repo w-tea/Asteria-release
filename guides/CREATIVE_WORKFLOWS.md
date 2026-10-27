@@ -8,6 +8,8 @@
 
 AIへ依頼する機能は、先に設定画面で接続先を用意してください。画像の確認には画像対応モデルが必要です。外部の接続先を選ぶと、画面に示された文章や画像がPCの外へ送られます。
 
+モデルが多い場合は、Generate上部の「モデルを検索」で名前やフォルダー名を絞り込めます。検索語を変えても、選択中のモデルは保持します。「詳細スタイル」のカードで省略された名称は、選択後の詳細欄で全文を確認してください。
+
 ### 1. プロンプトを組み立てる
 
 Generateの「シーン組立」では、描きたい場面を日本語などで説明し、ベース・キャラクター・詳細の三欄へ分けた文章を提案できます。
@@ -50,7 +52,7 @@ Wildcardsの「ツールを開く」から「展開プレビュー」を使う�
 
 ### 4. 自動生成を指定した条件で終了する
 
-「自動リピート」をONにし、「終了条件」から最大試行枚数・最大時間・合格枚数を指定します。`0`はその条件の上限なしです。合格枚数を使うには画像チェックをONにしてください。
+「自動リピート」をONにし、「終了条件」から最大試行枚数・最大時間・合格枚数を指定します。初期値は三つとも`0`で、その条件の上限なしを意味します。以前に保存した値は引き継ぎます。合格枚数を使うには画像チェックをONにしてください。
 
 失敗や不合格も試行枚数に含みます。上限に達した場合は実行中の一枚を終えてから停止し、理由を表示します。接続エラーや判定不能を合格として数えることはありません。ブラウザーを閉じたり処理を中止したりした後に、自動で生成を再開する機能ではありません。
 
@@ -137,6 +139,8 @@ These tools are available in Generate, Media Library, and LoRA Training. Start w
 
 Configure an AI connection in Settings before using AI-assisted actions. Image reviews require a vision-capable model. An external connection receives the text or images described on the screen outside your PC.
 
+Use Search models at the top of Generate to filter a large model list by model or folder name. Editing the search keeps the selected model. Select an Advanced Style to read its full name in the detail panel when the card shortens it.
+
 ### 1. Assemble prompts
 
 Scene builder turns a scene description and optional material notes into Base, Character, Details, and negative-prompt suggestions. Choose an AI connection, request a proposal, and review or edit it before applying it. Applying replaces the three positive sections and switches to sectioned input, while preserving their names and order. Negative replacement is optional. Pinned wildcard choices are cleared. Requesting a proposal alone never changes your current text.
@@ -163,7 +167,7 @@ You can vote for the left or right image, choose no preference or neither, and s
 
 ### 4. Set automatic-generation limits
 
-Enable automatic repeat and open its stop conditions. Set limits for attempted images, elapsed time, or accepted images; `0` means no limit for that condition. Accepted-image limits require image checking. Failed and rejected images count toward attempts. When a limit is reached, Asteria finishes the current image and shows the stop reason. Unknown judgments and connection errors are not accepted images. Closing the browser or interrupting the run does not schedule an automatic restart.
+Enable automatic repeat and open its stop conditions. Set limits for attempted images, elapsed time, or accepted images. All three default to `0`, meaning no limit for that condition; previously saved values are retained. Accepted-image limits require image checking. Failed and rejected images count toward attempts. When a limit is reached, Asteria finishes the current image and shows the stop reason. Unknown judgments and connection errors are not accepted images. Closing the browser or interrupting the run does not schedule an automatic restart.
 
 ### 5. Record stages and generation progress
 
