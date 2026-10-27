@@ -9,6 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, ValidationError
 
 from app.core.config import AppConfig
+from app.services.atomic_json import write_json_atomic
 
 SD15_BLOCKS = [
     "BASE",
@@ -365,10 +366,7 @@ class MergePresetRepository:
                 if not generated_current or (schema_matches and projection_matches):
                     continue
             presets.sort(key=lambda item: item.name.lower())
-            path.write_text(
-                json.dumps({"items": [item.model_dump() for item in presets]}, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
+            write_json_atomic(path, {"items": [item.model_dump() for item in presets]})
 
     def list(self) -> list[MergeBlockPreset]:
         try:
@@ -404,10 +402,7 @@ class MergePresetRepository:
         ]
         presets.append(preset)
         presets.sort(key=lambda item: (item.family, item.name.lower(), item.id))
-        self.user_path.write_text(
-            json.dumps({"items": [item.model_dump() for item in presets]}, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
+        write_json_atomic(self.user_path, {"items": [item.model_dump() for item in presets]})
         return preset
 
     def delete_user_preset(self, preset_id: str) -> bool:
@@ -419,10 +414,7 @@ class MergePresetRepository:
         if len(kept) == len(presets):
             return False
         self.user_path.parent.mkdir(parents=True, exist_ok=True)
-        self.user_path.write_text(
-            json.dumps({"items": [item.model_dump() for item in kept]}, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
+        write_json_atomic(self.user_path, {"items": [item.model_dump() for item in kept]})
         return True
 
 

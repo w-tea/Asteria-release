@@ -148,11 +148,23 @@ def _syntax_error(code: str, message: str, recovery: str) -> PromptSyntaxError:
     return PromptSyntaxError(code, message, recovery)
 
 
+def _is_quote_delimiter(text: str, index: int, quote: str | None) -> bool:
+    char = text[index]
+    if char == '"':
+        return True
+    if char != "'":
+        return False
+    previous_is_word = index > 0 and text[index - 1].isalnum()
+    next_is_word = index + 1 < len(text) and text[index + 1].isalnum()
+    # A word apostrophe is text, including possessives outside quoted sections.
+    return not (previous_is_word and (quote is None or next_is_word))
+
+
 def _validate_lexical(text: str) -> None:
     quote: str | None = None
     escaped = False
     stack: list[str] = []
-    for char in text:
+    for index, char in enumerate(text):
         if escaped:
             escaped = False
             continue
@@ -160,10 +172,10 @@ def _validate_lexical(text: str) -> None:
             escaped = True
             continue
         if quote:
-            if char == quote:
+            if char == quote and _is_quote_delimiter(text, index, quote):
                 quote = None
             continue
-        if char in {'"', "'"}:
+        if _is_quote_delimiter(text, index, None):
             quote = char
             continue
         if char in "([":
@@ -216,11 +228,11 @@ def _top_level_positions(text: str, token: str) -> list[int]:
             index += 1
             continue
         if quote:
-            if char == quote:
+            if char == quote and _is_quote_delimiter(text, index, quote):
                 quote = None
             index += 1
             continue
-        if char in {'"', "'"}:
+        if _is_quote_delimiter(text, index, None):
             quote = char
             index += 1
             continue
@@ -273,10 +285,10 @@ def _matching_square_end(text: str, start: int) -> int:
             escaped = True
             continue
         if quote:
-            if char == quote:
+            if char == quote and _is_quote_delimiter(text, index, quote):
                 quote = None
             continue
-        if char in {'"', "'"}:
+        if _is_quote_delimiter(text, index, None):
             quote = char
             continue
         if char == "[":
@@ -302,10 +314,10 @@ def _split_inner(text: str, delimiter: str) -> list[str]:
             escaped = True
             continue
         if quote:
-            if char == quote:
+            if char == quote and _is_quote_delimiter(text, index, quote):
                 quote = None
             continue
-        if char in {'"', "'"}:
+        if _is_quote_delimiter(text, index, None):
             quote = char
             continue
         if char == "(":
@@ -355,11 +367,11 @@ def _outer_square_expressions(text: str) -> list[_SquareExpression]:
             index += 1
             continue
         if quote:
-            if char == quote:
+            if char == quote and _is_quote_delimiter(text, index, quote):
                 quote = None
             index += 1
             continue
-        if char in {'"', "'"}:
+        if _is_quote_delimiter(text, index, None):
             quote = char
             index += 1
             continue
@@ -430,11 +442,11 @@ def _normalize_weight_text(text: str) -> str:
             continue
         if quote:
             result.append(char)
-            if char == quote:
+            if char == quote and _is_quote_delimiter(text, index, quote):
                 quote = None
             index += 1
             continue
-        if char in {'"', "'"}:
+        if _is_quote_delimiter(text, index, None):
             quote = char
             result.append(char)
             index += 1
@@ -459,7 +471,7 @@ def _normalize_weight_text(text: str) -> str:
 def _contains_token_weight(text: str) -> bool:
     escaped = False
     quote: str | None = None
-    for char in text:
+    for index, char in enumerate(text):
         if escaped:
             escaped = False
             continue
@@ -467,10 +479,10 @@ def _contains_token_weight(text: str) -> bool:
             escaped = True
             continue
         if quote:
-            if char == quote:
+            if char == quote and _is_quote_delimiter(text, index, quote):
                 quote = None
             continue
-        if char in {'"', "'"}:
+        if _is_quote_delimiter(text, index, None):
             quote = char
             continue
         if char in "([":

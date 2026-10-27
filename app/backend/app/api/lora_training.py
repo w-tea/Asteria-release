@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import mimetypes
 import json
+import logging
 import math
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -106,10 +107,14 @@ from app.services.lora_training import (
     score_lora_training_run_samples,
     start_lora_copy_machine_training_run,
     start_lora_training_run,
+    copy_machine_training_process,
+    lora_training_process,
+    _stop_training_process,
 )
 from app.services.xyz_grid import XYZGridAxis, XYZGridCell, build_xyz_contact_sheet
 from app.core.config import AppConfig
 from app.services.model_library import ModelLibraryScanner
+from app.services.model_library_cache import clear_model_library_cache
 from app.services.model_storage import resolve_model_root
 from app.services.operation_coordinator import OperationCoordinator
 from app.services.operation_executor import (
@@ -119,6 +124,7 @@ from app.services.operation_executor import (
     OperationExecutionResult,
 )
 from app.services.operation_repository import OperationNotFoundError, OperationRepository
+from app.services.resource_lifecycle import resource_admission, ResourceAdmissionTimeoutError
 
 class LoRATrainingRoute(APIRoute):
     def get_route_handler(self):
@@ -128,6 +134,7 @@ class LoRATrainingRoute(APIRoute):
             try:
                 return await original_handler(request)
             except LoRATrainingStorageError:
+                _logger.exception("Unable to persist LoRA training state")
                 return JSONResponse(
                     status_code=409,
                     content={"detail": "lora_training_storage_unavailable"},
@@ -138,6 +145,8 @@ class LoRATrainingRoute(APIRoute):
 
 router = APIRouter(prefix="/api/lora-training", tags=["lora-training"], route_class=LoRATrainingRoute)
 _lora_operation_coordinators: dict[Path, OperationCoordinator] = {}
+_lora_training_start_lock = threading.Lock()
+_logger = logging.getLogger(__name__)
 
 
 class LoRATrainingOperationExecutor:
@@ -147,38 +156,88 @@ class LoRATrainingOperationExecutor:
         return ("training_gpu_exclusive", "disk_write_heavy")
 
     def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
+        # The coordinator handles queued operations; direct copy-machine and
+        # XYZ work also share the process-wide GPU admission service.
+        while True:
+            if context.cancel_requested:
+                raise OperationCancelled()
+            try:
+                lease = resource_admission.acquire(
+                    ("training_gpu_exclusive",),
+                    operation_id=context.operation.operation_id,
+                    timeout_seconds=0.25,
+                )
+                break
+            except ResourceAdmissionTimeoutError:
+                continue
+        if context.cancel_requested:
+            lease.release()
+            raise OperationCancelled()
+        try:
+            result = self._execute_admitted(context)
+        except BaseException:
+            run_id = str(context.request_snapshot["run_id"])
+            current = _run_repository().get(run_id)
+            # An old operation must not stop a newer attempt of the same run.
+            if current is not None and current.operation_id == context.operation.operation_id:
+                _stop_training_process(lora_training_process(run_id))
+            # If reading ownership or stopping failed, leave admission closed.
+            lease.release()
+            raise
+        else:
+            lease.release()
+            return result
+
+    def _execute_admitted(self, context: OperationExecutionContext) -> OperationExecutionResult:
         run_id = str(context.request_snapshot["run_id"])
         repository = _run_repository()
-        run = repository.get(run_id)
-        if run is None:
-            raise OperationExecutionError("lora_training_run_not_found", retryable=False)
-        run.operation_id = context.operation.operation_id
-        repository.save(run)
-        if run.status != "running":
-            try:
-                run = start_lora_training_run(
-                    run_id,
-                    repository,
-                    data_dir=AppConfig().data_dir,
-                    project_root=AppConfig().root_dir,
-                )
-            except ValueError as exc:
-                raise OperationExecutionError(str(exc), retryable=True) from exc
+        with _lora_training_start_lock:
+            if context.cancel_requested:
+                raise OperationCancelled()
+            run = repository.get(run_id)
+            if run is None:
+                raise OperationExecutionError("lora_training_run_not_found", retryable=False)
+            is_retry = (
+                run.status in {"failed", "cancelled", "interrupted"}
+                and getattr(context.operation, "retry_of", None) == run.operation_id
+            )
+            if run.operation_id not in {None, context.operation.operation_id} and not is_retry:
+                raise OperationCancelled()
+            run.operation_id = context.operation.operation_id
+            repository.save(run)
+            if run.status != "running":
+                try:
+                    run = start_lora_training_run(
+                        run_id,
+                        repository,
+                        data_dir=AppConfig().data_dir,
+                        project_root=AppConfig().root_dir,
+                    )
+                except ValueError as exc:
+                    raise OperationExecutionError(str(exc), retryable=True) from exc
         if run is None:
             raise OperationExecutionError("lora_training_run_not_found", retryable=False)
         while run.status == "running":
-            if context.cancel_requested:
-                cancel_lora_training_run(run_id, repository)
-                raise OperationCancelled()
+            with _lora_training_start_lock:
+                latest = repository.get(run_id)
+                if latest is None or latest.operation_id != context.operation.operation_id:
+                    raise OperationCancelled()
+                if context.cancel_requested:
+                    cancel_lora_training_run(run_id, repository)
+                    raise OperationCancelled()
             current = int(run.progress_current or 0)
             total = int(run.progress_total) if run.progress_total is not None else None
             context.report_progress(current, total, "steps", phase="training")
             time.sleep(0.25)
-            run = refresh_lora_training_run(
-                run_id,
-                repository,
-                project_root=AppConfig().root_dir,
-            )
+            with _lora_training_start_lock:
+                latest = repository.get(run_id)
+                if latest is None or latest.operation_id != context.operation.operation_id:
+                    raise OperationCancelled()
+                run = refresh_lora_training_run(
+                    run_id,
+                    repository,
+                    project_root=AppConfig().root_dir,
+                )
             if run is None:
                 raise OperationExecutionError("lora_training_run_not_found", retryable=False)
         if run.status == "cancelled":
@@ -679,6 +738,50 @@ def create_copy_machine_training_run(
 
 @router.post("/copy-machine/runs/{run_id}/start", response_model=LoRACopyMachineTrainingRun)
 def start_copy_machine_training_run(run_id: str) -> LoRACopyMachineTrainingRun:
+    with _lora_training_start_lock:
+        run = _copy_machine_run_repository().get(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="copy_machine_training_run_not_found")
+        process = None
+        try:
+            lease = resource_admission.acquire(
+                ("training_gpu_exclusive",), operation_id=f"copy-machine:{run_id}", timeout_seconds=0,
+            )
+        except ResourceAdmissionTimeoutError as exc:
+            raise HTTPException(status_code=409, detail="lora_training_resources_busy") from exc
+        try:
+            run = _start_copy_machine_training_run(run_id)
+            process = copy_machine_training_process(run)
+            if run.status != "running" or process is None:
+                lease.release()
+            else:
+                try:
+                    threading.Thread(target=_hold_copy_machine_resources, args=(process, lease), daemon=True).start()
+                except BaseException:
+                    _stop_training_process(process)
+                    lease.release()
+                    raise
+            return run
+        except BaseException:
+            current = process or copy_machine_training_process(run)
+            if current is None or current.poll() is not None:
+                lease.release()
+            raise
+
+
+def _hold_copy_machine_resources(process, lease) -> None:
+    try:
+        process.wait()
+    except BaseException:
+        # Keep admission closed if stopping an unobservable child also fails.
+        _stop_training_process(process)
+        lease.release()
+        raise
+    else:
+        lease.release()
+
+
+def _start_copy_machine_training_run(run_id: str) -> LoRACopyMachineTrainingRun:
     try:
         run = start_lora_copy_machine_training_run(
             run_id,
@@ -735,6 +838,7 @@ def register_copy_machine_training_run_models(run_id: str) -> LoRACopyMachineTra
         raise
     if run is None:
         raise HTTPException(status_code=404, detail="copy_machine_training_run_not_found")
+    clear_model_library_cache()
     library = ModelLibraryScanner(_model_root()).scan()
     return LoRACopyMachineTrainingRunModelRegistrationResponse(
         **run.model_dump(),
@@ -1509,12 +1613,30 @@ def delete_run(run_id: str) -> dict[str, str | bool]:
 
 @router.post("/runs/{run_id}/start", response_model=LoRATrainingRun)
 def start_run(run_id: str) -> LoRATrainingRun:
-    config = AppConfig()
+    with _lora_training_start_lock:
+        return _start_run_with_operation(run_id)
+
+
+def _start_run_with_operation(run_id: str) -> LoRATrainingRun:
     repository = _run_repository()
     prepared = repository.get(run_id)
     if prepared is None:
         raise HTTPException(status_code=404, detail="lora_training_run_not_found")
     coordinator = _lora_operation_coordinator()
+    if prepared.operation_id:
+        try:
+            current = coordinator.get(prepared.operation_id)
+        except OperationNotFoundError:
+            pass
+        else:
+            if current.status not in {"completed", "completed_with_warnings", "failed", "cancelled", "interrupted"}:
+                return prepared
+    if not prepared.preflight.ready:
+        raise HTTPException(status_code=422, detail="lora_training_run_preflight_not_ready")
+    if prepared.status not in {"planned", "failed", "cancelled"}:
+        raise HTTPException(status_code=422, detail="lora_training_run_not_startable")
+    if not prepared.command_args:
+        raise HTTPException(status_code=422, detail="lora_training_run_command_empty")
     operation = coordinator.enqueue(
         kind="lora.training",
         source_actor="local",
@@ -1526,53 +1648,46 @@ def start_run(run_id: str) -> LoRATrainingRun:
         progress_unit="steps",
     )
     prepared.operation_id = operation.operation_id
-    repository.save(prepared)
+    prepared.status = "planned"
+    prepared.pid = None
+    prepared.started_at = None
+    prepared.finished_at = None
+    prepared.progress_current = None
+    prepared.progress_total = None
+    prepared.progress_percent = None
+    prepared.progress_message = ""
     try:
-        run = start_lora_training_run(
-            run_id,
-            repository,
-            data_dir=config.data_dir,
-            project_root=config.root_dir,
-        )
-    except ValueError as exc:
-        detail = str(exc)
-        if detail in {
-            "lora_training_run_preflight_not_ready",
-            "lora_training_run_not_startable",
-            "lora_training_run_command_empty",
-            "lora_training_working_dir_not_found",
-            "lora_training_command_start_failed",
-        }:
-            current = coordinator.get(operation.operation_id)
-            coordinator.repository.transition(
-                operation.operation_id,
-                expected_revision=current.row_revision,
-                target_status="failed",
-                phase="failed",
-                error_code=detail,
-                retryable=True,
-            )
-            raise HTTPException(status_code=422, detail=detail) from exc
+        repository.save(prepared)
+    except LoRATrainingStorageError:
+        coordinator.request_cancel(operation.operation_id)
         raise
-    if run is None:
-        raise HTTPException(status_code=404, detail="lora_training_run_not_found")
-    run.operation_id = operation.operation_id
-    repository.save(run)
     threading.Thread(
         target=_monitor_lora_operation,
         args=(operation.operation_id,),
         daemon=True,
         name=f"asteria-lora-operation-{operation.operation_id[:8]}",
     ).start()
-    return run
+    return prepared
 
 
 @router.post("/runs/{run_id}/refresh", response_model=LoRATrainingRun)
 def refresh_run(run_id: str) -> LoRATrainingRun:
-    run = refresh_lora_training_run(run_id, _run_repository(), project_root=AppConfig().root_dir)
-    if run is None:
-        raise HTTPException(status_code=404, detail="lora_training_run_not_found")
-    return run
+    with _lora_training_start_lock:
+        run = refresh_lora_training_run(run_id, _run_repository(), project_root=AppConfig().root_dir)
+        if run is None:
+            raise HTTPException(status_code=404, detail="lora_training_run_not_found")
+        if run.status == "planned" and run.operation_id:
+            try:
+                operation = _lora_operation_coordinator().get(run.operation_id)
+            except OperationNotFoundError:
+                pass
+            else:
+                if operation.status in {"failed", "cancelled", "interrupted"}:
+                    run.status = "cancelled" if operation.status == "cancelled" else "failed"
+                    run.finished_at = operation.updated_at.isoformat()
+                    run.updated_at = run.finished_at
+                    _run_repository().save(run)
+        return run
 
 
 @router.post("/runs/{run_id}/score-samples", response_model=LoRATrainingRun)
@@ -1608,6 +1723,11 @@ def run_sample_image(run_id: str, sample_index: int) -> FileResponse:
 
 @router.post("/runs/{run_id}/cancel", response_model=LoRATrainingRun)
 def cancel_run(run_id: str) -> LoRATrainingRun:
+    with _lora_training_start_lock:
+        return _cancel_run_with_operation(run_id)
+
+
+def _cancel_run_with_operation(run_id: str) -> LoRATrainingRun:
     run = cancel_lora_training_run(run_id, _run_repository())
     if run is None:
         raise HTTPException(status_code=404, detail="lora_training_run_not_found")
@@ -1641,6 +1761,7 @@ def register_run_models(run_id: str) -> LoRATrainingRunModelRegistrationResponse
         raise
     if result is None:
         raise HTTPException(status_code=404, detail="lora_training_run_not_found")
+    clear_model_library_cache()
     library = ModelLibraryScanner(model_root).scan()
     return LoRATrainingRunModelRegistrationResponse(
         **result.model_dump(),

@@ -46,7 +46,7 @@ def apply_output_image_format(output_paths: list[str], image_format: str) -> lis
             converted.append(output_path)
             continue
         try:
-            destination = unique_output_path(path.with_suffix(target_suffix))
+            destination = unique_output_path(path.with_suffix(target_suffix), include_sidecar=True)
             with Image.open(path) as image:
                 output_image = image.convert("RGB") if target_format == "jpg" else image
                 output_image.save(destination, format=pil_format_by_setting[target_format])
@@ -93,7 +93,7 @@ def apply_filename_template(
         )
         stem = safe_segment(raw_name) or f"{profile}_{generation_id}_{image_index}"
         try:
-            destination = unique_output_path(path.with_name(f"{stem}{path.suffix.lower()}"))
+            destination = unique_output_path(path.with_name(f"{stem}{path.suffix.lower()}"), include_sidecar=True)
             path.replace(destination)
         except _PATH_ACCESS_ERRORS:
             renamed.append(output_path)

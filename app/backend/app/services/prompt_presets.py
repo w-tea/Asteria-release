@@ -9,6 +9,7 @@ from uuid import uuid4
 from app.schemas.prompt_input import PromptInput
 from app.schemas.prompt_choices import PromptChoicePins
 from app.schemas.prompt_layout import PromptLayout
+from app.services.atomic_json import write_json_atomic
 from app.services.spatial_prompt_contract import (
     SpatialPromptRecoveryStatus,
     recover_saved_spatial_prompt_contract,
@@ -168,7 +169,7 @@ class PromptPresetRepository:
             if item.prompt_pins is not None:
                 serialized["prompt_pins"] = item.prompt_pins.model_dump(mode="json")
             payload.append(serialized)
-        self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        write_json_atomic(self.path, payload)
 
     def _normalize_tags(self, tags: list[str]) -> list[str]:
         normalized = []

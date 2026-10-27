@@ -19,6 +19,7 @@ import zipfile
 
 from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, Response, StreamingResponse
+from app.schemas.media import image_media_type
 from PIL import Image, ImageOps
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
@@ -5679,25 +5680,26 @@ def create_history_folder(request: CreateGenerationFolderRequest) -> GenerationF
 @router.patch("/history/bulk", response_model=GenerationHistoryResponse)
 def bulk_update_history_items(request: BulkGenerationCurationRequest) -> GenerationHistoryResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
-    try:
-        items = repository.bulk_update_curation(
-            request.ids,
-            rating=request.rating,
-            favorite=request.favorite,
-            tags_add=request.tags_add,
-            tags_remove=request.tags_remove,
-            folder_id=request.folder_id,
-            update_folder=request.update_folder,
-        )
-    except HistoryTagLimitExceededError as error:
-        raise HTTPException(
-            status_code=400,
-            detail={"code": api_errors.HISTORY_TAG_LIMIT_EXCEEDED, "limit": 160},
-        ) from error
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-    _sync_curation_sidecars(items)
-    return GenerationHistoryResponse(items=items)
+    with repository.publication():
+        try:
+            items = repository.bulk_update_curation(
+                request.ids,
+                rating=request.rating,
+                favorite=request.favorite,
+                tags_add=request.tags_add,
+                tags_remove=request.tags_remove,
+                folder_id=request.folder_id,
+                update_folder=request.update_folder,
+            )
+        except HistoryTagLimitExceededError as error:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": api_errors.HISTORY_TAG_LIMIT_EXCEEDED, "limit": 160},
+            ) from error
+        except ValueError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        _sync_curation_sidecars(items)
+        return GenerationHistoryResponse(items=items)
 
 
 @router.post("/history/scan", response_model=LibraryScanResponse)
@@ -5712,19 +5714,20 @@ def scan_history_sidecars() -> LibraryScanResponse:
 @router.patch("/history/{generation_id}", response_model=GenerationHistoryResponse)
 def update_history_item(generation_id: int, request: UpdateGenerationCurationRequest) -> GenerationHistoryResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
-    item = repository.update_curation(
-        generation_id,
-        rating=request.rating,
-        favorite=request.favorite,
-        tags=request.tags,
-        notes=request.notes,
-        folder_id=request.folder_id,
-        update_folder=request.update_folder,
-    )
-    if item is None:
-        raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_NOT_FOUND})
-    _sync_curation_sidecars([item])
-    return GenerationHistoryResponse(items=[item])
+    with repository.publication():
+        item = repository.update_curation(
+            generation_id,
+            rating=request.rating,
+            favorite=request.favorite,
+            tags=request.tags,
+            notes=request.notes,
+            folder_id=request.folder_id,
+            update_folder=request.update_folder,
+        )
+        if item is None:
+            raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_NOT_FOUND})
+        _sync_curation_sidecars([item])
+        return GenerationHistoryResponse(items=[item])
 
 
 @router.post("/history/bulk-delete", response_model=BulkDeleteGenerationResponse)
@@ -6076,7 +6079,7 @@ def output_file(filename: str) -> FileResponse:
         or not _path_is_file_safely(path)
     ):
         raise HTTPException(status_code=404, detail={"code": api_errors.OUTPUT_IMAGE_NOT_FOUND})
-    return FileResponse(path, headers={"Access-Control-Allow-Origin": "*"})
+    return FileResponse(path, media_type=image_media_type(str(path)), headers={"Access-Control-Allow-Origin": "*"})
 
 
 @router.get("/output-by-path")
@@ -6090,4 +6093,4 @@ def output_file_by_path(path: str) -> FileResponse:
         raise HTTPException(status_code=404, detail={"code": api_errors.OUTPUT_IMAGE_NOT_FOUND})
     if not _is_current_output_path(output_path, data_dir) and not _is_referenced_output_path(output_path, data_dir):
         raise HTTPException(status_code=403, detail={"code": api_errors.OUTPUT_IMAGE_NOT_REGISTERED})
-    return FileResponse(output_path, headers={"Access-Control-Allow-Origin": "*"})
+    return FileResponse(output_path, media_type=image_media_type(str(output_path)), headers={"Access-Control-Allow-Origin": "*"})

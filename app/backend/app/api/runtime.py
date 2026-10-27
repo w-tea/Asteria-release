@@ -840,13 +840,21 @@ def start() -> RuntimeStatus:
 
 @router.post("/stop", response_model=RuntimeStatus)
 def stop() -> RuntimeStatus:
-    return _manager().stop()
+    try:
+        return _manager().stop()
+    except RuntimeProcessError as exc:
+        code = str(exc) if str(exc) in {'runtime_ownership_unverified','runtime_stop_failed'} else 'runtime_stop_failed'
+        raise HTTPException(status_code=409,detail={'code':code}) from exc
 
 
 @router.post("/restart", response_model=RuntimeStatus)
 def restart() -> RuntimeStatus:
     manager = _manager()
-    manager.stop()
+    try:
+        manager.stop()
+    except RuntimeProcessError as exc:
+        code = str(exc) if str(exc) in {'runtime_ownership_unverified','runtime_stop_failed'} else 'runtime_stop_failed'
+        raise HTTPException(status_code=409,detail={'code':code}) from exc
     try:
         return manager.start()
     except RuntimeProcessError as exc:

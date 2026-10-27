@@ -357,6 +357,7 @@ class OperationRepository:
         statuses: Iterable[OperationStatus] | None = None,
         limit: int = 200,
         include_dismissed: bool = False,
+        for_display: bool = False,
     ) -> list[OperationRecord]:
         if limit < 1 or limit > 1000:
             raise ValueError("operation_limit_invalid")
@@ -371,9 +372,14 @@ class OperationRepository:
         if not include_dismissed:
             clauses.append("dismissed_at is null")
         where = f"where {' and '.join(clauses)}" if clauses else ""
+        order = (
+            "case when status in ('queued', 'preparing', 'running', 'cancelling') then 0 else 1 end, "
+            "updated_at desc, rowid desc"
+            if for_display else "queued_at asc, rowid asc"
+        )
         with self._connect() as connection:
             rows = connection.execute(
-                f"select * from operations {where} order by queued_at asc, rowid asc limit ?",
+                f"select * from operations {where} order by {order} limit ?",
                 (*parameters, limit),
             ).fetchall()
         return [self._row_to_record(row) for row in rows]

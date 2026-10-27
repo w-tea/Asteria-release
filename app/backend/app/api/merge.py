@@ -47,11 +47,13 @@ from app.services.merge_recipes import (
     preflight_anima_merge_architecture,
     preflight_anima_merge_recipe,
     resolve_merge_source_fingerprints,
+    unique_merge_output_path,
 )
 from app.services.merge_runtime_contract import (
     MERGE_RUNTIME_CONTRACT_VERSION,
     MergeRuntimeContractError,
     normalize_merge_runtime_recipe,
+    restore_merge_runtime_recipe,
 )
 from app.services.merge_xyz import (
     MergeXYZPlan,
@@ -261,9 +263,11 @@ class MergeBlockPresetImportResponse(BaseModel):
 
 
 class PromotePrecheckCandidateRequest(BaseModel):
-    candidate_path: str
+    candidate_path: str = ""
     metadata_path: str = ""
     output_name: str = ""
+    generation_id: int | None = Field(default=None, gt=0)
+    candidate_id: str = ""
 
 
 class PromotePrecheckCandidateResponse(BaseModel):
@@ -526,13 +530,17 @@ def _merge_metadata_audit(payload: dict[str, Any], output_path: Path, safetensor
     if output_exists_state is not False and not safetensors_metadata:
         warnings.append("safetensors_metadata_missing_or_unreadable")
     missing_fields = [field for field in REPRODUCIBLE_RECIPE_FIELDS if field not in recipe_dict]
+    comparison_recipe = recipe_dict
+    if safetensors_recipe is not None and "output_content_hash" not in safetensors_recipe:
+        # The final file hash is added to the sidecar after the embedded recipe is written.
+        comparison_recipe = {key: value for key, value in recipe_dict.items() if key != "output_content_hash"}
     return MergeMetadataAudit(
         output_exists=output_exists,
         metadata_exists=True,
         recipe_present=bool(recipe_dict),
         safetensors_metadata_present=bool(safetensors_metadata),
         safetensors_recipe_present=safetensors_recipe is not None,
-        recipe_matches_safetensors=(recipe_dict == safetensors_recipe) if recipe_dict and safetensors_recipe is not None else None,
+        recipe_matches_safetensors=(comparison_recipe == safetensors_recipe) if recipe_dict and safetensors_recipe is not None else None,
         missing_reproducibility_fields=missing_fields,
         warnings=warnings,
     )
@@ -1045,6 +1053,10 @@ def run_merge_recipe(recipe_id: str) -> MergeRun:
         )
     except (MergeExecutionError, OSError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _execute_merge_recipe_operation(recipe)
+
+
+def _execute_merge_recipe_operation(recipe: MergeRecipe) -> MergeRun:
     coordinator = _merge_operation_coordinator()
     operation = coordinator.enqueue(
         kind="merge.recipe",
@@ -1062,6 +1074,8 @@ def run_merge_recipe(recipe_id: str) -> MergeRun:
         progress_unit="model",
     )
     completed = coordinator.execute_operation(operation.operation_id)
+    if completed.status not in {"completed", "completed_with_warnings", "failed", "cancelled", "interrupted"}:
+        completed = coordinator.wait_for_terminal(operation.operation_id)
     error = _merge_operation_errors.pop(operation.operation_id, None)
     if error is not None:
         raise error
@@ -1071,8 +1085,58 @@ def run_merge_recipe(recipe_id: str) -> MergeRun:
     return run
 
 
+def _promote_in_memory_candidate(request: PromotePrecheckCandidateRequest) -> PromotePrecheckCandidateResponse:
+    if request.candidate_path or request.metadata_path:
+        raise HTTPException(status_code=400, detail="merge_candidate_identity_ambiguous")
+    config = AppConfig()
+    row = HistoryRepository(config.data_dir / "asteria.db").get(request.generation_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="merge_candidate_not_found")
+    settings = row.get("settings")
+    candidate = settings.get("merge_candidate", {}) if isinstance(settings, dict) else {}
+    if (
+        row.get("status") != "completed"
+        or not isinstance(candidate, dict)
+        or candidate.get("artifact_type") != "merge_xyz_candidate"
+        or candidate.get("candidate_state") != "completed"
+        or candidate.get("operation_state") != "completed"
+        or candidate.get("generation_id") != request.generation_id
+        or not request.candidate_id
+        or candidate.get("candidate_id") != request.candidate_id
+    ):
+        raise HTTPException(status_code=409, detail="merge_candidate_not_completed")
+    try:
+        recipe = restore_merge_runtime_recipe(candidate["normalized_recipe"], candidate["source_models"])
+        identities = candidate["source_identities"]
+        expected = recipe.source_fingerprints
+        if not expected or len(identities) != len(expected):
+            raise ValueError("candidate source provenance is missing")
+        current = resolve_merge_xyz_sources(recipe, requires_source_c=recipe.normalized_runtime_contract().requires_source_c)
+        if [source.metadata() for source in current] != identities or [source.fingerprint() for source in current] != expected:
+            raise HTTPException(status_code=409, detail="merge_candidate_source_changed")
+        preflight_anima_merge_recipe(recipe)
+    except HTTPException:
+        raise
+    except (KeyError, ValueError, TypeError, OSError, MergeExecutionError) as exc:
+        raise HTTPException(status_code=400, detail="merge_candidate_recipe_unavailable") from exc
+    recipe.id = uuid4().hex
+    recipe.save_model = True
+    recipe.overwrite = False
+    recipe.save_metadata = True
+    recipe.output_name = _safe_model_name(request.output_name, f"{request.candidate_id}.safetensors")
+    promoted_from = f"{candidate.get('operation_id', '')}/{request.candidate_id}"
+    recipe = recipe.model_copy(update={
+        "promoted_from": promoted_from, "candidate_generation_id": request.generation_id,
+        "candidate_id": request.candidate_id,
+    })
+    run = _execute_merge_recipe_operation(recipe)
+    return PromotePrecheckCandidateResponse(output_path=run.output_path, metadata_path=run.metadata_path, promoted_from=promoted_from)
+
+
 @router.post("/precheck-candidates/promote", response_model=PromotePrecheckCandidateResponse)
 def promote_precheck_candidate(request: PromotePrecheckCandidateRequest) -> PromotePrecheckCandidateResponse:
+    if request.generation_id is not None:
+        return _promote_in_memory_candidate(request)
     config = AppConfig()
     try:
         candidate = Path(request.candidate_path).resolve()
@@ -1096,7 +1160,7 @@ def promote_precheck_candidate(request: PromotePrecheckCandidateRequest) -> Prom
         output_name = _safe_model_name(request.output_name, candidate.name)
         if not output_name.lower().endswith(".safetensors"):
             output_name = f"{output_name}.safetensors"
-        output_path = _unique_path(output_root / output_name)
+        output_path = unique_merge_output_path(output_root / output_name)
         shutil.copy2(candidate, output_path)
 
         metadata_source = Path(request.metadata_path).resolve() if request.metadata_path else candidate.with_suffix(".asteria.merge.json").resolve()
@@ -1119,7 +1183,7 @@ def promote_precheck_candidate(request: PromotePrecheckCandidateRequest) -> Prom
             }
         )
         metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
-    except OSError as exc:
+    except (OSError, MergeExecutionError) as exc:
         raise HTTPException(status_code=409, detail=f"Could not promote merge candidate: {exc}") from exc
     return PromotePrecheckCandidateResponse(output_path=str(output_path), metadata_path=str(metadata_path), promoted_from=str(candidate))
 

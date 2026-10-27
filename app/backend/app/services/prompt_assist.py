@@ -572,7 +572,10 @@ def _post_json_and_extract_text(
         raise ValueError(f"prompt_assist_provider_request_failed: {exc}") from exc
     except ValueError as exc:
         raise ValueError(f"prompt_assist_provider_response_invalid: {exc}") from exc
-    content = extractor(body)
+    try:
+        content = extractor(body)
+    except ValueError as exc:
+        raise ValueError(f"prompt_assist_provider_response_invalid: {exc}") from exc
     if not content.strip():
         raise ValueError("prompt_assist_provider_response_empty")
     return content.strip()

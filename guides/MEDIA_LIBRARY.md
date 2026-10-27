@@ -1,12 +1,14 @@
 # Media Library / メディアライブラリ
 
+[日本語](#日本語) | [English](#english) | [README](../README.md)
+
 ![DarkモードのLibraryで検索した画像と詳細を確認 / Library image selection and details](images/media-library-dark-ja.jpg)
 
 画面例は日本語表示です。 / Screenshots show the Japanese interface.
 
 ## 日本語
 
-Media Libraryでは、画像、動画、音声を一つの画面で管理できます。上部の**すべて／画像／動画／音声**で種類を絞り込めます。
+左メニューの「メディア」を開くと、画像、動画、音声を一つの画面で管理できます。上部の**すべて／画像／動画／音声**で絞り込み、カードを選んで詳細を確認します。
 
 ### カードと詳細
 
@@ -18,8 +20,8 @@ Media Libraryでは、画像、動画、音声を一つの画面で管理でき�
 
 ### Video への受け渡し
 
-- 画像の **Image to Video** は、選択した画像を Video Studio の入力へ渡します。
-- 画像・動画・音声の **Reference / Video Edit** は、選択した素材を参照へ渡します。
+- 画像の **画像から動画** は、選択した画像を動画スタジオの入力へ渡します。
+- 画像・動画・音声の **参照 / 動画編集** は、選択した素材を参照へ渡します。
 - Sequenceの完成動画では、連結した動画と採用済みの各クリップを確認し、Sequenceへ戻れます。
 
 選択した成果物はそのまま受け渡され、別のファイルへ勝手に置き換わりません。対応しない操作は、理由を表示したうえで無効になります。
@@ -38,11 +40,11 @@ Media Libraryでは、画像、動画、音声を一つの画面で管理でき�
 
 ## English
 
-Media Library manages images, videos, and audio in one place. Filter the grid with **All / Images / Videos / Audio**.
+Open **Media** in the left menu to manage images, videos and audio in one place. Filter the grid with **All / Images / Videos / Audio**, then select a card to inspect its details.
 
 ### Cards and details
 
-- Images keep the existing image preview and details.
+- Image details show the preview and generation settings.
 - Video cards show a poster, duration, resolution, audio indicator, and status. Details include a player, prompt, provider, FPS, codec, generation settings, and references.
 - Audio cards show duration, format, sample rate, channels, and provider/model. Details include a native player, description, lyrics, seed, duration, and generation settings.
 

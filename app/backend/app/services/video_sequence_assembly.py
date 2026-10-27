@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from fractions import Fraction
 from hashlib import sha256
 import json
-import os
 from pathlib import Path
 import re
 from typing import Any
@@ -19,6 +18,7 @@ from app.schemas.video import VideoRequest
 from app.schemas.video_sequence import VideoSequence
 from app.services.media_probe import MediaProbeResult, probe_media
 from app.services.atomic_json import write_json_atomic
+from app.services.image_check_recovery import move_without_replacement
 from app.services.runtime import ComfyClient, RuntimeCancellationConfirmed, RuntimeErrorResponse
 from app.services.video_model_resolver import VideoModelResolver
 from app.services.video_sequence_context import (
@@ -716,7 +716,7 @@ class VideoSequenceAssemblyService:
                 latent_execution=latent_execution,
             )
             canonical = _canonical_json(receipt)
-            os.replace(staging_path, final_path)
+            move_without_replacement(staging_path, final_path)
             return SequenceAssemblyResult(
                 output_path=final_path,
                 probe=result_probe,

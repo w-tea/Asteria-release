@@ -23,6 +23,11 @@ from app.services.operation_retention import OperationRetentionService
 from app.services.preview_registry import PreviewRegistry
 from app.services.resource_observation import ResourceObserver
 from app.services.runtime_process import RuntimeProcessManager
+from app.services.runtime_ownership import (
+    RuntimeOwnershipError,
+    load_runtime_ownership,
+    terminate_process_tree,
+)
 from app.services.runtime_recovery import (
     RuntimeOwnership,
     RuntimeProcessSample,
@@ -57,32 +62,29 @@ class DiagnosticsError(RuntimeError):
 
 
 class PsutilRuntimeInspector:
+    def __init__(self) -> None:
+        self._sampled_processes: dict[int, psutil.Process] = {}
+
     def sample(self, pid: int) -> RuntimeProcessSample | None:
+        self._sampled_processes.pop(pid, None)
         try:
             process = psutil.Process(pid)
-            return RuntimeProcessSample(
+            sample = RuntimeProcessSample(
                 pid=pid,
                 executable=process.exe(),
                 start_time=process.create_time(),
                 root=process.cwd(),
             )
+            if not process.is_running():
+                return None
+            self._sampled_processes[pid] = process
+            return sample
         except (psutil.AccessDenied, psutil.NoSuchProcess, psutil.Error, OSError):
             return None
 
     def stop(self, pid: int) -> bool:
-        try:
-            process = psutil.Process(pid)
-            process.terminate()
-            try:
-                process.wait(timeout=10)
-            except psutil.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=5)
-            return not process.is_running()
-        except psutil.NoSuchProcess:
-            return True
-        except (psutil.AccessDenied, psutil.Error, OSError):
-            return False
+        process = self._sampled_processes.pop(pid, None)
+        return process is not None and terminate_process_tree(process)
 
 
 class DiagnosticsService:
@@ -454,74 +456,21 @@ class DiagnosticsService:
         return {"safe_mode": payload["safe_mode"], "records": records}
 
     def _load_runtime_ownership(self) -> RuntimeOwnership:
-        state_path = self.config.data_dir / "temp" / "launcher" / "launcher-state.json"
         try:
-            payload = json.loads(state_path.read_text(encoding="utf-8-sig"))
-            if not self._same_path(payload["app_root"], self.config.root_dir):
+            ownership = load_runtime_ownership(self.config)
+            if ownership is None:
                 raise DiagnosticsError("runtime_ownership_unverified")
-            records = [
-                item
-                for item in payload["processes"]
-                if isinstance(item, dict) and item.get("name") == "comfyui"
-            ]
-            if len(records) != 1:
-                raise DiagnosticsError("runtime_ownership_unverified")
-            record = records[0]
-            started = datetime.fromisoformat(
-                str(record["started_at_utc"]).replace("Z", "+00:00")
-            ).timestamp()
-            return RuntimeOwnership(
-                pid=int(record["pid"]),
-                executable=str(Path(record["executable_path"]).resolve(strict=False)),
-                start_time=started,
-                root=str(self.config.comfy_dir.resolve(strict=False)),
-            )
-        except DiagnosticsError:
-            raise
-        except (
-            OSError,
-            RuntimeError,
-            ValueError,
-            KeyError,
-            TypeError,
-            json.JSONDecodeError,
-        ) as exc:
+            return ownership
+        except RuntimeOwnershipError as exc:
             raise DiagnosticsError("runtime_ownership_unverified") from exc
 
     def _record_started_runtime(self, pid: int) -> bool:
-        sample = self.inspector.sample(pid)
-        if sample is None or sample.pid != pid:
-            return False
-        state_path = self.config.data_dir / "temp" / "launcher" / "launcher-state.json"
+        # RuntimeProcessManager writes the native timestamp; do not replace its
+        # seven-digit Windows time with a rounded Python datetime.
         try:
-            payload = json.loads(state_path.read_text(encoding="utf-8-sig"))
-            if not self._same_path(payload["app_root"], self.config.root_dir):
-                return False
-            records = [
-                item
-                for item in payload.get("processes", [])
-                if isinstance(item, dict) and item.get("name") != "comfyui"
-            ]
-            records.append(
-                {
-                    "name": "comfyui",
-                    "pid": sample.pid,
-                    "executable_path": sample.executable,
-                    "started_at_utc": datetime.fromtimestamp(
-                        sample.start_time,
-                        tz=UTC,
-                    ).isoformat(),
-                }
-            )
-            payload["processes"] = records
-            temporary = state_path.with_name(f".{state_path.name}.tmp")
-            temporary.write_text(
-                json.dumps(payload, ensure_ascii=False, sort_keys=True),
-                encoding="utf-8",
-            )
-            os.replace(temporary, state_path)
-            return True
-        except (OSError, RuntimeError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+            ownership = self._load_runtime_ownership()
+            return ownership.pid == pid and RuntimeRecoveryService(self.inspector).ownership_matches(ownership)
+        except DiagnosticsError:
             return False
 
     def _active_operation_count(self) -> int:

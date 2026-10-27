@@ -131,13 +131,17 @@ class MediaArtifact(BaseModel):
         return self.fps_numerator / self.fps_denominator
 
 
+def image_media_type(path: str) -> str | None:
+    suffix = PurePosixPath(path.replace("\\", "/")).suffix.lower()
+    return _IMAGE_MIME_TYPES.get(suffix)
+
+
 def legacy_image_artifacts(generation_id: int, paths: list[str]) -> list[MediaArtifact]:
     artifacts: list[MediaArtifact] = []
     for ordinal, path in enumerate(paths):
         if not isinstance(path, str):
             continue
-        suffix = PurePosixPath(path.replace("\\", "/")).suffix.lower()
-        mime_type = _IMAGE_MIME_TYPES.get(suffix)
+        mime_type = image_media_type(path)
         if mime_type is None:
             continue
         digest = sha256(f"{generation_id}:{ordinal}:{path}".encode("utf-8")).hexdigest()[:20]

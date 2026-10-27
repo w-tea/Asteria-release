@@ -49,7 +49,7 @@ $resolvedAppRoot = [System.IO.Path]::GetFullPath($AppRoot)
 $maintenanceJournalPath = [System.IO.Path]::Combine("$resolvedAppRoot.maintenance", "journal.json")
 if (Test-Path -LiteralPath $maintenanceJournalPath -PathType Leaf) {
     try {
-        $maintenanceRecovery = Repair-AsteriaMaintenanceTransaction -JournalPath $maintenanceJournalPath
+        $maintenanceRecovery = Repair-AsteriaMaintenanceTransaction -JournalPath $maintenanceJournalPath -ExpectedAppRoot $resolvedAppRoot
         if ($maintenanceRecovery.status -eq "recovery_required") {
             Complete-Start "blocked" "launcher_maintenance_recovery_required" 75 "The previous update could not be recovered automatically. Run Repair-Asteria.cmd."
         }

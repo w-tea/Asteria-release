@@ -5,6 +5,7 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
+from threading import Lock
 from urllib.parse import urlparse
 
 import psutil
@@ -14,11 +15,17 @@ from app.core.config import AppConfig
 from app.services.comfy_model_paths import render_comfy_extra_model_paths
 from app.services.external_model_libraries import ExternalModelLibraryRepository
 from app.services.runtime import ComfyClient
+from app.services.runtime_ownership import (
+    RuntimeOwnershipError, load_runtime_ownership, process_matches,
+    record_started_runtime, remove_runtime_ownership, terminate_process_tree,
+)
+from app.services.runtime_recovery import RuntimeOwnership
 from app.services.user_settings import UserSettingsRepository
 
 
 logger = logging.getLogger(__name__)
 DISABLE_PINNED_MEMORY_ARG = "--disable-pinned-memory"
+_LIFECYCLE_LOCK = Lock()
 
 
 class RuntimeStatus(BaseModel):
@@ -58,8 +65,21 @@ class RuntimeProcessManager:
         )
 
     def start(self) -> RuntimeStatus:
+        with _LIFECYCLE_LOCK:
+            return self._start()
+
+    def _start(self) -> RuntimeStatus:
         current = self.status()
         if current.healthy:
+            return current
+        if current.running:
+            try:
+                ownership = load_runtime_ownership(self.config)
+                if ownership is None or not process_matches(psutil.Process(ownership.pid), ownership):
+                    raise RuntimeOwnershipError('runtime_ownership_unverified')
+            except (RuntimeOwnershipError, psutil.Error, OSError) as exc:
+                raise RuntimeProcessError('runtime_ownership_unverified') from exc
+            current.pid = ownership.pid
             return current
         try:
             if self.config.comfy_dir.exists() and not self.config.comfy_dir.is_dir():
@@ -75,7 +95,7 @@ class RuntimeProcessManager:
         comfy_args = self._resolved_comfy_args()
         try:
             with stdout_path.open("a", encoding="utf-8") as stdout, stderr_path.open("a", encoding="utf-8") as stderr:
-                process = subprocess.Popen(
+                process = psutil.Popen(
                     [str(self.config.comfy_python_path), "main.py", *comfy_args],
                     cwd=self.config.comfy_dir,
                     stdout=stdout,
@@ -84,6 +104,13 @@ class RuntimeProcessManager:
                 )
         except OSError as exc:
             raise RuntimeProcessError(f"Could not start ComfyUI: {exc}") from exc
+        try:
+            record_started_runtime(self.config,process)
+        except RuntimeOwnershipError as exc:
+            # This object is the child just created here, never a discovered PID.
+            if not terminate_process_tree(process):
+                raise RuntimeProcessError('runtime_stop_failed') from exc
+            raise RuntimeProcessError('runtime_ownership_unverified') from exc
         try:
             self.config.comfy_pid_path.write_text(str(process.pid), encoding="utf-8")
         except OSError:
@@ -108,12 +135,31 @@ class RuntimeProcessManager:
         return args
 
     def stop(self) -> RuntimeStatus:
-        pid = self._pid_from_base_url() or self._read_pid()
-        if pid and self._pid_is_running(pid):
-            if pid != os.getpid():
-                self._terminate_pid(pid)
+        with _LIFECYCLE_LOCK:
+            return self._stop()
+
+    def _stop(self) -> RuntimeStatus:
+        candidate = self._pid_from_base_url() or self._read_pid()
         try:
-            if self.config.comfy_pid_path.exists():
+            ownership = load_runtime_ownership(self.config)
+        except RuntimeOwnershipError as exc:
+            if candidate and self._pid_is_running(candidate):
+                raise RuntimeProcessError('runtime_ownership_unverified') from exc
+            ownership = None
+        if ownership is None:
+            if candidate and self._pid_is_running(candidate):
+                raise RuntimeProcessError('runtime_ownership_unverified')
+        else:
+            if ownership.pid == os.getpid():
+                raise RuntimeProcessError('runtime_ownership_unverified')
+            if not self._terminate_pid(ownership.pid,ownership):
+                raise RuntimeProcessError('runtime_stop_failed')
+            try:
+                remove_runtime_ownership(self.config,ownership)
+            except RuntimeOwnershipError as exc:
+                raise RuntimeProcessError('runtime_stop_failed') from exc
+        try:
+            if self.config.comfy_pid_path.exists() and (ownership is None or self._read_pid() == ownership.pid):
                 self.config.comfy_pid_path.unlink()
         except OSError:
             pass
@@ -189,16 +235,18 @@ class RuntimeProcessManager:
         name = devices[0].get("name")
         return name if isinstance(name, str) else None
 
-    def _terminate_pid(self, pid: int) -> None:
+    def _terminate_pid(self, pid: int, ownership: RuntimeOwnership) -> bool:
         try:
             process = psutil.Process(pid)
-            process.terminate()
-            try:
-                process.wait(timeout=10)
-            except psutil.TimeoutExpired:
-                process.kill()
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.Error):
-            return
+            if not process_matches(process,ownership):
+                raise RuntimeProcessError('runtime_ownership_unverified')
+            return terminate_process_tree(process)
+        except psutil.NoSuchProcess:
+            if self._pid_from_base_url():
+                raise RuntimeProcessError('runtime_ownership_unverified') from None
+            return True
+        except (psutil.AccessDenied,psutil.Error,OSError) as exc:
+            raise RuntimeProcessError('runtime_ownership_unverified') from exc
 
     def _write_extra_model_paths_config(self) -> None:
         path = self.config.comfy_dir / "extra_model_paths.yaml"

@@ -15,6 +15,7 @@ def pick_native_path(
     if os.name != "nt" or sys.platform != "win32":
         return "unavailable", None
     script = r"""
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 Add-Type -AssemblyName System.Windows.Forms
 $target = $env:ASTERIA_PICK_TARGET
 $title = $env:ASTERIA_PICK_TITLE

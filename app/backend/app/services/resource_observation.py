@@ -19,6 +19,7 @@ from app.services.operation_coordinator import OperationCoordinator
 from app.services.resource_lifecycle import resource_admission
 from app.services.runtime import ComfyClient
 from app.services.runtime_process import RuntimeProcessManager
+from app.services.runtime_ownership import RuntimeOwnershipError, load_runtime_ownership, process_matches
 from app.services.user_settings import resolve_current_output_root
 
 
@@ -145,37 +146,18 @@ class ResourceObserver:
     def _runtime_owned(self, pid: int | None) -> bool | None:
         if pid is None:
             return None
-        state_path = self.config.data_dir / "temp" / "launcher" / "launcher-state.json"
         try:
-            payload = json.loads(state_path.read_text(encoding="utf-8-sig"))
-            if os.path.normcase(str(Path(payload["app_root"]).resolve(strict=False))) != os.path.normcase(
-                str(self.config.root_dir.resolve(strict=False))
-            ):
+            ownership = load_runtime_ownership(self.config)
+            if ownership is None:
                 return False
-            record = next(
-                item
-                for item in payload["processes"]
-                if item.get("name") == "comfyui" and int(item.get("pid")) == pid
+            process = psutil.Process(ownership.pid)
+            if not process_matches(process, ownership):
+                return False
+            return pid == ownership.pid or any(
+                child.pid == pid and child.is_running()
+                for child in process.children(recursive=True)
             )
-            process = psutil.Process(pid)
-            expected_time = datetime.fromisoformat(
-                str(record["started_at_utc"]).replace("Z", "+00:00")
-            ).timestamp()
-            return (
-                os.path.normcase(process.exe())
-                == os.path.normcase(str(Path(record["executable_path"]).resolve(strict=False)))
-                and abs(process.create_time() - expected_time) < 0.001
-            )
-        except (
-            OSError,
-            RuntimeError,
-            ValueError,
-            KeyError,
-            StopIteration,
-            TypeError,
-            json.JSONDecodeError,
-            psutil.Error,
-        ):
+        except (RuntimeOwnershipError, OSError, RuntimeError, ValueError, psutil.Error):
             return None
 
     def _verified_vram(self) -> dict[str, int] | None:

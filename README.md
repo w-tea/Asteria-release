@@ -2,27 +2,15 @@
 
 [日本語](#日本語) | [English](#english)
 
+**画像・動画・音楽の生成から、編集、整理、LoRA学習、モデルのMergeまで。Windowsで使うローカルAI制作アプリです。**
+
+**A local AI creation app for Windows: generate images, video and music, then edit, organize, train LoRAs and merge models.**
+
 ![Darkモードの生成画面。左でプロンプト、右で生成条件を設定 / Generate in Dark mode](guides/images/generate-dark-ja.jpg)
 
-Darkモード・日本語表示の実画面です。起動後の操作は[画面付きクイックスタート](guides/QUICK_START.md)から確認できます。 / Japanese interface in Dark mode. Start with the illustrated [Quick start](guides/QUICK_START.md).
+画面例はDarkモード・日本語表示です。必要な情報は以下の日本語・英語の案内から確認できます。
 
-> **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトを三欄に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
->
-> **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
-
-## 更新履歴 / Release history
-
-- **V1.2.0** — Video Studio、Music Studio、動画・音声に対応したMedia Library、拡張機能、Anima 2.9B／3.8B、独自のMerge計算方法を追加。プロンプトの組み立て・解釈・比較、ワイルドカードの部分固定、生成過程の保存と途中からの分岐、画像・LoRAの点検、自動生成の終了条件も選べます。 / Added Video Studio, Music Studio, video/audio support in Media Library, Extensions, Anima 2.9B/3.8B support, and new Merge modes. New creative tools cover prompt assembly, interpretation and comparison, partial wildcard pinning, generation-stage recording and branching, image and LoRA review, and automatic-generation limits.
-- **V1.1.2** — 初回セットアップで一時的にパスが長くなり、一部の管理対象コンポーネントを導入できない問題を修正。復旧が必要な場合は、原因と対処方法を表示します。 / Fixed managed-component installation failures caused by an unnecessarily long temporary extraction path and added actionable recovery guidance.
-- **V1.1.1** — 空白を含むフォルダーへAsteriaを配置すると起動できない問題を修正。 / Fixed Asteria failing to start when installed in a folder whose path contains spaces.
-- **V1.1.0** — 中断後も再開できる処理、更新・復旧時の保護、外部モデルライブラリ、追加のMerge方式、全画面のテーマ刷新、画像メタデータの再利用、Discord生成、診断を追加。 / Added resumable long-running work, safer update and recovery, external model libraries, new Merge modes, a full visual refresh, image-metadata reuse, Discord generation, and diagnostics.
-- **V1.0.4** — Runtime Monitor、生成時間、Seed単独適用、LoRAサムネイルと生成出力を改善。 / Added Runtime Monitor and generation time, seed-only reuse, LoRA thumbnails, and generation-output fixes.
-- **V1.0.3** — LibraryとImage Editの長期利用・データ保護、Generate／Merge XYZ、Topaz／Eagle連携、モデル参照と操作UIを強化。 / Strengthened long-term Library and Image Edit safety, Generate/Merge XYZ, Topaz/Eagle integration, model handling, and operation UI.
-- **V1.0.2** — Generateのモデル一覧キャッシュ、Generation Preset、Prompt & Assets、画面を移動したときの更新処理を改善。 / Refined Generate model caching, Generation Presets, Prompt & Assets, and navigation refresh behavior.
-- **V1.0.1** — Merge XYZ、Windowsのリンク経由モデル、Portable版の初期設定と修復を強化。 / Added Merge XYZ and strengthened Windows linked-model and Portable bootstrap/repair behavior.
-- **V1.0.0** — Windows Portable初回公開版。 / Initial Windows Portable release.
-
-この一覧には利用者向けの変更を記載します。dev版の対象範囲は上記の案内を確認してください。 / This list covers user-facing changes. See the note above for the scope of this dev build.
+Screenshots show the Japanese interface in Dark mode. Choose your language below for setup, guides and release details.
 
 ## 日本語
 
@@ -32,7 +20,30 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 
 画面例のテーマと言語は設定から変更できます。起動後の最初の操作は[画面付きクイックスタート](guides/QUICK_START.md)を参照してください。
 
+### まず始める
+
+1. [必要環境](#必要最低限のスペックと動作環境)を確認し、[ZIPの展開と初回セットアップ](#インストール方法)へ進みます。
+2. 手持ちのモデルを[追加・共有](#モデルの追加)するか、起動後に任意のスターターパックを選びます。
+3. [画面付きクイックスタート](guides/QUICK_START.md)で、一枚の生成、画像の選択、マスク編集を試します。
+4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
+
+> **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトを三欄に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
+
 ### 主な機能
+
+V1.2.0では、次の制作の流れをまとめて扱えます。
+
+| やりたいこと | 主な機能・操作ガイド |
+|---|---|
+| 画像を生成・編集する | txt2img、img2img、inpaint、Hires.fix、ControlNet、Detailer、Topaz。[クイックスタート](guides/QUICK_START.md) |
+| プロンプトや生成条件を比べる | シーン組立、解釈ビュー、語句比較、ワイルドカードの部分固定、途中状態からの分岐。[制作支援](guides/CREATIVE_WORKFLOWS.md) |
+| 結果を確認・整理する | 画像・動画・音声のMedia Library、人体部位レビュー、再生成条件の比較。[メディア管理](guides/MEDIA_LIBRARY.md)／[完成画像チェック](guides/IMAGE_CHECK.md) |
+| 動画や音楽を作る | MiniMax H3の5タスクとSequence、MiniMax-Music3のVocal／Instrumental。[動画](guides/VIDEO_STUDIO.md)／[音楽](guides/MUSIC_STUDIO.md) |
+| LoRA学習・モデル合成を行う | 学習素材の確認、LoRAの学習・実用テスト、Merge XYZ、Moment Weave／Log Weave／Dual Residual |
+| 自分の制作環境を整える | 外部モデルライブラリ、Discord連携、[拡張機能](guides/EXTENSIONS.md)、Light／Dark／System、Anima 2.9B／3.8B対応 |
+
+<details>
+<summary>機能ごとの詳しい説明を開く</summary>
 
 - **画像を作る・整える**: txt2img／img2imgで新規画像を作ったり、元画像を変換したりできます。Hires.fix、ControlNet、Detailer、Topaz Photo AI連携で仕上がりも調整できます。
 - **画像・動画・音声を管理する**: マスクや切り抜きで編集した結果をMedia Libraryに保存し、画像・動画・音声の再生、比較、評価、タグ付けまで続けて行えます。
@@ -50,7 +61,14 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - **外部から生成する**: Generateで公開した設定だけをDiscordの許可したサーバーやチャンネルから実行できます。
 - **機能を拡張する**: Extensionsでカタログ、URL／GitHub、ローカルZIP、拡張機能フォルダーを選び、Asteriaの画面や操作を追加できます。Safe Modeなら起動を妨げる拡張機能を止めて復旧できます。
 
+</details>
+
 ### 更新履歴
+
+<details>
+<summary>V1.2.0と以前のバージョンの変更を開く</summary>
+
+利用者向けの変更を記載しています。dev版の対象範囲は「まず始める」の案内を確認してください。
 
 #### V1.2.0
 
@@ -124,6 +142,15 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - LoRAと同じ名前の画像をサムネイルとして表示できるようにしました。ジャンクションやシンボリックリンクで共有しているLoRAにも対応します。
 - SettingsにRuntime Monitorを追加しました。次回起動時に別ウィンドウで生成ログを確認でき、Monitorを閉じてもAsteria本体は終了しません。
 - 生成結果や履歴から、選択した画像のSeedだけを現在の生成設定へ適用できるようにしました。
+
+#### V1.0.3以前
+
+- **V1.0.3** — LibraryとImage Editの長期利用・データ保護、Generate／Merge XYZ、Topaz／Eagle連携、モデル参照と操作UIを強化しました。
+- **V1.0.2** — Generateのモデル一覧キャッシュ、Generation Preset、Prompt & Assets、画面を移動したときの更新処理を改善しました。
+- **V1.0.1** — Merge XYZ、Windowsのリンク経由モデル、Portable版の初期設定と修復を強化しました。
+- **V1.0.0** — Windows Portable初回公開版です。
+
+</details>
 
 ### 必要最低限のスペックと動作環境
 
@@ -282,6 +309,10 @@ Asteria本体の利用条件は`LICENSE`で確認できます。
 
 取得する実行環境、パッケージ、カスタムノード、モデルの提供元、固定バージョン、ライセンスは、`release-manifest.yaml`、`runtime-dependencies.yaml`、`model-dependencies.yaml`、`notices/THIRD_PARTY_NOTICES.txt`で確認できます。スターターパックを含む第三者モデルには、各配布元の利用条件が適用されます。
 
+### 謝辞
+
+Qwen2D-Anime VAE対応では、Anzhc氏が公開している[anzhc-qwen2d-comfyui](https://github.com/Anzhc/anzhc-qwen2d-comfyui)を参考にしました。
+
 ---
 
 ## English
@@ -294,7 +325,30 @@ Asteria is a Windows application for local AI creation. It combines image genera
 
 Screenshots show the Japanese interface in Dark mode. Language and theme are selectable in Settings. See the illustrated [Quick start](guides/QUICK_START.md) for your first steps after launch.
 
+### Get started
+
+1. Check the [requirements](#minimum-requirements-and-supported-environment), then follow [installation and first-run setup](#installation).
+2. [Add or share your own models](#adding-models), or select an optional starter pack after launch.
+3. Use the illustrated [Quick start](guides/QUICK_START.md) to generate one image, select a result and edit a mask.
+4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
+
+> **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
+
 ### Main features
+
+V1.2.0 brings these workflows together:
+
+| What you want to do | Features and guides |
+|---|---|
+| Generate and edit images | txt2img, img2img, inpaint, Hires.fix, ControlNet, Detailer and Topaz. [Quick start](guides/QUICK_START.md) |
+| Compare prompts and generation settings | Scene builder, interpretation, prompt-effect comparisons, partial wildcard pinning and intermediate-state branching. [Creative workflows](guides/CREATIVE_WORKFLOWS.md) |
+| Review and organize results | Image, video and audio Media Library, body-part review and generation-condition comparison. [Media management](guides/MEDIA_LIBRARY.md) / [Completed-image checks](guides/IMAGE_CHECK.md) |
+| Create video and music | Five MiniMax H3 tasks and Sequence; MiniMax-Music3 Vocal and Instrumental. [Video](guides/VIDEO_STUDIO.md) / [Music](guides/MUSIC_STUDIO.md) |
+| Train LoRAs and merge models | Dataset review, training and practical tests, Merge XYZ, Moment Weave, Log Weave and Dual Residual |
+| Set up your studio | External model libraries, Discord, [Extensions](guides/EXTENSIONS.md), Light/Dark/System and Anima 2.9B/3.8B support |
+
+<details>
+<summary>Open the full feature descriptions</summary>
 
 - **Generation and enhancement**: Use txt2img, img2img, Hires.fix, ControlNet, Detailer, and Topaz Photo AI integration.
 - **Image editing and Media Library**: Edit with masks and crops; browse and play images, video, and audio; compare images; and organize artifacts with ratings and tags.
@@ -312,7 +366,14 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 - **Extensions**: Add Asteria workspaces and actions from the catalog, a URL or GitHub repository, a local ZIP, or an extension folder.
 - **Discord generation**: Use only the Generate settings you explicitly publish from allowed Discord servers or channels.
 
+</details>
+
 ### Release history
+
+<details>
+<summary>Open changes in V1.2.0 and earlier versions</summary>
+
+This history covers user-facing changes. See Get started for the scope of this dev build.
 
 #### V1.2.0
 
@@ -384,6 +445,15 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 - Added LoRA thumbnails from image files with the same name, including LoRAs shared through junctions or symbolic links.
 - Added Runtime Monitor under Settings. It can open on the next launch to show generation logs in a separate window, and closing it does not stop Asteria.
 - Added an action to apply only the seed from a selected result or history image to the current generation settings.
+
+#### V1.0.3 and earlier
+
+- **V1.0.3** — Strengthened long-term Library and Image Edit safety, Generate/Merge XYZ, Topaz/Eagle integration, model handling and operation UI.
+- **V1.0.2** — Refined Generate model caching, Generation Presets, Prompt & Assets and navigation refresh behavior.
+- **V1.0.1** — Added Merge XYZ and strengthened Windows linked-model and Portable bootstrap/repair behavior.
+- **V1.0.0** — Initial Windows Portable release.
+
+</details>
 
 ### Minimum requirements and supported environment
 
@@ -542,8 +612,6 @@ The Asteria license is provided in `LICENSE`.
 
 Provider information, pinned versions, and licenses for downloaded runtimes, packages, custom nodes, and models are recorded in `release-manifest.yaml`, `runtime-dependencies.yaml`, `model-dependencies.yaml`, and `notices/THIRD_PARTY_NOTICES.txt`. Third-party models, including starter packs, remain subject to the terms set by their providers.
 
-### 謝辞 / Acknowledgements
-
-Qwen2D-Anime VAE対応では、Anzhc氏が公開している[anzhc-qwen2d-comfyui](https://github.com/Anzhc/anzhc-qwen2d-comfyui)を参考にしました。
+### Acknowledgements
 
 Asteria's Qwen2D-Anime VAE support was informed by [anzhc-qwen2d-comfyui](https://github.com/Anzhc/anzhc-qwen2d-comfyui), created by Anzhc.

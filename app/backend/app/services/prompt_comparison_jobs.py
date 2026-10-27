@@ -82,11 +82,11 @@ class PromptComparisonExecutor:
                 context.report_progress(active_index + 1, total, 'images', phase='running')
             self.repository.set_status(comparison_id, 'completed')
             return OperationExecutionResult(artifact_refs=tuple(artifacts))
-        except OperationCancelled:
+        except OperationCancelled as exc:
             self.repository.set_status(comparison_id, 'cancelled')
             if active_index is not None and self.repository.get(comparison_id)['cells'][active_index]['status'] == 'running':
                 self.repository.update_cell(comparison_id, active_index, status='cancelled')
-            raise
+            raise OperationCancelled(artifact_refs=tuple(dict.fromkeys((*artifacts, *exc.artifact_refs)))) from exc
         except Exception as exc:
             if isinstance(exc, OperationExecutionError):
                 code = exc.error_code

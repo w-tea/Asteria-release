@@ -612,6 +612,8 @@ def process(request: TopazProcessRequest) -> TopazProcessResponse:
         progress_unit="image",
     )
     completed = coordinator.execute_operation(operation.operation_id)
+    if completed.status not in {"completed", "completed_with_warnings", "failed", "cancelled", "interrupted"}:
+        completed = coordinator.wait_for_terminal(operation.operation_id)
     error = _topaz_operation_errors.pop(operation.operation_id, None)
     if error is not None:
         raise error

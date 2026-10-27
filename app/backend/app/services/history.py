@@ -215,6 +215,143 @@ class HistoryRepository:
             self._backfill_tag_index(con)
             migrate_history_database_schema(con)
 
+    def recover_interrupted_media_generations(self) -> list[int]:
+        """Recover only inflight history owned by restart-interrupted media jobs."""
+        media_kinds = {'video.generate': 'video', 'video.upscale': 'video',
+                       'video.sequence.clip': 'video', 'video.sequence.assemble': 'video',
+                       'music.generate': 'audio'}
+        active_statuses = {'queued', 'preparing', 'running', 'cancelling'}
+        with _history_connection(self.db_path) as con:
+            con.execute('BEGIN IMMEDIATE')
+            if con.execute("select 1 from sqlite_master where type = 'table' and name = 'operations'").fetchone() is None:
+                return []
+            rows = con.execute(
+                "select kind, status, error_code, request_snapshot_json from operations "
+                "where kind in ('video.generate', 'video.upscale', 'video.sequence.clip', "
+                "'video.sequence.assemble', 'music.generate') "
+                "and status in ('queued', 'preparing', 'running', 'cancelling', 'interrupted')"
+            ).fetchall()
+            interrupted: set[tuple[int, str]] = set()
+            active: set[tuple[int, str]] = set()
+            for kind, status, error_code, raw_snapshot in rows:
+                if status not in active_statuses and error_code != 'operation_interrupted_by_restart':
+                    continue
+                try:
+                    snapshot = json.loads(raw_snapshot)
+                except (TypeError, ValueError):
+                    continue
+                if not isinstance(snapshot, dict):
+                    continue
+                candidates = [snapshot]
+                batch = snapshot.get('batch')
+                if isinstance(batch, dict) and isinstance(batch.get('candidates'), list):
+                    candidates.extend(item for item in batch['candidates'] if isinstance(item, dict))
+                target = active if status in active_statuses else interrupted
+                for candidate in candidates:
+                    identity = candidate.get('generation_id')
+                    if type(identity) is int and identity > 0:
+                        target.add((identity, media_kinds[kind]))
+            recovered = []
+            for identity, media_kind in sorted(interrupted - active):
+                updated = con.execute(
+                    "update generations set status = 'interrupted' "
+                    "where id = ? and media_kind = ? and status in ('queued', 'running')",
+                    (identity, media_kind),
+                )
+                if updated.rowcount:
+                    recovered.append(identity)
+            return recovered
+
+    def recover_interrupted_upscale_inputs(self) -> list[int]:
+        """Release verified borrowed inputs, never unfinished generated payloads."""
+        from app.services.generation_working_artifacts import (
+            GenerationWorkingArtifactError,
+            GenerationWorkingArtifactRegistry,
+        )
+        from app.services.media_artifacts import file_sha256
+
+        with _history_connection(self.db_path) as con:
+            if con.execute("select 1 from sqlite_master where type='table' and name='operations'").fetchone() is None:
+                return []
+            rows = con.execute(
+                "select status, error_code, request_snapshot_json from operations "
+                "where kind='video.upscale' and status in ('queued','preparing','running','cancelling','interrupted')"
+            ).fetchall()
+        active_statuses = {'queued', 'preparing', 'running', 'cancelling'}
+        active: set[tuple[str, str, str]] = set()
+        candidates = []
+        histories = {}
+        for status, error_code, raw in rows:
+            try:
+                snapshot = json.loads(raw)
+                request = snapshot['request']
+                identity, source_id = snapshot['generation_id'], request['source_generation_id']
+                if type(identity) is not int or type(source_id) is not int:
+                    continue
+                for generation_id in (identity, source_id):
+                    if generation_id not in histories:
+                        histories[generation_id] = self.get(generation_id)
+                child, source = histories[identity], histories[source_id]
+                if (not child or not source or child['media_kind'] != 'video'
+                        or source['media_kind'] != 'video' or source['status'] != 'completed'):
+                    continue
+                settings, original = child['settings'], source['settings']
+                original_root = Path(original['output_root']).expanduser()
+                if not original_root.is_absolute():
+                    continue
+                root = str(original_root.resolve(strict=True))
+                owner = snapshot['bundle_operation_id']
+                expected = {
+                    snapshot['bundle_artifact_id']: ('upscale_work_bundle', snapshot['bundle_sha256']),
+                    snapshot['latent_artifact_id']: ('av_latent', snapshot['latent_sha256']),
+                }
+                if len(expected) != 2 or not all(isinstance(key, str) for key in expected):
+                    continue
+                if (original['upscale_work_bundle_operation_id'] != owner
+                        or original['upscale_work_bundle_id'] != snapshot['bundle_artifact_id']):
+                    continue
+                keys = {(root, owner, key) for key in expected}
+                if status in active_statuses:
+                    active.update(keys)
+                    continue
+                if (error_code != 'operation_interrupted_by_restart'
+                        or child['status'] != 'interrupted'
+                        or settings['request_snapshot'] != request
+                        or settings['source_generation_id'] != source_id
+                        or settings['source_bundle_artifact_id'] != snapshot['bundle_artifact_id']
+                        or settings['source_latent_artifact_id'] != snapshot['latent_artifact_id']
+                        or settings['source_bundle_sha256'] != snapshot['bundle_sha256']
+                        or settings['source_latent_sha256'] != snapshot['latent_sha256']):
+                    continue
+                candidates.append((identity, source_id, request['source_artifact_id'], root, owner, expected, keys))
+            except (KeyError, TypeError, ValueError, OSError, RuntimeError):
+                continue
+        recovered = set()
+        for identity, source_id, media_id, root, owner, expected, keys in candidates:
+            if keys & active:
+                continue
+            try:
+                registry = GenerationWorkingArtifactRegistry(Path(root))
+                records = {record.artifact_id: record for record in registry.list_public(owner)}
+                selected = [records[key] for key in expected]
+                if any(record.generation_id != source_id or record.media_artifact_id != media_id
+                       or record.kind != expected[record.artifact_id][0]
+                       or record.state not in {'available', 'in_use'} for record in selected):
+                    continue
+                borrowed = tuple(record.artifact_id for record in selected if record.state == 'in_use')
+                if not borrowed:
+                    continue
+                for key, (kind, checksum) in expected.items():
+                    payload = registry.resolve_for_adapter(operation_id=owner, artifact_id=key,
+                        expected_kind=kind, allow_in_use=True)
+                    if file_sha256(payload) != checksum:
+                        raise GenerationWorkingArtifactError('working_artifact_changed')
+                registry.finish_use_many(owner, borrowed, outcome='available', operation_status='interrupted')
+                recovered.add(identity)
+            except (GenerationWorkingArtifactError, KeyError, ValueError, OSError):
+                continue
+        return sorted(recovered)
+
     def add(
         self,
         *,
@@ -344,8 +481,11 @@ class HistoryRepository:
                     ],
                 }
                 migrated = migrate_generation_reference_metadata(payload, candidates)
-                migrated.pop("model_slots", None)
-                migrated.pop("loras", None)
+                for key in ("model_slots", "loras"):
+                    if key in settings:
+                        migrated[key] = settings[key]
+                    else:
+                        migrated.pop(key, None)
                 if migrated == settings:
                     continue
                 con.execute(
@@ -965,6 +1105,8 @@ class HistoryRepository:
     ) -> dict | None:
         with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
+            if not con.in_transaction:
+                con.execute('BEGIN IMMEDIATE')
             item = self._get_with_connection(con, generation_id)
             if item is None:
                 return None
@@ -1004,6 +1146,8 @@ class HistoryRepository:
         unique_ids = list(dict.fromkeys(int(value) for value in generation_ids))
         with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
+            if not con.in_transaction:
+                con.execute('BEGIN IMMEDIATE')
             targets = [
                 (generation_id, item)
                 for generation_id in unique_ids

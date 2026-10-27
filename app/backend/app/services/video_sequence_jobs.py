@@ -6,6 +6,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 from typing import Any, Callable
+from uuid import uuid4
 
 from app.schemas.media import MediaArtifact
 from app.schemas.generation_working_artifact import GenerationWorkingArtifactSummary
@@ -22,6 +23,7 @@ from app.schemas.video import VideoRequest
 from app.schemas.video_sequence import VideoSequence, VideoSequenceSegment
 from app.services.history import HistoryRepository
 from app.services.atomic_json import write_json_atomic
+from app.services.image_check_recovery import file_identity, move_without_replacement, owns_file
 from app.services.media_artifacts import (
     MediaArtifactAccessError,
     file_sha256,
@@ -298,7 +300,11 @@ class VideoSequenceAssemblyExecutor:
     def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
         metadata = self._metadata(context.request_snapshot)
         generation_id = metadata["generation_id"]
-        created_paths: list[Path] = []
+        created_paths: dict[Path, list[int]] = {}
+
+        def remember_created(path: Path) -> None:
+            if path not in created_paths:
+                created_paths[path] = file_identity(path)
         try:
             sequence = self.sequences.get(metadata["sequence_id"])
             plan = build_active_chain_plan(
@@ -331,14 +337,15 @@ class VideoSequenceAssemblyExecutor:
                 output_root=output_root,
                 operation_id=context.operation.operation_id,
             )
-            created_paths.append(assembled.output_path)
+            remember_created(assembled.output_path)
             context.raise_if_cancelled()
             finalized = self.finalizer(
                 generation_id=generation_id,
                 source_path=assembled.output_path,
                 poster_root=self.poster_root,
             )
-            created_paths.extend(Path(value) for value in finalized.output_paths)
+            for value in finalized.output_paths:
+                remember_created(Path(value))
             source_ids = tuple(clip.artifact.artifact_id for clip in plan.clips)
             artifacts = [
                 artifact.model_copy(
@@ -380,8 +387,13 @@ class VideoSequenceAssemblyExecutor:
                     for artifact in artifacts
                 ],
             }
-            write_json_atomic(sidecar_path, sidecar_payload)
-            created_paths.append(sidecar_path)
+            staged_sidecar = sidecar_path.with_name(f".{sidecar_path.name}.{uuid4().hex}.staging")
+            try:
+                write_json_atomic(staged_sidecar, sidecar_payload)
+                move_without_replacement(staged_sidecar, sidecar_path)
+            finally:
+                staged_sidecar.unlink(missing_ok=True)
+            remember_created(sidecar_path)
             sidecar_sha = file_sha256(sidecar_path)
             sidecar = MediaArtifact(
                 artifact_id=f"media:sidecar:{generation_id}:{sidecar_sha[:20]}",
@@ -471,11 +483,12 @@ class VideoSequenceAssemblyExecutor:
                     roots.add(Path(value))
         return roots
 
-    def _fail(self, metadata: dict[str, Any], operation_id: str, paths: list[Path]) -> None:
-        for path in dict.fromkeys(paths):
+    def _fail(self, metadata: dict[str, Any], operation_id: str, paths: dict[Path, list[int]]) -> None:
+        for path, identity in paths.items():
             try:
-                path.unlink(missing_ok=True)
-            except OSError:
+                if owns_file(path, [identity]):
+                    path.unlink(missing_ok=True)
+            except (OSError, ValueError):
                 continue
         item = self.history.get(metadata["generation_id"])
         if item is not None and item["status"] != "completed":

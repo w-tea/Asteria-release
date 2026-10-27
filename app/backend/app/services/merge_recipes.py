@@ -9,6 +9,7 @@ import numpy as np
 import random
 import re
 import shutil
+import tempfile
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -18,6 +19,8 @@ from safetensors.torch import load_file, save_file
 import scipy.ndimage
 import torch
 
+from app.services.atomic_json import write_json_atomic
+from app.services.image_check_recovery import move_without_replacement
 from app.services.merge_calculation_modes import (
     ASTERIA_CALCULATION_MODES,
     CALCULATION_CONTRACT_VERSION,
@@ -442,7 +445,7 @@ class MergeRecipeRepository:
 
     def _write(self, items: list[dict]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+        write_json_atomic(self.path, items)
 
 
 class MergeRunRepository:
@@ -500,7 +503,7 @@ class MergeRunRepository:
 
     def _write(self, items: list[dict]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+        write_json_atomic(self.path, items)
 
 
 class MergeExecutionError(RuntimeError):
@@ -752,6 +755,31 @@ def _safe_model_name(value: str, fallback: str) -> str:
     return name or fallback
 
 
+_MERGE_CONFIG_SUFFIXES = (".yaml", ".yml", ".json", ".toml", ".txt")
+
+
+def unique_merge_output_path(path: Path) -> Path:
+    """Choose an unused model name, including detached metadata/configs."""
+    for attempt in range(100):
+        candidate = path if attempt == 0 else path.with_name(f"{path.stem}_{uuid4().hex[:8]}{path.suffix}")
+        companions = [candidate, candidate.with_suffix(".asteria.merge.json"),
+                      candidate.with_suffix(".asteria.merge-candidate.json")]
+        for suffix in _MERGE_CONFIG_SUFFIXES:
+            companions.append(candidate.with_suffix(suffix))
+            companions.extend(candidate.with_name(f"{candidate.stem}.{role}{suffix}") for role in ("a", "b", "c"))
+        for artifact in companions:
+            try:
+                artifact.lstat()
+            except FileNotFoundError:
+                continue
+            except OSError as exc:
+                raise MergeExecutionError(f"merge output collision check failed: {artifact}") from exc
+            break
+        else:
+            return candidate
+    raise MergeExecutionError(f"merge output name unavailable: {path}")
+
+
 def _output_path(recipe: MergeRecipe, output_root: Path, transient: bool = False) -> Path:
     folder = "lora" if recipe.merge_type in {"lora", "extract_lora"} else "checkpoints"
     output_dir = output_root / ("merge-candidates" if transient else "merged") / folder
@@ -763,9 +791,7 @@ def _output_path(recipe: MergeRecipe, output_root: Path, transient: bool = False
     if not name.lower().endswith(".safetensors"):
         name = f"{name}.safetensors"
     candidate = output_dir / name
-    if recipe.overwrite or not _path_exists(candidate):
-        return candidate
-    return output_dir / f"{candidate.stem}_{uuid4().hex[:8]}{candidate.suffix}"
+    return candidate if recipe.overwrite else unique_merge_output_path(candidate)
 
 
 def _float_list(value: str) -> list[float]:
@@ -929,6 +955,8 @@ def preflight_anima_merge_architecture(
 
 def preflight_anima_merge_recipe(
     recipe: MergeRecipe,
+    *,
+    include_source_c: bool = True,
 ) -> list[dict[str, object]]:
     if recipe.model_family != "anima" or recipe.merge_type != "checkpoint":
         return []
@@ -936,7 +964,7 @@ def preflight_anima_merge_recipe(
     source_b = _source(recipe, "B")
     source_c = (
         _source(recipe, "C")
-        if MERGE_MODES.get(recipe.normalized_merge_mode(), {}).get("requires_c")
+        if include_source_c and MERGE_MODES.get(recipe.normalized_merge_mode(), {}).get("requires_c")
         else None
     )
     return preflight_anima_merge_architecture(
@@ -1257,22 +1285,13 @@ def _attention_similarities(tensors_a: dict[str, torch.Tensor], tensors_b: dict[
 def analyze_merge_recipe(recipe: MergeRecipe) -> MergeAnalysis:
     source_a = _source(recipe, "A")
     source_b = _source(recipe, "B")
-    source_c = (
-        _source(recipe, "C")
-        if MERGE_MODES.get(recipe.normalized_merge_mode(), {}).get("requires_c")
-        else None
-    )
-    preflight_anima_merge_recipe(recipe)
+    preflight_anima_merge_recipe(recipe, include_source_c=False)
     tensors_a = _load_safetensors(source_a, "A")
     tensors_b = _load_safetensors(source_b, "B")
     sources = [
         MergeAnalysisSource(role="A", path=str(source_a), tensor_count=len(tensors_a), block_counts=_source_block_counts(tensors_a, recipe.block_schema)),
         MergeAnalysisSource(role="B", path=str(source_b), tensor_count=len(tensors_b), block_counts=_source_block_counts(tensors_b, recipe.block_schema)),
     ]
-    if source_c is not None:
-        tensors_c = _load_safetensors(source_c, "C")
-        sources.append(MergeAnalysisSource(role="C", path=str(source_c), tensor_count=len(tensors_c), block_counts=_source_block_counts(tensors_c, recipe.block_schema)))
-
     common_keys = _checkpoint_common_keys(tensors_a, tensors_b) if recipe.merge_type == "checkpoint" else sorted(set(tensors_a).intersection(tensors_b))
     missing_in_b = _checkpoint_missing_keys(tensors_a, tensors_b) if recipe.merge_type == "checkpoint" else sorted(set(tensors_a).difference(tensors_b))
     shape_mismatches: list[MergeShapeMismatch] = []
@@ -1547,7 +1566,8 @@ def _dice_seed(recipe: MergeRecipe) -> int:
 
 
 def _dice_randomer(recipe: MergeRecipe) -> np.ndarray:
-    return np.random.RandomState(_dice_seed(recipe)).rand(3000)
+    # Preserve existing MT19937 streams while admitting the 64-bit recipe hash.
+    return np.random.RandomState(_dice_seed(recipe) % (2**32)).rand(3000)
 
 
 def _dice_precision(recipe: MergeRecipe) -> int:
@@ -2807,7 +2827,7 @@ def _copy_source_configs(recipe: MergeRecipe, sources: dict[str, Path], output_p
     if not recipe.copy_config:
         return []
     copied: list[dict[str, str]] = []
-    suffixes = (".yaml", ".yml", ".json", ".toml", ".txt")
+    suffixes = _MERGE_CONFIG_SUFFIXES
     seen: set[Path] = set()
     for role in ("A", "B", "C"):
         source = sources.get(role)
@@ -2832,6 +2852,51 @@ def _copy_source_configs(recipe: MergeRecipe, sources: dict[str, Path], output_p
 
 def _cpu_tensors_for_save(tensors: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
     return {key: value.detach().cpu() for key, value in tensors.items()}
+
+
+def _publish_merge_output(staging: Path, output_directory: Path, *, overwrite: bool) -> None:
+    """Keep overwritten files until every member of this output is published."""
+    files = sorted(staging.iterdir(), key=lambda path: (path.suffix != '.safetensors', path.name))
+    backups = staging / 'previous'
+    backups.mkdir()
+    changes: list[tuple[Path, Path | None]] = []
+    created: dict[Path, tuple[int, int]] = {}
+    try:
+        for source in files:
+            target = output_directory / source.name
+            if not overwrite:
+                identity = source.stat()
+                move_without_replacement(source, target)
+                created[target] = (identity.st_dev, identity.st_ino)
+                changes.append((target, None))
+                continue
+            backup = backups / source.name if target.exists() else None
+            if backup is not None:
+                if not target.is_file():
+                    raise OSError(f'merge output is not a file: {target}')
+                target.replace(backup)
+            changes.append((target, backup))
+            source.replace(target)
+    except OSError as exc:
+        rollback_errors: list[OSError] = []
+        for target, backup in reversed(changes):
+            try:
+                if backup is not None:
+                    backup.replace(target)
+                else:
+                    if target in created and target.exists():
+                        identity = target.stat()
+                        if (identity.st_dev, identity.st_ino) != created[target]:
+                            raise OSError(f'merge output changed during rollback: {target}')
+                    target.unlink(missing_ok=True)
+            except OSError as rollback_exc:
+                rollback_errors.append(rollback_exc)
+        if rollback_errors:
+            # The caller must not clean up the only remaining original files.
+            raise MergeExecutionError(f'merge output rollback failed; retained files: {staging}') from exc
+        backups.rmdir()
+        raise MergeExecutionError('merge output publish failed') from exc
+    shutil.rmtree(backups, ignore_errors=True)
 
 
 def _materialized_checkpoint_dtype(recipe: MergeRecipe, tensor: torch.Tensor) -> torch.dtype:
@@ -3204,49 +3269,58 @@ def execute_merge_recipe(
             extracted_lora_format = "kohya_down_up"
         metadata["asteria.merge.extracted_lora_format"] = extracted_lora_format
     output_metadata = _output_metadata(recipe, sources, metadata) if recipe.save_metadata else None
-    try:
-        save_file(_cpu_tensors_for_save(merged), str(output_path), metadata=output_metadata)
-    except Exception as exc:
-        raise MergeExecutionError(f"merge output save failed: {output_path}") from exc
-    try:
-        output_content_hash = _output_content_hash(output_path, fingerprints)
-    except OSError as exc:
-        raise MergeExecutionError("merge output provenance hash failed") from exc
-    copied_configs = _copy_source_configs(recipe, sources, output_path)
-    normalized_recipe = _normalized_recipe_provenance(
-        recipe,
-        output_content_hash=output_content_hash,
-    )
-    if copied_configs:
-        logs.append(f"copied configs: {len(copied_configs)}")
     metadata_path = output_path.with_suffix(".asteria.merge.json")
     metadata_path_text = str(metadata_path)
-    if recipe.save_metadata:
-        payload = {
-            "schema": "asteria.merge.v1",
-            "transient": transient,
-            "recipe": normalized_recipe,
-            "output_path": str(output_path),
-            "output_content_hash": output_content_hash,
-            "logs": [*logs, f"skipped blocks: {skipped}"],
-            "pruned_keys": pruned_keys[:200],
-            "clip_position_ids_reset": clip_ids_reset,
-            "bake_in_vae": recipe.bake_in_vae,
-            "vae_baked_tensors": vae_baked_tensors,
-            "adjust_target_tensors": adjust_target_tensors,
-            "cuda_requested": recipe.use_cuda,
-            "merge_device": merge_device,
-            "copied_configs": copied_configs,
-            "debug_tensors": debug_tensors if recipe.debug else [],
-            "created_at": _now(),
-        }
+    try:
+        staging = Path(tempfile.mkdtemp(prefix='.merge-', dir=output_path.parent))
+    except OSError as exc:
+        raise MergeExecutionError(f"merge output save failed: {output_path}") from exc
+    staged_output = staging / output_path.name
+    try:
         try:
-            metadata_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            save_file(_cpu_tensors_for_save(merged), str(staged_output), metadata=output_metadata)
+        except Exception as exc:
+            raise MergeExecutionError(f"merge output save failed: {output_path}") from exc
+        try:
+            output_content_hash = _output_content_hash(staged_output, fingerprints)
         except OSError as exc:
-            raise MergeExecutionError(f"merge metadata save failed: {metadata_path}") from exc
-    else:
-        metadata_path_text = ""
-        logs.append("metadata skipped")
+            raise MergeExecutionError("merge output provenance hash failed") from exc
+        copied_configs = _copy_source_configs(recipe, sources, staged_output)
+        for item in copied_configs:
+            item['destination'] = str(output_path.parent / Path(item['destination']).name)
+        normalized_recipe = _normalized_recipe_provenance(recipe, output_content_hash=output_content_hash)
+        if copied_configs:
+            logs.append(f"copied configs: {len(copied_configs)}")
+        if recipe.save_metadata:
+            payload = {
+                "schema": "asteria.merge.v1",
+                "transient": transient,
+                "recipe": normalized_recipe,
+                "output_path": str(output_path),
+                "output_content_hash": output_content_hash,
+                "logs": [*logs, f"skipped blocks: {skipped}"],
+                "pruned_keys": pruned_keys[:200],
+                "clip_position_ids_reset": clip_ids_reset,
+                "bake_in_vae": recipe.bake_in_vae,
+                "vae_baked_tensors": vae_baked_tensors,
+                "adjust_target_tensors": adjust_target_tensors,
+                "cuda_requested": recipe.use_cuda,
+                "merge_device": merge_device,
+                "copied_configs": copied_configs,
+                "debug_tensors": debug_tensors if recipe.debug else [],
+                "created_at": _now(),
+            }
+            try:
+                (staging / metadata_path.name).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            except OSError as exc:
+                raise MergeExecutionError(f"merge metadata save failed: {metadata_path}") from exc
+        else:
+            metadata_path_text = ""
+            logs.append("metadata skipped")
+        _publish_merge_output(staging, output_path.parent, overwrite=recipe.overwrite)
+    finally:
+        if not (staging / 'previous').exists():
+            shutil.rmtree(staging, ignore_errors=True)
     return MergeRun(
         id=uuid4().hex,
         recipe_id=recipe.id,

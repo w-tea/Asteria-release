@@ -381,12 +381,47 @@ function Wait-AsteriaOwnedProcessExit {
         [int]$TimeoutSeconds
     )
 
-    $watch = [Diagnostics.Stopwatch]::StartNew()
-    do {
-        if ((Get-AsteriaOwnedProcessState -Record $Record) -ne "owned") { return $true }
-        Start-Sleep -Milliseconds 50
-    } while ($watch.Elapsed.TotalSeconds -lt $TimeoutSeconds)
-    return (Get-AsteriaOwnedProcessState -Record $Record) -ne "owned"
+    $process = $null
+    try {
+        $process = [Diagnostics.Process]::GetProcessById([int]$Record.pid)
+        $milliseconds = [int][Math]::Min([int]::MaxValue, [Math]::Max(0, [long]$TimeoutSeconds) * 1000)
+        return $process.WaitForExit($milliseconds)
+    }
+    catch [System.ArgumentException] { return $true }
+    catch { return $false }
+    finally { if ($null -ne $process) { $process.Dispose() } }
+}
+
+function Stop-AsteriaOwnedProcessRecord {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]$Record,
+        [int]$TimeoutSeconds = 10
+    )
+
+    $ownership = Get-AsteriaOwnedProcessState -Record $Record
+    if ($ownership -eq "not-running") {
+        try {
+            $remaining = [Diagnostics.Process]::GetProcessById([int]$Record.pid)
+            $remaining.Dispose()
+            return $false
+        }
+        catch [System.ArgumentException] { return $true }
+        catch { return $false }
+    }
+    if ($ownership -ne "owned") { return $false }
+    try {
+        Stop-Process -Id ([int]$Record.pid) -ErrorAction Stop
+    }
+    catch {
+        if (Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds 0) { return $true }
+        throw
+    }
+    if (Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds $TimeoutSeconds) { return $true }
+    if ((Get-AsteriaOwnedProcessState -Record $Record) -eq "owned") {
+        Stop-Process -Id ([int]$Record.pid) -Force -ErrorAction Stop
+    }
+    return Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds $TimeoutSeconds
 }
 
 function Stop-AsteriaOwnedProcess {
@@ -397,18 +432,54 @@ function Stop-AsteriaOwnedProcess {
     )
 
     if ((Get-AsteriaOwnedProcessState -Record $Record) -ne "owned") { return $false }
-    try {
-        Stop-Process -Id ([int]$Record.pid) -ErrorAction Stop
+    $snapshot = @(Get-CimInstance Win32_Process -Property ProcessId, ParentProcessId, CreationDate -ErrorAction Stop)
+    $parents = @($Record)
+    $children = @()
+    $visited = @{}
+    $visited[[int]$Record.pid] = $true
+    for ($index = 0; $index -lt $parents.Count; $index++) {
+        $parent = $parents[$index]
+        if ((Get-AsteriaOwnedProcessState -Record $parent) -ne "owned") { continue }
+        $parentStart = (Get-Process -Id ([int]$parent.pid) -ErrorAction Stop).StartTime.ToUniversalTime()
+        $parentStartStamp = $parentStart.ToString('yyyyMMddHHmmss.ffffff')
+        foreach ($row in $snapshot) {
+            $childId = [int]$row.ProcessId
+            if ([int]$row.ParentProcessId -ne [int]$parent.pid -or $visited.ContainsKey($childId)) { continue }
+            # Parent IDs can outlive their original owner. Reject older or unknown
+            # records before querying potentially inaccessible unrelated processes.
+            if ($null -eq $row.CreationDate) { continue }
+            $snapshotStartStamp = $row.CreationDate.ToUniversalTime().ToString('yyyyMMddHHmmss.ffffff')
+            if ($snapshotStartStamp -lt $parentStartStamp) { continue }
+            try {
+                $child = Get-Process -Id $childId -ErrorAction Stop
+                $started = $child.StartTime.ToUniversalTime()
+                if ($started -lt $parentStart) { continue }
+                if ($started.ToString('yyyyMMddHHmmss.ffffff') -ne $snapshotStartStamp) { continue }
+                $childRecord = [pscustomobject]@{
+                    name = "$($Record.name)-child-$childId"
+                    pid = $childId
+                    executable_path = [System.IO.Path]::GetFullPath($child.Path)
+                    started_at_utc = $started.ToString('o')
+                }
+            }
+            catch {
+                if (-not (Get-Process -Id $childId -ErrorAction SilentlyContinue)) { continue }
+                throw
+            }
+            $visited[$childId] = $true
+            $children += $childRecord
+            $parents += $childRecord
+        }
     }
-    catch {
-        if ((Get-AsteriaOwnedProcessState -Record $Record) -ne "owned") { return $true }
-        throw
+    # Stop the spawning owner first, then its frozen descendants. Every stop
+    # still checks executable and creation time; reused PIDs remain untouched.
+    $stopped = Stop-AsteriaOwnedProcessRecord -Record $Record -TimeoutSeconds $TimeoutSeconds
+    [array]::Reverse($children)
+    foreach ($childRecord in $children) {
+        if ((Get-AsteriaOwnedProcessState -Record $childRecord) -ne "owned") { continue }
+        if (-not (Stop-AsteriaOwnedProcessRecord -Record $childRecord -TimeoutSeconds $TimeoutSeconds)) { $stopped = $false }
     }
-    if (Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds $TimeoutSeconds) { return $true }
-    if ((Get-AsteriaOwnedProcessState -Record $Record) -eq "owned") {
-        Stop-Process -Id ([int]$Record.pid) -Force -ErrorAction Stop
-    }
-    return Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds $TimeoutSeconds
+    return $stopped
 }
 
 function Test-AsteriaTcpPortInUse {

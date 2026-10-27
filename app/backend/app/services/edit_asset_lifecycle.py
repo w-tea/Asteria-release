@@ -209,11 +209,17 @@ class EditAssetLifecycleService:
     ) -> EditAssetGroup | None:
         if not healthy:
             return None
+        now = datetime.now(UTC).timestamp()
         for path in group.paths:
             root = self._root_for(path)
             if root is None or not is_owned_edit_asset(path, root):
                 return None
             if self._path_key(path) in references:
+                return None
+            try:
+                if now - path.stat().st_mtime < self.grace.total_seconds():
+                    return None
+            except OSError:
                 return None
         return group
 
@@ -552,17 +558,19 @@ class EditAssetLifecycleService:
             return None
 
     def _collect_strings(self, value: Any, references: set[str]) -> None:
-        if isinstance(value, str):
-            if value:
-                references.add(self._path_key(Path(value)))
-            return
-        if isinstance(value, dict):
-            for nested in value.values():
-                self._collect_strings(nested, references)
-            return
-        if isinstance(value, list):
-            for nested in value:
-                self._collect_strings(nested, references)
+        pending = [value]
+        strings: set[str] = set()
+        while pending:
+            current = pending.pop()
+            if isinstance(current, str):
+                if current:
+                    strings.add(current)
+            elif isinstance(current, dict):
+                pending.extend(current.values())
+            elif isinstance(current, list):
+                pending.extend(current)
+        for raw in strings:
+            references.add(self._path_key(Path(raw)))
 
     def _path_key(self, path: Path) -> str:
         resolved = _safe_resolve(path, strict=False)

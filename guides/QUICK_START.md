@@ -14,7 +14,7 @@
 
 ### 2. 一枚生成する
 
-1. 左の「生成」を開き、モデルプロファイル、Checkpoint、必要なVAEを選びます。未導入の場合はモデルを追加するか、Settingsの起動準備を確認してください。
+1. 左の「生成」を開き、モデルプロファイル、Checkpoint、必要なVAEを選びます。未導入の場合はモデルを追加するか、「設定」→「起動準備」を確認してください。
 2. 描きたい内容とネガティブプロンプトを入力します。「項目別に入力」は文章を三欄に整理する機能であり、人物の位置を指定するものではありません。
 3. 右の「基本設定」でサイズ、Samplingステップなどを選びます。通常はSeedを`-1`にして、毎回新しい値を使います。
 4. 「生成」を押し、完成画像を確認します。中断したいときは「停止」を押します。自動リピートをONにした場合は、終了条件も確認してください。
@@ -23,7 +23,7 @@
 
 画面例は通常生成の完成画像です。再生成用のSeedや設定は履歴に残りますが、別の実行環境で画素まで同じになる保証はありません。詳しい比較や途中状態の保存は[制作支援ガイド](CREATIVE_WORKFLOWS.md)を参照してください。
 
-### 3. Libraryで選ぶ
+### 3. メディアライブラリで選ぶ
 
 「メディア」で画像・動画・音声を確認します。画像カードを選ぶと、右にプレビューと設定が表示されます。Ctrl＋クリックで複数選択し、整理や比較へ進めます。動画・音声は詳細のプレーヤーから再生します。
 
@@ -33,13 +33,15 @@
 
 ### 4. 必要な範囲だけ編集する
 
-Libraryの「画像編集で開く」から入力画像を選び、マスクを描きます。任意のSAMがある場合は、人体部位レビューで作った実マスクも使えます。色付きの範囲を確認し、ブラシ・消しゴムで直してから生成へ送ってください。元画像を直接上書きする操作ではありません。
+メディアライブラリで画像を選び、「画像編集で開く」を押します。描き直したい範囲にマスクを描いてください。任意のSAMがある場合は、人体部位レビューで作った実マスクも使えます。色付きの範囲を確認し、ブラシ・消しゴムで直してから「マスクを保存」で保存し、生成へ送ります。元画像は直接上書きしません。
 
 ![既存の画像編集でマスクを確認して生成へ送る画面](images/image-edit-mask-dark-ja.jpg)
 
+「マスク修復」を選んだ状態です。「範囲を描き直す」の案内に従って、編集する範囲を確認してください。
+
 ### 5. 学習やMergeへ進む
 
-LoRA学習では画像とcaptionを用意し、学習内容を確認してから開始します。キャラクター用captionは、先頭のトリガーを残し、それに覚えさせたい固定特徴を文章から外してください。AIの点検候補は自動適用されません。
+LoRA学習では画像とキャプションを用意し、学習内容を確認してから開始します。キャラクター用キャプションは、先頭のトリガーを残し、それに覚えさせたい固定特徴を文章から外してください。AIの点検候補は自動適用されません。
 
 ![LoRA学習の入力と保存済み実行履歴を確認する画面](images/lora-training-dark-ja.jpg)
 
@@ -89,9 +91,11 @@ Body-part review and same-part comparison show detection candidates for your ins
 
 ### 4. Edit a selected region
 
-Use Open in Image Edit from Library and draw a mask. With optional SAM available, you can also use a real mask from Body-part review. Inspect the colored region, refine it with the brush or eraser, then send it to Generate. This does not directly overwrite the original image.
+Select an image in Media Library, click Open in Image Edit, and draw a mask over the area to change. With optional SAM available, you can also use a real mask from Body-part review. Inspect the colored region, refine it with the brush or eraser, use Save mask, then send it to Generate. The original image is not directly overwritten.
 
 ![Image Edit with a real mask and the handoff to Generate](images/image-edit-mask-dark-ja.jpg)
+
+The screenshot shows **Inpaint mask** selected. Use **Redraw the masked area** to identify the task, then inspect the region before sending it to Generate.
 
 ### 5. Continue to training or Merge
 

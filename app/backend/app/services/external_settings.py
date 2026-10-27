@@ -6,6 +6,8 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
+from app.services.atomic_json import write_json_atomic
+
 
 DEFAULT_EAGLE_BASE_URL = "http://localhost:41595"
 
@@ -90,10 +92,7 @@ class ExternalIntegrationSettingsRepository:
     def save(self, settings: ExternalIntegrationSettings) -> ExternalIntegrationSettings:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._ensure_existing_file_is_readable()
-        self.path.write_text(
-            json.dumps(settings.model_dump(), ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        write_json_atomic(self.path, settings.model_dump())
         return settings
 
     def _ensure_existing_file_is_readable(self) -> None:

@@ -1,10 +1,12 @@
 # プロンプト・生成過程・画像の制作支援 / Creative workflows
 
-[日本語](#日本語) | [English](#english)
+[日本語](#日本語) | [English](#english) | [README](../README.md)
 
 ## 日本語
 
-このガイドでは、Generate、Media Library、LoRA学習で使える制作支援を説明します。AIへ依頼する機能では、先にSettingsで接続先を設定してください。画像を確認する機能には、画像入力に対応したモデルが必要です。外部の接続先を選ぶと、画面に示された文章や画像がその接続先へ送られます。
+このガイドでは、生成、メディアライブラリ、LoRA学習の制作支援を説明します。目的に合う項目から読んでください。
+
+AIへ依頼する機能は、先に設定画面で接続先を用意してください。画像の確認には画像対応モデルが必要です。外部の接続先を選ぶと、画面に示された文章や画像がPCの外へ送られます。
 
 ### 1. プロンプトを組み立てる
 
@@ -79,6 +81,8 @@ Media Libraryの「画像の条件チェック」では、人数、髪・服、�
 
 「再生成アシスト」では、保存した文章や設定に加え、当時のモデルと現在のモデルの違いを確認して再利用できます。資産の欠落や変更があれば、対応するものを選び直してください。設定を復元できても、モデルや実行環境が違えば同じ画素になるとは限りません。
 
+画像生成のSeed／Subseed欄には、`-1`（ランダム）か、`0`〜`9,007,199,254,740,991`の整数を使ってください。ブラウザーで正確に扱えない値は、丸めたまま送信せずエラーで停止します。これは入力欄の制約であり、過去の記録やbackendのSeedを書き換えるものではありません。
+
 人体チェックは、通常生成・Hires.fix・Topaz・ADetailerなど、すべての生成・補正が終わった完成画像に対して、正式な保存・履歴登録・表示の前に一回実施します。[画像チェックのガイド](IMAGE_CHECK.md)を参照してください。AIには見逃しや誤判定があります。独自の人体判定器は現在選べません。
 
 ### 7. 語句の範囲を部分編集へ渡す・複数人のポーズを作る
@@ -91,7 +95,11 @@ SDXLでは対応するControlNet、Animaでは対応するLLLiteと制御画像�
 
 ### 人体部位レビューと再生成条件の差を確認する
 
-Media Libraryの画像詳細、またはImage Editのマスク欄で「人体部位レビュー」を開きます。「探す部位」を選んで「部位候補を検出」を押すと、矩形候補と部位の拡大一覧を表示します。候補には重複・誤検出・見逃し・人物の混在があります。人体の正常性や部位の所属は判定しません。
+人体部位レビューは、検出した部位を拡大して確認し、必要な範囲を編集へ渡すための機能です。人体の正常性や部位の所属は判定しません。
+
+1. メディアライブラリの画像詳細、または画像編集のマスク欄で「人体部位レビュー」を開きます。
+2. 「探す部位」を選び、「部位候補を検出」を押します。
+3. 画像上の矩形と拡大一覧を確認します。候補には重複・誤検出・見逃し・人物の混在があります。
 
 ![Darkモードの人体部位レビュー。矩形は検出候補であり正常性の判定ではありません](images/body-review-dark-ja.jpg)
 
@@ -99,7 +107,7 @@ Media Libraryの画像詳細、またはImage Editのマスク欄で「人体部
 
 ![一候補を選択し、別の候補を除外して矩形を修正する画面](images/body-review-corrections-dark-ja.jpg)
 
-複数画像の同じ部位を見る場合は、LibraryでCtrl＋クリック、またはCtrl＋Enterで2〜32画像を選び、「部位を比較」を開きます。「手」などの種類を選び、各画像から一候補を選ぶと、切り出した部位を横並びで比較できます。拡大率は共通です。横へスクロールすると残りの画像も確認できます。候補のない画像も空欄として残り、「不足候補を検出」を明示的に押した場合だけ検出します。各列の「人体部位レビュー」で候補の修正・除外や既存のマスク編集へ進めます。
+複数画像の同じ部位を見る場合は、メディアライブラリでCtrl＋クリック、またはCtrl＋Enterで2〜32画像を選び、「部位を比較」を開きます。「手」などの種類を選び、各画像から一候補を選ぶと、切り出した部位を横並びで比較できます。拡大率は共通です。横へスクロールすると残りの画像も確認できます。候補のない画像も空欄として残ります。必要なら「候補のない○画像を検出」を押してください。○には対象の画像数が表示され、押したときだけ検出が始まります。各列の「人体部位レビュー」で候補の修正・除外や既存のマスク編集へ進めます。
 
 ![二画像の手候補を横並びにした部位比較。各列で候補を選び、共通の拡大率で確認できます](images/body-parts-comparison-dark-ja.jpg)
 
@@ -107,7 +115,9 @@ SAMが利用できる場合は「選択部位をマスク化」を押し、色�
 
 検出とマスク作成は任意導入で、利用者が操作したときだけCPUで実行します。モデルがなければ対応ボタンが無効になりますが、手動編集は使えます。[Grounding DINO tiny](https://huggingface.co/IDEA-Research/grounding-dino-tiny/tree/a2bb814dd30d776dcf7e30523b00659f4f141c71)のモデル・設定・tokenizerをモデル保存先の`body_review/grounding-dino-tiny/`へ、[SAM ViT-B](https://github.com/facebookresearch/segment-anything#model-checkpoints)を`sams/sam_vit_b_01ec64.pth`へ配置してください。AsteriaのPython環境にはTransformersとsegment-anythingも必要です。両モデルはApache-2.0ですが、提供元の利用条件も確認してください。モデルの自動取得は行いません。
 
-「再生成アシスト」の「記録された数値の差」では、比較する履歴を選んで保存値を照合できます。Seed、Sampler、実入力、モデル・VAE・Embedding等の記録済みhashに加え、今後の通常生成でも、実際に使ったsigma列、初期noiseと入力latentのhash、入力の配置先、samplingの計算先を記録します。Hires等の工程やbatchも分けて確認できます。tensor本体は保存しません。
+再生成の違いを調べるには、「再生成アシスト」→「記録された数値の差」を開きます。比較する履歴を選び、「生成条件を比較」を押してください。
+
+Seed、Sampler、実際の入力、モデル・VAE・Embedding等の記録済みhashを比較します。今後の通常生成では、実際に使ったsigma列、初期noiseと入力latentのhash、入力の配置先、samplingの計算先も記録します。Hires等の工程やbatchも分けて確認できます。tensor本体は保存しません。
 
 ![二つの保存履歴の数値を比較する画面。一致と相違、未記録を分けて表示します](images/regeneration-numbers-dark-ja.jpg)
 
@@ -123,7 +133,9 @@ LoRA学習では、学習画像とcaptionの対応、トリガー、特徴の偏
 
 ## English
 
-These tools are available in Generate, Media Library, and LoRA Training. Configure an AI connection in Settings before using AI-assisted actions. Image reviews require a vision-capable model. If you choose an external connection, the text or images described on the screen are sent to that connection.
+These tools are available in Generate, Media Library, and LoRA Training. Start with the section that matches your task.
+
+Configure an AI connection in Settings before using AI-assisted actions. Image reviews require a vision-capable model. An external connection receives the text or images described on the screen outside your PC.
 
 ### 1. Assemble prompts
 
@@ -173,6 +185,8 @@ Series review compares two to 24 images against a reference for changes in appea
 
 Reproduction assistance restores recorded text and settings and checks recorded assets against currently available ones. Reselect missing or changed assets. Restored settings do not guarantee pixel-identical output across different models or execution environments.
 
+For the image-generation Seed and Subseed fields, use `-1` for random or a whole number from `0` to `9,007,199,254,740,991`. Values that the browser cannot represent exactly are refused instead of being rounded and submitted. This is an input-field limitation; it does not rewrite existing records or backend Seeds.
+
 Anatomy checking runs once after all generation and enhancement steps, including ordinary generation, Hires.fix, Topaz, and ADetailer, on the completed image before its official save, history registration, and display. See [Image checks](IMAGE_CHECK.md). AI can miss problems or give false alarms. A native anatomy checker is not currently selectable.
 
 ### 7. Use word maps and multi-person poses
@@ -183,7 +197,11 @@ In the pose editor, add people and drag their joints or move an entire person. O
 
 ### Review body parts and recorded regeneration differences
 
-Open **Body-part review** in Media Library image details or the Image Edit mask inspector. Select the parts to look for and explicitly run **Find candidates**. Box overlays and enlarged crops may contain duplicates, false detections, missing parts or mixed people; they do not judge anatomical correctness or ownership.
+Body-part review helps you inspect enlarged parts and send selected regions to editing. It does not judge anatomical correctness or person ownership.
+
+1. Open **Body-part review** in Media Library image details or the Image Edit mask inspector.
+2. Select the parts to look for and press **Find candidates**.
+3. Inspect the box overlays and enlarged crops. Duplicates, false detections, missing parts and mixed people may remain.
 
 ![Body-part review with candidate rectangles, not anatomy judgments](images/body-review-dark-ja.jpg)
 
@@ -191,7 +209,7 @@ Click a crop to adjust its box edges. Exclude or restore candidates, and use **S
 
 ![Selecting a candidate, excluding a duplicate and correcting rectangle edges](images/body-review-corrections-dark-ja.jpg)
 
-For the same part across multiple images, select 2–32 Library images using Ctrl+click or Ctrl+Enter, then open **Compare body parts**. Choose a part type and one candidate per image. Crops appear side by side with shared zoom; scroll horizontally to reach the other images. Missing candidates remain as empty columns. Only **Detect missing candidates** explicitly starts detection. Each column's **Body-part review** reuses the existing correction, exclusion and mask-editing workflow.
+For the same part across multiple images, select 2–32 Media Library images using Ctrl+click or Ctrl+Enter, then open **Compare body parts**. Choose a part type and one candidate per image. Crops appear side by side with shared zoom; scroll horizontally to reach the other images. Missing candidates remain as empty columns. If needed, click **Detect missing candidates (… images)**; the label shows the number of affected images, and detection starts only when clicked. Each column's **Body-part review** reuses the existing correction, exclusion and mask-editing workflow.
 
 ![Same-part comparison across two images, with a candidate selector for each column](images/body-parts-comparison-dark-ja.jpg)
 
@@ -199,7 +217,9 @@ When SAM is available, create a mask and inspect its colored area before sending
 
 Detection and masking are optional, CPU-only and explicitly invoked; they do not run after each generation. Missing models disable only their respective operations, not manual editing. Put the pinned [Grounding DINO tiny](https://huggingface.co/IDEA-Research/grounding-dino-tiny/tree/a2bb814dd30d776dcf7e30523b00659f4f141c71) model/config/tokenizer files in `body_review/grounding-dino-tiny/` under model storage, and the official [SAM ViT-B](https://github.com/facebookresearch/segment-anything#model-checkpoints) checkpoint in `sams/sam_vit_b_01ec64.pth`. Asteria's Python environment also needs Transformers and segment-anything. Both models declare Apache-2.0; check their provider terms. Models are not downloaded automatically.
 
-In **Regeneration assist → Recorded numerical differences**, choose another history entry and compare its saved inputs, Seed, Sampler and model/VAE/Embedding hashes. Future ordinary generations also record actual sigma values, initial noise and input-latent hashes, input devices and sampling compute devices. Hires stages and batches remain distinct. Tensors themselves are not saved.
+Open **Regeneration assist → Recorded numerical differences**, choose another history entry, then press **Compare generation conditions**.
+
+The comparison shows saved inputs, Seed, Sampler and model/VAE/Embedding hashes. Future ordinary generations also record actual sigma values, initial noise and input-latent hashes, input devices and sampling compute devices. Hires stages and batches remain distinct. Tensors themselves are not saved.
 
 ![Comparing saved execution observations while separating matches, differences and missing records](images/regeneration-numbers-dark-ja.jpg)
 

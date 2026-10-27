@@ -222,6 +222,8 @@ class BodyReviewService:
                 raise ValueError(reason or 'body_review_inference_failed')
             result = json.loads(output.read_text('utf-8'))
             with _lock:
+                if event.is_set():
+                    raise ValueError('body_review_cancelled')
                 record = self.checked(record['id'])
                 if stage == 'detect':
                     record.update(candidates=result['candidates'], candidate_count=result['candidate_count'],

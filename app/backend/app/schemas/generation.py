@@ -2,7 +2,7 @@ import hashlib
 import json
 from typing import Any, ClassVar, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 
 from app.schemas.common import LoraSelection
 from app.schemas.image_edit import ImageEditLineage
@@ -439,6 +439,16 @@ class GenerationHistoryItem(BaseModel):
     folder_id: int | None = None
     folder_name: str | None = None
     created_at: str
+
+    @computed_field
+    @property
+    def seed_decimal(self) -> str | None:
+        # Preserve a saved 64-bit Music seed across JSON/JavaScript without rewriting history.
+        snapshot = self.settings.get('request_snapshot')
+        if self.media_kind != 'audio' or not isinstance(snapshot, dict):
+            return None
+        seed = snapshot.get('seed')
+        return str(seed) if type(seed) is int and -1 <= seed <= 9223372036854775807 else None
 
 
 class GenerationHistoryResponse(BaseModel):

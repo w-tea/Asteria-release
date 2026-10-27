@@ -47,7 +47,7 @@ def _summary(record: OperationRecord) -> dict[str, Any]:
 
 @router.get("")
 def list_operations(limit: int = Query(default=200, ge=1, le=1000)) -> dict[str, Any]:
-    return {"items": [_summary(item) for item in get_operation_coordinator().list(limit=limit)]}
+    return {"items": [_summary(item) for item in get_operation_coordinator().list(limit=limit, for_display=True)]}
 
 
 @router.get("/{operation_id}")

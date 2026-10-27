@@ -10,6 +10,7 @@ from typing import Any
 
 import discord
 from discord import app_commands
+import psutil
 
 from app.schemas.discord import (
     DiscordConnectionStatus,
@@ -287,8 +288,7 @@ class _DiscordInstanceLease:
             pid = int(pid_text)
             if pid <= 0:
                 return True
-            os.kill(pid, 0)
-            return False
+            return not psutil.pid_exists(pid)
         except (OSError, ValueError):
             return True
 

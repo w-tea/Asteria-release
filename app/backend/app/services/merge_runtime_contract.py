@@ -179,3 +179,29 @@ def normalize_merge_runtime_recipe(recipe: MergeRecipe) -> MergeRuntimeRecipeCon
             debug=expanded.debug,
         ),
     )
+
+
+def restore_merge_runtime_recipe(
+    payload: dict[str, object], sources: dict[str, str]
+) -> MergeRecipe:
+    """Restore an already expanded candidate, never re-roll Dice or infer inputs."""
+    try:
+        contract = MergeRuntimeRecipeContract.model_validate(payload)
+        required = {"A", "B", "C"} if contract.requires_source_c else {"A", "B"}
+        if not isinstance(sources, dict) or set(sources) != required or any(not isinstance(path, str) or not path.strip() for path in sources.values()):
+            raise ValueError("candidate source roles do not match")
+        if contract.calculation_implementation_revision != CALCULATION_IMPLEMENTATION_REVISION:
+            raise ValueError("candidate calculation revision is not supported")
+        data = contract.model_dump(mode="json")
+        recipe = MergeRecipe(
+            **{key: value for key, value in data.items() if key in MergeRecipe.model_fields},
+            id=contract.recipe_id, name=contract.recipe_name,
+            calc_mode=contract.calculation_mode_id, dice_seed=contract.random_seed,
+            sources=[{"role": role, "path": sources[role]} for role in sorted(required)],
+            use_cuda=False, **contract.export_controls.model_dump(),
+        )
+        if normalize_merge_runtime_recipe(recipe).model_dump(mode="json") != data:
+            raise ValueError("candidate contract does not round-trip")
+        return recipe
+    except (ValueError, TypeError) as exc:
+        raise MergeRuntimeContractError("candidate recipe cannot be restored exactly") from exc

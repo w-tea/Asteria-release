@@ -44,12 +44,12 @@ dependencies:
       provider: bundled
       url: runtime-components/comfyui/Asteria-Generation-Stage
       ref: asteria.generation-stage.v1
-      verified_at: "2026-10-20"
+      verified_at: "2026-10-22"
       provenance_url: bundled://asteria/generation-stage/v1
     target:
       relative_path: custom_nodes/Asteria-Generation-Stage
-    size_bytes: 65004
-    checksum_sha256: 9ca470c2db5330cb76b7c69614bd637069f6580c9b3cb27c210b0f2bf404d268
+    size_bytes: 67654
+    checksum_sha256: 337f299b39f8dc1279766dd403925bf147345171b95538091f6612b7ca3e4660
     license:
       id: mit
       url: bundled://asteria/license

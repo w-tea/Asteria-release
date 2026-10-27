@@ -1,12 +1,14 @@
 # Extensions / 拡張機能
 
+[日本語](#日本語) | [English](#english) | [README](../README.md)
+
 ![Darkモードの拡張機能管理画面 / Extensions management in Dark mode](images/extensions-dark-ja.jpg)
 
 画面例は日本語表示です。表示だけでは導入・更新は始まりません。 / Japanese interface shown; viewing the screen does not install or update extensions.
 
 ## 日本語
 
-AsteriaのExtensionsでは、画面、パネル、操作を追加できます。拡張機能には、分離された画面と申告済みの仲介機能だけを使う**標準拡張**と、Asteria本体と同じ権限でコードを動かす**フルアクセス拡張**があります。
+左メニューの「拡張機能」から、画面、パネル、操作を追加できます。**標準拡張**は分離された画面で動き、事前に申告して許可されたAsteriaの機能だけを使います。**フルアクセス拡張**は、Asteria本体と同じ権限でコードを動かします。
 
 標準拡張は、PC内のファイルやAsteriaの内部データへ直接触れられません。入力中のプロンプトを読む場合や、外部サービスへ接続する場合は、導入前に権限と接続先を表示します。フルアクセス拡張は、ファイル、ネットワーク、外部プログラムへアクセスできます。導入前に実行方式、入手元、ライセンス、要求される権限を確認してください。
 
@@ -19,16 +21,16 @@ AsteriaのExtensionsでは、画面、パネル、操作を追加できます。
 - **ローカルZIP**では、PCに保存した拡張機能のZIPを選びます。
 - **拡張機能フォルダー**では、開発中のフォルダーを選びます。手動で指定したフォルダーは、Asteriaからの更新や前の版へ戻す操作の対象外です。
 
-内容を確認して **Install** を確定すると、次回の再起動後に導入結果が反映されます。パッケージのinstall script、`npm install`、`pip install`は自動で実行しません。
+カタログでは「導入」、直接導入では「導入内容を確認」を押します。確認画面で内容を確認し、最後に「確認して実行」を押してください。Asteriaを再起動すると導入結果が反映されます。パッケージのinstall script、`npm install`、`pip install`は自動で実行しません。
 
 ### 更新・無効化・復旧
 
 変更後の状態は、次の操作と再起動で適用されます。
 
-- **Update** を押すと、明示的に選んだ更新だけを取得・適用します。通知を確認しただけでは更新されません。
-- 管理対象の更新は前の版を一世代保持します。前の版へ戻す（Roll back）場合は操作を選び、再起動してください。
-- **Disable / Enable** は次回の再起動後に反映されます。
-- **Uninstall** は確認後に削除を予約し、再起動後に反映されます。
+- **更新**を押すと、明示的に選んだ更新だけを取得・適用します。通知を確認しただけでは更新されません。
+- 管理対象の更新は前の版を一世代保持します。戻したい場合は**元に戻す**を選び、再起動してください。
+- **無効化 / 有効化**は次回の再起動後に反映されます。
+- **削除**は確認後に削除を予約し、再起動後に反映されます。
 - 起動できない場合はランチャーの **Safe Mode** で再起動します。拡張機能を読み込まない状態で、問題の拡張機能を無効化、再導入、または前の版へ戻してください。その後、通常起動へ戻します。
 
 Asteriaは第三者拡張機能やカタログ掲載物の品質、安全性、動作、継続提供を保証しません。Safe Mode、無効化、前の版へ戻す機能は、起動できない状態から復旧するためのものです。拡張機能がすでに行った通信やファイル操作は取り消せません。
@@ -40,6 +42,8 @@ Extension Kit、Manifest、Custom Element、Python登録方法は[拡張機能�
 ## English
 
 Asteria Extensions can add workspaces, panels, and actions. A **Standard extension** runs in a sandboxed frame and uses only declared broker operations. A **Full-access extension** runs code with the same user-level access as Asteria and can access files, networks, and external programs. Review the execution level, source, license, and requested access before installing.
+
+Standard extensions cannot directly access local files or Asteria's internal data. Requests to read your prompt or contact an external service are shown with the requested permissions and destinations before installation.
 
 ### Sources
 
@@ -55,7 +59,7 @@ Use the **Catalog** or **Install** tab to review the name, supported Asteria ver
 - Update detection is informational. A download happens only after you press **Update**.
 - Managed updates retain one previous version for **Roll back**. Restart to apply the rollback.
 - **Disable / Enable** changes apply after the next restart.
-- **Uninstall** is confirmed first and takes effect after restart.
+- **Remove** is confirmed first and takes effect after restart.
 - If an extension prevents normal startup, restart with the launcher’s **Safe Mode**. Safe Mode loads no extension code, allowing you to disable, reinstall, or roll back the problem extension before returning to normal startup.
 
 Asteria does not guarantee the security, quality, operation, or continued availability of third-party extensions or catalog listings. Safe Mode, disable, and rollback are startup-recovery tools; they cannot undo network or file activity that already occurred.

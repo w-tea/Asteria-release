@@ -255,7 +255,10 @@ class ModelLibraryScanner:
             except ValueError:
                 health.skipped_file_count += 1
                 continue
-            if any(part.casefold() in HIDDEN_MODEL_PATH_PARTS for part in relative_path.parts[:-1]):
+            if any(
+                part.casefold() in HIDDEN_MODEL_PATH_PARTS or part.casefold().startswith(".merge-")
+                for part in relative_path.parts[:-1]
+            ):
                 continue
             physical_identity = self._physical_identity(logical_path, target_stat)
             if physical_identity in seen_files:

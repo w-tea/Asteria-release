@@ -5,6 +5,9 @@ from threading import Condition, Lock
 from types import TracebackType
 from typing import Self
 
+from starlette.concurrency import run_in_threadpool
+from starlette.types import ASGIApp, Receive, Scope, Send
+
 
 class ReferenceMutationLease:
     def __init__(self, release: Callable[[], None]) -> None:
@@ -64,3 +67,23 @@ class ReferenceMutationCoordinator:
 
 
 reference_mutation_coordinator = ReferenceMutationCoordinator()
+
+
+class ReferenceMutationMiddleware:
+    """Exclude asset cleanup without wrapping the application's ASGI channels."""
+
+    def __init__(self, app: ASGIApp, *, coordinator: ReferenceMutationCoordinator) -> None:
+        self.app = app
+        self.coordinator = coordinator
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if (scope['type'] != 'http'
+                or scope['method'] not in {'POST', 'PUT', 'PATCH', 'DELETE'}
+                or scope['path'] == '/api/assets/lifecycle/cleanup'):
+            await self.app(scope, receive, send)
+            return
+        lease = await run_in_threadpool(self.coordinator.acquire_publisher)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            lease.release()

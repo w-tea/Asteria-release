@@ -6,12 +6,18 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field, ValidationError
 
+from app.services.atomic_json import write_json_atomic
+
 
 class Preset(BaseModel):
     id: str = Field(default_factory=lambda: uuid4().hex)
     kind: str
     name: str
     data: dict
+
+
+class PresetKindMismatchError(ValueError):
+    pass
 
 
 class PresetRepository:
@@ -23,23 +29,20 @@ class PresetRepository:
         return [item for item in items if kind is None or item.kind == kind]
 
     def save(self, preset: Preset) -> Preset:
-        items = [item for item in self._read(strict=True) if item.id != preset.id]
+        existing = self._read(strict=True)
+        if any(item.id == preset.id and item.kind != preset.kind for item in existing):
+            raise PresetKindMismatchError("preset ID belongs to another kind")
+        items = [item for item in existing if item.id != preset.id]
         items.insert(0, preset)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(
-            json.dumps({"items": [item.model_dump() for item in items]}, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        write_json_atomic(self.path, {"items": [item.model_dump() for item in items]})
         return preset
 
-    def delete(self, preset_id: str) -> bool:
+    def delete(self, preset_id: str, *, kind: str | None = None) -> bool:
         items = self._read(strict=True)
-        next_items = [item for item in items if item.id != preset_id]
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(
-            json.dumps({"items": [item.model_dump() for item in next_items]}, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        next_items = [item for item in items if item.id != preset_id or (kind is not None and item.kind != kind)]
+        if kind is not None and len(next_items) == len(items):
+            return False
+        write_json_atomic(self.path, {"items": [item.model_dump() for item in next_items]})
         return len(next_items) != len(items)
 
     def migrate_model_references(self, candidates: list[object]) -> int:
@@ -58,15 +61,7 @@ class PresetRepository:
                 changed += 1
             migrated_items.append(item)
         if changed:
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            self.path.write_text(
-                json.dumps(
-                    {"items": [item.model_dump() for item in migrated_items]},
-                    ensure_ascii=False,
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
+            write_json_atomic(self.path, {"items": [item.model_dump() for item in migrated_items]})
         return changed
 
     def _read(self, *, strict: bool = False) -> list[Preset]:

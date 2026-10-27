@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor
 import re
-from threading import Event, Lock, Thread
+from threading import Condition, Event, Lock, Thread
 from time import sleep
 from dataclasses import dataclass
 from typing import Any, Mapping
@@ -48,6 +48,7 @@ class OperationCoordinator:
         self._active_claims: dict[str, tuple[str, ...]] = {}
         self._futures: dict[str, Future[None]] = {}
         self._lock = Lock()
+        self._state_changed = Condition(self._lock)
         self._stop_event = Event()
         self._max_workers = max_workers
         self._pool: ThreadPoolExecutor | None = None
@@ -138,6 +139,8 @@ class OperationCoordinator:
 
     def shutdown(self, *, wait: bool = True) -> None:
         self._stop_event.set()
+        with self._state_changed:
+            self._state_changed.notify_all()
         dispatcher = self._dispatcher
         if dispatcher is not None and dispatcher.is_alive():
             dispatcher.join(timeout=5 if wait else 0)
@@ -211,8 +214,8 @@ class OperationCoordinator:
     def get(self, operation_id: str) -> OperationRecord:
         return self.repository.get(operation_id)
 
-    def list(self, *, limit: int = 200) -> list[OperationRecord]:
-        return self.repository.list(limit=limit)
+    def list(self, *, limit: int = 200, for_display: bool = False) -> list[OperationRecord]:
+        return self.repository.list(limit=limit, for_display=for_display)
 
     def events(
         self,
@@ -249,6 +252,7 @@ class OperationCoordinator:
             event = self._cancel_events.get(operation_id)
             if event is not None:
                 event.set()
+            self._state_changed.notify_all()
         return updated
 
     def retry(
@@ -314,6 +318,15 @@ class OperationCoordinator:
             self._release(operation_id)
         return self.repository.get(operation_id)
 
+    def wait_for_terminal(self, operation_id: str) -> OperationRecord:
+        """Wait for terminal state or shutdown without racing the dispatcher."""
+        with self._state_changed:
+            while True:
+                operation = self.repository.get(operation_id)
+                if operation.status in TERMINAL_OPERATION_STATUSES or self._stop_event.is_set():
+                    return operation
+                self._state_changed.wait()
+
     def _dispatch_loop(self) -> None:
         while not self._stop_event.is_set():
             selected = self._select_ready()
@@ -378,6 +391,7 @@ class OperationCoordinator:
             self._active_claims.pop(operation_id, None)
             self._cancel_events.pop(operation_id, None)
             self._futures.pop(operation_id, None)
+            self._state_changed.notify_all()
 
     def _transition(self, operation_id: str, target_status: str, **updates: Any) -> OperationRecord:
         while True:

@@ -263,7 +263,7 @@ class RemasterOrchestrator:
             if callable(cancel_requested) and cancel_requested():
                 self._persist_cancelled(remaster_id, settings, failure_paths(), runtime_result)
                 raise RemasterExecutionError(remaster_id, "remaster_cancelled")
-            comparison = (self._comparison(remaster_id, request, validation, final_path, runtime_result)
+            comparison = (self._comparison(remaster_id, request, validation, final_path, runtime_result, output_root)
                           if check_passed else comparison_disabled_result())
             warnings = list(comparison.warnings)
             if not check_passed:
@@ -429,13 +429,14 @@ class RemasterOrchestrator:
         validation: RemasterValidationResult,
         final_path: Path,
         runtime_result: dict,
+        output_root: Path,
     ) -> RemasterComparisonResult:
         if not validation.settings.create_comparison:
             return comparison_disabled_result()
         return self.comparison_builder(
             validation.source_path,
             final_path,
-            self.config.data_dir / "reports",
+            output_root / "reports",
             {
                 "remaster_id": remaster_id,
                 "profile": request.profile,

@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import sqlite3
+import time
 from typing import Callable
 from uuid import uuid4
 
@@ -214,7 +215,10 @@ class MaintenanceBackupService:
                 if destination.exists():
                     snapshot = rollback / relative_path
                     snapshot.parent.mkdir(parents=True, exist_ok=True)
-                    self._copy_regular_file(destination, snapshot)
+                    if relative_path.as_posix().casefold() == "asteria.db":
+                        self._copy_sqlite(destination, snapshot)
+                    else:
+                        self._copy_regular_file(destination, snapshot)
 
             restored_count = 0
             for item in generic_records:
@@ -447,9 +451,13 @@ class MaintenanceBackupService:
                 raise MaintenanceBackupError("restore_destination_invalid")
 
     def _copy_sqlite(self, source: Path, destination: Path) -> None:
+        deadline = time.monotonic() + 30
+        def bounded_progress(_status: int, _remaining: int, _total: int) -> None:
+            if time.monotonic() > deadline:
+                raise sqlite3.OperationalError("database backup deadline exceeded")
         with closing(sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True)) as source_connection:
             with closing(sqlite3.connect(destination)) as destination_connection:
-                source_connection.backup(destination_connection)
+                source_connection.backup(destination_connection, pages=256, progress=bounded_progress, sleep=0.05)
                 destination_connection.commit()
         self._verify_sqlite(destination)
 
@@ -466,6 +474,11 @@ class MaintenanceBackupService:
         shutil.copy2(source, destination)
 
     def _replace_file(self, source: Path, destination: Path) -> None:
+        if destination == self.data_dir / "asteria.db":
+            # Keep open SQLite connections valid and restore through its pager,
+            # including rollback snapshots containing committed WAL data.
+            self._copy_sqlite(source, destination)
+            return
         temporary = destination.with_name(f".{destination.name}.{uuid4().hex}.restore.tmp")
         try:
             self._copy_regular_file(source, temporary)

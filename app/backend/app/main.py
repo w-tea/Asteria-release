@@ -6,7 +6,6 @@ from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from starlette.concurrency import run_in_threadpool
 
 from app.api.advanced_styles import router as advanced_styles_router
 from app.api.assets import router as assets_router
@@ -67,15 +66,11 @@ from app.services.extension_loader import ExtensionLoader, clear_loaded_extensio
 from app.services.extension_repository import ExtensionRepository
 from app.services.extension_startup import ExtensionStartupService
 from app.services.resource_advisor import ResourceCapabilityRegistry
-from app.services.reference_mutation import reference_mutation_coordinator
+from app.services.reference_mutation import ReferenceMutationMiddleware, reference_mutation_coordinator
 from app.services.video_runtime_adapters import default_video_adapters
 from app.services.music_runtime_adapters import default_music_adapters
 from app.services.history import HistoryRepository
 from app.services.image_check_recovery import recover_image_publications
-
-
-MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
-EDIT_ASSET_CLEANUP_PATH = "/api/assets/lifecycle/cleanup"
 
 
 @asynccontextmanager
@@ -103,7 +98,10 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         extension_root=config.extension_root,
     )
     coordinator.recover_startup()
-    recover_image_publications(HistoryRepository(config.data_dir / 'asteria.db'))
+    history = HistoryRepository(config.data_dir / 'asteria.db')
+    history.recover_interrupted_media_generations()
+    history.recover_interrupted_upscale_inputs()
+    recover_image_publications(history)
     if video_service is not None:
         video_service.cleanup_working_artifacts()
     sequence_service.sequences.interrupt_active_sequences()
@@ -141,15 +139,7 @@ def create_app(*, config: AppConfig | None = None) -> FastAPI:
             content={"detail": {"code": "extension_request_invalid"}},
         )
 
-    @app.middleware("http")
-    async def coordinate_reference_mutations(request: Request, call_next):
-        if request.method not in MUTATING_METHODS or request.url.path == EDIT_ASSET_CLEANUP_PATH:
-            return await call_next(request)
-        lease = await run_in_threadpool(reference_mutation_coordinator.acquire_publisher)
-        try:
-            return await call_next(request)
-        finally:
-            lease.release()
+    app.add_middleware(ReferenceMutationMiddleware, coordinator=reference_mutation_coordinator)
 
     app.add_middleware(
         CORSMiddleware,

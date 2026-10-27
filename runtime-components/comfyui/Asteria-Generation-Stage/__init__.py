@@ -1,3 +1,7 @@
+from .music_graph_safety import install_runtime
+
+install_runtime()
+
 from .nodes import NODE_CLASS_MAPPINGS
 from .sampling import NODE_CLASS_MAPPINGS as SAMPLING_NODES
 from .branch_nodes import NODE_CLASS_MAPPINGS as BRANCH_NODES
