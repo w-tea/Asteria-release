@@ -1549,6 +1549,8 @@ def refresh_lora_copy_machine_training_run(
         else:
             _sync_copy_machine_delegated_run(run, delegated)
         return repository.save(run)
+    if _apply_copy_machine_progress_from_log(run):
+        repository.save(run)
     process = _COPY_MACHINE_RUN_PROCESSES.get(run.id)
     if process is None:
         if run.effective_config_path and run.effective_config_evidence is None:
@@ -4760,6 +4762,26 @@ def _sync_copy_machine_delegated_run(
         elif delegated.exit_code not in {None, 0}:
             _append_unique_issue(run.errors, "copy_machine_training_command_failed")
     run.updated_at = _utc_now()
+
+
+def _apply_copy_machine_progress_from_log(run: LoRACopyMachineTrainingRun) -> bool:
+    if not run.log_path:
+        return False
+    progress = None
+    for raw_line in _read_text_tail(Path(run.log_path)).splitlines():
+        line = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", raw_line).strip()
+        # TrainTrain labels optimizer updates with loss and epoch rather than
+        # sd-scripts' "steps:". Do not interpret cache/preview bars as updates.
+        if not re.match(r"Loss EMA \* 1000:.*[,]\s*Epoch:\s*\d+\s*:", line):
+            continue
+        fraction = _parse_progress_fraction(line)
+        if fraction is not None:
+            current, total = fraction
+            progress = (current, total, round(current / total * 100, 2), line[-240:])
+    if progress is None or progress == (run.progress_current, run.progress_total, run.progress_percent, run.progress_message):
+        return False
+    run.progress_current, run.progress_total, run.progress_percent, run.progress_message = progress
+    return True
 
 
 def _parse_training_progress(log_text: str) -> tuple[int | None, int | None, float | None, str] | None:
