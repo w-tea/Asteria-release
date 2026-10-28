@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "34a38024a31ee4916f91bf4211db81463317e22f",
-  "build_timestamp_utc": "2026-10-28T09:49:49Z",
+  "source_commit": "226c3da37230882a5ef611df85b8dca5e1ddd550",
+  "build_timestamp_utc": "2026-10-28T12:51:32Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -953,8 +953,8 @@
     },
     {
       "path": "app/backend/app/services/lora_training.py",
-      "size_bytes": 239646,
-      "sha256": "3b5003c235b3f33046823648fb40d99082e9d7a522526513c9a7efd961ecb901"
+      "size_bytes": 239578,
+      "sha256": "5f8a912d185b54b30dc0b4f225f36a86f989ea56dab022d1032c7e29ed960dd6"
     },
     {
       "path": "app/backend/app/services/maintenance_backup.py",
@@ -1422,6 +1422,11 @@
       "sha256": "af34f355d304bc06f3250ddaeed592b0f00fc327bfe1ceeac5975de4a6cc1e0b"
     },
     {
+      "path": "app/backend/app/services/training_process.py",
+      "size_bytes": 2439,
+      "sha256": "38319645c8b50ed1f22c11e577d039d094b75a8177cc3692ebdf32ce149cd311"
+    },
+    {
       "path": "app/backend/app/services/upscaler_catalog.py",
       "size_bytes": 1936,
       "sha256": "08594c943bc179c3ab21aedcdd58ee272f72bae5b8c5fca124ff8dc88a18ed5c"
@@ -1574,12 +1579,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "f52b193b31458dc81b8de3aea22610c501eea0086963addba46c6bda970e2829"
+      "sha256": "87770897448744583e5af934067f0f29d3c22f959e77b2489129b4b16e3068ab"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/4aca1e4a-24a2-4dc9-a034-f53466aba0f2.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/a111a4ab-5499-47e0-add3-9ad569ddadf0.json",
       "size_bytes": 88,
-      "sha256": "9ea662544dfdd9c41bac78ba6bb13860d28ff5f2f83c511fb77d915ded598260"
+      "sha256": "f332c481768d2ed2654f1a08636ef716a61689b8b60294dd5e316b280899439d"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.Dp_3fwT-.css",
@@ -1624,7 +1629,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 162688,
-      "sha256": "42b162c9cefea36430c6cf60888347eb4d9c4c3ccbd9ee24118c76849cd478af"
+      "sha256": "70b28a6ab3a88724b5bd5194ae8b1571d38befe7dccd8b98863f5ef6c5d500b5"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.Br3zh7eU.mjs",
@@ -2429,7 +2434,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 20970,
-      "sha256": "d76d73439d8c1c294e1278ee143203a786d5d6e0e6947f0649581117ab76dfc1"
+      "sha256": "047299e46bd53a53a2e703ebae89fae29b57484037f476c606ce0adce3a1f825"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",

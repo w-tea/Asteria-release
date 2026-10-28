@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field
 
 from app.services.image_metadata_text import metadata_value_to_text
 from app.services.atomic_json import write_json_atomic
+from app.services.training_process import popen_training_process
 
 TrainingProfile = Literal["sdxl", "anima"]
 TrainingType = Literal["copy_lora", "character_lora", "style_lora"]
@@ -2008,13 +2009,10 @@ def start_lora_training_run(
             log_file.write(f"Command: {' '.join(run.command_args)}\n\n")
             log_file.flush()
             try:
-                process = subprocess.Popen(
+                process = popen_training_process(
                     run.command_args,
-                    cwd=str(working_dir),
+                    cwd=working_dir,
                     stdout=log_file,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    start_new_session=os.name != "nt",
                 )
             except OSError as exc:
                 now = _utc_now()
