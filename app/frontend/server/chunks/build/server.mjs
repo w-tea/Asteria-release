@@ -1592,15 +1592,15 @@ const messages = {
   "bodyCompare.choose": { en: "Candidate from image {id}", ja: "画像{id}の比較候補" },
   "bodyCompare.select": { en: "Choose a candidate", ja: "候補を選択してください" },
   "bodyCompare.loading": { en: "Reading saved candidates…", ja: "保存済みの候補を読込中…" },
-  "bodyCompare.missing": { en: "No saved candidate of this kind. Run detection or open body-part review.", ja: "この部位の保存候補がありません。検出するか、人体部位レビューを開いてください。" },
+  "bodyCompare.missing": { en: "No saved candidate of this kind. Run detection or open Detect and select body parts.", ja: "この部位の保存候補がありません。検出するか、「体の部位を検出・選択」を開いてください。" },
   "bodyCompare.detectMissing": { en: "Detect missing candidates ({count} images)", ja: "候補のない{count}画像を検出" },
   "bodyCompare.progress": { en: "Detecting in order · {count} images finished", ja: "順番に検出中・{count}画像完了" },
   "bodyCompare.count": { en: "{count} images · Select a candidate in each column.", ja: "{count}画像・各列で候補を選択してください。" },
   "bodyCompare.scrollHelp": { en: "Scroll horizontally to compare the remaining images. Missing candidates stay visible as empty columns.", ja: "横にスクロールすると残りの画像を確認できます。候補がない画像も空の列として残します。" },
   "bodyCompare.rail": { en: "Horizontal part comparison", ja: "部位の横並び比較" },
   "bodyCompare.crop": { en: "{part} from image {id}", ja: "画像{id}の{part}" },
-  "bodyReview.open": { en: "Review body parts…", ja: "人体部位レビュー…" },
-  "bodyReview.title": { en: "Body-part review", ja: "人体部位レビュー" },
+  "bodyReview.open": { en: "Detect and select body parts…", ja: "体の部位を検出・選択…" },
+  "bodyReview.title": { en: "Detect and select body parts", ja: "体の部位を検出・選択" },
   "bodyReview.help": { en: "Inspect suggested regions before editing. Duplicates, missing parts, mixed people and false detections can occur. These candidates do not judge anatomy, normality or person ownership.", ja: "編集したい部位の候補を確認します。重複、見逃し、人物の混在、誤検出があります。人体の異常・正常や、どの人物の部位かは判定しません。" },
   "bodyReview.parts": { en: "Parts to look for", ja: "探す部位" },
   "bodyReview.part.person": { en: "Person", ja: "人物" },
@@ -1613,7 +1613,7 @@ const messages = {
   "bodyReview.detect": { en: "Find candidates", ja: "部位候補を検出" },
   "bodyReview.stop": { en: "Stop", ja: "中止" },
   "bodyReview.working": { en: "Processing on CPU. You can stop or close this review.", ja: "CPUで処理しています。中止するか、この画面を閉じられます。" },
-  "bodyReview.noDetector": { en: "The optional detector is not installed. See the body-part review guide for setup, or use the manual mask brush.", ja: "任意導入の検出モデルがありません。人体部位レビューのガイドで導入方法を確認するか、手動マスクを使ってください。" },
+  "bodyReview.noDetector": { en: "The optional detector is not installed. See the body-part selection guide for setup, or use the manual mask brush.", ja: "任意導入の検出モデルがありません。体の部位を選ぶガイドで導入方法を確認するか、手動マスクを使ってください。" },
   "bodyReview.noSam": { en: "The optional mask model is not installed. Boxes can still be reviewed; use the manual brush to make a mask.", ja: "マスク作成用のモデルがありません。矩形の確認はできます。マスクは手動ブラシで作成してください。" },
   "bodyReview.loadError": { en: "The image or saved review is unavailable. Reopen the image and check its saved files.", ja: "画像または保存済みの候補を読み込めません。画像を開き直し、保存先を確認してください。" },
   "bodyReview.runError": { en: "Processing stopped or failed. Check the optional models and try again. Manual editing is still available.", ja: "処理を完了できませんでした。導入したモデルを確認し、もう一度お試しください。手動編集は引き続き使えます。" },
@@ -1638,7 +1638,7 @@ const messages = {
   "bodyReview.makeMask": { en: "Create mask from selection", ja: "選択部位をマスク化" },
   "bodyReview.edit": { en: "Use mask in Image Edit", ja: "マスクを画像編集へ" },
   "bodyReview.maskHelp": { en: "Only the colored SAM mask is transferred, not the rectangles. Refine it with the existing brush before generating. Unselected or missed regions can be painted manually.", ja: "転送されるのは色付きのSAMマスクで、矩形そのものではありません。生成前に既存のブラシで修正してください。未選択・見逃しの部位も手動で追加できます。" },
-  "reproduction.numbers": { en: "Recorded numerical differences", ja: "記録された数値の差" },
+  "reproduction.numbers": { en: "Compare recorded generation values", ja: "生成時の数値を比較" },
   "reproduction.originFresh": { en: "Sampling values were recorded during this generation.", ja: "この生成の実行時に数値を記録しました。" },
   "reproduction.originReused": { en: "Includes values from a previously computed result reused without sampling again.", ja: "再計算せずに利用した、以前の計算結果の記録を含みます。" },
   "reproduction.numbersHelp": { en: "Compare two histories using actual inputs, model hashes, and recorded initial-noise hashes and sigma values. Missing values are not counted as matches. Matching records do not guarantee identical pixels or establish why images differ.", ja: "2件の履歴で、実際の入力・モデルのhash・記録済みの初期ノイズのhashやsigmaを見比べます。未記録の値は一致と数えません。記録が同じでも画素の一致は保証せず、画像が異なる原因も断定しません。" },
@@ -1669,8 +1669,8 @@ const messages = {
   "wordMask.brush": { en: "The colored area will be edited. Open the image editor to refine it with the brush before generating.", ja: "色の付いた範囲が編集対象です。画像編集を開くと、生成前にブラシで手直しできます。" },
   "wordMask.edit": { en: "Edit with this range", ja: "この範囲で画像編集" },
   "wordMask.saving": { en: "Saving mask…", ja: "マスクを保存中…" },
-  "loraPractical.open": { en: "Test in new scenes", ja: "別の場面で比較" },
-  "loraPractical.title": { en: "LoRA practical test", ja: "LoRAの実用テスト" },
+  "loraPractical.open": { en: "Compare with and without LoRA", ja: "LoRAあり・なしを比較" },
+  "loraPractical.title": { en: "Compare with and without LoRA", ja: "LoRAあり・なしを比較" },
   "loraPractical.help": { en: "Compare finished images with and without the trained LoRA, using outfits, settings and poses outside its training material.", ja: "学習素材にない服・背景・ポーズで生成し、LoRAの有無による違いを完成画像で比べます。" },
   "loraPractical.setup": { en: "Test conditions", ja: "条件を作る" },
   "loraPractical.results": { en: "Compare and rate", ja: "比較・評価" },
@@ -1722,9 +1722,9 @@ const messages = {
   "loraPractical.alreadyStarted": { en: "This comparison has already started. Refresh its status instead of starting it again.", ja: "この比較は開始済みです。再実行せず、状態を更新してください。" },
   "loraPractical.interrupted": { en: "This comparison was interrupted. Review the completed images and create a new comparison if needed.", ja: "比較が中断されました。完成済みの画像を確認し、必要なら新しい比較を作ってください。" },
   "loraPractical.requestFailed": { en: "The request could not be completed. Check the input and connection, then try again.", ja: "操作を完了できませんでした。入力内容と接続を確認し、もう一度お試しください。" },
-  "datasetReview.open": { en: "Review training images", ja: "学習素材を点検" },
+  "datasetReview.open": { en: "Review training images and captions", ja: "学習画像と文章を確認" },
   "datasetReview.reload": { en: "Reload", ja: "再読み込み" },
-  "datasetReview.title": { en: "Training image review", ja: "学習素材の点検" },
+  "datasetReview.title": { en: "Review training images and captions", ja: "学習画像と文章を確認" },
   "datasetReview.help": { en: "Inspect images and their training captions. Confirm visible features yourself; this does not change images or captions, or start training.", ja: "画像と学習用キャプションを見比べ、写っている内容を確認します。点検だけで画像や文章を書き換えたり、学習を始めたりすることはありません。" },
   "datasetReview.images": { en: "Images and annotations", ja: "画像と注釈" },
   "datasetReview.summary": { en: "Distribution and duplicates", ja: "偏り・重複" },
@@ -1777,13 +1777,13 @@ const messages = {
   "datasetReview.loadFailed": { en: "Could not load the review. Check the images and reload. Review supports up to 512 images per dataset.", ja: "点検内容を読み込めませんでした。画像を確認し、再読み込みしてください。一組で点検できるのは512枚までです。" },
   "datasetReview.checkFailed": { en: "AI review failed. Check the connection and model. You can still annotate manually; the caption has not changed.", ja: "AIで確認できませんでした。接続先とモデルを確認してください。手動で注釈を入力することもできます。キャプションは変更していません。" },
   "datasetReview.saveFailed": { en: "Could not save. The image, caption or review may have changed. Reload and check the current content.", ja: "保存できませんでした。画像・文章・確認内容が変わっている可能性があります。再読み込みして、現在の内容を確認してください。" },
-  "stages.record": { en: "Keep images for before/after comparison", ja: "比較用の画像を残す" },
-  "making.record": { en: "Save a making-of video", ja: "メイキングを保存" },
-  "branch.record": { en: "Keep an intermediate state", ja: "途中の状態を残す" },
+  "stages.record": { en: "Save images before and after enhancement", ja: "補正前後の画像を保存" },
+  "making.record": { en: "Save a video of generation progress", ja: "生成過程を動画で保存" },
+  "branch.record": { en: "Save an intermediate generation state", ja: "生成の途中状態を保存" },
   "branch.step": { en: "Branch after step", ja: "状態を残すステップ" },
   "branch.recordHelp": { en: "Keep one point during base generation. You can change the prompt or CFG later and continue from that point. Uses up to 128 MiB per image.", ja: "最初の生成中に状態を一か所保存します。後から文章やCFGを変え、その続きから生成できます。1枚につき最大128MiBを使います。" },
   "branch.support": { en: "Available for a single SDXL or Anima text-to-image result with Euler, Euler a, DPM++ 2M, DPM++ 2M SDE, DPM++ 3M SDE, or ER SDE.", ja: "SDXLまたはAnimaで、テキストから1枚生成するときに使えます。対応サンプラーはEuler、Euler a、DPM++ 2M、DPM++ 2M SDE、DPM++ 3M SDE、ER SDEです。" },
-  "branch.open": { en: "Branch from step {step}…", ja: "ステップ{step}から分岐…" },
+  "branch.open": { en: "Continue from step {step}…", ja: "ステップ{step}から続きを生成…" },
   "branch.title": { en: "Continue from a saved state", ja: "途中の状態から生成" },
   "branch.help": { en: "Change the text or CFG for the remaining steps. This creates a separate image without replacing the original.", ja: "残りのステップで使う文章やCFGを変更します。元の画像は残し、別の画像として保存します。" },
   "branch.loading": { en: "Checking the saved state…", ja: "保存した状態を確認しています…" },
@@ -1799,24 +1799,24 @@ const messages = {
   "branch.settingsError": { en: "This setup cannot keep an intermediate state. Use one SDXL or Anima text-to-image result with a supported sampler.", ja: "この設定では途中の状態を残せません。対応サンプラーを選び、SDXLまたはAnimaでテキストから1枚生成してください。" },
   "branch.stepError": { en: "The saved point must be before the final base step or refiner switch. Choose an earlier step.", ja: "状態を残すステップは、最初の生成の終了またはRefinerへの切り替えより前を指定してください。" },
   "making.help": { en: "Record existing previews as MP4 and GIF without extra image-model computation. Encoding takes extra time and storage. Cancelled or rejected images are not recorded.", ja: "途中プレビューをMP4とGIFに保存します。画像モデルの計算は増えませんが、動画の作成時間と保存容量が必要です。中止や画像チェック不合格の場合は残しません。" },
-  "making.open": { en: "Play making-of", ja: "メイキングを再生" },
-  "making.title": { en: "Making-of video", ja: "生成のメイキング" },
+  "making.open": { en: "Play generation video", ja: "生成過程の動画を再生" },
+  "making.title": { en: "Generation progress video", ja: "生成過程の動画" },
   "making.previewHelp": { en: "{count} previews, accelerated at 8 fps with a long edge up to 640 px. Captions show elapsed time, batch, pass and known steps. Each final image is held for 2 seconds.", ja: "途中画像{count}枚を長辺最大640px・8fpsで早送りします。字幕は経過時間、生成の回、取得できたstepです。完成画像は各2秒表示します。" },
   "making.limited": { en: "Some previews were skipped to limit recording time and storage.", ja: "記録の負荷と容量を抑えるため、一部の途中画像を省略しています。" },
   "making.mp4": { en: "Download MP4", ja: "MP4を保存" },
   "making.gif": { en: "Download GIF", ja: "GIFを保存" },
   "making.playFailed": { en: "The video could not be loaded. Check whether it was moved or deleted in Media Library.", ja: "動画を読み込めませんでした。移動・削除していないかメディアライブラリで確認してください。" },
-  "making.reason.too_many_images": { en: "Making-of is not saved for batches over 100 final images. Reduce the batch size to record it.", ja: "完成画像が100枚を超えるため、メイキングは保存していません。記録する場合は生成枚数を減らしてください。" },
+  "making.reason.too_many_images": { en: "The generation video is not saved for batches over 100 final images. Reduce the batch size to record it.", ja: "完成画像が100枚を超えるため、生成過程の動画は保存していません。記録する場合は生成枚数を減らしてください。" },
   "making.reason.recording_failed": { en: "Previews could not be recorded. Check the output folder and free disk space.", ja: "途中画像を記録できませんでした。保存先のフォルダーと空き容量を確認してください。" },
-  "making.reason.generation_incomplete": { en: "No making-of was saved because generation did not finish.", ja: "生成が完了しなかったため、メイキングは保存していません。" },
-  "making.reason.image_check_not_passed": { en: "No making-of was saved because an image was rejected or could not be checked.", ja: "画像チェックの不合格または判定不能を含むため、メイキングは保存していません。" },
-  "making.reason.no_previews": { en: "No making-of was saved because no intermediate previews were available.", ja: "途中プレビューを取得できなかったため、メイキングは保存していません。" },
-  "making.reason.encoding_failed": { en: "The making-of could not be saved. The generated image is unaffected. Check free disk space before trying again.", ja: "メイキングを保存できませんでした。生成画像には影響しません。空き容量を確認してから再度お試しください。" },
+  "making.reason.generation_incomplete": { en: "The generation video was not saved because generation did not finish.", ja: "生成が完了しなかったため、生成過程の動画は保存していません。" },
+  "making.reason.image_check_not_passed": { en: "The generation video was not saved because an image was rejected or could not be checked.", ja: "身体チェックの不合格または判定不能を含むため、生成過程の動画は保存していません。" },
+  "making.reason.no_previews": { en: "The generation video was not saved because no intermediate previews were available.", ja: "途中プレビューを取得できなかったため、生成過程の動画は保存していません。" },
+  "making.reason.encoding_failed": { en: "The generation video could not be saved. The generated image is unaffected. Check free disk space before trying again.", ja: "生成過程の動画を保存できませんでした。生成画像には影響しません。空き容量を確認してから再度お試しください。" },
   "stages.recordHelp": { en: "Save images before and after enhancement. Compare them in Media Library. Extra decoding and image storage use more time and disk space.", ja: "拡大・補正の前後の画像を保存し、メディアライブラリで比較します。画像への変換と保存の分だけ、処理時間とディスク使用量が増えます。" },
   "stages.open": { en: "Compare enhancement stages", ja: "補正・拡大の前後を比較" },
   "stages.title": { en: "Before and after enhancement", ja: "補正・拡大の前後比較" },
-  "stages.help": { en: "Select two saved stages of the same image. The original images are not changed. Use image conditions to assess visible changes separately.", ja: "同じ一枚の工程を二つ選んで比較します。元画像は変更しません。顔や服などの確認には、それぞれの「条件をチェック」を使えます。" },
-  "stages.empty": { en: "No stage images were saved. Enable “Keep images for before/after comparison” under enhancements before your next generation.", ja: "比較用の画像は保存されていません。次の生成前に「補正・拡張」の「比較用の画像を残す」をONにしてください。" },
+  "stages.help": { en: "Select two saved stages of the same image. The original images are not changed. Use Check image conditions with AI to assess visible changes separately.", ja: "同じ一枚の工程を二つ選んで比較します。元画像は変更しません。顔や服などの確認には、それぞれの「AIで画像の条件確認」を使えます。" },
+  "stages.empty": { en: "No stage images were saved. Enable “Save images before and after enhancement” under enhancements before your next generation.", ja: "比較用の画像は保存されていません。次の生成前に「補正・拡張」の「補正前後の画像を保存」をONにしてください。" },
   "stages.image": { en: "Image", ja: "比較する一枚" },
   "stages.zoom": { en: "View size", ja: "表示倍率" },
   "stages.before": { en: "Left stage", ja: "左に表示する工程" },
@@ -1835,9 +1835,9 @@ const messages = {
   "stages.kind.before_topaz": { en: "Before Topaz", ja: "Topazへ渡す画像" },
   "stages.kind.topaz": { en: "After Topaz", ja: "Topaz後" },
   "stages.kind.final": { en: "Final image", ja: "完成画像" },
-  "conditions.open": { en: "Check image conditions", ja: "条件をチェック" },
-  "series.open": { en: "Check series consistency", ja: "シリーズの一貫性を確認" },
-  "series.title": { en: "Series consistency", ja: "シリーズ画像の一貫性" },
+  "conditions.open": { en: "Check image conditions with AI", ja: "AIで画像の条件確認" },
+  "series.open": { en: "Compare appearance with AI", ja: "AIで見た目を比較" },
+  "series.title": { en: "Compare appearance with a reference", ja: "基準画像と見た目を比較" },
   "series.help": { en: "Compare visible hair, clothing and other features with a reference image. Hidden or ambiguous details remain unknown. This does not identify people or guarantee the same character.", ja: "基準画像と比べて、髪や服などの見た目が揃っているか確認します。見えない部分や曖昧な部分は「不明」です。同一人物の特定や、同じキャラクターであることの保証はしません。" },
   "series.selection": { en: "{count} images selected. Select 2–24 images in the library using Ctrl/Shift; one will be the reference.", ja: "{count}枚選択中。ライブラリでCtrl／Shiftを使って2～24枚を選び、そのうち一枚を基準にします。" },
   "series.reference": { en: "Reference image", ja: "基準画像" },
@@ -1855,7 +1855,7 @@ const messages = {
   "series.running": { en: "No completed result yet", ja: "確認結果はまだありません" },
   "series.failedStatus": { en: "Could not check", ja: "確認できませんでした" },
   "series.empty": { en: "Start a comparison or select a saved result. Opening this screen does not resume unfinished checks.", ja: "比較を開始するか、保存した結果を選んでください。この画面を開くだけでは、途中の確認を再開しません。" },
-  "conditions.title": { en: "Image condition check", ja: "画像の条件チェック" },
+  "conditions.title": { en: "Check image conditions with AI", ja: "AIで画像の条件確認" },
   "conditions.help": { en: "Check visible details against your conditions. Hidden or ambiguous details remain unknown. This is separate from anatomy checking and does not change or delete the image.", ja: "指定した条件に合うか、画像を見て確認します。見えない部分や曖昧な部分は「不明」です。人体の崩れ判定とは別で、画像の変更・削除はしません。" },
   "conditions.selectedImage": { en: "Image to check", ja: "確認する画像" },
   "conditions.criteria": { en: "Conditions — one per line", ja: "確認する条件（一行に一つ）" },
@@ -1895,29 +1895,29 @@ const messages = {
   "conditions.filter.mismatch": { en: "Conditions: does not match", ja: "条件判定：不一致" },
   "conditions.filter.unknown": { en: "Conditions: unknown", ja: "条件判定：不明" },
   "conditions.filter.unchecked": { en: "Conditions: not checked", ja: "条件判定：未確認" },
-  "materials.tab": { en: "Materials", ja: "素材" },
-  "materials.title": { en: "Prompt materials", ja: "人物・衣装の素材" },
-  "materials.help": { en: "Save appearance, clothing, poses and backgrounds separately, then combine them when writing a prompt.", ja: "人物・衣装・ポーズ・背景を別々に保存し、選んで組み合わせられます。" },
-  "materials.savedList": { en: "Saved materials", ja: "保存した素材" },
-  "materials.search": { en: "Search materials", ja: "素材を検索" },
+  "materials.tab": { en: "Saved prompts", ja: "保存プロンプト" },
+  "materials.title": { en: "Save and reuse prompts", ja: "プロンプトを保存・追加" },
+  "materials.help": { en: "Save reusable text for people, outfits, poses and backgrounds. Select entries to append their text to a prompt field.", ja: "人物・衣装・ポーズ・背景の文章を保存し、選んだ入力欄の末尾へ追加できます。" },
+  "materials.savedList": { en: "Saved prompts", ja: "保存したプロンプト" },
+  "materials.search": { en: "Search saved prompts", ja: "保存プロンプトを検索" },
   "materials.category": { en: "Filter by category", ja: "種類で絞る" },
   "materials.all": { en: "All categories", ja: "すべて" },
   "materials.kind.person": { en: "Person", ja: "人物" },
   "materials.kind.clothing": { en: "Clothing", ja: "衣装" },
   "materials.kind.pose": { en: "Pose", ja: "ポーズ" },
   "materials.kind.background": { en: "Background", ja: "背景" },
-  "materials.kindLabel": { en: "Material category", ja: "素材の種類" },
-  "materials.new": { en: "New material", ja: "素材を作成" },
+  "materials.kindLabel": { en: "Prompt category", ja: "プロンプトの種類" },
+  "materials.new": { en: "New saved prompt", ja: "プロンプトを登録" },
   "materials.reload": { en: "Reload list", ja: "一覧を更新" },
-  "materials.empty": { en: "No matching materials. Create one or propose one from an image.", ja: "該当する素材はありません。作成欄で入力するか、画像から候補を作れます。" },
+  "materials.empty": { en: "No matching saved prompts. Enter text to save, or request a suggestion from an image.", ja: "該当する保存プロンプトはありません。文章を入力するか、画像から候補を作れます。" },
   "materials.anyProfile": { en: "Any model family", ja: "指定なし" },
   "materials.profile": { en: "Model family", ja: "モデルの系統" },
-  "materials.edit": { en: "Edit material", ja: "素材を編集" },
+  "materials.edit": { en: "Edit saved prompt", ja: "保存プロンプトを編集" },
   "materials.delete": { en: "Delete", ja: "削除" },
-  "materials.deleteQuestion": { en: "Delete this saved material? Your prompts and image files will not be changed.", ja: "この素材を削除しますか？ 入力中のプロンプトや画像ファイルは変更しません。" },
-  "materials.confirmDelete": { en: "Delete this material", ja: "この素材を削除" },
-  "materials.name": { en: "Material name", ja: "素材名" },
-  "materials.prompt": { en: "Material prompt", ja: "素材のプロンプト" },
+  "materials.deleteQuestion": { en: "Delete this saved prompt? Your current prompt fields and image files will not be changed.", ja: "この保存プロンプトを削除しますか？ 入力中のプロンプトや画像ファイルは変更しません。" },
+  "materials.confirmDelete": { en: "Delete this saved prompt", ja: "この保存プロンプトを削除" },
+  "materials.name": { en: "Saved prompt name", ja: "保存する名前" },
+  "materials.prompt": { en: "Text to save", ja: "保存するプロンプト" },
   "materials.links": { en: "Linked LoRA and Embeddings", ja: "LoRA・Embeddingのひも付け" },
   "materials.assetKind": { en: "Asset type", ja: "資産の種類" },
   "materials.asset": { en: "Choose an asset", ja: "資産を選択" },
@@ -1930,31 +1930,31 @@ const messages = {
   "materials.image": { en: "Source image", ja: "元の画像" },
   "materials.propose": { en: "Send image and propose", ja: "画像を送って候補を作る" },
   "materials.confirmImage": { en: "I checked these details against the image.", ja: "画像と見比べて内容を確認しました" },
-  "materials.save": { en: "Save material", ja: "素材を保存" },
-  "materials.assemble": { en: "Combine selected materials", ja: "選んだ素材を組み合わせる" },
-  "materials.selectHelp": { en: "Select materials in the order you want to insert them (up to 32 per insertion).", ja: "挿入したい順に素材を選んでください。一度に32件まで組み合わせられます。" },
+  "materials.save": { en: "Save prompt", ja: "プロンプトを保存" },
+  "materials.assemble": { en: "Append saved prompts", ja: "保存プロンプトを追加" },
+  "materials.selectHelp": { en: "Select saved prompts in the order you want to append them (up to 32 at a time).", ja: "追加したい順に保存プロンプトを選んでください。一度に32件まで組み合わせられます。" },
   "materials.target": { en: "Insert into", ja: "挿入先" },
   "materials.applyAssets": { en: "Also apply linked LoRA and Embeddings", ja: "ひも付けたLoRAとEmbeddingも適用する" },
   "materials.insert": { en: "Append to this prompt", ja: "この欄へ追加" },
-  "materials.toScene": { en: "Use in scene builder", ja: "シーン組立へ渡す" },
+  "materials.toScene": { en: "Use in AI prompt builder", ja: "AIプロンプト作成へ渡す" },
   "materials.clear": { en: "Clear selection", ja: "選択を解除" },
-  "materials.sceneHelp": { en: "Scene builder uses the selected material text. Linked assets are applied only by the append action. This does not guarantee character identity or placement.", ja: "シーン組立には選択した素材の文章を渡します。LoRA等は「この欄へ追加」で適用します。同じ人物や配置を保証する機能ではありません。" },
-  "materials.sceneSelected": { en: "Selected material text", ja: "選択中の素材" },
-  "materials.useInScene": { en: "Include selected material text in the proposal", ja: "選択した素材の文章も提案に使う" },
-  "materials.issue.profile": { en: "A selected material targets another model family. Review it or turn off linked assets to insert text only.", ja: "別のモデル系統向けの素材が含まれています。素材を確認するか、資産の適用をOFFにして文章だけを使ってください。" },
+  "materials.sceneHelp": { en: "AI prompt builder receives the selected saved text. Linked assets are applied only by the append action. This does not guarantee character identity or placement.", ja: "AIプロンプト作成には選択した文章を渡します。LoRA等は「この欄へ追加」で適用します。同じ人物や配置を保証する機能ではありません。" },
+  "materials.sceneSelected": { en: "Selected saved prompts", ja: "選択中の保存プロンプト" },
+  "materials.useInScene": { en: "Include the selected saved prompts in the proposal", ja: "選択した保存プロンプトも提案に使う" },
+  "materials.issue.profile": { en: "A saved prompt targets another model family. Review it or turn off linked assets to append text only.", ja: "別のモデル系統向けの保存プロンプトが含まれています。内容を確認するか、資産の適用をOFFにして文章だけを使ってください。" },
   "materials.issue.missing": { en: "A linked asset is missing. Relink it from the current model list, or insert text only.", ja: "ひも付けた資産が見つかりません。現在の一覧から選び直すか、資産の適用をOFFにしてください。" },
-  "materials.issue.conflict": { en: "The same LoRA has different settings. Resolve the conflict before applying linked assets.", ja: "同じLoRAの設定が食い違っています。素材や選択中のLoRAの強度・有効状態・階層設定を揃えてください。" },
-  "materials.saved": { en: "Material saved.", ja: "素材を保存しました。" },
+  "materials.issue.conflict": { en: "The same LoRA has different settings. Resolve the conflict before applying linked assets.", ja: "同じLoRAの設定が食い違っています。保存プロンプトと選択中のLoRAの強度・有効状態・階層設定を揃えてください。" },
+  "materials.saved": { en: "Prompt saved.", ja: "プロンプトを保存しました。" },
   "materials.inserted": { en: "Added to the selected prompt.", ja: "選んだ欄へ追加しました。" },
   "materials.proposed": { en: "Review and edit the candidate, then confirm it against the image before saving.", ja: "候補を確認・編集し、画像と見比べてから保存してください。" },
   "materials.working": { en: "Processing…", ja: "処理中…" },
   "materials.failed": { en: "The operation failed. Check the connection and input. If you were saving, reload the list to check its status before trying again.", ja: "処理できませんでした。接続先と入力内容を確認してください。保存中だった場合は、一覧を更新して保存状態を確認してからやり直してください。" },
-  "materials.changed": { en: "This material was changed elsewhere. Reload the list before editing it again.", ja: "この素材は別の操作で更新されています。一覧を更新してから編集し直してください。" },
+  "materials.changed": { en: "This saved prompt was changed elsewhere. Reload the list before editing it again.", ja: "この保存プロンプトは別の操作で更新されています。一覧を更新してから編集し直してください。" },
   "materials.insertFailed": { en: "Could not insert the selection. Check the target and linked assets.", ja: "挿入できませんでした。挿入先と、ひも付けた資産を確認してください。" },
   "materials.imageTooLarge": { en: "Choose an image no larger than 32 MB.", ja: "32MB以下の画像を選んでください。" },
-  "promptWorkshop.tab.scene": { en: "Scene builder", ja: "シーン組立" },
-  "promptWorkshop.tab.review": { en: "Meaning check", ja: "矛盾チェック" },
-  "promptWorkshop.title.scene": { en: "Build a scene", ja: "シーンを組み立てる" },
+  "promptWorkshop.tab.scene": { en: "AI prompt builder", ja: "AIプロンプト作成" },
+  "promptWorkshop.tab.review": { en: "AI conflict check", ja: "AIで矛盾確認" },
+  "promptWorkshop.title.scene": { en: "Create prompts from a scene description", ja: "場面の説明からプロンプトを作成" },
   "promptWorkshop.title.review": { en: "Check prompt meaning", ja: "プロンプトの矛盾を確認" },
   "promptWorkshop.help.scene": { en: "Describe what you want to draw. Review and edit the proposed prompts before replacing the three positive sections.", ja: "描きたい場面を説明すると、三つの欄に分けたプロンプトを提案します。内容を確認・編集してから反映してください。" },
   "promptWorkshop.help.review": { en: "Look for possible conflicts in count, appearance, clothing or actions. This never changes your prompts.", ja: "人数・外見・服装・動作など、意図がぶつかりそうな箇所を探します。入力した文章は変更しません。" },
@@ -1964,7 +1964,7 @@ const messages = {
   "promptWorkshop.sendNotice": { en: "The text for this operation is sent to the selected AI connection. No images are sent.", ja: "この操作に使う文章を、選択したAI接続先へ送ります。画像は送信しません。" },
   "promptWorkshop.scene": { en: "Scene description", ja: "描きたい場面" },
   "promptWorkshop.sceneExample": { en: "A woman with braided red hair reads a book by a cafe window, soft watercolor illustration.", ja: "赤い編み髪の女性が、カフェの窓辺で本を読んでいる。柔らかい水彩のイラスト。" },
-  "promptWorkshop.materials": { en: "Material notes (optional)", ja: "素材メモ（任意）" },
+  "promptWorkshop.materials": { en: "Details to include (optional)", ja: "入れたい特徴や語句（任意）" },
   "promptWorkshop.materialsHelp": { en: "One note per line: character features, clothes, background, or exact wildcard tokens to preserve.", ja: "人物の特徴、服装、背景、残したいワイルドカードなどを一行ずつ入力します。" },
   "promptWorkshop.input": { en: "Text to check", ja: "確認する文章" },
   "promptWorkshop.emptyField": { en: "(Empty)", ja: "（空欄）" },
@@ -1990,7 +1990,7 @@ const messages = {
   "promptWorkshop.category.clothing": { en: "Clothing", ja: "服装" },
   "promptWorkshop.category.action": { en: "Action", ja: "動作" },
   "promptWorkshop.category.other": { en: "Other", ja: "その他" },
-  "promptComparison.title": { en: "Prompt effect comparison", ja: "語句の効き方比較" },
+  "promptComparison.title": { en: "Generate a prompt comparison", ja: "プロンプトの比較生成" },
   "promptComparison.summary": { en: "Change one condition", ja: "一つの条件を変えて比較" },
   "promptComparison.help": { en: "Compare two conditions with matching seeds and generation settings. Wildcard choices outside the changed text stay the same. Your normal generation settings are not changed.", ja: "Seedと生成設定を揃え、一つの条件だけ変えて画像を比べます。変更箇所以外のワイルドカードは再抽選しません。普段の生成設定は書き換えません。" },
   "promptComparison.kind": { en: "Compare", ja: "比較するもの" },
@@ -2063,7 +2063,7 @@ const messages = {
   "promptComparison.pairError": { en: "This pair is incomplete. Choose a completed pair.", ja: "この組は未完成です。二枚とも完成した組を選んでください。" },
   "promptComparison.interruptedError": { en: "The previous run was interrupted. Its results are kept; prepare a new comparison to run again.", ja: "前回の実行は中断しました。得られた結果は残っています。もう一度実行する場合は、新しい比較を準備してください。" },
   "promptComparison.requestError": { en: "Could not complete the request. Check the inputs and connection, then refresh the status before trying again.", ja: "操作を完了できませんでした。入力と接続を確認し、状態を更新してからお試しください。" },
-  "reproduction.title": { en: "Regeneration assist", ja: "再生成アシスト" },
+  "reproduction.title": { en: "Restore and compare generation settings", ja: "生成設定の復元・比較" },
   "reproduction.help": { en: "Restore this generation for another run. Matching settings and files do not guarantee identical pixels across engine, device, or version changes.", ja: "この画像の設定を生成画面へ戻します。設定とファイルが同じでも、生成環境やバージョンが変わると画像まで完全には一致しない場合があります。" },
   "reproduction.assets": { en: "Models and related files", ja: "モデルと関連ファイル" },
   "reproduction.hashHelp": { en: "Compare current file contents with the files selected at generation start. Large models can take a while to read. Missing or ambiguous files are not treated as a match.", ja: "生成開始時に選んでいたファイルと、現在の内容を照合します。大きなモデルは読み取りに時間がかかります。見つからないファイルや、候補を特定できないものは一致扱いにしません。" },
@@ -2097,7 +2097,7 @@ const messages = {
   "reproduction.original": { en: "Restore original input", ja: "元の入力を戻す" },
   "reproduction.checkFailed": { en: "Could not compare the files. Refresh the model library and try again.", ja: "ファイルを照合できませんでした。モデル一覧を更新してから、もう一度お試しください。" },
   "reproduction.restoreFailed": { en: "Could not restore the settings. Check the model profile and try again.", ja: "設定を戻せませんでした。モデルプロファイルを確認して、もう一度お試しください。" },
-  "promptInterpretation.title": { en: "Prompt interpretation", ja: "プロンプトの解釈" },
+  "promptInterpretation.title": { en: "Prompts used for generation", ja: "生成に使ったプロンプト" },
   "promptInterpretation.close": { en: "Close", ja: "閉じる" },
   "promptInterpretation.help": { en: "These are the inputs actually sent to the text encoders. Token weights are not a measurement of how strongly a phrase appears in the image.", ja: "文章の変換に実際に使われた入力です。語句の重みは、画像にどれだけ描かれたかを示す値ではありません。" },
   "promptInterpretation.source": { en: "Original and expanded prompts", ja: "元文と展開結果" },
@@ -2138,14 +2138,14 @@ const messages = {
   "promptChoices.promptChanged": { en: "The prompt or applied styles changed since these choices were pinned. Clear the pins in the expansion preview, then select them again.", ja: "固定した後にプロンプトか適用スタイルが変わりました。展開プレビューで固定を解除し、選び直してください。" },
   "promptChoices.optionsChanged": { en: "A pinned choice is no longer available or its candidates changed. Clear the pins in the expansion preview, then select them again.", ja: "固定した候補が見つからないか、候補の内容が変わっています。展開プレビューで固定を解除し、選び直してください。" },
   "promptChoices.expansionLimit": { en: "The prompt contains too many nested choices. Reduce the nesting or number of choices and try again.", ja: "候補の展開数が多すぎます。入れ子や候補の数を減らして再試行してください。" },
-  "imageCheck.title": { en: "Generated image check", ja: "生成画像のチェック" },
+  "imageCheck.title": { en: "Finished-image anatomy check", ja: "完成画像の身体チェック" },
   "generation.error.imageCheckRuntimeUnsupported": { en: "Image checking is unavailable for the selected generation engine. Select the ComfyUI engine, or turn off image checking and retry.", ja: "選択中の生成エンジンでは画像をチェックできません。ComfyUIを選ぶか、画像のチェックをOFFにして再試行してください。" },
-  "generation.error.imageCheckSettingsInvalid": { en: "The image-check settings could not be read. Open Check settings, select the AI connection again, and save.", ja: "画像チェックの設定を読み込めませんでした。「チェック設定」でAI接続先を選び直し、保存してください。" },
+  "generation.error.imageCheckSettingsInvalid": { en: "The anatomy-check settings could not be read. Open Anatomy check settings, select the AI connection again, and save.", ja: "身体チェックの設定を読み込めませんでした。「身体チェック設定」でAI接続先を選び直し、保存してください。" },
   "imageCheck.checking": { en: "Checking the completed image…", ja: "完成した画像を確認しています…" },
-  "imageCheck.toggle": { en: "Check images", ja: "画像をチェック" },
-  "imageCheck.settings": { en: "Check settings", ja: "チェック設定" },
+  "imageCheck.toggle": { en: "Check anatomy", ja: "身体チェック" },
+  "imageCheck.settings": { en: "Anatomy check settings", ja: "身体チェック設定" },
   "imageCheck.description": { en: "Check the completed image once before saving it. This does not check whether an image matches your prompt. The AI receives an image reduced to at most 1536 pixels on its longest edge; unclear details are inconclusive.", ja: "生成・補正を終えた画像を、保存前に一回確認します。プロンプトとの一致を調べる機能とは別です。AIには長辺1536pxまで縮小した画像を渡すため、見えない細部は判定できません。" },
-  "imageCheck.defaultEnabled": { en: "Enable checking by default", ja: "生成画像のチェックを初期状態でONにする" },
+  "imageCheck.defaultEnabled": { en: "Enable anatomy checking by default", ja: "身体チェックを初期状態でONにする" },
   "imageCheck.provider": { en: "Image-capable AI connection", ja: "画像を判定するAI接続先" },
   "imageCheck.method": { en: "Check with", ja: "判定方法" },
   "imageCheck.methodLLM": { en: "Image-capable LLM", ja: "画像対応LLM" },
@@ -3328,6 +3328,10 @@ const messages = {
   "help.workspaceAria": { en: "Help", ja: "ヘルプ" },
   "help.eyebrow": { en: "Product help", ja: "製品ヘルプ" },
   "help.title": { en: "Help Center", ja: "ヘルプセンター" },
+  "help.steps": { en: "Steps", ja: "操作手順" },
+  "help.notes": { en: "Notes and limitations", ja: "確認すること・注意点" },
+  "help.enlargeImage": { en: "Open full-size image", ja: "画像を拡大して見る" },
+  "help.referenceLinks": { en: "Official references", ja: "公式の参考資料" },
   "help.topics": { en: "Help Topics", ja: "ヘルプトピック" },
   "help.topicNavAria": { en: "Help topics", ja: "ヘルプ項目" },
   "help.checkpointsAria": { en: "Important notes", ja: "重要な確認事項" },
@@ -3351,8 +3355,8 @@ const messages = {
   "generation.repeatLimits.minutes": { en: "Maximum time (minutes)", ja: "最大時間（分）" },
   "generation.repeatLimits.timeHelp": { en: "Includes waiting time. Finish the active batch, then stop; it may run past the limit.", ja: "待ち時間も含めます。時間に達しても実行中の分は完了させるため、その分だけ超過する場合があります。" },
   "generation.repeatLimits.passes": { en: "Passed-image target", ja: "合格枚数" },
-  "generation.repeatLimits.passHelp": { en: "Count image-check passes. The active batch finishes, so its results may exceed this target.", ja: "画像チェックの合格枚数で終了します。実行中の分は完了させるため、指定枚数を超える場合があります。" },
-  "generation.repeatLimits.checkerRequired": { en: "Enable image checking to use a passed-image target, or set the target to 0.", ja: "合格枚数を使うには「画像をチェック」をONにしてください。使わない場合は0に戻してください。" },
+  "generation.repeatLimits.passHelp": { en: "Count anatomy-check passes. The active batch finishes, so its results may exceed this target.", ja: "身体チェックの合格枚数で終了します。実行中の分は完了させるため、指定枚数を超える場合があります。" },
+  "generation.repeatLimits.checkerRequired": { en: "Enable Check anatomy to use a passed-image target, or set the target to 0.", ja: "合格枚数を使うには「身体チェック」をONにしてください。使わない場合は0に戻してください。" },
   "generation.repeatLimits.sessionHelp": { en: "Keep this tab open during repeat generation. These limits are saved in this browser; reloading does not resume a run.", ja: "リピート中はこのタブを開いたままにしてください。条件はこのブラウザーに保存しますが、再読込しても生成は再開しません。" },
   "generation.repeatLimits.invalid": { en: "Enter a whole number of 0 or greater for each limit.", ja: "各項目に0以上の整数を入力してください。" },
   "generation.repeatLimits.save": { en: "Save conditions", ja: "条件を保存" },
@@ -19984,24 +19988,54 @@ const _sfc_main$1R = /* @__PURE__ */ defineComponent({
   __name: "HelpArticleCanvas",
   __ssrInlineRender: true,
   props: {
-    topic: {}
+    topic: {},
+    section: {}
   },
   setup(__props) {
     const { t } = useAsteriaI18n();
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<article${ssrRenderAttrs(mergeProps({ class: "help-article-canvas" }, _attrs))} data-v-5bed5522><header class="help-article-canvas__header" data-v-5bed5522><p class="eyebrow" data-v-5bed5522>${ssrInterpolate(__props.topic.label)}</p><h2 data-v-5bed5522>${ssrInterpolate(__props.topic.title)}</h2><p data-v-5bed5522>${ssrInterpolate(__props.topic.summary)}</p></header><div class="help-article-canvas__sections" data-v-5bed5522><!--[-->`);
-      ssrRenderList(__props.topic.sections, (section, index) => {
-        _push(`<section class="help-article-section" data-v-5bed5522><h3 data-v-5bed5522><span data-v-5bed5522>${ssrInterpolate(index + 1)}.</span> ${ssrInterpolate(section.title)}</h3><p data-v-5bed5522>${ssrInterpolate(section.body)}</p><ul data-v-5bed5522><!--[-->`);
-        ssrRenderList(section.items, (item) => {
-          _push(`<li data-v-5bed5522>${ssrInterpolate(item)}</li>`);
+      _push(`<article${ssrRenderAttrs(mergeProps({
+        class: "help-article-canvas",
+        "data-help-article": __props.section.id,
+        "aria-labelledby": `help-${__props.section.id}`
+      }, _attrs))} data-v-0bf1e24f><header class="help-article-canvas__header" data-v-0bf1e24f><p class="eyebrow" data-v-0bf1e24f>${ssrInterpolate(__props.topic.label)}</p><h2${ssrRenderAttr("id", `help-${__props.section.id}`)} data-v-0bf1e24f>${ssrInterpolate(__props.section.title)}</h2><p data-v-0bf1e24f>${ssrInterpolate(__props.section.body)}</p></header><div class="help-article-section" data-v-0bf1e24f><h3 data-v-0bf1e24f>${ssrInterpolate(unref(t)("help.steps"))}</h3><ol class="help-article-steps" data-v-0bf1e24f><!--[-->`);
+      ssrRenderList(__props.section.steps, (step) => {
+        _push(`<li data-v-0bf1e24f>${ssrInterpolate(step)}</li>`);
+      });
+      _push(`<!--]--></ol><!--[-->`);
+      ssrRenderList(__props.section.images, (picture) => {
+        _push(`<figure class="help-article-figure" data-v-0bf1e24f><a${ssrRenderAttr("href", picture.src)} target="_blank" rel="noopener noreferrer"${ssrRenderAttr("aria-label", `${unref(t)("help.enlargeImage")}: ${picture.alt}`)} data-v-0bf1e24f><img${ssrRenderAttr("src", picture.src)}${ssrRenderAttr("alt", picture.alt)} loading="lazy" decoding="async" data-v-0bf1e24f><span data-v-0bf1e24f>${ssrInterpolate(unref(t)("help.enlargeImage"))} ↗</span></a><figcaption data-v-0bf1e24f>${ssrInterpolate(picture.caption)}</figcaption></figure>`);
+      });
+      _push(`<!--]-->`);
+      if (__props.section.items.length) {
+        _push(`<aside class="help-article-notes" data-v-0bf1e24f><h3 data-v-0bf1e24f>${ssrInterpolate(unref(t)("help.notes"))}</h3><ul data-v-0bf1e24f><!--[-->`);
+        ssrRenderList(__props.section.items, (item) => {
+          _push(`<li data-v-0bf1e24f>${ssrInterpolate(item)}</li>`);
         });
-        _push(`<!--]--></ul></section>`);
-      });
-      _push(`<!--]--></div><aside class="help-article-checklist"${ssrRenderAttr("aria-label", unref(t)("help.checkpointsAria"))} data-v-5bed5522><h3 data-v-5bed5522>${ssrInterpolate(unref(t)("help.checkpoints"))}</h3><ul data-v-5bed5522><!--[-->`);
-      ssrRenderList(__props.topic.checkpoints, (checkpoint) => {
-        _push(`<li data-v-5bed5522><span aria-hidden="true" data-v-5bed5522>✓</span><p data-v-5bed5522>${ssrInterpolate(checkpoint)}</p></li>`);
-      });
-      _push(`<!--]--></ul></aside></article>`);
+        _push(`<!--]--></ul></aside>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (__props.section.links?.length) {
+        _push(`<nav class="help-article-links"${ssrRenderAttr("aria-label", unref(t)("help.referenceLinks"))} data-v-0bf1e24f><!--[-->`);
+        ssrRenderList(__props.section.links, (link) => {
+          _push(`<a${ssrRenderAttr("href", link.url)} target="_blank" rel="noopener noreferrer" data-v-0bf1e24f>${ssrInterpolate(link.label)} ↗</a>`);
+        });
+        _push(`<!--]--></nav>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div>`);
+      if (__props.topic.checkpoints.length) {
+        _push(`<aside class="help-article-checklist"${ssrRenderAttr("aria-label", unref(t)("help.checkpointsAria"))} data-v-0bf1e24f><h3 data-v-0bf1e24f>${ssrInterpolate(unref(t)("help.checkpoints"))}</h3><ul data-v-0bf1e24f><!--[-->`);
+        ssrRenderList(__props.topic.checkpoints, (checkpoint) => {
+          _push(`<li data-v-0bf1e24f>${ssrInterpolate(checkpoint)}</li>`);
+        });
+        _push(`<!--]--></ul></aside>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</article>`);
     };
   }
 });
@@ -20011,7 +20045,7 @@ _sfc_main$1R.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpArticleCanvas.vue");
   return _sfc_setup$1R ? _sfc_setup$1R(props, ctx) : void 0;
 };
-const HelpArticleCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1R, [["__scopeId", "data-v-5bed5522"]]), { __name: "StudioHelpArticleCanvas" });
+const HelpArticleCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1R, [["__scopeId", "data-v-0bf1e24f"]]), { __name: "StudioHelpArticleCanvas" });
 const _sfc_main$1Q = /* @__PURE__ */ defineComponent({
   __name: "HelpRelatedActions",
   __ssrInlineRender: true,
@@ -20038,18 +20072,29 @@ const _sfc_main$1P = /* @__PURE__ */ defineComponent({
   __ssrInlineRender: true,
   props: {
     topics: {},
-    activeTopic: {}
+    activeTopic: {},
+    activeSection: {}
   },
-  emits: ["select-topic"],
+  emits: ["select-topic", "select-section"],
   setup(__props, { emit: __emit }) {
     const { t } = useAsteriaI18n();
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<nav${ssrRenderAttrs(mergeProps({
         class: "help-topic-rail",
         "aria-label": unref(t)("help.topicNavAria")
-      }, _attrs))} data-v-6e5de24e><p class="help-topic-rail__title" data-v-6e5de24e>${ssrInterpolate(unref(t)("help.topics"))}</p><!--[-->`);
+      }, _attrs))} data-v-4ba9bfc1><p class="help-topic-rail__title" data-v-4ba9bfc1>${ssrInterpolate(unref(t)("help.topics"))}</p><!--[-->`);
       ssrRenderList(__props.topics, (topic, index) => {
-        _push(`<button type="button" class="${ssrRenderClass(["help-topic-rail__item", { "help-topic-rail__item--active": topic.id === __props.activeTopic }])}"${ssrRenderAttr("aria-current", topic.id === __props.activeTopic ? "page" : void 0)} data-v-6e5de24e><span class="help-topic-rail__index" data-v-6e5de24e>${ssrInterpolate(index + 1)}</span><span class="help-topic-rail__copy" data-v-6e5de24e><strong data-v-6e5de24e>${ssrInterpolate(topic.label)}</strong><small data-v-6e5de24e>${ssrInterpolate(topic.hint)}</small></span></button>`);
+        _push(`<div class="help-topic-rail__group" data-v-4ba9bfc1><button type="button"${ssrRenderAttr("data-help-topic", topic.id)} class="${ssrRenderClass(["help-topic-rail__item", { "help-topic-rail__item--active": topic.id === __props.activeTopic }])}"${ssrRenderAttr("aria-current", !__props.activeSection && topic.id === __props.activeTopic ? "page" : void 0)}${ssrRenderAttr("aria-expanded", __props.activeSection ? topic.id === __props.activeTopic : void 0)} data-v-4ba9bfc1><span class="help-topic-rail__index" aria-hidden="true" data-v-4ba9bfc1>${ssrInterpolate(__props.activeSection ? topic.id === __props.activeTopic ? "▾" : "▸" : index + 1)}</span><span class="help-topic-rail__copy" data-v-4ba9bfc1><strong data-v-4ba9bfc1>${ssrInterpolate(topic.label)}</strong><small data-v-4ba9bfc1>${ssrInterpolate(topic.hint)}</small></span></button>`);
+        if (__props.activeSection && topic.id === __props.activeTopic) {
+          _push(`<ul class="help-topic-rail__procedures" data-v-4ba9bfc1><!--[-->`);
+          ssrRenderList(topic.sections, (section) => {
+            _push(`<li data-v-4ba9bfc1><button type="button" class="help-topic-rail__procedure"${ssrRenderAttr("data-help-section", section.id)}${ssrRenderAttr("aria-current", section.id === __props.activeSection ? "page" : void 0)} data-v-4ba9bfc1>${ssrInterpolate(section.menuLabel ?? section.title)}</button></li>`);
+          });
+          _push(`<!--]--></ul>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</div>`);
       });
       _push(`<!--]--></nav>`);
     };
@@ -20061,473 +20106,2557 @@ _sfc_main$1P.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpTopicRail.vue");
   return _sfc_setup$1P ? _sfc_setup$1P(props, ctx) : void 0;
 };
-const HelpTopicRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1P, [["__scopeId", "data-v-6e5de24e"]]), { __name: "StudioHelpTopicRail" });
-const helpTopicsByLocale = {
-  en: [
-    {
-      id: "generate",
-      label: "Generate",
-      hint: "Prompts, models, and results",
-      title: "Generate",
-      summary: "Create images from a prompt or edit an existing image. Choose a model and reuse presets; add ControlNet, Detailer, or Topaz when needed.",
-      sections: [
-        {
-          title: "Start a generation",
-          body: "Enter a prompt, choose a generation mode and model, then check the status at the top. Select Generate when everything is ready.",
-          items: [
-            "Use txt2img for a new image, img2img when an input image should guide the result, and inpaint when a mask limits the change area.",
-            "Refresh assets after adding checkpoints, LoRAs, embeddings, VAE, ControlNet, or Detailer files while Asteria is open.",
-            "Save a generation config preset when a set of model choices and processing options should be reused."
-          ]
-        },
-        {
-          title: "Review and reuse results",
-          body: "Generated images appear beside recent history so you can compare outputs and keep useful settings moving through the studio.",
-          items: [
-            "Open a result in Image Edit when it needs a mask, crop, source-image handoff, or pose/reference work.",
-            "Send useful results to Library actions for rating, tags, notes, metadata, Eagle export, or Topaz processing.",
-            "Use Seed -1 for a new random starting point. Reuse a Seed for controlled comparisons, but do not assume that the Seed alone guarantees identical pixels."
-          ]
-        }
-      ],
-      checkpoints: [
-        "Generation needs a prompt, and image modes need the required source image or mask.",
-        "If a model or support asset is missing, refresh assets or choose an installed file.",
-        "A saved config preset stores generation choices, not the generated image itself."
-      ]
-    },
+const HelpTopicRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1P, [["__scopeId", "data-v-4ba9bfc1"]]), { __name: "StudioHelpTopicRail" });
+const generateHelp = {
+  "ja": {
+    id: "generate",
+    "label": "生成",
+    "title": "生成",
+    "hint": "プロンプトの再利用・比較・生成の続け方",
+    "summary": "まず一枚作りたい場合は「最初の一枚を生成」から始めます。慣れたら保存プロンプトの再利用、比較、生成過程の保存を試せます。",
+    "checkpoints": [],
+    "sections": [
+      {
+        id: "generate-first",
+        "menuLabel": "最初の一枚を生成",
+        "title": "最初の一枚を生成する",
+        "body": "新しい画像はtxt2img、入力画像を参考にする場合はimg2img、指定範囲だけを変える場合はinpaintを使います。",
+        "steps": [
+          "左メニューの「生成」を開き、生成モードとモデルを選びます。モデルが多い場合は「モデルを検索」で絞り込みます。",
+          "描きたい内容をプロンプトへ入力し、サイズ・Steps・CFG・Samplerを確認します。通常のSeedは-1にすると、生成ごとに新しい値を使います。",
+          "画面の準備状態を確認して「生成」を押します。中止したい場合は、実行中の中止ボタンを使います。",
+          "完成画像を開いて確認します。生成設定や履歴から、再利用や画像編集へ進めます。"
+        ],
+        "items": [
+          "モデルが見つからない場合は、設定でモデル保存場所を確認してからアセットを更新します。",
+          "Hires.fix・Topaz・Detailerは必要なものだけ有効にします。対応モデルや外部ツールが必要な設定は、準備を終えてから使います。",
+          "使える機能はモデルごとに異なります。対応しない組み合わせは画面の案内を確認してください。Anima LLLiteも任意の姿勢や配置を保証しません。"
+        ],
+        "images": [
+          {
+            "src": "/help/images/generate-dark-ja.jpg",
+            "alt": "プロンプト、保存済みの完成画像、生成条件を表示した画面",
+            "caption": "Darkモードの日本語画面で保存済みの結果を開いた例です。左がプロンプト、中央が画像、右が生成条件です。"
+          }
+        ]
+      },
+      {
+        id: "generate-sections",
+        "menuLabel": "項目別に入力",
+        "title": "プロンプトを項目ごとに分けて入力する",
+        "body": "背景や画質の指定、人物の特徴、細かな描写を、別々の入力欄で整理できます。",
+        "steps": [
+          "生成画面のプロンプトで「項目別に入力」を選びます。",
+          "「ベースプロンプト」に全体の指定、「キャラクタープロンプト」に人物の特徴、「詳細プロンプト」に追加の描写を入力します。",
+          "必要に応じて各欄の名前や順序を変え、「結合結果」で生成に使う文章を確認します。"
+        ],
+        "items": [
+          "各欄の文章は、生成時に一つのポジティブプロンプトへまとめられます。ネガティブプロンプトは分割しません。",
+          "人物ごとの配置を指定する機能ではありません。V1.2.0では独自の配置機能を省いています。"
+        ],
+        "images": [
+          {
+            "src": "/help/images/prompt-sections-example-dark-ja.jpg",
+            "alt": "項目別に入力を選んだプロンプト欄",
+            "caption": "説明用の文章を入力した例です。各項目と結合結果を確認できます。配置を指定する機能ではありません。"
+          }
+        ]
+      },
+      {
+        id: "generate-styles",
+        "menuLabel": "詳細スタイル",
+        "title": "詳細スタイルを使う",
+        "body": "保存したプロンプトとネガティブプロンプトの組を、選んだ順番で生成に適用できます。絵柄以外の文章も保存できます。",
+        "steps": [
+          "生成画面で「詳細スタイル」を開きます。",
+          "使うスタイルを選んで内容を確認し、「チェーンへ追加」を押します。必要なら適用順を変えます。",
+          "プロンプトやほかの設定と重複しないか確認してから生成します。"
+        ],
+        "items": [
+          "スタイルは人物や構図の再現を保証しません。LoRAや生成設定プリセットとは別の設定です。"
+        ]
+      },
+      {
+        id: "generate-lora",
+        "menuLabel": "LoRAを使う",
+        "title": "LoRAを生成に使う",
+        "body": "基本モデルにLoRAを組み合わせ、絵柄や人物などの特徴を反映させます。",
+        "steps": [
+          "生成画面のLoRA欄で、使うLoRAを選びます。",
+          "対応するモデルの系統と重みを確認します。LoRAが指定するトリガーワードがあれば、プロンプトへ入力します。",
+          "生成後に画像を確認し、必要な場合だけ重みや文章を調整します。"
+        ],
+        "items": [
+          "モデルの系統が違うLoRAは使えません。候補にない場合は、設定の保存場所とアセットの更新を確認してください。",
+          "LoRAを選ぶだけで、学習された特徴が必ず同じように描かれるわけではありません。"
+        ]
+      },
+      {
+        id: "generate-embedding",
+        "menuLabel": "Embeddingを挿入",
+        "title": "Embeddingを挿入する",
+        "body": "学習済みの短い語句として、Embeddingをプロンプトに挿入できます。",
+        "steps": [
+          "生成画面のEmbedding欄で、使うEmbeddingを選びます。",
+          "挿入先のプロンプトと、挿入された語句を確認します。",
+          "対応モデルを確認して生成します。不要になった場合は、入力欄から挿入した語句を取り除きます。"
+        ],
+        "items": [
+          "Embeddingも対応するモデルの系統に合わせてください。ファイルが見つからない場合は、保存場所を確認してアセットを更新します。"
+        ]
+      },
+      {
+        id: "generate-presets",
+        "menuLabel": "生成設定プリセット",
+        "title": "生成設定をプリセットに保存する",
+        "body": "よく使う生成設定を保存し、次回の生成で呼び出せます。",
+        "steps": [
+          "生成画面で、保存したいモデル・プロンプト・補正などの設定を整えます。",
+          "プリセットの保存操作から名前を付けて保存します。",
+          "次に使うときはプリセットを読み込み、復元されたモデルと補正設定を確認してから生成します。"
+        ],
+        "items": [
+          "プリセットは設定を保存します。モデルファイルや生成画像は複製しません。",
+          "読み込み前の設定と混同しないよう、Seed、Wildcard、Hires.fix、Detailerも確認してください。"
+        ]
+      },
+      {
+        id: "generate-materials",
+        "menuLabel": "プロンプトを保存",
+        "title": "よく使うプロンプトを保存する",
+        "body": "人物・衣装・ポーズ・背景などの文章に名前を付け、後から入力欄へ追加できます。",
+        "steps": [
+          "生成画面の「ツールを開く」から「保存プロンプト」を選びます。",
+          "「プロンプトを登録」を押し、「保存する名前」「プロンプトの種類」「モデルの系統」と、再利用したい文章を入力します。",
+          "必要ならLoRAやEmbeddingをひも付け、「プロンプトを保存」を押します。保存一覧に追加されたことを確認します。"
+        ],
+        "items": [
+          "画像から保存プロンプト案を作るには画像対応AIが必要です。画像に見える特徴と提案文を確認してから保存してください。",
+          "保存一覧から削除しても、すでに入力欄へ追加した文章は消えません。",
+          "詳細スタイルも文章の再利用に使えます。保存プロンプトは入力欄へ文章を追加する方法で、詳細スタイルは選んだ文章を生成時に適用する方法です。"
+        ],
+        "images": [
+          {
+            "src": "/help/images/materials-dark-ja.jpg",
+            "alt": "保存プロンプトタブの保存欄",
+            "caption": "説明用の保存プロンプトを保存・選択した例です。"
+          }
+        ]
+      },
+      {
+        id: "generate-material-insert",
+        "menuLabel": "保存プロンプトを追加",
+        "title": "保存プロンプトを入力欄へ追加する",
+        "body": "保存一覧から選んだ文章を、指定した入力欄の末尾へ追加します。",
+        "steps": [
+          "生成画面の「保存プロンプト」で、使う保存プロンプトを順に選びます。",
+          "「挿入先」を選びます。ひも付けた資産も使う場合だけ、「ひも付けたLoRAとEmbeddingも適用する」を選択します。",
+          "「この欄へ追加」を押し、入力欄の文章と適用された資産を確認します。"
+        ],
+        "items": [
+          "「AIプロンプト作成へ渡す」は提案用の文章だけを渡します。生成への適用とは別の操作です。",
+          "保存プロンプトを使っても、同じ人物や配置を必ず再現できるわけではありません。"
+        ],
+        "images": [
+          {
+            "src": "/help/images/materials-insertion-dark-ja.jpg",
+            "alt": "保存プロンプトの挿入先とLoRA・Embeddingの適用操作",
+            "caption": "挿入先と資産の適用有無を確認し、「この欄へ追加」を押します。"
+          }
+        ]
+      },
+      {
+        id: "generate-wildcards",
+        "menuLabel": "Wildcardの一部を固定",
+        "title": "Wildcardの一部だけを固定する",
+        "body": "髪色など一部の選択だけを保持し、固定していない候補は次の生成で選び直せます。",
+        "steps": [
+          "自分で用意したWildcardファイルを設定した場所へ置き、プロンプトに__ファイル名__などの候補を入れます。",
+          "「ツールを開く」→「Wildcards」で「展開プレビュー」を開き、選ばれた文章を確認します。",
+          "残したい選択だけを固定します。髪色だけを固定し、衣装などは固定しない、という使い方ができます。",
+          "固定した選択と未固定の選択を確認して生成します。固定を解除すると、その選択も再び抽選されます。"
+        ],
+        "items": [
+          "{red hair|blue hair}のような候補記法も同じ画面で固定できます。画像はこの記法を使った例です。",
+          "入れ子の外側と内側は別の選択です。子を固定すると親も固定され、親の固定解除で子の固定も解除されます。外側だけの固定は展開文全体の固定ではありません。",
+          "元の文章や候補ファイルが変わって固定を引き継げない場合は、固定を解除して展開プレビューを作り直します。Seedの固定とWildcardの固定は別です。"
+        ],
+        "images": [
+          {
+            "src": "/help/images/wildcards-dark-ja.jpg",
+            "alt": "Wildcard展開プレビューと選択ごとの固定",
+            "caption": "説明用Wildcardの例。表示された候補を見て、残したい選択だけを固定します。"
+          }
+        ]
+      },
+      {
+        id: "generate-comparison",
+        "menuLabel": "語句・LoRAを比較",
+        "title": "語句・LoRA・Embeddingの効きを比較する",
+        "body": "一つの入力だけを変え、同じ初期条件のA/B画像を並べて確認します。",
+        "steps": [
+          "生成画面で元のモデル・プロンプト・生成条件を整え、詳細ツールの「プロンプトの比較生成」を開きます。",
+          "比較する対象を選びます。語句なら「A：置き換える語句」と「B：変更後の文章」を入力し、LoRAなどは対象と変更値を選びます。",
+          "「比較する組数」を指定して「比較内容を確認」を押し、実際に使う文章と設定を確認します。",
+          "「比較を開始」を押します。一組につきA/Bの二枚を生成します。中止した場合も、完成した組と未完了の組を区別してください。",
+          "「比較結果を見る」で完成した組を確認し、左右の好み・差を感じない・どちらも選ばないを選んで「評価を保存」します。「条件を表示」でA/Bを確認できます。"
+        ],
+        "items": [
+          "同じ組は初期ノイズを揃えるため同じSeedを使います。-1なら準備時に抽選します。別の組でも同じ画像になるという意味ではありません。",
+          "通常生成の同一Seedや数値記録の一致は、常に画素一致を保証するものではありません。少数比較を成功率の証明には使わないでください。"
+        ],
+        "images": [
+          {
+            "src": "/help/images/comparison-dark-ja.jpg",
+            "alt": "プロンプトの比較生成のA/B入力と比較準備",
+            "caption": "比較対象と変更後の文章を指定する画面。開始前に組数と入力を確認します。"
+          }
+        ]
+      },
+      {
+        id: "generate-interpretation",
+        "menuLabel": "生成に使ったプロンプト",
+        "title": "生成に使われたプロンプトを確認する",
+        "body": "記法の展開結果や、モデルへ渡した文章を記録から調べられます。",
+        "steps": [
+          "生成結果、またはライブラリで対象画像を開き、「生成に使ったプロンプト」を選びます。",
+          "元の文章と展開後の文章を確認し、記録がある場合はHiresやDetailerの段階も切り替えます。",
+          "重みや変換単位と画像を見比べます。数値は文章の処理内容であり、画像への効き方を測った値ではありません。"
+        ],
+        "items": [
+          "記録のない過去画像から実入力を復元する機能ではありません。"
+        ],
+        "images": [
+          {
+            "src": "/help/images/prompt-interpretation-dark-ja.jpg",
+            "alt": "生成に使ったプロンプトと記録済みの変換単位",
+            "caption": "Darkモードの日本語画面。選んだ生成段階の入力記録を確認します。"
+          }
+        ]
+      },
+      {
+        id: "generate-process-images",
+        "menuLabel": "補正前後の画像",
+        "title": "補正前後の画像を残す",
+        "body": "通常生成と補正後の画像を見比べられるよう、工程ごとの画像を保存します。",
+        "steps": [
+          "生成画面の「補正・拡張」で「補正前後の画像を保存」を選びます。",
+          "Hires.fixやDetailerなど、使う補正を設定して生成します。",
+          "完成した結果から工程画像を開き、補正前後の違いを確認します。"
+        ],
+        "items": [
+          "工程画像は完成画像とは別に保存されるため、保存容量が増えます。利用できる工程は実行した処理により変わります。",
+          "工程画像だけでは途中から生成を再開できません。再開には「生成の途中状態を保存」が必要です。"
+        ]
+      },
+      {
+        id: "generate-making",
+        "menuLabel": "生成過程の動画保存",
+        "title": "生成過程を動画で保存する",
+        "body": "生成の経過を、後から見返せるメイキングとして残します。",
+        "steps": [
+          "生成画面の「補正・拡張」で「生成過程を動画で保存」を選びます。",
+          "生成を実行し、完成結果の「生成過程の動画を再生」を押します。",
+          "プレビューと保存先を確認します。必要な成果物だけを共有してください。"
+        ],
+        "items": [
+          "保存量と変換時間が増えます。生成過程を動画で保存しても、途中から生成を再開できるわけではありません。"
+        ]
+      },
+      {
+        id: "generate-branch",
+        "menuLabel": "途中状態から分岐",
+        "title": "保存した途中状態から分岐する",
+        "body": "途中の状態を保存しておくと、その時点から別のプロンプトなどで生成を続けられます。",
+        "steps": [
+          "生成画面の「補正・拡張」で「生成の途中状態を保存」を選び、保存ステップを指定します。画面で選べる、一段目の終了やRefiner切り替えより前の値を使います。",
+          "生成後、途中状態がある結果で「ステップ○から続きを生成…」を開きます。",
+          "変更可能なプロンプトやCFGを設定して実行します。元画像と履歴を残したまま、分岐した結果が追加されます。"
+        ],
+        "items": [
+          "対応する単一画像のSDXL／Anima txt2imgとSamplerで使えます。非対応の条件は画面の案内に従ってください。",
+          "保存時点のモデル・Seed・サイズなどは固定されます。ControlNet／LLLiteの保存済み入力が失われると再開できません。",
+          "途中状態は容量を使います。後半からの分岐では、構図がほとんど変わらない場合があります。"
+        ]
+      },
+      {
+        id: "generate-repeat",
+        "menuLabel": "自動リピート",
+        "title": "自動リピートで生成を続ける",
+        "body": "生成を繰り返し、指定した枚数や時間で終了できます。完成画像の身体チェックを使わない場合も利用できます。",
+        "steps": [
+          "生成設定を整え、「自動リピート」をONにします。",
+          "「終了条件」を開き、必要な上限を入力して「条件を保存」を押します。0はその条件の上限なしです。",
+          "「生成」を押すと繰り返し生成します。いずれかの終了条件に達すると停止します。",
+          "次の生成へ進む前に止める場合は「リピート停止」を押します。実行中の生成も中止したい場合は、通常の中止ボタンを使います。"
+        ],
+        "items": [
+          "各上限の初期値は0です。以前に保存した終了条件は引き継がれます。開始前に値を確認してください。",
+          "最大試行枚数には不合格や失敗も含みます。最大時間には待機時間も含み、実行中の生成を終えてから止まるため超過することがあります。",
+          "合格枚数を使う場合だけ、完成画像の身体チェックの設定が必要です。最後のバッチにより合格枚数を超える場合があります。判定不能や接続エラーでは一時停止します。",
+          "操作中はブラウザーを開いておいてください。閉じたり再読み込みしたりしても、自動では再開しません。固定Seedのままなら同じSeedを繰り返し使います。"
+        ],
+        "images": [
+          {
+            "src": "/help/images/repeat-limits-dark-ja.jpg",
+            "alt": "自動リピートの終了条件",
+            "caption": "最大試行枚数・最大時間・合格枚数を設定します。0は、その上限を設けない設定です。"
+          }
+        ]
+      },
+      {
+        id: "ai-image-check",
+        "title": "完成画像のチェックを設定する",
+        "body": "生成と補正を終えた画像を、正式な保存の直前に画像対応AIで一回チェックします。",
+        "steps": [
+          "「設定」→「AIプロバイダー」の「完成画像の身体チェック」を開きます。",
+          "「判定方法」で画像対応LLM、または利用可能なCodexを選びます。LLMを使う場合は、保存済みの画像対応接続先を選びます。",
+          "「不合格画像も保存」と次回からONにするかを選び、「チェック設定を保存」を押します。生成画面のON／OFFも確認します。",
+          "保存済みの画像で試す場合は、履歴から選んで「この画像で試す」を押します。この操作は画像を変更せず、既定値も保存しません。"
+        ],
+        "items": [
+          "通常生成、Hires.fix、Topaz Hires、ADetailerなど、Generateからの全処理を終えた完成画像を対象にします。単独Topazなど、別操作の保存経路とは異なります。",
+          "合格でも正常の保証ではありません。見逃し・誤判定があります。判定不能を正常や合格として扱いません。研究中の独自人体判定器は選べません。",
+          "AIへ渡す画像は長辺1536pxまで縮小します。元画像が大きすぎる場合や細部を確認できない場合は、正常と決めつけないでください。プロンプトや画像内のメタデータは送りません。",
+          "不合格画像を保存しない場合も、履歴に判定を残します。自動リピートは不合格なら次へ進み、判定不能や接続エラーでは一時停止します。"
+        ],
+        "images": [
+          {
+            "src": "/help/images/image-check-settings-dark-ja.jpg",
+            "alt": "完成画像の身体チェックの判定方法と保存設定",
+            "caption": "Darkモードの日本語画面。画像対応AIの精度を示す画像ではありません。"
+          }
+        ],
+        "menuLabel": "完成画像の身体チェック"
+      }
+    ]
+  },
+  "en": {
+    id: "generate",
+    "label": "Generate",
+    "title": "Generate",
+    "hint": "Reuse prompts, compare inputs and generate images",
+    "summary": "Start with your first image, then explore saved prompts, comparisons and recording options as needed.",
+    "checkpoints": [],
+    "sections": [
+      {
+        id: "generate-first",
+        "menuLabel": "Generate an image",
+        "title": "Generate your first image",
+        "body": "Use txt2img for a new image, img2img for an image-guided result, and inpaint to change a masked area.",
+        "steps": [
+          "Open Generate in the left menu. Choose the mode and model; use Search models to filter a long model list.",
+          "Enter the prompt and review size, Steps, CFG and Sampler. Normally use Seed -1 for a fresh starting point.",
+          "Check readiness and press Generate. Use the running operation’s cancel action to stop it.",
+          "Open the completed image. Use its settings and history to regenerate or continue in Image Edit."
+        ],
+        "items": [
+          "If an asset is missing, check model storage in Settings and refresh assets.",
+          "Enable Hires.fix, Topaz or Detailer only when needed. Prepare the required models or external tools before using them.",
+          "Supported features depend on the model. Follow compatibility notices; Anima LLLite does not guarantee arbitrary poses or placement."
+        ],
+        "images": [
+          {
+            "src": "/help/images/generate-dark-ja.jpg",
+            "alt": "Prompt, a saved completed image and generation settings",
+            "caption": "Japanese UI in Dark mode with a saved result open: prompt on the left, image in the center and generation settings on the right."
+          }
+        ]
+      },
+      {
+        id: "generate-sections",
+        "menuLabel": "Organize a prompt into sections",
+        "title": "Organize a prompt into sections",
+        "body": "Keep overall instructions, character features and extra details in separate input fields.",
+        "steps": [
+          "In Generate, select Prompt sections for positive input.",
+          "Enter overall instructions in the base prompt, character features in the character prompt, and extra descriptions in the detail prompt.",
+          "Adjust section names or order as needed, then inspect the combined result."
+        ],
+        "items": [
+          "The sections are joined into one positive prompt for generation. The negative prompt stays separate.",
+          "Sections do not guarantee character placement. The independent placement feature is omitted from V1.2.0."
+        ],
+        "images": [
+          {
+            "src": "/help/images/prompt-sections-example-dark-ja.jpg",
+            "alt": "Prompt sections and the combined result",
+            "caption": "Japanese UI in Dark mode with example text. The base, character and detail fields organize text; they do not assign positions."
+          }
+        ]
+      },
+      {
+        id: "generate-styles",
+        "menuLabel": "Use advanced styles",
+        "title": "Use advanced styles",
+        "body": "Apply saved prompt and negative-prompt pairs in the order of your style chain.",
+        "steps": [
+          "Open Advanced styles in Generate.",
+          "Choose a style, review its text, then click Add to chain. Reorder the chain if needed.",
+          "Check for overlap with your prompt and other settings before generating."
+        ],
+        "items": [
+          "Styles do not guarantee identity or composition. They are separate from LoRAs and generation presets."
+        ]
+      },
+      {
+        id: "generate-lora",
+        "menuLabel": "Generate with a LoRA",
+        "title": "Generate with a LoRA",
+        "body": "Combine a LoRA with the base model to influence style, characters or other learned features.",
+        "steps": [
+          "Choose a LoRA in Generate.",
+          "Check its model family and weight. Add its trigger words to the prompt if required.",
+          "Inspect the generated image before deciding whether to adjust the weight or wording."
+        ],
+        "items": [
+          "The LoRA must match the model family. If it is missing, check its storage path in Settings and refresh assets.",
+          "Selecting a LoRA does not guarantee an exact reproduction of its learned features."
+        ]
+      },
+      {
+        id: "generate-embedding",
+        "menuLabel": "Insert an Embedding",
+        "title": "Insert an Embedding",
+        "body": "Use a learned Embedding as a prompt token.",
+        "steps": [
+          "Select an Embedding in Generate.",
+          "Check the destination prompt and the inserted token.",
+          "Confirm model compatibility before generating. Remove the inserted token from the prompt when it is no longer needed."
+        ],
+        "items": [
+          "Embeddings must match the model family. If a file is missing, check its configured location and refresh assets."
+        ]
+      },
+      {
+        id: "generate-presets",
+        "menuLabel": "Save generation settings as a preset",
+        "title": "Save generation settings as a preset",
+        "body": "Save a reusable set of generation settings and load it later.",
+        "steps": [
+          "Prepare the model, prompt and enhancement settings you want to retain in Generate.",
+          "Use the preset save action and give the preset a name.",
+          "Load the preset when needed. Review the restored model and enhancements before generating."
+        ],
+        "items": [
+          "Presets store settings, not copies of model files or generated images.",
+          "Also check Seed, Wildcards, Hires.fix and Detailer after loading a preset."
+        ]
+      },
+      {
+        id: "generate-materials",
+        "menuLabel": "Save reusable prompts",
+        "title": "Save reusable prompts",
+        "body": "Save named prompt text for characters, clothing, poses or backgrounds.",
+        "steps": [
+          "In Generate, open the tools drawer and select Saved prompts.",
+          "Select New saved prompt. Enter a name, category, model family and the text to reuse.",
+          "Link a LoRA or Embedding if needed, then select Save prompt and check the saved list."
+        ],
+        "items": [
+          "Image-based suggestions require a vision-capable AI. Compare the proposal with the image before saving.",
+          "Deleting a saved entry does not remove text already added to a prompt field."
+        ],
+        "images": [
+          {
+            "src": "/help/images/materials-dark-ja.jpg",
+            "alt": "Saved prompt editor",
+            "caption": "Japanese UI in Dark mode with an example saved prompt."
+          }
+        ]
+      },
+      {
+        id: "generate-material-insert",
+        "menuLabel": "Append saved prompts",
+        "title": "Append saved prompts to an input field",
+        "body": "Select saved entries and append their text to the end of an input field.",
+        "steps": [
+          "Open Saved prompts in Generate and select the saved prompts in the order you want.",
+          "Choose Insert into. Enable Also apply linked LoRA and Embeddings only if you want those assets too.",
+          "Select Append to this prompt, then review the resulting text and applied assets."
+        ],
+        "items": [
+          "Use in AI prompt builder transfers text for a proposal; it does not apply generation settings.",
+          "Saved prompts do not guarantee identical characters or placement."
+        ],
+        "images": [
+          {
+            "src": "/help/images/materials-insertion-dark-ja.jpg",
+            "alt": "Saved prompt insertion and optional linked assets",
+            "caption": "Japanese UI in Dark mode. Check the destination and linked-asset option before Append to this prompt."
+          }
+        ]
+      },
+      {
+        id: "generate-wildcards",
+        "menuLabel": "Pin Wildcard choices",
+        "title": "Pin only selected Wildcard choices",
+        "body": "Keep a choice such as hair color while rerolling unpinned alternatives.",
+        "steps": [
+          "Put your own Wildcard files in the configured location and use their tokens, such as __filename__, in the prompt.",
+          "Open the tools drawer → Wildcards → expansion preview and inspect the selected text.",
+          "Pin only the choices you want to retain. Leave other choices, such as clothing, unpinned.",
+          "Review the pins and generate. Unpin a choice when it should be drawn again."
+        ],
+        "items": [
+          "Choice notation such as {red hair|blue hair} uses the same pin controls; the picture shows this notation.",
+          "Pinning a nested child also pins its parents. Clearing a parent clears dependent pins. Pinning only an outer choice does not freeze all expanded text.",
+          "If prompt or candidate-file changes invalidate a pin, clear it and prepare a new preview. Wildcard pinning is not Seed locking."
+        ],
+        "images": [
+          {
+            "src": "/help/images/wildcards-dark-ja.jpg",
+            "alt": "Wildcard expansion and per-choice pins",
+            "caption": "Japanese UI in Dark mode with example files: inspect the alternatives and pin only the desired choices."
+          }
+        ]
+      },
+      {
+        id: "generate-comparison",
+        "menuLabel": "Compare input effects",
+        "title": "Compare phrase, LoRA or Embedding effects",
+        "body": "Change one input and compare A/B images with matched starting conditions.",
+        "steps": [
+          "Prepare the original model, prompt and generation settings. Open Generate a prompt comparison in the expert tools.",
+          "Choose what to change. For text, enter A: text to replace and B: replacement text; for an asset, select its target and change.",
+          "Choose Seed pairs, then Prepare comparison. Review the actual prompts and settings.",
+          "Select Start comparison. Each pair generates two images. Keep completed pairs separate from incomplete pairs after cancellation.",
+          "Open Compare results. Choose left, right, tie or neither, add notes and Save rating. Reveal conditions shows the A/B labels."
+        ],
+        "items": [
+          "A and B share a Seed to isolate the changed input from initial-noise differences. Seed -1 draws once during preparation.",
+          "Matching Seeds or numerical records do not guarantee identical pixels in ordinary generation. A few pairs are not a success-rate measurement."
+        ],
+        "images": [
+          {
+            "src": "/help/images/comparison-dark-ja.jpg",
+            "alt": "A/B input and comparison preparation",
+            "caption": "Japanese UI in Dark mode: choose the change, review pair count, then prepare the inputs."
+          }
+        ]
+      },
+      {
+        id: "generate-interpretation",
+        "menuLabel": "Inspect prompt inputs",
+        "title": "Inspect the prompt actually used",
+        "body": "Read saved expansion, notation and model-input records.",
+        "steps": [
+          "Open a generated image or its Library entry and select Prompts used for generation.",
+          "Compare original and expanded text. Select Hires or Detailer stages when they have records.",
+          "Compare the recorded weights and text units with the image. These describe processing, not measured visual influence."
+        ],
+        "items": [
+          "Missing historical input records cannot be reconstructed afterwards."
+        ],
+        "images": [
+          {
+            "src": "/help/images/prompt-interpretation-dark-ja.jpg",
+            "alt": "Recorded prompts used for generation and text units",
+            "caption": "Japanese UI in Dark mode: inspect the input recorded for the selected stage."
+          }
+        ]
+      },
+      {
+        id: "generate-process-images",
+        "menuLabel": "Keep images from generation stages",
+        "title": "Keep images from generation stages",
+        "body": "Save stage images to compare the original result with later enhancements.",
+        "steps": [
+          "Under enhancements in Generate, enable the option to keep comparison images.",
+          "Configure Hires.fix, Detailer or other supported enhancements and generate.",
+          "Open the saved stage images from the result and compare the changes."
+        ],
+        "items": [
+          "Stage images use extra storage. Available stages depend on the processing that actually ran.",
+          "A stage image alone cannot resume sampling. Resumable intermediate states are a separate option."
+        ]
+      },
+      {
+        id: "generate-making",
+        "menuLabel": "Save a generation video",
+        "title": "Save a video of generation progress",
+        "body": "Keep a view of the generation process for later review.",
+        "steps": [
+          "Under enhancements in Generate, enable Save a video of generation progress.",
+          "Generate, then select Play generation video in the completed result.",
+          "Check its preview and saved location before sharing the desired output."
+        ],
+        "items": [
+          "This adds storage and conversion time. A generation video is not a resumable sampling state."
+        ]
+      },
+      {
+        id: "generate-branch",
+        "menuLabel": "Branch from a saved intermediate state",
+        "title": "Branch from a saved intermediate state",
+        "body": "Save a sampling state, then continue from it with supported changes to the prompt or CFG.",
+        "steps": [
+          "Enable intermediate-state recording under enhancements. Choose a supported step before the first pass ends or switches to a Refiner.",
+          "After generation, open the branch action on the result with a saved state.",
+          "Set the supported continuation prompt or CFG and run. The new branch is added without replacing the original image or history."
+        ],
+        "items": [
+          "Available for supported single-image SDXL/Anima txt2img and Samplers. Follow on-screen compatibility notices.",
+          "The saved model, Seed and dimensions remain fixed. Missing saved ControlNet/LLLite inputs prevent replay.",
+          "Recording uses extra storage. A late branch may barely change composition."
+        ]
+      },
+      {
+        id: "generate-repeat",
+        "menuLabel": "Continue generating with automatic repeat",
+        "title": "Continue generating with automatic repeat",
+        "body": "Repeat generation until a chosen count or time limit is reached. Image checking is not required for ordinary repeat.",
+        "steps": [
+          "Prepare generation settings and enable automatic repeat.",
+          "Open Stop conditions, enter any limits and save them. Zero disables that limit.",
+          "Select Generate. Repeating stops when any active limit is reached.",
+          "Use Stop repeat to finish after the current generation. Use the normal cancel action to cancel the current operation as well."
+        ],
+        "items": [
+          "All limits initially default to zero; previously saved limits are retained. Review them before starting.",
+          "Attempts include rejected and failed images. Time includes waiting; finishing the current generation may exceed the time limit.",
+          "An accepted-image limit requires final-image checking. The last batch may exceed that count. An unknown result or connection error pauses repeat.",
+          "Keep the browser open. Closing or reloading does not automatically resume. A fixed Seed remains fixed across repeats."
+        ],
+        "images": [
+          {
+            "src": "/help/images/repeat-limits-dark-ja.jpg",
+            "alt": "Automatic repeat stop conditions",
+            "caption": "Japanese UI in Dark mode. Set attempt, time or accepted-image limits; zero disables a limit."
+          }
+        ]
+      },
+      {
+        id: "ai-image-check",
+        "title": "Set up final-image checking",
+        "body": "Check a completed image once with vision AI, after generation and enhancement but before official saving.",
+        "steps": [
+          "Open Settings → AI providers → generation image checking.",
+          "Choose a vision LLM or available Codex method. For an LLM, choose a saved vision-capable connection.",
+          "Choose whether to save rejected images and enable checking by default, then save check settings. Also review the switch in Generate.",
+          "To try a saved image, select it from history and run the test action. The test does not alter the image or save defaults."
+        ],
+        "items": [
+          "The target is the final result after Generate’s processing, including Hires.fix, Topaz Hires and ADetailer. Separate operations such as standalone Topaz have different saving paths.",
+          "Accepted does not guarantee normal anatomy: AI can miss defects or raise false alarms. Unknown is not accepted. The research native anatomy checker is not selectable.",
+          "The AI input is resized to a maximum long edge of 1536px. Oversized inputs or unclear details must not be treated as normal. Prompts and embedded image metadata are not sent.",
+          "The judgment remains in history even when a rejected image is not saved. Repeat continues after rejection but pauses on unknown results or connection errors."
+        ],
+        "images": [
+          {
+            "src": "/help/images/image-check-settings-dark-ja.jpg",
+            "alt": "Final-image method and saving policy",
+            "caption": "Japanese UI in Dark mode; this is not evidence of anatomy-detection accuracy."
+          }
+        ],
+        "menuLabel": "Set up final-image checking"
+      }
+    ]
+  }
+};
+const workspaceHelp = {
+  "ja": [
     {
       id: "image-edit",
-      label: "Image Edit",
-      hint: "Masks, source images, and handoff",
-      title: "Image Edit",
-      summary: "Prepare an existing image for img2img, inpaint, mask cleanup, crop work, and handoff back to Generate.",
-      sections: [
+      "label": "画像編集",
+      "title": "画像編集",
+      "hint": "マスク・範囲選択・生成への受け渡し",
+      "summary": "画像を編集し、img2imgやinpaintの入力として生成画面へ渡します。",
+      "checkpoints": [],
+      "sections": [
         {
-          title: "Prepare the edit",
-          body: "Load or receive an image, then use the edit tools to define what should change before sending the setup to Generate.",
-          items: [
-            "Use masks for inpaint work so only the selected area is regenerated.",
-            "Use crop and canvas controls when the source composition or target framing needs adjustment.",
-            "Save the current mask before sending an inpaint setup to Generate."
+          id: "edit-mask",
+          "title": "マスクを作り、部分編集へ渡す",
+          "body": "マスクで描き直す範囲を指定します。画像を読み込むだけではマスクは作成されません。",
+          "steps": [
+            "左メニューの「画像編集」を開いて画像を読み込むか、ライブラリの選択画像を画像編集へ送ります。",
+            "マスクのブラシで範囲を追加し、消しゴムで不要な範囲を取り除きます。必要なら拡大して端を確認します。",
+            "現在のマスクを保存します。切り抜きやキャンバス変更も、結果を確認してから確定します。",
+            "生成へ送る操作でimg2imgまたはマスク付きinpaintへ渡し、生成画面で画像・マスク・Denoiseなどを確認してから生成します。"
+          ],
+          "items": [
+            "マスクを読み込めない場合はマスクをクリアするか選び直し、元画像自体を消す必要はありません。",
+            "編集中の画像と保存済み画像を区別してください。別の画像へ切り替える前に未保存の内容を確認します。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/image-edit-mask-dark-ja.jpg",
+              "alt": "画像編集のマスクと保存・受け渡し操作",
+              "caption": "Darkモードの日本語画面。編集範囲を確認し、マスクを保存してから生成へ送ります。"
+            }
           ]
         },
         {
-          title: "Move between workspaces",
-          body: "Open an image from Media Library, prepare the image and mask here, then send them to Generate for img2img or inpaint.",
-          items: [
-            "Open Library images in Image Edit when a selected output needs localized changes.",
-            "Send an edited image to Generate as an init image for img2img or as a masked inpaint setup.",
-            "Return to Library when the image needs curation, rating, metadata, or external-tool actions."
+          id: "edit-word",
+          "title": "言葉から範囲を選ぶ",
+          "body": "生成時の語句参照を記録した画像では、言葉から編集範囲の候補を取得できます。",
+          "steps": [
+            "語句の参照範囲を保存した画像を開き、語句から範囲を選ぶ操作を開きます。",
+            "記録された「髪」「服」などの語句を選び、画像上の候補を確認します。",
+            "ブラシと消しゴムで不足やはみ出しを修正し、マスクを保存してinpaintへ渡します。"
+          ],
+          "items": [
+            "語句の参照傾向であり、正確な部位輪郭や人物所属の判定ではありません。",
+            "記録のない過去画像から同じ情報を後付けで取得する機能ではありません。"
+          ]
+        },
+        {
+          id: "edit-pose",
+          "title": "複数人物のポーズを準備する",
+          "body": "人物ごとの関節を操作して、生成へ渡す制御画像を準備します。",
+          "steps": [
+            "画像編集のポーズ画面を開き、必要な人数を追加します。",
+            "対象人物を選んで関節を動かします。「人物全体を移動」はその人物の全体をまとめて動かします。",
+            "制御画像を確認して生成へ渡し、SDXLの対応ControlNetまたはAnima LLLiteと、必要な入力を選びます。"
+          ],
+          "items": [
+            "制御画像には選択中以外の人物も含まれます。人物ごとの完成画像を合成する機能ではありません。",
+            "必要な制御モデルは別途用意してください。特にAnima LLLiteは任意の姿勢への追従や人物の描き分けを保証しません。"
           ]
         }
-      ],
-      checkpoints: [
-        "Inpaint requires both an input image and a saved mask.",
-        "After sending an image to Generate, check that the intended image and mask are selected before generating.",
-        "If an image fails to load, choose another image or refresh the source view."
       ]
     },
     {
       id: "library",
-      label: "Media Library",
-      hint: "Browse, compare, and organize",
-      title: "Media Library",
-      summary: "Browse images, videos, and audio with their generation settings. Rate and organize results, compare images, or send them to another workspace.",
-      sections: [
+      "label": "メディアライブラリ",
+      "title": "メディアライブラリ",
+      "hint": "検索・比較・部位レビュー・再生成",
+      "summary": "完成した画像・動画・音声を探し、確認・整理して次の制作へつなげます。",
+      "checkpoints": [],
+      "sections": [
         {
-          title: "Find and inspect images",
-          body: "Use Library to review generated outputs with their prompt, settings, notes, tags, and related artifacts.",
-          items: [
-            "Filter or search history when you need a specific prompt, profile, tag, rating, or favorite.",
-            "Open detail panels to inspect generation settings before deciding whether to reuse or export an image.",
-            "Use compare and board views when several candidates need side-by-side review."
-          ]
+          id: "library-find",
+          "title": "成果物を探して開く",
+          "body": "画像・動画・音声を、検索や絞り込みで探せます。",
+          "steps": [
+            "左メニューの「メディア」を開き、探す種類と検索条件を選びます。",
+            "一覧の項目を選び、詳細を確認します。画像は拡大し、動画・音声はプレーヤーで再生できます。",
+            "別の成果物へ移るときは一覧から選び直します。詳細に表示されたファイルが操作対象です。"
+          ],
+          "items": [
+            "一覧で選択する操作と、拡大プレビューを開く操作は異なります。選択済みの画像を再クリックすると、プレビューが開く場合があります。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/media-library-dark-ja.jpg",
+              "alt": "メディアライブラリの一覧・絞り込み・詳細",
+              "caption": "Darkモードの日本語画面。詳細で生成条件と対象ファイルを確認します。"
+            }
+          ],
+          "menuLabel": "成果物を探す"
         },
         {
-          title: "Act on selected images",
-          body: "Library actions keep generated images connected to editing, training, and external organization workflows.",
-          items: [
-            "Send an image to Generate as an img2img or ControlNet source when it should guide a new result.",
-            "Open an image in Image Edit when it needs a crop, mask, or localized change.",
-            "Send selected images into a LoRA dataset when they should become training material."
-          ]
+          id: "library-organize",
+          "title": "評価・タグ・メモで整理する",
+          "body": "お気に入りや評価を付け、後から成果物を探しやすくします。",
+          "steps": [
+            "メディアライブラリで対象を選び、詳細を開きます。",
+            "評価、お気に入り、タグ、メモを必要に応じて編集します。",
+            "一覧の絞り込みや詳細の再表示で、変更を確認します。"
+          ],
+          "items": [
+            "複数選択にはCtrl+クリック、またはCtrl+Enterを使えます。まとめて変更する前に選択対象を確認してください。",
+            "ファイルを削除する場合は、確認画面の対象と範囲を読んでください。整理用の情報の変更とは別の操作です。"
+          ],
+          "menuLabel": "評価・タグ・メモ"
+        },
+        {
+          id: "library-compare",
+          "title": "複数の画像を比較する",
+          "body": "選んだ画像を比較画面やボードに並べ、違いを確認します。",
+          "steps": [
+            "メディアライブラリで比較する画像を複数選択します。",
+            "比較またはボードを開き、並べる画像を確認します。",
+            "拡大しながら見比べます。工程画像の記録がある場合は、補正前後の段階も確認できます。"
+          ],
+          "items": [
+            "動画や音声では画像用の比較操作は使えません。選択対象の種類を確認してください。"
+          ],
+          "menuLabel": "画像を比較"
+        },
+        {
+          id: "library-transfer",
+          "title": "画像を別の画面で使う",
+          "body": "画像を入力として使う操作と、生成設定を復元する操作を選び分けます。",
+          "steps": [
+            "メディアライブラリで画像を選び、詳細の操作を開きます。",
+            "目的の送り先を選びます。画像を使うならimg2img・ControlNet・画像編集・動画入力、学習素材にするならデータセットへ送ります。",
+            "送り先で入力画像を確認します。生成を始める場合は、モデル、マスク、Seedなどの設定も確認してください。"
+          ],
+          "items": [
+            "同じ条件で生成し直す場合は、画像の転送ではなく「生成設定の復元・比較」を使います。",
+            "対応しない種類の素材や送り先では、画面の理由を確認して別の操作を選びます。音楽の再生成には音声そのものではなく設定を渡します。"
+          ],
+          "menuLabel": "別画面で使う"
+        },
+        {
+          id: "library-body",
+          "title": "人体部位の検出候補を確認する",
+          "body": "画像に描かれた部位を探し、矩形候補を確認・修正する機能です。人体異常の判定はしません。",
+          "steps": [
+            "画像詳細、または画像編集のマスク欄から「体の部位を検出・選択」を開きます。",
+            "「探す部位」を選び、「部位候補を検出」を押します。元画像の矩形と、拡大された候補を見比べます。",
+            "使う候補を選び、必要なら矩形を修正します。不要なものは「除外」、再び使うものは「戻す」を押します。",
+            "「修正・選択を保存」で確認結果を残します。マスクが必要な場合は、別の手順「部位候補から編集マスクを作る」へ進みます。"
+          ],
+          "items": [
+            "候補には重複・誤検出・見逃し・人物混合があります。人物所属、余分な腕、正常性は自動判定しません。",
+            "Grounding DINO tinyは任意導入です。自動取得UIはありません。利用できない環境でも、既存の手動編集は使えます。",
+            "生成ごとに自動で実行する機能ではありません。必要な画像で検出を開始してください。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/body-review-dark-ja.jpg",
+              "alt": "部位選択画面の矩形候補と拡大表示",
+              "caption": "矩形は候補です。元画像に描かれた部位を確認してから採用します。"
+            },
+            {
+              "src": "/help/images/body-review-corrections-dark-ja.jpg",
+              "alt": "候補の除外と矩形の修正",
+              "caption": "Darkモードの日本語画面。検出結果を利用者が修正・選択します。"
+            }
+          ],
+          "menuLabel": "人体部位を確認"
+        },
+        {
+          id: "library-body-mask",
+          "title": "部位候補から編集マスクを作る",
+          "body": "SAMが利用できる場合、選んだ部位候補をマスクにして画像編集へ渡せます。",
+          "steps": [
+            "「体の部位を検出・選択」で使う候補を選び、矩形の位置を確認します。",
+            "SAMによるマスク作成を実行し、画像に重なった色付きの範囲を確認します。",
+            "マスクを画像編集へ送り、ブラシと消しゴムで修正して保存します。inpaintに使う場合は、生成へ渡してから入力を確認します。"
+          ],
+          "items": [
+            "SAM ViT-Bは任意導入で、自動取得UIはありません。使えない場合は手動マスク編集を利用してください。",
+            "矩形だけの候補は輪郭マスクではありません。SAMでマスク化した場合も、対象や境界が正しいか利用者が確認してください。"
+          ],
+          "menuLabel": "部位をマスクにする"
+        },
+        {
+          id: "library-parts",
+          "title": "複数画像の同じ部位を並べる",
+          "body": "例えば各画像の手を一つずつ選び、拡大して横並びに比較できます。",
+          "steps": [
+            "ライブラリで2〜32画像を複数選択し、「部位を比較」を開きます。",
+            "比較する部位の種類を選び、各列でその画像の候補を一つ選びます。",
+            "候補のない画像は空の列として残ります。必要な場合だけ不足分の検出ボタンを押します。",
+            "共通の拡大操作で見比べ、横にスクロールして他の列も確認します。修正やマスク化は各列の「体の部位を検出・選択」から開きます。"
+          ],
+          "items": [
+            "同じ種類の候補でも人物所属や正常性が確認されたわけではありません。各画像の選択対象を確認してください。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/body-parts-comparison-dark-ja.jpg",
+              "alt": "複数画像から選んだ同種の部位の比較",
+              "caption": "Darkモードの日本語画面。画像ごとに比較したい候補を選びます。"
+            }
+          ],
+          "menuLabel": "複数画像の部位比較"
+        },
+        {
+          id: "library-regenerate",
+          "title": "元の生成設定を復元する",
+          "body": "保存されたプロンプトやモデルの情報を確認し、生成画面へ戻せます。",
+          "steps": [
+            "画像詳細で「生成設定の復元・比較」を開きます。",
+            "元の文章とモデル・VAE・LoRA・Embeddingを確認します。欠落や変更がある資産は、対応するものを選び直します。",
+            "生成画面へ設定を戻し、プロンプト、モデル、Seed、補正設定を確認してから再生成します。"
+          ],
+          "items": [
+            "モデルファイルの更新や実行環境の違いにより、同じSeedでも画素が一致するとは限りません。",
+            "二つの生成記録の数値を調べる場合は、次の「記録された生成条件を比較する」を使います。"
+          ],
+          "menuLabel": "元の設定を復元"
+        },
+        {
+          id: "library-numerics",
+          "title": "記録された生成条件を比較する",
+          "body": "二つの生成記録を選び、実際に保存されている条件や数値の違いを調べます。",
+          "steps": [
+            "画像詳細の「生成設定の復元・比較」を開きます。",
+            "「生成時の数値を比較」で比較する履歴を選び、「生成条件を比較」を押します。",
+            "Seed、Sampler、モデルなどのハッシュ値を見比べます。記録がある場合は、sigmaの値、初期ノイズや潜在画像のハッシュ値、計算に使ったCPU／GPUも確認できます。"
+          ],
+          "items": [
+            "表示するのは保存済みの値だけです。過去の未記録値を推測で補いません。大きな配列そのものを毎回保存する仕様ではありません。",
+            "一致・差分・未記録を区別してください。数値が一致しても画素一致を保証せず、差の原因を自動で特定するものでもありません。",
+            "同じ生成段階・バッチの記録を比較してください。Hires前後など、違う段階を混同しないでください。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/regeneration-numbers-dark-ja.jpg",
+              "alt": "再生成条件の数値比較",
+              "caption": "一致・差分・未記録を区別します。画素一致の保証ではありません。"
+            }
+          ],
+          "menuLabel": "生成条件の数値比較"
         }
-      ],
-      checkpoints: [
-        "Ratings, favorites, tags, and notes help keep later filtering useful.",
-        "External actions need their connection or executable configured in Settings.",
-        "Dataset handoff should use images that have been visually checked for the intended subject or style."
       ]
     },
     {
       id: "settings",
-      label: "Settings",
-      hint: "Paths, providers, and setup",
-      title: "Settings",
-      summary: "Configure output paths, model storage, external tools, AI providers, language, and local generation setup.",
-      sections: [
+      "label": "設定",
+      "title": "設定",
+      "hint": "保存先・資産・外部ツール・表示",
+      "summary": "保存先、モデル、外部ツール、表示の設定から、目的に合う説明を選んでください。AIとDiscordの接続手順は、それぞれの分類にあります。",
+      "checkpoints": [],
+      "sections": [
         {
-          title: "Storage and setup",
-          body: "Choose where Asteria saves results, finds models, and stores presets. Save your changes before returning to a workspace.",
-          items: [
-            "Choose a writable output folder before relying on generated file organization.",
-            "Set the model storage root so checkpoints, LoRAs, embeddings, VAE, ControlNet, and Detailer files can be found.",
-            "Use setup actions when the selected generation engine or supporting files need installation, repair, or update."
-          ]
+          id: "settings-storage",
+          "title": "生成物の保存先を選ぶ",
+          "body": "画像・動画・音声などの共通の出力先を設定します。モデルの保存場所とは別です。",
+          "steps": [
+            "「設定」で出力先の項目を開きます。",
+            "フォルダー選択から、書き込み可能な保存先を選びます。",
+            "設定を保存します。次の処理で作成する生成物から、その出力先を使います。"
+          ],
+          "items": [
+            "初期の出力先はdata/outputsです。変更しても過去のファイルは移動しません。履歴は記録済みの保存先を参照します。"
+          ],
+          "menuLabel": "生成物の保存先"
         },
         {
-          title: "Integrations and providers",
-          body: "Set up external tools and AI providers here before using them in Generate, Media Library, or LoRA Training.",
-          items: [
-            "Save a Topaz executable path before using Topaz actions from generation or Library workflows.",
-            "Refresh Eagle status after Eagle is open when export actions should send images and metadata there.",
-            "Add AI provider presets so prompt and caption assist can reuse endpoint, model, timeout, and environment-variable settings.",
-            "For Discord, allow the Guild or Channel first, then allow the people who may run commands. Start with explicit User IDs, use a dedicated role for a team, and use the @everyone role only when every server member should have access.",
-            "Enable Developer Mode in Discord, then use Copy ID on a server, channel, user, or role. The @everyone role ID is the same as the server ID.",
-            "Admin User IDs may cancel operations created by other users, so keep that list narrower than the normal user or role allowlist."
-          ]
-        }
-      ],
-      checkpoints: [
-        "Save settings after changing paths or provider presets.",
-        "A disconnected external tool can be refreshed after the local app or executable is ready.",
-        "Language selection is stored in the browser for the current Asteria UI."
-      ]
-    },
-    {
-      id: "ai-agent",
-      label: "AI Prompt Assist",
-      hint: "Generate prompts and caption drafts",
-      title: "AI Prompt Assist",
-      summary: "Use saved providers or a one-time request key to draft prompts, negative prompts, and LoRA captions without storing raw API keys in Asteria settings.",
-      sections: [
-        {
-          title: "Where it is used",
-          body: "Prompt Assist appears in Generate, and caption assist appears in LoRA Training. Both can use the same saved provider presets from Settings.",
-          items: [
-            "Choose Prompt only when you want Asteria to prepare a copyable request without calling a provider.",
-            "Choose a provider to request a prompt or caption draft from your configured AI service. Review the draft before applying it.",
-            "Set the output language per request when you need Japanese or English wording."
-          ]
+          id: "settings-models",
+          "title": "モデルの保存場所を登録する",
+          "body": "モデルや追加ファイルを探す場所を設定し、生成画面で選べるようにします。",
+          "steps": [
+            "「設定」でモデル保存ルートを確認します。必要なら外部モデルライブラリを追加します。",
+            "外部ライブラリの優先順位と、重複したファイルを確認して保存します。",
+            "アセットを更新し、生成画面でモデルやLoRAなどを選び直します。"
+          ],
+          "items": [
+            "登録はモデルファイルを複製する操作ではありません。対応するモデルの系統と、各ファイルの利用条件を確認してください。"
+          ],
+          "menuLabel": "モデルの保存場所"
         },
         {
-          title: "Provider setup",
-          body: "Saved providers keep endpoint, model, timeout, and environment-variable name together so Generate and LoRA Training can reuse the same configuration.",
-          items: [
-            "Open Settings, add an AI provider, then save the endpoint and model you want to use.",
-            "Store only an environment variable name for reusable keys, or enter a one-time key in the request form.",
-            "For local OpenAI-compatible tools, use the local endpoint and leave the API key blank when the tool does not require one."
-          ]
-        }
-      ],
-      checkpoints: [
-        "Raw API keys are not saved in Settings.",
-        "Prompt only mode prepares text for manual use.",
-        "Provider errors usually mean the endpoint, model, key, or timeout needs review."
-      ]
-    },
-    {
-      id: "lora-training",
-      label: "LoRA Training",
-      hint: "Dataset, captions, runs, and outputs",
-      title: "LoRA Training",
-      summary: "Train a LoRA from images and captions you have reviewed. Prepare the training files, start training, then inspect the samples before registering the LoRA for generation.",
-      sections: [
-        {
-          title: "Dataset flow",
-          body: "Start from a preset, create or import a dataset, then review images and captions before preparing files for a run.",
-          items: [
-            "Use folder import for a prepared image directory, or send selected Library images into a LoRA dataset.",
-            "Review captions and tags before preparing the training files so they match the intended character or style.",
-            "Use Caption Evidence when you need to compare manual edits against source tags, metadata, or provider drafts."
-          ]
+          id: "settings-external",
+          "title": "Eagleへの送信を設定する",
+          "body": "完成した画像を、Eagleへ送って整理できます。",
+          "steps": [
+            "Eagleを起動し、Asteriaの「設定」でEagleの項目を開きます。",
+            "「EagleサーバーURL」を確認して保存し、「Eagle URLをテスト」で接続を確かめます。必要なら送信先フォルダーを選びます。",
+            "メディアライブラリなどのEagle書き出しを使い、Eagle側で画像と情報を確認します。"
+          ],
+          "items": [
+            "自動送信を使う場合は「完成画像をEagleへ自動送信」を有効にします。必要ない場合はOFFのままにしてください。",
+            "送信だけが失敗した場合は、Asteriaの元画像と履歴を確認します。Eagleの起動とURLを確認してから、送信操作をやり直してください。"
+          ],
+          "menuLabel": "Eagleへの送信"
         },
         {
-          title: "Training and outputs",
-          body: "Follow the training progress here, then review the completed LoRA files and sample images.",
-          items: [
-            "Prepare a run, resolve any visible setup issues, then start training when the run is ready.",
-            "Review generated samples after completion before deciding whether the LoRA should be registered.",
-            "Register completed LoRA files so they appear in Generate after the model list is refreshed."
-          ]
-        }
-      ],
-      checkpoints: [
-        "Human review remains required for character and style quality.",
-        "Caption source tools need their own local setup before they can refresh captions.",
-        "Generated samples are evidence for the run, not a replacement for visual inspection."
-      ]
-    },
-    {
-      id: "merge",
-      label: "Merge Studio",
-      hint: "Recipes, candidates, and outputs",
-      title: "Merge Studio",
-      summary: "Create checkpoint and LoRA merge recipes, compare temporary candidates, and save only the merge result you want to keep.",
-      sections: [
-        {
-          title: "Build a merge recipe",
-          body: "Start with the merge type and model family, choose source checkpoints or LoRAs, then tune the blend settings for the kind of result you want.",
-          items: [
-            "Use checkpoint merge when two or three checkpoints should be blended into a new candidate.",
-            "Use LoRA merge or LoRA into checkpoint when you need to combine LoRAs or apply a LoRA into a checkpoint candidate.",
-            "Use MBW presets or block weights when the merge should affect style, face, structure, or other model regions differently."
-          ]
+          id: "settings-topaz",
+          "title": "Topazを使えるようにする",
+          "body": "インストール済みのTopazを指定し、生成時やライブラリから補正に使います。",
+          "steps": [
+            "「設定」のTopaz項目で、インストール済みの実行ファイルを選びます。",
+            "「Topazパスを保存」を押し、準備状態を確認します。",
+            "生成のTopaz Hires、またはライブラリのTopaz操作へ戻り、補正設定を確認して実行します。"
+          ],
+          "items": [
+            "対応するTopaz本体、ライセンス、CLI対応が必要です。パスの登録だけで未導入のTopazが使えるわけではありません。",
+            "失敗した場合は元画像と履歴を確認し、実行ファイルや利用条件を見直してください。"
+          ],
+          "menuLabel": "Topazの準備"
         },
         {
-          title: "Compare and keep candidates",
-          body: "XYZ pre-check creates temporary comparison candidates before you commit to saving a merged model artifact.",
-          items: [
-            "Keep XYZ value lists short while exploring expensive merge settings.",
-            "Use the candidate board to review images, ratings, fingerprints, and exact axis values, then choose which candidate to save.",
-            "Save metadata with the merged artifact so the recipe, sources, and reproducibility details remain available later."
-          ]
+          id: "settings-appearance",
+          "title": "画面の配色を変える",
+          "body": "明るい画面、暗い画面、OSに合わせた配色を選べます。",
+          "steps": [
+            "「設定」の表示設定を開きます。",
+            "「ライト」「ダーク」「システム」から選びます。「システム」はOSの配色に従います。",
+            "作業画面へ戻り、文字や画像の見え方を確認します。"
+          ],
+          "items": [],
+          "images": [
+            {
+              "src": "/help/images/appearance-dark-ja.jpg",
+              "alt": "表示設定のテーマ選択",
+              "caption": "Darkモードの日本語画面。配色と表示方法を選びます。"
+            }
+          ],
+          "menuLabel": "画面の配色"
+        },
+        {
+          id: "settings-language",
+          "title": "日本語と英語を切り替える",
+          "body": "画面の表示言語を切り替えられます。",
+          "steps": [
+            "画面上部にある「日本語」または「EN」を選びます。",
+            "メニューや説明文が切り替わったことを確認します。"
+          ],
+          "items": [
+            "表示言語は現在のブラウザーに保存されます。入力したプロンプトやファイル名を翻訳する操作ではありません。"
+          ],
+          "menuLabel": "表示言語"
+        },
+        {
+          id: "settings-backup",
+          "title": "バックアップを作成・復元する",
+          "body": "保存データを保管し、必要なときにバックアップから復元します。",
+          "steps": [
+            "「設定」でバックアップの項目を開き、対象と保存先を確認します。",
+            "バックアップを作成し、保存先にファイルができたことを確認します。",
+            "復元が必要な場合は、先に現在のデータも保管します。使うバックアップと復元範囲を確認してから実行してください。"
+          ],
+          "items": [
+            "復元は表示だけでなく保存データへ影響します。確認画面に表示された範囲を読んでください。",
+            "修復や削除はバックアップとは別の操作です。同じものとして実行しないでください。"
+          ],
+          "menuLabel": "バックアップ"
         }
-      ],
-      checkpoints: [
-        "A merge needs valid source model files for the selected family and merge type.",
-        "Preview candidates are temporary until you promote or save the output you want to keep.",
-        "Advanced modes and block-weight changes should be compared visually before reusing the result in production."
       ]
     }
   ],
-  ja: [
-    {
-      id: "generate",
-      label: "生成",
-      hint: "プロンプト、モデル、結果",
-      title: "生成",
-      summary: "プロンプトから画像を作成したり、既存の画像を描き直したりできます。モデルやプリセットを選び、必要に応じてControlNet、Detailer、Topazを組み合わせます。",
-      sections: [
-        {
-          title: "生成を始める",
-          body: "プロンプト、生成モード、モデルを指定し、画面上部で準備状態を確認します。準備ができたら「生成」を押します。",
-          items: [
-            "新しい画像を作る時はtxt2img、入力画像を参考にする時はimg2img、マスクした範囲だけ変える時はinpaintを使います。",
-            "Asteriaを開いたままCheckpoint、LoRA、Embedding、VAE、ControlNet、Detailerを追加した時はアセットを更新します。",
-            "モデル選択や処理オプションを同じ形で再利用したい時は、生成設定プリセットを保存します。"
-          ]
-        },
-        {
-          title: "結果を確認して再利用する",
-          body: "生成結果は履歴と並んで表示されるため、出力を見比べながら次の作業へつなげられます。",
-          items: [
-            "マスク、切り抜き、入力画像の調整、ポーズや参照画像の作業が必要な結果は画像編集で開きます。",
-            "評価、タグ、メモ、メタデータ、Eagle書き出し、Topaz処理が必要な結果はライブラリで扱います。",
-            "Seedを-1にすると、毎回ランダムな初期状態で生成します。条件を比較する時は同じSeedを使いますが、Seedだけで画素の一致を保証するものではありません。"
-          ]
-        }
-      ],
-      checkpoints: [
-        "生成にはプロンプトが必要です。画像モードでは入力画像やマスクも必要です。",
-        "モデルや補助アセットが見つからない時は、アセットを更新するかインストール済みのファイルを選びます。",
-        "生成設定プリセットは生成時の選択を保存するもので、生成画像そのものは保存しません。"
-      ]
-    },
+  "en": [
     {
       id: "image-edit",
-      label: "画像編集",
-      hint: "マスク、入力画像、受け渡し",
-      title: "画像編集",
-      summary: "既存画像を切り抜いたり、描き直す範囲をマスクで指定したりできます。準備した画像とマスクは生成画面へ送れます。",
-      sections: [
+      "label": "Image Edit",
+      "title": "Image Edit",
+      "hint": "Masks, region selection and handoff",
+      "summary": "Prepare an image and send it to Generate as an img2img or inpaint input.",
+      "checkpoints": [],
+      "sections": [
         {
-          title: "編集を準備する",
-          body: "画像を読み込み、生成へ送る前に、どこをどう変えるかを編集ツールで整えます。",
-          items: [
-            "inpaintでは、再生成したい範囲だけをマスクで指定します。",
-            "構図や出力範囲を整えたい時は、切り抜きやキャンバス操作を使います。",
-            "inpaint設定を生成へ送る前に、現在のマスクを保存します。"
+          id: "edit-mask",
+          "title": "Create a mask and send it to inpaint",
+          "body": "A mask specifies the area to redraw; loading an image does not create a mask.",
+          "steps": [
+            "Open Image Edit and load an image, or send a selected Library image to it.",
+            "Add regions with the mask brush and remove unwanted areas with the eraser. Zoom in to inspect edges.",
+            "Save the current mask. Review crop or canvas changes before confirming them too.",
+            "Send the image as img2img or masked inpaint. In Generate, check the image, mask and Denoise before starting."
+          ],
+          "items": [
+            "If only mask loading failed, clear or reselect that mask rather than deleting the source image.",
+            "Distinguish the current edit from saved data and check unsaved work before changing images."
+          ],
+          "images": [
+            {
+              "src": "/help/images/image-edit-mask-dark-ja.jpg",
+              "alt": "Image Edit mask and handoff controls",
+              "caption": "Japanese UI in Dark mode: inspect and save the mask before sending it to Generate."
+            }
           ]
         },
         {
-          title: "ワークスペースを移動する",
-          body: "メディアライブラリから画像を開き、画像やマスクを整えます。生成画面へ送ると、img2imgやinpaintの入力として使えます。",
-          items: [
-            "ライブラリで選んだ出力に部分修正が必要な時は、画像編集で開きます。",
-            "編集した画像をimg2imgの入力画像、またはマスク付きinpaint設定として生成へ送ります。",
-            "評価、メタデータ、外部ツール操作が必要な時はライブラリに戻ります。"
+          id: "edit-word",
+          "title": "Select an edit region using words",
+          "body": "An image with saved word-reference maps can provide region candidates from text.",
+          "steps": [
+            "Open an image with recorded word maps and its word-region selection tool.",
+            "Choose recorded words such as hair or clothing and inspect the suggested area.",
+            "Add or erase regions, save the mask and send it to inpaint."
+          ],
+          "items": [
+            "These are reference tendencies, not exact boundaries or person-ownership judgments.",
+            "Historical images without the maps cannot acquire the same observations retrospectively."
+          ]
+        },
+        {
+          id: "edit-pose",
+          "title": "Prepare a multi-person pose",
+          "body": "Move each person’s joints to build a generation control image.",
+          "steps": [
+            "Open the pose tools in Image Edit and add the required people.",
+            "Select a person and move joints. Move whole person moves that person together.",
+            "Review the control image and send it to Generate with a compatible SDXL ControlNet or Anima LLLite model."
+          ],
+          "items": [
+            "The control image includes every person, not just the selected one. Separately generated people are not composited.",
+            "Supply the required control weights. Anima LLLite in particular does not guarantee arbitrary pose following or character separation."
           ]
         }
-      ],
-      checkpoints: [
-        "inpaintには入力画像と保存済みマスクの両方が必要です。",
-        "生成画面へ送った後は、意図した画像とマスクが選ばれていることを確認してから生成します。",
-        "画像を読み込めない時は、別の画像を選ぶか元の画面を更新します。"
       ]
     },
     {
       id: "library",
-      label: "メディアライブラリ",
-      hint: "閲覧、比較、整理",
-      title: "メディアライブラリ",
-      summary: "画像・動画・音声を生成設定と一緒に確認できます。評価や整理、画像の比較、ほかの画面への受け渡しもできます。",
-      sections: [
+      "label": "Media Library",
+      "title": "Media Library",
+      "hint": "Search, compare, review parts and regenerate",
+      "summary": "Find completed images, videos and music, review them and continue production.",
+      "checkpoints": [],
+      "sections": [
         {
-          title: "画像を探して確認する",
-          body: "ライブラリでは、出力画像をプロンプト、設定、メモ、タグ、関連ファイルと一緒に確認できます。",
-          items: [
-            "特定のプロンプト、プロファイル、タグ、評価、お気に入りを探す時は検索や絞り込みを使います。",
-            "再利用や書き出しを判断する前に、詳細パネルで生成設定を確認します。",
-            "複数候補を見比べたい時は、比較やボード表示を使います。"
+          id: "library-find",
+          "title": "Find and open an output",
+          "body": "Find images, videos and audio with search and filters.",
+          "steps": [
+            "Open Media in the left menu, then select the media type and search conditions.",
+            "Select an item and inspect its details. Enlarge images or play video and audio.",
+            "Select another item from the list to change the target. Actions apply to the file shown in the details."
+          ],
+          "items": [
+            "Selecting an item and opening its full preview are different actions. Clicking a selected image again may open the preview."
+          ],
+          "images": [
+            {
+              "src": "/help/images/media-library-dark-ja.jpg",
+              "alt": "Media Library filters, list and details",
+              "caption": "Japanese UI in Dark mode: inspect the file and generation settings in its details."
+            }
+          ],
+          "menuLabel": "Find and open an output"
+        },
+        {
+          id: "library-organize",
+          "title": "Organize outputs with ratings, tags and notes",
+          "body": "Mark favorites and add information that helps you find outputs later.",
+          "steps": [
+            "Select an item in Media Library and open its details.",
+            "Edit its rating, favorite status, tags or notes as needed.",
+            "Reopen the details or use filters to confirm the changes."
+          ],
+          "items": [
+            "Use Ctrl+click or Ctrl+Enter for multiple selection. Check the selected targets before bulk changes.",
+            "Deletion is separate from editing organization details. Read the confirmation and target list before deleting."
+          ],
+          "menuLabel": "Organize outputs with ratings, tags and notes"
+        },
+        {
+          id: "library-compare",
+          "title": "Compare several images",
+          "body": "Arrange selected images in a comparison view or board.",
+          "steps": [
+            "Select the images to compare in Media Library.",
+            "Open the comparison view or board and check the selected images.",
+            "Enlarge them to inspect differences. Use recorded stage images when available to compare before and after processing."
+          ],
+          "items": [
+            "Image comparison actions are not available for video or audio. Check the selected media type."
+          ],
+          "menuLabel": "Compare several images"
+        },
+        {
+          id: "library-transfer",
+          "title": "Use a selected image in another workspace",
+          "body": "Choose whether to transfer the image itself or restore its generation settings.",
+          "steps": [
+            "Select an image in Media Library and open its actions.",
+            "Choose a destination: img2img, ControlNet, Image Edit or video input for image-based work; a dataset for training materials.",
+            "Check the image in the destination. Before generating, also review the model, mask, Seed and other settings."
+          ],
+          "items": [
+            "Use Restore and compare generation settings, rather than image transfer, to restore generation settings.",
+            "Unavailable destinations explain their restrictions. Music regeneration transfers settings, not the audio itself."
+          ],
+          "menuLabel": "Use a selected image in another workspace"
+        },
+        {
+          id: "library-body",
+          "title": "Review detected body-part candidates",
+          "body": "Find, inspect and correct rectangular candidates. This does not judge anatomical defects.",
+          "steps": [
+            "Open Detect and select body parts from image details or the mask area in Image Edit.",
+            "Choose the part and select Detect part candidates. Compare the rectangles with the enlarged candidates and original image.",
+            "Select candidates and adjust their rectangles if needed. Exclude unwanted ones or Restore them.",
+            "Save corrections and selection. To make a mask, use the separate procedure for creating an editing mask from a candidate."
+          ],
+          "items": [
+            "Candidates may be duplicated, incorrect, missing or mixed across people. They do not establish ownership, extra limbs or anatomical normality.",
+            "Grounding DINO tiny is optional, and no automatic download UI is provided. Manual editing remains available when detection is unavailable.",
+            "Detection runs only when you request it, not after every generation."
+          ],
+          "images": [
+            {
+              "src": "/help/images/body-review-dark-ja.jpg",
+              "alt": "Body-part candidate rectangles and crops",
+              "caption": "Japanese UI in Dark mode. Candidates are not anatomy judgments; inspect the original before choosing one."
+            },
+            {
+              "src": "/help/images/body-review-corrections-dark-ja.jpg",
+              "alt": "Excluding and correcting candidates",
+              "caption": "Japanese UI in Dark mode: review and correct the candidates yourself."
+            }
+          ],
+          "menuLabel": "Review detected body-part candidates"
+        },
+        {
+          id: "library-body-mask",
+          "title": "Make an editing mask from a part candidate",
+          "body": "With SAM available, turn a selected candidate into a mask and send it to Image Edit.",
+          "steps": [
+            "Select a candidate in Detect and select body parts and check its rectangle.",
+            "Run SAM mask creation and inspect the colored area over the image.",
+            "Send the mask to Image Edit, correct it with the brush and eraser, and save. For inpaint, transfer it to Generate and review the inputs."
+          ],
+          "items": [
+            "SAM ViT-B is optional and has no automatic download UI. Use manual mask editing when it is unavailable.",
+            "A rectangle alone is not a contour mask. Even with SAM, check the target and boundary yourself."
+          ],
+          "menuLabel": "Make an editing mask from a part candidate"
+        },
+        {
+          id: "library-parts",
+          "title": "Compare the same part across images",
+          "body": "Select one hand or other part from each image and compare enlarged crops side by side.",
+          "steps": [
+            "Select 2–32 Library images and open Compare body parts.",
+            "Choose a part type and one candidate per image column.",
+            "Missing candidates stay as empty columns. Request missing detections only when needed.",
+            "Use shared zoom and horizontal scrolling. Open each column’s Detect and select body parts for corrections or mask editing."
+          ],
+          "items": [
+            "The same part label does not establish person ownership or anatomical correctness. Verify each choice."
+          ],
+          "images": [
+            {
+              "src": "/help/images/body-parts-comparison-dark-ja.jpg",
+              "alt": "Same-part comparison across multiple images",
+              "caption": "Japanese UI in Dark mode: choose the intended candidate in each image."
+            }
           ]
         },
         {
-          title: "選んだ画像を使う",
-          body: "ライブラリの操作は、生成、編集、LoRA学習、外部整理へ画像をつなげます。",
-          items: [
-            "新しい結果の参考にしたい画像は、img2imgやControlNetの入力として生成へ送ります。",
-            "切り抜き、マスク、部分修正が必要な画像は画像編集で開きます。",
-            "LoRAの学習素材にしたい画像は、LoRAデータセットへ送ります。"
-          ]
+          id: "library-regenerate",
+          "title": "Restore the original generation settings",
+          "body": "Review saved prompts and assets, then restore the settings in Generate.",
+          "steps": [
+            "Open Restore and compare generation settings in image details.",
+            "Review the prompt, model, VAE, LoRAs and Embeddings. Select replacements for missing or changed assets.",
+            "Restore the settings to Generate. Check the prompt, model, Seed and enhancements before running again."
+          ],
+          "items": [
+            "Updated model files or a different execution environment may change pixels even with the same Seed.",
+            "Use the numerical comparison procedure to inspect differences between two saved generation records."
+          ],
+          "menuLabel": "Restore the original generation settings"
+        },
+        {
+          id: "library-numerics",
+          "title": "Compare recorded generation conditions",
+          "body": "Select two generation records and inspect their saved settings and numerical differences.",
+          "steps": [
+            "Open Restore and compare generation settings in image details.",
+            "Under Compare recorded generation values, select a history entry and choose Compare generation conditions.",
+            "Compare Seed, Sampler and asset hashes. When recorded, also inspect sigma values, initial noise or latent hashes, and the CPU/GPU used for computation."
+          ],
+          "items": [
+            "Only saved values are displayed. Missing historical values are not inferred, and large tensors are not saved on every run.",
+            "Distinguish matches, differences and missing records. Matching records do not guarantee matching pixels or identify the cause automatically.",
+            "Compare the same generation stage and batch. Do not mix first-pass and Hires records."
+          ],
+          "images": [
+            {
+              "src": "/help/images/regeneration-numbers-dark-ja.jpg",
+              "alt": "Numerical regeneration comparison",
+              "caption": "Japanese UI in Dark mode. Distinguish matching, different and unrecorded values. Pixel identity is not guaranteed."
+            }
+          ],
+          "menuLabel": "Compare recorded generation conditions"
         }
-      ],
-      checkpoints: [
-        "評価、お気に入り、タグ、メモを付けると後で探しやすくなります。",
-        "外部ツール操作には、Settingsで接続や実行ファイルの設定が必要です。",
-        "データセットへ送る画像は、目的の被写体やスタイルに合うか目視確認してから使います。"
       ]
     },
     {
       id: "settings",
-      label: "設定",
-      hint: "パス、プロバイダー、セットアップ",
-      title: "設定",
-      summary: "出力先、モデル保存場所、外部ツール、AIプロバイダー、表示言語、ローカル生成環境を設定します。",
-      sections: [
+      "label": "Settings",
+      "title": "Settings",
+      "hint": "Storage, assets, external tools and appearance",
+      "summary": "Choose instructions for storage, models, external tools or display. AI and Discord connection procedures have their own categories.",
+      "checkpoints": [],
+      "sections": [
         {
-          title: "保存先とセットアップ",
-          body: "生成結果、モデル、プリセットの保存先を指定します。変更したら設定を保存してから各画面へ戻ります。",
-          items: [
-            "生成ファイルの整理を使う前に、書き込み可能な出力フォルダを選びます。",
-            "Checkpoint、LoRA、Embedding、VAE、ControlNet、Detailerを見つけるためにモデル保存ルートを設定します。",
-            "生成エンジンや補助ファイルに準備が必要な時は、インストール、修復、更新の操作を使います。"
-          ]
+          id: "settings-storage",
+          "title": "Choose where outputs are saved",
+          "body": "Set the common output folder for generated images, video and audio. This is separate from model storage.",
+          "steps": [
+            "Open the output-location section in Settings.",
+            "Choose a writable folder with the folder picker.",
+            "Save the setting. New operations use that output location."
+          ],
+          "items": [
+            "The project default is data/outputs. Changing it does not move old files; history continues to use their recorded locations."
+          ],
+          "menuLabel": "Choose where outputs are saved"
         },
         {
-          title: "外部連携とプロバイダー",
-          body: "生成、メディアライブラリ、LoRA学習で使う外部ツールやAIプロバイダーを、ここで事前に設定します。",
-          items: [
-            "生成やライブラリからTopazを使う前に、Topaz実行ファイルのパスを保存します。",
-            "Eagleへ画像とメタデータを書き出したい時は、Eagleを開いてから状態を更新します。",
-            "プロンプト支援やキャプション支援で再利用するために、エンドポイント、モデル、タイムアウト、環境変数名を保存します。",
-            "Discordでは、まずGuildまたはChannelを許可し、次にコマンドを使える人を許可します。個人運用はUser ID、チーム運用は専用ロール、サーバー全員へ開放する場合だけ@everyoneロールを使用します。",
-            "Discordの開発者モードを有効にし、サーバー、チャンネル、ユーザー、ロールの「IDをコピー」を使用します。@everyoneロールのIDはサーバーIDと同じです。",
-            "Admin User IDは他ユーザーの処理も取消できるため、通常のUser／Role許可より狭く設定します。"
-          ]
-        }
-      ],
-      checkpoints: [
-        "パスやプロバイダーを変更した後は設定を保存します。",
-        "外部ツールが未接続の時は、ローカルアプリや実行ファイルを準備してから状態を更新します。",
-        "表示言語は現在のブラウザに保存されます。"
-      ]
-    },
-    {
-      id: "ai-agent",
-      label: "AIプロンプト支援",
-      hint: "プロンプトとキャプション案を作成",
-      title: "AIプロンプト支援",
-      summary: "保存済みプロバイダー、または一回だけ使うキーで、プロンプト、ネガティブプロンプト、LoRAキャプション案を作成します。Asteriaの設定には生のAPIキーを保存しません。",
-      sections: [
-        {
-          title: "使う場所",
-          body: "AIプロンプト支援は生成画面、キャプション支援はLoRA学習画面で使います。どちらも設定の保存済みプロバイダーを利用できます。",
-          items: [
-            "AIへ送信せず、手動で使う依頼文だけを作る場合は「プロンプトのみ」を選びます。",
-            "設定したAIにプロンプトやキャプションの案を作らせる場合は、プロバイダーを選びます。案を確認してから適用してください。",
-            "日本語または英語の出力が必要な時は、リクエストごとに出力言語を選びます。"
-          ]
+          id: "settings-models",
+          "title": "Register model locations",
+          "body": "Tell Asteria where to find models and additional assets.",
+          "steps": [
+            "Check the model storage root in Settings. Add an external model library if needed.",
+            "Review external-library priority and duplicate files, then save.",
+            "Refresh assets and return to Generate to select the model, LoRA or other asset."
+          ],
+          "items": [
+            "Registration does not copy model files. Check model-family compatibility and each asset’s license."
+          ],
+          "menuLabel": "Register model locations"
         },
         {
-          title: "プロバイダー設定",
-          body: "保存済みプロバイダーは、エンドポイント、モデル、タイムアウト、環境変数名をまとめて保存し、生成画面とLoRA学習画面から再利用できます。",
-          items: [
-            "設定画面でAIプロバイダーを追加し、使いたいエンドポイントとモデルを保存します。",
-            "再利用するキーは環境変数名だけを保存し、一回だけ使うキーは実行フォームに入力します。",
-            "ローカルのOpenAI互換ツールでは、ローカルエンドポイントを指定し、キーが不要なら空欄のまま使います。"
-          ]
-        }
-      ],
-      checkpoints: [
-        "生のAPIキーは設定に保存されません。",
-        "「プロンプトのみ」は、手動でAIに渡す依頼文を作るモードです。",
-        "プロバイダーエラー時は、エンドポイント、モデル、キー、タイムアウトを確認します。"
-      ]
-    },
-    {
-      id: "lora-training",
-      label: "LoRA学習",
-      hint: "データセット、キャプション、実行、出力",
-      title: "LoRA学習",
-      summary: "確認済みの画像とキャプションからLoRAを学習します。学習用ファイルを準備して学習を開始し、サンプルを確認してから生成用に登録します。",
-      sections: [
-        {
-          title: "データセットの流れ",
-          body: "プリセットから始め、データセットを作成または取り込み、画像とキャプションを確認してから実行用ファイルを準備します。",
-          items: [
-            "準備済み画像フォルダを取り込むか、ライブラリで選んだ画像をLoRAデータセットへ送ります。",
-            "学習ファイルを作る前に、目的のキャラクターやスタイルに合うようキャプションとタグを確認します。",
-            "手動編集、元のタグ、メタデータ、AIの案を見比べたい時は「キャプション根拠」を使います。"
-          ]
+          id: "settings-external",
+          "title": "Set up sending images to Eagle",
+          "body": "Send completed images to Eagle for organization.",
+          "steps": [
+            "Start Eagle and open its section in Asteria Settings.",
+            "Check and save the Eagle server URL. Use Test Eagle URL to confirm the connection and choose a destination folder if needed.",
+            "Use an Eagle export action, such as the one in Media Library, then check the image and metadata in Eagle."
+          ],
+          "items": [
+            "Enable automatic sending of completed images only if you want it; otherwise leave it off.",
+            "If only delivery fails, check the original image and history in Asteria. Confirm Eagle is running and the URL is correct before resending."
+          ],
+          "menuLabel": "Set up sending images to Eagle"
         },
         {
-          title: "学習と出力",
-          body: "この画面で学習の進行を確認し、完了後にLoRAファイルとサンプル画像を確認します。",
-          items: [
-            "実行を準備し、画面に表示されるセットアップ項目を解消してから学習を開始します。",
-            "完了後はサンプル画像を確認し、LoRAを登録するか判断します。",
-            "完成したLoRAを登録すると、モデル一覧の更新後に生成画面で使えます。"
-          ]
-        }
-      ],
-      checkpoints: [
-        "キャラクターやスタイルの品質判断には目視確認が必要です。",
-        "キャプションソースツールを更新に使うには、それぞれのローカル設定が必要です。",
-        "サンプル画像は実行結果の確認材料であり、目視確認の代わりにはなりません。"
-      ]
-    },
-    {
-      id: "merge",
-      label: "マージスタジオ",
-      hint: "レシピ、候補、出力",
-      title: "マージスタジオ",
-      summary: "CheckpointやLoRAのマージレシピを作成し、一時候補を比較して、残したいマージ結果だけを保存します。",
-      sections: [
-        {
-          title: "マージレシピを作る",
-          body: "マージ種別とモデルファミリーを選び、元になるCheckpointまたはLoRAを指定して、目的に合わせてブレンド設定を調整します。",
-          items: [
-            "2つまたは3つのCheckpointを合成して新しい候補を作る時は、Checkpoint mergeを使います。",
-            "LoRA同士を合成する時や、LoRAをCheckpoint候補へ適用する時は、LoRA mergeやLoRA into checkpointを使います。",
-            "作風、顔、構造などモデル内の領域ごとに効き方を変えたい時は、MBWプリセットやブロック重みを使います。"
-          ]
+          id: "settings-topaz",
+          "title": "Prepare Topaz for use",
+          "body": "Select an installed Topaz application for enhancement during generation or from the Library.",
+          "steps": [
+            "Choose the installed executable in the Topaz section of Settings.",
+            "Select Save Topaz path and check readiness.",
+            "Return to Topaz Hires in Generate or a Library Topaz action. Review the enhancement settings before running."
+          ],
+          "items": [
+            "A compatible Topaz installation, license and CLI support are required. Saving a path does not install Topaz.",
+            "After a failure, check the original image and history, then review the executable and requirements."
+          ],
+          "menuLabel": "Prepare Topaz for use"
         },
         {
-          title: "候補を比較して残す",
-          body: "XYZ事前確認では、マージ済みモデルを書き出す前に一時的な比較候補を作成できます。",
-          items: [
-            "重いマージ設定を試す間は、XYZの値リストを短く保ちます。",
-            "候補ボードで画像、評価、フィンガープリント、各軸の値を確認し、保存する候補を選びます。",
-            "後でレシピ、ソース、再現情報を確認できるように、マージ成果物にはメタデータを保存します。"
-          ]
+          id: "settings-appearance",
+          "title": "Change the color theme",
+          "body": "Choose a light theme, a dark theme or the operating system’s preference.",
+          "steps": [
+            "Open Appearance in Settings.",
+            "Choose Light, Dark or System. System follows the operating system’s color preference.",
+            "Return to your workspace and check the text and image presentation."
+          ],
+          "items": [],
+          "images": [
+            {
+              "src": "/help/images/appearance-dark-ja.jpg",
+              "alt": "Theme selection in Settings",
+              "caption": "Japanese UI in Dark mode: choose display and theme settings."
+            }
+          ],
+          "menuLabel": "Change the color theme"
+        },
+        {
+          id: "settings-language",
+          "title": "Switch between Japanese and English",
+          "body": "Change the language used for interface labels and instructions.",
+          "steps": [
+            "Select 日本語 or EN at the top of the screen.",
+            "Check that menus and explanations have changed language."
+          ],
+          "items": [
+            "The choice is saved in the current browser. It does not translate your prompts or file names."
+          ],
+          "menuLabel": "Switch between Japanese and English"
+        },
+        {
+          id: "settings-backup",
+          "title": "Create or restore a backup",
+          "body": "Keep a backup of saved data and restore it when needed.",
+          "steps": [
+            "Open the backup section in Settings and check the included data and destination.",
+            "Create a backup and confirm that its file exists at the destination.",
+            "Before restoring, also preserve the current data. Check the backup and restoration scope before proceeding."
+          ],
+          "items": [
+            "Restoring affects saved data, not just its display. Read the scope shown in the confirmation.",
+            "Repair and deletion are different operations from backup. Do not treat them as interchangeable."
+          ],
+          "menuLabel": "Create or restore a backup"
         }
-      ],
-      checkpoints: [
-        "マージには、選択したファミリーとマージ種別に合う元モデルファイルが必要です。",
-        "プレビュー候補は、昇格または保存するまで一時的な候補です。",
-        "高度な方式やブロック重みの変更は、本番利用前に画像で比較して確認します。"
       ]
     }
   ]
 };
+const studioHelp = {
+  "ja": [
+    {
+      id: "lora-training",
+      "label": "LoRA学習",
+      "title": "LoRA学習",
+      "hint": "素材・キャプション・学習・実用比較",
+      "summary": "素材を確認して学習し、完成したLoRAを実画像で評価します。",
+      "checkpoints": [],
+      "sections": [
+        {
+          id: "lora-dataset",
+          "title": "データセットとキャプションを準備する",
+          "body": "画像と文章の対応を確認し、固定の特徴と変化する特徴を整理します。",
+          "steps": [
+            "「LoRA学習」でプリセットとデータセットを選ぶか、新しく作ります。フォルダーの取り込みやライブラリからの追加も使えます。",
+            "画像とキャプションを確認します。「キャプション根拠」では手動編集・元タグ・メタデータ・AI案を見比べます。",
+            "キャラクター学習ではトリガーを各キャプションの先頭に置きます。トリガーで覚えさせる固定の特徴は外し、服・姿勢・表情・背景などの変化は残します。",
+            "画像や文章の抜け、似すぎた素材、無関係な内容を確認して保存します。"
+          ],
+          "items": [
+            "学習用ファイルを作る前に、実際の画像と文章を確認してください。",
+            "キャラクター学習ではkeep_tokensを1以上にし、先頭のトリガーが保たれるようにします。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/lora-training-dark-ja.jpg",
+              "alt": "LoRA学習のデータセットと準備操作",
+              "caption": "Darkモードの日本語画面。素材と文章を確認してから準備します。"
+            }
+          ]
+        },
+        {
+          id: "lora-annotation",
+          "title": "学習素材のAI提案を確認する",
+          "body": "画像対応AIの提案を使って、学習画像の説明やキャプションを見直します。",
+          "steps": [
+            "「LoRA学習」で対象のデータセットを選び、「キャプションを編集」から「学習画像と文章を確認」を開きます。確認する画像を選んでください。",
+            "画像対応AIの接続先と送信対象を確認して実行します。",
+            "元画像、既存キャプション、提案の根拠を見比べ、採用する内容だけを反映して保存します。"
+          ],
+          "items": [
+            "AIの注釈は正解ではありません。見えない部分や曖昧な特徴を断定しないでください。画像や文章を変えた後の古い提案は使わないでください。",
+            "提案を取得しただけでは、キャプションの確定や学習の開始はしません。"
+          ],
+          "menuLabel": "素材のAI提案を確認"
+        },
+        {
+          id: "lora-run",
+          "title": "学習を準備・開始・中止する",
+          "body": "必要なファイルを準備し、表示された条件が整ってから開始します。",
+          "steps": [
+            "モデル・学習条件・出力名・保存先を確認し、実行を準備します。未準備項目があれば解消します。",
+            "学習開始の操作を押し、進行・ログ・サンプルを確認します。止める場合は実行中の中止を使います。",
+            "完了後は重みとサンプルを確認し、使うLoRAを登録します。アセットを更新すると生成で選べます。"
+          ],
+          "items": [
+            "中止や失敗は完了ではありません。再開の可否は方式と保存された学習状態に依存します。",
+            "通常LoRAと、元画像・変更後画像の差を扱う学習は別の方式です。必要な入力を確認します。"
+          ]
+        },
+        {
+          id: "lora-practical",
+          "title": "LoRAあり・なしの画像を比較する",
+          "body": "学習に使っていない服・背景・姿勢でも使えるか画像で確認します。",
+          "steps": [
+            "登録したLoRAから「LoRAあり・なしを比較」を開き、モデル・評価プロンプト・条件を確認します。",
+            "LoRAあり／なしを同じSeedの組で生成します。",
+            "人物の特徴・服・背景・姿勢・通常の画質を別々に評価して記録します。"
+          ],
+          "items": [
+            "学習画像そっくりの一枚や低いLossだけで、汎用的な成功とは判断できません。",
+            "モデルの対応と利用条件も確認してください。Lossは学習中の誤差であり、画像の使いやすさを保証する値ではありません。"
+          ]
+        }
+      ]
+    },
+    {
+      id: "merge",
+      "label": "マージスタジオ",
+      "title": "マージスタジオ",
+      "hint": "モデル・計算方式・候補・レシピ",
+      "summary": "元モデルと計算方式を選び、候補を比較して保存します。",
+      "checkpoints": [],
+      "sections": [
+        {
+          id: "merge-recipe",
+          "title": "モデルを選び、マージを実行する",
+          "body": "左側のモデル・方式・詳細調整を上から確認し、右上で実行します。",
+          "steps": [
+            "「マージ」を開き、種別・ファミリーを選びます。検索で絞り込み、必要なA・B・Cなどを指定します。",
+            "計算方式と比率を選び、Weight sumやSLERPなど、その方式の入力と説明を確認します。",
+            "保存オプションの出力名・保存先・メタデータを確認します。",
+            "右側の保存オプション上にある実行ボタンを押し、進行と完成ファイルを確認します。"
+          ],
+          "items": [
+            "ページ内移動は左側上部から使えます。モデル名が長い場合も選択対象を確認します。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/merge-dark-ja.jpg",
+              "alt": "マージのモデル検索と右上の実行欄",
+              "caption": "Darkモードの日本語画面。モデル実行とレシピ保存を区別します。"
+            }
+          ]
+        },
+        {
+          id: "merge-mbw",
+          "title": "ブロックごとの重みを調整する",
+          "body": "MBWを使い、モデルのブロックごとにマージの重みを設定します。",
+          "steps": [
+            "「マージ」で元モデルと計算方式を選びます。",
+            "詳細調整で、MBWプリセットまたは各ブロックの重みを指定します。",
+            "対応状況と保存オプションを確認して実行します。設定を再利用する場合はレシピにも保存します。"
+          ],
+          "items": [
+            "使えるブロックと重みはモデルや計算方式で異なります。対応しない組み合わせは画面の案内を確認してください。"
+          ],
+          "menuLabel": "MBWで調整"
+        },
+        {
+          id: "merge-compare",
+          "title": "XYZでマージ候補を比較する",
+          "body": "比較する条件を軸に指定し、候補の結果を見ながら残すモデルを選びます。",
+          "steps": [
+            "「マージ」で元モデルと基本の計算条件を整えます。",
+            "XYZの比較軸と値を少数で指定し、事前確認で組み合わせと負荷を確認します。",
+            "候補画像、評価、軸の値を見比べます。残す候補を選び、正式に保存します。"
+          ],
+          "items": [
+            "一時候補を見ただけではモデルの保存は完了しません。使える組み合わせはモデルと方式で異なります。"
+          ],
+          "menuLabel": "XYZで候補を比較"
+        },
+        {
+          id: "merge-save",
+          "title": "レシピを保存して復元する",
+          "body": "名前とメモを付け、次回に同じ選択を呼び出せるようにします。",
+          "steps": [
+            "左側の調整後、下部のレシピ名・メモ・保存欄へ進みます。",
+            "名前を付けて保存します。既存レシピを更新する場合は対象を確認して変更を保存します。",
+            "次回は保存レシピを読み込み、モデルファイルの変更・欠落を確認してから実行します。"
+          ],
+          "items": [
+            "高度なレシピの内容も保存対象です。レシピ名だけで元ファイルの同一性は保証しません。",
+            "レシピは設定の保存です。マージ済みのモデルファイルを保存する操作とは別です。"
+          ]
+        }
+      ]
+    },
+    {
+      id: "video",
+      "label": "動画スタジオ",
+      "title": "動画スタジオ",
+      "hint": "入力・生成・Sequence",
+      "summary": "MiniMax H3で動画を作り、連続クリップは確認しながら連結します。",
+      "checkpoints": [
+        "初回は容量と公式の利用条件を確認してセットアップします。モデルは本体に同梱されません。",
+        "ローカル生成です。有料APIへ自動で切り替わりません。"
+      ],
+      "sections": [
+        {
+          id: "video-generate",
+          "title": "タスクと入力を選んで動画を作る",
+          "body": "テキスト、画像、最初／最後のフレーム、参照／動画編集、連続クリップから選びます。",
+          "steps": [
+            "「動画」を開き、未準備ならセットアップの容量・利用条件を確認して導入します。",
+            "タスクを選び、プロンプトと必要な画像・動画・音声の参照を指定します。ライブラリからも送れます。",
+            "秒数・解像度などを確認します。フレーム調整や負荷の警告は内容を読んで続行か変更を選びます。",
+            "「動画を生成」を押し、完成後はプレーヤーで再生して保存結果とライブラリを確認します。"
+          ],
+          "items": [
+            "非対応の素材を別のものへ勝手に置き換えません。負荷の警告と、実行できない入力エラーは別です。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/video-studio-dark-ja.jpg",
+              "alt": "動画スタジオのタスクと入力",
+              "caption": "日本語Dark画面の設定・保存済みプレビュー例。新しい生成結果ではありません。"
+            }
+          ]
+        },
+        {
+          id: "video-sequence",
+          "title": "連続クリップを採用・再試行・完成する",
+          "body": "各クリップを見てから次へ進みます。未確認のまま自動で続きは作りません。",
+          "steps": [
+            "「連続クリップ」で新規Sequenceを作るか保存した対象を開き、現在の入力を確認します。",
+            "「現在のクリップを生成」を押し、完成プレビューを再生します。",
+            "「このクリップを再試行」「採用して次へ」「採用して完成」から選びます。",
+            "連結だけ失敗した場合は、採用済みクリップを確認して連結だけ再試行します。"
+          ],
+          "items": [
+            "採用済みクリップの差し替え後は、その先の再生成が必要です。完成動画と採用クリップはライブラリにも残ります。"
+          ]
+        }
+      ]
+    },
+    {
+      id: "music",
+      "label": "音楽スタジオ",
+      "title": "音楽スタジオ",
+      "hint": "Vocal・Instrumental・試聴・再生成",
+      "summary": "MiniMax-Music3でボーカル曲やインストゥルメンタルを作ります。",
+      "checkpoints": [
+        "利用条件を確認し同意してセットアップします。",
+        "新規生成が対象です。カバー、リミックス、ステム分離、既存音声の入力には対応しません。"
+      ],
+      "sections": [
+        {
+          id: "music-generate",
+          "title": "曲の説明から音楽を作る",
+          "body": "雰囲気・楽器・テンポ・構成を文章で伝えます。",
+          "steps": [
+            "「音楽」を開き、必要なら容量・利用条件を確認してセットアップします。",
+            "「ボーカル曲」または「インストゥルメンタル」を選び、曲の説明を入力します。",
+            "ボーカル曲は必要に応じて歌詞を入力し、長さ・言語・Seedを確認します。通常は-1を使います。",
+            "「音楽を生成」を押し、完成後に試聴・保存してライブラリでも確認します。"
+          ],
+          "items": [
+            "同じSeedでも同じ音声を保証しません。ローカル失敗時に有料APIへ切り替わりません。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/music-studio-dark-ja.jpg",
+              "alt": "音楽の準備状態と試聴プレーヤー",
+              "caption": "日本語Dark画面の準備・保存済み音声例。下へ進むと曲の入力を選べます。"
+            }
+          ]
+        },
+        {
+          id: "music-reuse",
+          "title": "保存した曲の条件を再利用する",
+          "body": "音声ファイルそのものではなく、説明・歌詞・Seedなどを渡します。",
+          "steps": [
+            "ライブラリの音声で「音楽スタジオで再生成」を選びます。",
+            "復元されたモード・説明・歌詞・Seedを確認して必要な部分を変更します。",
+            "新しく生成し、試聴して保存します。「再試行」も計算をもう一度実行する操作です。"
+          ],
+          "items": [
+            "元の音声を生成条件として入力したわけではありません。再生の修復だけを目的に何度も生成しないでください。"
+          ]
+        }
+      ]
+    },
+    {
+      id: "extensions",
+      "label": "拡張機能",
+      "title": "拡張機能",
+      "hint": "導入・権限・更新・復旧",
+      "summary": "信頼できる拡張を追加し、問題がある時は無効化や復旧を試します。",
+      "checkpoints": [
+        "標準拡張とフルアクセス拡張は権限が異なります。フルアクセスはAsteriaと同じ利用者権限で動きます。",
+        "配布元と要求する権限を確認してください。宣言や署名だけで安全性は保証されません。"
+      ],
+      "sections": [
+        {
+          id: "extensions-install",
+          "title": "拡張を導入して有効にする",
+          "body": "カタログ・HTTPS／GitHub・ローカルZIP・フォルダーなどから導入元を選びます。",
+          "steps": [
+            "「拡張機能」を開いて導入元を選びます。",
+            "配布元・バージョン・必要な権限と、標準／フルアクセスの種別を確認します。",
+            "確認して導入し、一覧で有効状態を確認します。必要な時は案内に従って再起動します。",
+            "追加された画面や操作を開きます。不要な権限まで許可する必要はありません。"
+          ],
+          "items": [
+            "ZIPやフォルダーは信頼するものだけを選んでください。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/extensions-dark-ja.jpg",
+              "alt": "拡張の導入元と管理画面",
+              "caption": "Darkモードの日本語画面。導入前に配布元と権限を確認します。"
+            }
+          ]
+        },
+        {
+          id: "extensions-update",
+          "title": "拡張機能の更新とロールバック",
+          "body": "更新内容を確認して導入し、問題がある場合は利用可能な前の版へ戻します。",
+          "steps": [
+            "「拡張機能」で対象を選び、配布元・更新内容・要求する権限を確認します。",
+            "更新を実行し、必要なら案内に従って再起動します。追加された画面や操作を確認してください。",
+            "更新後だけ問題がある場合は、利用できるロールバックで前の版へ戻せるか確認します。難しい場合は無効化して切り分けます。"
+          ],
+          "items": [
+            "ロールバックは、拡張機能が行ったすべての外部変更を取り消す保証ではありません。"
+          ],
+          "menuLabel": "更新・ロールバック"
+        },
+        {
+          id: "extensions-recovery",
+          "title": "無効化・Safe Modeで復旧する",
+          "body": "拡張機能が原因かを切り分け、本体データを消さずに復旧を試します。",
+          "steps": [
+            "通常起動できる場合は、「拡張機能」で問題のある拡張を無効化します。",
+            "起動できない場合は、Safe Modeで拡張を動かさずに起動し、対象を無効化します。",
+            "通常起動へ戻し、元の操作が使えるか確認します。削除する場合は、対象と保存内容を確認してから実行してください。"
+          ],
+          "items": [
+            "Safe Modeは、拡張機能が行った外部変更をすべて取り消すものではありません。"
+          ],
+          "menuLabel": "無効化・Safe Mode"
+        }
+      ]
+    }
+  ],
+  "en": [
+    {
+      id: "lora-training",
+      "label": "LoRA Training",
+      "title": "LoRA Training",
+      "hint": "Data, captions, training and practical tests",
+      "summary": "Review materials, train and evaluate the resulting LoRA in images.",
+      "checkpoints": [],
+      "sections": [
+        {
+          id: "lora-dataset",
+          "title": "Prepare a dataset and captions",
+          "body": "Separate stable identity from variable features and verify image/caption correspondence.",
+          "steps": [
+            "Open LoRA Training and select a preset and dataset, or create one. Import a folder or add Library images.",
+            "Inspect images and captions. Caption evidence compares manual edits, tags, metadata and AI proposals.",
+            "For characters, put the trigger first. Remove stable identity features it should recall; retain variable clothing, pose, expression and background.",
+            "Check missing text/images, near duplicates and unrelated content, then save."
+          ],
+          "items": [
+            "Review the actual files before preparing training.",
+            "For character training, use keep_tokens of at least 1 to preserve the leading trigger."
+          ],
+          "images": [
+            {
+              "src": "/help/images/lora-training-dark-ja.jpg",
+              "alt": "LoRA dataset and preparation controls",
+              "caption": "Japanese UI in Dark mode: inspect the materials before preparing a run."
+            }
+          ]
+        },
+        {
+          id: "lora-annotation",
+          "title": "Review AI suggestions for training materials",
+          "body": "Use vision-AI suggestions to review image descriptions and captions.",
+          "steps": [
+            "In LoRA Training, select a dataset and open Edit captions → Review training images and captions. Choose the image to review.",
+            "Review the vision-AI connection and selected inputs, then run the request.",
+            "Compare the image, existing caption and explanation. Apply only the changes you accept, then save."
+          ],
+          "items": [
+            "AI annotations are not ground truth. Do not assert invisible or ambiguous features, or use old suggestions after changing an input.",
+            "Obtaining suggestions does not finalize captions or start training."
+          ],
+          "menuLabel": "Review AI suggestions for training materials"
+        },
+        {
+          id: "lora-run",
+          "title": "Prepare, start and cancel training",
+          "body": "Prepare files and resolve the displayed requirements before starting.",
+          "steps": [
+            "Review the model, conditions, output name and destination; prepare the run and resolve missing setup.",
+            "Start and inspect progress, logs and samples. Use the running operation’s cancel action to stop.",
+            "After completion inspect weights and samples, register the desired LoRA and refresh assets for Generate."
+          ],
+          "items": [
+            "Cancellation or failure is not completion. Resume depends on the method and saved state.",
+            "Ordinary LoRA and source/target-difference training have different input requirements."
+          ]
+        },
+        {
+          id: "lora-practical",
+          "title": "Compare images with and without LoRA",
+          "body": "Inspect unseen outfits, backgrounds and poses.",
+          "steps": [
+            "Open Compare with and without LoRA and review the model, prompts and conditions.",
+            "Generate matched-Seed LoRA-on/off pairs.",
+            "Record identity, clothing, background, pose and quality separately."
+          ],
+          "items": [
+            "One memorized image or low Loss does not establish general success.",
+            "Also check model compatibility and licensing. Training loss alone does not establish practical image quality."
+          ]
+        }
+      ]
+    },
+    {
+      id: "merge",
+      "label": "Merge Studio",
+      "title": "Merge Studio",
+      "hint": "Sources, calculations, candidates and recipes",
+      "summary": "Choose models and calculations, compare candidates and save.",
+      "checkpoints": [],
+      "sections": [
+        {
+          id: "merge-recipe",
+          "title": "Choose models and run a merge",
+          "body": "Work down the left-side sources and tuning, then execute at the upper right.",
+          "steps": [
+            "Open Merge, choose type and family, search models and select the required A/B/C sources.",
+            "Choose calculation and ratio. Read the inputs and description for Weight sum, SLERP or the selected mode.",
+            "Review output name, destination and metadata under save options.",
+            "Start above the right-side save options and inspect progress and the completed file."
+          ],
+          "items": [
+            "Page navigation is at the top left. Verify selected sources when names are long."
+          ],
+          "images": [
+            {
+              "src": "/help/images/merge-dark-ja.jpg",
+              "alt": "Model search and upper-right merge execution",
+              "caption": "Japanese UI in Dark mode: distinguish model execution from recipe saving."
+            }
+          ]
+        },
+        {
+          id: "merge-mbw",
+          "title": "Adjust per-block merge weights",
+          "body": "Use MBW to set merge weights for individual model blocks.",
+          "steps": [
+            "Choose the source models and calculation method in Merge.",
+            "Select an MBW preset or set the block weights in detailed settings.",
+            "Review compatibility and saving options before executing. Save a recipe as well if you want to reuse the settings."
+          ],
+          "items": [
+            "Available blocks and weights depend on the model and method. Follow notices for unsupported combinations."
+          ],
+          "menuLabel": "Adjust per-block merge weights"
+        },
+        {
+          id: "merge-compare",
+          "title": "Compare merge candidates with XYZ",
+          "body": "Set comparison axes, inspect the results and choose the models to retain.",
+          "steps": [
+            "Prepare the source models and base calculation settings in Merge.",
+            "Set a small set of XYZ axes and values. Use the pre-check to review combinations and workload.",
+            "Compare candidate images, ratings and axis values. Select and formally save the candidates you want."
+          ],
+          "items": [
+            "Viewing a temporary candidate does not save the final model. Supported combinations depend on the model and method."
+          ],
+          "menuLabel": "Compare merge candidates with XYZ"
+        },
+        {
+          id: "merge-save",
+          "title": "Save and restore a recipe",
+          "body": "Retain choices with a recipe name and notes.",
+          "steps": [
+            "After tuning, go to the lower recipe name, notes and save area.",
+            "Save with a name; verify the existing target before saving changes to it.",
+            "Load the recipe next time and check changed or missing model files before running."
+          ],
+          "items": [
+            "Advanced recipe data is saved too. A recipe name alone does not establish source-file identity.",
+            "A recipe saves settings; saving the merged model file is a separate action."
+          ]
+        }
+      ]
+    },
+    {
+      id: "video",
+      "label": "Video Studio",
+      "title": "Video Studio",
+      "hint": "Inputs, generation and Sequence",
+      "summary": "Create MiniMax H3 videos and review clips before joining them.",
+      "checkpoints": [
+        "Review storage and official terms before setup. Models are not bundled.",
+        "Generation is local without automatic paid-API fallback."
+      ],
+      "sections": [
+        {
+          id: "video-generate",
+          "title": "Choose a task and generate a video",
+          "body": "Choose text, image, first/last frame, reference/video edit or Sequence.",
+          "steps": [
+            "Open Video and complete setup after reviewing space and terms.",
+            "Choose a task and provide text and its required image/video/audio inputs. Library handoffs are available.",
+            "Review duration and resolution. Read frame adjustments and workload advisories before proceeding or changing settings.",
+            "Press Generate video, play the result and check saving and Library."
+          ],
+          "items": [
+            "Unsupported media is not silently replaced. A workload advisory is different from an invalid-input error."
+          ],
+          "images": [
+            {
+              "src": "/help/images/video-studio-dark-ja.jpg",
+              "alt": "Video tasks and inputs",
+              "caption": "Japanese Dark-mode settings and previously saved preview, not a new result."
+            }
+          ]
+        },
+        {
+          id: "video-sequence",
+          "title": "Accept, retry and finish a Sequence",
+          "body": "Each clip is reviewed; unreviewed clips do not continue automatically.",
+          "steps": [
+            "Create a new Sequence or open the intended saved one and inspect current inputs.",
+            "Generate current clip and play its preview.",
+            "Choose Retry, Accept and continue, or Accept and finish.",
+            "For assembly-only failures, inspect retained clips and retry joining only."
+          ],
+          "items": [
+            "Replacing an accepted clip requires later continuation to be regenerated. Completed video and accepted clips remain in Library."
+          ]
+        }
+      ]
+    },
+    {
+      id: "music",
+      "label": "Music Studio",
+      "title": "Music Studio",
+      "hint": "Vocal, Instrumental, listening and reuse",
+      "summary": "Create vocal or instrumental tracks with MiniMax-Music3.",
+      "checkpoints": [
+        "Review terms and agree before setup.",
+        "V1.2.0 supports new generation, not covers, remixes, stems or existing-audio input."
+      ],
+      "sections": [
+        {
+          id: "music-generate",
+          "title": "Generate music from a description",
+          "body": "Describe mood, instruments, tempo and structure.",
+          "steps": [
+            "Open Music and complete setup after reviewing space and terms.",
+            "Choose Vocal or Instrumental and describe the track.",
+            "Optionally enter Vocal lyrics. Review duration, language and Seed; normally use -1.",
+            "Generate music, listen, save and inspect it in Library."
+          ],
+          "items": [
+            "A repeated Seed does not guarantee identical audio. Local failures never silently switch to a paid API."
+          ],
+          "images": [
+            {
+              "src": "/help/images/music-studio-dark-ja.jpg",
+              "alt": "Music setup and player",
+              "caption": "Japanese Dark-mode setup and saved audio example. Track inputs are further down."
+            }
+          ]
+        },
+        {
+          id: "music-reuse",
+          "title": "Reuse a saved track’s settings",
+          "body": "Transfer description, lyrics and Seed, not audio as conditioning.",
+          "steps": [
+            "Choose Regenerate in Music for a Library audio item.",
+            "Review and edit restored mode, description, lyrics and Seed.",
+            "Generate, listen and save the new track. Retry also executes computation again."
+          ],
+          "items": [
+            "The old audio was not supplied as input. Do not repeatedly generate just to troubleshoot playback."
+          ]
+        }
+      ]
+    },
+    {
+      id: "extensions",
+      "label": "Extensions",
+      "title": "Extensions",
+      "hint": "Install, permissions, update and recovery",
+      "summary": "Install trusted extensions and disable or recover when needed.",
+      "checkpoints": [
+        "Standard and full-access extensions differ. Full access runs with your Asteria user permissions.",
+        "Inspect the publisher and permissions. A declaration or signature does not guarantee safety."
+      ],
+      "sections": [
+        {
+          id: "extensions-install",
+          "title": "Install and enable an extension",
+          "body": "Choose a supported catalog, HTTPS/GitHub URL, local ZIP or folder.",
+          "steps": [
+            "Open Extensions and select the installation source.",
+            "Inspect publisher, version, requested permissions and standard/full-access type.",
+            "Confirm installation, verify its enabled state and restart if requested.",
+            "Open the added workspace or actions without granting unrelated privileges."
+          ],
+          "items": [
+            "Choose only trusted ZIPs and folders."
+          ],
+          "images": [
+            {
+              "src": "/help/images/extensions-dark-ja.jpg",
+              "alt": "Extension installation and management",
+              "caption": "Japanese UI in Dark mode: review source and permissions before installation."
+            }
+          ]
+        },
+        {
+          id: "extensions-update",
+          "title": "Update or roll back an extension",
+          "body": "Review an update before installing it, or return to an available previous version after a problem.",
+          "steps": [
+            "Select the extension and check its publisher, changes and requested permissions.",
+            "Update it and restart if instructed. Check the extension’s screen or action.",
+            "If the problem appeared after updating, check whether rollback is available. Otherwise disable the extension to isolate the issue."
+          ],
+          "items": [
+            "Rollback does not guarantee reversal of every external change made by an extension."
+          ],
+          "menuLabel": "Update or roll back an extension"
+        },
+        {
+          id: "extensions-recovery",
+          "title": "Recover with disabling or Safe Mode",
+          "body": "Isolate extension problems before deleting application data.",
+          "steps": [
+            "If normal startup works, disable the affected extension in Extensions.",
+            "If startup fails, start in Safe Mode without running extensions and disable the affected one.",
+            "Return to normal startup and check the operation. Before removing an extension, review the target and saved data."
+          ],
+          "items": [
+            "Safe Mode does not undo every external change an extension may have made."
+          ],
+          "menuLabel": "Recover with disabling or Safe Mode"
+        }
+      ]
+    }
+  ]
+};
+const aiDiscordHelp = {
+  "ja": [
+    {
+      id: "ai-agent",
+      "label": "AIプロンプト支援",
+      "title": "AIプロンプト支援・AI連携",
+      "hint": "接続先・依頼・提案の反映",
+      "summary": "AIの接続先を用意し、文章や画像について依頼します。提案を取得する操作と、内容を反映する操作は別です。",
+      "checkpoints": [
+        "外部の接続先を選ぶと、画面に示された文章や画像がPCの外へ送られます。送信内容と接続先を確認してください。",
+        "AIの提案は利用者が確認して適用します。見えない部分や曖昧な内容を正解と断定しないでください。"
+      ],
+      "sections": [
+        {
+          id: "ai-provider",
+          "menuLabel": "AI接続先の設定",
+          "title": "AI接続先を設定する",
+          "body": "文章や画像について依頼するAIの接続先を登録します。利用するAIアプリやサービスを先に用意してください。",
+          "steps": [
+            "左メニューの「設定」→「AIプロバイダー」を開き、接続先を追加します。",
+            "分かりやすい名前、対応する接続方式、エンドポイント、使うモデルを入力します。ローカルAIなら、先にそのアプリを起動して画像対応など必要なモデルを読み込みます。",
+            "認証が必要ならAPIキーの環境変数名を指定します。一回だけ使うキーは、対応する実行フォームに入力します。キー不要のローカル接続では空欄にできます。",
+            "接続先を有効にして保存し、用意されている接続確認を実行します。各機能へ戻り、使うAI接続先を選びます。"
+          ],
+          "items": [
+            "エンドポイントとモデル名は、利用するAIアプリやサービスが案内する値を使います。Asteriaの生成用Checkpointを指定する欄ではありません。",
+            "接続方式はOpenAI互換・OpenAI Responses・Anthropic・Geminiから選びます。Codexによる完成画像の身体チェックは別の判定方法です。画像を扱う機能には画像対応が必要です。利用できない場合は、起動・モデル・認証・タイムアウトを順に確認します。",
+            "通常の設定には生のAPIキーを保存せず、キーを読む環境変数名などを保存します。キーはチャットや説明用画像へ載せないでください。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/ai-provider-dark-ja.jpg",
+              "alt": "AIプロバイダーの接続先とモデルの入力例",
+              "caption": "架空の接続先による入力例です。本物のAPIキーや接続成功の画面ではありません。"
+            }
+          ]
+        },
+        {
+          id: "ai-prompt",
+          "menuLabel": "プロンプト案を作る",
+          "title": "AIプロンプト支援で案を作る",
+          "body": "描きたい内容からプロンプト案を作り、確認してから生成欄へ反映します。",
+          "steps": [
+            "生成画面のツールから「AIプロンプト支援」を開きます。",
+            "実行方法・接続先・依頼内容・出力言語などを選びます。AIへ送らず依頼文だけを作る場合は「プロンプトのみ」を使います。",
+            "依頼を実行し、返ったポジティブ・ネガティブの案を読みます。必要なら文章を編集します。",
+            "使う案を選び、反映する操作を実行します。生成欄が意図した内容になったことを確認してから生成します。"
+          ],
+          "items": [
+            "「プロンプトのみ」は外部AIへの送信や画像生成を実行しません。作った依頼文を手動で利用できます。",
+            "応答待ちの間に入力や接続先を変えた場合は、古い結果を適用せず現在の内容で依頼し直してください。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/ai-prompt-dark-ja.jpg",
+              "alt": "生成画面のAIプロンプト支援",
+              "caption": "「プロンプトのみ」を使った画面例。外部AIの応答ではありません。"
+            }
+          ]
+        },
+        {
+          id: "ai-scene",
+          "title": "場面からプロンプト案を作る",
+          "body": "描きたい場面を文章で伝え、項目別のプロンプト案を作ります。自分で確認してから入力欄へ反映します。",
+          "steps": [
+            "生成画面のツールで「AIプロンプト作成」を開き、AI接続先を選びます。",
+            "「描きたい場面」を入力します。参考にしたい文章があれば「入れたい特徴や語句（任意）」へ追加し、「プロンプトを提案」を押します。",
+            "「ベースプロンプト」「キャラクタープロンプト」「詳細プロンプト」とネガティブの案を確認・編集します。",
+            "ポジティブを置き換える場合は「三つの欄へ反映」を押します。ネガティブも置き換える場合だけ「ネガティブプロンプトも置き換える」を選びます。"
+          ],
+          "items": [
+            "反映すると「項目別に入力」へ切り替わります。欄名と順序は保ち、Wildcardの固定は解除します。依頼しただけでは入力中の文章は変わりません。",
+            "この操作で送るのは文章です。人物の配置や、指定どおりの生成を保証するものではありません。"
+          ],
+          "menuLabel": "場面から文章を作る"
+        },
+        {
+          id: "ai-conflicts",
+          "title": "プロンプトの意味の食い違いを確認する",
+          "body": "人数・服・動作など、入力文の中で食い違う可能性がある指定をAIに確認します。",
+          "steps": [
+            "生成画面で文章を入力し、ツールの「AIで矛盾確認」を開きます。",
+            "AI接続先と確認する入力を確認し、「矛盾の候補を確認」を押します。",
+            "示された箇所と理由を読みます。別人物の説明や意図した変化であれば、修正する必要はありません。",
+            "直す場合は自分でプロンプトを編集します。"
+          ],
+          "items": [
+            "文章を自動で削除・修正しません。候補がなくても、指定どおりに描かれる保証はありません。",
+            "画像ではなく、確認対象の文章をAIへ送ります。"
+          ],
+          "menuLabel": "意味の食い違いを確認"
+        },
+        {
+          id: "ai-image",
+          "title": "画像が指定した条件に合うか確認する",
+          "body": "人数・髪・服・背景など、指定した条件が画像に見えるかをAIへ確認します。",
+          "steps": [
+            "メディアライブラリで画像を選び、条件チェックを開きます。",
+            "確認したい条件を一行に一つ入力し、画像対応AIの接続先を選びます。",
+            "送信内容を確認して実行し、「一致」「不一致」「不明」の根拠を元画像と見比べます。",
+            "誤りがあれば理由を添えて訂正します。画像を変えた場合は、古い結果をその画像の判定として使わないでください。"
+          ],
+          "items": [
+            "条件への一致と、人体が正常かどうかは別の判断です。見逃し・誤判定があり、画像チェックの代わりにはなりません。"
+          ],
+          "menuLabel": "AIで画像の条件確認"
+        },
+        {
+          id: "ai-series",
+          "title": "シリーズ画像の違いを確認する",
+          "body": "基準画像とほかの画像を比べ、人物や衣装などの変化をAIへ確認します。",
+          "steps": [
+            "メディアライブラリで2〜24画像を選び、「AIで見た目を比較」を開きます。",
+            "基準画像と比較画像を選び、確認する条件と画像対応AIの接続先を指定します。",
+            "送信内容を確認して実行し、画像ごとの根拠を元画像と見比べます。必要なら訂正を残します。"
+          ],
+          "items": [
+            "AIの提案は確認用です。画像の変更や自動修正はしません。画像を差し替えた場合は、古い結果を新しい画像の結果として扱わないでください。"
+          ],
+          "menuLabel": "シリーズの違いを確認"
+        }
+      ]
+    },
+    {
+      id: "discord",
+      "label": "Discord",
+      "title": "Discordから画像生成",
+      "hint": "Bot・IDの入力先・公開・接続確認",
+      "summary": "自分のBotを接続し、許可した利用者だけが公開済みの生成設定を使えるようにします。",
+      "checkpoints": [
+        "Bot tokenはパスワードと同じ秘密情報です。チャットやスクリーンショットへ掲載しないでください。漏れた場合はDeveloper Portalで再発行します。",
+        "掲載画像の値はすべてダミーです。自分のアプリ・サーバー・利用者から取得したIDへ置き換えてください。"
+      ],
+      "sections": [
+        {
+          id: "discord-create-bot",
+          "title": "Discord側でBotを準備する",
+          "body": "DiscordからAsteriaを操作するために、自分のBotをサーバーへ追加します。WebhookのURLを登録する方式ではありません。",
+          "steps": [
+            "Discord Developer Portalで自分のアプリを開きます。まだなければ作成し、「General Information」のApplication IDを控えます。",
+            "「Bot」で接続用tokenを取得します。「Reset Token」は古いtokenを無効にするため、既存Botでは必要な場合だけ使います。",
+            "インストール設定でサーバー向けのbotとapplications.commandsを指定し、自分が管理するサーバーへ追加します。",
+            "使うチャンネルで、Botの閲覧・メッセージ送信・ファイル添付を許可します。次にAsteria側の接続設定へ進みます。"
+          ],
+          "items": [
+            "管理者権限を一律に与える必要はありません。必要なチャンネルと操作だけを許可してください。",
+            "Bot tokenはパスワードと同じ秘密情報です。公開しないでください。漏れた場合はDeveloper Portalで再発行します。"
+          ],
+          "links": [
+            {
+              "label": "Discord公式：アプリ作成とインストール",
+              "url": "https://docs.discord.com/developers/quick-start/getting-started"
+            }
+          ],
+          "menuLabel": "Discord側の準備"
+        },
+        {
+          id: "discord-bot",
+          "title": "BotをAsteriaへ接続する",
+          "body": "Discord側で準備したBotのApplication IDとtokenを、Asteriaの専用欄へ登録します。",
+          "steps": [
+            "Asteriaの「設定」→「Discord」を開きます。",
+            "「Discordアプリの番号（アプリケーションID）」へApplication ID、「Botの接続用トークン」へtokenを入力します。サーバーIDやWebhook URLと混同しないでください。",
+            "「どのIDを、どの欄へ入れるか」の手順で、使える場所と利用者を設定します。",
+            "「Discord Botを接続する」をONにして「設定を保存」を押します。接続状態を更新し、必要な場合は「再接続」を使います。"
+          ],
+          "items": [
+            "tokenは現在のWindowsユーザー向けに暗号化して保存し、保存後は再表示しません。",
+            "Discordから生成する間はAsteriaと生成環境を起動しておきます。同じBotを複数のAsteriaから同時に使わないでください。",
+            "掲載画像はダミーIDで、tokenは空欄です。自分の値を設定してください。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/discord-connection-dark-ja.jpg",
+              "alt": "DiscordのApplication IDとtokenの入力場所",
+              "caption": "ダミーのApplication IDです。tokenは空欄のまま撮影し、接続も実行していません。"
+            }
+          ],
+          "links": [
+            {
+              "label": "Discord公式：アプリ作成とインストール",
+              "url": "https://docs.discord.com/developers/quick-start/getting-started"
+            }
+          ],
+          "menuLabel": "Asteriaへ接続"
+        },
+        {
+          id: "discord-ids",
+          "menuLabel": "IDの取得先と入力欄",
+          "title": "どのIDを、どの欄へ入れるか",
+          "body": "個人利用なら、登録先サーバーと、許可サーバー・許可ユーザーを先に設定すると整理しやすくなります。",
+          "steps": [
+            "Discordの「ユーザー設定」→「詳細設定」→「開発者モード」をONにします。名前ではなく「IDをコピー」で得た数字を使います。",
+            "サーバーアイコンを右クリックし、サーバーIDをコピーします。「Botコマンドを登録するサーバーID」と、そのサーバーを許可する欄へ入力します。登録先の指定だけでは利用許可になりません。",
+            "自分のユーザーIDをコピーし、「使えるユーザーID」へ入力します。特定チャンネルに限る場合は、そのチャンネルIDを許可欄へ入力します。",
+            "チームで使う場合は専用ロールのIDを許可します。複数の値は改行またはカンマで区切り、設定を保存します。"
+          ],
+          "items": [
+            "Application ID：Developer Portal → General Information → Application ID。サーバーIDやBot tokenの代わりには使いません。",
+            "使えるサーバーID／チャンネルID：使える場所の条件です。これに加え、ユーザーID／ロールIDの利用者条件も満たす必要があります。",
+            "使えるロールID：そのロールを持つ人に許可します。サーバー全員へ開放する時だけ@everyoneを使います。@everyoneのIDはサーバーIDと同じです。",
+            "管理者にするユーザーID：生成を許可し、他人が開始した処理も中止できる人です。通常の利用許可より狭く指定します。",
+            "予備の送信先チャンネルID：通常の送信に失敗した時などの通知先です。チャンネル許可の代わりではありません。",
+            "モデル／プリセットの許可欄：Asteriaの選択肢を制限する欄です。DiscordのユーザーIDを入れる欄ではありません。"
+          ],
+          "images": [
+            {
+              "src": "/help/images/discord-ids-dark-ja.jpg",
+              "alt": "Discordの登録先と許可するサーバー・ユーザーの入力欄",
+              "caption": "ダミーIDの配置例。自分が使う範囲に合わせて許可を設定してください。"
+            }
+          ],
+          "links": [
+            {
+              "label": "Discord公式：各IDのコピー方法",
+              "url": "https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID"
+            }
+          ]
+        },
+        {
+          id: "discord-publish",
+          "title": "Discordで使う生成設定を公開する",
+          "body": "Discordから使わせる生成設定を、Asteriaで明示的に公開します。",
+          "steps": [
+            "生成画面でモデル・プロンプト・サイズなどを整えます。",
+            "「Discordへ公開」を押し、設定のDiscord欄で公開済みGenerate設定を確認します。",
+            "設定を変更してBotにも使わせたい場合は、もう一度公開します。使わせないときは設定の「公開解除」を押します。"
+          ],
+          "items": [
+            "画面を表示するだけでは公開されません。公開後に生成画面を変更しても、自動では反映されません。",
+            "公開先は自分のBotです。許可された人が生成画像をDiscordへ送れることを確認して、公開する内容を決めてください。"
+          ],
+          "menuLabel": "生成設定を公開"
+        },
+        {
+          id: "discord-generate",
+          "title": "Discordのコマンドで生成する",
+          "body": "公開済みの設定を使い、許可されたDiscordの場所から画像を生成します。",
+          "steps": [
+            "Asteriaと生成環境を起動し、Botが接続済みで生成設定も公開されていることを確認します。",
+            "許可されたサーバー・チャンネルで「/」を入力し、Botのgenerateコマンドを選びます。",
+            "表示された入力を確認して実行します。進行と完成画像をDiscordで確認してください。",
+            "進行状況はstatus、中止はcancelコマンドで確認・操作できます。"
+          ],
+          "items": [
+            "使える場所と利用者の両方の許可が必要です。NSFWチャンネル、DM、待機時間、同時実行数、キュー上限も別の設定です。",
+            "生成画像はDiscordへ送信されます。外部へ送ってよい内容だけを使ってください。"
+          ],
+          "menuLabel": "コマンドで生成"
+        },
+        {
+          id: "discord-recovery",
+          "title": "Botの接続・コマンドを確認する",
+          "body": "接続できない、コマンドが見えない、権限で拒否される場合を、段階ごとに確認します。",
+          "steps": [
+            "未設定・未接続の場合は、Application ID、token、Botのサーバー参加、Asteriaの起動状態を確認します。",
+            "コマンドが出ない場合は、登録先サーバーとBotのインストール先を確認します。設定を保存・再接続して状態を更新します。",
+            "権限で拒否された場合は、場所の許可と利用者の許可を両方確認します。Bot自身の閲覧・送信・ファイル添付の権限も確認してください。"
+          ],
+          "items": [
+            "tokenをログやチャットへ貼らないでください。同じBotを別のAsteriaが使っている場合は、接続に使うAsteriaを一つにします。",
+            "生成は終わったのに画像が届かない場合は、接続のやり直しや再生成の前に、次の「生成済み画像がDiscordへ届かないとき」を確認してください。"
+          ],
+          "menuLabel": "接続・コマンドの問題"
+        },
+        {
+          id: "discord-delivery",
+          "title": "生成済み画像がDiscordへ届かないとき",
+          "body": "生成の失敗と、完成画像の送信だけの失敗を分けて確認します。",
+          "steps": [
+            "Asteriaの履歴で、その処理の完成画像があるか確認します。",
+            "完成している場合は、Discordの送信先とBotのメッセージ送信・ファイル添付権限を確認します。設定していれば予備の送信先も確認します。",
+            "完成画像をAsteria側で開けることを確認し、必要なら手元から共有します。未完成の場合は、生成の停止理由を確認してください。"
+          ],
+          "items": [
+            "配送エラーだけを理由に、同じ生成を何度も起動しないでください。",
+            "予備の送信先チャンネルIDは通常のチャンネル許可の代わりにはなりません。"
+          ],
+          "menuLabel": "完成画像が届かない"
+        }
+      ]
+    }
+  ],
+  "en": [
+    {
+      id: "ai-agent",
+      "label": "AI Prompt Assist",
+      "title": "AI Prompt Assist and connections",
+      "hint": "Connections, requests and reviewed application",
+      "summary": "Prepare a connection and request text or image assistance. Requesting a proposal and applying it are separate actions.",
+      "checkpoints": [
+        "An external provider can send the displayed text or images outside your PC. Review the connection and payload first.",
+        "Review AI proposals before applying them. Invisible or ambiguous details are not established facts."
+      ],
+      "sections": [
+        {
+          id: "ai-provider",
+          "menuLabel": "Set up a connection",
+          "title": "Set up an AI connection",
+          "body": "Register the AI connection to use for text or image requests. Prepare the AI application or service first.",
+          "steps": [
+            "Open Settings → AI Providers and add a connection.",
+            "Enter a recognizable name, supported provider type, endpoint and model. Start your local AI application and load its required model first.",
+            "For authentication, specify the API-key environment variable. Supported request forms can accept a one-time key. Leave it empty for a local endpoint that requires none.",
+            "Enable and save the connection, run the available connection test, then choose it in the feature you want to use."
+          ],
+          "items": [
+            "Use the endpoint and model identifier supplied by that AI service or application, not an image-generation Checkpoint.",
+            "Connection types include OpenAI-compatible, OpenAI Responses, Anthropic and Gemini. Codex final-image checking is a separate method. Image features require vision support. On failure check startup, model, credentials and timeout.",
+            "Normal settings store a key’s environment-variable name rather than the raw API key. Do not expose keys in chat or example images."
+          ],
+          "images": [
+            {
+              "src": "/help/images/ai-provider-dark-ja.jpg",
+              "alt": "AI provider endpoint and model fields",
+              "caption": "Japanese UI in Dark mode with a fictitious connection. No real key or successful external connection is shown."
+            }
+          ]
+        },
+        {
+          id: "ai-prompt",
+          "menuLabel": "Draft a prompt",
+          "title": "Draft prompts with AI Prompt Assist",
+          "body": "Review a proposed prompt before applying it to Generate.",
+          "steps": [
+            "Open AI Prompt Assist in the Generate tools.",
+            "Choose the execution method, connection, request and output language. Use Prompt only to prepare a request without sending it.",
+            "Run the request and review the positive and negative proposals. Edit the text if needed.",
+            "Choose and apply the proposal, then verify the generation fields before generating."
+          ],
+          "items": [
+            "Prompt only does not call an external AI or generate an image. Its request text can be used manually.",
+            "If the input or connection changes while waiting, request a new result instead of applying an old one."
+          ],
+          "images": [
+            {
+              "src": "/help/images/ai-prompt-dark-ja.jpg",
+              "alt": "AI Prompt Assist in Generate",
+              "caption": "Japanese UI in Dark mode using Prompt only; this is not an external AI response."
+            }
+          ]
+        },
+        {
+          id: "ai-scene",
+          "title": "Build a prompt from a scene description",
+          "body": "Describe a scene to get sectioned prompt suggestions. Review them before replacing your input.",
+          "steps": [
+            "Open AI prompt builder in Generate’s tools and choose the AI connection.",
+            "Enter the Scene description and optional Details to include, then select Propose prompts.",
+            "Review and edit the base, character, detail and negative suggestions.",
+            "Select Replace the three sections to replace positive input. Enable Replace negative prompt too only if you also want to replace it."
+          ],
+          "items": [
+            "Applying switches to Prompt sections, preserves names and order, and clears Wildcard pins. Requesting a proposal alone does not change your input.",
+            "This action sends text. It does not guarantee placement or faithful generation."
+          ],
+          "menuLabel": "Build a prompt from a scene description"
+        },
+        {
+          id: "ai-conflicts",
+          "title": "Check a prompt for conflicting instructions",
+          "body": "Ask AI to identify potentially inconsistent descriptions of count, clothing, actions or other conditions.",
+          "steps": [
+            "Enter your prompt in Generate and open AI conflict check in the tools.",
+            "Review the AI connection and input, then select Check for conflicts.",
+            "Read each candidate and its explanation. Different people or intentional changes may explain the wording.",
+            "Edit the prompt yourself if a change is needed."
+          ],
+          "items": [
+            "No text is deleted or corrected automatically. Finding no conflict does not guarantee the requested image.",
+            "This action sends the selected text, not an image, to the AI."
+          ],
+          "menuLabel": "Check a prompt for conflicting instructions"
+        },
+        {
+          id: "ai-image",
+          "title": "Check whether an image meets your conditions",
+          "body": "Ask AI whether conditions such as count, hair, clothing or background are visible.",
+          "steps": [
+            "Select an image in Media Library and open Check image conditions with AI.",
+            "Enter one condition per line and choose a vision-capable AI connection.",
+            "Review what will be sent, run the check, and compare matched, unmatched or unknown explanations with the original image.",
+            "Correct mistakes with an explanation. Do not treat an old result as a judgment of a changed image."
+          ],
+          "items": [
+            "Matching conditions is not proof of normal anatomy. This can miss details or give false results and does not replace final-image checking."
+          ],
+          "menuLabel": "Check whether an image meets your conditions"
+        },
+        {
+          id: "ai-series",
+          "title": "Review differences across a series",
+          "body": "Compare a reference image with other images for changes in characters, clothing or other conditions.",
+          "steps": [
+            "Select 2–24 images in Media Library and open Compare appearance with AI.",
+            "Choose the reference and comparison images, conditions and vision-capable connection.",
+            "Review the outgoing request, run the check, and compare each explanation with the images. Record corrections if needed."
+          ],
+          "items": [
+            "AI results are suggestions for review, not automatic image corrections. Do not apply old results to replaced images."
+          ],
+          "menuLabel": "Review differences across a series"
+        }
+      ]
+    },
+    {
+      id: "discord",
+      "label": "Discord",
+      "title": "Generate from Discord",
+      "hint": "Bot setup, ID mapping, publishing and recovery",
+      "summary": "Connect your bot and allow selected users to run explicitly published Generate settings.",
+      "checkpoints": [
+        "Treat the Bot token like a password. Never post it in chat or screenshots. Rotate it in Developer Portal if exposed.",
+        "All pictured IDs are dummy values. Replace them with IDs from your own application, server and users."
+      ],
+      "sections": [
+        {
+          id: "discord-create-bot",
+          "title": "Prepare a Bot in Discord",
+          "body": "Add your own Bot to a server so it can operate Asteria. This is not a Webhook URL integration.",
+          "steps": [
+            "Open your application in the Discord Developer Portal, or create one. Record the Application ID from General Information.",
+            "Obtain the token under Bot. Reset Token invalidates the old token, so use it only when needed for an existing Bot.",
+            "Configure the server installation with bot and applications.commands, then add it to a server you manage.",
+            "Allow the Bot to view the intended channel, send messages and attach files. Continue with the connection settings in Asteria."
+          ],
+          "items": [
+            "You do not need to grant Administrator permission indiscriminately. Permit only the required channels and actions.",
+            "Treat the Bot token like a password. Never publish it; reissue it in the Developer Portal if exposed."
+          ],
+          "links": [
+            {
+              "label": "Discord: application and installation setup",
+              "url": "https://docs.discord.com/developers/quick-start/getting-started"
+            }
+          ],
+          "menuLabel": "Prepare a Bot in Discord"
+        },
+        {
+          id: "discord-bot",
+          "title": "Connect the Bot to Asteria",
+          "body": "Register the prepared Bot’s Application ID and token in their dedicated Asteria fields.",
+          "steps": [
+            "Open Settings → Discord in Asteria.",
+            "Enter the Application ID and Bot token in their respective fields. Do not substitute a server ID or Webhook URL.",
+            "Follow the ID-mapping procedure to allow the intended locations and users.",
+            "Enable the Discord Bot connection, save settings and refresh its status. Reconnect if needed."
+          ],
+          "items": [
+            "The token is encrypted for the current Windows user and is not displayed again after saving.",
+            "Keep Asteria and the generation environment running while generating from Discord. Do not connect multiple Asteria instances with the same Bot simultaneously.",
+            "The picture uses a dummy ID and an empty token field. Enter your own values."
+          ],
+          "images": [
+            {
+              "src": "/help/images/discord-connection-dark-ja.jpg",
+              "alt": "Discord Application ID and Bot token fields",
+              "caption": "Japanese UI in Dark mode with a dummy application ID. The token is empty and no connection was made."
+            }
+          ],
+          "links": [
+            {
+              "label": "Discord: application and installation setup",
+              "url": "https://docs.discord.com/developers/quick-start/getting-started"
+            }
+          ],
+          "menuLabel": "Connect the Bot to Asteria"
+        },
+        {
+          id: "discord-ids",
+          "menuLabel": "Find and enter each ID",
+          "title": "Put each Discord ID in the right field",
+          "body": "For personal use, start with the command-registration server, an allowed server and your allowed user.",
+          "steps": [
+            "In Discord User Settings → Advanced, enable Developer Mode. Use copied numeric IDs, not display names.",
+            "Right-click the server icon and copy its ID. Enter it in Server for bot commands and the server allowlist. Command registration alone does not grant usage permission.",
+            "Copy your user ID into the user allowlist. Use channel IDs when allowing specific channels.",
+            "For a team, allow a dedicated role. Separate multiple entries with newlines or commas, then save."
+          ],
+          "items": [
+            "Application ID: Developer Portal → General Information → Application ID. It is not a server ID or Bot token.",
+            "Server/channel allowlists define allowed places. The requesting user or role must also be allowed.",
+            "Role IDs allow members of that role. Use @everyone only to allow the whole server; its role ID equals the server ID.",
+            "Admin User IDs may cancel operations created by other users and are also allowed to generate. Keep this list narrower than ordinary usage permissions.",
+            "The fallback channel receives recovery messages; it is not a replacement for channel permissions.",
+            "Model/preset allowlists restrict Asteria choices. Do not put Discord user IDs in them."
+          ],
+          "images": [
+            {
+              "src": "/help/images/discord-ids-dark-ja.jpg",
+              "alt": "Registration server and place/user allowlists",
+              "caption": "Japanese UI in Dark mode with dummy IDs. Grant only the scope you intend."
+            }
+          ],
+          "links": [
+            {
+              "label": "Discord: copying user and server IDs",
+              "url": "https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID"
+            }
+          ]
+        },
+        {
+          id: "discord-publish",
+          "title": "Publish generation settings for Discord",
+          "body": "Explicitly publish the settings the Bot is allowed to use.",
+          "steps": [
+            "Prepare the model, prompt, dimensions and other settings in Generate.",
+            "Select Publish to Discord and review the published Generate settings in Settings → Discord.",
+            "Publish again when you want changes to reach the Bot. Unpublish in Settings when access is no longer needed."
+          ],
+          "items": [
+            "Displaying Generate does not publish its settings. Later edits are not automatically reflected in the published copy.",
+            "Publishing is for your Bot. Consider which settings and images authorized users may send to Discord."
+          ],
+          "menuLabel": "Publish generation settings for Discord"
+        },
+        {
+          id: "discord-generate",
+          "title": "Generate with Discord commands",
+          "body": "Use published settings to generate images from an authorized Discord location.",
+          "steps": [
+            "Keep Asteria and the generation environment running. Confirm that the Bot is connected and settings are published.",
+            "In an allowed server and channel, type / and select the Bot’s generate command.",
+            "Review the command inputs and run it. Check progress and the completed image in Discord.",
+            "Use status to inspect progress and cancel to stop an operation."
+          ],
+          "items": [
+            "Both location and user permissions must allow access. NSFW channels, DMs, cooldowns, concurrency and queue limits have separate settings.",
+            "Images are sent to Discord. Generate only content you are willing to send outside the computer."
+          ],
+          "menuLabel": "Generate with Discord commands"
+        },
+        {
+          id: "discord-recovery",
+          "title": "Troubleshoot Bot connection and commands",
+          "body": "Check connection, command registration and permissions as separate stages.",
+          "steps": [
+            "For an unconfigured or disconnected Bot, check the Application ID, token, server membership and whether Asteria is running.",
+            "If commands are missing, check the registration server and Bot installation. Save and reconnect, then refresh status.",
+            "If access is denied, check both location and user permissions, plus the Bot’s own viewing, sending and attachment permissions."
+          ],
+          "items": [
+            "Never paste tokens into logs or chat. Use only one Asteria connection for the same Bot.",
+            "If generation finished but the image did not arrive, follow delivery troubleshooting before reconnecting or generating again."
+          ],
+          "menuLabel": "Troubleshoot Bot connection and commands"
+        },
+        {
+          id: "discord-delivery",
+          "title": "When a completed image does not reach Discord",
+          "body": "Distinguish a generation failure from a failure to deliver an already completed image.",
+          "steps": [
+            "Check Asteria history for the completed image from that operation.",
+            "If it exists, check the Discord destination and the Bot’s message and attachment permissions. Also check a configured fallback destination.",
+            "Confirm you can open the completed image in Asteria and share it manually if needed. If no output completed, inspect the generation stop reason."
+          ],
+          "items": [
+            "Do not repeatedly regenerate merely because delivery failed.",
+            "A fallback channel ID does not replace normal channel authorization."
+          ],
+          "menuLabel": "When a completed image does not reach Discord"
+        }
+      ]
+    }
+  ]
+};
+const helpTopicsByLocale = {
+  en: [generateHelp.en, ...workspaceHelp.en, aiDiscordHelp.en[0], ...studioHelp.en, aiDiscordHelp.en[1]],
+  ja: [generateHelp.ja, ...workspaceHelp.ja, aiDiscordHelp.ja[0], ...studioHelp.ja, aiDiscordHelp.ja[1]]
+};
 const useAsteriaHelpTopics = () => {
   const { locale } = useAsteriaI18n();
   const topics = computed(() => helpTopicsByLocale[locale.value]);
-  return {
-    topics
-  };
+  return { topics };
 };
 const _sfc_main$1O = /* @__PURE__ */ defineComponent({
   __name: "HelpView",
@@ -20544,21 +22673,37 @@ const _sfc_main$1O = /* @__PURE__ */ defineComponent({
     const activeTopicRecord = computed(() => {
       return topics.value.find((topic) => topic.id === props.activeTopic) ?? topics.value[0];
     });
+    const selectedSectionId = ref("");
+    const content = ref(null);
+    const activeSection = computed(() => activeTopicRecord.value.sections.find((section) => section.id === selectedSectionId.value) ?? activeTopicRecord.value.sections[0]);
+    watch(() => props.activeTopic, () => {
+      selectedSectionId.value = "";
+    }, { flush: "sync" });
+    watch(() => activeSection.value.id, async () => {
+      await nextTick();
+      content.value?.scrollTo({ top: 0 });
+    });
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "help-workspace",
         "aria-label": unref(t)("help.workspaceAria")
-      }, _attrs))} data-v-824e84f1><header class="help-workspace__header" data-v-824e84f1><div data-v-824e84f1><p class="eyebrow" data-v-824e84f1>${ssrInterpolate(unref(t)("help.eyebrow"))}</p><h1 data-v-824e84f1>${ssrInterpolate(unref(t)("help.title"))}</h1></div></header><div class="help-workspace__body" data-v-824e84f1>`);
+      }, _attrs))} data-v-bf82be08><header class="help-workspace__header" data-v-bf82be08><div data-v-bf82be08><p class="eyebrow" data-v-bf82be08>${ssrInterpolate(unref(t)("help.eyebrow"))}</p><h1 data-v-bf82be08>${ssrInterpolate(unref(t)("help.title"))}</h1></div></header><div class="help-workspace__body" data-v-bf82be08>`);
       _push(ssrRenderComponent(HelpTopicRail, {
         topics: unref(topics),
         "active-topic": unref(activeTopicRecord).id,
-        onSelectTopic: ($event) => emit("select-topic", $event)
+        "active-section": unref(activeSection).id,
+        onSelectTopic: ($event) => emit("select-topic", $event),
+        onSelectSection: ($event) => selectedSectionId.value = $event
       }, null, _parent));
-      _push(ssrRenderComponent(HelpArticleCanvas, { topic: unref(activeTopicRecord) }, null, _parent));
+      _push(`<div class="help-workspace__content" data-v-bf82be08>`);
+      _push(ssrRenderComponent(HelpArticleCanvas, {
+        topic: unref(activeTopicRecord),
+        section: unref(activeSection)
+      }, null, _parent));
       _push(ssrRenderComponent(HelpRelatedActions, {
         onOpenRelatedAction: ($event) => emit("open-related-action", $event)
       }, null, _parent));
-      _push(`</div></section>`);
+      _push(`</div></div></section>`);
     };
   }
 });
@@ -20568,7 +22713,7 @@ _sfc_main$1O.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/HelpView.vue");
   return _sfc_setup$1O ? _sfc_setup$1O(props, ctx) : void 0;
 };
-const HelpView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1O, [["__scopeId", "data-v-824e84f1"]]), { __name: "StudioHelpView" });
+const HelpView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1O, [["__scopeId", "data-v-bf82be08"]]), { __name: "StudioHelpView" });
 const _sfc_main$1N = /* @__PURE__ */ defineComponent({
   __name: "HelpGuideDrawer",
   __ssrInlineRender: true,
@@ -20589,13 +22734,13 @@ const _sfc_main$1N = /* @__PURE__ */ defineComponent({
       _push(`<div${ssrRenderAttrs(mergeProps({
         class: "help-guide-overlay",
         role: "presentation"
-      }, _attrs))} data-v-6cfdf912><aside class="help-guide-drawer" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("help.drawerTitle"))} data-v-6cfdf912><header class="help-guide-drawer__header" data-v-6cfdf912><div data-v-6cfdf912><p class="eyebrow" data-v-6cfdf912>${ssrInterpolate(unref(t)("help.contextualGuide"))}</p><h2 data-v-6cfdf912>${ssrInterpolate(unref(t)("help.drawerTitle"))}</h2></div><button class="help-guide-drawer__icon-close icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("help.close"))} data-v-6cfdf912>×</button></header><div class="help-guide-drawer__body" data-v-6cfdf912>`);
+      }, _attrs))} data-v-81f77f6e><aside class="help-guide-drawer" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("help.drawerTitle"))} data-v-81f77f6e><header class="help-guide-drawer__header" data-v-81f77f6e><div data-v-81f77f6e><p class="eyebrow" data-v-81f77f6e>${ssrInterpolate(unref(t)("help.contextualGuide"))}</p><h2 data-v-81f77f6e>${ssrInterpolate(unref(t)("help.drawerTitle"))}</h2></div><button class="help-guide-drawer__icon-close icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("help.close"))} data-v-81f77f6e>×</button></header><div class="help-guide-drawer__body" data-v-81f77f6e>`);
       _push(ssrRenderComponent(HelpTopicRail, {
         topics: unref(topics),
         "active-topic": unref(activeTopicRecord).id,
         onSelectTopic: ($event) => emit("select-topic", $event)
       }, null, _parent));
-      _push(`<section class="help-guide-drawer__summary" data-v-6cfdf912><p class="eyebrow" data-v-6cfdf912>${ssrInterpolate(unref(activeTopicRecord).label)}</p><h3 data-v-6cfdf912>${ssrInterpolate(unref(activeTopicRecord).title)}</h3><p data-v-6cfdf912>${ssrInterpolate(unref(activeTopicRecord).summary)}</p></section></div><footer class="help-guide-drawer__actions" data-v-6cfdf912><button class="help-guide-drawer__return" type="button" data-v-6cfdf912>${ssrInterpolate(unref(t)("help.returnToCenter"))}</button></footer></aside></div>`);
+      _push(`<section class="help-guide-drawer__summary" data-v-81f77f6e><p class="eyebrow" data-v-81f77f6e>${ssrInterpolate(unref(activeTopicRecord).label)}</p><h3 data-v-81f77f6e>${ssrInterpolate(unref(activeTopicRecord).title)}</h3><p data-v-81f77f6e>${ssrInterpolate(unref(activeTopicRecord).summary)}</p></section></div><footer class="help-guide-drawer__actions" data-v-81f77f6e><button class="help-guide-drawer__return" type="button" data-v-81f77f6e>${ssrInterpolate(unref(t)("help.returnToCenter"))}</button></footer></aside></div>`);
     };
   }
 });
@@ -20605,7 +22750,7 @@ _sfc_main$1N.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpGuideDrawer.vue");
   return _sfc_setup$1N ? _sfc_setup$1N(props, ctx) : void 0;
 };
-const HelpGuideDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1N, [["__scopeId", "data-v-6cfdf912"]]), { __name: "StudioHelpGuideDrawer" });
+const HelpGuideDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1N, [["__scopeId", "data-v-81f77f6e"]]), { __name: "StudioHelpGuideDrawer" });
 const MIN_CANVAS_ZOOM = 0.25;
 const MAX_CANVAS_ZOOM = 4;
 const CANVAS_ZOOM_STEP = 0.25;
@@ -52939,7 +55084,11 @@ const HELP_TOPIC_IDS = [
   "settings",
   "ai-agent",
   "lora-training",
-  "merge"
+  "merge",
+  "video",
+  "music",
+  "extensions",
+  "discord"
 ];
 const DEFAULT_HELP_TOPIC_ID = "generate";
 new Set(HELP_TOPIC_IDS);

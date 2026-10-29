@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.0",
   "platform": "windows-x64",
-  "source_commit": "226c3da37230882a5ef611df85b8dca5e1ddd550",
-  "build_timestamp_utc": "2026-10-28T12:51:32Z",
+  "source_commit": "4f3ad0b5eab1c31a41a7acd76b681f3d8aed2b50",
+  "build_timestamp_utc": "2026-10-29T06:22:08Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 65845,
-      "sha256": "edcab7c0c3fc1b2e64719831f10f1746d9c20a242875039f21ee9060cd6afc47"
+      "size_bytes": 66325,
+      "sha256": "55c0990d3f06e5143fc6294f9325a26e66f6837622c2d8fbb871c8ac0ae328f0"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -1562,34 +1562,34 @@
       "sha256": "7dc00e00c0b113ab1a0020779d96b49c7cd0caf52f769507a3d7fafeb3d25104"
     },
     {
-      "path": "app/frontend/public/_nuxt/D7b5LVhf.js",
-      "size_bytes": 3451,
-      "sha256": "18a8ab4031832a678decc0a13b15c3399882149cd131f254279ddfdceb72bfa9"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/D9yqePgN.js",
-      "size_bytes": 2264872,
-      "sha256": "5531d77bef68dcb55c33530cb3c62ad59ff14be353280a16381587896ff94e4e"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/PFfXe3qN.js",
+      "path": "app/frontend/public/_nuxt/1uFzu2E4.js",
       "size_bytes": 9504,
-      "sha256": "76df93d81ba5035e10a111756125393232c48f05a2eab5b1b0728249a118e5cd"
+      "sha256": "bef9567973c54a2e2815dcbb7f1de67928607fcf4aea93ac88c8ec40573e5e81"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/BL2gKJWE.js",
+      "size_bytes": 2366376,
+      "sha256": "34152ae50c85208115022fc40dc1f94dfe1fd2fbcb3ca7e2c35415b536c04834"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/DgkybZ2L.js",
+      "size_bytes": 3451,
+      "sha256": "e5e5dfeda6ec9c6ada0941ab775525a31fbb2dd9a1c623a5d33629c39d0ee86b"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "87770897448744583e5af934067f0f29d3c22f959e77b2489129b4b16e3068ab"
+      "sha256": "bedd04454a01c9b1f7721f6baab56dd5a3b2412e83c54000ab432608ef435bbb"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/a111a4ab-5499-47e0-add3-9ad569ddadf0.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/bdb1fedc-b9ae-4de6-bb24-578dcc9ff605.json",
       "size_bytes": 88,
-      "sha256": "f332c481768d2ed2654f1a08636ef716a61689b8b60294dd5e316b280899439d"
+      "sha256": "149fa60d2245cfdb7e120d504e12804d28c447dc604b3490ad43819ea187d138"
     },
     {
-      "path": "app/frontend/public/_nuxt/entry.Dp_3fwT-.css",
-      "size_bytes": 502536,
-      "sha256": "20eff79e49a2bce5308b8c703011818d75264864cee88c12e91bcaa9910d66cc"
+      "path": "app/frontend/public/_nuxt/entry.C3crp97S.css",
+      "size_bytes": 503929,
+      "sha256": "cd61728597d2984c4205098db4e8811270d56b2c479c3fac654422c45d2202c9"
     },
     {
       "path": "app/frontend/public/_nuxt/error-404.BBhU_iaz.css",
@@ -1622,14 +1622,139 @@
       "sha256": "e98becab057c70e898ec4253705114b67296a4d3b2121a479aba512700959ac0"
     },
     {
+      "path": "app/frontend/public/help/images/ai-prompt-dark-ja.jpg",
+      "size_bytes": 60909,
+      "sha256": "a7b79f411bef1e9d8acb7d3a01dad59cd6b58078530e3c1b558a119a864ac5e9"
+    },
+    {
+      "path": "app/frontend/public/help/images/ai-provider-dark-ja.jpg",
+      "size_bytes": 43111,
+      "sha256": "33d5e45eaa67852b3455ddde1f5cdf9d805a70478458267657b7dc0e15acf656"
+    },
+    {
+      "path": "app/frontend/public/help/images/appearance-dark-ja.jpg",
+      "size_bytes": 78022,
+      "sha256": "e97366f460a838c8af9439122f89e6c4b5aaeed74f31cfbcf773e8e31cb3f079"
+    },
+    {
+      "path": "app/frontend/public/help/images/body-parts-comparison-dark-ja.jpg",
+      "size_bytes": 132579,
+      "sha256": "443a7662fd20a53456194acc266d0879b1c44e84ef08defb14a7749ad89221eb"
+    },
+    {
+      "path": "app/frontend/public/help/images/body-review-corrections-dark-ja.jpg",
+      "size_bytes": 97373,
+      "sha256": "701ad372de2e763a7826aa19e07730abbdb8d5fd5bbe103b824f53f4bace6a77"
+    },
+    {
+      "path": "app/frontend/public/help/images/body-review-dark-ja.jpg",
+      "size_bytes": 134299,
+      "sha256": "d89071e5a57d0cdf1c5b3662d075a7b01fb905e4ea5ff8e0fe5faa98278a7b49"
+    },
+    {
+      "path": "app/frontend/public/help/images/comparison-dark-ja.jpg",
+      "size_bytes": 35018,
+      "sha256": "d505f4f45b01aef43b015b779b082f562f1aa8c71de3bb9595c32f240ee1cd1d"
+    },
+    {
+      "path": "app/frontend/public/help/images/discord-connection-dark-ja.jpg",
+      "size_bytes": 121424,
+      "sha256": "a6c00c9009fe016426f3e5ada04a74b24f36b90ac9c217bf7eb0b9fb0f8a375f"
+    },
+    {
+      "path": "app/frontend/public/help/images/discord-ids-dark-ja.jpg",
+      "size_bytes": 107232,
+      "sha256": "6ed43cae1928470bcc4aefe67c4a783a2bb7fefe75d41aa3da235cc19dbb9946"
+    },
+    {
+      "path": "app/frontend/public/help/images/extensions-dark-ja.jpg",
+      "size_bytes": 69034,
+      "sha256": "5ba80f1c2d4d5ab969b287ba3ac09fbda9af50d1818704f549ad8656ac261d82"
+    },
+    {
+      "path": "app/frontend/public/help/images/generate-dark-ja.jpg",
+      "size_bytes": 214124,
+      "sha256": "28dd01f214c04238365aad4f9a73f92d17168cf815e82e6786d629db02c8bb28"
+    },
+    {
+      "path": "app/frontend/public/help/images/image-check-settings-dark-ja.jpg",
+      "size_bytes": 124436,
+      "sha256": "8d68568412483729d5d2d84f1987da51477736b3632730eafd977f7825c54b37"
+    },
+    {
+      "path": "app/frontend/public/help/images/image-edit-mask-dark-ja.jpg",
+      "size_bytes": 175476,
+      "sha256": "f54d0e114361029cd724ce9b0da207f691ca0b99e2357e1c928b862390d092e3"
+    },
+    {
+      "path": "app/frontend/public/help/images/lora-training-dark-ja.jpg",
+      "size_bytes": 117860,
+      "sha256": "1e43053116e82e8da5af4d4ee5033a2969dc68049563112fa92d0949f9a53241"
+    },
+    {
+      "path": "app/frontend/public/help/images/materials-dark-ja.jpg",
+      "size_bytes": 78960,
+      "sha256": "f430f5e94217c09f764bcba4e4b61dab7b498002737baece7bb5de134a7648b8"
+    },
+    {
+      "path": "app/frontend/public/help/images/materials-insertion-dark-ja.jpg",
+      "size_bytes": 31531,
+      "sha256": "07631e63ff78cb134e71bb26ba6186e93fae29dee37c7fedba5404af19edd389"
+    },
+    {
+      "path": "app/frontend/public/help/images/media-library-dark-ja.jpg",
+      "size_bytes": 162646,
+      "sha256": "443f472e5954e1dd781f55fc08b8482a1b1c89fcb1faf28c9baec0fc3cebac67"
+    },
+    {
+      "path": "app/frontend/public/help/images/merge-dark-ja.jpg",
+      "size_bytes": 179836,
+      "sha256": "89a0a09dc2ee8dedcd65fcfbfe81c78b52b5de0c6c28f3301fc9046a3e4825f8"
+    },
+    {
+      "path": "app/frontend/public/help/images/music-studio-dark-ja.jpg",
+      "size_bytes": 99840,
+      "sha256": "8465a8f8b7d720b2fe083bc88a473f07db5b0821e547b7a3b677e6e520e66784"
+    },
+    {
+      "path": "app/frontend/public/help/images/prompt-interpretation-dark-ja.jpg",
+      "size_bytes": 136102,
+      "sha256": "cf80d3ccca2d8bfda104d7e7c369fdfe6048b2583f110ae4d2093bc48fd94da4"
+    },
+    {
+      "path": "app/frontend/public/help/images/prompt-sections-example-dark-ja.jpg",
+      "size_bytes": 30328,
+      "sha256": "1e7940678d1e7e979bd6e1bc784b194b1dee26469bb42639c0d758f35a794faa"
+    },
+    {
+      "path": "app/frontend/public/help/images/regeneration-numbers-dark-ja.jpg",
+      "size_bytes": 72703,
+      "sha256": "32b7ae0a99f348fb698aadf70ce16231e1bac29888409813d002b9d714f90500"
+    },
+    {
+      "path": "app/frontend/public/help/images/repeat-limits-dark-ja.jpg",
+      "size_bytes": 47471,
+      "sha256": "e4d41116d54ec6661b01c0c98f095d56b6febd9ffb92d86713a9d38dd92f24c7"
+    },
+    {
+      "path": "app/frontend/public/help/images/video-studio-dark-ja.jpg",
+      "size_bytes": 117730,
+      "sha256": "ecd7849119d9e4ff7a078b674dda4f938cc81bce6a335e003e89644e1fed1dd7"
+    },
+    {
+      "path": "app/frontend/public/help/images/wildcards-dark-ja.jpg",
+      "size_bytes": 59023,
+      "sha256": "0909880093019a0aa548ba0b4ae7d367e596a23b1bf80558d13cf6c8ea3a667c"
+    },
+    {
       "path": "app/frontend/server/chunks/_/error-500.mjs",
       "size_bytes": 5093,
       "sha256": "2ba5c88b1daaa088d0af39e2dc47d33aad884e96d859129d35efbc4e2384a1f0"
     },
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
-      "size_bytes": 162688,
-      "sha256": "70b28a6ab3a88724b5bd5194ae8b1571d38befe7dccd8b98863f5ef6c5d500b5"
+      "size_bytes": 169035,
+      "sha256": "a9ed26a54732bf457c2be5e39820b0d2f4d33e8fa67e3de3f4ecd222dfda0a2b"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.Br3zh7eU.mjs",
@@ -1777,14 +1902,14 @@
       "sha256": "ba02cbc3ca448aa459c68d537ad06e710dd788ce94e4e94b72eff5fa3338e4b4"
     },
     {
-      "path": "app/frontend/server/chunks/build/HelpArticleCanvas-styles.BgtpWG6S.mjs",
-      "size_bytes": 2746,
-      "sha256": "26d9b72a4e16ea8cb061ad94facb3731bddb3ebc9cf811c4622a37d61a6b9bb6"
+      "path": "app/frontend/server/chunks/build/HelpArticleCanvas-styles.CVWsvml3.mjs",
+      "size_bytes": 3114,
+      "sha256": "55f6960427374d4f27514bd2d7e15118f6090b55d738425cc2d4b82ef818cadf"
     },
     {
-      "path": "app/frontend/server/chunks/build/HelpGuideDrawer-styles.C5B7D1O3.mjs",
-      "size_bytes": 2086,
-      "sha256": "c164c5c8883601d890e201bd946443aa6229c632b0ef0660c5064eac7c74bfa7"
+      "path": "app/frontend/server/chunks/build/HelpGuideDrawer-styles.Crv929ux.mjs",
+      "size_bytes": 2023,
+      "sha256": "09f474fc6160978b5833094f78ca4ad1567a30033bb5ca879528fa747cdbd55e"
     },
     {
       "path": "app/frontend/server/chunks/build/HelpRelatedActions-styles.CGY9583s.mjs",
@@ -1792,14 +1917,14 @@
       "sha256": "3556735887d70155ef61fdbb5cde1c9b4712ff60eadedbcc85198ad3d7aa3fa9"
     },
     {
-      "path": "app/frontend/server/chunks/build/HelpTopicRail-styles.CoxvW36S.mjs",
-      "size_bytes": 1974,
-      "sha256": "0d843cdcc6340a490943e5951aad8317aca63d865dc0da224b00b74093298127"
+      "path": "app/frontend/server/chunks/build/HelpTopicRail-styles.mpiRb7cl.mjs",
+      "size_bytes": 2752,
+      "sha256": "037706195418691e196818aaabd696abeaaa48bfc017e9422e99045bf120c2a6"
     },
     {
-      "path": "app/frontend/server/chunks/build/HelpView-styles.ByVeVtxM.mjs",
-      "size_bytes": 931,
-      "sha256": "13adaf9206aac72e926346970469b0f917b95f24c078e5b1682792c211b6341e"
+      "path": "app/frontend/server/chunks/build/HelpView-styles.DXmIGE71.mjs",
+      "size_bytes": 1241,
+      "sha256": "8567d474911649249fbe9a5032fa5da2d2bca1a12f6c0f444d802d21c7e0c361"
     },
     {
       "path": "app/frontend/server/chunks/build/HistoryPanel-styles.YAdx3pez.mjs",
@@ -2404,7 +2529,7 @@
     {
       "path": "app/frontend/server/chunks/build/client.precomputed.mjs",
       "size_bytes": 2916,
-      "sha256": "b425c1c26a7453798a106400f69634b0c772d12bcf5b3007a91463cdf25d1925"
+      "sha256": "e0a30dce2346bab6f47134ab6ad2aa8f0a5d6fce1ee3824abd7bf490aa4765e0"
     },
     {
       "path": "app/frontend/server/chunks/build/error-404-DXgHoesY.mjs",
@@ -2428,13 +2553,13 @@
     },
     {
       "path": "app/frontend/server/chunks/build/server.mjs",
-      "size_bytes": 3588403,
-      "sha256": "d3afb33b1e1febb7ada3280271dcc26bc92a9fbc810bca6bb625ad229ffe0017"
+      "size_bytes": 3717004,
+      "sha256": "10cf005e3dd0cbfe139bb231b229371a279fa6e1ca8abef0059282cdd272ad3a"
     },
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 20970,
-      "sha256": "047299e46bd53a53a2e703ebae89fae29b57484037f476c606ce0adce3a1f825"
+      "sha256": "828ce9c05ee4d3ede2de034497c7ac4247e43613bdeb681600c5e1227139f2b6"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -2973,8 +3098,8 @@
     },
     {
       "path": "guides/CREATIVE_WORKFLOWS.md",
-      "size_bytes": 29657,
-      "sha256": "dabbbf5c88c51f513815480c9fd8e04da6b5a5c145ab9a1b81b44fecc0bbf850"
+      "size_bytes": 30757,
+      "sha256": "11a19f9be87529e16d4f1b6519efb88e114dcde2333cc41f32c2bb436a408c17"
     },
     {
       "path": "guides/EXTENSIONS.md",
@@ -2983,13 +3108,13 @@
     },
     {
       "path": "guides/IMAGE_CHECK.md",
-      "size_bytes": 8992,
-      "sha256": "b7ec11197254311a0fb53fe85f9e1adb7a69fd6427368b3b63b8a26c49fb89bb"
+      "size_bytes": 9067,
+      "sha256": "34dc3fce154b8a839b6f08c335269316cfdfcf237748ca151c40070f2020b8fb"
     },
     {
       "path": "guides/MEDIA_LIBRARY.md",
-      "size_bytes": 5263,
-      "sha256": "df1bff9667f5d3e1e8713657ee78a4e84892d52c04851e1d063ffd15d079eec0"
+      "size_bytes": 5314,
+      "sha256": "d55456690b823e1f328aa9e877d7ca6a33d04a518c59f6fa156f10f38d67c811"
     },
     {
       "path": "guides/MUSIC_STUDIO.md",
@@ -2998,8 +3123,8 @@
     },
     {
       "path": "guides/QUICK_START.md",
-      "size_bytes": 9970,
-      "sha256": "52a0166c9b90c60f97f4bc06a13d6a7e3d7f600d5bd4b8211b885cb5fb91f677"
+      "size_bytes": 10127,
+      "sha256": "98406b570f2cda28d2a313b51e506de6e9cb76ea613df4b5d070e6911ec7eea5"
     },
     {
       "path": "guides/VIDEO_STUDIO.md",
@@ -3023,8 +3148,8 @@
     },
     {
       "path": "guides/images/body-parts-comparison-dark-ja.jpg",
-      "size_bytes": 97381,
-      "sha256": "3a584ab9d3091b7b2addd94009716960f48d44ead4f88672226a9eb273457e95"
+      "size_bytes": 132579,
+      "sha256": "443a7662fd20a53456194acc266d0879b1c44e84ef08defb14a7749ad89221eb"
     },
     {
       "path": "guides/images/body-review-corrections-dark-ja.jpg",
@@ -3033,8 +3158,8 @@
     },
     {
       "path": "guides/images/body-review-dark-ja.jpg",
-      "size_bytes": 105596,
-      "sha256": "65732b8188bd575c06b79dfdc2b9b2de9057019ebcc2a40a4afc0306b289d3e3"
+      "size_bytes": 134299,
+      "sha256": "d89071e5a57d0cdf1c5b3662d075a7b01fb905e4ea5ff8e0fe5faa98278a7b49"
     },
     {
       "path": "guides/images/extensions-dark-ja.jpg",
@@ -3043,13 +3168,13 @@
     },
     {
       "path": "guides/images/generate-dark-ja.jpg",
-      "size_bytes": 255806,
-      "sha256": "66593ed0b6460423d975d03acda9a130107fe5868a6194984a3731a817d4eb60"
+      "size_bytes": 214124,
+      "sha256": "28dd01f214c04238365aad4f9a73f92d17168cf815e82e6786d629db02c8bb28"
     },
     {
       "path": "guides/images/image-check-settings-dark-ja.jpg",
-      "size_bytes": 82980,
-      "sha256": "9626722cef1fd88089e7451ae42145aa596c217efe69fae4b5489841b0e9171c"
+      "size_bytes": 124436,
+      "sha256": "8d68568412483729d5d2d84f1987da51477736b3632730eafd977f7825c54b37"
     },
     {
       "path": "guides/images/image-edit-mask-dark-ja.jpg",
@@ -3063,8 +3188,8 @@
     },
     {
       "path": "guides/images/media-library-dark-ja.jpg",
-      "size_bytes": 177072,
-      "sha256": "66305418080d606f3cc83f2475db985b4443b0bf57ac3c7b10fc068395008782"
+      "size_bytes": 162646,
+      "sha256": "443f472e5954e1dd781f55fc08b8482a1b1c89fcb1faf28c9baec0fc3cebac67"
     },
     {
       "path": "guides/images/merge-dark-ja.jpg",
@@ -3078,13 +3203,13 @@
     },
     {
       "path": "guides/images/prompt-interpretation-dark-ja.jpg",
-      "size_bytes": 112166,
-      "sha256": "289a0d380e33cae3f5423473dd21636b153a92c30f5f99abb06fe3e3420fd9d3"
+      "size_bytes": 136102,
+      "sha256": "cf80d3ccca2d8bfda104d7e7c369fdfe6048b2583f110ae4d2093bc48fd94da4"
     },
     {
       "path": "guides/images/regeneration-numbers-dark-ja.jpg",
-      "size_bytes": 122395,
-      "sha256": "c8ddd64e7457f8d5c8f943c86f24f8761524d9466fc892bd5478a20418390a89"
+      "size_bytes": 72703,
+      "sha256": "32b7ae0a99f348fb698aadf70ce16231e1bac29888409813d002b9d714f90500"
     },
     {
       "path": "guides/images/video-studio-dark-ja.jpg",

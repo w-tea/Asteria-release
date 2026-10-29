@@ -27,13 +27,13 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 3. [画面付きクイックスタート](guides/QUICK_START.md)で、一枚の生成、画像の選択、マスク編集を試します。
 4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
 
-> **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトを三欄に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
+> **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトをベース・キャラクター・詳細に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
 
 ### 今回の使いやすさの改善
 
 - GenerateとMergeに「モデルを検索」を追加しました。名前やフォルダー名で候補を絞り込み、選択中のモデルは検索語を変えても保持します。
 - Mergeはモデル・計算方式、詳細調整、候補比較、レシピ保存の順に操作できます。PCの通常幅では、右上の実行ボタンは設定や履歴をスクロールしても表示されたままです。
-- 詳細スタイルのカードをLoRAと同じサイズへそろえ、長い名称は省略表示にしました。素材の2カラム選択欄のずれも修正しました。
+- 詳細スタイルのカードをLoRAと同じサイズへそろえ、長い名称は省略表示にしました。保存プロンプトの2カラム選択欄のずれも修正しました。
 
 ![モデル検索と右上の実行欄、上部のページ内移動を備えたMerge画面](guides/images/merge-dark-ja.jpg)
 
@@ -46,8 +46,8 @@ V1.2.0では、次の制作の流れをまとめて扱えます。
 | やりたいこと | 主な機能・操作ガイド |
 |---|---|
 | 画像を生成・編集する | txt2img、img2img、inpaint、Hires.fix、ControlNet、Detailer、Topaz。[クイックスタート](guides/QUICK_START.md) |
-| プロンプトや生成条件を比べる | シーン組立、解釈ビュー、語句比較、ワイルドカードの部分固定、途中状態からの分岐。[制作支援](guides/CREATIVE_WORKFLOWS.md) |
-| 結果を確認・整理する | 画像・動画・音声のMedia Library、人体部位レビュー、再生成条件の比較。[メディア管理](guides/MEDIA_LIBRARY.md)／[完成画像チェック](guides/IMAGE_CHECK.md) |
+| プロンプトや生成条件を比べる | AIプロンプト作成、保存プロンプト、生成に使ったプロンプト、プロンプトの比較生成、ワイルドカードの部分固定、途中状態からの分岐。[制作支援](guides/CREATIVE_WORKFLOWS.md) |
+| 結果を確認・整理する | 画像・動画・音声のMedia Library、体の部位を検出・選択、再生成条件の比較。[メディア管理](guides/MEDIA_LIBRARY.md)／[完成画像の身体チェック](guides/IMAGE_CHECK.md) |
 | 動画や音楽を作る | MiniMax H3の5タスクとSequence、MiniMax-Music3のVocal／Instrumental。[動画](guides/VIDEO_STUDIO.md)／[音楽](guides/MUSIC_STUDIO.md) |
 | LoRA学習・モデル合成を行う | 学習素材の確認、LoRAの学習・実用テスト、Merge XYZ、Moment Weave／Log Weave／Dual Residual |
 | 自分の制作環境を整える | 外部モデルライブラリ、Discord連携、[拡張機能](guides/EXTENSIONS.md)、Light／Dark／System、Anima 2.9B／3.8B対応 |
@@ -57,8 +57,8 @@ V1.2.0では、次の制作の流れをまとめて扱えます。
 
 - **画像を作る・整える**: txt2img／img2imgで新規画像を作ったり、元画像を変換したりできます。Hires.fix、ControlNet、Detailer、Topaz Photo AI連携で仕上がりも調整できます。
 - **画像・動画・音声を管理する**: マスクや切り抜きで編集した結果をMedia Libraryに保存し、画像・動画・音声の再生、比較、評価、タグ付けまで続けて行えます。
-- **人体部位を見比べて編集する**: 任意モデルによる人体部位レビューで矩形候補を確認・修正・除外できます。SAMがある場合だけ実マスクを作り、既存の画像編集へ渡せます。複数画像の同じ部位も並べて確認できます。人体異常や人物所属を自動判定する機能ではありません。
-- **再生成の条件差を調べる**: 再生成アシストの「記録された数値の差」で、資産、実入力、Seed、記録されたsigmaや初期ノイズの指紋を比較できます。過去に保存していない値は「未記録」と表示します。同Seedでも完成画像の画素一致は保証しません。
+- **体の部位を見比べて編集する**: 「体の部位を検出・選択」で、任意モデルが検出した矩形候補を確認・修正・除外できます。SAMがある場合だけ実マスクを作り、既存の画像編集へ渡せます。複数画像の同じ部位も並べて確認できます。人体異常や人物所属を自動判定する機能ではありません。
+- **再生成の条件差を調べる**: 生成設定の復元・比較の「生成時の数値を比較」で、資産、実入力、Seed、記録されたsigmaや初期ノイズの指紋を比較できます。過去に保存していない値は「未記録」と表示します。同Seedでも完成画像の画素一致は保証しません。
 - **Video Studioで動画を仕上げる**: MiniMax H3のText、Image、First / Last Frame、Reference / Video Edit、Sequenceを使い分けられます。Sequenceでは各クリップを確認してから続行または連結するため、採用した部分を保ったまま完成させられます。
 - **Music Studioで曲を作る**: MiniMax-Music3でVocalまたはInstrumentalを選び、用途に合う新しい曲を生成できます。
 - **設定を再利用する**: スタイル、ワイルドカード、Embedding、LoRA、生成プリセットを組み合わせ、PNG／JPEG／WebPからプロンプトや対応する生成設定を読み込んで次の生成に使えます。
@@ -82,22 +82,22 @@ V1.2.0では、次の制作の流れをまとめて扱えます。
 
 #### V1.2.0
 
-- 描写位置を指定する配置機能を対象から外しました。項目別入力は文章を整理する機能として残り、三欄の文章を指定した順に結合します。欄ごとに描写位置を指定する機能ではありません。
+- 描写位置を指定する配置機能を対象から外しました。項目別入力は文章を整理する機能として残り、各欄の文章を指定した順に結合します。欄ごとに描写位置を指定する機能ではありません。
 - Video Studioでは、Text、Image、First / Last Frame、Reference / Video Edit、Sequenceの5タスクから目的に合う動画作成を選べます。使用するモデルや構成、Steps、Sampler、Schedulerなどを選び、生成後に結果を確認してからアップスケールできます。Sequenceではクリップをプレビューし、**このクリップを再試行**、**採用して次へ**、**採用して完成**から次の操作を選びます。最後の連結だけ失敗したときは、採用済みクリップを作り直さず再試行できます。
 - Music Studioでは、VocalとInstrumentalを別々に下書きし、モデル構成、Steps、Sampler、Scheduler、曲の長さ、Seedなどを選べます。MiniMax-Music3の処理が失敗しても有料APIへ切り替わりません。
 - Generateでは、ポジティブプロンプトを「まとめて入力」と「項目別に入力」から選べます。項目別入力では、ベース、キャラクター、詳細の表示名と並び順を変更できます。生成時は項目の間へ区切りを補って一つのプロンプトにまとめ、履歴、生成プリセット、画像のメタデータからも同じ構成を復元できます。
 - Generateでは、選択した文字の重みをCtrl＋↑／↓で0.1ずつ調整できます。記法メニューから強調、弱化、数値指定、候補、段階切り替え、交互切り替え、AND、BREAKを入力できます。
 - 自動リピートの進行確認を修正しました。進行通知が途切れた場合は同じ生成の状態を確認し直します。履歴の読み込み待ちで次の生成を止めず、生成自体が失敗した場合は理由を表示して停止します。
 - 自動生成に最大試行枚数、最大時間、合格枚数の終了条件を追加しました。失敗や不合格も試行枚数に含め、終了時は理由を表示します。
-- プロンプト解釈ビューで、ワイルドカードの展開、重み、記法、実際に使ったモデルへの入力を確認できます。語句の効き方比較では一つの変更を同じSeedで比べ、条件名を隠して好みを選べます。ワイルドカードは髪色など一部の選択だけを固定できます。
-- 日本語のシーン説明から三欄のプロンプトを組み立てるAI支援、人物・衣装などの素材保存、意味上の矛盾候補の確認を追加しました。提案は確認してから適用し、入力文を勝手に書き換えません。
-- HiresやDetailerの前後の画像、メイキング動画・GIF、生成途中の状態を任意で保存できます。対応する生成では、保存した途中状態から文章や条件を変えて別の候補を作れます。
-- Media Libraryで条件への一致やシリーズ内の変化を確認し、判定を訂正できます。再生成アシストでは、保存した設定と現在のモデルの違いを確認して再利用できます。画像対応AIの判定には見逃しや誤判定があります。
-- 人体部位レビュー、SAMで作成したマスクの編集転送、2〜32画像の同種部位比較を追加しました。検出とマスク作成は利用者が実行したときだけ動き、必要なモデルは任意導入です。
-- 通常生成でも、実際に使ったsigma列、初期ノイズと入力latentの指紋、計算先を小さな記録として残します。再生成アシストで確認でき、未記録の過去値は推測しません。通常の生成計算は変えません。
+- 生成に使ったプロンプトで、ワイルドカードの展開、重み、記法、実際に使ったモデルへの入力を確認できます。プロンプトの比較生成では一つの変更を同じSeedで比べ、条件名を隠して好みを選べます。ワイルドカードは髪色など一部の選択だけを固定できます。
+- 「AIプロンプト作成」で場面の説明からプロンプト案を作れます。「保存プロンプト」ではよく使う文章を保存・追加でき、「AIで矛盾確認」では意味の食い違いの候補を調べられます。提案は確認してから適用し、入力文を勝手に書き換えません。
+- HiresやDetailerの前後の画像、生成過程の動画・GIF、生成途中の状態を任意で保存できます。対応する生成では、保存した途中状態から文章や条件を変えて別の候補を作れます。
+- Media Libraryで条件への一致やシリーズ内の変化を確認し、判定を訂正できます。生成設定の復元・比較では、保存した設定と現在のモデルの違いを確認して再利用できます。画像対応AIの判定には見逃しや誤判定があります。
+- 体の部位を検出・選択、SAMで作成したマスクの編集転送、2〜32画像の同種部位比較を追加しました。検出とマスク作成は利用者が実行したときだけ動き、必要なモデルは任意導入です。
+- 通常生成でも、実際に使ったsigma列、初期ノイズと入力latentの指紋、計算先を小さな記録として残します。生成設定の復元・比較で確認でき、未記録の過去値は推測しません。通常の生成計算は変えません。
 - LoRA学習用の画像とcaptionを点検し、学習後は服・背景・ポーズを変えた生成で効果を比べられます。AIの注釈候補は確認用であり、勝手にcaptionを変更したり学習を始めたりしません。
 - 生成時に語句の参照範囲を記録し、手直しして部分編集へ渡せます。範囲は正確な部位の輪郭ではありません。複数人のポーズは一つの制御画像として編集できますが、AnimaのLLLiteではポーズへの追従を保証しません。
-- 生成画像のチェックを追加しました。生成・補正を終えた完成画像を、保存前に画像対応AIで一回確認し、不合格画像を保存するか選べます。Settingsでは履歴の画像を選び、設定を保存する前に判定を試せます。AIには見逃しや誤判定があり、独自の人体判定器は現在選べません。[操作と制約](guides/IMAGE_CHECK.md)を確認してください。
+- 完成画像の身体チェックを追加しました。生成・補正を終えた完成画像を、保存前に画像対応AIで一回確認し、不合格画像を保存するか選べます。Settingsでは履歴の画像を選び、設定を保存する前に判定を試せます。AIには見逃しや誤判定があり、独自の人体判定器は現在選べません。[操作と制約](guides/IMAGE_CHECK.md)を確認してください。
 - AIプロンプト支援では、用途に合わせて標準、Anima、Illustrious、Danbooruタグへ変換を選べます。OpenAI互換の接続先では、利用できるモデルの一覧を取得して選べます。
 - Settingsに「生成時のRAM使用量を抑える」を追加しました。大きな動画や連続生成でRAMが不足する場合に選べます。単発生成は遅くなる場合があり、変更はAsteriaの次回起動時に反映されます。
 - Media Libraryでは画像・動画・音声をまとめて扱えます。動画をVideo Studioへ渡し、音楽は設定だけを引き継いで作り直せます。
@@ -107,7 +107,7 @@ V1.2.0では、次の制作の流れをまとめて扱えます。
 - 旧28ブロックAnima向けLoRAは、Anima 2.9Bで使えるように再配置できます。Anima 3.8Bでは結果をまだ確認できないため、自動変換しません。
 - AnimaではQwen2D-Anime VAEも選べます。必要な読み込み機能はAsteriaに含まれるため、別の拡張機能を追加する必要はありません。
 - Merge StudioではMoment Weave、Log Weave、Dual Residualを、Weight sumでモデルを組み合わせる際の計算方法として選べます。MBWの部位別設定やMerge XYZの比較にも使えます。
-- 詳しい操作方法は[制作支援](guides/CREATIVE_WORKFLOWS.md)、[画像チェック](guides/IMAGE_CHECK.md)、[Extensions](guides/EXTENSIONS.md)、[Video Studio](guides/VIDEO_STUDIO.md)、[Music Studio](guides/MUSIC_STUDIO.md)、[Media Library](guides/MEDIA_LIBRARY.md)を参照してください。
+- 詳しい操作方法は[制作支援](guides/CREATIVE_WORKFLOWS.md)、[完成画像の身体チェック](guides/IMAGE_CHECK.md)、[Extensions](guides/EXTENSIONS.md)、[Video Studio](guides/VIDEO_STUDIO.md)、[Music Studio](guides/MUSIC_STUDIO.md)、[Media Library](guides/MEDIA_LIBRARY.md)を参照してください。
 
 #### V1.1.2
 
@@ -348,7 +348,7 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 
 - Generate and Merge now include Search models. Filter by model or folder name without changing the selected model when you edit the search.
 - Merge follows models and method, advanced settings, candidate comparison, then recipe saving. At normal desktop widths, the execution button stays at the top right while settings and history scroll.
-- Advanced Style cards now match LoRA card sizing and shorten long names. Two-column Materials selectors are aligned consistently.
+- Advanced Style cards now match LoRA card sizing and shorten long names. Two-column Saved prompts selectors are aligned consistently.
 
 ![Merge with model search, top-right execution and section navigation; Japanese UI in Dark mode](guides/images/merge-dark-ja.jpg)
 
@@ -361,8 +361,8 @@ V1.2.0 brings these workflows together:
 | What you want to do | Features and guides |
 |---|---|
 | Generate and edit images | txt2img, img2img, inpaint, Hires.fix, ControlNet, Detailer and Topaz. [Quick start](guides/QUICK_START.md) |
-| Compare prompts and generation settings | Scene builder, interpretation, prompt-effect comparisons, partial wildcard pinning and intermediate-state branching. [Creative workflows](guides/CREATIVE_WORKFLOWS.md) |
-| Review and organize results | Image, video and audio Media Library, body-part review and generation-condition comparison. [Media management](guides/MEDIA_LIBRARY.md) / [Completed-image checks](guides/IMAGE_CHECK.md) |
+| Compare prompts and generation settings | AI prompt builder, Saved prompts, Prompts used for generation, Generate a prompt comparison, partial wildcard pinning and intermediate-state branching. [Creative workflows](guides/CREATIVE_WORKFLOWS.md) |
+| Review and organize results | Image, video and audio Media Library, body-part selection and generation-condition comparison. [Media management](guides/MEDIA_LIBRARY.md) / [Completed-image checks](guides/IMAGE_CHECK.md) |
 | Create video and music | Five MiniMax H3 tasks and Sequence; MiniMax-Music3 Vocal and Instrumental. [Video](guides/VIDEO_STUDIO.md) / [Music](guides/MUSIC_STUDIO.md) |
 | Train LoRAs and merge models | Dataset review, training and practical tests, Merge XYZ, Moment Weave, Log Weave and Dual Residual |
 | Set up your studio | External model libraries, Discord, [Extensions](guides/EXTENSIONS.md), Light/Dark/System and Anima 2.9B/3.8B support |
@@ -372,8 +372,8 @@ V1.2.0 brings these workflows together:
 
 - **Generation and enhancement**: Use txt2img, img2img, Hires.fix, ControlNet, Detailer, and Topaz Photo AI integration.
 - **Image editing and Media Library**: Edit with masks and crops; browse and play images, video, and audio; compare images; and organize artifacts with ratings and tags.
-- **Body-part review**: Inspect, correct or exclude optional-model detections, and compare the same part across multiple images. With SAM available, create a real mask and send it to the existing editor. This does not judge anatomical correctness or person ownership.
-- **Recorded numerical differences**: Regeneration assist compares saved assets, actual inputs, Seed, sigma values and initial-noise hashes. Missing historical values remain **Not recorded**. Matching settings or Seeds do not guarantee identical output pixels.
+- **Detect and select body parts**: Inspect, correct or exclude optional-model detections, and compare the same part across multiple images. With SAM available, create a real mask and send it to the existing editor. This does not judge anatomical correctness or person ownership.
+- **Compare recorded generation values**: Restore and compare generation settings compares saved assets, actual inputs, Seed, sigma values and initial-noise hashes. Missing historical values remain **Not recorded**. Matching settings or Seeds do not guarantee identical output pixels.
 - **Video Studio**: Use five MiniMax H3 tasks, including a Sequence flow that pauses for review after every clip.
 - **Music Studio**: Generate new Vocal or Instrumental music locally with MiniMax-Music3.
 - **Reusable prompts and settings**: Reuse styles, wildcards, embeddings, LoRAs, generation presets, and compatible prompts or settings found in PNG, JPEG, and WebP images.
@@ -405,12 +405,12 @@ This history covers user-facing changes. See Get started for the scope of this d
 - Added Ctrl + Up/Down prompt-weight adjustment and a notation menu for emphasis, de-emphasis, numeric weight, prompt alternatives, scheduled switching, alternating prompts, AND, and BREAK.
 - Fixed automatic-repeat progress monitoring. If progress notifications stop, Asteria checks the same job instead of submitting another one. A pending history refresh no longer blocks the next generation; actual generation failures still stop the repeat loop with an error.
 - Added automatic-generation limits for attempted images, elapsed time, and accepted images. Failed and rejected images count toward the attempt limit, and Asteria shows why the repeat stopped.
-- Added a prompt interpretation view for wildcard expansion, weights, notation, and actual model input. Prompt-effect comparisons change one input while sharing the same Seed, with an optional blind preference vote. You can also pin individual wildcard choices, such as hair color, while rerolling the others.
-- Added AI-assisted three-section prompt assembly from a scene description, reusable character and outfit materials, and semantic conflict suggestions. Suggestions require an explicit apply action and do not silently rewrite your prompt.
-- Added optional before/after images for Hires and Detailer, making-of videos and GIFs, and saved intermediate generation states. Supported runs can branch from a saved state with edited text or settings.
-- Media Library can review condition matches and consistency across a series, with editable judgments. Reproduction assistance compares recorded settings and assets with those currently available. Image-capable AI can miss problems or make incorrect judgments.
-- Added Body-part review, real SAM mask handoff to Image Edit, and same-part comparison across 2–32 images. Detection and masking run only on explicit request and require optional models.
-- Ordinary generation now keeps bounded observations of actual sigma values, initial-noise and input-latent hashes, and compute devices. Regeneration assist can compare these records without inferring missing historical values or changing ordinary generation arithmetic.
+- Added **Prompts used for generation** to inspect wildcard expansion, weights, notation, and actual model input. Use **Generate a prompt comparison** to change one input while sharing the same Seed, with an optional blind preference vote. You can also pin individual wildcard choices, such as hair color, while rerolling the others.
+- Added **AI prompt builder** for proposals from a scene description, **Saved prompts** for reusable text, and **AI conflict check** for possible contradictions. Suggestions require an explicit apply action and do not silently rewrite your prompt.
+- Added optional before/after images for Hires and Detailer, videos and GIFs of generation progress, and saved intermediate generation states. Supported runs can continue from a saved state with edited text or settings.
+- Media Library includes **Check image conditions with AI** and **Compare appearance with AI**, with editable judgments. **Restore and compare generation settings** compares recorded settings and assets with those currently available. Image-capable AI can miss problems or make incorrect judgments.
+- Added Detect and select body parts, real SAM mask handoff to Image Edit, and same-part comparison across 2–32 images. Detection and masking run only on explicit request and require optional models.
+- Ordinary generation now keeps bounded observations of actual sigma values, initial-noise and input-latent hashes, and compute devices. Restore and compare generation settings can compare these records without inferring missing historical values or changing ordinary generation arithmetic.
 - Added LoRA dataset review and practical generation comparisons using different outfits, backgrounds, and poses. AI annotations are review suggestions; they do not automatically change captions or start training.
 - You can record word-reference maps during generation, refine them, and send them to inpaint. These maps are not exact anatomical boundaries. Multi-person poses can be edited in one control image; Anima LLLite does not guarantee pose following.
 - Added generated-image checking through an image-capable AI once after generation and enhancement, before saving the completed image, with a choice to keep or discard rejected images. Settings can try a saved history image before saving the check configuration. AI judgements may be wrong; an Asteria-native anatomy classifier is not currently available. See the [operation and limits](guides/IMAGE_CHECK.md).

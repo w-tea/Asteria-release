@@ -12,19 +12,21 @@ AIへ依頼する機能は、先に設定画面で接続先を用意してくだ
 
 ### 1. プロンプトを組み立てる
 
-Generateの「シーン組立」では、描きたい場面を日本語などで説明し、ベース・キャラクター・詳細の三欄へ分けた文章を提案できます。
+Generateの「AIプロンプト作成」では、描きたい場面を日本語などで説明し、ベース・キャラクター・詳細に分けたプロンプト案を作れます。
 
-1. AI接続先を選び、「描きたい場面」と任意の素材メモを入力します。
-2. 「プロンプトを提案」を押し、提案された三欄とネガティブを確認・編集します。
+1. AI接続先を選び、「描きたい場面」と任意の入れたい特徴や語句を入力します。
+2. 「プロンプトを提案」を押し、各項目とネガティブの案を確認・編集します。
 3. 「三つの欄へ反映」でポジティブを置き換えます。ネガティブも置き換える場合は、その選択をONにします。
 
 反映すると項目別入力に切り替わります。欄の名前と順序は保ち、ワイルドカードの固定は解除します。AIへ依頼しただけでは、入力中の文章は変わりません。
 
-「素材」では人物・衣装・ポーズ・背景を別々に保存できます。使う順に素材を選び、「この欄へ追加」で入力中のプロンプトへ挿入します。LoRAやEmbeddingのひも付けも適用するか選べます。「シーン組立へ渡す」では文章だけを提案に使い、ひも付けた資産を自動適用しません。
+「保存プロンプト」では人物・衣装・ポーズ・背景などの文章に名前を付けて保存できます。使う順に選び、「この欄へ追加」で入力欄の末尾へ追加します。LoRAやEmbeddingのひも付けも適用するか選べます。「AIプロンプト作成へ渡す」では文章だけを提案に使い、ひも付けた資産を自動適用しません。
 
-画像から素材の候補を作る場合は、見える特徴と候補の文章を見比べてから保存してください。同じ人物や指定した配置を再現する保証はありません。
+画像から保存プロンプトの候補を作る場合は、見える特徴と候補の文章を見比べてから保存してください。同じ人物や指定した配置を再現する保証はありません。
 
-「矛盾チェック」は、人数・髪・服・動作などの文章が食い違う可能性を示します。別人物の説明や意図した変化もあるため、候補を見て判断してください。文章を勝手に削除・修正する機能ではありません。
+詳細スタイルも、保存した文章の再利用に使えます。保存プロンプトは入力欄へ文章を追加して編集する方法、詳細スタイルは選んだ文章を生成時に適用する方法です。どちらもLoRAやEmbeddingの記法を使えます。保存プロンプトでは、それらの関連付けを別の設定として管理することもできます。
+
+「AIで矛盾確認」は、人数・髪・服・動作などの文章が食い違う可能性を示します。別人物の説明や意図した変化もあるため、候補を見て判断してください。文章を勝手に削除・修正する機能ではありません。
 
 ### 2. ワイルドカードを部分固定する
 
@@ -32,15 +34,15 @@ Wildcardsの「ツールを開く」から「展開プレビュー」を使う�
 
 入れ子の候補は、外側と内側で選択が分かれます。外側だけの固定と、展開された文章全体の固定は同じではありません。必要な選択をそれぞれ確認してください。元のプロンプトや候補ファイルが変わり、固定を引き継げなくなった場合は、展開プレビューを作り直します。
 
-ワイルドカードのファイルは利用者が用意します。自分のファイルを共有せずに、三欄の入力や通常の候補記法だけを使うこともできます。
+ワイルドカードのファイルは利用者が用意します。自分のファイルを共有せずに、項目別入力や通常の候補記法だけを使うこともできます。
 
 ### 3. 解釈を確認し、語句の効果を比べる
 
-生成結果の「プロンプトの解釈」では、元文と展開後の文章、重み、記法が適用される時期、モデルの文章変換に使った入力を確認できます。HiresやDetailerなど、記録のある段階も選べます。語句の重みは、画像に描かれた強さの測定値ではありません。入力記録のない過去の画像から、後付けで取得することもできません。
+生成結果の「生成に使ったプロンプト」では、元文と展開後の文章、重み、記法が適用される時期、モデルの文章変換に使った入力を確認できます。HiresやDetailerなど、記録のある段階も選べます。語句の重みは、画像に描かれた強さの測定値ではありません。入力記録のない過去の画像から、後付けで取得することもできません。
 
-![プロンプト解釈で実際に記録された文章と変換単位を確認する画面](images/prompt-interpretation-dark-ja.jpg)
+![「生成に使ったプロンプト」で記録済みの文章と変換単位を確認する画面](images/prompt-interpretation-dark-ja.jpg)
 
-「語句の効き方比較」では、語句・ネガティブ・LoRA・Embedding・一欄の文章・スタイルのうち一つを変えて比べます。
+「プロンプトの比較生成」では、語句・ネガティブ・LoRA・Embedding・一欄の文章・スタイルのうち一つを変えて比べます。
 
 1. 変更する対象とBの値、比較する組数を指定します。
 2. 「比較内容を確認」で、実際に使う文章と設定を確認します。
@@ -52,7 +54,7 @@ Wildcardsの「ツールを開く」から「展開プレビュー」を使う�
 
 ### 4. 自動生成を指定した条件で終了する
 
-「自動リピート」をONにし、「終了条件」から最大試行枚数・最大時間・合格枚数を指定します。初期値は三つとも`0`で、その条件の上限なしを意味します。以前に保存した値は引き継ぎます。合格枚数を使うには画像チェックをONにしてください。
+「自動リピート」をONにし、「終了条件」から最大試行枚数・最大時間・合格枚数を指定します。初期値は三つとも`0`で、その条件の上限なしを意味します。以前に保存した値は引き継ぎます。合格枚数を使うには「身体チェック」をONにしてください。
 
 失敗や不合格も試行枚数に含みます。上限に達した場合は実行中の一枚を終えてから停止し、理由を表示します。接続エラーや判定不能を合格として数えることはありません。ブラウザーを閉じたり処理を中止したりした後に、自動で生成を再開する機能ではありません。
 
@@ -62,14 +64,14 @@ Generateの「補正・拡張」では、必要な記録だけをONにできま�
 
 | 選択 | 保存するもの | 注意点 |
 |---|---|---|
-| 比較用の画像を残す | 一段目、Hires、Topaz、Detailerなど実際の処理前後の画像 | 画像への変換時間と保存容量が増えます |
-| メイキングを保存 | 途中プレビューから作るMP4とGIF | 画像モデルの計算は増えませんが、動画の作成時間と保存容量が必要です |
-| 途中の状態を残す | 指定した一つのステップの再開用データ | 一枚あたり最大128MiB。対応する生成で利用します |
+| 補正前後の画像を保存 | 一段目、Hires、Topaz、Detailerなど実際の処理前後の画像 | 画像への変換時間と保存容量が増えます |
+| 生成過程を動画で保存 | 途中プレビューから作るMP4とGIF | 画像モデルの計算は増えませんが、動画の作成時間と保存容量が必要です |
+| 生成の途中状態を保存 | 指定した一つのステップの再開用データ | 一枚あたり最大128MiB。対応する生成で利用します |
 | 言葉で選ぶ範囲を記録 | 語句の参照範囲の候補 | 処理時間と保存容量が増え、正確な部位の輪郭とは限りません |
 
-比較用画像はMedia Libraryで並べて確認できます。画素が変わった場所と、顔や服の意味が変わったかどうかは分けて確認してください。メイキングは実際に取得できたプレビューを使うため、すべてのステップが必ず収録されるわけではありません。中止や画像チェック不合格の場合はメイキングを残しません。
+比較用画像はMedia Libraryで並べて確認できます。画素が変わった場所と、顔や服の意味が変わったかどうかは分けて確認してください。生成過程の動画は実際に取得できたプレビューを使うため、すべてのステップが必ず収録されるわけではありません。中止や身体チェック不合格の場合は動画を残しません。
 
-途中状態を保存した結果では、「ステップ○から分岐…」から続きのプロンプトやCFGを変え、別の候補を作れます。元の画像と履歴は残ります。元のモデル・Seed・サイズなど、再開時に固定される設定は変更できません。後半の分岐では、構図などを大きく変える効果は弱くなる場合があります。
+途中状態を保存した結果では、「ステップ○から続きを生成…」から続きのプロンプトやCFGを変え、別の候補を作れます。元の画像と履歴は残ります。元のモデル・Seed・サイズなど、再開時に固定される設定は変更できません。後半の分岐では、構図などを大きく変える効果は弱くなる場合があります。
 
 途中からの再開は、単一画像のSDXL／Animaのtxt2imgと、Euler、Euler a、DPM++ 2M、DPM++ 2M SDE、DPM++ 3M SDE、ER SDEに対応します。保存するステップは一段目の終了やRefinerへの切り替えより前にしてください。利用できない条件は画面で確認できます。
 
@@ -77,15 +79,15 @@ ControlNetやAnima LLLiteを併用した場合は、制御画像とマスクも�
 
 ### 6. 完成画像を確認して再利用する
 
-Media Libraryの「画像の条件チェック」では、人数、髪・服、背景、行動、見切れ、不要物などを一行に一つ指定します。画像対応AIの結果は「一致」「不一致」「不明」です。見えない部分は不明として扱い、誤った結果は理由を添えて訂正できます。最新の判定で一覧を絞り込めます。画像を変更・削除する機能ではなく、人体の崩れ判定とも別です。
+Media Libraryの「AIで画像の条件確認」では、人数、髪・服、背景、行動、見切れ、不要物などを一行に一つ指定します。画像対応AIの結果は「一致」「不一致」「不明」です。見えない部分は不明として扱い、誤った結果は理由を添えて訂正できます。最新の判定で一覧を絞り込めます。画像を変更・削除する機能ではなく、人体の崩れ判定とも別です。
 
-シリーズの確認では、基準画像と比較する画像を選び、髪・服・顔などの変化を確認します。二枚から24枚まで扱えます。AIの元の結果と利用者の訂正を残します。同一人物の生成を保証する機能ではありません。
+「AIで見た目を比較」では、基準画像と比較する画像を選び、髪・服・顔などの変化を確認します。二枚から24枚まで扱えます。AIの元の結果と利用者の訂正を残します。同一人物の生成を保証する機能ではありません。
 
-「再生成アシスト」では、保存した文章や設定に加え、当時のモデルと現在のモデルの違いを確認して再利用できます。資産の欠落や変更があれば、対応するものを選び直してください。設定を復元できても、モデルや実行環境が違えば同じ画素になるとは限りません。
+「生成設定の復元・比較」では、保存した文章や設定に加え、当時のモデルと現在のモデルの違いを確認して再利用できます。資産の欠落や変更があれば、対応するものを選び直してください。設定を復元できても、モデルや実行環境が違えば同じ画素になるとは限りません。
 
 画像生成のSeed／Subseed欄には、`-1`（ランダム）か、`0`〜`9,007,199,254,740,991`の整数を使ってください。ブラウザーで正確に扱えない値は、丸めたまま送信せずエラーで停止します。これは入力欄の制約であり、過去の記録やbackendのSeedを書き換えるものではありません。
 
-人体チェックは、通常生成・Hires.fix・Topaz・ADetailerなど、すべての生成・補正が終わった完成画像に対して、正式な保存・履歴登録・表示の前に一回実施します。[画像チェックのガイド](IMAGE_CHECK.md)を参照してください。AIには見逃しや誤判定があります。独自の人体判定器は現在選べません。
+「完成画像の身体チェック」は、通常生成・Hires.fix・Topaz・ADetailerなど、すべての生成・補正が終わった完成画像に対して、正式な保存・履歴登録・表示の前に一回実施します。[身体チェックのガイド](IMAGE_CHECK.md)を参照してください。AIには見逃しや誤判定があります。独自の人体判定器は現在選べません。
 
 ### 7. 語句の範囲を部分編集へ渡す・複数人のポーズを作る
 
@@ -95,29 +97,31 @@ Media Libraryの「画像の条件チェック」では、人数、髪・服、�
 
 SDXLでは対応するControlNet、Animaでは対応するLLLiteと制御画像を使います。必要なモデルは利用者が用意してください。AnimaのLLLiteは制御画像が結果に作用しても、任意のポーズに追従するとは限りません。ポーズや複数人の描き分けを保証する機能ではありません。
 
-### 人体部位レビューと再生成条件の差を確認する
+### 体の部位を見比べて編集する
 
-人体部位レビューは、検出した部位を拡大して確認し、必要な範囲を編集へ渡すための機能です。人体の正常性や部位の所属は判定しません。
+「体の部位を検出・選択」では、検出候補を拡大して確認し、必要な範囲を編集へ渡せます。人体の正常性や部位の所属は判定しません。
 
-1. メディアライブラリの画像詳細、または画像編集のマスク欄で「人体部位レビュー」を開きます。
+1. メディアライブラリの画像詳細、または画像編集のマスク欄で「体の部位を検出・選択」を開きます。
 2. 「探す部位」を選び、「部位候補を検出」を押します。
 3. 画像上の矩形と拡大一覧を確認します。候補には重複・誤検出・見逃し・人物の混在があります。
 
-![Darkモードの人体部位レビュー。矩形は検出候補であり正常性の判定ではありません](images/body-review-dark-ja.jpg)
+![Darkモードの部位選択画面。矩形は検出候補であり正常性の判定ではありません](images/body-review-dark-ja.jpg)
 
 候補の画像を押すと、その矩形の端を修正できます。不要な候補は「除外」で外し、「戻す」で復帰できます。「修正・選択を保存」で次回にも残します。二つ選ぶと同じ表示部品で拡大比較できます。マスク化は一度に16部位までです。
 
 ![一候補を選択し、別の候補を除外して矩形を修正する画面](images/body-review-corrections-dark-ja.jpg)
 
-複数画像の同じ部位を見る場合は、メディアライブラリでCtrl＋クリック、またはCtrl＋Enterで2〜32画像を選び、「部位を比較」を開きます。「手」などの種類を選び、各画像から一候補を選ぶと、切り出した部位を横並びで比較できます。拡大率は共通です。横へスクロールすると残りの画像も確認できます。候補のない画像も空欄として残ります。必要なら「候補のない○画像を検出」を押してください。○には対象の画像数が表示され、押したときだけ検出が始まります。各列の「人体部位レビュー」で候補の修正・除外や既存のマスク編集へ進めます。
+複数画像の同じ部位を見る場合は、メディアライブラリでCtrl＋クリック、またはCtrl＋Enterで2〜32画像を選び、「部位を比較」を開きます。「手」などの種類を選び、各画像から一候補を選ぶと、切り出した部位を横並びで比較できます。拡大率は共通です。横へスクロールすると残りの画像も確認できます。候補のない画像も空欄として残ります。必要なら「候補のない○画像を検出」を押してください。○には対象の画像数が表示され、押したときだけ検出が始まります。各列の「体の部位を検出・選択」で候補の修正・除外や既存のマスク編集へ進めます。
 
-![二画像の手候補を横並びにした部位比較。各列で候補を選び、共通の拡大率で確認できます](images/body-parts-comparison-dark-ja.jpg)
+![二画像の胴体候補を横並びにした部位比較。各列で候補を選び、共通の拡大率で確認できます](images/body-parts-comparison-dark-ja.jpg)
 
 SAMが利用できる場合は「選択部位をマスク化」を押し、色付きの実マスクを確認して「マスクを画像編集へ」を使います。矩形だけの候補をマスクとして転送することはありません。Image Editのブラシ・消しゴムで修正し、既存の「マスクを保存」から生成へ進んでください。未保存の手動マスクがある場合は先に保存します。元画像は上書きしません。
 
 検出とマスク作成は任意導入で、利用者が操作したときだけCPUで実行します。モデルがなければ対応ボタンが無効になりますが、手動編集は使えます。[Grounding DINO tiny](https://huggingface.co/IDEA-Research/grounding-dino-tiny/tree/a2bb814dd30d776dcf7e30523b00659f4f141c71)のモデル・設定・tokenizerをモデル保存先の`body_review/grounding-dino-tiny/`へ、[SAM ViT-B](https://github.com/facebookresearch/segment-anything#model-checkpoints)を`sams/sam_vit_b_01ec64.pth`へ配置してください。AsteriaのPython環境にはTransformersとsegment-anythingも必要です。両モデルはApache-2.0ですが、提供元の利用条件も確認してください。モデルの自動取得は行いません。
 
-再生成の違いを調べるには、「再生成アシスト」→「記録された数値の差」を開きます。比較する履歴を選び、「生成条件を比較」を押してください。
+### 再生成条件の差を調べる
+
+「生成設定の復元・比較」→「生成時の数値を比較」を開きます。比較する履歴を選び、「生成条件を比較」を押してください。
 
 Seed、Sampler、実際の入力、モデル・VAE・Embedding等の記録済みhashを比較します。今後の通常生成では、実際に使ったsigma列、初期noiseと入力latentのhash、入力の配置先、samplingの計算先も記録します。Hires等の工程やbatchも分けて確認できます。tensor本体は保存しません。
 
@@ -131,7 +135,7 @@ LoRA学習では、学習画像とcaptionの対応、トリガー、特徴の偏
 
 キャラクター学習では、全captionの先頭へトリガーを置きます。トリガーに覚えさせる固定特徴はcaptionから外し、変化する服・姿勢・表情・背景・小物・照明を残してください。
 
-学習後のLoRA実用テストでは、服・背景・ポーズなどの場面を変えて、LoRAあり／なしの生成を比較できます。同じ組は同じSeedで生成し、人物の特徴、服、背景、姿勢、画質などを別々に評価して記録します。学習中のLossが下がっただけで完成とは扱わず、学習に使っていない条件でも画像を確認してください。
+学習後の「LoRAあり・なしを比較」では、服・背景・ポーズなどの場面を変えて生成できます。同じ組は同じSeedで生成し、人物の特徴、服、背景、姿勢、画質などを別々に評価して記録します。学習中のLossが下がっただけで完成とは扱わず、学習に使っていない条件でも画像を確認してください。
 
 ## English
 
@@ -143,11 +147,13 @@ Use Search models at the top of Generate to filter a large model list by model o
 
 ### 1. Assemble prompts
 
-Scene builder turns a scene description and optional material notes into Base, Character, Details, and negative-prompt suggestions. Choose an AI connection, request a proposal, and review or edit it before applying it. Applying replaces the three positive sections and switches to sectioned input, while preserving their names and order. Negative replacement is optional. Pinned wildcard choices are cleared. Requesting a proposal alone never changes your current text.
+AI prompt builder turns a scene description and optional Details to include into Base, Character, Details, and negative-prompt suggestions. Choose an AI connection, request a proposal, and review or edit it before applying it. Applying replaces the three positive sections and switches to sectioned input, while preserving their names and order. Negative replacement is optional. Pinned wildcard choices are cleared. Requesting a proposal alone never changes your current text.
 
-Materials stores people, outfits, poses, and backgrounds separately. Select materials in insertion order and append them to a prompt section. Linked LoRA and Embeddings can be applied by that append action. Sending materials to Scene builder uses their text only; it does not automatically apply linked assets. Review image-derived suggestions against the visible image before saving them. Materials do not guarantee identity or placement.
+Use **Saved prompts** to store reusable text for people, outfits, poses and backgrounds. Select entries in order and append their text to the end of a prompt field. You can also apply linked LoRA and Embeddings. **Use in AI prompt builder** sends only the selected text for a suggestion; it does not apply linked assets. Review image-derived suggestions against the visible image before saving them. Saved prompts do not guarantee identity or placement.
 
-Meaning check suggests possible conflicts in count, appearance, clothing, or actions. Different subjects and intentional changes can look contradictory, so review the suggestions yourself. It never deletes or rewrites your prompts.
+Advanced Styles also reuse saved text. With **Saved prompts**, you append editable text to an input field; with **Advanced Styles**, you apply selected text during generation. Both can contain LoRA or Embedding syntax. Saved prompts additionally lets you manage those links as separate settings.
+
+AI conflict check suggests possible conflicts in count, appearance, clothing, or actions. Different subjects and intentional changes can look contradictory, so review the suggestions yourself. It never deletes or rewrites your prompts.
 
 ### 2. Pin individual wildcard choices
 
@@ -157,23 +163,23 @@ Supply your own wildcard files. The ordinary three-section editor and prompt-alt
 
 ### 3. Inspect interpretation and compare effects
 
-Prompt interpretation shows original and expanded text, weights, notation timing, and recorded text-encoder input. Recorded Hires and Detailer stages are selectable. A weight is not a measurement of how prominently a phrase appears in the image. Results without an input record cannot acquire it retrospectively.
+Open **Prompts used for generation** to inspect original and expanded text, weights, notation timing, and recorded text-encoder input. Recorded Hires and Detailer stages are selectable. A weight is not a measurement of how prominently a phrase appears in the image. Results without an input record cannot acquire it retrospectively.
 
-![Prompt interpretation showing recorded text-encoder input; Japanese UI in Dark mode](images/prompt-interpretation-dark-ja.jpg)
+![Prompts used for generation showing recorded text-encoder input; Japanese UI in Dark mode](images/prompt-interpretation-dark-ja.jpg)
 
-Prompt-effect comparison changes one phrase, negative input, LoRA, Embedding, section, or style. Select the change and pair count, review the prepared inputs, then start the comparison. Each pair uses the same Seed for A and B to isolate the change from initial-noise differences. Seed `-1` draws seeds once during preparation. Each pair produces two images at batch size one.
+Use **Generate a prompt comparison** to change one phrase, negative input, LoRA, Embedding, section, or style. Select the change and pair count, review the prepared inputs, then start the comparison. Each pair uses the same Seed for A and B to isolate the change from initial-noise differences. Seed `-1` draws seeds once during preparation. Each pair produces two images at batch size one.
 
 You can vote for the left or right image, choose no preference or neither, and save notes before revealing the conditions. This is a preference aid, not a statistical proof of effectiveness or success rate.
 
 ### 4. Set automatic-generation limits
 
-Enable automatic repeat and open its stop conditions. Set limits for attempted images, elapsed time, or accepted images. All three default to `0`, meaning no limit for that condition; previously saved values are retained. Accepted-image limits require image checking. Failed and rejected images count toward attempts. When a limit is reached, Asteria finishes the current image and shows the stop reason. Unknown judgments and connection errors are not accepted images. Closing the browser or interrupting the run does not schedule an automatic restart.
+Enable automatic repeat and open its stop conditions. Set limits for attempted images, elapsed time, or accepted images. All three default to `0`, meaning no limit for that condition; previously saved values are retained. Accepted-image limits require **Check anatomy**. Failed and rejected images count toward attempts. When a limit is reached, Asteria finishes the current image and shows the stop reason. Unknown judgments and connection errors are not accepted images. Closing the browser or interrupting the run does not schedule an automatic restart.
 
 ### 5. Record stages and generation progress
 
-In Generate's enhancement settings, independently enable before/after images, making-of MP4/GIF output, one intermediate branch state, or word-reference maps. All use the common generation output folder.
+In Generate's enhancement settings, independently enable **Save images before and after enhancement**, **Save a video of generation progress**, **Save an intermediate generation state**, or word-reference maps. All use the common generation output folder.
 
-Stage images add decoding and disk costs. Making-of output uses captured previews without extra image-model evaluations, but needs encoding time and storage; some steps may be absent. It is not retained for cancelled or image-check-rejected runs. A branch state uses up to 128 MiB per image. Word-reference maps add processing and storage and are not exact object boundaries.
+Stage images add decoding and disk costs. The generation video uses captured previews without extra image-model evaluations, but needs encoding time and storage; some steps may be absent. It is not retained for cancelled or anatomy-check-rejected runs. A branch state uses up to 128 MiB per image. Word-reference maps add processing and storage and are not exact object boundaries.
 
 Compare stage images in Media Library, distinguishing pixel changes from semantic changes to faces or outfits. Saved branch states expose a branch action on the result. Edit continuation text or CFG to create another candidate while retaining the original image and history. Settings fixed by the saved state, such as its model, Seed, and dimensions, cannot be changed. Late branching may have little effect on composition.
 
@@ -183,11 +189,11 @@ With ControlNet or Anima LLLite enabled, the saved state also retains control im
 
 ### 6. Review and reuse completed images
 
-Image condition check in Media Library accepts one criterion per line, such as count, hair, clothing, background, action, cropping, or unwanted objects. A vision model reports match, mismatch, or unknown; invisible details remain unknown. Correct a judgment with a reason and filter the library by its latest result. This does not change or delete the image and is separate from anatomy checking.
+**Check image conditions with AI** in Media Library accepts one criterion per line, such as count, hair, clothing, background, action, cropping, or unwanted objects. A vision model reports match, mismatch, or unknown; invisible details remain unknown. Correct a judgment with a reason and filter the library by its latest result. This does not change or delete the image and is separate from anatomy checking.
 
-Series review compares two to 24 images against a reference for changes in appearance, clothing, or faces. Original AI judgments and your corrections are retained. It does not guarantee that generated images depict the same identity.
+**Compare appearance with AI** compares two to 24 images against a reference for changes in appearance, clothing, or faces. Original AI judgments and your corrections are retained. It does not guarantee that generated images depict the same identity.
 
-Reproduction assistance restores recorded text and settings and checks recorded assets against currently available ones. Reselect missing or changed assets. Restored settings do not guarantee pixel-identical output across different models or execution environments.
+**Restore and compare generation settings** restores recorded text and settings and checks recorded assets against currently available ones. Reselect missing or changed assets. Restored settings do not guarantee pixel-identical output across different models or execution environments.
 
 For the image-generation Seed and Subseed fields, use `-1` for random or a whole number from `0` to `9,007,199,254,740,991`. Values that the browser cannot represent exactly are refused instead of being rounded and submitted. This is an input-field limitation; it does not rewrite existing records or backend Seeds.
 
@@ -199,21 +205,21 @@ Images with recorded word-reference maps can suggest edit regions for words such
 
 In the pose editor, add people and drag their joints or move an entire person. One control image includes every person, not just the selected one; this is not a composition of separately generated people. Use a compatible SDXL ControlNet or Anima LLLite model and supply the required weights yourself. Anima LLLite can influence the result without following an arbitrary pose. Pose following and multi-person attribute separation are not guaranteed.
 
-### Review body parts and recorded regeneration differences
+### Inspect body parts and send them to editing
 
-Body-part review helps you inspect enlarged parts and send selected regions to editing. It does not judge anatomical correctness or person ownership.
+Use **Detect and select body parts** to inspect enlarged candidates and send selected regions to editing. It does not judge anatomical correctness or person ownership.
 
-1. Open **Body-part review** in Media Library image details or the Image Edit mask inspector.
+1. Open **Detect and select body parts** in Media Library image details or the Image Edit mask inspector.
 2. Select the parts to look for and press **Find candidates**.
 3. Inspect the box overlays and enlarged crops. Duplicates, false detections, missing parts and mixed people may remain.
 
-![Body-part review with candidate rectangles, not anatomy judgments](images/body-review-dark-ja.jpg)
+![Detect and select body parts with candidate rectangles, not anatomy judgments](images/body-review-dark-ja.jpg)
 
 Click a crop to adjust its box edges. Exclude or restore candidates, and use **Save review** to retain corrections and selections. Select two crops for comparison using the shared image viewer. Up to 16 selected regions can be masked at once.
 
 ![Selecting a candidate, excluding a duplicate and correcting rectangle edges](images/body-review-corrections-dark-ja.jpg)
 
-For the same part across multiple images, select 2–32 Media Library images using Ctrl+click or Ctrl+Enter, then open **Compare body parts**. Choose a part type and one candidate per image. Crops appear side by side with shared zoom; scroll horizontally to reach the other images. Missing candidates remain as empty columns. If needed, click **Detect missing candidates (… images)**; the label shows the number of affected images, and detection starts only when clicked. Each column's **Body-part review** reuses the existing correction, exclusion and mask-editing workflow.
+For the same part across multiple images, select 2–32 Media Library images using Ctrl+click or Ctrl+Enter, then open **Compare body parts**. Choose a part type and one candidate per image. Crops appear side by side with shared zoom; scroll horizontally to reach the other images. Missing candidates remain as empty columns. If needed, click **Detect missing candidates (… images)**; the label shows the number of affected images, and detection starts only when clicked. Each column's **Detect and select body parts** reuses the existing correction, exclusion and mask-editing workflow.
 
 ![Same-part comparison across two images, with a candidate selector for each column](images/body-parts-comparison-dark-ja.jpg)
 
@@ -221,7 +227,9 @@ When SAM is available, create a mask and inspect its colored area before sending
 
 Detection and masking are optional, CPU-only and explicitly invoked; they do not run after each generation. Missing models disable only their respective operations, not manual editing. Put the pinned [Grounding DINO tiny](https://huggingface.co/IDEA-Research/grounding-dino-tiny/tree/a2bb814dd30d776dcf7e30523b00659f4f141c71) model/config/tokenizer files in `body_review/grounding-dino-tiny/` under model storage, and the official [SAM ViT-B](https://github.com/facebookresearch/segment-anything#model-checkpoints) checkpoint in `sams/sam_vit_b_01ec64.pth`. Asteria's Python environment also needs Transformers and segment-anything. Both models declare Apache-2.0; check their provider terms. Models are not downloaded automatically.
 
-Open **Regeneration assist → Recorded numerical differences**, choose another history entry, then press **Compare generation conditions**.
+### Inspect recorded regeneration differences
+
+Open **Restore and compare generation settings → Compare recorded generation values**, choose another history entry, then press **Compare generation conditions**.
 
 The comparison shows saved inputs, Seed, Sampler and model/VAE/Embedding hashes. Future ordinary generations also record actual sigma values, initial noise and input-latent hashes, input devices and sampling compute devices. Hires stages and batches remain distinct. Tensors themselves are not saved.
 

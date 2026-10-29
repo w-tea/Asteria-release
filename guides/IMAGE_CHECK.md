@@ -1,8 +1,8 @@
-# 生成画像のチェック / Generated-image check
+# 完成画像の身体チェック / Finished-image anatomy check
 
 [日本語](#日本語) | [English](#english) | [README](../README.md)
 
-![Darkモードの画像チェック設定。判定方式と不合格画像の保存を選択 / Completed-image check settings](images/image-check-settings-dark-ja.jpg)
+![Darkモードの身体チェック設定。判定方式と不合格画像の保存を選択 / Finished-image anatomy check settings](images/image-check-settings-dark-ja.jpg)
 
 画面例は設定方法を示すもので、人体異常の検出精度を示すものではありません。 / This configuration example does not demonstrate anatomy-detection accuracy.
 
@@ -13,9 +13,9 @@
 ### 設定する
 
 1. 「設定」→「AIプロバイダー」を開きます。
-2. 「生成画像のチェック」で「画像対応LLM」または「Codex」を選びます。LLMを使う場合は、保存済みの画像対応モデルの接続先を選びます。文章専用のモデルでは判定できません。Codexの利用可否は実行環境と対応モデルによって異なります。
+2. 「完成画像の身体チェック」で「画像対応LLM」または「Codex」を選びます。LLMを使う場合は、保存済みの画像対応モデルの接続先を選びます。文章専用のモデルでは判定できません。Codexの利用可否は実行環境と対応モデルによって異なります。
 3. 不合格画像を残したい場合は「不合格画像も保存」をONにします。
-4. 次回から初期状態でチェックを有効にしたい場合は「生成画像のチェックを初期状態でONにする」を選び、「チェック設定を保存」を押します。生成画面でも、その生成に使うON／OFFを切り替えられます。
+4. 次回から初期状態でチェックを有効にしたい場合は「身体チェックを初期状態でONにする」を選び、「チェック設定を保存」を押します。生成画面でも、その生成に使う「身体チェック」を切り替えられます。
 
 独自の人体判定器は現在選べません。接続するAIの判断能力によって結果が変わります。
 
@@ -62,9 +62,9 @@ This feature asks an image-capable AI to check for anatomical defects. It is sep
 ### Configure the check
 
 1. Open Settings → AI providers.
-2. Under Generated image check, select Image-capable LLM or Codex. For an LLM, choose a saved connection with an image-capable model. Text-only models cannot judge the image. Codex availability depends on the installed environment and supported models.
+2. Under Finished-image anatomy check, select Image-capable LLM or Codex. For an LLM, choose a saved connection with an image-capable model. Text-only models cannot judge the image. Codex availability depends on the installed environment and supported models.
 3. Enable Also save rejected images if you want to keep rejected results.
-4. To enable checking by default, select Enable checking by default and click Save check settings. The Generate screen also has a per-generation ON/OFF control.
+4. To enable checking by default, select Enable anatomy checking by default and click Save check settings. Use Check anatomy on the Generate screen to switch it ON or OFF for the next generation.
 
 An Asteria-native anatomy classifier is not currently available. Results depend on the selected AI’s capabilities.
 

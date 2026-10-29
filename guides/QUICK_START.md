@@ -15,11 +15,11 @@
 ### 2. 一枚生成する
 
 1. 左の「生成」を開き、モデルプロファイル、Checkpoint、必要なVAEを選びます。「モデルを検索」ではモデル名やフォルダー名で候補を絞り込めます。未導入の場合はモデルを追加するか、「設定」→「起動準備」を確認してください。
-2. 描きたい内容とネガティブプロンプトを入力します。「項目別に入力」は文章を三欄に整理する機能であり、人物の位置を指定するものではありません。
+2. 描きたい内容とネガティブプロンプトを入力します。「項目別に入力」を選ぶと、ベース・キャラクター・詳細に分けて文章を整理できます。人物の位置を指定する機能ではありません。
 3. 右の「基本設定」でサイズ、Samplingステップなどを選びます。通常はSeedを`-1`にして、毎回新しい値を使います。
 4. 「生成」を押し、完成画像を確認します。中断したいときは「停止」を押します。自動リピートをONにした場合は、終了条件も確認してください。
 
-![プロンプトと基本設定、完成画像を表示する生成画面](images/generate-dark-ja.jpg)
+![保存済みの完成画像を開いた生成画面。左がプロンプト、中央が画像、右が生成条件です](images/generate-dark-ja.jpg)
 
 画面例は、保存済みの生成画像を履歴から読み込んだ状態です。再生成用のSeedや設定は履歴に残りますが、別の実行環境で画素まで同じになる保証はありません。詳しい比較や途中状態の保存は[制作支援ガイド](CREATIVE_WORKFLOWS.md)を参照してください。
 
@@ -29,11 +29,11 @@
 
 ![検索した画像と選択画像の詳細を表示するメディアライブラリ](images/media-library-dark-ja.jpg)
 
-人体部位レビューと複数画像の部位比較は、検出候補を自分で確認するための機能です。人体の正常性や部位の所属は判定しません。操作と任意モデルの用意は[制作支援ガイド](CREATIVE_WORKFLOWS.md)を確認してください。
+「体の部位を検出・選択」と複数画像の部位比較では、検出候補を自分で確認できます。人体の正常性や部位の所属は判定しません。操作と任意モデルの用意は[制作支援ガイド](CREATIVE_WORKFLOWS.md)を確認してください。
 
 ### 4. 必要な範囲だけ編集する
 
-メディアライブラリで画像を選び、「画像編集で開く」を押します。描き直したい範囲にマスクを描いてください。任意のSAMがある場合は、人体部位レビューで作った実マスクも使えます。色付きの範囲を確認し、ブラシ・消しゴムで直してから「マスクを保存」で保存し、生成へ送ります。元画像は直接上書きしません。
+メディアライブラリで画像を選び、「画像編集で開く」を押します。描き直したい範囲にマスクを描いてください。任意のSAMがある場合は、「体の部位を検出・選択」で作った実マスクも使えます。色付きの範囲を確認し、ブラシ・消しゴムで直してから「マスクを保存」で保存し、生成へ送ります。元画像は直接上書きしません。
 
 ![既存の画像編集でマスクを確認して生成へ送る画面](images/image-edit-mask-dark-ja.jpg)
 
@@ -79,7 +79,7 @@ Open Settings → Appearance and choose Light, Dark or System. The theme changes
 3. Choose dimensions and sampling settings in Basic settings. Use Seed `-1` for a fresh value during ordinary generation.
 4. Press Generate and inspect the completed image. Stop cancels an ongoing run. Review the stop conditions before enabling automatic repeat.
 
-![Generate with prompt input, settings and a completed ordinary image](images/generate-dark-ja.jpg)
+![A saved result open in Generate, with prompt input, the completed image and generation settings](images/generate-dark-ja.jpg)
 
 The screenshot shows a saved generation restored from history. History retains the Seed and settings, but pixel-identical output across execution environments is not guaranteed. See [Creative workflows](CREATIVE_WORKFLOWS.md) for comparisons and saved intermediate states.
 
@@ -89,11 +89,11 @@ Open Media to browse images, video and audio. Select an image card to see its pr
 
 ![Filtered Library images and the selected image details](images/media-library-dark-ja.jpg)
 
-Body-part review and same-part comparison show detection candidates for your inspection, not anatomical correctness or ownership judgments. See [Creative workflows](CREATIVE_WORKFLOWS.md) for their optional models and operations.
+Detect and select body parts and same-part comparison show detection candidates for your inspection, not anatomical correctness or ownership judgments. See [Creative workflows](CREATIVE_WORKFLOWS.md) for their optional models and operations.
 
 ### 4. Edit a selected region
 
-Select an image in Media Library, click Open in Image Edit, and draw a mask over the area to change. With optional SAM available, you can also use a real mask from Body-part review. Inspect the colored region, refine it with the brush or eraser, use Save mask, then send it to Generate. The original image is not directly overwritten.
+Select an image in Media Library, click Open in Image Edit, and draw a mask over the area to change. With optional SAM available, you can also use a real mask from Detect and select body parts. Inspect the colored region, refine it with the brush or eraser, use Save mask, then send it to Generate. The original image is not directly overwritten.
 
 ![Image Edit with a real mask and the handoff to Generate](images/image-edit-mask-dark-ja.jpg)
 

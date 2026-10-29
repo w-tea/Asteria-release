@@ -34,9 +34,9 @@
 
 ### 部位を見比べる・生成条件を調べる
 
-画像詳細の「人体部位レビュー」では、任意モデルが検出した矩形候補を修正・除外できます。Ctrl＋クリックなどで2〜32画像を選び「部位を比較」を開くと、同じ種類の部位を横並びで確認できます。候補は正常性や人物所属の判定ではありません。
+画像詳細の「体の部位を検出・選択」では、任意モデルが検出した矩形候補を修正・除外できます。Ctrl＋クリックなどで2〜32画像を選び「部位を比較」を開くと、同じ種類の部位を横並びで確認できます。候補は正常性や人物所属の判定ではありません。
 
-「再生成アシスト」では設定を再利用し、「記録された数値の差」から保存済みの資産・実入力・sigma等を比較できます。未記録の値は推測しません。詳しい手順と任意モデルの準備は[制作支援ガイド](CREATIVE_WORKFLOWS.md)を参照してください。
+「生成設定の復元・比較」では設定を再利用し、「生成時の数値を比較」から保存済みの資産・実入力・sigma等を比較できます。未記録の値は推測しません。詳しい手順と任意モデルの準備は[制作支援ガイド](CREATIVE_WORKFLOWS.md)を参照してください。
 
 ## English
 
@@ -66,6 +66,6 @@ Image-only actions such as Image Edit and Topaz are unavailable while a video or
 
 ### Compare parts and inspect generation conditions
 
-Body-part review in image details lets you correct or exclude optional-model detection candidates. Select 2–32 images with Ctrl+click and open Compare body parts to view the same part type side by side. Candidates do not judge anatomical correctness or person ownership.
+Detect and select body parts in image details lets you correct or exclude optional-model detection candidates. Select 2–32 images with Ctrl+click and open Compare body parts to view the same part type side by side. Candidates do not judge anatomical correctness or person ownership.
 
-Regeneration assist restores settings; Recorded numerical differences compares saved assets, actual inputs and sigma observations without inferring missing values. See [Creative workflows](CREATIVE_WORKFLOWS.md) for steps and optional-model preparation.
+Restore and compare generation settings restores settings; Compare recorded generation values compares saved assets, actual inputs and sigma observations without inferring missing values. See [Creative workflows](CREATIVE_WORKFLOWS.md) for steps and optional-model preparation.
