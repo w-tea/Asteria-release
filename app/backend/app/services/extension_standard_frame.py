@@ -102,7 +102,7 @@ def build_standard_extension_frame(
         ":root{color-scheme:light;font-family:Inter,'Segoe UI',sans-serif;color:#182234;background:transparent}"
         ":root[data-theme='dark']{color-scheme:dark;color:#e7edf6}"
         "html,body{margin:0;min-width:0;background:transparent}"
-        "body{padding:14px}button,input,select,textarea{font:inherit}"
+        "body{padding:0}button,input,select,textarea{font:inherit}"
         "#asteria-extension-root{min-width:0}"
         "</style></head><body><main id=\"asteria-extension-root\"></main>"
         f"<script type=\"module\" nonce=\"{frame_nonce}\">{bootstrap}</script>"

@@ -19378,7 +19378,7 @@ const _sfc_main$1W = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: ["extension-contribution-workspace", { "extension-contribution-workspace--compact": __props.compact }],
         "aria-label": __props.item.label
-      }, _attrs))} data-v-c06c0cbd><header data-v-c06c0cbd><p data-v-c06c0cbd>${ssrInterpolate(unref(t)("extensions.contribution.eyebrow"))}</p>`);
+      }, _attrs))} data-v-878e8efb><header data-v-878e8efb><p data-v-878e8efb>${ssrInterpolate(unref(t)("extensions.contribution.eyebrow"))}</p>`);
       ssrRenderVNode(_push, createVNode(resolveDynamicComponent(__props.compact ? "h3" : "h1"), null, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
@@ -19393,18 +19393,18 @@ const _sfc_main$1W = /* @__PURE__ */ defineComponent({
       }), _parent);
       _push(`</header>`);
       if (unref(loading)) {
-        _push(`<p class="contribution-state" aria-live="polite" data-v-c06c0cbd>${ssrInterpolate(unref(t)("extensions.contribution.loading"))}</p>`);
+        _push(`<p class="contribution-state" aria-live="polite" data-v-878e8efb>${ssrInterpolate(unref(t)("extensions.contribution.loading"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(error)) {
-        _push(`<p class="contribution-state contribution-state--error" role="alert" data-v-c06c0cbd>${ssrInterpolate(unref(error))}</p>`);
+        _push(`<p class="contribution-state contribution-state--error" role="alert" data-v-878e8efb>${ssrInterpolate(unref(error))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="extension-contribution-frame-shell"${ssrRenderAttr("aria-busy", unref(loading))} data-v-c06c0cbd>`);
+      _push(`<div class="extension-contribution-frame-shell"${ssrRenderAttr("aria-busy", unref(loading))} data-v-878e8efb>`);
       if (unref(frameSource)) {
-        _push(`<iframe class="extension-contribution-frame"${ssrRenderAttr("src", unref(frameSource))}${ssrRenderAttr("aria-label", __props.item.label)} sandbox="allow-scripts" referrerpolicy="no-referrer" data-v-c06c0cbd></iframe>`);
+        _push(`<iframe class="extension-contribution-frame"${ssrRenderAttr("src", unref(frameSource))}${ssrRenderAttr("aria-label", __props.item.label)} sandbox="allow-scripts" referrerpolicy="no-referrer" data-v-878e8efb></iframe>`);
       } else {
         _push(`<!---->`);
       }
@@ -19418,7 +19418,7 @@ _sfc_main$1W.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/StandardExtensionFrame.vue");
   return _sfc_setup$1W ? _sfc_setup$1W(props, ctx) : void 0;
 };
-const StandardExtensionFrame = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-c06c0cbd"]]), { __name: "StudioExtensionsStandardExtensionFrame" });
+const StandardExtensionFrame = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-878e8efb"]]), { __name: "StudioExtensionsStandardExtensionFrame" });
 const _sfc_main$1V = /* @__PURE__ */ defineComponent({
   __name: "ExtensionContributionHost",
   __ssrInlineRender: true,
