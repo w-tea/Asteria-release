@@ -54653,11 +54653,11 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     const { t } = useAsteriaI18n();
     return (_ctx, _push, _parent, _attrs) => {
       const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
-      _push(`<nav${ssrRenderAttrs(mergeProps({ class: "studio-rail" }, _attrs))} data-v-67c7d727><!--[-->`);
+      _push(`<nav${ssrRenderAttrs(mergeProps({ class: "studio-rail" }, _attrs))} data-v-4c763b78><!--[-->`);
       ssrRenderList(__props.items, (item, index) => {
         _push(`<!--[-->`);
         if (item.group === "extensions" && __props.items[index - 1]?.group !== "extensions") {
-          _push(`<p class="studio-rail__group-label" data-v-67c7d727>${ssrInterpolate(unref(t)("rail.extensionsGroup"))}</p>`);
+          _push(`<p class="studio-rail__group-label" data-v-4c763b78>${ssrInterpolate(unref(t)("rail.extensionsGroup"))}</p>`);
         } else {
           _push(`<!---->`);
         }
@@ -54667,11 +54667,11 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
           disabled: item.disabled,
           "aria-label": item.label,
           "aria-current": item.id === __props.active ? "page" : void 0
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.label)))} data-v-67c7d727><svg class="studio-rail__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" data-v-67c7d727><!--[-->`);
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.label)))} data-v-4c763b78><svg class="studio-rail__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" data-v-4c763b78><!--[-->`);
         ssrRenderList(iconPaths[item.icon] || iconPaths.extensions, (path) => {
-          _push(`<path${ssrRenderAttr("d", path)} data-v-67c7d727></path>`);
+          _push(`<path${ssrRenderAttr("d", path)} data-v-4c763b78></path>`);
         });
-        _push(`<!--]--></svg><small data-v-67c7d727>${ssrInterpolate(item.label)}</small></button><!--]-->`);
+        _push(`<!--]--></svg><small data-v-4c763b78>${ssrInterpolate(item.label)}</small></button><!--]-->`);
       });
       _push(`<!--]--></nav>`);
     };
@@ -54683,7 +54683,7 @@ _sfc_main$8.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StudioRail.vue");
   return _sfc_setup$8 ? _sfc_setup$8(props, ctx) : void 0;
 };
-const StudioRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$8, [["__scopeId", "data-v-67c7d727"]]), { __name: "StudioRail" });
+const StudioRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$8, [["__scopeId", "data-v-4c763b78"]]), { __name: "StudioRail" });
 const _sfc_main$7 = /* @__PURE__ */ defineComponent({
   __name: "StudioShell",
   __ssrInlineRender: true,
