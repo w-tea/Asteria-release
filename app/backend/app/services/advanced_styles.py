@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import os
 import re
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +30,10 @@ class AdvancedStylesLibrary:
 
 
 class AdvancedStylesError(Exception):
+    pass
+
+
+class AdvancedStylesThumbnailIdentityConflict(AdvancedStylesError):
     pass
 
 
@@ -91,6 +97,8 @@ class AdvancedStylesRepository:
     def save_thumbnail(self, group: str, name: str, image_bytes: bytes) -> str:
         if not image_bytes:
             raise ValueError("Thumbnail image is empty")
+        self._require_thumbnail_identity(group, name)
+        temporary_path: Path | None = None
         try:
             from io import BytesIO
 
@@ -98,14 +106,26 @@ class AdvancedStylesRepository:
             with Image.open(BytesIO(image_bytes)) as image:
                 thumbnail = image.convert("RGB")
                 thumbnail.thumbnail((512, 512))
-                thumbnail.save(path, format="WEBP", quality=90, method=6)
+                with tempfile.NamedTemporaryFile(
+                    prefix=f".{path.name}.", suffix=".tmp", dir=path.parent, delete=False
+                ) as temporary:
+                    temporary_path = Path(temporary.name)
+                thumbnail.save(temporary_path, format="WEBP", quality=90, method=6)
+                temporary_path.replace(path)
         except OSError as exc:
             raise AdvancedStylesError(f"Could not save thumbnail: {exc}") from exc
         except Exception as exc:
             raise ValueError("Unsupported thumbnail image") from exc
+        finally:
+            if temporary_path is not None:
+                try:
+                    temporary_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
         return str(path.relative_to(self.data_dir))
 
     def delete_thumbnail(self, group: str, name: str) -> bool:
+        self._require_thumbnail_identity(group, name)
         path = self._thumbnail_path(group, name, create_dir=False)
         if not self._path_exists(path) or not self._path_is_file(path):
             return False
@@ -223,6 +243,20 @@ class AdvancedStylesRepository:
             tmp_path.replace(self.styles_path)
         except OSError as exc:
             raise AdvancedStylesError(f"Could not save advanced styles: {exc}") from exc
+
+    def _require_thumbnail_identity(self, group: str, name: str) -> None:
+        group, name = group.strip(), name.strip()
+        try:
+            target = os.path.normcase(str(self._thumbnail_path(group, name, create_dir=False).resolve()))
+            for other_group, styles in self._load_styles(strict=True).items():
+                for other_name in styles:
+                    if (other_group, other_name) == (group, name):
+                        continue
+                    other = self._thumbnail_path(other_group, other_name, create_dir=False)
+                    if os.path.normcase(str(other.resolve())) == target:
+                        raise AdvancedStylesThumbnailIdentityConflict("thumbnail identity conflicts with another style")
+        except OSError as exc:
+            raise AdvancedStylesError("Could not check thumbnail identity") from exc
 
     def _thumbnail_relative_path(self, group: str, name: str) -> str | None:
         path = self._thumbnail_path(group, name, create_dir=False)

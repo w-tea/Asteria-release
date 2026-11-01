@@ -12,6 +12,10 @@ from uuid import uuid4
 import psutil
 
 from app.core.config import AppConfig
+from app.schemas.extensions import validate_extension_id, validate_semver
+from app.services.extension_catalog import ExtensionCatalogService
+from app.services.extension_registry import ExtensionRegistryRepository
+from app.services.extension_repository import ExtensionRepository
 from app.schemas.operations import ACTIVE_OPERATION_STATUSES
 from app.services.log_rotation import OwnedLogRotator
 from app.services.operation_coordinator import OperationCoordinator
@@ -19,6 +23,11 @@ from app.services.operation_retention import OperationRetentionService
 from app.services.preview_registry import PreviewRegistry
 from app.services.resource_observation import ResourceObserver
 from app.services.runtime_process import RuntimeProcessManager
+from app.services.runtime_ownership import (
+    RuntimeOwnershipError,
+    load_runtime_ownership,
+    terminate_process_tree,
+)
 from app.services.runtime_recovery import (
     RuntimeOwnership,
     RuntimeProcessSample,
@@ -31,6 +40,21 @@ EXPORT_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
 EXPORT_NAME_PATTERN = re.compile(r"^diagnostics-([0-9a-f]{32})\.json$")
 EXPORT_MAX_COUNT = 20
 EXPORT_MAX_AGE = timedelta(days=30)
+_SAFE_EXTENSION_LOAD_CODES = frozenset(
+    {
+        "extension_disabled",
+        "extension_entrypoint_invalid",
+        "extension_import_failed",
+        "extension_install_missing",
+        "extension_manifest_mismatch",
+        "extension_registration_failed",
+        "extension_registration_invalid",
+        "extension_registry_invalid",
+        "extension_return_invalid",
+        "extension_uninstall_finalize_failed",
+        "extension_uninstalled",
+    }
+)
 
 
 class DiagnosticsError(RuntimeError):
@@ -38,32 +62,29 @@ class DiagnosticsError(RuntimeError):
 
 
 class PsutilRuntimeInspector:
+    def __init__(self) -> None:
+        self._sampled_processes: dict[int, psutil.Process] = {}
+
     def sample(self, pid: int) -> RuntimeProcessSample | None:
+        self._sampled_processes.pop(pid, None)
         try:
             process = psutil.Process(pid)
-            return RuntimeProcessSample(
+            sample = RuntimeProcessSample(
                 pid=pid,
                 executable=process.exe(),
                 start_time=process.create_time(),
                 root=process.cwd(),
             )
+            if not process.is_running():
+                return None
+            self._sampled_processes[pid] = process
+            return sample
         except (psutil.AccessDenied, psutil.NoSuchProcess, psutil.Error, OSError):
             return None
 
     def stop(self, pid: int) -> bool:
-        try:
-            process = psutil.Process(pid)
-            process.terminate()
-            try:
-                process.wait(timeout=10)
-            except psutil.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=5)
-            return not process.is_running()
-        except psutil.NoSuchProcess:
-            return True
-        except (psutil.AccessDenied, psutil.Error, OSError):
-            return False
+        process = self._sampled_processes.pop(pid, None)
+        return process is not None and terminate_process_tree(process)
 
 
 class DiagnosticsService:
@@ -138,12 +159,14 @@ class DiagnosticsService:
                     "reason_code": restart_reason,
                 },
             },
+            "extensions": self._sanitized_extensions(),
         }
 
     def export(self) -> dict[str, Any]:
         export_id = uuid4().hex
         now = self._now()
         resources = self._sanitized_resources(self.observer.snapshot())
+        resources["extensions"] = self._sanitized_extensions()
         report = {
             "schema_version": 1,
             "generated_at": now.isoformat(),
@@ -346,75 +369,108 @@ class DiagnosticsService:
             },
         }
 
-    def _load_runtime_ownership(self) -> RuntimeOwnership:
-        state_path = self.config.data_dir / "temp" / "launcher" / "launcher-state.json"
+    def _sanitized_extensions(self) -> dict[str, Any]:
+        journal = self._read_extension_startup_journal()
+        loaded_by_id = {
+            item["extension_id"]: item
+            for item in journal["records"]
+        }
         try:
-            payload = json.loads(state_path.read_text(encoding="utf-8-sig"))
-            if not self._same_path(payload["app_root"], self.config.root_dir):
-                raise DiagnosticsError("runtime_ownership_unverified")
-            records = [
-                item
-                for item in payload["processes"]
-                if isinstance(item, dict) and item.get("name") == "comfyui"
-            ]
-            if len(records) != 1:
-                raise DiagnosticsError("runtime_ownership_unverified")
-            record = records[0]
-            started = datetime.fromisoformat(
-                str(record["started_at_utc"]).replace("Z", "+00:00")
-            ).timestamp()
-            return RuntimeOwnership(
-                pid=int(record["pid"]),
-                executable=str(Path(record["executable_path"]).resolve(strict=False)),
-                start_time=started,
-                root=str(self.config.comfy_dir.resolve(strict=False)),
+            repository = ExtensionRepository(self.config.extension_root)
+            registry = ExtensionRegistryRepository(repository.registry_path).load()
+        except ValueError:
+            registry = None
+
+        items: list[dict[str, Any]] = []
+        if registry is not None:
+            for record in registry.records:
+                loaded = loaded_by_id.get(record.extension_id)
+                error_code = record.error_code
+                if loaded is not None and loaded["error_code"] is not None:
+                    error_code = loaded["error_code"]
+                items.append(
+                    {
+                        "extension_id": record.extension_id,
+                        "version": record.active_version,
+                        "enabled": bool(record.enabled) if record.enabled is not None else False,
+                        "load_status": loaded["status"] if loaded is not None else "not_loaded",
+                        "error_code": error_code,
+                    }
+                )
+
+        catalog_age = ExtensionCatalogService(
+            self.config.extension_catalog_cache_dir,
+            catalog_url=self.config.extension_catalog_url,
+            asteria_version=ExtensionRepository(
+                self.config.extension_root
+            ).asteria_version,
+        ).snapshot().cache_age_seconds
+        return {
+            "safe_mode": journal["safe_mode"],
+            "items": items,
+            "catalog_cache_age_seconds": catalog_age,
+        }
+
+    def _read_extension_startup_journal(self) -> dict[str, Any]:
+        empty = {"safe_mode": None, "records": []}
+        path = self.config.extension_root / "startup-journal.json"
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            return empty
+        if (
+            not isinstance(payload, dict)
+            or payload.get("schema_version") != "asteria.extension.startup.v1"
+            or payload.get("status") != "ready"
+            or not isinstance(payload.get("safe_mode"), bool)
+            or not isinstance(payload.get("records"), list)
+        ):
+            return empty
+
+        records: list[dict[str, Any]] = []
+        for source in payload["records"]:
+            if not isinstance(source, dict):
+                continue
+            try:
+                extension_id = validate_extension_id(source.get("extension_id"))
+                version = source.get("version")
+                if version is not None:
+                    version = validate_semver(version)
+            except (TypeError, ValueError):
+                continue
+            status = source.get("status")
+            if status not in {"loaded", "failed", "skipped"}:
+                continue
+            raw_error = source.get("error_code")
+            error_code = raw_error if raw_error in _SAFE_EXTENSION_LOAD_CODES else None
+            if status == "failed" and error_code is None:
+                error_code = "extension_registry_invalid"
+            records.append(
+                {
+                    "extension_id": extension_id,
+                    "version": version,
+                    "status": status,
+                    "error_code": error_code,
+                }
             )
-        except DiagnosticsError:
-            raise
-        except (
-            OSError,
-            RuntimeError,
-            ValueError,
-            KeyError,
-            TypeError,
-            json.JSONDecodeError,
-        ) as exc:
+        return {"safe_mode": payload["safe_mode"], "records": records}
+
+    def _load_runtime_ownership(self) -> RuntimeOwnership:
+        try:
+            ownership = load_runtime_ownership(self.config)
+            if ownership is None:
+                raise DiagnosticsError("runtime_ownership_unverified")
+            return ownership
+        except RuntimeOwnershipError as exc:
             raise DiagnosticsError("runtime_ownership_unverified") from exc
 
     def _record_started_runtime(self, pid: int) -> bool:
-        sample = self.inspector.sample(pid)
-        if sample is None or sample.pid != pid:
-            return False
-        state_path = self.config.data_dir / "temp" / "launcher" / "launcher-state.json"
+        # RuntimeProcessManager writes the native timestamp; do not replace its
+        # seven-digit Windows time with a rounded Python datetime.
         try:
-            payload = json.loads(state_path.read_text(encoding="utf-8-sig"))
-            if not self._same_path(payload["app_root"], self.config.root_dir):
-                return False
-            records = [
-                item
-                for item in payload.get("processes", [])
-                if isinstance(item, dict) and item.get("name") != "comfyui"
-            ]
-            records.append(
-                {
-                    "name": "comfyui",
-                    "pid": sample.pid,
-                    "executable_path": sample.executable,
-                    "started_at_utc": datetime.fromtimestamp(
-                        sample.start_time,
-                        tz=UTC,
-                    ).isoformat(),
-                }
-            )
-            payload["processes"] = records
-            temporary = state_path.with_name(f".{state_path.name}.tmp")
-            temporary.write_text(
-                json.dumps(payload, ensure_ascii=False, sort_keys=True),
-                encoding="utf-8",
-            )
-            os.replace(temporary, state_path)
-            return True
-        except (OSError, RuntimeError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+            ownership = self._load_runtime_ownership()
+            return ownership.pid == pid and RuntimeRecoveryService(self.inspector).ownership_matches(ownership)
+        except DiagnosticsError:
             return False
 
     def _active_operation_count(self) -> int:

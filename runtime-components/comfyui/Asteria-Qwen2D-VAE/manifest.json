@@ -1,0 +1,6 @@
+{
+  "id": "asteria-qwen2d-vae",
+  "version": "1.2.0",
+  "contract_version": "asteria.qwen2d_vae.v1",
+  "files": ["__init__.py", "qwen2d.py", "runtime.py", "LICENSE", "THIRD_PARTY_NOTICES.md"]
+}

@@ -12,11 +12,16 @@ import torch
 
 try:
     from .calculation_modes import (
+        ASTERIA_CALCULATION_MODES,
         CALCULATION_CONTRACT_VERSION,
         CALCULATION_IMPLEMENTATION_REVISION,
         CALCULATION_PARAMETER_SCHEMA_VERSION,
         V11_CALCULATION_MODES,
+        V12_CALCULATION_CONTRACT_VERSION,
+        V12_CALCULATION_IMPLEMENTATION_REVISION,
+        V12_CALCULATION_PARAMETER_SCHEMA_VERSION,
         CalculationModeError,
+        calculation_implementation_revision_supported,
         merge_weight_sum_tensor,
     )
 except ImportError:
@@ -37,7 +42,20 @@ except ImportError:
         _calculation_module.CALCULATION_PARAMETER_SCHEMA_VERSION
     )
     V11_CALCULATION_MODES = _calculation_module.V11_CALCULATION_MODES
+    V12_CALCULATION_CONTRACT_VERSION = (
+        _calculation_module.V12_CALCULATION_CONTRACT_VERSION
+    )
+    V12_CALCULATION_IMPLEMENTATION_REVISION = (
+        _calculation_module.V12_CALCULATION_IMPLEMENTATION_REVISION
+    )
+    V12_CALCULATION_PARAMETER_SCHEMA_VERSION = (
+        _calculation_module.V12_CALCULATION_PARAMETER_SCHEMA_VERSION
+    )
+    ASTERIA_CALCULATION_MODES = _calculation_module.ASTERIA_CALCULATION_MODES
     CalculationModeError = _calculation_module.CalculationModeError
+    calculation_implementation_revision_supported = (
+        _calculation_module.calculation_implementation_revision_supported
+    )
     merge_weight_sum_tensor = _calculation_module.merge_weight_sum_tensor
 
 
@@ -71,23 +89,29 @@ def validate_payload(payload: dict[str, Any]) -> None:
     if payload.get("merge_mode") not in {"weight_sum", "add_difference", "triple_sum", "sum_twice"}:
         raise MergeRuntimeMathError("unsupported merge mode")
     calculation_mode = payload.get("calculation_mode_id") or payload.get("calculation_mode")
-    if calculation_mode in V11_CALCULATION_MODES:
+    if calculation_mode in ASTERIA_CALCULATION_MODES:
         if payload.get("calculation_mode_id") != payload.get("calculation_mode"):
             raise MergeRuntimeMathError("calculation mode identity mismatch")
         if payload.get("merge_mode") != "weight_sum":
             raise MergeRuntimeMathError(
-                "V1.1 calculation modes require weight_sum"
+                "Asteria calculation modes require weight_sum"
             )
-        if payload.get("calculation_contract_version") != CALCULATION_CONTRACT_VERSION:
+        if calculation_mode in V11_CALCULATION_MODES:
+            contract_version = CALCULATION_CONTRACT_VERSION
+            parameter_schema_version = CALCULATION_PARAMETER_SCHEMA_VERSION
+        else:
+            contract_version = V12_CALCULATION_CONTRACT_VERSION
+            parameter_schema_version = V12_CALCULATION_PARAMETER_SCHEMA_VERSION
+        if payload.get("calculation_contract_version") != contract_version:
             raise MergeRuntimeMathError("incompatible calculation contract")
         if (
             payload.get("calculation_parameter_schema_version")
-            != CALCULATION_PARAMETER_SCHEMA_VERSION
+            != parameter_schema_version
         ):
             raise MergeRuntimeMathError("incompatible calculation parameter schema")
-        if (
-            payload.get("calculation_implementation_revision")
-            != CALCULATION_IMPLEMENTATION_REVISION
+        if not calculation_implementation_revision_supported(
+            calculation_mode,
+            str(payload.get("calculation_implementation_revision") or ""),
         ):
             raise MergeRuntimeMathError("incompatible calculation implementation")
 
@@ -378,7 +402,7 @@ def _merge_tensor(payload: dict[str, Any], key: str, a: torch.Tensor, b: torch.T
     mode = payload.get("calculation_mode_id") or payload["calculation_mode"]
     a_float, b_float = a.float(), b.float()
     c_float = c.float() if c is not None else None
-    if mode in V11_CALCULATION_MODES:
+    if mode in ASTERIA_CALCULATION_MODES:
         try:
             value = merge_weight_sum_tensor(
                 mode,
@@ -386,6 +410,9 @@ def _merge_tensor(payload: dict[str, Any], key: str, a: torch.Tensor, b: torch.T
                 b_float,
                 alpha,
                 payload.get("calculation_parameters"),
+                implementation_revision=str(
+                    payload.get("calculation_implementation_revision") or ""
+                ),
             )
         except CalculationModeError as exc:
             raise MergeRuntimeMathError(str(exc)) from exc

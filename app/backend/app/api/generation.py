@@ -1,23 +1,27 @@
 import json
+from dataclasses import asdict
 import logging
 import os
 from pathlib import Path
 import asyncio
 from datetime import UTC, datetime
 import hashlib
+import secrets
 from itertools import product
 import sqlite3
 import threading
 import time
 import unicodedata
-from typing import Any
+from typing import Any, Literal, Mapping
+from urllib.parse import quote
 from uuid import uuid4
 import zipfile
 
-from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
-from PIL import Image
-from pydantic import BaseModel, Field, field_validator
+from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, Response, StreamingResponse
+from app.schemas.media import image_media_type
+from PIL import Image, ImageOps
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from app.core.config import AppConfig
 from app.schemas.generation import (
@@ -28,6 +32,7 @@ from app.schemas.generation import (
     GenerationResponse,
     Img2ImgRequest,
     InpaintRequest,
+    PromptSyntaxGenerationRecord,
     Txt2ImgRequest,
     XYZAxis,
     XYZCellResult,
@@ -35,22 +40,42 @@ from app.schemas.generation import (
     XYZPlotResponse,
 )
 from app.schemas.common import LoraSelection
+from app.schemas.prompt_choices import PromptChoicePins
+from app.services.prompt_choices import PromptChoice
+from app.schemas.media import MediaArtifact
 from app.schemas.remaster import RemasterRequest, RemasterResponse
 from app.schemas.operations import OperationChildSummary, OperationRecord
 from app.services.history import HistoryBulkDeleteConflictError, HistoryRepository, HistoryTagLimitExceededError
+from app.services.media_artifacts import MediaArtifactAccessError, resolve_registered_media_artifact
+from app.services.video_sequence_history import VideoSequenceHistoryProjector
 from app.services.artifact_lifecycle import (
     artifact_write_operation as _artifact_write_operation,
     begin_orphan_cleanup as _begin_orphan_cleanup,
     end_orphan_cleanup as _end_orphan_cleanup,
 )
 from app.services.image_validation import InvalidImageContentError, validate_image_file
+from app.services.image_check_operation import ImageCheckOperation, capture_image_check_operation
+from app.services.image_check import remap_checked_image_paths
+from app.services.image_check_finalization import FinalImageSession, is_private_image_candidate
 from app.services.library_thumbnails import LibraryThumbnailError, LibraryThumbnailService
 from app.services.inpaint_region import InpaintRegionError, validate_only_masked_inputs
 from app.services.external_settings import ExternalIntegrationSettingsRepository
+from app.services.external_model_libraries import (
+    ExternalModelLibraryError,
+    ExternalModelLibraryRepository,
+    ExternalModelRoot,
+)
 from app.services.generation_schema import GenerationSchema, GenerationSchemaNotFound, GenerationSchemaRepository
 from app.services import api_errors
 from app.services.comfy_model_paths import comfy_model_name
 from app.services.controlnet_preprocessor import SUPPORTED_PREPROCESSORS
+from app.services.anima_lllite_runtime import (
+    anima_lllite_missing_nodes,
+    anima_lllite_model_directory,
+    anima_lllite_model_values,
+    anima_lllite_runtime_contract,
+    is_standard_controlnet_model_name,
+)
 from app.services.controlnet_mode import (
     controlnet_mode_contract_status,
     enabled_priority_controlnet_units,
@@ -83,7 +108,21 @@ from app.services.reference_mutation import (
     reference_mutation_coordinator,
 )
 from app.services.model_library_cache import get_model_library
+from app.services.model_library import ModelLibrary
 from app.services.model_fingerprints import ModelFingerprintService
+from app.services.generation_reproduction import capture_generation_assets, compare_generation_assets
+from app.services.prompt_styles import (
+    apply_advanced_style_text as _apply_advanced_style_text,
+    compose_with_advanced_styles as _compose_with_advanced_styles,
+)
+from app.services.anima_lora_remap import (
+    AnimaLoraRemapRegistryError,
+    prepare_anima_lora_runtime_entries,
+)
+from app.services.anima_generation_bundle import (
+    AnimaGenerationBundleError,
+    prepare_anima_generation_bundle,
+)
 from app.services.model_profiles import ModelProfileRepository
 from app.services.model_selections import ModelSelectionRepository
 from app.services.model_storage import resolve_model_root
@@ -103,6 +142,12 @@ from app.services.operation_retention import OperationRetentionService
 from app.services.preview_registry import PreviewRegistry
 from app.services.parameter_mapper import ParameterMapper
 from app.services.prompt_pipeline import expand_dynamic_prompt, extract_embeddings, extract_loras, list_wildcards
+from app.services.prompt_syntax import (
+    PROMPT_PARSER_GENERATION,
+    PromptSyntaxError,
+    PromptSyntaxPlan,
+    parse_prompt_syntax,
+)
 from app.services.runtime import (
     ComfyClient,
     ComfyGenerationRuntime,
@@ -118,13 +163,37 @@ from app.services.seed_resize import (
     seed_resize_requested,
     seed_resize_request_issues,
 )
+from app.services.spatial_runtime_contract import (
+    SPATIAL_PROMPT_CONTRACT_VERSION,
+    spatial_runtime_contract_status,
+    uses_spatial_prompt_layout,
+)
+from app.services.spatial_prompt_contract import validate_spatial_prompt_contract
+from app.services.spatial_generation_context import (
+    PreparedSpatialGenerationContext,
+    SpatialGenerationContextError,
+    SpatialStagePreparation,
+    prepare_spatial_generation_context,
+)
+from app.services.spatial_mask_compiler import SpatialMaskCompilerError
+from app.services.spatial_profile_resolver import (
+    SpatialModelEvidence,
+    infer_sdxl_spatial_profile_id,
+    sdxl_spatial_model_evidence,
+)
+from app.services.media_model_catalog import (
+    SafetensorsHeaderError,
+    read_safetensors_header,
+)
+from app.services.anima_model_classifier import AnimaModelClassifier
+from app.services.model_library import ModelLibraryItem
 from app.services.runtime_adapters import AsteriaGenerationRuntime, AsteriaNativeEngineAdapter, ExternalProcessRuntimeAdapter, RuntimeAdapterError
 from app.services.sampling_catalog import sampler_runtime_name, scheduler_runtime_name
 from app.services.topaz import TopazError, TopazSettings, process_topaz_image
 from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
 from app.services.user_settings import UserSettingsRepository, resolve_output_root, safe_segment
 from app.services.xyz_grid import XYZGridAxis, XYZGridCell, create_xyz_contact_sheet_streaming
-from app.services.workflow_mapping import WorkflowMappingRepository
+from app.services.workflow_mapping import WorkflowMappingNotFound, WorkflowMappingRepository
 from app.services.schema_versions import CURRENT_SCHEMA_VERSIONS
 
 logger = logging.getLogger(__name__)
@@ -156,12 +225,15 @@ class PromptExpandRequest(BaseModel):
     negative_prompt: str = ""
     seed: int = -1
     advanced_styles: list[AdvancedStyleSelection] = Field(default_factory=list)
+    prompt_pins: PromptChoicePins | None = None
 
 
 class PromptExpandResponse(BaseModel):
     prompt: str
     expanded_prompt: str
     selections: list[str]
+    choices: list[PromptChoice] = Field(default_factory=list)
+    prompt_hash: str = ''
 
 
 class DeleteGenerationResponse(BaseModel):
@@ -264,6 +336,7 @@ class GenerationJobResponse(BaseModel):
     preview_path: str = ""
     preview_paths: list[str] = []
     error: str = ""
+    error_target_ids: list[str] = Field(default_factory=list)
     cancelled: bool = False
 
 
@@ -335,9 +408,12 @@ def configure_generation_operation_coordinator(
 
 
 def _register_generation_executors(coordinator: OperationCoordinator) -> None:
+    from app.services.prompt_comparison_jobs import PromptComparisonExecutor
+
     for mode in ("txt2img", "img2img", "inpaint"):
         coordinator.register_executor(f"generation.{mode}", _GenerationOperationExecutor(mode))
     coordinator.register_executor("generation.remaster", _RemasterOperationExecutor())
+    coordinator.register_executor("generation.prompt_comparison", PromptComparisonExecutor(coordinator.repository.db_path))
 
 
 class _GenerationOperationExecutor:
@@ -397,6 +473,7 @@ def _execute_generation_operation(
         with _jobs_lock:
             cache = _jobs.setdefault(job_id, _new_job_cache(mode, request))
             cache["request"] = request
+            cache["generation_operation_snapshot"] = payload.get("generation_operation_snapshot")
         lease = _publisher_leases.pop(job_id, None)
         if lease is None:
             lease = reference_mutation_coordinator.acquire_publisher()
@@ -420,6 +497,10 @@ def _execute_generation_operation(
                 result = _generate(request, "inpaint", job_id=job_id)
             else:
                 result = _generate(request, "txt2img", job_id=job_id)
+            if mode != "remaster" and getattr(result, "status", None) == "cancelled":
+                _set_job(job_id, generation=result)
+                context.acknowledge_cancel()
+                raise OperationCancelled(artifact_refs=_generation_artifact_refs(result))
             context.raise_if_cancelled()
             result_field = "remaster" if mode == "remaster" else "generation"
             _set_job(job_id, **{result_field: result})
@@ -465,7 +546,18 @@ def _execute_generation_operation(
                     and 0 < len(value) <= 128
                     and all(character.isalnum() or character in "_.:-" for character in value)
                 )
-            _set_job(job_id, error=":".join(dict.fromkeys(safe_parts)))
+            target_ids = detail.get("target_ids")
+            safe_target_ids = [
+                value for value in target_ids
+                if isinstance(value, str)
+                and 0 < len(value) <= 128
+                and all(character.isalnum() or character in "_-" for character in value)
+            ] if isinstance(target_ids, list) else []
+            _set_job(
+                job_id,
+                error=":".join(dict.fromkeys(safe_parts)),
+                error_target_ids=list(dict.fromkeys(safe_target_ids)),
+            )
             raise OperationExecutionError(code, retryable=False) from exc
         finally:
             try:
@@ -555,6 +647,7 @@ def _new_job_cache(mode: str, request: Txt2ImgRequest | RemasterRequest) -> dict
         "runtime_job_id": "",
         "runtime_stop_confirmed": False,
         "cancel_warnings": [],
+        "error_target_ids": [],
         "cancelled": False,
     }
 
@@ -576,6 +669,7 @@ def _runtime(config: AppConfig, runtime_id: str | None = None):
         return ComfyGenerationRuntime(
             ComfyClient(config.comfy_base_url),
             model_root=config.model_dir,
+            external_roots=_registered_external_model_roots(config),
             comfy_output_dir=config.comfy_output_dir,
             topaz_executable=_topaz_executable(config),
         )
@@ -642,6 +736,60 @@ def _preflight_controlnet_mode_request(request: Txt2ImgRequest, mode: str = "txt
     _validate_controlnet_mode_object_info(config, object_info, settings)
 
 
+def _validate_spatial_prompt_runtime_contract(
+    object_info: dict[str, Any],
+    *,
+    required: bool,
+) -> None:
+    if not required:
+        return
+    status = spatial_runtime_contract_status(object_info)
+    if not status.available:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": api_errors.MISSING_SPATIAL_PROMPT_RUNTIME_CONTRACT,
+                "missing_components": list(status.missing_components),
+                "contract_version": SPATIAL_PROMPT_CONTRACT_VERSION,
+            },
+        )
+
+
+_SPATIAL_PROMPT_SUPPORTED_SAMPLERS = {
+    "euler_ancestral": "Euler a",
+    "dpmpp_2m": "DPM++ 2M",
+    "er_sde": "ER SDE",
+}
+
+
+def _validate_spatial_prompt_sampling_options(settings: dict) -> None:
+    if not uses_spatial_prompt_layout(settings):
+        return
+    candidates = [("sampler", str(settings.get("sampler") or "Euler a"))]
+    if settings.get("hires_enabled"):
+        hires_sampler = str(settings.get("hires_sampler") or "Use same sampler")
+        if hires_sampler != "Use same sampler":
+            candidates.append(("hires_sampler", hires_sampler))
+    unsupported = [
+        {
+            "field": field,
+            "label": label,
+            "reason": "spatial_prompt_sampler_not_supported",
+            "supported": list(_SPATIAL_PROMPT_SUPPORTED_SAMPLERS.values()),
+        }
+        for field, label in candidates
+        if sampler_runtime_name(label) not in _SPATIAL_PROMPT_SUPPORTED_SAMPLERS
+    ]
+    if unsupported:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING,
+                "unsupported": unsupported,
+            },
+        )
+
+
 def _validate_runtime_feature_requirements(
     config: AppConfig,
     selected_runtime: str,
@@ -650,6 +798,7 @@ def _validate_runtime_feature_requirements(
     loras: list[dict] | None = None,
     model_slots: dict[str, str] | None = None,
 ) -> None:
+    requires_spatial_prompt = uses_spatial_prompt_layout(settings)
     remaster_settings = settings.get("remaster", {})
     requires_remaster = isinstance(remaster_settings, dict) and bool(remaster_settings.get("enabled"))
     if requires_remaster and selected_runtime != "comfy_workflow":
@@ -670,6 +819,20 @@ def _validate_runtime_feature_requirements(
                 ],
             },
         )
+    if requires_spatial_prompt and selected_runtime != "comfy_workflow":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING,
+                "unsupported": [
+                    {
+                        "field": "prompt_layout",
+                        "reason": "spatial_prompt_requires_comfy_workflow",
+                    }
+                ],
+            },
+        )
+    _validate_spatial_prompt_sampling_options(settings)
     if selected_runtime != "comfy_workflow":
         return
     requires_anima_lllite = bool(settings.get("anima_lllite_units"))
@@ -715,6 +878,7 @@ def _validate_runtime_feature_requirements(
             and not requires_anima_lllite
             and not requires_remaster
             and not requires_detailer
+            and not requires_spatial_prompt
         ):
             return
         try:
@@ -732,6 +896,20 @@ def _validate_runtime_feature_requirements(
                 status_code=409,
                 detail={"code": api_errors.MISSING_RUNTIME_MODEL, "missing": missing_runtime_models},
             )
+        missing_anima_bundle_models = _missing_anima_bundle_runtime_models(
+            object_info,
+            settings,
+            model_slots or {},
+            model_root=config.model_dir,
+        )
+        if missing_anima_bundle_models:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": api_errors.MISSING_RUNTIME_MODEL,
+                    "missing": missing_anima_bundle_models,
+                },
+            )
         missing_hires_checkpoint = _missing_hires_checkpoint_model(
             object_info,
             settings,
@@ -744,6 +922,10 @@ def _validate_runtime_feature_requirements(
                 detail={"code": api_errors.MISSING_RUNTIME_MODEL, "missing": [missing_hires_checkpoint]},
             )
         nodes = {key for key, value in object_info.items() if isinstance(key, str) and isinstance(value, dict)}
+        _validate_spatial_prompt_runtime_contract(
+            object_info,
+            required=requires_spatial_prompt,
+        )
         unsupported_seed_variation = _unsupported_seed_variation_runtime_settings(profile, nodes, settings)
         if unsupported_seed_variation:
             raise HTTPException(
@@ -790,12 +972,25 @@ def _validate_runtime_feature_requirements(
                     },
                 )
         if requires_anima_lllite:
-            missing = sorted(ANIMA_LLLITE_REQUIRED_NODES - nodes)
+            missing = sorted(
+                set(ANIMA_LLLITE_REQUIRED_NODES - nodes)
+                | set(anima_lllite_missing_nodes(object_info, nodes))
+            )
             if missing:
                 raise HTTPException(
                     status_code=409,
                     detail={"code": api_errors.MISSING_ANIMA_LLLITE_RUNTIME_NODES, "missing_nodes": missing},
                 )
+            lllite_contract = anima_lllite_runtime_contract(object_info)
+            if lllite_contract is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": api_errors.MISSING_ANIMA_LLLITE_RUNTIME_NODES,
+                        "missing_nodes": ["AnimaLLLiteApply"],
+                    },
+                )
+            settings["anima_lllite_runtime_contract"] = lllite_contract
             if requires_anima_regional:
                 missing = sorted(ANIMA_REGIONAL_REQUIRED_NODES - nodes)
                 if missing:
@@ -807,6 +1002,7 @@ def _validate_runtime_feature_requirements(
                 object_info,
                 settings,
                 model_root=config.model_dir,
+                external_roots=_registered_external_model_roots(config),
             )
             if missing_lllite_models:
                 raise HTTPException(
@@ -817,6 +1013,7 @@ def _validate_runtime_feature_requirements(
             object_info,
             loras or [],
             model_root=config.model_dir,
+            external_roots=_registered_external_model_roots(config),
         )
         if missing_lora_models:
             raise HTTPException(
@@ -861,6 +1058,10 @@ def _validate_runtime_feature_requirements(
     except RuntimeErrorResponse as exc:
         raise HTTPException(status_code=502, detail={"code": api_errors.GENERATION_RUNTIME_UNREACHABLE}) from exc
     nodes = {key for key, value in object_info.items() if isinstance(key, str) and isinstance(value, dict)}
+    _validate_spatial_prompt_runtime_contract(
+        object_info,
+        required=requires_spatial_prompt,
+    )
     _validate_seed_resize_object_info(config, object_info, settings)
     unsupported_seed_variation = _unsupported_seed_variation_runtime_settings(profile, nodes, settings)
     if unsupported_seed_variation:
@@ -921,6 +1122,7 @@ def _validate_runtime_feature_requirements(
             object_info,
             settings,
             model_root=config.model_dir,
+            external_roots=_registered_external_model_roots(config),
         )
         if missing_controlnet_models:
             raise HTTPException(
@@ -952,6 +1154,7 @@ def _validate_runtime_feature_requirements(
             object_info,
             loras or [],
             model_root=config.model_dir,
+            external_roots=_registered_external_model_roots(config),
         )
         if missing_lora_models:
             raise HTTPException(
@@ -1314,11 +1517,16 @@ def _missing_controlnet_models(
     settings: dict,
     *,
     model_root: Path | None = None,
+    external_roots: tuple[ExternalModelRoot, ...] = (),
 ) -> list[dict[str, Any]]:
     units = settings.get("controlnet_units")
     if not isinstance(units, list) or "ControlNetLoader" not in object_info:
         return []
-    model_values = _node_input_values(object_info, "ControlNetLoader", "control_net_name")
+    model_values = {
+        value
+        for value in _node_input_values(object_info, "ControlNetLoader", "control_net_name")
+        if is_standard_controlnet_model_name(value)
+    }
     missing: list[dict[str, Any]] = []
     for index, unit in enumerate(units):
         if not isinstance(unit, dict) or not unit.get("enabled", True):
@@ -1326,7 +1534,12 @@ def _missing_controlnet_models(
         model = str(unit.get("model") or "").strip()
         if not model:
             continue
-        model_name = comfy_model_name(model, "controlnet", model_root=model_root)
+        model_name = comfy_model_name(
+            model,
+            "controlnet",
+            model_root=model_root,
+            external_roots=external_roots,
+        )
         if model_name not in model_values:
             missing.append({"index": index, "model": model, "model_name": model_name})
     return missing
@@ -1337,9 +1550,11 @@ def _missing_anima_lllite_models(
     settings: dict,
     *,
     model_root: Path | None = None,
+    external_roots: tuple[ExternalModelRoot, ...] = (),
 ) -> list[dict[str, Any]]:
     units = settings.get("anima_lllite_units")
-    if not isinstance(units, list) or "AnimaLLLiteApply" not in object_info:
+    contract = anima_lllite_runtime_contract(object_info)
+    if not isinstance(units, list) or contract is None:
         return []
     model_values = _anima_lllite_model_values(object_info)
     missing: list[dict[str, Any]] = []
@@ -1350,19 +1565,19 @@ def _missing_anima_lllite_models(
         if not model:
             missing.append({"index": index, "model": model, "reason": "model_required"})
             continue
-        model_name = comfy_model_name(model, "controlnet", model_root=model_root)
+        model_name = comfy_model_name(
+            model,
+            anima_lllite_model_directory(contract),
+            model_root=model_root,
+            external_roots=external_roots,
+        )
         if model_name not in model_values:
             missing.append({"index": index, "model": model, "model_name": model_name})
     return missing
 
 
 def _anima_lllite_model_values(object_info: dict) -> set[str]:
-    values = _node_input_values(object_info, "AnimaLLLiteApply", "lllite_name")
-    return {
-        value
-        for value in values
-        if "lllite" in value.lower() or "anima" in value.lower()
-    }
+    return anima_lllite_model_values(object_info)
 
 
 def _missing_detailer_detector_models(object_info: dict, settings: dict) -> list[dict[str, Any]]:
@@ -1391,23 +1606,48 @@ def _missing_lora_models(
     loras: list[dict],
     *,
     model_root: Path | None = None,
+    external_roots: tuple[ExternalModelRoot, ...] = (),
 ) -> list[dict[str, Any]]:
     missing: list[dict[str, Any]] = []
     lora_loader_present = "LoraLoader" in object_info
+    anima_remap_loader_present = "AsteriaAnimaLoraRemap" in object_info
     block_loader_present = LORA_BLOCK_WEIGHT_CLASS in object_info
     lora_loader_values = _node_model_input_values(object_info, "LoraLoader", "lora_name")
     block_loader_values = _node_model_input_values(object_info, LORA_BLOCK_WEIGHT_CLASS, "lora_name")
+    anima_remap_loader_values = _node_model_input_values(
+        object_info,
+        "AsteriaAnimaLoraRemap",
+        "lora_name",
+    )
     for index, lora in enumerate(loras):
         if not isinstance(lora, dict):
             continue
         name = str(lora.get("name") or "").strip()
         if not name:
             continue
-        model_name = comfy_model_name(name, "loras", model_root=model_root)
+        model_name = comfy_model_name(
+            name,
+            "loras",
+            model_root=model_root,
+            external_roots=external_roots,
+        )
         block_vector = str(lora.get("block_weight") or lora.get("block_weight_preset") or "").strip()
         uses_block_loader = bool(block_vector and lora.get("hierarchy_mode") != "disabled")
-        loader_present = block_loader_present if uses_block_loader else lora_loader_present
-        available = block_loader_values if uses_block_loader else lora_loader_values
+        uses_anima_remap = isinstance(lora.get("anima_remap"), dict)
+        loader_present = (
+            anima_remap_loader_present
+            if uses_anima_remap
+            else block_loader_present
+            if uses_block_loader
+            else lora_loader_present
+        )
+        available = (
+            anima_remap_loader_values
+            if uses_anima_remap
+            else block_loader_values
+            if uses_block_loader
+            else lora_loader_values
+        )
         if loader_present and model_name not in available:
             missing.append({"index": index, "name": name, "model_name": model_name})
     return missing
@@ -1552,13 +1792,96 @@ def _runtime_model_slot_checks(profile: str) -> tuple[tuple[str, str, str, str],
     return ()
 
 
+def _runtime_model_slots_for_request(
+    profile: str,
+    model_slots: dict[str, str],
+    *,
+    model_root: Path,
+    external_roots: tuple[ExternalModelRoot, ...] = (),
+) -> dict[str, str]:
+    model_directories = {
+        slot: model_dir_name
+        for slot, model_dir_name, _node_name, _input_name in _runtime_model_slot_checks(profile)
+    }
+    if profile == "anima":
+        model_directories.update(
+            {
+                "qwen35_text_encoder": "text_encoders",
+                "progressive_adapter": "text_encoders",
+            }
+        )
+    projected = dict(model_slots)
+    for slot, model_dir_name in model_directories.items():
+        value = str(projected.get(slot) or "").strip()
+        if value:
+            projected[slot] = comfy_model_name(
+                value,
+                model_dir_name,
+                model_root=model_root,
+                external_roots=external_roots,
+            )
+    return projected
+
+
+def _registered_external_model_roots(config: AppConfig) -> tuple[ExternalModelRoot, ...]:
+    try:
+        return tuple(
+            ExternalModelLibraryRepository(
+                config.data_dir / "config" / "external-model-libraries.json"
+            ).list()
+        )
+    except ExternalModelLibraryError:
+        return ()
+
+
+def _missing_anima_bundle_runtime_models(
+    object_info: dict,
+    settings: dict,
+    model_slots: dict[str, str],
+    *,
+    model_root: Path | None = None,
+) -> list[dict[str, str]]:
+    bundle = settings.get("anima_generation_bundle")
+    if not isinstance(bundle, dict) or bundle.get("variant_id") != "anima_3_8b_52":
+        return []
+    checks = (
+        (
+            "qwen35_text_encoder",
+            "AnimaQwen35Loader",
+            "qwen35_model",
+        ),
+        (
+            "progressive_adapter",
+            "AnimaQwen35UnifiedPrompt",
+            "adapter_name",
+        ),
+    )
+    missing: list[dict[str, str]] = []
+    for slot, node, input_name in checks:
+        value = str(model_slots.get(slot) or "").strip()
+        if not value or node not in object_info:
+            continue
+        model_name = comfy_model_name(
+            value,
+            "text_encoders",
+            model_root=model_root,
+        )
+        if model_name not in _node_model_input_values(object_info, node, input_name):
+            missing.append({"slot": slot, "model_name": model_name})
+    return missing
+
+
 def _profile_base_required_nodes(profile: str, settings: dict, *, requires_lora: bool = False) -> set[str]:
     if profile == "anima":
+        bundle = settings.get("anima_generation_bundle")
+        is_anima_3_8b = (
+            isinstance(bundle, dict)
+            and bundle.get("variant_id") == "anima_3_8b_52"
+        )
         required = {
             "UNETLoader",
             "CLIPLoader",
             "VAELoader",
-            "TextEncodeQwenImageEdit",
             "RandomNoise",
             "CFGGuider",
             "KSamplerSelect",
@@ -1567,15 +1890,29 @@ def _profile_base_required_nodes(profile: str, settings: dict, *, requires_lora:
             "VAEDecode",
             "SaveImage",
         }
+        if is_anima_3_8b:
+            required.update(
+                {
+                    "AnimaQwen35Loader",
+                    "AnimaQwen35UnifiedPrompt",
+                    "CLIPTextEncode",
+                    "EmptySD3LatentImage",
+                }
+            )
+        else:
+            required.add("TextEncodeQwenImageEdit")
         mode = str(settings.get("mode") or "txt2img")
         if mode == "inpaint":
-            required.update({"LoadImage", "VAEEncodeForInpaint"})
+            required.update({"LoadImage", "VAEEncode", "SetLatentNoiseMask"})
         elif mode == "img2img":
             required.update({"LoadImage", "VAEEncode"})
-        else:
+        elif not is_anima_3_8b:
             required.add("EmptyQwenImageLayeredLatentImage")
         if requires_lora:
-            required.add("LoraLoader")
+            if int(settings.get("anima_remap_lora_count") or 0) > 0:
+                required.add("AsteriaAnimaLoraRemap")
+            if int(settings.get("anima_standard_lora_count") or 0) > 0:
+                required.add("LoraLoader")
         return required
     if profile == "flux1":
         required = {
@@ -1902,7 +2239,7 @@ def _sdxl_base_required_nodes(settings: dict, model_slots: dict[str, str]) -> se
         required.add("CLIPSetLastLayer")
     mode = str(settings.get("mode") or "txt2img")
     if mode == "inpaint":
-        required.update({"LoadImage", "VAEEncodeForInpaint"})
+        required.update({"LoadImage", "VAEEncode", "SetLatentNoiseMask"})
     elif mode == "img2img":
         required.update({"LoadImage", "VAEEncode"})
     else:
@@ -1915,6 +2252,44 @@ def _schema_repository(config: AppConfig) -> GenerationSchemaRepository:
 
 def _model_root(config: AppConfig) -> Path:
     return resolve_model_root(data_dir=config.data_dir, fallback=config.model_dir)
+
+
+def _resolve_anima_hires_diffusion_path(
+    settings: dict[str, Any],
+    *,
+    model_root: Path,
+    library: ModelLibrary,
+) -> Path | None:
+    if not settings.get("hires_enabled"):
+        return None
+    value = str(settings.get("hires_checkpoint") or "").strip()
+    if not value or value == "Use same checkpoint":
+        return None
+    direct = Path(value)
+    if direct.is_absolute() and _path_is_file_safely(str(direct)):
+        return direct
+    expected_name = comfy_model_name(
+        value,
+        "diffusion_models",
+        model_root=model_root,
+    )
+    matches = [
+        item.path
+        for item in library.by_type("checkpoint")
+        if comfy_model_name(
+            str(item.path),
+            "diffusion_models",
+            model_root=model_root,
+        ).casefold()
+        == expected_name.casefold()
+    ]
+    if len(matches) != 1:
+        raise AnimaLoraRemapRegistryError(
+            "anima_hires_target_model_ambiguous"
+            if matches
+            else "anima_hires_target_model_unresolved"
+        )
+    return matches[0]
 
 
 def _resolve_discord_model_slots(model_references: dict[str, str]) -> dict[str, str]:
@@ -2070,9 +2445,14 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
         exclude={
             "profile",
             "runtime",
+            "prompt_input",
+            "prompt_layout",
+            "prompt_pins",
             "loras",
             "controlnet_units",
             "anima_lllite_units",
+            "anima_qwen35_adapter_strength",
+            "anima_qwen35_negative_adapter_strength",
             "detailer_units",
             "model_slot_overrides",
             "remaster",
@@ -2082,6 +2462,7 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
         },
         exclude_unset=True,
     )
+    values['record_branch_step'] = request.record_branch_step or 0
     try:
         mapped = ParameterMapper(schema_path).map(values)
     except ValueError as error:
@@ -2119,18 +2500,379 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
     if anima_lllite_units:
         mapped["anima_lllite_units"] = anima_lllite_units
         mapped["anima_lllite_runtime"] = "not_implemented"
+    if request.profile == "anima":
+        mapped["anima_qwen35_adapter_strength"] = (
+            request.anima_qwen35_adapter_strength
+        )
+        mapped["anima_qwen35_negative_adapter_strength"] = (
+            request.anima_qwen35_negative_adapter_strength
+        )
     if detailer_units:
         mapped["detailer_units"] = detailer_units
         mapped["detailer_runtime"] = "not_implemented"
     if request.model_slot_overrides:
         mapped["model_slot_overrides"] = dict(request.model_slot_overrides)
     mapped["remaster"] = request.remaster.model_dump()
+    if request.prompt_pins is not None:
+        mapped["prompt_pins"] = request.prompt_pins.model_dump(mode="json")
+    if request.prompt_input is not None:
+        mapped["prompt_input"] = request.prompt_input.model_dump(
+            mode="json",
+            exclude_none=True,
+        )
+    if request.prompt_layout is not None:
+        mapped["prompt_layout"] = request.prompt_layout.model_dump(
+            mode="json",
+            exclude_none=True,
+        )
     if request.remaster.enabled:
         mapped["requested_batch_size"] = request.batch_size
         mapped["requested_batch_count"] = request.batch_count
         mapped["batch_size"] = 1
         mapped["batch_count"] = request.batch_size * request.batch_count
     return mapped, negative_prompt
+
+
+def _spatial_request_enabled(request: Txt2ImgRequest) -> bool:
+    return request.prompt_layout is not None and request.prompt_layout.mode == "enabled"
+
+
+def _freeze_spatial_request_seed(request: Txt2ImgRequest) -> Txt2ImgRequest:
+    if not _spatial_request_enabled(request) or request.seed >= 0:
+        return request
+    return request.model_copy(update={"seed": secrets.randbelow(2**32)}, deep=True)
+
+
+def _resolve_spatial_model_path(
+    value: str,
+    *,
+    model_root: Path,
+    model_directory: str,
+    library: ModelLibrary,
+) -> Path:
+    normalized = str(value or "").strip()
+    direct = Path(normalized)
+    if direct.is_absolute() and _path_is_file_safely(direct):
+        return direct
+    rooted = model_root / model_directory / normalized
+    if _path_is_file_safely(rooted):
+        return rooted
+    expected = comfy_model_name(
+        normalized,
+        model_directory,
+        model_root=model_root,
+    ).casefold()
+    matches = [
+        item.path
+        for item in library.by_type("checkpoint")
+        if comfy_model_name(
+            str(item.path),
+            model_directory,
+            model_root=model_root,
+        ).casefold()
+        == expected
+    ]
+    if len(matches) != 1:
+        raise SpatialGenerationContextError(
+            "spatial_model_ambiguous" if matches else "spatial_model_unavailable"
+        )
+    return matches[0]
+
+
+def _spatial_model_evidence(
+    *,
+    profile: str,
+    path: Path,
+    stage: str,
+    anima_variant: str | None = None,
+    manual_profile_id: str | None = None,
+    catalog_metadata: Mapping[str, str] | None = None,
+) -> SpatialModelEvidence:
+    try:
+        header = read_safetensors_header(path)
+    except SafetensorsHeaderError as exc:
+        raise SpatialGenerationContextError(exc.reason_code) from exc
+    slot_id = f"model:{stage}:{path.name}"
+    if profile == "sdxl":
+        lineage_metadata = {**header.metadata, **dict(catalog_metadata or {})}
+        selected_profile_id = infer_sdxl_spatial_profile_id(lineage_metadata)
+        return sdxl_spatial_model_evidence(
+            header,
+            model_slot_id=slot_id,
+            variant=(
+                "illustrious"
+                if selected_profile_id == "illustrious.boundary.v5"
+                else "sdxl"
+            ),
+        )
+    if profile != "anima":
+        raise SpatialGenerationContextError("spatial_profile_unsupported")
+    encoder_kind = (
+        "qwen35_progressive"
+        if anima_variant == "anima_3_8b_52"
+        else "native_qwen"
+    )
+    item = ModelLibraryItem(
+        type="checkpoint",
+        name=path.name,
+        path=path,
+        relative_path=Path(path.name),
+        size_bytes=path.stat().st_size,
+        metadata={},
+    )
+    evidence = AnimaModelClassifier().spatial_model_evidence(
+        item,
+        header,
+        model_slot_id=slot_id,
+        encoder_kind=encoder_kind,
+    )
+    if evidence is None:
+        raise SpatialGenerationContextError("spatial_model_structure_unverified")
+    return evidence
+
+
+def _spatial_catalog_metadata(
+    library,
+    path: Path,
+) -> Mapping[str, str]:
+    item = next((candidate for candidate in library.items if candidate.path == path), None)
+    return item.metadata if item is not None else {}
+
+
+def _positive_inpaint_mask(path: str | Path, size: tuple[int, int]) -> Image.Image:
+    try:
+        with Image.open(path) as source:
+            source.load()
+            if source.mode == "RGBA":
+                alpha = source.getchannel("A")
+                luminance = ImageOps.grayscale(source.convert("RGB"))
+                mask = (
+                    luminance
+                    if alpha.getextrema() == (255, 255)
+                    else Image.composite(luminance, alpha, alpha)
+                )
+            else:
+                mask = ImageOps.grayscale(source.convert("RGB"))
+            if mask.size != size:
+                mask = mask.resize(size, Image.Resampling.NEAREST)
+            return mask.copy()
+    except OSError as exc:
+        raise SpatialGenerationContextError("spatial_inpaint_mask_unavailable") from exc
+
+
+def _spatial_base_geometry(
+    request: Txt2ImgRequest,
+) -> tuple[int, int, Image.Image | None, tuple[int, int, int, int] | None]:
+    if not isinstance(request, Img2ImgRequest):
+        return request.width, request.height, None, None
+    if isinstance(request, InpaintRequest) and request.inpaint_area.strip().lower() == "only_masked":
+        try:
+            analysis = validate_only_masked_inputs(
+                request.init_image_path,
+                request.mask_image_path,
+                mask_blur=request.mask_blur,
+                requested_size=(request.width, request.height),
+            )
+        except InpaintRegionError as exc:
+            raise SpatialGenerationContextError(exc.code) from exc
+        with analysis.open_positive_mask() as image:
+            mask = image.convert("L").copy()
+        return (*analysis.canvas_size, mask, analysis.region.rect)
+    try:
+        with Image.open(request.init_image_path) as source:
+            source_width, source_height = source.size
+    except OSError as exc:
+        raise SpatialGenerationContextError("spatial_source_image_unavailable") from exc
+    width = source_width // 8 * 8
+    height = source_height // 8 * 8
+    inpaint_mask = None
+    if isinstance(request, InpaintRequest):
+        inpaint_mask = _positive_inpaint_mask(
+            request.mask_image_path,
+            (width, height),
+        )
+    return width, height, inpaint_mask, None
+
+
+def _prepare_spatial_generation(
+    *,
+    request: Txt2ImgRequest,
+    settings: dict[str, Any],
+    config: AppConfig,
+    model_slots: dict[str, str],
+    known_embeddings: list[str],
+    output_dir: Path,
+) -> PreparedSpatialGenerationContext | None:
+    if not _spatial_request_enabled(request):
+        return None
+    if request.profile not in {"sdxl", "anima"}:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "spatial_profile_unsupported", "profile": request.profile},
+        )
+    snapshot = validate_spatial_prompt_contract(
+        request.prompt,
+        request.prompt_input,
+        request.prompt_layout,
+        request._spatial_generation_mode,
+    )
+    model_root = _model_root(config)
+    library = get_model_library(model_root, config=config)
+    base_slot = "checkpoint" if request.profile == "sdxl" else "diffusion_model"
+    model_directory = "checkpoints" if request.profile == "sdxl" else "diffusion_models"
+    base_path = _resolve_spatial_model_path(
+        model_slots[base_slot],
+        model_root=model_root,
+        model_directory=model_directory,
+        library=library,
+    )
+    anima_bundle = settings.get("anima_generation_bundle")
+    anima_variant = (
+        str(anima_bundle.get("variant_id"))
+        if isinstance(anima_bundle, dict)
+        else None
+    )
+    # Runtime tensors are authoritative. SDXL uses its verified 24-block
+    # structure; Anima resolves the 28/40/52-block profile from its tensors.
+    # Older histories may retain a manual selection, but it is no longer used.
+    base_manual_profile = None
+    base_width, base_height, inpaint_mask, crop_rect = _spatial_base_geometry(request)
+    stage_inputs: list[SpatialStagePreparation] = [
+        SpatialStagePreparation(
+            stage="base",
+            layout=request.prompt_layout,
+            width=base_width,
+            height=base_height,
+            evidence=_spatial_model_evidence(
+                profile=request.profile,
+                path=base_path,
+                stage="base",
+                anima_variant=anima_variant,
+                manual_profile_id=base_manual_profile,
+                catalog_metadata=_spatial_catalog_metadata(library, base_path),
+            ),
+            inpaint_mask=inpaint_mask,
+            crop_rect=crop_rect,
+            manual_profile_id=base_manual_profile,
+        )
+    ]
+    hires_size = _hires_target_size(settings)
+    if hires_size is not None:
+        hires_value = str(settings.get("hires_checkpoint") or "").strip()
+        hires_path = base_path
+        if hires_value and hires_value != "Use same checkpoint":
+            hires_path = _resolve_spatial_model_path(
+                hires_value,
+                model_root=model_root,
+                model_directory=model_directory,
+                library=library,
+            )
+        hires_manual_profile = None
+        hires_mask = (
+            inpaint_mask.resize(hires_size, Image.Resampling.NEAREST)
+            if inpaint_mask is not None and crop_rect is None
+            else None
+        )
+        stage_inputs.append(
+            SpatialStagePreparation(
+                stage="hires",
+                layout=request.prompt_layout,
+                width=hires_size[0],
+                height=hires_size[1],
+                evidence=_spatial_model_evidence(
+                    profile=request.profile,
+                    path=hires_path,
+                    stage="hires",
+                    anima_variant=(
+                        str(settings.get("anima_hires_generation_bundle", {}).get("variant_id"))
+                        if isinstance(settings.get("anima_hires_generation_bundle"), dict)
+                        else anima_variant
+                    ),
+                    manual_profile_id=hires_manual_profile,
+                    catalog_metadata=_spatial_catalog_metadata(library, hires_path),
+                ),
+                inpaint_mask=hires_mask,
+                manual_profile_id=hires_manual_profile,
+            )
+        )
+    if request.profile == "sdxl" and _uses_refiner(settings):
+        refiner_path = _resolve_spatial_model_path(
+            str(settings["refiner_checkpoint"]),
+            model_root=model_root,
+            model_directory="checkpoints",
+            library=library,
+        )
+        refiner_size = hires_size or (base_width, base_height)
+        refiner_manual_profile = None
+        refiner_mask = (
+            inpaint_mask.resize(refiner_size, Image.Resampling.NEAREST)
+            if inpaint_mask is not None and crop_rect is None
+            else inpaint_mask
+        )
+        stage_inputs.append(
+            SpatialStagePreparation(
+                stage="refiner",
+                layout=request.prompt_layout,
+                width=refiner_size[0],
+                height=refiner_size[1],
+                evidence=_spatial_model_evidence(
+                    profile="sdxl",
+                    path=refiner_path,
+                    stage="refiner",
+                    manual_profile_id=refiner_manual_profile,
+                    catalog_metadata=_spatial_catalog_metadata(library, refiner_path),
+                ),
+                inpaint_mask=refiner_mask,
+                crop_rect=crop_rect if hires_size is None else None,
+                manual_profile_id=refiner_manual_profile,
+            )
+        )
+    try:
+        return prepare_spatial_generation_context(
+            snapshot,
+            profile_id=request.profile,
+            generation_seed=request.seed,
+            stages=stage_inputs,
+            profiles_path=config.mapping_dir / "spatial-model-profiles.yaml",
+            working_directory=output_dir / "_spatial" / uuid4().hex,
+            advanced_styles=request.advanced_styles,
+            hires_prompt=str(settings.get("hires_prompt") or ""),
+            wildcard_dir=config.wildcard_dir,
+            known_embedding_names=known_embeddings,
+            data_dir=config.data_dir,
+        )
+    except SpatialMaskCompilerError as exc:
+        detail: dict[str, Any] = {"code": exc.code}
+        if exc.target_ids:
+            detail["target_ids"] = list(exc.target_ids)
+        raise HTTPException(status_code=409, detail=detail) from exc
+    except SpatialGenerationContextError as exc:
+        detail = {"code": exc.code}
+        if exc.target_ids:
+            detail["target_ids"] = list(exc.target_ids)
+        if exc.stage is not None:
+            detail["stage"] = exc.stage
+        if exc.profile_ids:
+            detail["profile_options"] = list(exc.profile_ids)
+        raise HTTPException(status_code=409, detail=detail) from exc
+
+
+def _spatial_prompt_selections(plan) -> list[dict[str, object]]:
+    records: list[dict[str, object]] = []
+    stages = [plan.base]
+    if plan.hires is not None and plan.hires.reused_from_stage is None:
+        stages.append(plan.hires)
+    for stage in stages:
+        for fragment in (stage.global_fragment, *stage.target_fragments):
+            for selection in fragment.selections:
+                records.append(
+                    {
+                        "fragment_id": fragment.fragment_id,
+                        "stage": fragment.stage,
+                        **selection.model_dump(mode="json"),
+                    }
+                )
+    return records
 
 
 def _topaz_settings_from_request(request: Txt2ImgRequest) -> TopazSettings:
@@ -2178,6 +2920,9 @@ def _round_hires_dimension(value: int | float, step: int = 8) -> int:
 
 
 def _apply_topaz_hires_if_needed(output_paths: list[str], settings: dict, request: Txt2ImgRequest, config: AppConfig, output_dir: Path) -> list[str]:
+    if isinstance(settings.get("image_check"), dict) and settings["image_check"].get("target_stage") == "final_output":
+        # A final decision must never be followed by another image correction.
+        return output_paths
     if not settings.get("hires_enabled") or settings.get("hires_upscaler") != "Topaz Photo AI":
         return output_paths
     if settings.get("topaz_hires_runtime") in {"completed", "completed_topaz_only"}:
@@ -2244,6 +2989,20 @@ def wildcards() -> WildcardListResponse:
     )
 
 
+def _expand_with_pins(prompt: str, request: Txt2ImgRequest | PromptExpandRequest, config: AppConfig):
+    try:
+        return expand_dynamic_prompt(
+            prompt,
+            seed=request.seed if request.seed >= 0 else None,
+            wildcard_dir=config.wildcard_dir,
+            **({"pins": request.prompt_pins} if request.prompt_pins is not None else {}),
+        )
+    except ValueError as exc:
+        if str(exc).startswith('prompt_choices_'):
+            raise HTTPException(status_code=409, detail={"code": str(exc)}) from exc
+        raise
+
+
 @router.post("/prompt/expand", response_model=PromptExpandResponse)
 def expand_prompt_preview(request: PromptExpandRequest) -> PromptExpandResponse:
     prompt, _negative_prompt = _compose_with_advanced_styles(
@@ -2251,15 +3010,13 @@ def expand_prompt_preview(request: PromptExpandRequest) -> PromptExpandResponse:
         request.negative_prompt,
         request.advanced_styles,
     )
-    expansion = expand_dynamic_prompt(
-        prompt,
-        seed=request.seed if request.seed >= 0 else None,
-        wildcard_dir=AppConfig().wildcard_dir,
-    )
+    expansion = _expand_with_pins(prompt, request, AppConfig())
     return PromptExpandResponse(
         prompt=request.prompt,
         expanded_prompt=expansion.expanded,
         selections=expansion.selections,
+        choices=expansion.choices,
+        prompt_hash=expansion.prompt_hash,
     )
 
 
@@ -2268,26 +3025,6 @@ def _merge_loras(prompt_loras: list[dict], request_loras: list[dict]) -> list[di
     for lora in [*prompt_loras, *request_loras]:
         merged[str(lora["name"])] = lora
     return list(merged.values())
-
-
-def _apply_advanced_style_text(base: str, style_text: str) -> str:
-    value = str(style_text or "").strip()
-    if not value:
-        return base
-    if "{prompt}" in value:
-        return value.replace("{prompt}", base).strip()
-    if not base.strip():
-        return value
-    return f"{base.rstrip()}, {value}"
-
-
-def _compose_with_advanced_styles(prompt: str, negative_prompt: str, styles: list) -> tuple[str, str]:
-    composed_prompt = prompt
-    composed_negative = negative_prompt
-    for style in sorted(styles, key=lambda item: item.order):
-        composed_prompt = _apply_advanced_style_text(composed_prompt, style.prompt)
-        composed_negative = _apply_advanced_style_text(composed_negative, style.negative)
-    return composed_prompt, composed_negative
 
 
 def _unsupported_profile_prompt_settings(profile: str, negative_prompt: str) -> list[dict[str, str]]:
@@ -2351,20 +3088,245 @@ def _preflight_profile_prompt_request(request: Txt2ImgRequest) -> None:
             request.remaster.scheduler = "Flux2"
 
 
+_PROMPT_SYNTAX_CONTRACTS = {
+    "scheduled_switch": {"conditioning_time_range", "conditioning_combine"},
+    "alternating_switch": {"prompt_step_schedule"},
+    "conditioning_and": {"conditioning_multiply", "conditioning_combine"},
+    "conditioning_break": {"conditioning_concat"},
+}
+
+
+def _prompt_payload_sha256(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _prompt_syntax_http_error(exc: PromptSyntaxError) -> HTTPException:
+    return HTTPException(
+        status_code=400,
+        detail={
+            "code": api_errors.PROMPT_SYNTAX_INVALID,
+            "reason": exc.code,
+            "message": exc.message,
+            "recovery": exc.recovery,
+        },
+    )
+
+
+def _prompt_syntax_assignments(plan: PromptSyntaxPlan) -> list[Literal["A", "B"]]:
+    return [
+        segment.assignment
+        for segment in plan.segments
+        if segment.assignment in {"A", "B"}
+    ]
+
+
+def _prompt_syntax_pass_plan(
+    *,
+    pass_id: Literal["base", "hires"],
+    profile_id: str,
+    steps: int,
+    sampler: str,
+    scheduler: str,
+    denoise: float,
+    positive_plan: PromptSyntaxPlan,
+    negative_plan: PromptSyntaxPlan,
+) -> dict[str, Any]:
+    assignments = {
+        key: values
+        for key, plan in (("positive", positive_plan), ("negative", negative_plan))
+        if (values := _prompt_syntax_assignments(plan))
+    }
+    return {
+        "schema_version": "asteria.prompt-pass.v1",
+        "node_contract_revision": "asteria.prompt.step-schedule.v1",
+        "profile_id": profile_id,
+        "pass_id": pass_id,
+        "steps": steps,
+        "sampler": sampler_runtime_name(sampler),
+        "scheduler": scheduler_runtime_name(scheduler),
+        "denoise": denoise,
+        "positive_plan_hash": positive_plan.sha256,
+        "negative_plan_hash": negative_plan.sha256,
+        "alternating_assignments": assignments,
+    }
+
+
+def _prepare_prompt_syntax_record(
+    *,
+    request: Txt2ImgRequest,
+    config: AppConfig,
+    settings: dict[str, Any],
+    expanded_prompt: str,
+    expanded_negative_prompt: str,
+    selected_runtime: str,
+) -> dict[str, Any]:
+    try:
+        positive_plan = parse_prompt_syntax(expanded_prompt, profile_id=request.profile)
+        negative_plan = parse_prompt_syntax(expanded_negative_prompt, profile_id=request.profile)
+        semantic_plans: dict[str, PromptSyntaxPlan] = {
+            "positive": positive_plan,
+            "negative": negative_plan,
+        }
+        hires_positive_plan = positive_plan
+        hires_negative_plan = negative_plan
+        if settings.get("hires_enabled") and settings.get("hires_prompt"):
+            hires_positive_plan = parse_prompt_syntax(
+                str(settings["hires_prompt"]),
+                profile_id=request.profile,
+            )
+            semantic_plans["hires_positive"] = hires_positive_plan
+        if settings.get("hires_enabled") and settings.get("hires_negative_prompt"):
+            hires_negative_plan = parse_prompt_syntax(
+                str(settings["hires_negative_prompt"]),
+                profile_id=request.profile,
+            )
+            semantic_plans["hires_negative"] = hires_negative_plan
+    except PromptSyntaxError as exc:
+        raise _prompt_syntax_http_error(exc) from exc
+
+    enabled_features = {
+        feature
+        for plan in semantic_plans.values()
+        for feature in plan.enabled_features
+    }
+    if enabled_features:
+        profiles = ModelProfileRepository(config.model_profiles_path).list()
+        active_profile = next((item for item in profiles if item.id == request.profile), None)
+        if active_profile is None:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": api_errors.MODEL_PROFILE_NOT_FOUND, "profile": request.profile},
+            )
+        unsupported = sorted(enabled_features - set(active_profile.prompt_syntax.features))
+        if (
+            active_profile.prompt_syntax.grammar != PROMPT_PARSER_GENERATION
+            or unsupported
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": api_errors.PROMPT_SYNTAX_PROFILE_UNSUPPORTED,
+                    "profile": request.profile,
+                    "features": unsupported or sorted(enabled_features),
+                },
+            )
+        if selected_runtime != "comfy_workflow":
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": api_errors.PROMPT_SYNTAX_RUNTIME_UNSUPPORTED,
+                    "runtime": selected_runtime,
+                },
+            )
+        try:
+            mapping = WorkflowMappingRepository(config.mapping_dir).get_txt2img(request.profile)
+        except WorkflowMappingNotFound as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": api_errors.PROMPT_SYNTAX_MAPPING_UNAVAILABLE},
+            ) from exc
+        required_contracts = {
+            contract
+            for plan in semantic_plans.values()
+            for contract in _PROMPT_SYNTAX_CONTRACTS.get(plan.operation, set())
+        }
+        missing_contracts = sorted(required_contracts - set(mapping.node_contracts))
+        if missing_contracts:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": api_errors.PROMPT_SYNTAX_MAPPING_UNAVAILABLE,
+                    "contracts": missing_contracts,
+                },
+            )
+
+    semantic_payloads = {
+        key: plan.to_dict()
+        for key, plan in semantic_plans.items()
+    }
+    pass_plans = {
+        "base": _prompt_syntax_pass_plan(
+            pass_id="base",
+            profile_id=request.profile,
+            steps=int(settings["steps"]),
+            sampler=str(settings.get("sampler", "Euler a")),
+            scheduler=str(settings.get("scheduler", "Automatic")),
+            denoise=float(settings.get("denoise", 1.0)),
+            positive_plan=positive_plan,
+            negative_plan=negative_plan,
+        )
+    }
+    if settings.get("hires_enabled"):
+        pass_plans["hires"] = _prompt_syntax_pass_plan(
+            pass_id="hires",
+            profile_id=request.profile,
+            steps=int(settings.get("hires_steps") or settings["steps"]),
+            sampler=str(
+                settings.get("sampler")
+                if settings.get("hires_sampler") in {None, "", "Use same sampler"}
+                else settings["hires_sampler"]
+            ),
+            scheduler=str(
+                settings.get("scheduler")
+                if settings.get("hires_scheduler") in {None, "", "Use same scheduler"}
+                else settings["hires_scheduler"]
+            ),
+            denoise=float(settings.get("hires_denoising_strength", 0.7)),
+            positive_plan=hires_positive_plan,
+            negative_plan=hires_negative_plan,
+        )
+    payload = {
+        "schema_version": "asteria.prompt-generation.v1",
+        "parser_generation": PROMPT_PARSER_GENERATION,
+        "profile_id": request.profile,
+        "raw_prompt": request.prompt,
+        "raw_negative_prompt": request.negative_prompt,
+        "expanded_prompt": expanded_prompt,
+        "expanded_negative_prompt": expanded_negative_prompt,
+        "semantic_plans": semantic_payloads,
+        "semantic_hashes": {
+            key: plan.sha256
+            for key, plan in semantic_plans.items()
+        },
+        "pass_plans": pass_plans,
+        "pass_plan_hashes": {
+            key: _prompt_payload_sha256(plan)
+            for key, plan in pass_plans.items()
+        },
+    }
+    return PromptSyntaxGenerationRecord.model_validate(payload).model_dump(mode="json")
+
+
 def _known_embedding_names(config: AppConfig) -> list[str]:
     library = get_model_library(_model_root(config))
     return [item.path.stem for item in library.by_type("embedding")]
 
 
-def _output_dir_for(data_dir: Path, profile: str) -> Path:
+def _output_dir_for(data_dir: Path, profile: str, operation: ImageCheckOperation | None = None) -> Path:
     from datetime import datetime
 
-    output_settings = UserSettingsRepository(data_dir / "user-settings.json").load().output
-    parts = [resolve_output_root(data_dir, output_settings)]
+    output_settings = (operation.output_settings if operation is not None
+                       else UserSettingsRepository(data_dir / "user-settings.json").load().output)
+    parts = [operation.output_root if operation is not None else resolve_output_root(data_dir, output_settings)]
     if output_settings.organize_by_date:
         parts.append(Path(datetime.now().strftime("%Y-%m-%d")))
     parts.append(Path(safe_segment(profile)))
     return Path(*parts)
+
+
+def _generation_operation_snapshot(request: Txt2ImgRequest) -> dict:
+    data_dir = _data_dir()
+    current = UserSettingsRepository(data_dir / "user-settings.json").load()
+    try:
+        return capture_image_check_operation(current, data_dir=data_dir, enabled=request.image_check_enabled).snapshot()
+    except ValidationError as exc:
+        raise HTTPException(status_code=409, detail={"code": "image_check_settings_invalid"}) from exc
 
 
 def _delete_history_artifacts(
@@ -2433,6 +3395,8 @@ def _scan_sidecar_metadata(repository: HistoryRepository, output_roots: list[Pat
             skipped += 1
             continue
         for sidecar_path in sidecar_paths:
+            if is_private_image_candidate(sidecar_path):
+                continue
             try:
                 payload = json.loads(sidecar_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
@@ -2451,6 +3415,7 @@ def _scan_sidecar_metadata(repository: HistoryRepository, output_roots: list[Pat
                 continue
             if (
                 resolved_image in referenced
+                or is_private_image_candidate(resolved_image)
                 or not _path_exists_safely(image_path)
                 or not _path_is_file_safely(image_path)
             ):
@@ -2511,6 +3476,8 @@ def _scan_sidecar_metadata(repository: HistoryRepository, output_roots: list[Pat
             skipped += 1
             continue
         for image_path in png_paths:
+            if is_private_image_candidate(image_path):
+                continue
             try:
                 resolved_image = str(image_path.resolve())
             except _PATH_ACCESS_ERRORS:
@@ -2643,25 +3610,164 @@ def _generate(
     merge_runtime_context: dict[str, Any] | None = None,
     comfy_admission_lease_token: str | None = None,
     merge_xyz_metadata: dict[str, Any] | None = None,
+    comparison_metadata: dict[str, Any] | None = None,
+    comparison_session=None,
 ) -> GenerationResponse:
+    from contextlib import ExitStack, nullcontext
+    from app.services.making_video import MakingRecorder
+    from app.services.generation_branch import BranchSession
+    from app.services.word_masks import WordMapSession
+
+    with ExitStack() as finalization_stack, \
+            (MakingRecorder() if request.record_making_video else nullcontext(None)) as making, \
+            (BranchSession() if request.record_branch_step is not None or request.branch_source_id else nullcontext(None)) as branch, \
+            (WordMapSession() if request.record_word_masks else nullcontext(None)) as word_maps:
+        return _generate_with_recording(
+            request, mode, job_id, making=making, branch=branch, word_maps=word_maps, merge_runtime_context=merge_runtime_context,
+            comfy_admission_lease_token=comfy_admission_lease_token,
+            merge_xyz_metadata=merge_xyz_metadata, comparison_metadata=comparison_metadata,
+            comparison_session=comparison_session,
+            finalization_stack=finalization_stack,
+        )
+
+
+def _generate_with_recording(
+    request: Txt2ImgRequest,
+    mode: str,
+    job_id: str | None = None,
+    *,
+    making=None,
+    branch=None,
+    word_maps=None,
+    merge_runtime_context: dict[str, Any] | None = None,
+    comfy_admission_lease_token: str | None = None,
+    merge_xyz_metadata: dict[str, Any] | None = None,
+    comparison_metadata: dict[str, Any] | None = None,
+    comparison_session=None,
+    finalization_stack=None,
+) -> GenerationResponse:
+    from contextlib import nullcontext
     generation_started = time.perf_counter()
+    request = _freeze_spatial_request_seed(request)
     _preflight_profile_prompt_request(request)
     data_dir = _data_dir()
     config = AppConfig()
+    stored_operation = _jobs.get(job_id, {}).get("generation_operation_snapshot") if job_id else None
+    check_operation = ImageCheckOperation.from_snapshot(stored_operation or _generation_operation_snapshot(request))
+    final_output_dir = _output_dir_for(data_dir, request.profile, check_operation)
+    history = HistoryRepository(data_dir / 'asteria.db') if check_operation.settings.enabled else None
+    image_session = (finalization_stack.enter_context(FinalImageSession(check_operation, final_output_dir, history=history))
+                     if check_operation.settings.enabled else None)
+    output_dir = image_session.directory if image_session else final_output_dir
+    if making is not None:
+        making.begin(check_operation.output_root, expected_images=request.batch_count * request.batch_size)
     model_slots = _model_slots_for_request(request, config)
     _validate_required_model_slots(request.profile, model_slots, config)
     external_model_snapshots = _external_model_reference_snapshots(model_slots, config)
+    runtime_model_slots = _runtime_model_slots_for_request(
+        request.profile,
+        model_slots,
+        model_root=_model_root(config),
+        external_roots=_registered_external_model_roots(config),
+    )
     styled_prompt, styled_negative_prompt = _compose_with_advanced_styles(
         request.prompt,
         request.negative_prompt,
         request.advanced_styles,
     )
-    prompt_expansion = expand_dynamic_prompt(
-        styled_prompt,
-        seed=request.seed if request.seed >= 0 else None,
-        wildcard_dir=config.wildcard_dir,
+    prompt_expansion = (
+        None
+        if _spatial_request_enabled(request)
+        else _expand_with_pins(styled_prompt, request, config)
     )
     settings, negative_prompt = _settings_from_request(request, config, mode)
+    if comparison_metadata is not None:
+        settings['prompt_comparison'] = dict(comparison_metadata)
+    if request.profile == "anima":
+        try:
+            anima_bundle = prepare_anima_generation_bundle(
+                model_slots,
+                adapter_strength=request.anima_qwen35_adapter_strength,
+                negative_adapter_strength=(
+                    request.anima_qwen35_negative_adapter_strength
+                ),
+            )
+        except AnimaGenerationBundleError as exc:
+            code, _, slots = exc.reason_code.partition(":")
+            detail: dict[str, Any] = {"code": code}
+            if slots:
+                detail["slots"] = slots.split(",")
+            raise HTTPException(status_code=409, detail=detail) from exc
+        settings["anima_generation_bundle"] = anima_bundle.model_dump(
+            mode="json",
+            exclude_none=True,
+        )
+        try:
+            hires_checkpoint_value = str(
+                settings.get("hires_checkpoint") or ""
+            ).strip()
+            anima_hires_target = None
+            if (
+                settings.get("hires_enabled")
+                and hires_checkpoint_value
+                and hires_checkpoint_value != "Use same checkpoint"
+            ):
+                anima_hires_library = get_model_library(
+                    _model_root(config),
+                    config=config,
+                )
+                anima_hires_target = _resolve_anima_hires_diffusion_path(
+                    settings,
+                    model_root=_model_root(config),
+                    library=anima_hires_library,
+                )
+            if anima_hires_target is not None:
+                anima_hires_bundle = prepare_anima_generation_bundle(
+                    {
+                        **model_slots,
+                        "diffusion_model": str(anima_hires_target),
+                    },
+                    adapter_strength=request.anima_qwen35_adapter_strength,
+                    negative_adapter_strength=(
+                        request.anima_qwen35_negative_adapter_strength
+                    ),
+                )
+                if (
+                    "anima_3_8b_52"
+                    in {
+                        anima_bundle.variant_id.value,
+                        anima_hires_bundle.variant_id.value,
+                    }
+                    and anima_bundle.variant_id != anima_hires_bundle.variant_id
+                ):
+                    raise AnimaGenerationBundleError(
+                        "anima_3_8b_hires_variant_mismatch"
+                    )
+                settings["anima_hires_generation_bundle"] = (
+                    anima_hires_bundle.model_dump(
+                        mode="json",
+                        exclude_none=True,
+                    )
+                )
+        except AnimaLoraRemapRegistryError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.reason_code},
+            ) from exc
+        except AnimaGenerationBundleError as exc:
+            code, _, slots = exc.reason_code.partition(":")
+            detail = {"code": code}
+            if slots:
+                detail["slots"] = slots.split(",")
+            raise HTTPException(status_code=409, detail=detail) from exc
+        if (
+            anima_bundle.variant_id.value == "anima_3_8b_52"
+            and mode not in {"txt2img", "img2img", "inpaint"}
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "anima_3_8b_unsupported_generation_mode"},
+            )
     if external_model_snapshots:
         settings["model_reference_snapshots"] = [
             {key: value for key, value in snapshot.items() if key != "execution_path"}
@@ -2673,10 +3779,118 @@ def _generate(
         settings["raw_prompt"] = request.prompt
         settings["raw_negative_prompt"] = request.negative_prompt
         settings["advanced_styles"] = [style.model_dump() for style in request.advanced_styles]
-    loras = _merge_loras(
-        extract_loras(prompt_expansion.expanded),
-        [lora.model_dump() for lora in request.loras],
+    known_embeddings = _known_embedding_names(config)
+    selected_runtime = _selected_runtime_id(config, request.runtime)
+    branch_source = None
+    if branch is not None:
+        from app.services.generation_branch import validate_capture, branch_request
+        try:
+            validate_capture(request, mode, selected_runtime)
+            if request.branch_source_id:
+                branch_source = HistoryRepository(data_dir / 'asteria.db').get(request.branch_source_id)
+                if branch_source is None:
+                    raise ValueError('branch_not_available')
+                canonical = branch_request(branch_source, {'prompt': request.prompt,
+                    'negative_prompt': request.negative_prompt, 'cfg_scale': request.cfg_scale})
+                if canonical.model_dump() != request.model_dump():
+                    raise ValueError('branch_fixed_settings_changed')
+        except (ValueError, KeyError) as exc:
+            raise HTTPException(status_code=409, detail={'code': str(exc)}) from exc
+    if _spatial_request_enabled(request) and selected_runtime != "comfy_workflow":
+        _validate_runtime_feature_requirements(
+            config,
+            selected_runtime,
+            request.profile,
+            settings,
+            [],
+            runtime_model_slots,
+        )
+    spatial_context = _prepare_spatial_generation(
+        request=request,
+        settings=settings,
+        config=config,
+        model_slots=model_slots,
+        known_embeddings=known_embeddings,
+        output_dir=output_dir,
     )
+    expanded_prompt = ""
+    expansion_selections: list[object] = []
+    spatial_loras: list[dict[str, Any]] | None = None
+    if spatial_context is not None:
+        settings["spatial_generation"] = spatial_context.history_record
+        expanded_prompt = spatial_context.prompt_plan.base.combined_expanded_prompt
+        expansion_selections = _spatial_prompt_selections(spatial_context.prompt_plan)
+        spatial_loras = [
+            item.model_dump(mode="json", exclude_none=True)
+            for item in spatial_context.prompt_plan.loras
+        ]
+    else:
+        if prompt_expansion is None:
+            raise RuntimeError("prompt expansion was not prepared")
+        expanded_prompt = prompt_expansion.expanded
+        expansion_selections = list(prompt_expansion.selections)
+        settings["prompt_choice_trace"] = {
+            "schema_version": "asteria.prompt-choices.v1",
+            "prompt_hash": prompt_expansion.prompt_hash,
+            "choices": [asdict(item) for item in prompt_expansion.choices],
+        }
+    loras = _merge_loras(
+        spatial_loras if spatial_loras is not None else extract_loras(expanded_prompt),
+        [lora.model_dump(exclude_none=True) for lora in request.loras],
+    )
+    if request.profile == "anima" and loras:
+        try:
+            anima_library = get_model_library(_model_root(config), config=config)
+            anima_fingerprints = ModelFingerprintService(
+                config.data_dir / "config" / "model-fingerprints.json"
+            )
+            loras, anima_lora_receipts = prepare_anima_lora_runtime_entries(
+                loras,
+                target_diffusion_path=Path(model_slots["diffusion_model"]),
+                library=anima_library,
+                fingerprints=anima_fingerprints,
+            )
+            hires_target = _resolve_anima_hires_diffusion_path(
+                settings,
+                model_root=_model_root(config),
+                library=anima_library,
+            )
+            anima_hires_lora_receipts: list[dict[str, Any]] = []
+            if hires_target is not None:
+                hires_loras, anima_hires_lora_receipts = (
+                    prepare_anima_lora_runtime_entries(
+                        loras,
+                        target_diffusion_path=hires_target,
+                        library=anima_library,
+                        fingerprints=anima_fingerprints,
+                    )
+                )
+                for runtime_lora, hires_lora in zip(loras, hires_loras, strict=True):
+                    hires_receipt = hires_lora.get("anima_remap")
+                    if isinstance(hires_receipt, dict):
+                        runtime_lora["hires_anima_remap"] = hires_receipt
+        except (AnimaLoraRemapRegistryError, KeyError) as exc:
+            reason_code = (
+                exc.reason_code
+                if isinstance(exc, AnimaLoraRemapRegistryError)
+                else "anima_target_model_slot_missing"
+            )
+            raise HTTPException(
+                status_code=409,
+                detail={"code": reason_code},
+            ) from exc
+        if anima_lora_receipts:
+            settings["anima_lora_remap_receipts"] = anima_lora_receipts
+        if anima_hires_lora_receipts:
+            settings["anima_hires_lora_remap_receipts"] = (
+                anima_hires_lora_receipts
+            )
+        settings["anima_remap_lora_count"] = sum(
+            1 for lora in loras if isinstance(lora.get("anima_remap"), dict)
+        )
+        settings["anima_standard_lora_count"] = (
+            len(loras) - int(settings["anima_remap_lora_count"])
+        )
     has_lora_runtime_extensions = any(
         lora.get("block_weight")
         or lora.get("block_weight_preset")
@@ -2685,25 +3899,95 @@ def _generate(
     )
     if has_lora_runtime_extensions:
         settings["lora_block_weight_runtime"] = "requested"
-    known_embeddings = _known_embedding_names(config)
-    embeddings = sorted(set(extract_embeddings(prompt_expansion.expanded, known_embeddings) + extract_embeddings(negative_prompt, known_embeddings)))
-    selected_runtime = _selected_runtime_id(config, request.runtime)
-    _validate_runtime_feature_requirements(config, selected_runtime, request.profile, settings, loras, model_slots)
+    embeddings = sorted(
+        set(
+            (
+                list(spatial_context.prompt_plan.embeddings)
+                if spatial_context is not None
+                else extract_embeddings(expanded_prompt, known_embeddings)
+            )
+            + extract_embeddings(negative_prompt, known_embeddings)
+        )
+    )
+    prompt_syntax_record = _prepare_prompt_syntax_record(
+        request=request,
+        config=config,
+        settings=settings,
+        expanded_prompt=expanded_prompt,
+        expanded_negative_prompt=negative_prompt,
+        selected_runtime=selected_runtime,
+    )
+    settings["prompt_syntax"] = prompt_syntax_record
+    _validate_runtime_feature_requirements(
+        config,
+        selected_runtime,
+        request.profile,
+        settings,
+        loras,
+        runtime_model_slots,
+    )
     _record_hires_runtime(settings, selected_runtime, request.profile)
     _record_hires_checkpoint_runtime(settings, selected_runtime, request.profile)
     _record_refiner_runtime(settings, selected_runtime, request.profile)
+    profile_contract = next((p for p in ModelProfileRepository(config.model_profiles_path).list() if p.id == request.profile), None)
+    settings["generation_assets"] = capture_generation_assets(
+        model_slots, settings, loras, embeddings,
+        get_model_library(_model_root(config), config=config),
+        ModelFingerprintService(config.data_dir / "config" / "model-fingerprints.json"),
+        slot_types={slot.id: slot.type for slot in profile_contract.model_slots} if profile_contract else {},
+        allow_identical_aliases=branch is not None or comparison_session is not None,
+    )
+    # Saved execution observations are outputs, never inputs to a new run.
+    settings.pop('sampling_execution', None)
+    runtime_settings = dict(settings)
+    runtime_settings.pop("prompt_input", None)
+    runtime_settings.pop("prompt_layout", None)
+    runtime_settings.pop("spatial_generation", None)
     runtime_request = {
         "profile": request.profile,
         "prompt": request.prompt,
-        "expanded_prompt": prompt_expansion.expanded,
-        "prompt_expansion_selections": prompt_expansion.selections,
+        "expanded_prompt": expanded_prompt,
+        "prompt_expansion_selections": expansion_selections,
         "negative_prompt": negative_prompt,
-        "settings": settings,
-        "model_slots": model_slots,
+        "settings": runtime_settings,
+        "model_slots": runtime_model_slots,
         "loras": loras,
         "embeddings": embeddings,
+        "prompt_syntax": prompt_syntax_record["semantic_plans"],
         "topaz_settings": _topaz_settings_from_request(request).model_dump(),
     }
+    if comparison_session is not None:
+        if selected_runtime != 'comfy_workflow':
+            raise HTTPException(409, detail={'code': 'comparison_sampling_unavailable'})
+        comparison_session.prepare(check_operation.output_root, comparison_metadata, runtime_request)
+    if word_maps is not None and request.profile in {'sdxl', 'anima'} and selected_runtime == 'comfy_workflow':
+        runtime_request['_word_maps'] = word_maps.begin(check_operation.output_root, request.profile)
+    if branch is not None:
+        from app.services.generation_branch import check_asset_identity
+        try:
+            if branch_source:
+                check_asset_identity(branch_source['settings']['generation_branch']['generation_assets'], settings['generation_assets'])
+            runtime_request['_generation_branch'] = branch.begin(check_operation.output_root, request, branch_source)
+            branch.prepare_control_inputs(runtime_settings)
+        except (ValueError, OSError, KeyError) as exc:
+            raise HTTPException(status_code=409, detail={'code': 'branch_source_unavailable'}) from exc
+    if check_operation.settings.enabled:
+        if selected_runtime != "comfy_workflow":
+            raise HTTPException(status_code=409, detail={"code": "image_check_runtime_not_supported"})
+        runtime_request["_image_check_operation"] = check_operation
+        # Live frames retain the existing preview registry and serving path.
+        # Completed candidates stay private until their final decision.
+        runtime_request['_preview_output_dir'] = str(final_output_dir / '_previews')
+        def prepare_final_batch(completed, batch_settings, directory):
+            before = completed['output_paths']
+            after = _apply_topaz_hires_if_needed(before, batch_settings, request, config, directory)
+            primary, mapped = remap_primary_outputs(completed.get('primary_outputs', []), before, after)
+            if not mapped:
+                raise OutputFinalizationError('Final image manifest does not match completed processing')
+            return {**completed, 'output_paths': after, 'primary_outputs': primary}
+        runtime_request['_prepare_final_image_batch'] = prepare_final_batch
+    if spatial_context is not None:
+        runtime_request["_spatial_runtime_context"] = spatial_context.runtime_context
     if merge_runtime_context is not None:
         runtime_request["_merge_runtime_context"] = dict(merge_runtime_context)
     if comfy_admission_lease_token:
@@ -2760,19 +4044,30 @@ def _generate(
         runtime_request["runtime_stop_confirmed"] = lambda: bool(
             _jobs.get(job_id, {}).get("runtime_stop_confirmed")
         )
+    if making is not None:
+        runtime_request['progress_callback'] = making.wrap(runtime_request.get('progress_callback'))
     runtime = _runtime(config, selected_runtime)
     _revalidate_external_model_reference_snapshots(external_model_snapshots, config)
     try:
         if mode == "img2img":
-            result = runtime.generate_img2img(runtime_request, _output_dir_for(data_dir, request.profile))
+            result = runtime.generate_img2img(runtime_request, output_dir)
         elif mode == "inpaint":
-            result = runtime.generate_inpaint(runtime_request, _output_dir_for(data_dir, request.profile))
+            result = runtime.generate_inpaint(runtime_request, output_dir)
         else:
-            result = runtime.generate_txt2img(runtime_request, _output_dir_for(data_dir, request.profile))
+            result = runtime.generate_txt2img(runtime_request, output_dir)
     except RuntimeCancellationConfirmed as exc:
         raise OperationCancelled() from exc
     except (RuntimeErrorResponse, RuntimeAdapterError, TopazError) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    runtime_settings_after_execution = runtime_request.get("settings")
+    if isinstance(runtime_settings_after_execution, dict):
+        settings.update(
+            {
+                key: value
+                for key, value in runtime_settings_after_execution.items()
+                if key not in {"prompt_input", "prompt_layout", "spatial_generation"}
+            }
+        )
     if result.get("runtime_adapter"):
         settings["runtime_adapter"] = result["runtime_adapter"]
         if settings.get("controlnet_units") and request.profile == "sdxl" and result["runtime_adapter"] == "comfy_workflow":
@@ -2806,9 +4101,11 @@ def _generate(
         settings["comfy_prompt_ids"] = result["comfy_prompt_ids"]
     if result.get("generated_seeds"):
         settings["generated_seeds"] = result["generated_seeds"]
-    output_settings = UserSettingsRepository(data_dir / "user-settings.json").load().output
-    settings["output_directory"] = str(_output_dir_for(data_dir, request.profile))
-    settings["output_root"] = str(resolve_output_root(data_dir, output_settings))
+    output_settings = check_operation.output_settings
+    settings["output_directory"] = str(final_output_dir)
+    settings["output_root"] = str(check_operation.output_root)
+    if comparison_session is not None and result['status'] == 'completed':
+        settings['prompt_comparison']['sampling'] = comparison_session.finish(settings)
     settings["filename_template"] = output_settings.filename_template
     settings["output_image_format"] = output_settings.image_format
     record_hires_metadata(settings)
@@ -2818,19 +4115,18 @@ def _generate(
     output_paths = list(result["output_paths"])
     primary_outputs = [dict(output) for output in result.get("primary_outputs", [])]
     before_paths = output_paths
-    output_paths = _apply_topaz_hires_if_needed(
-        output_paths,
-        settings,
-        request,
-        config,
-        _output_dir_for(data_dir, request.profile),
-    )
+    if image_session and not result.get('image_check_finalized'):
+        raise HTTPException(status_code=502, detail={'code': 'image_check_final_output_missing'})
+    output_paths = (output_paths if image_session else _apply_topaz_hires_if_needed(
+        output_paths, settings, request, config, output_dir))
     primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
     if not manifest_mapped:
         settings["primary_output_manifest_warning"] = "topaz_postprocess_path_mapping_failed"
     try:
         before_paths = output_paths
-        output_paths = _apply_output_image_format(output_paths, output_settings.image_format)
+        if image_session is None:
+            output_paths = _apply_output_image_format(output_paths, output_settings.image_format)
+        remap_checked_image_paths(settings, before_paths, output_paths)
         primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
         if not manifest_mapped:
             settings["primary_output_manifest_warning"] = "output_format_path_mapping_failed"
@@ -2842,70 +4138,83 @@ def _generate(
     )
     generated_tags = metadata_tags(
         profile=request.profile,
-        prompt=prompt_expansion.expanded or request.prompt,
+        prompt=expanded_prompt or request.prompt,
         model_slots=model_slots,
         embeddings=embeddings,
         loras=loras,
     )
-    history = HistoryRepository(data_dir / "asteria.db")
-    generation_id = history.add(
-        status=result["status"],
-        profile=request.profile,
-        prompt=request.prompt,
-        expanded_prompt=prompt_expansion.expanded,
-        negative_prompt=negative_prompt,
-        settings=settings,
-        model_slots=model_slots,
-        loras=loras,
-        embeddings=embeddings,
-        output_paths=output_paths,
-        generated_tags=generated_tags,
-    )
-    before_paths = output_paths
-    output_paths = _apply_filename_template(output_paths, settings, request.profile, generation_id)
-    primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
-    if not manifest_mapped:
-        settings["primary_output_manifest_warning"] = "filename_path_mapping_failed"
-    finalize_merge_xyz_metadata(
-        settings,
-        output_paths=output_paths,
-        runtime_adapter=str(result.get("runtime_adapter") or selected_runtime),
-        mapping_id=f"{request.profile}_txt2img",
-    )
-    settings["primary_outputs"] = primary_outputs
-    _auto_send_primary_outputs_to_eagle(
-        data_dir=data_dir,
-        config=config,
-        primary_outputs=primary_outputs,
-        generated_tags=generated_tags,
-        prompt=prompt_expansion.expanded or request.prompt,
-        negative_prompt=negative_prompt,
-        settings=settings,
-    )
-    history.update_settings(generation_id, settings)
-    _update_output_paths_safely(history, generation_id, output_paths)
-    sidecar_paths = MetadataWriter().write_generation_sidecars(
-        {
-            "generation_id": generation_id,
-            "status": result["status"],
-            "profile": request.profile,
-            "prompt": request.prompt,
-            "expanded_prompt": prompt_expansion.expanded,
-            "negative_prompt": negative_prompt,
-            "prompt_expansion_selections": prompt_expansion.selections,
-            "settings": settings,
-            "model_slots": model_slots,
-            "loras": loras,
-            "embeddings": embeddings,
-            "metadata_tags": generated_tags,
-        },
-        output_paths,
-    )
-    if sidecar_paths:
-        output_paths = [*output_paths, *sidecar_paths]
-        _update_output_paths_safely(history, generation_id, output_paths)
+    history = history or HistoryRepository(data_dir / "asteria.db")
+    with history.publication() if image_session else nullcontext():
+        generation_id = history.add(
+            status=result["status"], profile=request.profile, prompt=request.prompt,
+            expanded_prompt=expanded_prompt, negative_prompt=negative_prompt,
+            settings=settings, model_slots=model_slots, loras=loras, embeddings=embeddings,
+            output_paths=[] if image_session else output_paths, generated_tags=generated_tags,
+        )
+        before_paths = output_paths
+        if image_session:
+            stage_paths = [s['path'] for s in result.get('enhancement_stages', [])]
+            all_paths = list(dict.fromkeys([*output_paths, *stage_paths]))
+            published = image_session.publish(all_paths, settings, request.profile, generation_id)
+            path_mapping = dict(zip(all_paths, published, strict=True))
+            output_paths = [path_mapping[p] for p in output_paths]
+            result['enhancement_stages'] = [{**s, 'path': path_mapping[s['path']]}
+                                           for s in result.get('enhancement_stages', [])]
+        else:
+            output_paths = _apply_filename_template(output_paths, settings, request.profile, generation_id)
+            remap_checked_image_paths(settings, before_paths, output_paths)
+        primary_outputs, manifest_mapped = remap_primary_outputs(primary_outputs, before_paths, output_paths)
+        if not manifest_mapped:
+            if image_session:
+                raise OutputFinalizationError('Final image publication manifest mismatch')
+            settings["primary_output_manifest_warning"] = "filename_path_mapping_failed"
+        finalize_merge_xyz_metadata(settings, output_paths=output_paths,
+            runtime_adapter=str(result.get("runtime_adapter") or selected_runtime), mapping_id=f"{request.profile}_txt2img")
+        settings["primary_outputs"] = primary_outputs
+        making_output_paths = list(output_paths) if making is not None else []
+        from app.services.enhancement_stages import finalize_stages
+        finalize_stages(settings, result.get('enhancement_stages', []), primary_outputs, output_paths)
+        word_paths = []
+        if word_maps is not None:
+            settings['word_masks'], word_paths = word_maps.finish(primary_outputs, result['status'])
+            output_paths.extend(word_paths)
+        branch_paths = []
+        if branch is not None:
+            settings['generation_branch'], branch_paths = branch.finish(
+                request, settings, model_slots, expanded_prompt, negative_prompt, result['status'])
+            output_paths.extend(branch_paths)
+            record_controlnet_artifacts(settings)
+            record_anima_lllite_artifacts(settings)
+        if image_session is None and result["status"] != "cancelled":
+            _auto_send_primary_outputs_to_eagle(data_dir=data_dir, config=config, primary_outputs=primary_outputs,
+                generated_tags=generated_tags, prompt=expanded_prompt or request.prompt,
+                negative_prompt=negative_prompt, settings=settings)
+        history.update_settings(generation_id, settings)
+        metadata_payload = {
+            "generation_id": generation_id, "status": result["status"], "profile": request.profile,
+            "prompt": request.prompt, "expanded_prompt": expanded_prompt, "negative_prompt": negative_prompt,
+            "prompt_expansion_selections": expansion_selections, "settings": settings,
+            "model_slots": model_slots, "loras": loras, "embeddings": embeddings, "metadata_tags": generated_tags,
+        }
+        sidecar_paths = MetadataWriter().write_generation_sidecars(metadata_payload, output_paths)
+        if sidecar_paths:
+            output_paths = [*output_paths, *sidecar_paths]
+        if image_session:
+            history.update_output_paths(generation_id, output_paths)
+            image_session.seal_history(generation_id)
+        else:
+            _update_output_paths_safely(history, generation_id, output_paths)
+    if image_session:
+        image_session.commit()
+        if result["status"] != "cancelled":
+            _auto_send_primary_outputs_to_eagle(data_dir=data_dir, config=config, primary_outputs=primary_outputs,
+                generated_tags=generated_tags, prompt=expanded_prompt or request.prompt,
+                negative_prompt=negative_prompt, settings=settings)
+            history.update_settings(generation_id, settings)
+            MetadataWriter().write_generation_sidecars(metadata_payload,
+                [p for p in output_paths if Path(p).suffix.lower() in {'.png', '.jpg', '.jpeg', '.webp'}])
     remasters: list[RemasterResponse] = []
-    if request.remaster.enabled:
+    if request.remaster.enabled and result["status"] != "cancelled":
         remasters = _fan_out_remasters(
             request,
             generation_id,
@@ -2913,11 +4222,18 @@ def _generate(
             model_slots,
             loras,
             job_id=job_id,
+            image_check_operation=check_operation if image_session else None,
         )
         settings["remaster_generation_ids"] = [item.id for item in remasters]
         settings["remaster_statuses"] = [item.status for item in remasters]
         settings["remaster_output_paths"] = [item.output_path for item in remasters]
         settings["remaster_comparison_paths"] = [item.contact_sheet_path for item in remasters]
+        if image_session:
+            child_checks = [item.settings['image_check'] for item in remasters if 'image_check' in item.settings]
+            settings['image_check']['remaster_checks'] = child_checks
+            if any(check.get('pause') for check in child_checks):
+                settings['image_check']['pause'] = True
+                settings['image_check']['status'] = 'unknown'
         if len(remasters) != len(primary_outputs):
             settings["remaster_preparation_warning"] = "primary_output_manifest_incomplete"
         history.update_settings(generation_id, settings)
@@ -2927,9 +4243,9 @@ def _generate(
                 "status": result["status"],
                 "profile": request.profile,
                 "prompt": request.prompt,
-                "expanded_prompt": prompt_expansion.expanded,
+                "expanded_prompt": expanded_prompt,
                 "negative_prompt": negative_prompt,
-                "prompt_expansion_selections": prompt_expansion.selections,
+                "prompt_expansion_selections": expansion_selections,
                 "settings": settings,
                 "model_slots": model_slots,
                 "loras": loras,
@@ -2938,18 +4254,39 @@ def _generate(
             },
             [str(primary["path"]) for primary in primary_outputs],
         )
+    if making is not None:
+        settings['making_video'] = making.finish(history, generation_id, {
+            'status': result['status'], 'profile': request.profile,
+            'prompt': request.prompt, 'expanded_prompt': expanded_prompt, 'negative_prompt': negative_prompt,
+            'settings': settings, 'model_slots': model_slots, 'loras': loras, 'embeddings': embeddings,
+            'output_paths': making_output_paths,
+        }, cancelled=runtime_request.get('cancel_requested', lambda: False))
+        history.update_settings(generation_id, settings)
+        MetadataWriter().write_generation_sidecars({
+            'generation_id': generation_id, 'status': result['status'], 'profile': request.profile,
+            'prompt': request.prompt, 'expanded_prompt': expanded_prompt, 'negative_prompt': negative_prompt,
+            'prompt_expansion_selections': expansion_selections, 'settings': settings,
+            'model_slots': model_slots, 'loras': loras, 'embeddings': embeddings, 'metadata_tags': generated_tags,
+        }, [path for path in output_paths if Path(path).suffix.lower() in {'.png', '.jpg', '.jpeg', '.webp'}])
+    history_item = history.get(generation_id)
+    if branch_paths:
+        branch.commit()
+    if word_paths:
+        word_maps.commit()
     return GenerationResponse(
         id=generation_id,
         status=result["status"],
         profile=request.profile,
         prompt=request.prompt,
-        expanded_prompt=prompt_expansion.expanded,
+        expanded_prompt=expanded_prompt,
         negative_prompt=negative_prompt,
         settings=settings,
         model_slots=model_slots,
         loras=loras,
         embeddings=embeddings,
         output_paths=output_paths,
+        media_kind=history_item["media_kind"] if history_item is not None else "image",
+        artifacts=history_item["artifacts"] if history_item is not None else [],
         primary_outputs=primary_outputs,
         remasters=remasters,
     )
@@ -2964,6 +4301,7 @@ def _fan_out_remasters(
     *,
     job_id: str | None = None,
     orchestrator=None,
+    image_check_operation: ImageCheckOperation | None = None,
 ) -> list[RemasterResponse]:
     from app.api.remaster import _build_orchestrator
 
@@ -2997,6 +4335,7 @@ def _fan_out_remasters(
         try:
             result = active_orchestrator.run(
                 child_request,
+                **({'image_check_operation': image_check_operation} if image_check_operation else {}),
                 cancel_requested=(
                     (lambda: bool(_jobs.get(job_id, {}).get("cancelled"))) if job_id is not None else None
                 ),
@@ -3020,6 +4359,8 @@ def _fan_out_remasters(
                 warnings=[exc.code],
             )
         results.append(result)
+        if result.settings.get('image_check', {}).get('pause'):
+            break
     return results
 
 
@@ -3067,6 +4408,24 @@ def _known_output_roots(data_dir: Path, items: list[dict] | None = None) -> set[
                     roots.add(Path(str(value)).resolve())
                 except _PATH_ACCESS_ERRORS:
                     continue
+    return roots
+
+
+def _media_artifact_roots(
+    data_dir: Path,
+    item: dict,
+    artifact_id: str,
+) -> set[Path]:
+    roots = _known_output_roots(data_dir, [item])
+    for raw in item.get("artifacts", []):
+        try:
+            artifact = MediaArtifact.model_validate(raw)
+        except ValueError:
+            continue
+        if artifact.artifact_id == artifact_id:
+            if artifact.kind == "poster":
+                roots.add(data_dir / "cache" / "media-posters")
+            break
     return roots
 
 
@@ -3271,7 +4630,7 @@ def _record_xyz_history(
         prompt=request.base.prompt,
         model_slots=model_slots,
         embeddings=[],
-        loras=[lora.model_dump() for lora in request.base.loras],
+        loras=[lora.model_dump(exclude_none=True) for lora in request.base.loras],
     )
     xyz_tags = [*generated_tags, "xyz plot"]
     if contact_sheet_path:
@@ -3293,7 +4652,7 @@ def _record_xyz_history(
         negative_prompt=request.base.negative_prompt,
         settings=settings,
         model_slots=model_slots,
-        loras=[lora.model_dump() for lora in request.base.loras],
+        loras=[lora.model_dump(exclude_none=True) for lora in request.base.loras],
         embeddings=[],
         output_paths=output_paths,
         generated_tags=xyz_tags,
@@ -3308,7 +4667,7 @@ def _record_xyz_history(
             "negative_prompt": request.base.negative_prompt,
             "settings": settings,
             "model_slots": model_slots,
-            "loras": [lora.model_dump() for lora in request.base.loras],
+            "loras": [lora.model_dump(exclude_none=True) for lora in request.base.loras],
             "embeddings": [],
             "metadata_tags": xyz_tags,
         },
@@ -3328,6 +4687,24 @@ def txt2img(request: Txt2ImgRequest) -> GenerationResponse:
 
 @_artifact_write_operation
 def _generate_xyz_plot(request: XYZPlotRequest) -> XYZPlotResponse:
+    if _spatial_request_enabled(request.base):
+        conflicting_axis = next(
+            (
+                axis
+                for axis in request.axes
+                if axis.target.strip().lower() == "prompt_replace"
+            ),
+            None,
+        )
+        if conflicting_axis is not None:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": api_errors.XYZ_AXIS_UNSUPPORTED,
+                    "target": conflicting_axis.target,
+                    "reason": "prompt_replace_conflicts_with_prompt_layout",
+                },
+            )
     if request.mode == "img2img":
         _ensure_supported_img2img_profile(request.base.profile)
     elif request.mode == "inpaint":
@@ -3545,6 +4922,7 @@ def _job_response(job_id: str, job: dict, operation=None) -> GenerationJobRespon
             if operation is not None
             else str(job.get("error", ""))
         ),
+        error_target_ids=list(job.get("error_target_ids", [])),
         cancelled=bool(job.get("cancelled", False)) or status in {"cancelling", "cancelled"},
     )
 
@@ -3553,6 +4931,8 @@ def _set_job(job_id: str, **patch: Any) -> None:
     with _jobs_lock:
         if job_id in _jobs:
             _jobs[job_id].update(patch)
+        comparison_total = _jobs.get(job_id, {}).get('comparison_total')
+        comparison_index = int(_jobs.get(job_id, {}).get('comparison_index', 0))
     progress_keys = {"current", "total", "phase", "step", "steps"}
     if not progress_keys.intersection(patch):
         return
@@ -3565,6 +4945,9 @@ def _set_job(job_id: str, **patch: Any) -> None:
         current = patch.get("current")
         if current is None and "progress" in patch and total is not None:
             current = round(float(patch["progress"]) * total)
+        if comparison_total:
+            current = comparison_index + min(1, max(0, int(current or 0)))
+            total = comparison_total
         coordinator.repository.transition(
             job_id,
             expected_revision=current_operation.row_revision,
@@ -3612,6 +4995,8 @@ def _fail_scheduled_operation(job_id: str) -> None:
 
 
 def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest) -> GenerationJobResponse:
+    if isinstance(request, Txt2ImgRequest):
+        request = _freeze_spatial_request_seed(request)
     coordinator = _generation_operation_coordinator()
     publisher_lease = reference_mutation_coordinator.acquire_publisher()
     registered = False
@@ -3625,6 +5010,8 @@ def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest
             "request": request.model_dump(mode="json"),
             "request_fields_set": sorted(request.model_fields_set),
         }
+        if isinstance(request, Txt2ImgRequest):
+            snapshot["generation_operation_snapshot"] = _generation_operation_snapshot(request)
         operation = coordinator.enqueue(
             kind=f"generation.{mode}",
             source_actor="local",
@@ -3668,6 +5055,7 @@ def enqueue_discord_txt2img(
 ):
     from app.services.discord_receipts import DiscordOperationClaim
 
+    request = _freeze_spatial_request_seed(request)
     _preflight_controlnet_mode_request(request, "txt2img")
     coordinator = _generation_operation_coordinator()
     publisher_lease = reference_mutation_coordinator.acquire_publisher()
@@ -3682,6 +5070,7 @@ def enqueue_discord_txt2img(
             "request": request.model_dump(mode="json"),
             "request_fields_set": sorted(request.model_fields_set),
             "discord": dict(discord_snapshot),
+            "generation_operation_snapshot": _generation_operation_snapshot(request),
         }
         claim = coordinator.enqueue_with_discord_receipt(
             kind="generation.txt2img",
@@ -3875,19 +5264,28 @@ def _cancel_legacy_remaster_job(job_id: str, job: dict[str, Any]) -> GenerationJ
 def retry_job(job_id: str) -> GenerationJobResponse:
     coordinator = _generation_operation_coordinator()
     try:
+        source = coordinator.get(job_id)
+        mode = str(source.request_snapshot["mode"])
+        request_type = {
+            "txt2img": Txt2ImgRequest,
+            "img2img": Img2ImgRequest,
+            "inpaint": InpaintRequest,
+            "remaster": RemasterRequest,
+        }[mode]
+        # Reject retired request contracts before retry creates a new operation.
+        request = request_type.model_validate(source.request_snapshot["request"])
         operation = coordinator.retry(job_id, source_actor="local")
     except OperationNotFoundError:
         raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_JOB_NOT_FOUND}) from None
     except OperationRetryError as exc:
         raise HTTPException(status_code=409, detail={"code": str(exc)}) from exc
-    mode = str(operation.request_snapshot["mode"])
-    request_type = {
-        "txt2img": Txt2ImgRequest,
-        "img2img": Img2ImgRequest,
-        "inpaint": InpaintRequest,
-        "remaster": RemasterRequest,
-    }[mode]
-    request = request_type.model_validate(operation.request_snapshot["request"])
+    except ValueError as exc:
+        code = (
+            "spatial_prompt_not_in_release"
+            if "spatial_prompt_not_in_release" in str(exc)
+            else "invalid_generation_snapshot"
+        )
+        raise HTTPException(status_code=409, detail={"code": code}) from exc
     publisher_lease = reference_mutation_coordinator.acquire_publisher()
     with _jobs_lock:
         _jobs[operation.operation_id] = _new_job_cache(mode, request)
@@ -3940,6 +5338,91 @@ def cleanup_jobs() -> GenerationJobCleanupResponse:
     )
 
 
+@router.get("/history/{generation_id}/reproduction")
+def generation_reproduction(generation_id: int) -> dict:
+    config = AppConfig()
+    item = HistoryRepository(_data_dir() / "asteria.db").get(generation_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail={"code": "generation_not_found"})
+    return compare_generation_assets(
+        item.get("settings", {}).get("generation_assets"),
+        get_model_library(_model_root(config), config=config),
+        ModelFingerprintService(config.data_dir / "config" / "model-fingerprints.json"),
+    )
+
+
+@router.get('/history/{generation_id}/reproduction/numbers')
+def generation_reproduction_numbers(generation_id: int, other_id: int) -> dict:
+    from app.services.reproduction_numbers import compare_numbers
+    repository = HistoryRepository(_data_dir() / 'asteria.db')
+    left, right = repository.get(generation_id), repository.get(other_id)
+    if left is None or right is None:
+        raise HTTPException(404, detail={'code': 'generation_not_found'})
+    return compare_numbers(left, right)
+
+
+class WordMaskSelection(BaseModel):
+    image_index: int = Field(ge=0, strict=True)
+    columns: list[int] = Field(min_length=1, max_length=256)
+    threshold: float = Field(default=.5, ge=.01, le=.99, allow_inf_nan=False)
+    expand: float = Field(default=0, ge=-10, le=10, allow_inf_nan=False)
+
+
+@router.get('/history/{generation_id}/word-masks')
+def generation_word_masks(generation_id: int) -> dict:
+    from app.services.word_masks import word_mask_details
+    item = HistoryRepository(_data_dir() / 'asteria.db').get(generation_id)
+    try:
+        return word_mask_details(item or {})
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=409, detail={'code': 'word_masks_unavailable'}) from exc
+
+
+@router.post('/history/{generation_id}/word-masks/preview')
+def preview_generation_word_mask(generation_id: int, selection: WordMaskSelection) -> Response:
+    from io import BytesIO
+    from app.services.word_masks import make_word_mask
+    item = HistoryRepository(_data_dir() / 'asteria.db').get(generation_id)
+    try:
+        mask = make_word_mask(item or {}, selection.image_index, selection.columns, selection.threshold, selection.expand)
+        stream = BytesIO(); mask.save(stream, format='PNG')
+        return Response(stream.getvalue(), media_type='image/png', headers={'Cache-Control': 'no-store'})
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=409, detail={'code': 'word_masks_unavailable'}) from exc
+
+
+@router.get('/history/{generation_id}/branch')
+def generation_branch_details(generation_id: int) -> dict:
+    from app.services.generation_branch import branch_request, resolve_source
+    item = HistoryRepository(_data_dir() / 'asteria.db').get(generation_id)
+    try:
+        if item is None:
+            raise ValueError('branch_not_available')
+        resolve_source(item)
+        request = branch_request(item, {})
+    except (ValueError, OSError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail={'code': 'branch_source_unavailable'}) from exc
+    saved = item['settings']['generation_branch']
+    return {'generation_id': generation_id, 'cut_step': saved['cut_step'], 'bytes': saved['bytes'],
+            'prompt': request.prompt, 'negative_prompt': request.negative_prompt, 'cfg_scale': request.cfg_scale,
+            'profile': request.profile, 'steps': request.steps, 'seed': request.seed,
+            'sampler': request.sampler, 'scheduler': request.scheduler, 'width': request.width, 'height': request.height}
+
+
+@router.post('/history/{generation_id}/branch', response_model=GenerationJobResponse)
+def queue_generation_branch(generation_id: int, changes: dict) -> GenerationJobResponse:
+    from app.services.generation_branch import branch_request, resolve_source
+    item = HistoryRepository(_data_dir() / 'asteria.db').get(generation_id)
+    try:
+        if item is None:
+            raise ValueError('branch_not_available')
+        resolve_source(item)
+        request = branch_request(item, changes)
+    except (ValueError, OSError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail={'code': 'branch_source_unavailable'}) from exc
+    return _enqueue_generation_job('txt2img', request)
+
+
 @router.get("/history", response_model=GenerationHistoryResponse)
 def history(
     limit: int = Query(default=72, ge=1, le=100),
@@ -3949,6 +5432,8 @@ def history(
     favorite: bool = False,
     tag: str = "",
     folder: str = "all",
+    media_kind: Literal["all", "image", "video", "audio"] = "all",
+    condition_verdict: Literal["", "match", "mismatch", "unknown", "unchecked"] = "",
 ) -> GenerationHistoryResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
     try:
@@ -3960,16 +5445,183 @@ def history(
             favorite=favorite,
             tag=tag,
             folder=folder,
+            media_kind=media_kind,
+            condition_verdict=condition_verdict,
         )
     except ValueError as error:
         if str(error) == "invalid_history_cursor":
             raise HTTPException(status_code=400, detail={"code": "invalid_history_cursor"}) from error
         raise
+    history_items = repository.list_all()
+    items = VideoSequenceHistoryProjector(
+        repository.db_path,
+        accepted_roots=_known_output_roots(_data_dir(), history_items),
+    ).project_items(
+        page.items,
+        history_items=history_items,
+    )
     return GenerationHistoryResponse(
-        items=page.items,
+        items=items,
         next_cursor=page.next_cursor,
         has_more=page.has_more,
     )
+
+
+@router.api_route(
+    "/history/{generation_id}/artifacts/{artifact_id}",
+    methods=["GET", "HEAD"],
+)
+def history_media_artifact(
+    generation_id: int,
+    artifact_id: str,
+    request: Request,
+    download: bool = False,
+) -> Response:
+    data_dir = _data_dir()
+    item = HistoryRepository(data_dir / "asteria.db").get(generation_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail={"code": "media_artifact_not_found"})
+    try:
+        artifact, path = resolve_registered_media_artifact(
+            item,
+            artifact_id,
+            accepted_roots=_media_artifact_roots(data_dir, item, artifact_id),
+            allowed_kinds={"video", "audio", "poster", "image"},
+        )
+        if artifact.kind == 'image' and (artifact.mime_type != 'image/gif' or artifact.role != 'derived'):
+            raise MediaArtifactAccessError('media_artifact_not_found')
+    except MediaArtifactAccessError as error:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "media_artifact_not_found"},
+        ) from error
+    try:
+        path_details = path.stat()
+        size = path_details.st_size
+    except OSError as error:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "media_artifact_not_found"},
+        ) from error
+    byte_range = _single_byte_range(request.headers.get("range", ""), size)
+    start, end = byte_range if byte_range is not None else (0, size - 1)
+    length = end - start + 1
+    status_code = 206 if byte_range is not None else 200
+    headers = {
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(length),
+        "Content-Disposition": f"{'attachment' if download else 'inline'}; filename*=UTF-8''{quote(path.name, safe='')}",
+        "X-Content-Type-Options": "nosniff",
+        "Access-Control-Allow-Origin": "*",
+    }
+    if byte_range is not None:
+        headers["Content-Range"] = f"bytes {start}-{end}/{size}"
+    if request.method == "HEAD":
+        return Response(
+            status_code=status_code,
+            media_type=artifact.mime_type,
+            headers=headers,
+        )
+    try:
+        source = path.open("rb")
+        opened_details = os.fstat(source.fileno())
+    except OSError as error:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "media_artifact_not_found"},
+        ) from error
+    if (
+        opened_details.st_size != size
+        or opened_details.st_dev != path_details.st_dev
+        or opened_details.st_ino != path_details.st_ino
+    ):
+        source.close()
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "media_artifact_not_found"},
+        )
+    return StreamingResponse(
+        _stream_file_range(source, start=start, length=length),
+        status_code=status_code,
+        media_type=artifact.mime_type,
+        headers=headers,
+    )
+
+
+def _open_containing_folder(path: Path) -> None:
+    if os.name != "nt" or not hasattr(os, "startfile"):
+        raise OSError("folder reveal is unavailable")
+    os.startfile(str(path.parent))
+
+
+@router.post("/history/{generation_id}/artifacts/{artifact_id}/reveal")
+def reveal_history_audio_artifact(
+    generation_id: int,
+    artifact_id: str,
+) -> dict[str, str]:
+    data_dir = _data_dir()
+    item = HistoryRepository(data_dir / "asteria.db").get(generation_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail={"code": "media_artifact_not_found"})
+    try:
+        _artifact, path = resolve_registered_media_artifact(
+            item,
+            artifact_id,
+            accepted_roots=_known_output_roots(data_dir, [item]),
+            allowed_kinds={"audio"},
+        )
+    except MediaArtifactAccessError as error:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "media_artifact_not_found"},
+        ) from error
+    try:
+        _open_containing_folder(path)
+    except OSError as error:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "media_artifact_reveal_failed"},
+        ) from error
+    return {"status": "opened"}
+
+
+def _single_byte_range(header: str, size: int) -> tuple[int, int] | None:
+    if not header:
+        return None
+    invalid_headers = {"Content-Range": f"bytes */{size}", "Accept-Ranges": "bytes"}
+    if size <= 0 or not header.startswith("bytes=") or "," in header:
+        raise HTTPException(status_code=416, headers=invalid_headers)
+    value = header.removeprefix("bytes=").strip()
+    if value.count("-") != 1:
+        raise HTTPException(status_code=416, headers=invalid_headers)
+    start_text, end_text = (part.strip() for part in value.split("-", 1))
+    try:
+        if not start_text:
+            suffix_length = int(end_text)
+            if suffix_length <= 0:
+                raise ValueError
+            start = max(0, size - suffix_length)
+            end = size - 1
+        else:
+            start = int(start_text)
+            end = size - 1 if not end_text else min(int(end_text), size - 1)
+            if start < 0 or start >= size or end < start:
+                raise ValueError
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=416, headers=invalid_headers) from None
+    return start, end
+
+
+def _stream_file_range(source, *, start: int, length: int):
+    remaining = length
+    with source:
+        source.seek(start)
+        while remaining > 0:
+            chunk = source.read(min(1024 * 1024, remaining))
+            if not chunk:
+                break
+            remaining -= len(chunk)
+            yield chunk
 
 
 @router.get("/history/tags", response_model=GenerationTagCatalogResponse)
@@ -3991,6 +5643,7 @@ def history_thumbnail(generation_id: int) -> FileResponse:
             data_dir / "init_images",
             data_dir / "mask_images",
             data_dir / "control_images",
+            data_dir / "cache" / "media-posters",
         }
     )
     try:
@@ -4027,25 +5680,26 @@ def create_history_folder(request: CreateGenerationFolderRequest) -> GenerationF
 @router.patch("/history/bulk", response_model=GenerationHistoryResponse)
 def bulk_update_history_items(request: BulkGenerationCurationRequest) -> GenerationHistoryResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
-    try:
-        items = repository.bulk_update_curation(
-            request.ids,
-            rating=request.rating,
-            favorite=request.favorite,
-            tags_add=request.tags_add,
-            tags_remove=request.tags_remove,
-            folder_id=request.folder_id,
-            update_folder=request.update_folder,
-        )
-    except HistoryTagLimitExceededError as error:
-        raise HTTPException(
-            status_code=400,
-            detail={"code": api_errors.HISTORY_TAG_LIMIT_EXCEEDED, "limit": 160},
-        ) from error
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-    _sync_curation_sidecars(items)
-    return GenerationHistoryResponse(items=items)
+    with repository.publication():
+        try:
+            items = repository.bulk_update_curation(
+                request.ids,
+                rating=request.rating,
+                favorite=request.favorite,
+                tags_add=request.tags_add,
+                tags_remove=request.tags_remove,
+                folder_id=request.folder_id,
+                update_folder=request.update_folder,
+            )
+        except HistoryTagLimitExceededError as error:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": api_errors.HISTORY_TAG_LIMIT_EXCEEDED, "limit": 160},
+            ) from error
+        except ValueError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        _sync_curation_sidecars(items)
+        return GenerationHistoryResponse(items=items)
 
 
 @router.post("/history/scan", response_model=LibraryScanResponse)
@@ -4060,19 +5714,20 @@ def scan_history_sidecars() -> LibraryScanResponse:
 @router.patch("/history/{generation_id}", response_model=GenerationHistoryResponse)
 def update_history_item(generation_id: int, request: UpdateGenerationCurationRequest) -> GenerationHistoryResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
-    item = repository.update_curation(
-        generation_id,
-        rating=request.rating,
-        favorite=request.favorite,
-        tags=request.tags,
-        notes=request.notes,
-        folder_id=request.folder_id,
-        update_folder=request.update_folder,
-    )
-    if item is None:
-        raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_NOT_FOUND})
-    _sync_curation_sidecars([item])
-    return GenerationHistoryResponse(items=[item])
+    with repository.publication():
+        item = repository.update_curation(
+            generation_id,
+            rating=request.rating,
+            favorite=request.favorite,
+            tags=request.tags,
+            notes=request.notes,
+            folder_id=request.folder_id,
+            update_folder=request.update_folder,
+        )
+        if item is None:
+            raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_NOT_FOUND})
+        _sync_curation_sidecars([item])
+        return GenerationHistoryResponse(items=[item])
 
 
 @router.post("/history/bulk-delete", response_model=BulkDeleteGenerationResponse)
@@ -4183,7 +5838,7 @@ def history_integrity() -> HistoryIntegrityResponse:
                     resolved = path.resolve()
                 except _PATH_ACCESS_ERRORS:
                     continue
-                if _path_is_file_safely(path) and resolved not in referenced:
+                if not is_private_image_candidate(resolved) and _path_is_file_safely(path) and resolved not in referenced:
                     orphan_files.append(str(path))
     return HistoryIntegrityResponse(missing_files=missing, orphan_files=orphan_files)
 
@@ -4419,11 +6074,12 @@ def output_file(filename: str) -> FileResponse:
         raise HTTPException(status_code=404, detail={"code": api_errors.OUTPUT_IMAGE_NOT_FOUND}) from None
     if (
         (output_dir != path and output_dir not in path.parents)
+        or is_private_image_candidate(path)
         or not _path_exists_safely(path)
         or not _path_is_file_safely(path)
     ):
         raise HTTPException(status_code=404, detail={"code": api_errors.OUTPUT_IMAGE_NOT_FOUND})
-    return FileResponse(path, headers={"Access-Control-Allow-Origin": "*"})
+    return FileResponse(path, media_type=image_media_type(str(path)), headers={"Access-Control-Allow-Origin": "*"})
 
 
 @router.get("/output-by-path")
@@ -4433,8 +6089,8 @@ def output_file_by_path(path: str) -> FileResponse:
     except _PATH_ACCESS_ERRORS:
         raise HTTPException(status_code=404, detail={"code": api_errors.OUTPUT_IMAGE_NOT_FOUND}) from None
     data_dir = _data_dir()
-    if not _path_exists_safely(output_path) or not _path_is_file_safely(output_path):
+    if is_private_image_candidate(output_path) or not _path_exists_safely(output_path) or not _path_is_file_safely(output_path):
         raise HTTPException(status_code=404, detail={"code": api_errors.OUTPUT_IMAGE_NOT_FOUND})
     if not _is_current_output_path(output_path, data_dir) and not _is_referenced_output_path(output_path, data_dir):
         raise HTTPException(status_code=403, detail={"code": api_errors.OUTPUT_IMAGE_NOT_REGISTERED})
-    return FileResponse(output_path, headers={"Access-Control-Allow-Origin": "*"})
+    return FileResponse(output_path, media_type=image_media_type(str(output_path)), headers={"Access-Control-Allow-Origin": "*"})

@@ -1,0 +1,6 @@
+{
+  "id": "asteria-h3-latent-assembly",
+  "version": "1.2.0",
+  "contract_version": "asteria.video.sequence.latent-assembly.v1",
+  "files": ["__init__.py", "nodes.py", "LICENSE", "THIRD_PARTY_NOTICES.md"]
+}

@@ -1,8 +1,10 @@
 from io import BytesIO
 from pathlib import Path
+import re
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import FileResponse
+from app.schemas.media import image_media_type
 from PIL import Image, ImageOps
 from pydantic import BaseModel, Field, model_validator
 
@@ -445,4 +447,4 @@ def asset_file(directory_name: str, filename: str) -> FileResponse:
         available = False
     if root != path.parent or not available:
         raise HTTPException(status_code=404, detail={"code": api_errors.ASSET_NOT_FOUND})
-    return FileResponse(path, headers={"Access-Control-Allow-Origin": "*"})
+    return FileResponse(path, media_type=image_media_type(str(path)), headers={"Access-Control-Allow-Origin": "*"})

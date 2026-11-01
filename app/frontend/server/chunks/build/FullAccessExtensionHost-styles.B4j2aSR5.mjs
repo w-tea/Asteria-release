@@ -1,0 +1,8 @@
+const FullAccessExtensionHost_vue_vue_type_style_index_0_scoped_b387b4b0_lang = ".extension-contribution-workspace[data-v-b387b4b0]{display:grid;gap:12px;min-width:0;padding:16px 18px}.extension-contribution-workspace header p[data-v-b387b4b0]{margin:0;color:var(--asteria-signal);font-size:11px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}.extension-contribution-workspace h1[data-v-b387b4b0]{margin:3px 0 0}.extension-contribution-mount[data-v-b387b4b0]{min-width:0;min-height:240px;padding:14px;border:1px solid var(--asteria-border);border-radius:var(--asteria-radius-strong);background:var(--asteria-panel)}.contribution-state[data-v-b387b4b0]{margin:0;padding:10px;border:1px solid var(--asteria-border);border-radius:var(--asteria-radius);background:var(--asteria-panel-raised)}.contribution-state--error[data-v-b387b4b0]{border-color:color-mix(in srgb,var(--asteria-danger) 55%,var(--asteria-border));color:var(--asteria-danger-text)}@media(max-width:520px){.extension-contribution-workspace[data-v-b387b4b0]{padding:10px 8px}.extension-contribution-mount[data-v-b387b4b0]{padding:10px}}.extension-contribution-workspace--compact[data-v-b387b4b0]{padding:0}.extension-contribution-workspace--compact header h3[data-v-b387b4b0]{margin:3px 0 0;font-size:14px}.extension-contribution-workspace--compact .extension-contribution-mount[data-v-b387b4b0]{min-height:0;padding:10px}";
+
+const FullAccessExtensionHostStyles_B4j2aSR5 = [
+  FullAccessExtensionHost_vue_vue_type_style_index_0_scoped_b387b4b0_lang
+];
+
+export { FullAccessExtensionHostStyles_B4j2aSR5 as default };
+//# sourceMappingURL=FullAccessExtensionHost-styles.B4j2aSR5.mjs.map

@@ -16,6 +16,7 @@ from app.services.managed_downloads import (
 )
 from app.services.operation_coordinator import OperationCoordinator
 from app.services.operation_repository import OperationNotFoundError
+from app.services.runtime_process import RuntimeProcessManager
 
 
 router = APIRouter(prefix="/api/downloads", tags=["downloads"])
@@ -46,14 +47,17 @@ class ManagedDownloadRequest(BaseModel):
 
 def configure_download_operation_coordinator(
     coordinator: OperationCoordinator,
+    *,
+    config: AppConfig | None = None,
 ) -> OperationCoordinator:
     global _coordinator
-    config = AppConfig()
+    config = config or AppConfig()
     coordinator.register_executor(
         "managed.download",
         ManagedDownloadOperationExecutor(
             temp_root=config.data_dir / "temp",
             db_path=coordinator.repository.db_path,
+            runtime_stopper=lambda: RuntimeProcessManager(config).stop(),
         ),
     )
     _coordinator = coordinator
@@ -96,12 +100,17 @@ def _download_payload(operation_id: str) -> dict:
 def enqueue_download(request: ManagedDownloadRequest) -> dict:
     config = AppConfig()
     destination = Path(request.destination).absolute()
+    runtime_root = (config.root_dir / "runtime").absolute()
+    if destination != runtime_root and destination.is_relative_to(runtime_root):
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "managed_download_runtime_destination_requires_setup"},
+        )
     allowed_roots = tuple(
         path.absolute()
         for path in (
             config.data_dir,
             config.model_dir,
-            config.root_dir / "runtime",
         )
     )
     if not any(

@@ -44,11 +44,14 @@ def build_topaz_command(
     if settings.enabled:
         if settings.override:
             command.append("--override")
-        command.append("--upscale=enabled=true")
-        command.append(f"--lighting=enabled={'true' if settings.lighting else 'false'}")
-        command.append(f"--color=enabled={'true' if settings.color else 'false'}")
-        command.append(f"--sharpen=enabled={'true' if settings.sharpen else 'false'}")
-        command.append(f"--noise=enabled={'true' if settings.denoise else 'false'}")
+        command.extend(["--upscale", "enabled=true"])
+        for option, enabled in (
+            ("--lighting", settings.lighting),
+            ("--color", settings.color),
+            ("--sharpen", settings.sharpen),
+            ("--noise", settings.denoise),
+        ):
+            command.extend([option, f"enabled={str(enabled).lower()}"])
 
     return command
 

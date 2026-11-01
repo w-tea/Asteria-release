@@ -1,11 +1,22 @@
+import asyncio
+from contextlib import suppress
+from dataclasses import asdict
 from pathlib import Path
+import sqlite3
 import threading
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ValidationError
+from starlette.concurrency import run_in_threadpool
 
+from app.adapters.image_check_codex import check_image_with_codex
+from app.adapters.image_check_llm import check_image_with_llm
 from app.core.config import AppConfig
+from app.schemas.image_check import ImageCheckTestRequest, ImageCheckTestResponse
+from app.services.history import HistoryRepository
+from app.services.image_check_operation import capture_image_check_operation
+from app.services.image_conditions import prepare_registered_image
 from app.services.user_settings import (
     FILENAME_TEMPLATE_FIELDS,
     UserSettings,
@@ -20,8 +31,63 @@ router = APIRouter(prefix="/api/settings", tags=["settings"])
 _settings_update_lock = threading.Lock()
 
 
+@router.get("/image-check/codex")
+def image_check_codex_status() -> dict:
+    from app.adapters.image_check_codex import discover_codex, cached_image_models
+
+    executable, version, reason = discover_codex()
+    return {"available": executable is not None, "version": version, "reason_code": reason,
+            "models": cached_image_models() if executable else []}
+
+
 def _repository() -> UserSettingsRepository:
     return UserSettingsRepository(AppConfig().data_dir / "user-settings.json")
+
+
+@router.post("/image-check/test", response_model=ImageCheckTestResponse)
+async def test_image_check(body: ImageCheckTestRequest, request: Request) -> ImageCheckTestResponse:
+    config = AppConfig()
+    settings = _repository().load().model_copy(update={"image_check": body.image_check})
+    operation = capture_image_check_operation(settings, data_dir=config.data_dir, enabled=True)
+    history_path = config.data_dir / "asteria.db"
+
+    def prepare():
+        try:
+            item = HistoryRepository.registered_output_source(history_path, body.generation_id)
+            return prepare_registered_image(item, body.output_path, operation.output_root)
+        except (ValueError, OSError, sqlite3.Error):
+            raise HTTPException(404, detail={"code": "image_check_test_image_unavailable"}) from None
+
+    image = await run_in_threadpool(prepare)
+    source, root = Path(image.receipt.source_path), Path(image.receipt.output_root)
+    cancel_event = asyncio.Event()
+    if operation.settings.method == "codex":
+        pending = check_image_with_codex(operation.settings, source, output_root=root, cancel_event=cancel_event)
+    else:
+        pending = check_image_with_llm(operation.settings, operation.providers, source,
+            output_root=root, cancel_event=cancel_event)
+    task = asyncio.create_task(pending)
+    try:
+        while not task.done():
+            await asyncio.wait({task}, timeout=0.2)
+            if await request.is_disconnected():
+                raise HTTPException(499, detail={"code": "image_check_cancelled"})
+        result = await task
+        try:
+            current = await run_in_threadpool(prepare)
+            checked_image = result.receipt.image
+            digest = checked_image.source_sha256 if checked_image else image.receipt.source_sha256
+            source_current = current.receipt.source_sha256 == digest
+        except HTTPException:
+            source_current = False
+        return ImageCheckTestResponse(generation_id=body.generation_id, output_path=str(source),
+            assessment=result.assessment, receipt=asdict(result.receipt), source_current=source_current)
+    finally:
+        cancel_event.set()
+        if not task.done():
+            task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
 
 
 class DirectoryValidation(BaseModel):
@@ -79,6 +145,8 @@ def _settings_validation_error_code(error: ValidationError) -> str:
     for item in error.errors():
         loc = tuple(str(part) for part in item.get("loc", ()))
         message = str(item.get("msg", ""))
+        if "image_check" in loc:
+            return "settings_image_check_invalid"
         if "library" in loc or "Library saved filter" in message:
             return "settings_library_saved_filters_invalid"
         if loc[-1:] == ("api_key_env_var",):
@@ -103,7 +171,7 @@ def _validate_settings_payload(payload: dict[str, Any]) -> UserSettings:
 
 def _merge_settings_payload(current: UserSettings, payload: dict[str, Any]) -> dict[str, Any]:
     merged = current.model_dump()
-    for section in ("output", "storage", "ai", "library", "appearance", "launcher"):
+    for section in ("output", "storage", "ai", "image_check", "library", "appearance", "launcher"):
         if section not in payload:
             continue
         value = payload[section]
@@ -123,6 +191,7 @@ def _settings_response(settings: UserSettings, *, ensure_directories: bool = Fal
         output=settings.output,
         storage=settings.storage,
         ai=settings.ai,
+        image_check=settings.image_check,
         library=settings.library,
         appearance=settings.appearance,
         launcher=settings.launcher,

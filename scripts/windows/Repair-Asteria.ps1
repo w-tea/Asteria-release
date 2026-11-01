@@ -14,7 +14,18 @@ Import-Module (Join-Path $PSScriptRoot "Asteria.Launcher.psm1") -Force
 $resolvedAppRoot = [System.IO.Path]::GetFullPath($AppRoot)
 $maintenanceJournalPath = [System.IO.Path]::Combine("$resolvedAppRoot.maintenance", "journal.json")
 if (Test-Path -LiteralPath $maintenanceJournalPath -PathType Leaf) {
-    $maintenanceRecovery = Repair-AsteriaMaintenanceTransaction -JournalPath $maintenanceJournalPath
+    try {
+        $maintenanceRecovery = Repair-AsteriaMaintenanceTransaction -JournalPath $maintenanceJournalPath -ExpectedAppRoot $resolvedAppRoot
+    }
+    catch {
+        if ($Json) {
+            Write-Output (@{ status = "blocked"; code = "launcher_maintenance_recovery_failed"; exit_code = 75 } | ConvertTo-Json -Compress)
+        }
+        else {
+            Write-Output "[Asteria] The previous update could not be recovered automatically. Keep the application folders unchanged and check the maintenance record."
+        }
+        exit 75
+    }
     if ($maintenanceRecovery.status -eq "recovery_required") {
         if ($Json) {
             Write-Output (@{ status = "blocked"; code = "launcher_maintenance_recovery_required"; exit_code = 75 } | ConvertTo-Json -Compress)

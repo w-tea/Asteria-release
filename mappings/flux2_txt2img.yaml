@@ -12,6 +12,11 @@ nodes:
   latent: "6"
   sampler_tail_start: "7"
 class_types:
+  generation_stage_save: AsteriaSaveGenerationStage
+  generation_stage_load: AsteriaLoadGenerationStage
+  generation_stage_sampler: AsteriaGenerationStageSampler
+  generation_stage_noise: AsteriaSelectedGenerationNoise
+  generation_stage_sample_filter: AsteriaSelectedGenerationSampler
   unet_loader: UNETLoader
   clip_loader: CLIPLoader
   vae_loader: VAELoader

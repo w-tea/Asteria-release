@@ -13,6 +13,10 @@ class MaintenanceSchemaVersions(BaseModel):
     merge_recipe: int = CURRENT_SCHEMA_VERSIONS.merge_recipe
     calculation: int = CURRENT_SCHEMA_VERSIONS.calculation
     component_manifest: int = CURRENT_SCHEMA_VERSIONS.component_manifest
+    media: int = CURRENT_SCHEMA_VERSIONS.media
+    music: int = CURRENT_SCHEMA_VERSIONS.music
+    video_sequence: int = CURRENT_SCHEMA_VERSIONS.video_sequence
+    extension_manifest: int = CURRENT_SCHEMA_VERSIONS.extension_manifest
 
     def as_registry(self) -> SchemaVersions:
         return SchemaVersions(**self.model_dump())

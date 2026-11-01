@@ -16,6 +16,12 @@ nodes:
   merge_source_c: "901"
   merge_runtime: "902"
 class_types:
+  generation_stage_save: AsteriaSaveGenerationStage
+  generation_branch_model: AsteriaGenerationBranchModel
+  generation_stage_load: AsteriaLoadGenerationStage
+  generation_stage_sampler: AsteriaGenerationStageSampler
+  generation_stage_noise: AsteriaSelectedGenerationNoise
+  generation_stage_sample_filter: AsteriaSelectedGenerationSampler
   checkpoint_loader: CheckpointLoaderSimple
   lora_loader: LoraLoader
   lora_block_weight_loader: LoraLoaderBlockWeight //Inspire
@@ -23,7 +29,7 @@ class_types:
   vae_loader: VAELoader
   load_image: LoadImage
   vae_encode: VAEEncode
-  vae_encode_inpaint: VAEEncodeForInpaint
+  set_latent_noise_mask: SetLatentNoiseMask
   latent: EmptyLatentImage
   clip_text_encode: CLIPTextEncode
   clip_text_encode_sdxl: CLIPTextEncodeSDXL
@@ -47,7 +53,102 @@ class_types:
   detailer_detector: UltralyticsDetectorProvider
   face_detailer: FaceDetailer
   merge_runtime: AsteriaSDXLMergeRuntime
+  conditioning_time_range: ConditioningSetTimestepRange
+  conditioning_combine: ConditioningCombine
+  conditioning_multiply: ConditioningMultiply
+  conditioning_concat: ConditioningConcat
+  prompt_step_schedule: AsteriaPromptStepSchedule
+  spatial_mask_collector: AsteriaSpatialMaskCollector
+  spatial_full_text_binding: AsteriaSpatialFullTextBinding
+  spatial_native_guidance: AsteriaSpatialNativeGuidance
+  spatial_execution_receipt: AsteriaSpatialExecutionReceipt
 node_contracts:
+  spatial_mask_collector:
+    required_inputs:
+      - mask
+      - target_id
+      - depth_index
+      - overlap_weight
+      - strength
+      - blending
+      - mask_sha256
+      - contract_version
+    accepted_inputs:
+      - previous
+    outputs_by_index:
+      0: ASTERIA_SPATIAL_MASK_BUNDLE
+      1: STRING
+  spatial_full_text_binding:
+    required_inputs:
+      - clip
+      - source_positive
+      - binding_json
+      - family
+      - contract_version
+    outputs_by_index:
+      0: CONDITIONING
+      1: ASTERIA_SPATIAL_FULL_TEXT
+      2: STRING
+  spatial_native_guidance:
+    required_inputs:
+      - model
+      - positive
+      - negative
+      - binding
+      - masks
+      - geometry_json
+      - profile_json
+      - stage
+      - initial_noise_seed
+      - contract_version
+    outputs_by_index:
+      0: MODEL
+      1: CONDITIONING
+      2: CONDITIONING
+      3: ASTERIA_SPATIAL_GUIDANCE_STATE
+  spatial_execution_receipt:
+    required_inputs:
+      - execution_state
+      - samples
+      - contract_version
+    outputs_by_index:
+      0: STRING
+  conditioning_time_range:
+    required_inputs:
+      - conditioning
+      - start
+      - end
+    outputs_by_index:
+      0: CONDITIONING
+  conditioning_combine:
+    required_inputs:
+      - conditioning_1
+      - conditioning_2
+    outputs_by_index:
+      0: CONDITIONING
+  conditioning_multiply:
+    required_inputs:
+      - conditioning
+      - multiplier
+    outputs_by_index:
+      0: CONDITIONING
+  conditioning_concat:
+    required_inputs:
+      - conditioning_to
+      - conditioning_from
+    outputs_by_index:
+      0: CONDITIONING
+  prompt_step_schedule:
+    required_inputs:
+      - model
+      - conditioning_a
+      - conditioning_b
+      - steps
+      - sampler_name
+      - scheduler
+      - denoise
+    outputs_by_index:
+      0: CONDITIONING
   controlnet_soft_weights:
     required_inputs:
       - base_multiplier
@@ -116,9 +217,10 @@ node_contracts:
       - variation_strength
     accepted_inputs:
       - noise_opt
+      - internal_seed
     required_input_values:
       noise_mode:
-        - GPU(=A1111)
+        - GPU+internal_seed
       batch_seed_mode:
         - incremental
     outputs_by_index:

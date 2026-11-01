@@ -1,0 +1,400 @@
+{
+  "$id": "asteria.extension.catalog.v1",
+  "$defs": {
+    "ExtensionCatalogAssets": {
+      "additionalProperties": false,
+      "properties": {
+        "icon": {
+          "anyOf": [
+            {
+              "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*://)(?!.*[?#]).+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Icon"
+        },
+        "screenshots": {
+          "default": [],
+          "items": {
+            "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*://)(?!.*[?#]).+$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Screenshots",
+          "type": "array"
+        }
+      },
+      "title": "ExtensionCatalogAssets",
+      "type": "object"
+    },
+    "ExtensionCatalogAuthor": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "minLength": 1,
+              "pattern": "^https://(?![^/?#]*@)",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ExtensionCatalogAuthor",
+      "type": "object"
+    },
+    "ExtensionCatalogCompatibility": {
+      "$comment": "Semantic validation requires maximum_exclusive to be greater than minimum; Asteria runtime validation enforces this rule in addition to JSON Schema.",
+      "additionalProperties": false,
+      "properties": {
+        "minimum": {
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
+          "title": "Minimum",
+          "type": "string"
+        },
+        "maximum_exclusive": {
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
+          "title": "Maximum Exclusive",
+          "type": "string"
+        }
+      },
+      "required": [
+        "minimum",
+        "maximum_exclusive"
+      ],
+      "title": "ExtensionCatalogCompatibility",
+      "type": "object"
+    },
+    "ExtensionCatalogEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "summary": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "version": {
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
+          "title": "Version",
+          "type": "string"
+        },
+        "asteria": {
+          "$ref": "#/$defs/ExtensionCatalogCompatibility"
+        },
+        "execution_level": {
+          "enum": [
+            "standard",
+            "full_access"
+          ],
+          "title": "Execution Level",
+          "type": "string"
+        },
+        "permissions": {
+          "$ref": "#/$defs/ExtensionStandardPermissions"
+        },
+        "capabilities": {
+          "items": {
+            "enum": [
+              "network",
+              "filesystem",
+              "subprocess"
+            ],
+            "type": "string"
+          },
+          "title": "Capabilities",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "author": {
+          "$ref": "#/$defs/ExtensionCatalogAuthor"
+        },
+        "license": {
+          "$ref": "#/$defs/ExtensionCatalogLicense"
+        },
+        "homepage": {
+          "format": "uri",
+          "minLength": 1,
+          "pattern": "^https://(?![^/?#]*@)",
+          "title": "Homepage",
+          "type": "string"
+        },
+        "review_status": {
+          "enum": [
+            "official",
+            "community",
+            "unverified"
+          ],
+          "title": "Review Status",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/ExtensionCatalogSource"
+        },
+        "assets": {
+          "$ref": "#/$defs/ExtensionCatalogAssets",
+          "default": {
+            "icon": null,
+            "screenshots": []
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "summary",
+        "version",
+        "asteria",
+        "execution_level",
+        "permissions",
+        "capabilities",
+        "author",
+        "license",
+        "homepage",
+        "review_status",
+        "source"
+      ],
+      "title": "ExtensionCatalogEntry",
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "execution_level": {
+                "const": "standard"
+              }
+            },
+            "required": [
+              "execution_level"
+            ]
+          },
+          "then": {
+            "properties": {
+              "capabilities": {
+                "type": "array",
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "execution_level": {
+                "const": "full_access"
+              }
+            },
+            "required": [
+              "execution_level"
+            ]
+          },
+          "then": {
+            "properties": {
+              "permissions": {
+                "type": "object",
+                "properties": {
+                  "asteria": {
+                    "type": "array",
+                    "maxItems": 0
+                  },
+                  "network_hosts": {
+                    "type": "array",
+                    "maxItems": 0
+                  },
+                  "localhost": {
+                    "type": "array",
+                    "maxItems": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ExtensionCatalogLicense": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "minLength": 1,
+          "pattern": "^https://(?![^/?#]*@)",
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "url"
+      ],
+      "title": "ExtensionCatalogLicense",
+      "type": "object"
+    },
+    "ExtensionCatalogSource": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "https_zip",
+            "github_release_zip"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "minLength": 1,
+          "pattern": "^https://(?![^/?#]*@)",
+          "title": "Url",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "exclusiveMinimum": 0,
+          "maximum": 536870912,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "url",
+        "sha256",
+        "size_bytes"
+      ],
+      "title": "ExtensionCatalogSource",
+      "type": "object"
+    },
+    "ExtensionLocalhostPermission": {
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "enum": [
+            "localhost",
+            "127.0.0.1",
+            "::1"
+          ],
+          "title": "Host",
+          "type": "string"
+        },
+        "port": {
+          "maximum": 65535,
+          "minimum": 1,
+          "not": {
+            "enum": [
+              3000,
+              3001,
+              5173,
+              8000,
+              8188
+            ]
+          },
+          "title": "Port",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "host",
+        "port"
+      ],
+      "title": "ExtensionLocalhostPermission",
+      "type": "object"
+    },
+    "ExtensionStandardPermissions": {
+      "additionalProperties": false,
+      "properties": {
+        "asteria": {
+          "default": [],
+          "items": {
+            "const": "prompt.read",
+            "type": "string"
+          },
+          "title": "Asteria",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "network_hosts": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Network Hosts",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "localhost": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExtensionLocalhostPermission"
+          },
+          "title": "Localhost",
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "title": "ExtensionStandardPermissions",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "asteria.extension.catalog.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "entries": {
+      "items": {
+        "$ref": "#/$defs/ExtensionCatalogEntry"
+      },
+      "title": "Entries",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "entries"
+  ],
+  "title": "ExtensionCatalogDocument",
+  "type": "object"
+}

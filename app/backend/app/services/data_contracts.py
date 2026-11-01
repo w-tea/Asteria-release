@@ -223,8 +223,8 @@ def _entry(
 
 _CURRENT_DATA_CONTRACT = validate_data_contract(
     DataContractManifest(
-        contract_id="asteria.data.v1.0.3",
-        source_version="1.0.3",
+        contract_id="asteria.data.v1.2.0",
+        source_version="1.2.0",
         entries=(
             _entry("history", "history", StorageClass.DURABLE, "asteria.db", PathKind.FILE, "generation_history"),
             _entry("user_settings", "settings", StorageClass.DURABLE, "user-settings.json", PathKind.FILE, "user_settings", "library_saved_filters"),
@@ -239,6 +239,22 @@ _CURRENT_DATA_CONTRACT = validate_data_contract(
             _entry("advanced_styles", "advanced_styles", StorageClass.DURABLE, "advanced_styles", PathKind.DIRECTORY, "advanced_styles", "advanced_style_thumbnails"),
             _entry("image_editor_drafts", "image_editor", StorageClass.DURABLE, "editor_drafts", PathKind.DIRECTORY, "image_edit_draft", "image_edit_mask"),
             _entry("lora_training", "lora_training", StorageClass.DURABLE, "lora-training", PathKind.DIRECTORY, "lora_datasets", "lora_runs", "copy_machine_sessions", "copy_machine_runs", "lora_recipe_reports"),
+            _entry(
+                "extensions",
+                "extensions",
+                StorageClass.DURABLE,
+                "extensions",
+                PathKind.DIRECTORY,
+                "managed_extension_active_package",
+                "managed_extension_previous_package",
+                "extension_manifests",
+                "extension_package_hashes",
+                "extension_version_receipts",
+                "extension_file_hashes",
+                "extension_state",
+                "extension_registry",
+                "unmanaged_extension_reference_metadata",
+            ),
             _entry("merge_recipes", "merge_studio", StorageClass.DURABLE, "merge-recipes.json", PathKind.FILE, "merge_recipes"),
             _entry("reports", "reports", StorageClass.DURABLE, "reports", PathKind.DIRECTORY, "merge_runs", "merge_reports", "copy_machine_reports"),
             _entry("discord_secrets", "discord", StorageClass.SECRET, "secrets", PathKind.DIRECTORY, "discord_bot_token"),

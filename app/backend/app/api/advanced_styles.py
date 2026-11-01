@@ -5,7 +5,12 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from app.core.config import AppConfig
-from app.services.advanced_styles import AdvancedStyle, AdvancedStylesError, AdvancedStylesRepository
+from app.services.advanced_styles import (
+    AdvancedStyle,
+    AdvancedStylesError,
+    AdvancedStylesRepository,
+    AdvancedStylesThumbnailIdentityConflict,
+)
 
 router = APIRouter(prefix="/api/advanced-styles", tags=["advanced-styles"])
 
@@ -105,6 +110,8 @@ async def upload_style_thumbnail(group: str, name: str, filename: str, body: byt
         thumbnail_path = get_repository().save_thumbnail(group=group, name=name, image_bytes=body)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except AdvancedStylesThumbnailIdentityConflict as exc:
+        raise HTTPException(status_code=409, detail={"code": "advanced_styles_thumbnail_identity_conflict"}) from exc
     except AdvancedStylesError as exc:
         raise HTTPException(
             status_code=409,
@@ -117,6 +124,8 @@ async def upload_style_thumbnail(group: str, name: str, filename: str, body: byt
 def delete_style_thumbnail(group: str, name: str) -> AdvancedStyleThumbnailResponse:
     try:
         return AdvancedStyleThumbnailResponse(deleted=get_repository().delete_thumbnail(group=group, name=name))
+    except AdvancedStylesThumbnailIdentityConflict as exc:
+        raise HTTPException(status_code=409, detail={"code": "advanced_styles_thumbnail_identity_conflict"}) from exc
     except AdvancedStylesError as exc:
         raise HTTPException(
             status_code=409,

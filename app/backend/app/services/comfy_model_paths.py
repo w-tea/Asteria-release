@@ -32,6 +32,10 @@ COMFY_MODEL_PATH_DIRECTORIES: dict[str, tuple[str, ...]] = {
     "loras": MODEL_TYPE_DIRECTORIES["lora"],
     "embeddings": MODEL_TYPE_DIRECTORIES["embedding"],
     "controlnet": MODEL_TYPE_DIRECTORIES["controlnet"],
+    # Current ComfyUI loads Anima LLLite through ModelPatchLoader. Keep the
+    # existing ControlNet library layout available to that standard loader so
+    # users do not have to move already installed models.
+    "model_patches": MODEL_TYPE_DIRECTORIES["controlnet"],
     "ultralytics_bbox": _DETAILER_BBOX_DIRECTORIES,
     "ultralytics_segm": _DETAILER_SEGM_DIRECTORIES,
     "upscale_models": MODEL_TYPE_DIRECTORIES["upscaler"],
@@ -45,7 +49,7 @@ _EXTERNAL_COMFY_KEYS: dict[str, tuple[str, ...]] = {
     "tokenizer": ("tokenizers", "tokenizer"),
     "lora": ("loras",),
     "embedding": ("embeddings",),
-    "controlnet": ("controlnet",),
+    "controlnet": ("controlnet", "model_patches"),
     "upscaler": ("upscale_models",),
 }
 
@@ -123,8 +127,16 @@ def comfy_model_name(
     model_dir_name: str,
     *,
     model_root: str | os.PathLike[str] | None = None,
+    external_roots: Iterable[ExternalModelRoot] = (),
 ) -> str:
     normalized = value.replace("\\", "/")
+    external_virtual_name = _relative_to_external_virtual_name(
+        normalized,
+        model_dir_name,
+        external_roots,
+    )
+    if external_virtual_name is not None:
+        return external_virtual_name.replace("/", "\\")
     relative = _relative_to_model_root(normalized, model_root)
     aliases = sorted(
         COMFY_MODEL_PATH_DIRECTORIES.get(model_dir_name, (model_dir_name,)),
@@ -135,6 +147,13 @@ def comfy_model_name(
         return _strip_leading_alias(normalized, aliases).replace("/", "\\")
     if model_root is not None:
         if relative is None:
+            external_name = _relative_to_external_model_root(
+                normalized,
+                model_dir_name,
+                external_roots,
+            )
+            if external_name is not None:
+                return external_name.replace("/", "\\")
             anchored = _relative_to_standard_models_anchor(normalized, aliases)
             if anchored is not None:
                 return anchored.replace("/", "\\")
@@ -154,6 +173,65 @@ def comfy_model_name(
         if index >= 0:
             return normalized[index + len(marker) :].replace("/", "\\")
     return normalized.replace("/", "\\")
+
+
+def _relative_to_external_model_root(
+    normalized_value: str,
+    model_dir_name: str,
+    external_roots: Iterable[ExternalModelRoot],
+) -> str | None:
+    model_types = tuple(
+        model_type
+        for model_type, comfy_keys in _EXTERNAL_COMFY_KEYS.items()
+        if model_dir_name in comfy_keys
+    )
+    for root in external_roots:
+        if not root.enabled or not root.path:
+            continue
+        relative = _relative_to_model_root(normalized_value, root.path)
+        if relative is None:
+            continue
+        directories = sorted(
+            {
+                directory
+                for model_type in model_types
+                for directory in root.mappings.get(model_type, ())
+            },
+            key=len,
+            reverse=True,
+        )
+        stripped = _strip_leading_alias(relative, directories)
+        if stripped != relative:
+            return stripped
+    return None
+
+
+def _relative_to_external_virtual_name(
+    normalized_value: str,
+    model_dir_name: str,
+    external_roots: Iterable[ExternalModelRoot],
+) -> str | None:
+    parts = normalized_value.strip("/").split("/")
+    if len(parts) < 4 or parts[0].casefold() != "external":
+        return None
+    root_id, model_type = parts[1], parts[2]
+    if any(part in {"", ".", ".."} for part in parts[3:]):
+        return None
+    allowed_model_types = {
+        candidate
+        for candidate, comfy_keys in _EXTERNAL_COMFY_KEYS.items()
+        if model_dir_name in comfy_keys
+    }
+    if model_type not in allowed_model_types:
+        return None
+    for root in external_roots:
+        if (
+            root.enabled
+            and root.root_id == root_id
+            and root.mappings.get(model_type)
+        ):
+            return "/".join(parts[3:])
+    return None
 
 
 def _relative_to_model_root(

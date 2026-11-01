@@ -1,4 +1,6 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import closing, contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import UTC, datetime
 import base64
@@ -7,13 +9,17 @@ from pathlib import Path
 import sqlite3
 import unicodedata
 
+from app.schemas.media import MediaArtifact, MediaKind, legacy_image_artifacts
+from app.schemas.generation import PromptSyntaxGenerationRecord
 from app.services.generation_metadata import metadata_tags
 from app.services.schema_migrations import migrate_history_database_schema
+from app.services.video_sequence_history import is_hidden_sequence_child
 
 
 MAX_USER_TAGS = 160
 HISTORY_PAGE_SCAN_BATCH = 128
 HISTORY_TAG_CATALOG_LIMIT = 1_000
+_active_publication: ContextVar[tuple[Path, sqlite3.Connection] | None] = ContextVar("history_publication", default=None)
 
 
 @dataclass(frozen=True)
@@ -75,6 +81,8 @@ create table if not exists generations (
     loras_json text not null,
     embeddings_json text not null default '[]',
     output_paths_json text not null,
+    media_kind text not null default 'image',
+    artifacts_json text not null default '[]',
     rating integer not null default 0,
     favorite integer not null default 0,
     tags_json text not null default '[]',
@@ -96,15 +104,100 @@ create table if not exists history_tag_index (
 )
 """
 
+IMAGE_PUBLICATIONS_SQL = """
+create table if not exists image_check_publications (
+    publication_id text primary key,
+    output_root text not null,
+    directory text not null,
+    generation_id integer,
+    committed integer not null default 0,
+    cleanup_ready integer not null default 0
+)
+"""
+
+
+@contextmanager
+def _history_connection(db_path: Path) -> Iterator[sqlite3.Connection]:
+    """Commit or roll back the transaction, then release the Windows file handle."""
+    active = _active_publication.get()
+    if active is not None and active[0] == db_path.resolve():
+        yield active[1]
+        return
+    with closing(sqlite3.connect(db_path)) as connection:
+        with connection:
+            yield connection
+
 
 class HistoryRepository:
+    def begin_image_publication(self, publication_id: str, output_root: Path, directory: Path) -> None:
+        with _history_connection(self.db_path) as con:
+            con.execute('insert into image_check_publications(publication_id, output_root, directory) values (?, ?, ?)',
+                        (publication_id, str(output_root), str(directory)))
+
+    def complete_image_publication(self, publication_id: str, generation_id: int) -> None:
+        active = _active_publication.get()
+        if active is None or active[0] != self.db_path.resolve():
+            raise RuntimeError('image_publication_requires_history_transaction')
+        active[1].execute('update image_check_publications set committed = 1, generation_id = ? where publication_id = ?',
+                          (generation_id, publication_id))
+
+    def list_image_publications(self) -> list[dict]:
+        with _history_connection(self.db_path) as con:
+            con.row_factory = sqlite3.Row
+            return [dict(row) for row in con.execute('select * from image_check_publications')]
+
+    def image_publication_committed(self, publication_id: str) -> bool:
+        with _history_connection(self.db_path) as con:
+            row = con.execute('select committed from image_check_publications where publication_id = ?',
+                              (publication_id,)).fetchone()
+            return row is not None and row[0] == 1
+
+    def prepare_image_publication_cleanup(self, publication_id: str) -> None:
+        with _history_connection(self.db_path) as con:
+            con.execute('update image_check_publications set cleanup_ready = 1 where publication_id = ?',
+                        (publication_id,))
+
+    def forget_image_publication(self, publication_id: str) -> None:
+        with _history_connection(self.db_path) as con:
+            con.execute('delete from image_check_publications where publication_id = ?', (publication_id,))
+
+    @contextmanager
+    def publication(self) -> Iterator[None]:
+        """Publish final references together; callers perform no remote work here."""
+        if _active_publication.get() is not None:
+            raise RuntimeError("history_publication_already_active")
+        with _history_connection(self.db_path) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            token = _active_publication.set((self.db_path.resolve(), connection))
+            try:
+                yield
+            finally:
+                _active_publication.reset(token)
+
+    @staticmethod
+    def registered_output_source(db_path: Path, generation_id: int) -> dict | None:
+        """Read an existing output registration without initializing or migrating history."""
+        with closing(sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)) as con:
+            con.row_factory = sqlite3.Row
+            row = con.execute("select id, media_kind, settings_json, output_paths_json from generations where id = ?",
+                (generation_id,)).fetchone()
+        if row is None:
+            return None
+        settings, paths = json.loads(row["settings_json"]), json.loads(row["output_paths_json"])
+        if not isinstance(settings, dict) or not isinstance(paths, list):
+            raise ValueError("invalid_output_registration")
+        return {"id": row["id"], "media_kind": row["media_kind"], "settings": settings, "output_paths": paths}
+
     def __init__(self, db_path: Path):
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(db_path) as con:
+        with _history_connection(db_path) as con:
             self._drop_legacy_table(con)
             con.execute(GENERATIONS_TABLE_SQL)
             con.execute(HISTORY_TAG_INDEX_SQL)
+            con.execute(IMAGE_PUBLICATIONS_SQL)
+            if 'cleanup_ready' not in {row[1] for row in con.execute('pragma table_info(image_check_publications)')}:
+                con.execute('alter table image_check_publications add column cleanup_ready integer not null default 0')
             con.execute(
                 "create index if not exists history_tag_catalog_idx "
                 "on history_tag_index(kind, normalized_key, generation_id desc)"
@@ -122,6 +215,143 @@ class HistoryRepository:
             self._backfill_tag_index(con)
             migrate_history_database_schema(con)
 
+    def recover_interrupted_media_generations(self) -> list[int]:
+        """Recover only inflight history owned by restart-interrupted media jobs."""
+        media_kinds = {'video.generate': 'video', 'video.upscale': 'video',
+                       'video.sequence.clip': 'video', 'video.sequence.assemble': 'video',
+                       'music.generate': 'audio'}
+        active_statuses = {'queued', 'preparing', 'running', 'cancelling'}
+        with _history_connection(self.db_path) as con:
+            con.execute('BEGIN IMMEDIATE')
+            if con.execute("select 1 from sqlite_master where type = 'table' and name = 'operations'").fetchone() is None:
+                return []
+            rows = con.execute(
+                "select kind, status, error_code, request_snapshot_json from operations "
+                "where kind in ('video.generate', 'video.upscale', 'video.sequence.clip', "
+                "'video.sequence.assemble', 'music.generate') "
+                "and status in ('queued', 'preparing', 'running', 'cancelling', 'interrupted')"
+            ).fetchall()
+            interrupted: set[tuple[int, str]] = set()
+            active: set[tuple[int, str]] = set()
+            for kind, status, error_code, raw_snapshot in rows:
+                if status not in active_statuses and error_code != 'operation_interrupted_by_restart':
+                    continue
+                try:
+                    snapshot = json.loads(raw_snapshot)
+                except (TypeError, ValueError):
+                    continue
+                if not isinstance(snapshot, dict):
+                    continue
+                candidates = [snapshot]
+                batch = snapshot.get('batch')
+                if isinstance(batch, dict) and isinstance(batch.get('candidates'), list):
+                    candidates.extend(item for item in batch['candidates'] if isinstance(item, dict))
+                target = active if status in active_statuses else interrupted
+                for candidate in candidates:
+                    identity = candidate.get('generation_id')
+                    if type(identity) is int and identity > 0:
+                        target.add((identity, media_kinds[kind]))
+            recovered = []
+            for identity, media_kind in sorted(interrupted - active):
+                updated = con.execute(
+                    "update generations set status = 'interrupted' "
+                    "where id = ? and media_kind = ? and status in ('queued', 'running')",
+                    (identity, media_kind),
+                )
+                if updated.rowcount:
+                    recovered.append(identity)
+            return recovered
+
+    def recover_interrupted_upscale_inputs(self) -> list[int]:
+        """Release verified borrowed inputs, never unfinished generated payloads."""
+        from app.services.generation_working_artifacts import (
+            GenerationWorkingArtifactError,
+            GenerationWorkingArtifactRegistry,
+        )
+        from app.services.media_artifacts import file_sha256
+
+        with _history_connection(self.db_path) as con:
+            if con.execute("select 1 from sqlite_master where type='table' and name='operations'").fetchone() is None:
+                return []
+            rows = con.execute(
+                "select status, error_code, request_snapshot_json from operations "
+                "where kind='video.upscale' and status in ('queued','preparing','running','cancelling','interrupted')"
+            ).fetchall()
+        active_statuses = {'queued', 'preparing', 'running', 'cancelling'}
+        active: set[tuple[str, str, str]] = set()
+        candidates = []
+        histories = {}
+        for status, error_code, raw in rows:
+            try:
+                snapshot = json.loads(raw)
+                request = snapshot['request']
+                identity, source_id = snapshot['generation_id'], request['source_generation_id']
+                if type(identity) is not int or type(source_id) is not int:
+                    continue
+                for generation_id in (identity, source_id):
+                    if generation_id not in histories:
+                        histories[generation_id] = self.get(generation_id)
+                child, source = histories[identity], histories[source_id]
+                if (not child or not source or child['media_kind'] != 'video'
+                        or source['media_kind'] != 'video' or source['status'] != 'completed'):
+                    continue
+                settings, original = child['settings'], source['settings']
+                original_root = Path(original['output_root']).expanduser()
+                if not original_root.is_absolute():
+                    continue
+                root = str(original_root.resolve(strict=True))
+                owner = snapshot['bundle_operation_id']
+                expected = {
+                    snapshot['bundle_artifact_id']: ('upscale_work_bundle', snapshot['bundle_sha256']),
+                    snapshot['latent_artifact_id']: ('av_latent', snapshot['latent_sha256']),
+                }
+                if len(expected) != 2 or not all(isinstance(key, str) for key in expected):
+                    continue
+                if (original['upscale_work_bundle_operation_id'] != owner
+                        or original['upscale_work_bundle_id'] != snapshot['bundle_artifact_id']):
+                    continue
+                keys = {(root, owner, key) for key in expected}
+                if status in active_statuses:
+                    active.update(keys)
+                    continue
+                if (error_code != 'operation_interrupted_by_restart'
+                        or child['status'] != 'interrupted'
+                        or settings['request_snapshot'] != request
+                        or settings['source_generation_id'] != source_id
+                        or settings['source_bundle_artifact_id'] != snapshot['bundle_artifact_id']
+                        or settings['source_latent_artifact_id'] != snapshot['latent_artifact_id']
+                        or settings['source_bundle_sha256'] != snapshot['bundle_sha256']
+                        or settings['source_latent_sha256'] != snapshot['latent_sha256']):
+                    continue
+                candidates.append((identity, source_id, request['source_artifact_id'], root, owner, expected, keys))
+            except (KeyError, TypeError, ValueError, OSError, RuntimeError):
+                continue
+        recovered = set()
+        for identity, source_id, media_id, root, owner, expected, keys in candidates:
+            if keys & active:
+                continue
+            try:
+                registry = GenerationWorkingArtifactRegistry(Path(root))
+                records = {record.artifact_id: record for record in registry.list_public(owner)}
+                selected = [records[key] for key in expected]
+                if any(record.generation_id != source_id or record.media_artifact_id != media_id
+                       or record.kind != expected[record.artifact_id][0]
+                       or record.state not in {'available', 'in_use'} for record in selected):
+                    continue
+                borrowed = tuple(record.artifact_id for record in selected if record.state == 'in_use')
+                if not borrowed:
+                    continue
+                for key, (kind, checksum) in expected.items():
+                    payload = registry.resolve_for_adapter(operation_id=owner, artifact_id=key,
+                        expected_kind=kind, allow_in_use=True)
+                    if file_sha256(payload) != checksum:
+                        raise GenerationWorkingArtifactError('working_artifact_changed')
+                registry.finish_use_many(owner, borrowed, outcome='available', operation_status='interrupted')
+                recovered.add(identity)
+            except (GenerationWorkingArtifactError, KeyError, ValueError, OSError):
+                continue
+        return sorted(recovered)
+
     def add(
         self,
         *,
@@ -135,12 +365,20 @@ class HistoryRepository:
         loras: list[dict],
         embeddings: list[str],
         output_paths: list[str],
+        media_kind: MediaKind = "image",
+        artifacts: list[dict] | list[MediaArtifact] | None = None,
         tags: list[str] | None = None,
         generated_tags: list[str] | None = None,
     ) -> int:
+        self._validate_prompt_syntax_settings(settings)
         normalized_tags = self._normalize_tags(tags or [])
         normalized_generated_tags = self._normalize_tags(generated_tags or [])
-        with sqlite3.connect(self.db_path) as con:
+        self._validate_media_kind(media_kind)
+        serialized_artifacts = self._serialize_artifacts(
+            media_kind=media_kind,
+            artifacts=artifacts or [],
+        )
+        with _history_connection(self.db_path) as con:
             cur = con.execute(
                 """
                 insert into generations(
@@ -154,9 +392,11 @@ class HistoryRepository:
                     loras_json,
                     embeddings_json,
                     output_paths_json,
+                    media_kind,
+                    artifacts_json,
                     tags_json,
                     generated_tags_json
-                ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     status,
@@ -169,11 +409,19 @@ class HistoryRepository:
                     json.dumps(loras, ensure_ascii=False),
                     json.dumps(embeddings, ensure_ascii=False),
                     json.dumps(output_paths, ensure_ascii=False),
+                    media_kind,
+                    json.dumps(serialized_artifacts, ensure_ascii=False),
                     json.dumps(normalized_tags, ensure_ascii=False),
                     json.dumps(normalized_generated_tags, ensure_ascii=False),
                 ),
             )
             generation_id = int(cur.lastrowid)
+            if artifacts is None and media_kind == "image":
+                serialized_artifacts = self._legacy_artifact_payloads(generation_id, output_paths)
+                con.execute(
+                    "update generations set artifacts_json = ? where id = ?",
+                    (json.dumps(serialized_artifacts, ensure_ascii=False), generation_id),
+                )
             self._replace_tag_index(
                 con,
                 generation_id,
@@ -183,7 +431,7 @@ class HistoryRepository:
             return generation_id
 
     def tag_catalog(self) -> dict[str, list[str]]:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             rows = con.execute(
                 """
                 with latest as (
@@ -219,7 +467,7 @@ class HistoryRepository:
         from app.services.model_reference_migration import migrate_generation_reference_metadata
 
         changed = 0
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             rows = con.execute(
                 "select id, settings_json, model_slots_json, loras_json from generations"
             ).fetchall()
@@ -233,8 +481,11 @@ class HistoryRepository:
                     ],
                 }
                 migrated = migrate_generation_reference_metadata(payload, candidates)
-                migrated.pop("model_slots", None)
-                migrated.pop("loras", None)
+                for key in ("model_slots", "loras"):
+                    if key in settings:
+                        migrated[key] = settings[key]
+                    else:
+                        migrated.pop(key, None)
                 if migrated == settings:
                     continue
                 con.execute(
@@ -246,7 +497,7 @@ class HistoryRepository:
 
     def list_recent(self, limit: int = 50, folder: str = "all") -> list[dict]:
         where, params = self._folder_where(folder)
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             rows = con.execute(
                 f"""
@@ -271,11 +522,14 @@ class HistoryRepository:
         favorite: bool = False,
         tag: str = "",
         folder: str = "all",
+        media_kind: str = "all",
+        condition_verdict: str = "",
     ) -> HistoryPage:
         if limit < 1 or limit > 100:
             raise ValueError("invalid_history_limit")
         query = query.strip().lower()
         tag = tag.strip().lower()
+        self._validate_media_filter(media_kind)
         scanned_id: int | None = None
         pending_id: int | None = None
         if cursor:
@@ -284,17 +538,25 @@ class HistoryRepository:
         folder_where, folder_params = self._folder_where(folder)
         clauses = [folder_where.removeprefix("where ")] if folder_where else []
         params = list(folder_params)
+        if condition_verdict:
+            from app.services.image_conditions import condition_filter_clause
+            condition_clause, condition_params = condition_filter_clause(self.db_path, condition_verdict)
+            clauses.append(condition_clause)
+            params.extend(condition_params)
         if profile:
             clauses.append("g.profile = ?")
             params.append(profile)
         if favorite:
             clauses.append("g.favorite != 0")
+        if media_kind != "all":
+            clauses.append("g.media_kind = ?")
+            params.append(media_kind)
         base_where = f"where {' and '.join(clauses)}" if clauses else ""
 
         items: list[dict] = []
         next_pending_id: int | None = None
         scan_before = scanned_id
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             if pending_id is not None:
                 pending = self._page_row(con, pending_id, base_where, params)
@@ -351,7 +613,7 @@ class HistoryRepository:
             return [], None
         where = "where id < ?" if before_id is not None else ""
         params = (before_id, limit) if before_id is not None else (limit,)
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             rows = con.execute(
                 f"""
@@ -375,7 +637,7 @@ class HistoryRepository:
         return items, next_before
 
     def list_all(self) -> list[dict]:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             rows = con.execute(
                 """
@@ -396,9 +658,11 @@ class HistoryRepository:
         favorite: bool = False,
         tag: str = "",
         folder: str = "all",
+        media_kind: str = "all",
     ) -> list[dict]:
         query = query.strip().lower()
         tag = tag.strip().lower()
+        self._validate_media_filter(media_kind)
         if limit <= 0:
             return []
         folder_where, folder_params = self._folder_where(folder)
@@ -407,6 +671,9 @@ class HistoryRepository:
         if profile:
             clauses.append("g.profile = ?")
             params.append(profile)
+        if media_kind != "all":
+            clauses.append("g.media_kind = ?")
+            params.append(media_kind)
         where = f"where {' and '.join(clauses)}" if clauses else ""
         sql = f"""
             select g.*, f.name as folder_name
@@ -420,7 +687,7 @@ class HistoryRepository:
             params.append(limit)
 
         filtered = []
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             for row in con.execute(sql, params):
                 item = self._row_to_dict(row)
@@ -478,6 +745,8 @@ class HistoryRepository:
         return f"where {clause}"
 
     def _matches_page_filters(self, item: dict, *, query: str, tag: str) -> bool:
+        if is_hidden_sequence_child(item):
+            return False
         tags = [str(value).lower() for value in item["tags"]]
         generated_tags = [str(value).lower() for value in item["generated_tags"]]
         if tag and tag not in [*tags, *generated_tags]:
@@ -500,7 +769,7 @@ class HistoryRepository:
         return query in haystack
 
     def get(self, generation_id: int) -> dict | None:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             row = con.execute(
                 """
@@ -514,7 +783,7 @@ class HistoryRepository:
         return self._row_to_dict(row) if row else None
 
     def list_folders(self) -> list[dict]:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             rows = con.execute(
                 """
@@ -545,7 +814,7 @@ class HistoryRepository:
         ]
 
     def referenced_output_paths(self) -> set[str]:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             rows = con.execute("select output_paths_json from generations").fetchall()
         paths: set[str] = set()
         for (raw_paths,) in rows:
@@ -564,7 +833,7 @@ class HistoryRepository:
         normalized = " ".join(name.strip().split())
         if not normalized:
             raise ValueError("folder_name_required")
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             cur = con.execute(
                 "insert into history_folders(name) values (?) on conflict(name) do update set name = excluded.name returning id",
                 (normalized,),
@@ -573,7 +842,7 @@ class HistoryRepository:
         return self.get_folder(folder_id) or {"id": folder_id, "name": normalized, "created_at": "", "item_count": 0}
 
     def get_folder(self, folder_id: int) -> dict | None:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             row = con.execute(
                 """
@@ -595,18 +864,99 @@ class HistoryRepository:
         }
 
     def update_output_paths(self, generation_id: int, output_paths: list[str]) -> None:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
+            row = con.execute(
+                "select media_kind from generations where id = ?", (generation_id,)
+            ).fetchone()
+            artifacts_json = (
+                json.dumps(self._legacy_artifact_payloads(generation_id, output_paths), ensure_ascii=False)
+                if row is not None and row[0] == "image"
+                else None
+            )
             con.execute(
                 """
                 update generations
-                set output_paths_json = ?
+                set output_paths_json = ?,
+                    artifacts_json = coalesce(?, artifacts_json)
                 where id = ?
                 """,
-                (json.dumps(output_paths, ensure_ascii=False), generation_id),
+                (json.dumps(output_paths, ensure_ascii=False), artifacts_json, generation_id),
             )
 
+    def update_media_artifacts(
+        self,
+        generation_id: int,
+        *,
+        media_kind: MediaKind,
+        artifacts: list[dict] | list[MediaArtifact],
+        output_paths: list[str],
+    ) -> None:
+        self._validate_media_kind(media_kind)
+        serialized_artifacts = self._serialize_artifacts(
+            media_kind=media_kind,
+            artifacts=artifacts,
+        )
+        registered_paths = set(output_paths)
+        if any(artifact["path"] not in registered_paths for artifact in serialized_artifacts):
+            raise ValueError("media artifact path must be registered in output paths")
+        with _history_connection(self.db_path) as con:
+            cur = con.execute(
+                """
+                update generations
+                set media_kind = ?, artifacts_json = ?, output_paths_json = ?
+                where id = ?
+                """,
+                (
+                    media_kind,
+                    json.dumps(serialized_artifacts, ensure_ascii=False),
+                    json.dumps(output_paths, ensure_ascii=False),
+                    generation_id,
+                ),
+            )
+            if cur.rowcount != 1:
+                raise ValueError("generation_not_found")
+
+    def complete_media_generation(
+        self,
+        generation_id: int,
+        *,
+        status: str,
+        settings: dict,
+        media_kind: MediaKind,
+        artifacts: list[dict] | list[MediaArtifact],
+        output_paths: list[str],
+    ) -> None:
+        self._validate_media_kind(media_kind)
+        serialized_artifacts = self._serialize_artifacts(
+            media_kind=media_kind,
+            artifacts=artifacts,
+        )
+        registered_paths = set(output_paths)
+        if any(artifact["path"] not in registered_paths for artifact in serialized_artifacts):
+            raise ValueError("media artifact path must be registered in output paths")
+        with _history_connection(self.db_path) as con:
+            cur = con.execute(
+                """
+                update generations
+                set status = ?, settings_json = ?, media_kind = ?,
+                    artifacts_json = ?, output_paths_json = ?
+                where id = ?
+                """,
+                (
+                    status,
+                    json.dumps(settings, ensure_ascii=False),
+                    media_kind,
+                    json.dumps(serialized_artifacts, ensure_ascii=False),
+                    json.dumps(output_paths, ensure_ascii=False),
+                    generation_id,
+                ),
+            )
+            if cur.rowcount != 1:
+                raise ValueError("generation_not_found")
+
     def update_settings(self, generation_id: int, settings: dict) -> None:
-        with sqlite3.connect(self.db_path) as con:
+        self._validate_prompt_syntax_settings(settings)
+        with _history_connection(self.db_path) as con:
             con.execute(
                 """
                 update generations
@@ -615,6 +965,12 @@ class HistoryRepository:
                 """,
                 (json.dumps(settings, ensure_ascii=False), generation_id),
             )
+
+    @staticmethod
+    def _validate_prompt_syntax_settings(settings: dict) -> None:
+        prompt_syntax = settings.get("prompt_syntax")
+        if prompt_syntax is not None:
+            PromptSyntaxGenerationRecord.model_validate(prompt_syntax)
 
     def update_generation(
         self,
@@ -626,14 +982,23 @@ class HistoryRepository:
     ) -> None:
         settings_json = json.dumps(settings, ensure_ascii=False)
         output_paths_json = json.dumps(output_paths, ensure_ascii=False)
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
+            row = con.execute(
+                "select media_kind from generations where id = ?", (generation_id,)
+            ).fetchone()
+            artifacts_json = (
+                json.dumps(self._legacy_artifact_payloads(generation_id, output_paths), ensure_ascii=False)
+                if row is not None and row[0] == "image"
+                else None
+            )
             cur = con.execute(
                 """
                 update generations
-                set status = ?, settings_json = ?, output_paths_json = ?
+                set status = ?, settings_json = ?, output_paths_json = ?,
+                    artifacts_json = coalesce(?, artifacts_json)
                 where id = ?
                 """,
-                (status, settings_json, output_paths_json, generation_id),
+                (status, settings_json, output_paths_json, artifacts_json, generation_id),
             )
             if cur.rowcount != 1:
                 raise ValueError("generation_not_found")
@@ -643,22 +1008,29 @@ class HistoryRepository:
         generation_id: int,
         mutation: Callable[[dict], tuple[dict, list[str]]],
     ) -> dict:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             con.execute("begin immediate")
             item = self._get_with_connection(con, generation_id)
             if item is None:
                 raise ValueError("generation_not_found")
             settings, output_paths = mutation(item)
+            artifacts_json = (
+                json.dumps(self._legacy_artifact_payloads(generation_id, output_paths), ensure_ascii=False)
+                if item["media_kind"] == "image"
+                else None
+            )
             cur = con.execute(
                 """
                 update generations
-                set settings_json = ?, output_paths_json = ?
+                set settings_json = ?, output_paths_json = ?,
+                    artifacts_json = coalesce(?, artifacts_json)
                 where id = ?
                 """,
                 (
                     json.dumps(settings, ensure_ascii=False),
                     json.dumps(output_paths, ensure_ascii=False),
+                    artifacts_json,
                     generation_id,
                 ),
             )
@@ -691,14 +1063,14 @@ class HistoryRepository:
             raise
 
     def delete(self, generation_id: int) -> bool:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.execute("delete from history_tag_index where generation_id = ?", (generation_id,))
             cur = con.execute("delete from generations where id = ?", (generation_id,))
             return cur.rowcount > 0
 
     def bulk_delete(self, generation_ids: list[int]) -> list[dict]:
         unique_ids = list(dict.fromkeys(int(value) for value in generation_ids))
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
             targets = [
                 (generation_id, self._get_with_connection(con, generation_id))
@@ -731,8 +1103,10 @@ class HistoryRepository:
         folder_id: int | None = None,
         update_folder: bool = False,
     ) -> dict | None:
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
+            if not con.in_transaction:
+                con.execute('BEGIN IMMEDIATE')
             item = self._get_with_connection(con, generation_id)
             if item is None:
                 return None
@@ -770,8 +1144,10 @@ class HistoryRepository:
         normalized_add = self._normalize_bulk_tags(tags_add or [])
         normalized_remove = self._normalize_bulk_tags(tags_remove or [])
         unique_ids = list(dict.fromkeys(int(value) for value in generation_ids))
-        with sqlite3.connect(self.db_path) as con:
+        with _history_connection(self.db_path) as con:
             con.row_factory = sqlite3.Row
+            if not con.in_transaction:
+                con.execute('BEGIN IMMEDIATE')
             targets = [
                 (generation_id, item)
                 for generation_id in unique_ids
@@ -905,6 +1281,11 @@ class HistoryRepository:
         return unicodedata.normalize("NFKC", tag).upper()
 
     def _row_to_dict(self, row: sqlite3.Row) -> dict:
+        media_kind = row["media_kind"] if row["media_kind"] in {"image", "video", "audio"} else "image"
+        output_paths = self._json_list(row["output_paths_json"])
+        artifacts = self._deserialize_artifacts(row["artifacts_json"])
+        if media_kind == "image" and not artifacts:
+            artifacts = self._legacy_artifact_payloads(int(row["id"]), output_paths)
         return {
             "id": row["id"],
             "status": row["status"],
@@ -916,7 +1297,9 @@ class HistoryRepository:
             "model_slots": self._json_dict(row["model_slots_json"]),
             "loras": self._json_list(row["loras_json"]),
             "embeddings": self._json_list(row["embeddings_json"]),
-            "output_paths": self._json_list(row["output_paths_json"]),
+            "output_paths": output_paths,
+            "media_kind": media_kind,
+            "artifacts": artifacts,
             "rating": self._bounded_int(row["rating"], default=0, minimum=0, maximum=5),
             "favorite": self._bool_int(row["favorite"]),
             "tags": self._normalize_tags(self._json_list(row["tags_json"])),
@@ -940,6 +1323,56 @@ class HistoryRepository:
         except (TypeError, json.JSONDecodeError):
             return []
         return payload if isinstance(payload, list) else []
+
+    def _validate_media_kind(self, media_kind: str) -> None:
+        if media_kind not in {"image", "video", "audio"}:
+            raise ValueError("invalid_media_kind")
+
+    def _validate_media_filter(self, media_kind: str) -> None:
+        if media_kind not in {"all", "image", "video", "audio"}:
+            raise ValueError("invalid_media_kind")
+
+    def _serialize_artifacts(
+        self,
+        *,
+        media_kind: str,
+        artifacts: list[dict] | list[MediaArtifact],
+    ) -> list[dict]:
+        serialized: list[dict] = []
+        parsed_artifacts: list[MediaArtifact] = []
+        for value in artifacts:
+            artifact = MediaArtifact.model_validate(value)
+            if artifact.role == "primary" and artifact.kind != media_kind:
+                raise ValueError("primary artifact kind must match history media kind")
+            parsed_artifacts.append(artifact)
+            serialized.append(artifact.model_dump(mode="json", exclude={"frame_rate"}))
+        artifact_by_id = {artifact.artifact_id: artifact for artifact in parsed_artifacts}
+        if len(artifact_by_id) != len(parsed_artifacts):
+            raise ValueError("media artifact identifiers must be unique")
+        for artifact in parsed_artifacts:
+            if artifact.poster_artifact_id is None:
+                continue
+            poster = artifact_by_id.get(artifact.poster_artifact_id)
+            if poster is None or poster.kind != "poster" or poster.role != "poster":
+                raise ValueError("video poster reference must resolve to a poster artifact")
+        return serialized
+
+    def _deserialize_artifacts(self, value: str) -> list[dict]:
+        payload = self._json_list(value)
+        artifacts: list[dict] = []
+        for candidate in payload:
+            try:
+                artifact = MediaArtifact.model_validate(candidate)
+            except ValueError:
+                continue
+            artifacts.append(artifact.model_dump(mode="json", exclude={"frame_rate"}))
+        return artifacts
+
+    def _legacy_artifact_payloads(self, generation_id: int, output_paths: list[str]) -> list[dict]:
+        return [
+            artifact.model_dump(mode="json", exclude={"frame_rate"})
+            for artifact in legacy_image_artifacts(generation_id, output_paths)
+        ]
 
     def _bounded_int(self, value: object, *, default: int, minimum: int, maximum: int) -> int:
         try:
@@ -1021,6 +1454,15 @@ class HistoryRepository:
             "folder_id",
             "created_at",
         ]
+        legacy_columns = {
+            str(row[1])
+            for row in con.execute(
+                "pragma table_info(generations_legacy_no_autoincrement)"
+            ).fetchall()
+        }
+        for optional_column in ("media_kind", "artifacts_json"):
+            if optional_column in legacy_columns:
+                columns.append(optional_column)
         column_sql = ", ".join(columns)
         con.execute(
             f"""

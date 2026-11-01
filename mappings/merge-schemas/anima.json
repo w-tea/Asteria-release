@@ -1,6 +1,7 @@
 {
   "id": "anima",
   "label": "Anima",
+  "revision": 1,
   "blocks": [
     "BASE",
     "B000",

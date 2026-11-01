@@ -35,13 +35,22 @@ function Write-AsteriaMaintenanceJournal {
     $parent = [System.IO.Path]::GetDirectoryName($resolved)
     [System.IO.Directory]::CreateDirectory($parent) | Out-Null
     $temporary = [System.IO.Path]::Combine($parent, ".$([System.IO.Path]::GetFileName($resolved)).$([Guid]::NewGuid().ToString('N')).tmp")
+    $backup = "$temporary.bak"
     try {
         $Journal | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $temporary -Encoding utf8
-        [System.IO.File]::Move($temporary, $resolved, $true)
+        if ([System.IO.File]::Exists($resolved)) {
+            [System.IO.File]::Replace($temporary, $resolved, $backup, $true)
+        }
+        else {
+            [System.IO.File]::Move($temporary, $resolved)
+        }
     }
     finally {
         if (Test-Path -LiteralPath $temporary -PathType Leaf) {
             Remove-Item -LiteralPath $temporary -Force
+        }
+        if (Test-Path -LiteralPath $backup -PathType Leaf) {
+            Remove-Item -LiteralPath $backup -Force
         }
     }
 }
@@ -376,11 +385,19 @@ function Restore-AsteriaMaintenancePair {
 
 function Repair-AsteriaMaintenanceTransaction {
     [CmdletBinding()]
-    param([Parameter(Mandatory = $true)][string]$JournalPath)
+    param(
+        [Parameter(Mandatory = $true)][string]$JournalPath,
+        [Parameter(Mandatory = $true)][string]$ExpectedAppRoot
+    )
 
     $journal = Read-AsteriaMaintenanceJournal -Path $JournalPath
     if ($null -eq $journal) {
         return [pscustomobject][ordered]@{ status = "no_action" }
+    }
+    $expected = Get-AsteriaMaintenanceFullPath $ExpectedAppRoot
+    $recorded = Get-AsteriaMaintenanceFullPath $journal.paths.app_root
+    if (-not $expected.Equals($recorded, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "maintenance_journal_ownership_mismatch"
     }
     if ($journal.status -eq "completed") {
         return [pscustomobject][ordered]@{ status = $(if ($journal.phase -eq "rolled_back") { "rolled_back" } else { "completed" }) }

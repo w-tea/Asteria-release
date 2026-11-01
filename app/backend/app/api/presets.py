@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.core.config import AppConfig
 from app.services import api_errors
-from app.services.presets import Preset, PresetRepository
+from app.services.presets import Preset, PresetKindMismatchError, PresetRepository
 
 router = APIRouter(prefix="/api/presets", tags=["presets"])
 
@@ -29,6 +29,8 @@ def save_preset(kind: str, preset: Preset) -> Preset:
         raise HTTPException(status_code=400, detail={"code": api_errors.INVALID_PRESET_KIND})
     try:
         return _repository().save(preset)
+    except PresetKindMismatchError as exc:
+        raise HTTPException(status_code=400, detail={"code": api_errors.INVALID_PRESET_KIND}) from exc
     except OSError as exc:
         raise HTTPException(status_code=409, detail={"code": api_errors.PRESET_SAVE_FAILED}) from exc
 
@@ -38,7 +40,7 @@ def delete_preset(kind: str, preset_id: str) -> dict:
     if kind not in ALLOWED_KINDS:
         raise HTTPException(status_code=404, detail={"code": api_errors.PRESET_KIND_NOT_FOUND})
     try:
-        deleted = _repository().delete(preset_id)
+        deleted = _repository().delete(preset_id, kind=kind)
     except OSError as exc:
         raise HTTPException(status_code=409, detail={"code": api_errors.PRESET_SAVE_FAILED}) from exc
     return {"deleted": deleted}

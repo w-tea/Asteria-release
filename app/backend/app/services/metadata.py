@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+import tempfile
 from typing import Any
 from urllib.parse import quote, unquote
 
@@ -12,6 +13,7 @@ from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
 from app.services.image_metadata_text import first_generation_parameters_text, read_image_metadata_values
+from app.services.atomic_json import write_json_atomic
 
 
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
@@ -1482,6 +1484,10 @@ class MetadataWriter:
                 **metadata,
                 "image_path": str(path),
             }
+            if metadata.get('settings', {}).get('image_check', {}).get('target_stage') == 'final_output':
+                self._write_final_output_metadata(path, payload)
+                sidecar_paths.append(str(path.with_suffix('.asteria.json')))
+                continue
             self._write_png_metadata(path, payload)
             sidecar_path = path.with_suffix(".asteria.json")
             try:
@@ -1493,6 +1499,34 @@ class MetadataWriter:
                 continue
             sidecar_paths.append(str(sidecar_path))
         return sidecar_paths
+
+    def _write_final_output_metadata(self, path: Path, payload: dict[str, Any]) -> None:
+        """Mandatory final-output metadata must never truncate the checked image."""
+        from app.services.image_check_finalization import replace_final_metadata
+
+        def write_atomic(destination: Path, writer) -> None:
+            descriptor, name = tempfile.mkstemp(prefix=f'.{destination.name}-', suffix='.tmp', dir=destination.parent)
+            os.close(descriptor)
+            temporary = Path(name)
+            try:
+                writer(temporary)
+                with temporary.open('r+b') as stream:
+                    os.fsync(stream.fileno())
+                replace_final_metadata(temporary, destination)
+            finally:
+                temporary.unlink(missing_ok=True)
+
+        if path.suffix.lower() == '.png':
+            with Image.open(path) as image:
+                pnginfo = PngInfo()
+                for key, value in image.info.items():
+                    if isinstance(value, str):
+                        pnginfo.add_text(key, value)
+                pnginfo.add_text('Asteria', json.dumps(payload, ensure_ascii=False))
+                pnginfo.add_text('parameters', self._parameters_text(payload))
+                write_atomic(path, lambda temporary: image.save(temporary, format='PNG', pnginfo=pnginfo))
+        text = json.dumps(payload, ensure_ascii=False, indent=2)
+        write_atomic(path.with_suffix('.asteria.json'), lambda temporary: temporary.write_text(text, encoding='utf-8'))
 
     def update_curation_sidecars(self, item: dict[str, Any]) -> list[str]:
         updated: list[str] = []
@@ -1507,6 +1541,8 @@ class MetadataWriter:
                     payload = json.loads(sidecar_path.read_text(encoding="utf-8"))
                 except (OSError, json.JSONDecodeError):
                     continue
+                if not isinstance(payload, dict):
+                    continue
                 payload["rating"] = item.get("rating", 0)
                 payload["favorite"] = item.get("favorite", False)
                 payload["tags"] = item.get("tags", [])
@@ -1515,7 +1551,7 @@ class MetadataWriter:
                 payload["folder_name"] = item.get("folder_name")
                 payload["updated_at"] = datetime.now(UTC).isoformat()
                 try:
-                    sidecar_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+                    write_json_atomic(sidecar_path, payload)
                 except OSError:
                     continue
                 updated.append(str(sidecar_path))
@@ -1546,7 +1582,11 @@ class MetadataWriter:
     def _write_png_metadata(self, path: Path, payload: dict[str, Any]) -> None:
         if path.suffix.lower() != ".png":
             return
+        temporary = None
         try:
+            descriptor, name = tempfile.mkstemp(prefix=f'.{path.name}-', suffix='.tmp', dir=path.parent)
+            os.close(descriptor)
+            temporary = Path(name)
             with Image.open(path) as image:
                 pnginfo = PngInfo()
                 for key, value in image.info.items():
@@ -1554,9 +1594,13 @@ class MetadataWriter:
                         pnginfo.add_text(key, value)
                 pnginfo.add_text("Asteria", json.dumps(payload, ensure_ascii=False))
                 pnginfo.add_text("parameters", self._parameters_text(payload))
-                image.save(path, pnginfo=pnginfo)
+                image.save(temporary, format='PNG', pnginfo=pnginfo)
+            temporary.replace(path)
         except OSError:
             return
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
 
     def _parameters_text(self, payload: dict[str, Any]) -> str:
         settings = payload.get("settings", {})

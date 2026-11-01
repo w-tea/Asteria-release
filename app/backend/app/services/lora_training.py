@@ -7,11 +7,13 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
 import os
+import signal
 import subprocess
 import re
 import shlex
 import shutil
 import sys
+from threading import RLock
 from pathlib import Path
 from pathlib import PureWindowsPath
 from typing import Literal
@@ -23,6 +25,8 @@ from PIL import ExifTags, Image, ImageFilter, ImageOps, ImageStat
 from pydantic import BaseModel, Field
 
 from app.services.image_metadata_text import metadata_value_to_text
+from app.services.atomic_json import write_json_atomic
+from app.services.training_process import popen_training_process
 
 TrainingProfile = Literal["sdxl", "anima"]
 TrainingType = Literal["copy_lora", "character_lora", "style_lora"]
@@ -1165,12 +1169,20 @@ def prepare_lora_copy_machine_target_image(
     output_dir = _resolve_source_path(data.output_dir, project_root)
     output_name = _safe_slug(data.output_name)
     output_path = output_dir / f"{output_name}-{uuid4().hex[:8]}.png"
+    created_output = False
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
         with Image.open(source.image_path) as image:
             target_image = _apply_copy_machine_target_transform(image.convert("RGB"), data.transform)
-            target_image.save(output_path)
+            with output_path.open("xb") as output:
+                created_output = True
+                target_image.save(output, format="PNG")
     except OSError as exc:
+        if created_output:
+            try:
+                output_path.unlink(missing_ok=True)
+            except OSError:
+                pass
         raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
     target = _copy_machine_image_evidence(str(output_path), project_root)
     if (source.width, source.height) != (target.width, target.height):
@@ -1410,6 +1422,9 @@ def start_lora_copy_machine_training_run(
     run = repository.get(run_id)
     if run is None:
         return None
+    existing_process = _COPY_MACHINE_RUN_PROCESSES.get(run.id)
+    if existing_process is not None and existing_process.poll() is None:
+        raise ValueError("copy_machine_training_run_not_startable")
     if run.status == "blocked":
         raise ValueError("copy_machine_training_run_blocked")
     if run.status not in {"planned", "failed"}:
@@ -1468,6 +1483,7 @@ def start_lora_copy_machine_training_run(
                     stdout=log_file,
                     stderr=subprocess.STDOUT,
                     text=True,
+                    start_new_session=os.name != "nt",
                 )
             except OSError as exc:
                 run.status = "failed"
@@ -1487,7 +1503,22 @@ def start_lora_copy_machine_training_run(
     run.started_at = _utc_now()
     run.finished_at = None
     run.updated_at = _utc_now()
-    return repository.save(run)
+    try:
+        return repository.save(run)
+    except LoRATrainingStorageError:
+        _stop_training_process(process)
+        _COPY_MACHINE_RUN_PROCESSES.pop(run.id, None)
+        raise
+
+
+def copy_machine_training_process(run: LoRACopyMachineTrainingRun) -> subprocess.Popen | None:
+    if run.delegated_training_run_id:
+        return _RUN_PROCESSES.get(run.delegated_training_run_id)
+    return _COPY_MACHINE_RUN_PROCESSES.get(run.id)
+
+
+def lora_training_process(run_id: str) -> subprocess.Popen | None:
+    return _RUN_PROCESSES.get(run_id)
 
 
 def refresh_lora_copy_machine_training_run(
@@ -1519,6 +1550,8 @@ def refresh_lora_copy_machine_training_run(
         else:
             _sync_copy_machine_delegated_run(run, delegated)
         return repository.save(run)
+    if _apply_copy_machine_progress_from_log(run):
+        repository.save(run)
     process = _COPY_MACHINE_RUN_PROCESSES.get(run.id)
     if process is None:
         if run.effective_config_path and run.effective_config_evidence is None:
@@ -1582,11 +1615,9 @@ def register_lora_copy_machine_training_run_models(
         raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
     registered: list[str] = []
     for source in sources:
-        target = target_dir / source.name
-        if not _new_file_candidate_is_available(target):
-            target = target_dir / f"{source.stem}-{run.id[:8]}{source.suffix}"
+        target = _unique_registered_lora_path(target_dir, source.name, run.id)
         try:
-            shutil.copy2(source, target)
+            _copy_registered_lora_file(source, target)
         except OSError as exc:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
         registered.append(str(target))
@@ -1747,6 +1778,13 @@ def build_lora_training_character_caption_gate(
     )
 
 
+def build_lora_training_item_caption(dataset: LoRATrainingDataset, item: LoRATrainingDatasetItem) -> str:
+    """The exact caption exported for training, also used by image review."""
+    tags = _exportable_caption_tags(item.tags, settings=dataset.caption_export_settings)
+    tags = _category_prefixed_tags(tags, "manual", dataset.caption_export_settings)
+    return item.caption.strip() or ", ".join(tags)
+
+
 def materialize_lora_training_dataset(
     dataset: LoRATrainingDataset,
     request: DatasetMaterializeRequestData,
@@ -1791,7 +1829,7 @@ def materialize_lora_training_dataset(
         fallback_tags = _category_prefixed_tags(fallback_tags, "manual", dataset.caption_export_settings)
         if not item.caption.strip() and len(fallback_tags) < len(_normalize_tags(item.tags)):
             materialize_warnings.append(f"caption_non_exportable_tags_filtered:{item.id}")
-        caption = item.caption.strip() or ", ".join(fallback_tags)
+        caption = build_lora_training_item_caption(dataset, item)
         try:
             shutil.copy2(source_path, image_path)
             if dataset.caption_export_settings.output_mode in {"caption_txt", "caption_txt_and_metadata_json"}:
@@ -1946,6 +1984,9 @@ def start_lora_training_run(
     run = repository.get(run_id)
     if run is None:
         return None
+    existing_process = _RUN_PROCESSES.get(run.id)
+    if existing_process is not None and existing_process.poll() is None and run.status != "running":
+        raise ValueError("lora_training_run_not_startable")
     if run.status == "running":
         return refresh_lora_training_run(run_id, repository, project_root=project_root)
     if not run.preflight.ready:
@@ -1968,12 +2009,10 @@ def start_lora_training_run(
             log_file.write(f"Command: {' '.join(run.command_args)}\n\n")
             log_file.flush()
             try:
-                process = subprocess.Popen(
+                process = popen_training_process(
                     run.command_args,
-                    cwd=str(working_dir),
+                    cwd=working_dir,
                     stdout=log_file,
-                    stderr=subprocess.STDOUT,
-                    text=True,
                 )
             except OSError as exc:
                 now = _utc_now()
@@ -2005,7 +2044,13 @@ def start_lora_training_run(
     run.started_at = now
     run.finished_at = None
     run.updated_at = now
-    repository.save(run)
+    try:
+        repository.save(run)
+    except LoRATrainingStorageError:
+        # A process without a persisted owner must not continue training.
+        _stop_training_process(process)
+        _RUN_PROCESSES.pop(run.id, None)
+        raise
     return run
 
 
@@ -2074,14 +2119,9 @@ def cancel_lora_training_run(
     run = repository.get(run_id)
     if run is None:
         return None
-    process = _RUN_PROCESSES.pop(run.id, None)
-    if process is not None and process.poll() is None:
-        process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=5)
+    process = _RUN_PROCESSES.get(run.id)
+    _stop_training_process(process)
+    _RUN_PROCESSES.pop(run.id, None)
     run.status = "cancelled"
     run.exit_code = process.returncode if process is not None else run.exit_code
     run.finished_at = _utc_now()
@@ -2091,6 +2131,37 @@ def cancel_lora_training_run(
     run.updated_at = _utc_now()
     repository.save(run)
     return run
+
+
+def _stop_training_process(process: subprocess.Popen | None) -> None:
+    if process is not None and process.poll() is None:
+        if os.name == "nt":
+            killer = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32/taskkill.exe"
+            try:
+                subprocess.run(
+                    [str(killer), "/PID", str(process.pid), "/T", "/F"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=True,
+                    timeout=10,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+            except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                if process.poll() is None:
+                    raise
+        else:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            if os.name == "nt":
+                process.kill()
+            else:
+                os.killpg(process.pid, signal.SIGKILL)
+            process.wait(timeout=5)
 
 
 def register_lora_training_run_models(
@@ -2135,7 +2206,7 @@ def register_lora_training_run_models(
         else:
             installed = _unique_registered_lora_path(target_dir, source.name, run.id)
             try:
-                shutil.copy2(source, installed)
+                _copy_registered_lora_file(source, installed)
             except OSError as exc:
                 raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
         installed_paths.append(str(installed))
@@ -2456,7 +2527,7 @@ def export_lora_training_anima_tagger_ron_sidecars(
                 continue
         text = _anima_tagger_ron_text_for_dataset_item(dataset, item, timestamp=timestamp)
         try:
-            sidecar_path.write_text(text, encoding="utf-8")
+            _write_anima_tagger_ron_atomic(sidecar_path, text)
         except OSError as exc:
             skipped_count += 1
             warnings.append(f"anima_tagger_ron_write_failed:{sidecar_path}:{exc}")
@@ -2471,6 +2542,21 @@ def export_lora_training_anima_tagger_ron_sidecars(
         written_paths=written_paths,
         warnings=warnings,
     )
+
+
+def _write_anima_tagger_ron_atomic(path: Path, text: str) -> None:
+    temporary_path = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
+    try:
+        temporary_path.write_text(text, encoding="utf-8")
+        with temporary_path.open("r+b") as temporary_file:
+            os.fsync(temporary_file.fileno())
+        temporary_path.replace(path)
+    except OSError:
+        try:
+            temporary_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise
 
 
 def analyze_lora_training_dataset_item(
@@ -4278,6 +4364,22 @@ def _is_disallowed_tool_execution_path(path: Path, project_root: Path) -> bool:
     return _path_is_relative_to(path, docs_root)
 
 
+def _copy_registered_lora_file(source: Path, target: Path) -> None:
+    created_target = False
+    try:
+        with source.open("rb") as incoming, target.open("xb") as outgoing:
+            created_target = True
+            shutil.copyfileobj(incoming, outgoing)
+        shutil.copystat(source, target)
+    except OSError:
+        if created_target:
+            try:
+                target.unlink(missing_ok=True)
+            except OSError:
+                pass
+        raise
+
+
 def _unique_registered_lora_path(target_dir: Path, source_name: str, run_id: str) -> Path:
     source = Path(source_name)
     suffix = source.suffix if source.suffix.lower() == ".safetensors" else ".safetensors"
@@ -4660,11 +4762,33 @@ def _sync_copy_machine_delegated_run(
     run.updated_at = _utc_now()
 
 
+def _apply_copy_machine_progress_from_log(run: LoRACopyMachineTrainingRun) -> bool:
+    if not run.log_path:
+        return False
+    progress = None
+    for raw_line in _read_text_tail(Path(run.log_path)).splitlines():
+        line = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", raw_line).strip()
+        # TrainTrain labels optimizer updates with loss and epoch rather than
+        # sd-scripts' "steps:". Do not interpret cache/preview bars as updates.
+        if not re.match(r"Loss EMA \* 1000:.*[,]\s*Epoch:\s*\d+\s*:", line):
+            continue
+        fraction = _parse_progress_fraction(line)
+        if fraction is not None:
+            current, total = fraction
+            progress = (current, total, round(current / total * 100, 2), line[-240:])
+    if progress is None or progress == (run.progress_current, run.progress_total, run.progress_percent, run.progress_message):
+        return False
+    run.progress_current, run.progress_total, run.progress_percent, run.progress_message = progress
+    return True
+
+
 def _parse_training_progress(log_text: str) -> tuple[int | None, int | None, float | None, str] | None:
     last_progress: tuple[int | None, int | None, float | None, str] | None = None
     for raw_line in log_text.splitlines():
-        line = raw_line.strip()
-        if not line:
+        line = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", raw_line).strip()
+        # sd-scripts labels optimizer updates as "steps". Cache preparation
+        # and generated previews also emit tqdm bars, but are not updates.
+        if not re.match(r"steps\s*:", line, re.IGNORECASE):
             continue
         percent = _parse_progress_percent(line)
         fraction = _parse_progress_fraction(line)
@@ -4777,11 +4901,7 @@ class LoRACopyMachineSessionRepository:
     def _write(self, sessions: list[LoRACopyMachineSession]) -> None:
         payload = [session.model_dump(mode="json") for session in sessions]
         try:
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            self.path.write_text(
-                json.dumps(payload, ensure_ascii=False, indent=2),
-                encoding="utf-8",
-            )
+            write_json_atomic(self.path, payload)
         except OSError as exc:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
 
@@ -4853,11 +4973,7 @@ class LoRACopyMachineTrainingRunRepository:
     def _write(self, runs: list[LoRACopyMachineTrainingRun]) -> None:
         payload = [run.model_dump(mode="json") for run in runs]
         try:
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            self.path.write_text(
-                json.dumps(payload, ensure_ascii=False, indent=2),
-                encoding="utf-8",
-            )
+            write_json_atomic(self.path, payload)
         except OSError as exc:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
 
@@ -5090,12 +5206,14 @@ class LoRATrainingDatasetRepository:
     def _write(self, datasets: list[LoRATrainingDataset]) -> None:
         payload = [dataset.model_dump(mode="json") for dataset in datasets]
         try:
-            self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            write_json_atomic(self.path, payload)
         except OSError as exc:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
 
 
 class LoRATrainingRunRepository:
+    _lock = RLock()
+
     def __init__(self, path) -> None:
         self.path = Path(path)
         try:
@@ -5104,10 +5222,12 @@ class LoRATrainingRunRepository:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
 
     def list(self) -> list[LoRATrainingRun]:
-        return sorted(self._read(), key=lambda run: run.updated_at, reverse=True)
+        with self._lock:
+            return sorted(self._read(), key=lambda run: run.updated_at, reverse=True)
 
     def get(self, run_id: str) -> LoRATrainingRun | None:
-        return next((run for run in self._read() if run.id == run_id), None)
+        with self._lock:
+            return next((run for run in self._read() if run.id == run_id), None)
 
     def create(
         self,
@@ -5141,30 +5261,33 @@ class LoRATrainingRunRepository:
             created_at=now,
             updated_at=now,
         )
-        runs = self._read(strict=True)
-        runs.insert(0, run)
-        self._write(runs)
+        with self._lock:
+            runs = self._read(strict=True)
+            runs.insert(0, run)
+            self._write(runs)
         return run
 
     def save(self, run: LoRATrainingRun) -> None:
-        runs = self._read(strict=True)
-        replaced = False
-        for index, existing in enumerate(runs):
-            if existing.id == run.id:
-                runs[index] = run
-                replaced = True
-                break
-        if not replaced:
-            runs.insert(0, run)
-        self._write(runs)
+        with self._lock:
+            runs = self._read(strict=True)
+            replaced = False
+            for index, existing in enumerate(runs):
+                if existing.id == run.id:
+                    runs[index] = run
+                    replaced = True
+                    break
+            if not replaced:
+                runs.insert(0, run)
+            self._write(runs)
 
     def delete(self, run_id: str) -> bool:
-        runs = self._read(strict=True)
-        next_runs = [run for run in runs if run.id != run_id]
-        if len(next_runs) == len(runs):
-            return False
-        self._write(next_runs)
-        return True
+        with self._lock:
+            runs = self._read(strict=True)
+            next_runs = [run for run in runs if run.id != run_id]
+            if len(next_runs) == len(runs):
+                return False
+            self._write(next_runs)
+            return True
 
     def _read(self, *, strict: bool = False) -> list[LoRATrainingRun]:
         try:
@@ -5206,7 +5329,7 @@ class LoRATrainingRunRepository:
     def _write(self, runs: list[LoRATrainingRun]) -> None:
         payload = [run.model_dump(mode="json") for run in runs]
         try:
-            self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            write_json_atomic(self.path, payload)
         except OSError as exc:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
 

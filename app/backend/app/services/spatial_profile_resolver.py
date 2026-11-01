@@ -1,0 +1,374 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+import re
+from typing import Literal, Mapping
+
+from app.schemas.spatial_prompt_runtime import (
+    SpatialModelProfileReceipt,
+    canonical_runtime_sha256,
+)
+from app.services.media_model_catalog import SafetensorsHeader
+from app.services.spatial_model_profiles import (
+    SpatialModelProfileDefinition,
+    load_spatial_model_profiles,
+)
+
+
+SpatialProfileStage = Literal["base", "hires", "refiner"]
+_ANIMA_SPATIAL_LAYOUT_TENSOR = re.compile(
+    r"^net\.(?:"
+    r"x_embedder\.proj\.1|"
+    r"final_layer\.linear|"
+    r"blocks\.\d+\.(?:cross_attn\.k_proj|self_attn\.q_proj|mlp\.layer1)|"
+    r"llm_adapter\.blocks\.\d+\.(?:cross_attn\.k_proj|self_attn\.q_proj)"
+    r")\.weight$"
+)
+_ASTERIA_SOURCE_METADATA = re.compile(
+    r"^asteria\.source\.([A-Z])\.metadata\.(.+)$",
+    re.IGNORECASE,
+)
+_SDXL_LINEAGE_METADATA_KEYS = frozenset(
+    {
+        "base_model",
+        "display_name",
+        "model_name",
+        "modelspec.title",
+        "ss_base_model_version",
+        "title",
+        "version_name",
+    }
+)
+_LEGACY_SPATIAL_PROFILE_IDS = {
+    "sdxl.attention.v1": "sdxl.boundary.v5",
+    "sdxl.attention.v2": "sdxl.boundary.v5",
+    "sdxl.guidance.v3": "sdxl.boundary.v5",
+    "sdxl.routing.v4": "sdxl.boundary.v5",
+    "illustrious.attention.v1": "illustrious.boundary.v5",
+    "illustrious.attention.v2": "illustrious.boundary.v5",
+    "illustrious.guidance.v3": "illustrious.boundary.v5",
+    "illustrious.routing.v4": "illustrious.boundary.v5",
+    "anima.28.attention.v1": "anima.28.boundary.v5",
+    "anima.28.attention.v2": "anima.28.boundary.v5",
+    "anima.28.guidance.v3": "anima.28.boundary.v5",
+    "anima.28.routing.v4": "anima.28.boundary.v5",
+    "anima.40.attention.v1": "anima.40.boundary.v5",
+    "anima.40.attention.v2": "anima.40.boundary.v5",
+    "anima.40.guidance.v3": "anima.40.boundary.v5",
+    "anima.40.routing.v4": "anima.40.boundary.v5",
+    "anima.52.attention.experimental.v1": "anima.52.boundary.experimental.v5",
+    "anima.52.attention.experimental.v2": "anima.52.boundary.experimental.v5",
+    "anima.52.guidance.experimental.v3": "anima.52.boundary.experimental.v5",
+    "anima.52.routing.experimental.v4": "anima.52.boundary.experimental.v5",
+}
+
+
+def _sdxl_lineage_from_metadata_value(value: str) -> str | None:
+    normalized = value.casefold()
+    if "illustrious" in normalized:
+        return "illustrious.boundary.v5"
+    if any(
+        marker in normalized
+        for marker in (
+            "sdxl",
+            "sd xl",
+            "sd_xl",
+            "stable diffusion xl",
+            "stable-diffusion-xl",
+            "pony",
+        )
+    ):
+        return "sdxl.boundary.v5"
+    return None
+
+
+def _sdxl_lineages_from_metadata_group(metadata: Mapping[str, str]) -> set[str]:
+    return {
+        profile
+        for key, value in metadata.items()
+        if key.casefold() in _SDXL_LINEAGE_METADATA_KEYS and str(value).strip()
+        if (profile := _sdxl_lineage_from_metadata_value(str(value))) is not None
+    }
+
+
+def infer_sdxl_spatial_profile_id(metadata: Mapping[str, str]) -> str | None:
+    """Infer lineage only from explicit metadata, never filename or tensor shape."""
+    direct: dict[str, str] = {}
+    source_groups: dict[str, dict[str, str]] = {}
+    for key, value in metadata.items():
+        match = _ASTERIA_SOURCE_METADATA.match(str(key))
+        if match:
+            source_groups.setdefault(match.group(1).upper(), {})[match.group(2)] = str(value)
+        else:
+            direct[str(key)] = str(value)
+
+    profiles = _sdxl_lineages_from_metadata_group(direct)
+    for group in source_groups.values():
+        profiles.update(_sdxl_lineages_from_metadata_group(group))
+    return next(iter(profiles)) if len(profiles) == 1 else None
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialModelEvidence:
+    model_slot_id: str
+    architecture: str
+    variant: str
+    encoder_kind: str
+    verified_structure_id: str
+    layout_fingerprint: str
+    structure_fingerprint: str
+    diffusion_block_count: int
+    prediction_type: str = "native"
+
+    def __post_init__(self) -> None:
+        if not self.model_slot_id.strip():
+            raise ValueError("spatial model slot id is required")
+        if not self.architecture.strip() or not self.variant.strip():
+            raise ValueError("spatial model architecture evidence is required")
+        if not self.encoder_kind.strip():
+            raise ValueError("spatial model encoder evidence is required")
+        if not self.verified_structure_id.strip():
+            raise ValueError("verified spatial structure id is required")
+        if len(self.layout_fingerprint) != 64 or any(
+            character not in "0123456789abcdef"
+            for character in self.layout_fingerprint
+        ):
+            raise ValueError("spatial layout fingerprint must be a lowercase sha256")
+        if len(self.structure_fingerprint) != 64 or any(
+            character not in "0123456789abcdef"
+            for character in self.structure_fingerprint
+        ):
+            raise ValueError("spatial structure fingerprint must be a lowercase sha256")
+        if self.diffusion_block_count < 1:
+            raise ValueError("spatial diffusion block count must be positive")
+        if not self.prediction_type.strip():
+            raise ValueError("spatial model prediction type evidence is required")
+
+
+def spatial_structure_fingerprint(header: SafetensorsHeader) -> str:
+    payload = {
+        "metadata": {
+            key: header.metadata[key]
+            for key in sorted(header.metadata)
+            if key.startswith("architecture") or key.startswith("model_type")
+        },
+        "tensors": [
+            {
+                "name": name,
+                "dtype": info.dtype,
+                "shape": list(info.shape),
+            }
+            for name, info in sorted(header.tensors.items())
+        ],
+    }
+    return canonical_runtime_sha256(payload)
+
+
+def spatial_layout_fingerprint(
+    header: SafetensorsHeader,
+    *,
+    architecture: Literal["sdxl", "anima"],
+) -> str:
+    def include(name: str) -> bool:
+        if architecture == "sdxl":
+            return name.startswith("model.diffusion_model.")
+        return _ANIMA_SPATIAL_LAYOUT_TENSOR.match(name) is not None
+
+    layout = [
+        {"name": name, "shape": list(info.shape)}
+        for name, info in sorted(header.tensors.items())
+        if include(name)
+    ]
+    if not layout:
+        raise ValueError("spatial model layout is missing")
+    return canonical_runtime_sha256(layout)
+
+
+def sdxl_prediction_type_from_header(header: SafetensorsHeader) -> str:
+    """Match ComfyUI's SDXL model-type markers without reading a filename."""
+    tensor_names = set(header.tensors)
+    if "edm_mean" in tensor_names and "edm_std" in tensor_names:
+        return "edm"
+    if "edm_vpred.sigma_max" in tensor_names:
+        return "v_prediction_edm"
+    if "v_pred" in tensor_names:
+        return "v_prediction"
+    return "eps"
+
+
+def sdxl_spatial_model_evidence(
+    header: SafetensorsHeader,
+    *,
+    model_slot_id: str,
+    variant: Literal["sdxl", "illustrious"],
+) -> SpatialModelEvidence:
+    """Build SDXL-family evidence from the resolved header, never its filename."""
+    return SpatialModelEvidence(
+        model_slot_id=model_slot_id,
+        architecture="sdxl",
+        variant=variant,
+        encoder_kind="clip",
+        verified_structure_id="sdxl_unet_v1",
+        layout_fingerprint=spatial_layout_fingerprint(
+            header,
+            architecture="sdxl",
+        ),
+        structure_fingerprint=spatial_structure_fingerprint(header),
+        diffusion_block_count=24,
+        prediction_type=sdxl_prediction_type_from_header(header),
+    )
+
+
+def _matches(definition: SpatialModelProfileDefinition, evidence: SpatialModelEvidence) -> bool:
+    return (
+        evidence.architecture in definition.architectures
+        and evidence.variant in definition.variants
+        and evidence.encoder_kind in definition.encoder_kinds
+        and evidence.prediction_type in definition.prediction_types
+        and evidence.verified_structure_id in definition.verified_structure_ids
+        and evidence.layout_fingerprint in definition.layout_fingerprints
+        and evidence.diffusion_block_count in definition.diffusion_block_counts
+    )
+
+
+def _receipt(
+    *,
+    evidence: SpatialModelEvidence,
+    stage: SpatialProfileStage,
+    target_ids: tuple[str, ...],
+    profile_id: str,
+    revision: str,
+    model_family: str,
+    support_status: str,
+    selection_mode: str,
+    reason_code: str | None,
+) -> SpatialModelProfileReceipt:
+    payload = {
+        "schema_version": "asteria.spatial-model-profile.v1",
+        "stage": stage,
+        "profile_id": profile_id,
+        "profile_revision": revision,
+        "model_family": model_family,
+        "model_slot_id": evidence.model_slot_id,
+        "encoder_kind": evidence.encoder_kind,
+        "verified_structure_id": evidence.verified_structure_id,
+        "layout_fingerprint": evidence.layout_fingerprint,
+        "structure_fingerprint": evidence.structure_fingerprint,
+        "support_status": support_status,
+        "selection_mode": selection_mode,
+        "reason_code": reason_code,
+        "target_ids": list(target_ids),
+    }
+    return SpatialModelProfileReceipt.model_validate(
+        {**payload, "receipt_sha256": canonical_runtime_sha256(payload)}
+    )
+
+
+def resolve_spatial_model_profile(
+    evidence: SpatialModelEvidence,
+    *,
+    stage: SpatialProfileStage,
+    target_ids: tuple[str, ...],
+    profiles_path: str | Path,
+    manual_profile_id: str | None = None,
+) -> SpatialModelProfileReceipt:
+    catalog = load_spatial_model_profiles(profiles_path)
+    by_id = {item.profile_id: item for item in catalog.profiles}
+    selection_mode = "manual" if manual_profile_id else "auto"
+    if manual_profile_id is not None:
+        manual_profile_id = _LEGACY_SPATIAL_PROFILE_IDS.get(
+            manual_profile_id,
+            manual_profile_id,
+        )
+        definition = by_id.get(manual_profile_id)
+        if definition is None:
+            return _receipt(
+                evidence=evidence,
+                stage=stage,
+                target_ids=target_ids,
+                profile_id=manual_profile_id,
+                revision="0",
+                model_family=evidence.architecture or "unknown",
+                support_status="unsupported",
+                selection_mode="manual",
+                reason_code="spatial_profile_unknown",
+            )
+        if not definition.manual_selectable or not _matches(definition, evidence):
+            return _receipt(
+                evidence=evidence,
+                stage=stage,
+                target_ids=target_ids,
+                profile_id=definition.profile_id,
+                revision=definition.revision,
+                model_family=definition.model_family,
+                support_status="unsupported",
+                selection_mode="manual",
+                reason_code="spatial_profile_evidence_mismatch",
+            )
+        return _receipt(
+            evidence=evidence,
+            stage=stage,
+            target_ids=target_ids,
+            profile_id=definition.profile_id,
+            revision=definition.revision,
+            model_family=definition.model_family,
+            support_status="supported",
+            selection_mode="manual",
+            reason_code=None,
+        )
+
+    matches = [item for item in catalog.profiles if _matches(item, evidence)]
+    if len(matches) != 1:
+        reason = "spatial_profile_ambiguous" if matches else "spatial_profile_not_found"
+        return _receipt(
+            evidence=evidence,
+            stage=stage,
+            target_ids=target_ids,
+            profile_id="unresolved",
+            revision="0",
+            model_family=evidence.architecture or "unknown",
+            support_status="unsupported",
+            selection_mode=selection_mode,
+            reason_code=reason,
+        )
+    definition = matches[0]
+    reason_code = {
+        "selection_required": "spatial_profile_manual_selection_required",
+        "unsupported": "spatial_profile_unsupported",
+    }.get(definition.automatic_status)
+    return _receipt(
+        evidence=evidence,
+        stage=stage,
+        target_ids=target_ids,
+        profile_id=definition.profile_id,
+        revision=definition.revision,
+        model_family=definition.model_family,
+        support_status=definition.automatic_status,
+        selection_mode=selection_mode,
+        reason_code=reason_code,
+    )
+
+
+def resolve_spatial_stage_profiles(
+    evidence_by_stage: Mapping[SpatialProfileStage, SpatialModelEvidence],
+    *,
+    target_ids: tuple[str, ...],
+    profiles_path: str | Path,
+    manual_profiles: Mapping[SpatialProfileStage, str] | None = None,
+) -> tuple[SpatialModelProfileReceipt, ...]:
+    unknown_stages = set(evidence_by_stage).difference({"base", "hires", "refiner"})
+    if unknown_stages:
+        raise ValueError("unknown spatial profile stage")
+    manual_profiles = manual_profiles or {}
+    return tuple(
+        resolve_spatial_model_profile(
+            evidence_by_stage[stage],
+            stage=stage,
+            target_ids=target_ids,
+            profiles_path=profiles_path,
+            manual_profile_id=manual_profiles.get(stage),
+        )
+        for stage in ("base", "hires", "refiner")
+        if stage in evidence_by_stage
+    )

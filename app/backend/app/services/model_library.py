@@ -40,7 +40,12 @@ MODEL_TYPE_DIRECTORIES = {
     "embedding": ("embeddings", "textual_inversion"),
     "controlnet": ("controlnet", "controlnets"),
     "detailer": ("adetailer", "bbox", "ultralytics/bbox", "segm", "ultralytics/segm"),
-    "upscaler": ("upscalers", "esrgan", "realesrgan"),
+    "upscaler": (
+        "upscalers",
+        "esrgan",
+        "realesrgan",
+        "latent_upscale_models",
+    ),
 }
 HIDDEN_MODEL_PATH_PARTS = {"merge-candidates"}
 _REPARSE_ATTRIBUTE = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
@@ -89,6 +94,8 @@ class ModelLibraryItem:
 class ModelLibrary:
     items: list[ModelLibraryItem]
     link_health: ModelLinkHealth = field(default_factory=ModelLinkHealth)
+    # Hidden from selection lists, but exact runtime paths still need content identity.
+    aliases: list[ModelLibraryItem] = field(default_factory=list)
 
     def by_type(self, model_type: str) -> list[ModelLibraryItem]:
         if model_type == "diffusion_model":
@@ -100,10 +107,12 @@ class ModelLibraryScanner:
     def __init__(self, model_root: Path) -> None:
         self.model_root = Path(os.path.abspath(os.fspath(model_root)))
 
-    def scan(self) -> ModelLibrary:
+    def scan(self, *, model_types: tuple[str, ...] | None = None) -> ModelLibrary:
         items: list[ModelLibraryItem] = []
         health = _MutableLinkHealth()
         for model_type, directories in MODEL_TYPE_DIRECTORIES.items():
+            if model_types is not None and model_type not in model_types:
+                continue
             # One physical file may intentionally be registered under multiple
             # model roles. Only aliases within the same role are duplicates.
             seen_directories: set[tuple[object, ...]] = set()
@@ -121,9 +130,12 @@ class ModelLibraryScanner:
                         health=health,
                         items=items,
                     )
-        items = self._dedupe_model_aliases(items)
+        scanned = items
+        items = self._dedupe_model_aliases(scanned)
+        selected_paths = {(item.type, item.path) for item in items}
+        aliases = [item for item in scanned if (item.type, item.path) not in selected_paths]
         items.sort(key=lambda item: (item.type, item.name.casefold(), str(item.relative_path).casefold()))
-        return ModelLibrary(items=items, link_health=health.freeze())
+        return ModelLibrary(items=items, link_health=health.freeze(), aliases=aliases)
 
     def _dedupe_model_aliases(self, items: list[ModelLibraryItem]) -> list[ModelLibraryItem]:
         preferred: dict[tuple[str, str], ModelLibraryItem] = {}
@@ -243,7 +255,10 @@ class ModelLibraryScanner:
             except ValueError:
                 health.skipped_file_count += 1
                 continue
-            if any(part.casefold() in HIDDEN_MODEL_PATH_PARTS for part in relative_path.parts[:-1]):
+            if any(
+                part.casefold() in HIDDEN_MODEL_PATH_PARTS or part.casefold().startswith(".merge-")
+                for part in relative_path.parts[:-1]
+            ):
                 continue
             physical_identity = self._physical_identity(logical_path, target_stat)
             if physical_identity in seen_files:

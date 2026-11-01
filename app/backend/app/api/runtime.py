@@ -22,6 +22,12 @@ from app.services.managed_artifacts import (
     ManagedArtifactRollbackIncomplete,
 )
 from app.services.controlnet_preprocessor import COMFY_CONTROLNET_PREPROCESSOR_NODES
+from app.services.anima_lllite_runtime import (
+    ANIMA_LLLITE_CURRENT_REQUIRED_NODES,
+    anima_lllite_missing_nodes,
+    anima_lllite_model_values,
+    is_standard_controlnet_model_name,
+)
 from app.services.controlnet_mode import (
     CONTROLNET_MODE_LABELS,
     controlnet_mode_contract_status,
@@ -120,6 +126,14 @@ class RuntimeDependencyStatusResponse(BaseModel):
     install_script: str | None
     pip_packages: list[str]
     auto_install: bool
+    release_class: str
+    size_bytes: int | None
+    checksum_sha256: str | None
+    license_id: str | None
+    license_url: str | None
+    repair_policy: str | None
+    source_verified_at: str | None
+    source_provenance_url: str | None
 
 
 class RuntimeDependencyListResponse(BaseModel):
@@ -155,15 +169,7 @@ CONTROLNET_REQUIRED_NODES = {
     "ControlNetLoader",
     "ControlNetApplyAdvanced",
 }
-ANIMA_LLLITE_REQUIRED_NODES = {
-    "LoadImage",
-    "AnimaLLLiteApply",
-}
-ANIMA_REGIONAL_REQUIRED_NODES = {
-    "AttentionCouplePPM",
-    "ImageColorToMask",
-    "SolidMask",
-}
+ANIMA_LLLITE_REQUIRED_NODES = {"LoadImage", "AnimaLLLiteApply"}
 DETAILER_REQUIRED_NODES = {"FaceDetailer", "UltralyticsDetectorProvider"}
 LORA_BLOCK_WEIGHT_REQUIRED_NODES = {LORA_BLOCK_WEIGHT_CLASS}
 HIRES_FIX_REQUIRED_NODES = {
@@ -291,7 +297,11 @@ def _all_required_capability(name: str, nodes: set[str], required: set[str]) -> 
 def _controlnet_capability(object_info: dict, nodes: set[str]) -> dict[str, Any]:
     missing = sorted(CONTROLNET_REQUIRED_NODES - nodes)
     controlnet_models = (
-        sorted(_node_input_values(object_info, "ControlNetLoader", "control_net_name"))
+        sorted(
+            value
+            for value in _node_input_values(object_info, "ControlNetLoader", "control_net_name")
+            if is_standard_controlnet_model_name(value)
+        )
         if not missing
         else []
     )
@@ -333,7 +343,10 @@ def _controlnet_capability(object_info: dict, nodes: set[str]) -> dict[str, Any]
 
 
 def _anima_lllite_capability(object_info: dict, nodes: set[str]) -> dict[str, Any]:
-    missing = sorted(ANIMA_LLLITE_REQUIRED_NODES - nodes)
+    missing = sorted(
+        set(ANIMA_LLLITE_REQUIRED_NODES - nodes)
+        | set(anima_lllite_missing_nodes(object_info, nodes))
+    )
     lllite_models = (
         sorted(_anima_lllite_model_values(object_info))
         if not missing
@@ -351,12 +364,7 @@ def _anima_lllite_capability(object_info: dict, nodes: set[str]) -> dict[str, An
 
 
 def _anima_lllite_model_values(object_info: dict) -> set[str]:
-    values = _node_input_values(object_info, "AnimaLLLiteApply", "lllite_name")
-    return {
-        value
-        for value in values
-        if "lllite" in value.lower() or "anima" in value.lower()
-    }
+    return anima_lllite_model_values(object_info)
 
 
 def _detailer_capability(object_info: dict, nodes: set[str]) -> dict[str, Any]:
@@ -527,16 +535,10 @@ def _unreachable_capabilities(base_url: str, message: str) -> RuntimeCapabilitie
             "anima_lllite": {
                 "available": False,
                 "runtime": "comfy_workflow",
-                "missing_nodes": sorted(ANIMA_LLLITE_REQUIRED_NODES),
+                "missing_nodes": sorted(ANIMA_LLLITE_CURRENT_REQUIRED_NODES),
                 "message": message,
                 "lllite_models": [],
             },
-            "anima_regional_prompting": RuntimeFeatureCapability(
-                available=False,
-                runtime="comfy_workflow",
-                missing_nodes=sorted(ANIMA_REGIONAL_REQUIRED_NODES),
-                message=message,
-            ),
             "lora_block_weight": RuntimeFeatureCapability(
                 available=False,
                 runtime="comfy_workflow",
@@ -591,11 +593,6 @@ def capabilities() -> RuntimeCapabilitiesResponse:
         features={
             "controlnet": _controlnet_capability(object_info, nodes),
             "anima_lllite": _anima_lllite_capability(object_info, nodes),
-            "anima_regional_prompting": _all_required_capability(
-                "Anima regional prompting",
-                nodes,
-                ANIMA_REGIONAL_REQUIRED_NODES,
-            ),
             "detailer": _detailer_capability(object_info, nodes),
             "controlnet_preprocessors": _controlnet_preprocessor_capability(nodes),
             "lora_block_weight": _all_required_capability(
@@ -843,13 +840,21 @@ def start() -> RuntimeStatus:
 
 @router.post("/stop", response_model=RuntimeStatus)
 def stop() -> RuntimeStatus:
-    return _manager().stop()
+    try:
+        return _manager().stop()
+    except RuntimeProcessError as exc:
+        code = str(exc) if str(exc) in {'runtime_ownership_unverified','runtime_stop_failed'} else 'runtime_stop_failed'
+        raise HTTPException(status_code=409,detail={'code':code}) from exc
 
 
 @router.post("/restart", response_model=RuntimeStatus)
 def restart() -> RuntimeStatus:
     manager = _manager()
-    manager.stop()
+    try:
+        manager.stop()
+    except RuntimeProcessError as exc:
+        code = str(exc) if str(exc) in {'runtime_ownership_unverified','runtime_stop_failed'} else 'runtime_stop_failed'
+        raise HTTPException(status_code=409,detail={'code':code}) from exc
     try:
         return manager.start()
     except RuntimeProcessError as exc:

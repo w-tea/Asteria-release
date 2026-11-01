@@ -1,0 +1,6 @@
+{
+  "id": "asteria-anima-lora-remap",
+  "version": "1.2.0",
+  "contract_version": "asteria.anima_lora_remap.v1",
+  "files": ["__init__.py", "remap_contract.py", "nodes.py", "lora-block-remap.v1.json"]
+}

@@ -5,7 +5,7 @@ from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
 
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageFilter, ImageOps, UnidentifiedImageError
 
 from app.services import api_errors
 
@@ -241,8 +241,12 @@ def prepare_only_masked_region(
         positive_mask = positive_mask.convert("L")
         init_crop = canonical_source.crop(resolved.region.rect)
         positive_crop = positive_mask.crop(resolved.region.rect)
+        noise_mask = (
+            positive_crop.filter(ImageFilter.GaussianBlur(radius=mask_blur))
+            if mask_blur > 0 else positive_crop
+        )
         comfy_mask = Image.new("RGBA", resolved.region.size, (255, 255, 255, 0))
-        comfy_mask.putalpha(ImageOps.invert(positive_crop))
+        comfy_mask.putalpha(ImageOps.invert(noise_mask))
         canonical_source.save(canonical_source_path, format="PNG")
         init_crop.save(init_crop_path, format="PNG")
         positive_crop.save(positive_mask_crop_path, format="PNG")

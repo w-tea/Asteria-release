@@ -1,0 +1,87 @@
+{
+  "schema_version": "asteria.video.mapping.v1",
+  "mapping_id": "minimax-h3-local-sequence.v1",
+  "mapping_version": 1,
+  "provider": "local_h3",
+  "adapter_id": "minimax_h3_local",
+  "mode_mappings": {
+    "sequence_initial": {
+      "provider_task": "ref2va",
+      "payload_template": {
+        "task": "${provider_task}",
+        "workflow_template_id": "asteria_minimax_h3_sequence_initial.v1",
+        "model_profile": "${model_profile}",
+        "model_selection": "${model_selection}",
+        "conditioning": {
+          "prompt": "${prompt}",
+          "audio_prompt": "${audio_prompt}"
+        },
+        "target": {
+          "width": "${width}",
+          "height": "${height}",
+          "duration_seconds": "${duration_seconds}",
+          "fps": "${fps}"
+        },
+        "sampling": {
+          "seed": "${seed}",
+          "production": "${sampling}"
+        },
+        "loras": "${loras}",
+        "runtime": {}
+      }
+    },
+    "sequence": {
+      "provider_task": "sequence_adapter_owned",
+      "payload_template": {
+        "task": "${continuation_provider_task}",
+        "workflow_template_id": "${continuation_workflow_template_id}",
+        "model_profile": "${model_profile}",
+        "model_selection": "${model_selection}",
+        "conditioning": {
+          "prompt": "${prompt}",
+          "audio_prompt": "${audio_prompt}",
+          "continuation": "${sequence_context}"
+        },
+        "target": {
+          "width": "${width}",
+          "height": "${height}",
+          "duration_seconds": "${duration_seconds}",
+          "fps": "${fps}"
+        },
+        "sampling": {
+          "seed": "${seed}",
+          "production": "${sampling}"
+        },
+        "loras": "${loras}",
+        "runtime": {}
+      },
+      "value_maps": {
+        "continuation_provider_task": {
+          "direct_context": "ref2va",
+          "reference_continuation": "ref2va"
+        },
+        "continuation_workflow_template_id": {
+          "direct_context": "asteria_minimax_h3_sequence_motion_context.v1",
+          "reference_continuation": "asteria_minimax_h3_sequence_reference.v1"
+        }
+      }
+    }
+  },
+  "provider_options": {
+    "precision": {
+      "value_type": "enum",
+      "target": "runtime.precision",
+      "allowed_values": ["auto", "bf16", "fp16"]
+    },
+    "offload": {
+      "value_type": "enum",
+      "target": "runtime.offload",
+      "allowed_values": ["auto", "balanced", "maximum"]
+    },
+    "attention_backend": {
+      "value_type": "enum",
+      "target": "runtime.attention_backend",
+      "allowed_values": ["auto", "sdpa"]
+    }
+  }
+}

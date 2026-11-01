@@ -1,6 +1,14 @@
 profiles:
   - id: sdxl
     label: SDXL / Illustrious
+    prompt_syntax:
+      grammar: asteria-prompt-v1
+      features:
+        - token_weight
+        - scheduled_switch
+        - alternating_switch
+        - conditioning_and
+        - conditioning_break
     dependency_ids:
       - sdxl-checkpoint
       - sdxl-vae
@@ -28,6 +36,9 @@ profiles:
 
   - id: anima
     label: Anima
+    prompt_syntax:
+      grammar: asteria-prompt-v1
+      features: []
     dependency_ids:
       - anima-base-v1
       - anima-text-encoder
@@ -42,10 +53,27 @@ profiles:
         label: Text Encoder
         type: text_encoder
         required: true
+      - id: qwen35_text_encoder
+        label: Qwen3.5 4B Text Encoder (Anima 3.8B)
+        type: text_encoder
+        required: false
+      - id: progressive_adapter
+        label: Progressive Adapter (Anima 3.8B)
+        type: text_encoder
+        required: false
       - id: vae
         label: VAE
         type: vae
         required: true
+    managed_model_bundles:
+      - id: anima-3.8b-official
+        variant: anima_3_8b_52
+        components:
+          diffusion_model: anima-3.8b-diffusion
+          text_encoder: anima-text-encoder
+          qwen35_text_encoder: anima-3.8b-qwen35
+          progressive_adapter: anima-3.8b-progressive-adapter
+          vae: anima-vae
     setting_groups:
       - base_generation
       - anima_runtime
@@ -57,6 +85,9 @@ profiles:
 
   - id: flux1
     label: Flux.1
+    prompt_syntax:
+      grammar: asteria-prompt-v1
+      features: []
     dependency_ids:
       - flux-model
       - flux-clip-l
@@ -89,6 +120,9 @@ profiles:
 
   - id: flux2
     label: Flux.2
+    prompt_syntax:
+      grammar: asteria-prompt-v1
+      features: []
     dependency_ids:
       - flux2-qwen3-8b
       - flux2-vae

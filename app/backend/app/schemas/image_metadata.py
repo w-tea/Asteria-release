@@ -5,6 +5,9 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.prompt_input import PromptInput
+from app.schemas.prompt_layout import PromptLayout
+
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -29,7 +32,7 @@ ResourceStatus = Literal["available", "missing", "ambiguous", "unsupported"]
 
 
 class ProfileModelSlotReference(StrictModel):
-    kind: Literal["checkpoint", "vae"]
+    kind: Literal["checkpoint", "vae", "text_encoder"]
     application: Literal["model_slot"] = "model_slot"
     slot_id: str = Field(min_length=1)
     source_name: str = Field(min_length=1)
@@ -149,6 +152,11 @@ class ImageMetadataPreview(StrictModel):
     source_family: Literal["asteria", "a1111_forge", "comfyui", "unknown"]
     status: Literal["complete", "partial", "unsupported"]
     positive_prompt: MetadataTextValue
+    prompt_input: PromptInput | None = None
+    prompt_layout: PromptLayout | None = None
+    spatial_prompt_status: Literal["ready", "partial", "legacy", "unsupported"] = "ready"
+    spatial_prompt_warning_code: str | None = None
+    spatial_prompt_legacy_snapshot: dict[str, Any] | None = None
     negative_prompt: MetadataTextValue
     settings: CompatibleTxt2ImgSettings = Field(default_factory=CompatibleTxt2ImgSettings)
     seed: int | None = None

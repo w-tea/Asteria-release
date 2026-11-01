@@ -17,27 +17,41 @@ from app.services.model_fingerprints import ModelFingerprintService
 
 
 _cache_lock = threading.RLock()
-_libraries: dict[str, ModelLibrary] = {}
+_libraries: dict[tuple[str, str, str], ModelLibrary] = {}
 
 
-def _cache_key(model_root: Path) -> str:
-    return os.path.normcase(os.path.abspath(str(model_root)))
+def _cache_key(model_root: Path, config: AppConfig) -> tuple[str, str, str]:
+    return (
+        os.path.normcase(os.path.abspath(str(model_root))),
+        os.path.normcase(os.path.abspath(str(config.data_dir))),
+        os.path.normcase(os.path.abspath(str(config.comfy_dir))),
+    )
 
 
-def get_model_library(model_root: Path) -> ModelLibrary:
-    key = _cache_key(model_root)
+def get_model_library(
+    model_root: Path,
+    *,
+    config: AppConfig | None = None,
+) -> ModelLibrary:
+    active_config = config or AppConfig()
+    key = _cache_key(model_root, active_config)
     with _cache_lock:
         library = _libraries.get(key)
         if library is None:
-            library = _scan_model_libraries(model_root)
+            library = _scan_model_libraries(model_root, config=active_config)
             _libraries[key] = library
         return library
 
 
-def refresh_model_library(model_root: Path) -> ModelLibrary:
-    library = _scan_model_libraries(model_root)
+def refresh_model_library(
+    model_root: Path,
+    *,
+    config: AppConfig | None = None,
+) -> ModelLibrary:
+    active_config = config or AppConfig()
+    library = _scan_model_libraries(model_root, config=active_config)
     with _cache_lock:
-        _libraries[_cache_key(model_root)] = library
+        _libraries[_cache_key(model_root, active_config)] = library
     return library
 
 
@@ -46,9 +60,20 @@ def clear_model_library_cache() -> None:
         _libraries.clear()
 
 
-def _scan_model_libraries(model_root: Path) -> ModelLibrary:
+def _scan_model_libraries(
+    model_root: Path,
+    *,
+    config: AppConfig,
+) -> ModelLibrary:
     local = ModelLibraryScanner(model_root).scan()
-    config = AppConfig()
+    # Impact's detector list also includes the configured engine's own model root.
+    # Keep those identities out of the application selection list, which already
+    # uses the engine's discovered detector names.
+    managed = ModelLibraryScanner(config.comfy_dir / 'models').scan(model_types=('detailer',))
+    aliases = [*local.aliases, *(
+        replace(item, source='runtime', root_id='asteria-runtime')
+        for item in [*managed.items, *managed.aliases]
+    )]
     fingerprints = ModelFingerprintService(config.data_dir / "config" / "model-fingerprints.json")
     local_items: list[ModelLibraryItem] = []
     for item in local.items:
@@ -84,7 +109,7 @@ def _scan_model_libraries(model_root: Path) -> ModelLibrary:
     try:
         external = service.scan()
     except ExternalModelLibraryError:
-        return ModelLibrary(items=local_items, link_health=local.link_health)
+        return ModelLibrary(items=local_items, link_health=local.link_health, aliases=aliases)
     external_items = [
         ModelLibraryItem(
             type=item.model_type,
@@ -107,4 +132,4 @@ def _scan_model_libraries(model_root: Path) -> ModelLibrary:
     ]
     items = [*local_items, *external_items]
     items.sort(key=lambda item: (item.type, item.name.casefold(), str(item.relative_path).casefold()))
-    return ModelLibrary(items=items, link_health=local.link_health)
+    return ModelLibrary(items=items, link_health=local.link_health, aliases=aliases)

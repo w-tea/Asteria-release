@@ -11,16 +11,28 @@ nodes:
   latent: "5"
   negative_conditioning: "6"
   sampler_tail_start: "7"
+  qwen35_loader: "7"
   merge_source_b: "900"
   merge_source_c: "901"
   merge_runtime: "902"
 class_types:
+  generation_stage_save: AsteriaSaveGenerationStage
+  generation_branch_model: AsteriaGenerationBranchModel
+  generation_stage_load: AsteriaLoadGenerationStage
+  generation_stage_sampler: AsteriaGenerationStageSampler
+  generation_stage_noise: AsteriaSelectedGenerationNoise
+  generation_stage_sample_filter: AsteriaSelectedGenerationSampler
   unet_loader: UNETLoader
   text_encoder_loader: CLIPLoader
   vae_loader: VAELoader
   conditioning: TextEncodeQwenImageEdit
+  qwen35_loader: AnimaQwen35Loader
+  qwen35_unified_prompt: AnimaQwen35UnifiedPrompt
+  native_text_encode: CLIPTextEncode
+  anima_3_8b_latent: EmptySD3LatentImage
   latent: EmptyQwenImageLayeredLatentImage
   lora_loader: LoraLoader
+  anima_lora_remap: AsteriaAnimaLoraRemap
   random_noise: RandomNoise
   basic_guider: BasicGuider
   cfg_guider: CFGGuider
@@ -36,18 +48,71 @@ class_types:
   upscale_model_loader: UpscaleModelLoader
   image_upscale_with_model: ImageUpscaleWithModel
   vae_encode: VAEEncode
-  vae_encode_inpaint: VAEEncodeForInpaint
+  set_latent_noise_mask: SetLatentNoiseMask
   load_image: LoadImage
-  image_color_to_mask: ImageColorToMask
-  solid_mask: SolidMask
-  attention_couple: AttentionCouplePPM
+  model_patch_loader: ModelPatchLoader
+  anima_lllite_apply: AnimaLLLiteApply
   detailer_detector: UltralyticsDetectorProvider
   face_detailer: FaceDetailer
   merge_runtime: AsteriaAnimaMergeRuntime
+  spatial_mask_collector: AsteriaSpatialMaskCollector
+  spatial_full_text_binding: AsteriaSpatialFullTextBinding
+  spatial_native_guidance: AsteriaSpatialNativeGuidance
+  spatial_execution_receipt: AsteriaSpatialExecutionReceipt
+node_contracts:
+  spatial_mask_collector:
+    required_inputs:
+      - mask
+      - target_id
+      - depth_index
+      - overlap_weight
+      - strength
+      - blending
+      - mask_sha256
+      - contract_version
+    accepted_inputs:
+      - previous
+    outputs_by_index:
+      0: ASTERIA_SPATIAL_MASK_BUNDLE
+      1: STRING
+  spatial_full_text_binding:
+    required_inputs:
+      - clip
+      - source_positive
+      - binding_json
+      - family
+      - contract_version
+    outputs_by_index:
+      0: CONDITIONING
+      1: ASTERIA_SPATIAL_FULL_TEXT
+      2: STRING
+  spatial_native_guidance:
+    required_inputs:
+      - model
+      - positive
+      - negative
+      - binding
+      - masks
+      - geometry_json
+      - profile_json
+      - stage
+      - initial_noise_seed
+      - contract_version
+    outputs_by_index:
+      0: MODEL
+      1: CONDITIONING
+      2: CONDITIONING
+      3: ASTERIA_SPATIAL_GUIDANCE_STATE
+  spatial_execution_receipt:
+    required_inputs:
+      - execution_state
+      - samples
+      - contract_version
+    outputs_by_index:
+      0: STRING
 dynamic_sections:
   - hires_fix
   - img2img
   - inpaint
-  - regional_prompting
   - detailer_units
   - remaster

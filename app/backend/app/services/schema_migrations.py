@@ -17,6 +17,8 @@ _SOURCE_SETTINGS_VERSION = {
     "1.0.1": 0,
     "1.0.2": 1,
     "1.0.3": 1,
+    "1.0.4": 1,
+    "1.1.0": 3,
 }
 
 
@@ -194,6 +196,12 @@ def migrate_history_database_schema(
                 create_discord_profile_tables(connection)
                 create_discord_receipt_tables(connection)
                 create_discord_override_tables(connection)
+            elif version == 6:
+                _migrate_database_6_to_7_reserved(connection)
+            elif version == 7:
+                _migrate_database_7_to_8_media(connection)
+            elif version == 8:
+                _migrate_database_8_to_9_video_sequence(connection)
             else:
                 raise SchemaMigrationError(f"database migration path is missing at version {version}")
             if failure_injector is not None:
@@ -297,6 +305,57 @@ def _table_exists(connection: sqlite3.Connection, name: str) -> bool:
         ).fetchone()
         is not None
     )
+
+
+def _migrate_database_6_to_7_reserved(connection: sqlite3.Connection) -> None:
+    """Sealed V1.2 boundary; future database changes must use a later step."""
+    return None
+
+
+def _migrate_database_7_to_8_media(connection: sqlite3.Connection) -> None:
+    if not _table_exists(connection, "generations"):
+        return
+    columns = {
+        str(row[1]) for row in connection.execute("pragma table_info(generations)").fetchall()
+    }
+    if "media_kind" not in columns:
+        connection.execute(
+            "alter table generations add column media_kind text not null default 'image'"
+        )
+    if "artifacts_json" not in columns:
+        connection.execute(
+            "alter table generations add column artifacts_json text not null default '[]'"
+        )
+
+    from app.schemas.media import legacy_image_artifacts
+
+    rows = connection.execute("select id, output_paths_json from generations").fetchall()
+    for generation_id, output_paths_json in rows:
+        try:
+            payload = json.loads(output_paths_json)
+        except (TypeError, json.JSONDecodeError):
+            payload = []
+        paths = [path for path in payload if isinstance(path, str)] if isinstance(payload, list) else []
+        artifacts = legacy_image_artifacts(int(generation_id), paths)
+        connection.execute(
+            "update generations set media_kind = 'image', artifacts_json = ? where id = ?",
+            (
+                json.dumps(
+                    [
+                        artifact.model_dump(mode="json", exclude={"frame_rate"})
+                        for artifact in artifacts
+                    ],
+                    ensure_ascii=False,
+                ),
+                generation_id,
+            ),
+        )
+
+
+def _migrate_database_8_to_9_video_sequence(connection: sqlite3.Connection) -> None:
+    from app.services.video_sequence_repository import create_video_sequence_tables
+
+    create_video_sequence_tables(connection)
 
 
 def _restore_file_snapshot(path: Path, *, existed: bool, content: bytes) -> None:

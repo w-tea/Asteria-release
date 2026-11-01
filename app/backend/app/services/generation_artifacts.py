@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from PIL import Image
 
+from app.services.media_artifacts import MediaFinalizationResult, finalize_media_artifact
 from app.services.user_settings import safe_segment
 
 
@@ -12,6 +13,19 @@ _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 
 class OutputFinalizationError(Exception):
     pass
+
+
+def finalize_non_image_output(
+    *,
+    generation_id: int,
+    source_path: Path,
+    poster_root: Path,
+) -> MediaFinalizationResult:
+    return finalize_media_artifact(
+        generation_id=generation_id,
+        source_path=source_path,
+        poster_root=poster_root,
+    )
 
 
 def apply_output_image_format(output_paths: list[str], image_format: str) -> list[str]:
@@ -32,7 +46,7 @@ def apply_output_image_format(output_paths: list[str], image_format: str) -> lis
             converted.append(output_path)
             continue
         try:
-            destination = unique_output_path(path.with_suffix(target_suffix))
+            destination = unique_output_path(path.with_suffix(target_suffix), include_sidecar=True)
             with Image.open(path) as image:
                 output_image = image.convert("RGB") if target_format == "jpg" else image
                 output_image.save(destination, format=pil_format_by_setting[target_format])
@@ -51,6 +65,8 @@ def apply_filename_template(
     settings: dict,
     profile: str,
     generation_id: int,
+    *,
+    identities: list[dict] | None = None,
 ) -> list[str]:
     template = str(settings.get("filename_template") or "").strip()
     if not template:
@@ -65,17 +81,19 @@ def apply_filename_template(
         image_index += 1
         seeds = settings.get("generated_seeds", [settings.get("seed", "")])
         seed = seeds[image_index - 1] if isinstance(seeds, list) and len(seeds) >= image_index else settings.get("seed", "")
+        identity = identities[image_index - 1] if identities and len(identities) >= image_index else {}
+        seed = identity.get("seed", seed)
         raw_name = template.format(
             profile=profile,
             seed=seed,
             id=generation_id,
-            index=image_index,
+            index=identity.get("index", image_index),
             sampler=settings.get("sampler", ""),
             scheduler=settings.get("scheduler", ""),
         )
         stem = safe_segment(raw_name) or f"{profile}_{generation_id}_{image_index}"
         try:
-            destination = unique_output_path(path.with_name(f"{stem}{path.suffix.lower()}"))
+            destination = unique_output_path(path.with_name(f"{stem}{path.suffix.lower()}"), include_sidecar=True)
             path.replace(destination)
         except _PATH_ACCESS_ERRORS:
             renamed.append(output_path)
@@ -101,12 +119,23 @@ def remap_primary_outputs(
     return remapped, True
 
 
-def unique_output_path(path: Path) -> Path:
-    if _is_available(path):
+def unique_output_path(
+    path: Path, *, include_sidecar: bool = False, reserved_paths: set[Path] | None = None,
+) -> Path:
+    def available(candidate: Path) -> bool:
+        reserved = reserved_paths or set()
+        return candidate not in reserved and _is_available(candidate) and (
+            not include_sidecar or (
+                candidate.with_suffix('.asteria.json') not in reserved
+                and _is_available(candidate.with_suffix('.asteria.json'))
+            )
+        )
+
+    if available(path):
         return path
     for index in range(2, 10000):
         candidate = path.with_name(f"{path.stem}_{index}{path.suffix}")
-        if _is_available(candidate):
+        if available(candidate):
             return candidate
     return path.with_name(f"{path.stem}_{uuid4().hex[:8]}{path.suffix}")
 

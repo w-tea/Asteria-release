@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import random
 import re
 import struct
@@ -25,6 +26,8 @@ except ImportError:  # pragma: no cover - optional runtime enhancement.
 
 from app.core.config import AppConfig
 from app.services import api_errors
+from app.services.comfy_enhancement_stages import mark_stage, decoded_stage_kind, append_stage_outputs
+from app.services.enhancement_stages import stage_receipt, copy_stage
 from app.services.comfy_admission import (
     ComfyAdmissionError,
     ComfyAdmissionService,
@@ -33,6 +36,7 @@ from app.services.comfy_admission import (
     comfy_admission,
 )
 from app.services.comfy_model_paths import comfy_model_name
+from app.services.external_model_libraries import ExternalModelRoot
 from app.services.controlnet_preprocessor import (
     COMFY_CONTROLNET_PREPROCESSOR_NODES,
     ControlNetPreprocessorError,
@@ -53,6 +57,31 @@ from app.services.sampling_catalog import sampler_runtime_name, scheduler_runtim
 from app.services.seed_resize import seed_resize_active
 from app.services.topaz import TopazSettings, process_topaz_image
 from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
+from app.services.prompt_syntax import PromptSyntaxError, PromptSyntaxPlan, prompt_syntax_plan_from_dict
+from app.schemas.prompt_input import join_prompt_contract_fragments
+from app.schemas.spatial_prompt_runtime import (
+    SpatialMaskBundle,
+    SpatialModelProfileReceipt,
+    SpatialPromptPlan,
+    canonical_runtime_sha256,
+)
+from app.services.spatial_conditioning_builder import (
+    SpatialConditioningBuilderError,
+    build_spatial_conditioning_bundle,
+    spatial_prompt_stage,
+)
+from app.services.spatial_prompt_mapping import (
+    ASTERIA_SPATIAL_NODE_CONTRACT_VERSION,
+    SpatialPromptMappingError,
+    append_spatial_execution_receipt,
+    append_spatial_prompt_mapping,
+    spatial_runtime_mask_receipt_sha256,
+)
+from app.services.spatial_generation_context import (
+    SpatialGenerationContextError,
+    resize_spatial_runtime_stage,
+    upload_spatial_runtime_masks,
+)
 from app.services.workflow_mapping import WorkflowMapping, WorkflowMappingRepository
 
 
@@ -62,6 +91,14 @@ class RuntimeErrorResponse(Exception):
 
 class RuntimeCancellationConfirmed(RuntimeErrorResponse):
     pass
+
+
+def _valid_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def _path_exists_safely(path: Path) -> bool:
@@ -126,6 +163,18 @@ def _hires_noise_mode(settings: dict) -> str:
     return str(settings.get("hires_noise_mode") or "CPU")
 
 
+def _inspire_noise_inputs(settings: dict, seed: int) -> dict:
+    # GPU initial noise must not reuse the ancestral/SDE sampler's RNG stream.
+    noise_mode = str(settings.get("noise_mode") or "GPU+internal_seed")
+    inputs = {"noise_mode": noise_mode}
+    if "internal_seed" in noise_mode:
+        internal_seed = settings.get("internal_seed")
+        inputs["internal_seed"] = (
+            int(internal_seed) if internal_seed is not None else (seed + 1) % (2**64)
+        )
+    return inputs
+
+
 def _refiner_checkpoint_setting(settings: dict) -> str:
     if not settings.get("refiner_enabled"):
         return ""
@@ -165,13 +214,6 @@ CONTROLNET_UNION_TYPES: dict[str, str] = {
 
 def _is_union_controlnet_model(model: object) -> bool:
     return "union" in str(model or "").lower()
-
-
-def _regional_color_value(value: object) -> int:
-    normalized = str(value or "").strip().lstrip("#")
-    if not re.fullmatch(r"[0-9A-Fa-f]{6}", normalized):
-        raise RuntimeErrorResponse(f"Invalid Anima regional prompt color: {value}")
-    return int(normalized, 16)
 
 
 class ComfyClient:
@@ -223,12 +265,12 @@ class ComfyClient:
     def wait_for_history(
         self,
         prompt_id: str,
-        timeout_seconds: float = 600.0,
+        timeout_seconds: float | None = 600.0,
         interval_seconds: float = 1.0,
         runtime_stop_confirmed=None,
     ) -> dict:
-        deadline = time.monotonic() + timeout_seconds
-        while time.monotonic() < deadline:
+        deadline = None if timeout_seconds is None else time.monotonic() + timeout_seconds
+        while deadline is None or time.monotonic() < deadline:
             if callable(runtime_stop_confirmed) and runtime_stop_confirmed():
                 raise RuntimeCancellationConfirmed(f"ComfyUI prompt stopped: {prompt_id}")
             history = self._request_json("GET", f"history/{prompt_id}")
@@ -248,12 +290,12 @@ class ComfyClient:
                 prompt_ids.append(row[1])
         return prompt_ids
 
-    def download_image(self, image: dict) -> bytes:
+    def download_output(self, output: dict) -> bytes:
         query = urlencode(
             {
-                "filename": image.get("filename", ""),
-                "subfolder": image.get("subfolder", ""),
-                "type": image.get("type", "output"),
+                "filename": output.get("filename", ""),
+                "subfolder": output.get("subfolder", ""),
+                "type": output.get("type", "output"),
             }
         )
         url = urljoin(self.base_url, f"view?{query}")
@@ -261,11 +303,14 @@ class ComfyClient:
             with urlopen(url, timeout=self.timeout_seconds) as response:
                 return response.read()
         except URLError as exc:
-            raise RuntimeErrorResponse(f"Failed to download ComfyUI image: {exc}") from exc
+            raise RuntimeErrorResponse(f"Failed to download ComfyUI output: {exc}") from exc
 
-    def upload_image(self, path: Path) -> str:
+    def download_image(self, image: dict) -> bytes:
+        return self.download_output(image)
+
+    def upload_file(self, path: Path) -> str:
         if not _path_exists_safely(path) or not _path_is_file_safely(path):
-            raise RuntimeErrorResponse(f"Image not found: {path}")
+            raise RuntimeErrorResponse(f"Input file not found: {path}")
         try:
             with httpx.Client(timeout=self.timeout_seconds) as client:
                 with path.open("rb") as file:
@@ -277,12 +322,17 @@ class ComfyClient:
             response.raise_for_status()
             payload = response.json()
         except (OSError, httpx.HTTPError, ValueError) as exc:
-            raise RuntimeErrorResponse(f"Failed to upload image to ComfyUI: {exc}") from exc
+            raise RuntimeErrorResponse(f"Failed to upload input to ComfyUI: {exc}") from exc
         name = payload.get("name")
         if not isinstance(name, str):
             raise RuntimeErrorResponse("ComfyUI upload did not return image name")
         subfolder = payload.get("subfolder")
         return f"{subfolder}/{name}" if subfolder else name
+
+    def upload_image(self, path: Path) -> str:
+        if not _path_exists_safely(path) or not _path_is_file_safely(path):
+            raise RuntimeErrorResponse(f"Image not found: {path}")
+        return self.upload_file(path)
 
     def _request_json(
         self,
@@ -429,28 +479,101 @@ class ComfyClient:
 
 
 class ComfyTxt2ImgWorkflowBuilder:
-    def __init__(self, mapping_dir: Path | None = None, model_root: Path | None = None) -> None:
+    def __init__(
+        self,
+        mapping_dir: Path | None = None,
+        model_root: Path | None = None,
+        external_roots: tuple[ExternalModelRoot, ...] = (),
+    ) -> None:
         self.mapping_repository = WorkflowMappingRepository(mapping_dir or AppConfig().mapping_dir)
         self.model_root = model_root
+        self.external_roots = external_roots
 
     def build(self, request: dict) -> dict:
+        if isinstance(request.get("_spatial_runtime_context"), dict):
+            settings = request.get("settings")
+            if not isinstance(settings, dict):
+                raise RuntimeErrorResponse("Generation settings are invalid.")
+            seed = settings.get("seed", -1)
+            if seed is None or int(seed) < 0:
+                settings["seed"] = random.randint(0, 2**32 - 1)
         profile = request.get("profile")
-        if profile == "sdxl":
-            return self._build_sdxl(request)
-        if profile in {"flux", "flux1"}:
-            return self._build_flux(request)
-        if profile == "flux2":
-            return self._build_flux2(request)
-        if profile == "anima":
-            return self._build_anima(request)
-        raise RuntimeErrorResponse(f"Unsupported ComfyUI profile: {profile}")
+        builders = {"sdxl": self._build_sdxl, "flux": self._build_flux,
+                    "flux1": self._build_flux, "flux2": self._build_flux2,
+                    "anima": self._build_anima}
+        if profile not in builders:
+            raise RuntimeErrorResponse(f"Unsupported ComfyUI profile: {profile}")
+        settings = request.setdefault("settings", {})
+        capture = bool(request.get("_image_check_capture"))
+        settings.pop('_enhancement_points', None)
+        settings.pop('_branch_sample_node', None)
+        if capture:
+            settings["_image_check_capture"] = True
+        try:
+            workflow = builders[profile](request)
+            word_operation = request.get('_word_maps')
+            if word_operation and settings.get('_prompt_trace_stage') != 'hires':
+                from app.services.comfy_word_masks import attach_word_capture
+                attach_word_capture(workflow, settings['_branch_sample_node'], {
+                    **word_operation, 'seed': settings['seed'], 'width': settings['width'],
+                    'height': settings['height']}, self._mapping(profile))
+            branch_operation = request.get('_generation_branch')
+            if branch_operation and settings.get('mode', 'txt2img') == 'txt2img' and settings.get('_prompt_trace_stage') != 'hires':
+                from app.services.comfy_generation_branch import attach_branch
+                attach_branch(workflow, settings['_branch_sample_node'], branch_operation, self._mapping(profile))
+            if request.get('_comparison_sampling') is not None:
+                from app.services.comparison_sampling import attach_comparison_sampling
+                attach_comparison_sampling(workflow, request['_comparison_sampling'], self._mapping(profile))
+            append_stage_outputs(workflow, settings, self._mapping(profile))
+            if capture:
+                boundary = settings.pop("_image_check_boundary")
+                boundary["output_nodes"] = [
+                    key for key, node in workflow.items()
+                    if node["class_type"] == self._mapping(profile).class_type("save_image", "SaveImage")
+                ]
+                request["_image_check_boundary"] = boundary
+            return workflow
+        finally:
+            settings.pop("_image_check_capture", None)
+            settings.pop("_image_check_boundary", None)
+            settings.pop('_branch_sample_node', None)
+
+    @staticmethod
+    def _capture_image_check_boundary(settings: dict, sample_node: str, vae_ref: list, mapping) -> None:
+        settings['_branch_sample_node'] = sample_node
+        if settings.get('hires_enabled') and settings.get('hires_upscaler') != 'Topaz Photo AI':
+            mark_stage(settings, 'base', samples=[sample_node, 0], vae=vae_ref)
+        if settings.get("_image_check_capture"):
+            settings["_image_check_boundary"] = {
+                "samples": [sample_node, 0], "vae": list(vae_ref),
+                "batch_size": int(settings.get("batch_size", 1)),
+                "save_class": mapping.class_type("generation_stage_save", "AsteriaSaveGenerationStage"),
+                "load_class": mapping.class_type("generation_stage_load", "AsteriaLoadGenerationStage"),
+                "sampler_class": mapping.class_type("generation_stage_sampler", "AsteriaGenerationStageSampler"),
+                "noise_class": mapping.class_type("generation_stage_noise", "AsteriaSelectedGenerationNoise"),
+                "sample_filter_class": mapping.class_type("generation_stage_sample_filter", "AsteriaSelectedGenerationSampler"),
+            }
 
     def _mapping(self, profile: str) -> WorkflowMapping:
         return self.mapping_repository.get_txt2img(profile)
 
+    def prepare_output_writes(self, workflow: dict, profile: str) -> None:
+        # Comfy caches SaveImage's receipt, not the file. Asteria removes its local
+        # intermediate after importing it, so every submission needs a fresh write.
+        # Change only output leaves; retain cached model/sampling results and seeds.
+        save_class = self._mapping(profile).class_type("save_image", "SaveImage")
+        operation_id = uuid4().hex
+        for node in workflow.values():
+            if node.get("class_type") == save_class:
+                inputs = node["inputs"]
+                inputs["filename_prefix"] = f"{inputs['filename_prefix']}_{operation_id}"
+
     def _build_sdxl(self, request: dict) -> dict:
         mapping = self._mapping("sdxl")
         settings = request["settings"]
+        spatial_runtime_stage = str(request.get("_spatial_runtime_stage") or "base")
+        positive_plan = self._request_prompt_syntax_plan(request, "positive")
+        negative_plan = self._request_prompt_syntax_plan(request, "negative")
         model_slots = request.get("model_slots", {})
         checkpoint = model_slots.get("checkpoint")
         if not checkpoint:
@@ -567,6 +690,12 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "class_type": mapping.class_type("load_image", "LoadImage"),
                 "inputs": {"image": init_image},
             }
+            # "original" retains the source under the mask; VAEEncodeForInpaint erases it.
+            workflow[encode_node] = {
+                "class_type": mapping.class_type("vae_encode", "VAEEncode"),
+                "inputs": {"pixels": [image_node, 0], "vae": vae_ref},
+            }
+            latent_ref: list[str | int] = [encode_node, 0]
             if settings.get("mode") == "inpaint":
                 mask_image = settings.get("mask_image_path")
                 if not mask_image:
@@ -577,21 +706,16 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "class_type": mapping.class_type("load_image", "LoadImage"),
                     "inputs": {"image": mask_image},
                 }
-                workflow[encode_node] = {
-                    "class_type": mapping.class_type("vae_encode_inpaint", "VAEEncodeForInpaint"),
+                masked_latent_node = str(next_id)
+                next_id += 1
+                workflow[masked_latent_node] = {
+                    "class_type": mapping.class_type("set_latent_noise_mask", "SetLatentNoiseMask"),
                     "inputs": {
-                        "pixels": [image_node, 0],
-                        "vae": vae_ref,
+                        "samples": [encode_node, 0],
                         "mask": [mask_node, 1],
-                        "grow_mask_by": settings.get("mask_blur", 4),
                     },
                 }
-            else:
-                workflow[encode_node] = {
-                    "class_type": mapping.class_type("vae_encode", "VAEEncode"),
-                    "inputs": {"pixels": [image_node, 0], "vae": vae_ref},
-                }
-            latent_ref: list[str | int] = [encode_node, 0]
+                latent_ref = [masked_latent_node, 0]
         else:
             workflow[latent_node] = {
                 "class_type": mapping.class_type("latent", "EmptyLatentImage"),
@@ -603,23 +727,66 @@ class ComfyTxt2ImgWorkflowBuilder:
             }
             latent_ref = [latent_node, 0]
 
-        workflow[positive_node] = self._sdxl_conditioning_node(
-            self._comfy_prompt_text(request["expanded_prompt"], request.get("embeddings", [])),
-            clip_ref,
-            mapping,
-            int(settings["width"]),
-            int(settings["height"]),
+        if self._identity_prompt_plan(positive_plan) and self._identity_prompt_plan(negative_plan):
+            workflow[positive_node] = self._sdxl_conditioning_node(
+                self._comfy_prompt_text(request["expanded_prompt"], request.get("embeddings", [])),
+                clip_ref,
+                mapping,
+                int(settings["width"]),
+                int(settings["height"]),
+            )
+            workflow[negative_node] = self._sdxl_conditioning_node(
+                self._comfy_prompt_text(request["negative_prompt"], request.get("embeddings", [])),
+                clip_ref,
+                mapping,
+                int(settings["width"]),
+                int(settings["height"]),
+            )
+            positive_ref: list[str | int] = [positive_node, 0]
+            negative_ref: list[str | int] = [negative_node, 0]
+        else:
+            positive_ref, next_id = self._append_sdxl_prompt_conditioning(
+                workflow=workflow,
+                next_id=next_id,
+                preferred_node=positive_node,
+                plan=positive_plan,
+                fallback_text=request["expanded_prompt"],
+                clip_ref=clip_ref,
+                model_ref=model_ref,
+                mapping=mapping,
+                width=int(settings["width"]),
+                height=int(settings["height"]),
+                stage_settings=settings,
+                embeddings=request.get("embeddings", []),
+            )
+            negative_ref, next_id = self._append_sdxl_prompt_conditioning(
+                workflow=workflow,
+                next_id=next_id,
+                preferred_node=negative_node,
+                plan=negative_plan,
+                fallback_text=request["negative_prompt"],
+                clip_ref=clip_ref,
+                model_ref=model_ref,
+                mapping=mapping,
+                width=int(settings["width"]),
+                height=int(settings["height"]),
+                stage_settings=settings,
+                embeddings=request.get("embeddings", []),
+            )
+        spatial_global = self._append_sdxl_spatial_global(
+            request=request,
+            stage=spatial_runtime_stage,
+            workflow=workflow,
+            next_id=next_id,
+            mapping=mapping,
+            clip_ref=clip_ref,
+            model_ref=model_ref,
+            width=int(settings["width"]),
+            height=int(settings["height"]),
+            stage_settings=settings,
         )
-        workflow[negative_node] = self._sdxl_conditioning_node(
-            self._comfy_prompt_text(request["negative_prompt"], request.get("embeddings", [])),
-            clip_ref,
-            mapping,
-            int(settings["width"]),
-            int(settings["height"]),
-        )
-
-        positive_ref: list[str | int] = [positive_node, 0]
-        negative_ref: list[str | int] = [negative_node, 0]
+        if spatial_global is not None:
+            positive_ref, next_id = spatial_global
         for unit in settings.get("controlnet_units", []):
             if not unit.get("enabled") or not unit.get("model") or not unit.get("image_path"):
                 continue
@@ -707,6 +874,30 @@ class ComfyTxt2ImgWorkflowBuilder:
             }
             positive_ref = [control_apply_node, 0]
             negative_ref = [control_apply_node, 1]
+        base_unpatched_model_ref = model_ref
+        base_execution_state_ref: list[str | int] | None = None
+        spatial_base = self._append_sdxl_spatial_stage(
+            request=request,
+            stage=spatial_runtime_stage,
+            workflow=workflow,
+            next_id=next_id,
+            mapping=mapping,
+            model_ref=base_unpatched_model_ref,
+            clip_ref=clip_ref,
+            global_ref=positive_ref,
+            negative_ref=negative_ref,
+            width=int(settings["width"]),
+            height=int(settings["height"]),
+            stage_settings=settings,
+        )
+        if spatial_base is not None:
+            (
+                model_ref,
+                positive_ref,
+                negative_ref,
+                base_execution_state_ref,
+                next_id,
+            ) = spatial_base
         refiner_checkpoint = _refiner_checkpoint_setting(settings)
         should_refine_base_stage = bool(refiner_checkpoint and not self._uses_comfy_hires(settings))
         sample_node = sampler_node
@@ -761,6 +952,15 @@ class ComfyTxt2ImgWorkflowBuilder:
                 mapping,
                 use_inspire=bool(settings.get("use_inspire_ksampler", True)),
             )
+        if base_execution_state_ref is not None:
+            next_id = append_spatial_execution_receipt(
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                execution_state_ref=base_execution_state_ref,
+                samples_ref=[sample_node, 0],
+            )
+        self._capture_image_check_boundary(settings, sample_node, vae_ref, mapping)
         current_width = int(settings["width"])
         current_height = int(settings["height"])
 
@@ -823,7 +1023,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "inputs": {"pixels": upscale_ref, "vae": vae_ref},
                 }
                 hires_latent_ref = [encode_node, 0]
-            hires_model_ref = model_ref
+            hires_model_ref = base_unpatched_model_ref
             hires_clip_ref = clip_ref
             hires_vae_ref = vae_ref
             hires_checkpoint = _hires_checkpoint_setting(settings)
@@ -845,26 +1045,8 @@ class ComfyTxt2ImgWorkflowBuilder:
             next_id += 2
             hires_prompt = settings.get("hires_prompt") or request["expanded_prompt"]
             hires_negative_prompt = settings.get("hires_negative_prompt") or request["negative_prompt"]
-            workflow[positive_node] = self._sdxl_conditioning_node(
-                self._comfy_prompt_text(hires_prompt, request.get("embeddings", [])),
-                hires_clip_ref,
-                mapping,
-                hires_width,
-                hires_height,
-            )
-            workflow[negative_node] = self._sdxl_conditioning_node(
-                self._comfy_prompt_text(hires_negative_prompt, request.get("embeddings", [])),
-                hires_clip_ref,
-                mapping,
-                hires_width,
-                hires_height,
-            )
-            positive_ref = [positive_node, 0]
-            negative_ref = [negative_node, 0]
-            sample_node = str(next_id)
-            next_id += 1
-            use_inspire_hires = bool(settings.get("use_inspire_ksampler", True))
             hires_stage_settings = settings | {
+                "_prompt_trace_stage": "hires",
                 "steps": settings.get("hires_steps") or settings["steps"],
                 "cfg_scale": settings.get("hires_cfg_scale") or settings["cfg_scale"],
                 "sampler": self._hires_sampler(settings),
@@ -872,6 +1054,102 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "denoise": settings.get("hires_denoising_strength", 0.7),
                 "noise_mode": _hires_noise_mode(settings),
             }
+            hires_positive_plan = (
+                self._request_prompt_syntax_plan(request, "hires_positive")
+                if settings.get("hires_prompt")
+                else positive_plan
+            )
+            hires_negative_plan = (
+                self._request_prompt_syntax_plan(request, "hires_negative")
+                if settings.get("hires_negative_prompt")
+                else negative_plan
+            )
+            if self._identity_prompt_plan(hires_positive_plan) and self._identity_prompt_plan(hires_negative_plan):
+                workflow[positive_node] = self._sdxl_conditioning_node(
+                    self._comfy_prompt_text(hires_prompt, request.get("embeddings", [])),
+                    hires_clip_ref,
+                    mapping,
+                    hires_width,
+                    hires_height,
+                )
+                workflow[negative_node] = self._sdxl_conditioning_node(
+                    self._comfy_prompt_text(hires_negative_prompt, request.get("embeddings", [])),
+                    hires_clip_ref,
+                    mapping,
+                    hires_width,
+                    hires_height,
+                )
+                positive_ref = [positive_node, 0]
+                negative_ref = [negative_node, 0]
+            else:
+                positive_ref, next_id = self._append_sdxl_prompt_conditioning(
+                    workflow=workflow,
+                    next_id=next_id,
+                    preferred_node=positive_node,
+                    plan=hires_positive_plan,
+                    fallback_text=hires_prompt,
+                    clip_ref=hires_clip_ref,
+                    model_ref=hires_model_ref,
+                    mapping=mapping,
+                    width=hires_width,
+                    height=hires_height,
+                    stage_settings=hires_stage_settings,
+                    embeddings=request.get("embeddings", []),
+                )
+                negative_ref, next_id = self._append_sdxl_prompt_conditioning(
+                    workflow=workflow,
+                    next_id=next_id,
+                    preferred_node=negative_node,
+                    plan=hires_negative_plan,
+                    fallback_text=hires_negative_prompt,
+                    clip_ref=hires_clip_ref,
+                    model_ref=hires_model_ref,
+                    mapping=mapping,
+                    width=hires_width,
+                    height=hires_height,
+                    stage_settings=hires_stage_settings,
+                    embeddings=request.get("embeddings", []),
+                )
+            spatial_hires_global = self._append_sdxl_spatial_global(
+                request=request,
+                stage="hires",
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                clip_ref=hires_clip_ref,
+                model_ref=hires_model_ref,
+                width=hires_width,
+                height=hires_height,
+                stage_settings=hires_stage_settings,
+            )
+            if spatial_hires_global is not None:
+                positive_ref, next_id = spatial_hires_global
+            hires_execution_state_ref: list[str | int] | None = None
+            spatial_hires = self._append_sdxl_spatial_stage(
+                request=request,
+                stage="hires",
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                model_ref=hires_model_ref,
+                clip_ref=hires_clip_ref,
+                global_ref=positive_ref,
+                negative_ref=negative_ref,
+                width=hires_width,
+                height=hires_height,
+                stage_settings=hires_stage_settings,
+            )
+            if spatial_hires is not None:
+                (
+                    hires_model_ref,
+                    positive_ref,
+                    negative_ref,
+                    hires_execution_state_ref,
+                    next_id,
+                ) = spatial_hires
+            sample_node = str(next_id)
+            next_id += 1
+            use_inspire_hires = bool(settings.get("use_inspire_ksampler", True))
             if refiner_checkpoint:
                 workflow[sample_node] = self._ksampler_advanced_node(
                     hires_stage_settings,
@@ -894,6 +1172,14 @@ class ComfyTxt2ImgWorkflowBuilder:
                     hires_latent_ref,
                     mapping,
                     use_inspire=use_inspire_hires,
+                )
+            if hires_execution_state_ref is not None:
+                next_id = append_spatial_execution_receipt(
+                    workflow=workflow,
+                    next_id=next_id,
+                    mapping=mapping,
+                    execution_state_ref=hires_execution_state_ref,
+                    samples_ref=[sample_node, 0],
                 )
             current_width, current_height = hires_width, hires_height
             model_ref = hires_model_ref
@@ -948,16 +1234,59 @@ class ComfyTxt2ImgWorkflowBuilder:
                 refiner_sampler = self._hires_sampler(settings)
                 refiner_scheduler = self._hires_scheduler(settings)
             refiner_stage_settings = settings | {
+                "_prompt_trace_stage": "refiner",
                 "steps": refiner_steps,
                 "cfg_scale": refiner_cfg_scale,
                 "sampler": refiner_sampler,
                 "scheduler": refiner_scheduler,
             }
+            refiner_model_ref: list[str | int] = [refiner_checkpoint_node, 0]
+            refiner_positive_ref: list[str | int] = [refiner_positive_node, 0]
+            refiner_negative_ref: list[str | int] = [refiner_negative_node, 0]
+            spatial_refiner_global = self._append_sdxl_spatial_global(
+                request=request,
+                stage="refiner",
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                clip_ref=[refiner_checkpoint_node, 1],
+                model_ref=refiner_model_ref,
+                width=current_width,
+                height=current_height,
+                stage_settings=refiner_stage_settings,
+                refiner=True,
+            )
+            if spatial_refiner_global is not None:
+                refiner_positive_ref, next_id = spatial_refiner_global
+            spatial_refiner = self._append_sdxl_spatial_stage(
+                request=request,
+                stage="refiner",
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                model_ref=refiner_model_ref,
+                clip_ref=[refiner_checkpoint_node, 1],
+                global_ref=refiner_positive_ref,
+                negative_ref=refiner_negative_ref,
+                width=current_width,
+                height=current_height,
+                stage_settings=refiner_stage_settings,
+                refiner=True,
+            )
+            refiner_execution_state_ref: list[str | int] | None = None
+            if spatial_refiner is not None:
+                (
+                    refiner_model_ref,
+                    refiner_positive_ref,
+                    refiner_negative_ref,
+                    refiner_execution_state_ref,
+                    next_id,
+                ) = spatial_refiner
             workflow[refiner_sample_node] = self._ksampler_advanced_node(
                 refiner_stage_settings,
-                [refiner_checkpoint_node, 0],
-                [refiner_positive_node, 0],
-                [refiner_negative_node, 0],
+                refiner_model_ref,
+                refiner_positive_ref,
+                refiner_negative_ref,
                 [sample_node, 0],
                 mapping,
                 start_at_step=self._refiner_switch_step(settings, refiner_steps),
@@ -965,8 +1294,16 @@ class ComfyTxt2ImgWorkflowBuilder:
                 add_noise=False,
                 return_with_leftover_noise=False,
             )
+            if refiner_execution_state_ref is not None:
+                next_id = append_spatial_execution_receipt(
+                    workflow=workflow,
+                    next_id=next_id,
+                    mapping=mapping,
+                    execution_state_ref=refiner_execution_state_ref,
+                    samples_ref=[refiner_sample_node, 0],
+                )
             sample_node = refiner_sample_node
-            model_ref = [refiner_checkpoint_node, 0]
+            model_ref = refiner_model_ref
             clip_ref = [refiner_checkpoint_node, 1]
             settings["refiner_runtime"] = "sdxl_advanced_sampler"
 
@@ -979,6 +1316,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             "inputs": {"samples": [sample_node, 0], "vae": vae_ref},
         }
         image_ref: list[str | int] = [decode_node, 0]
+        mark_stage(settings, decoded_stage_kind(settings), images=image_ref)
         if settings.get("restore_faces"):
             image_ref, next_id = self._append_face_detailer_node(
                 workflow,
@@ -1406,10 +1744,34 @@ class ComfyTxt2ImgWorkflowBuilder:
     def _build_anima(self, request: dict) -> dict:
         mapping = self._mapping("anima")
         settings = request["settings"]
+        spatial_runtime_stage = str(request.get("_spatial_runtime_stage") or "base")
+        if any(
+            isinstance(unit, dict) and bool(unit.get("regional_prompts"))
+            for unit in settings.get("anima_lllite_units", [])
+        ):
+            raise RuntimeErrorResponse(
+                "Legacy Anima regional prompts cannot be used for a new generation. "
+                "Open the prompt layout editor and import the saved regions first."
+            )
         model_slots = request.get("model_slots", {})
         diffusion_model = model_slots.get("diffusion_model")
         text_encoder = model_slots.get("text_encoder")
         vae = model_slots.get("vae")
+        bundle = settings.get("anima_generation_bundle")
+        is_anima_3_8b = (
+            isinstance(bundle, dict)
+            and bundle.get("variant_id") == "anima_3_8b_52"
+        )
+        if is_anima_3_8b and settings.get("mode", "txt2img") not in {
+            "txt2img",
+            "img2img",
+            "inpaint",
+        }:
+            raise RuntimeErrorResponse(
+                "Anima 3.8B supports txt2img, img2img, and inpaint."
+            )
+        qwen35_text_encoder = model_slots.get("qwen35_text_encoder")
+        progressive_adapter = model_slots.get("progressive_adapter")
         missing = [
             name
             for name, value in {
@@ -1421,6 +1783,10 @@ class ComfyTxt2ImgWorkflowBuilder:
         ]
         if missing:
             raise RuntimeErrorResponse(f"Anima requires model slots before generation: {', '.join(missing)}")
+        if is_anima_3_8b and (not qwen35_text_encoder or not progressive_adapter):
+            raise RuntimeErrorResponse(
+                "Anima 3.8B requires Qwen3.5 4B and its progressive adapter."
+            )
 
         diffusion_node = mapping.node("diffusion_loader", "1")
         text_encoder_node = mapping.node("text_encoder_loader", "2")
@@ -1428,6 +1794,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         conditioning_node = mapping.node("conditioning", "4")
         latent_node = mapping.node("latent", "5")
         negative_conditioning_node = mapping.node("negative_conditioning", "6")
+        qwen35_loader_node = mapping.node("qwen35_loader", "7")
         model_ref: list[str | int] = [diffusion_node, 0]
         clip_ref: list[str | int] = [text_encoder_node, 0]
         workflow: dict[str, dict] = {
@@ -1442,39 +1809,107 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "class_type": mapping.class_type("text_encoder_loader", "CLIPLoader"),
                 "inputs": {
                     "clip_name": self._model_name(text_encoder, "text_encoders"),
-                    "type": "qwen_image",
+                    "type": "stable_diffusion" if is_anima_3_8b else "qwen_image",
                 },
             },
             vae_node: {
                 "class_type": mapping.class_type("vae_loader", "VAELoader"),
                 "inputs": {"vae_name": self._model_name(vae, "vae")},
             },
-            conditioning_node: {
-                "class_type": mapping.class_type("conditioning", "TextEncodeQwenImageEdit"),
+            latent_node: {
+                "class_type": mapping.class_type(
+                    "anima_3_8b_latent" if is_anima_3_8b else "latent",
+                    "EmptySD3LatentImage"
+                    if is_anima_3_8b
+                    else "EmptyQwenImageLayeredLatentImage",
+                ),
+                "inputs": {
+                    "width": settings["width"],
+                    "height": settings["height"],
+                    **({} if is_anima_3_8b else {"layers": 0}),
+                    "batch_size": settings.get("batch_size", 1),
+                },
+            },
+        }
+        if is_anima_3_8b:
+            workflow[qwen35_loader_node] = {
+                "class_type": mapping.class_type(
+                    "qwen35_loader", "AnimaQwen35Loader"
+                ),
+                "inputs": {
+                    "qwen35_model": self._model_name(
+                        qwen35_text_encoder, "text_encoders"
+                    )
+                },
+            }
+            workflow[conditioning_node] = {
+                "class_type": mapping.class_type(
+                    "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                ),
+                "inputs": {
+                    "model": model_ref,
+                    "native_clip": clip_ref,
+                    "qwen35_clip": [qwen35_loader_node, 0],
+                    "adapter_name": self._model_name(
+                        progressive_adapter, "text_encoders"
+                    ),
+                    "prompt": request["expanded_prompt"],
+                    "adapter_strength": settings.get(
+                        "anima_qwen35_adapter_strength", 1.0
+                    ),
+                },
+            }
+            negative_strength = float(
+                settings.get("anima_qwen35_negative_adapter_strength") or 0.0
+            )
+            workflow[negative_conditioning_node] = (
+                {
+                    "class_type": mapping.class_type(
+                        "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                    ),
+                    "inputs": {
+                        "model": model_ref,
+                        "native_clip": clip_ref,
+                        "qwen35_clip": [qwen35_loader_node, 0],
+                        "adapter_name": self._model_name(
+                            progressive_adapter, "text_encoders"
+                        ),
+                        "prompt": request.get("negative_prompt", ""),
+                        "adapter_strength": negative_strength,
+                    },
+                }
+                if negative_strength > 0
+                else {
+                    "class_type": mapping.class_type(
+                        "native_text_encode", "CLIPTextEncode"
+                    ),
+                    "inputs": {
+                        "clip": clip_ref,
+                        "text": request.get("negative_prompt", ""),
+                    },
+                }
+            )
+        else:
+            workflow[conditioning_node] = {
+                "class_type": mapping.class_type(
+                    "conditioning", "TextEncodeQwenImageEdit"
+                ),
                 "inputs": {
                     "clip": clip_ref,
                     "prompt": request["expanded_prompt"],
                     "vae": [vae_node, 0],
                 },
-            },
-            negative_conditioning_node: {
-                "class_type": mapping.class_type("conditioning", "TextEncodeQwenImageEdit"),
+            }
+            workflow[negative_conditioning_node] = {
+                "class_type": mapping.class_type(
+                    "conditioning", "TextEncodeQwenImageEdit"
+                ),
                 "inputs": {
                     "clip": clip_ref,
                     "prompt": request.get("negative_prompt", ""),
                     "vae": [vae_node, 0],
                 },
-            },
-            latent_node: {
-                "class_type": mapping.class_type("latent", "EmptyQwenImageLayeredLatentImage"),
-                "inputs": {
-                    "width": settings["width"],
-                    "height": settings["height"],
-                    "layers": 0,
-                    "batch_size": settings.get("batch_size", 1),
-                },
-            },
-        }
+            }
         merge_context = request.get("_merge_runtime_context")
         if merge_context is not None:
             if not isinstance(merge_context, dict):
@@ -1513,7 +1948,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "inputs": merge_inputs,
             }
             model_ref = [merge_node, 0]
-        next_id = 7
+        next_id = 8 if is_anima_3_8b else 7
         hires_model_ref: list[str | int] | None = None
         hires_checkpoint = _hires_checkpoint_setting(settings) if self._uses_comfy_hires(settings) else None
         if hires_checkpoint:
@@ -1551,8 +1986,9 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "inputs": {"image": settings["init_image_path"]},
             }
             image_ref = [image_node, 0]
-            workflow[conditioning_node]["inputs"]["image"] = image_ref
-            workflow[negative_conditioning_node]["inputs"]["image"] = image_ref
+            if not is_anima_3_8b:
+                workflow[conditioning_node]["inputs"]["image"] = image_ref
+                workflow[negative_conditioning_node]["inputs"]["image"] = image_ref
             if settings.get("mode") == "inpaint":
                 mask_image = settings.get("mask_image_path")
                 if not mask_image:
@@ -1563,13 +1999,20 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "class_type": mapping.class_type("load_image", "LoadImage"),
                     "inputs": {"image": mask_image},
                 }
-                workflow[latent_node] = {
-                    "class_type": mapping.class_type("vae_encode_inpaint", "VAEEncodeForInpaint"),
+                encode_node = str(next_id)
+                next_id += 1
+                workflow[encode_node] = {
+                    "class_type": mapping.class_type("vae_encode", "VAEEncode"),
                     "inputs": {
                         "pixels": image_ref,
                         "vae": [vae_node, 0],
+                    },
+                }
+                workflow[latent_node] = {
+                    "class_type": mapping.class_type("set_latent_noise_mask", "SetLatentNoiseMask"),
+                    "inputs": {
+                        "samples": [encode_node, 0],
                         "mask": [mask_node, 1],
-                        "grow_mask_by": settings.get("mask_blur", 4),
                     },
                 }
                 settings["inpaint_runtime"] = "anima_vae_masked_img2img"
@@ -1582,42 +2025,73 @@ class ComfyTxt2ImgWorkflowBuilder:
             previous_clip_ref = clip_ref
             node_id = str(next_id)
             next_id += 1
-            workflow[node_id] = self._lora_loader_node(lora, model_ref, clip_ref, mapping, settings)
+            workflow[node_id] = self._anima_lora_loader_node(
+                lora,
+                model_ref,
+                clip_ref,
+                mapping,
+                settings,
+            )
             model_ref = [node_id, 0]
             clip_ref = [node_id, 1]
             if hires_model_ref is not None:
                 hires_node_id = str(next_id)
                 next_id += 1
-                workflow[hires_node_id] = self._lora_loader_node(
+                workflow[hires_node_id] = self._anima_lora_loader_node(
                     lora,
                     hires_model_ref,
                     previous_clip_ref,
                     mapping,
                     settings,
+                    remap_key="hires_anima_remap",
                 )
                 hires_model_ref = [hires_node_id, 0]
-        workflow[conditioning_node]["inputs"]["clip"] = clip_ref
-        workflow[negative_conditioning_node]["inputs"]["clip"] = clip_ref
-        regional_prompts: list[tuple[dict, dict, list[str | int]]] = []
+        if is_anima_3_8b:
+            workflow[conditioning_node]["inputs"]["model"] = model_ref
+            workflow[conditioning_node]["inputs"]["native_clip"] = clip_ref
+            if (
+                workflow[negative_conditioning_node]["class_type"]
+                == mapping.class_type(
+                    "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                )
+            ):
+                workflow[negative_conditioning_node]["inputs"]["model"] = model_ref
+                workflow[negative_conditioning_node]["inputs"]["native_clip"] = clip_ref
+            else:
+                workflow[negative_conditioning_node]["inputs"]["clip"] = clip_ref
+        else:
+            workflow[conditioning_node]["inputs"]["clip"] = clip_ref
+            workflow[negative_conditioning_node]["inputs"]["clip"] = clip_ref
         for unit in settings.get("anima_lllite_units", []):
             if not unit.get("enabled") or not unit.get("model") or not unit.get("image_path"):
                 continue
             image_node = str(next_id)
-            node_id = str(next_id + 1)
-            next_id += 2
+            next_id += 1
             workflow[image_node] = {
                 "class_type": mapping.class_type("load_image", "LoadImage"),
                 "inputs": {"image": unit["image_path"]},
             }
+            contract = settings.get("anima_lllite_runtime_contract", "model_patch")
             inputs = {
                 "model": model_ref,
-                "lllite_name": self._model_name(unit["model"], "controlnet"),
                 "image": [image_node, 0],
                 "strength": unit.get("strength", 1.0),
                 "start_percent": unit.get("guidance_start", 0.0),
                 "end_percent": unit.get("guidance_end", 0.45),
-                "preserve_wrapper": unit.get("preserve_wrapper", True),
             }
+            if contract == "legacy_direct":
+                inputs["lllite_name"] = self._model_name(unit["model"], "controlnet")
+                inputs["preserve_wrapper"] = unit.get("preserve_wrapper", True)
+            else:
+                loader_node = str(next_id)
+                next_id += 1
+                workflow[loader_node] = {
+                    "class_type": mapping.class_type("model_patch_loader", "ModelPatchLoader"),
+                    "inputs": {
+                        "name": self._model_name(unit["model"], "model_patches"),
+                    },
+                }
+                inputs["model_patch"] = [loader_node, 0]
             if unit.get("mask_image_path"):
                 mask_node = str(next_id)
                 next_id += 1
@@ -1626,6 +2100,8 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "inputs": {"image": unit["mask_image_path"]},
                 }
                 inputs["mask"] = [mask_node, 1]
+            node_id = str(next_id)
+            next_id += 1
             workflow[node_id] = {
                 "class_type": mapping.class_type("anima_lllite_apply", "AnimaLLLiteApply"),
                 "inputs": inputs,
@@ -1638,82 +2114,151 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "inputs": inputs | {"model": hires_model_ref},
                 }
                 hires_model_ref = [hires_node_id, 0]
-            for region in unit.get("regional_prompts", []):
-                if not isinstance(region, dict) or not str(region.get("prompt") or "").strip():
-                    continue
-                regional_prompts.append((unit, region, [image_node, 0]))
             unit["runtime"] = "comfy_workflow"
             model_ref = [node_id, 0]
-        if regional_prompts:
-            base_mask_node = str(next_id)
-            next_id += 1
-            workflow[base_mask_node] = {
-                "class_type": mapping.class_type("solid_mask", "SolidMask"),
-                "inputs": {
-                    "value": 1.0,
-                    "width": settings["width"],
-                    "height": settings["height"],
-                },
-            }
-            couple_inputs: dict[str, object] = {
-                "model": model_ref,
-                "base_cond": [conditioning_node, 0],
-                "base_mask": [base_mask_node, 0],
-            }
-            coupled_units: set[int] = set()
-            for index, (unit, region, image_ref) in enumerate(regional_prompts, start=1):
-                conditioning_id = str(next_id)
-                mask_id = str(next_id + 1)
-                next_id += 2
-                workflow[conditioning_id] = {
-                    "class_type": mapping.class_type("conditioning", "TextEncodeQwenImageEdit"),
+        base_unpatched_model_ref = model_ref
+        hires_unpatched_model_ref = hires_model_ref or model_ref
+        base_positive_ref: list[str | int] = [conditioning_node, 0]
+        base_negative_ref: list[str | int] = [negative_conditioning_node, 0]
+        base_execution_state_ref: list[str | int] | None = None
+        spatial_base = self._append_anima_spatial_stage(
+            request=request,
+            stage=spatial_runtime_stage,
+            workflow=workflow,
+            next_id=next_id,
+            mapping=mapping,
+            model_ref=base_unpatched_model_ref,
+            clip_ref=clip_ref,
+            vae_ref=[vae_node, 0],
+            negative_ref=base_negative_ref,
+            width=int(settings["width"]),
+            height=int(settings["height"]),
+            is_anima_3_8b=is_anima_3_8b,
+            qwen35_ref=[qwen35_loader_node, 0] if is_anima_3_8b else None,
+            progressive_adapter=(
+                self._model_name(progressive_adapter, "text_encoders")
+                if is_anima_3_8b and progressive_adapter
+                else None
+            ),
+            output_index=0,
+        )
+        if spatial_base is not None:
+            (
+                model_ref,
+                base_positive_ref,
+                base_negative_ref,
+                base_execution_state_ref,
+                next_id,
+            ) = spatial_base
+
+        hires_positive_ref: list[str | int] | None = None
+        hires_negative_ref: list[str | int] | None = None
+        if self._uses_comfy_hires(settings) and request.get("_spatial_runtime_context") is not None:
+            hires_payload = self._spatial_stage_payload(request, "hires")
+            if hires_payload is None:
+                raise RuntimeErrorResponse("Spatial Hires context is missing.")
+            hires_negative_prompt = settings.get("hires_negative_prompt") or request.get(
+                "negative_prompt", ""
+            )
+            hires_negative_node, next_id = self._allocate_prompt_node_id(
+                workflow, next_id
+            )
+            if is_anima_3_8b:
+                if negative_strength > 0:
+                    workflow[hires_negative_node] = {
+                        "class_type": mapping.class_type(
+                            "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                        ),
+                        "inputs": {
+                            "model": hires_unpatched_model_ref,
+                            "native_clip": clip_ref,
+                            "qwen35_clip": [qwen35_loader_node, 0],
+                            "adapter_name": self._model_name(
+                                progressive_adapter, "text_encoders"
+                            ),
+                            "prompt": hires_negative_prompt,
+                            "adapter_strength": negative_strength,
+                        },
+                    }
+                    hires_negative_ref = [hires_negative_node, 1]
+                else:
+                    workflow[hires_negative_node] = {
+                        "class_type": mapping.class_type(
+                            "native_text_encode", "CLIPTextEncode"
+                        ),
+                        "inputs": {"clip": clip_ref, "text": hires_negative_prompt},
+                    }
+                    hires_negative_ref = [hires_negative_node, 0]
+            else:
+                workflow[hires_negative_node] = {
+                    "class_type": mapping.class_type(
+                        "conditioning", "TextEncodeQwenImageEdit"
+                    ),
                     "inputs": {
                         "clip": clip_ref,
-                        "prompt": str(region["prompt"]).strip(),
+                        "prompt": hires_negative_prompt,
                         "vae": [vae_node, 0],
                     },
                 }
-                workflow[mask_id] = {
-                    "class_type": mapping.class_type("image_color_to_mask", "ImageColorToMask"),
-                    "inputs": {
-                        "image": image_ref,
-                        "color": _regional_color_value(region.get("color")),
-                    },
-                }
-                couple_inputs[f"cond_{index}"] = [conditioning_id, 0]
-                couple_inputs[f"mask_{index}"] = [mask_id, 0]
-                region["runtime"] = "attention_couple_ppm"
-                coupled_units.add(id(unit))
-            couple_node = str(next_id)
-            next_id += 1
-            workflow[couple_node] = {
-                "class_type": mapping.class_type("attention_couple", "AttentionCouplePPM"),
-                "inputs": couple_inputs,
-            }
-            hires_couple_node: str | None = None
-            if hires_model_ref is not None:
-                hires_couple_node = str(next_id)
-                next_id += 1
-                workflow[hires_couple_node] = {
-                    "class_type": mapping.class_type("attention_couple", "AttentionCouplePPM"),
-                    "inputs": couple_inputs | {"model": hires_model_ref},
-                }
-            for unit in settings.get("anima_lllite_units", []):
-                if id(unit) in coupled_units:
-                    unit["regional_prompt_runtime"] = "attention_couple_ppm"
-            model_ref = [couple_node, 0]
-            if hires_couple_node is not None:
-                hires_model_ref = [hires_couple_node, 0]
+                hires_negative_ref = [hires_negative_node, 0]
+            hires_execution_state_ref: list[str | int] | None = None
+            spatial_hires = self._append_anima_spatial_stage(
+                request=request,
+                stage="hires",
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                model_ref=hires_unpatched_model_ref,
+                clip_ref=clip_ref,
+                vae_ref=[vae_node, 0],
+                negative_ref=hires_negative_ref,
+                width=self._hires_target_dimensions(settings)[0],
+                height=self._hires_target_dimensions(settings)[1],
+                is_anima_3_8b=is_anima_3_8b,
+                qwen35_ref=[qwen35_loader_node, 0] if is_anima_3_8b else None,
+                progressive_adapter=(
+                    self._model_name(progressive_adapter, "text_encoders")
+                    if is_anima_3_8b and progressive_adapter
+                    else None
+                ),
+                output_index=1 if is_anima_3_8b else 0,
+            )
+            if spatial_hires is not None:
+                (
+                    hires_model_ref,
+                    hires_positive_ref,
+                    hires_negative_ref,
+                    hires_execution_state_ref,
+                    next_id,
+                ) = spatial_hires
+        else:
+            hires_execution_state_ref = None
         workflow = self._build_custom_sampler_tail(
             workflow,
             settings,
             model_ref=model_ref,
-            conditioning_ref=[conditioning_node, 0],
-            negative_ref=[negative_conditioning_node, 0],
+            conditioning_ref=base_positive_ref,
+            negative_ref=base_negative_ref,
+            hires_conditioning_ref=(
+                hires_positive_ref
+                if hires_positive_ref is not None
+                else ([conditioning_node, 1] if is_anima_3_8b else None)
+            ),
+            hires_negative_ref=(
+                hires_negative_ref
+                if hires_negative_ref is not None
+                else (
+                    [negative_conditioning_node, 1]
+                    if is_anima_3_8b and negative_strength > 0
+                    else None
+                )
+            ),
             latent_ref=latent_ref,
             vae_ref=[vae_node, 0],
             mapping=mapping,
             hires_model_ref=hires_model_ref,
+            base_execution_state_ref=base_execution_state_ref,
+            hires_execution_state_ref=hires_execution_state_ref,
         )
         detailer_units = [
             unit
@@ -1785,6 +2330,10 @@ class ComfyTxt2ImgWorkflowBuilder:
         negative_ref: list[str | int] | None = None,
         scheduler_kind: str = "basic",
         hires_model_ref: list[str | int] | None = None,
+        hires_conditioning_ref: list[str | int] | None = None,
+        hires_negative_ref: list[str | int] | None = None,
+        base_execution_state_ref: list[str | int] | None = None,
+        hires_execution_state_ref: list[str | int] | None = None,
     ) -> dict:
         next_id = max(int(node_id) for node_id in workflow) + 1
         sample_node = self._append_custom_sample(
@@ -1799,6 +2348,15 @@ class ComfyTxt2ImgWorkflowBuilder:
             scheduler_kind=scheduler_kind,
         )
         next_id += self._custom_sample_node_count(settings, scheduler_kind)
+        self._capture_image_check_boundary(settings, sample_node, vae_ref, mapping)
+        if base_execution_state_ref is not None:
+            next_id = append_spatial_execution_receipt(
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                execution_state_ref=base_execution_state_ref,
+                samples_ref=[sample_node, 0],
+            )
         if self._uses_comfy_hires(settings):
             if settings.get("hires_keep_first_pass"):
                 first_pass_decode_node = str(next_id)
@@ -1858,10 +2416,8 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "inputs": {"pixels": upscale_ref, "vae": vae_ref},
                 }
                 hires_latent_ref = [encode_node, 0]
-            sample_node = self._append_custom_sample(
-                workflow,
-                next_id,
-                settings | {
+            hires_sample_settings = settings | {
+                "_prompt_trace_stage": "hires",
                     "steps": settings.get("hires_steps") or settings["steps"],
                     "cfg_scale": settings.get("hires_cfg_scale") or settings["cfg_scale"],
                     "sampler": self._hires_sampler(settings),
@@ -1872,18 +2428,30 @@ class ComfyTxt2ImgWorkflowBuilder:
                         if scheduler_kind == "flux2"
                         else {}
                     ),
-                },
+                }
+            sample_node = self._append_custom_sample(
+                workflow,
+                next_id,
+                hires_sample_settings,
                 hires_model_ref or model_ref,
-                conditioning_ref,
+                hires_conditioning_ref or conditioning_ref,
                 hires_latent_ref,
                 mapping,
-                negative_ref=negative_ref,
+                negative_ref=hires_negative_ref or negative_ref,
                 scheduler_kind=scheduler_kind,
             )
             next_id += self._custom_sample_node_count(
-                settings | {"denoise": settings.get("hires_denoising_strength", 0.7)},
+                hires_sample_settings,
                 scheduler_kind,
             )
+            if hires_execution_state_ref is not None:
+                next_id = append_spatial_execution_receipt(
+                    workflow=workflow,
+                    next_id=next_id,
+                    mapping=mapping,
+                    execution_state_ref=hires_execution_state_ref,
+                    samples_ref=[sample_node, 0],
+                )
 
         decode_node = str(next_id)
         save_node = str(next_id + 1)
@@ -1895,6 +2463,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             "class_type": mapping.class_type("save_image", "SaveImage"),
             "inputs": {"images": [decode_node, 0], "filename_prefix": "Asteria"},
         }
+        mark_stage(settings, decoded_stage_kind(settings), images=[decode_node, 0])
         settings["primary_output_node_ids"] = [save_node]
         return workflow
 
@@ -1973,6 +2542,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             sigmas_ref = [split_node, 1]
         workflow[sample_node] = {
             "class_type": mapping.class_type("sampler_custom", "SamplerCustomAdvanced"),
+            "_meta": {"asteria_stage": settings.get("_prompt_trace_stage", "base")},
             "inputs": {
                 "noise": [noise_node, 0],
                 "guider": [guider_node, 0],
@@ -2019,7 +2589,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 variation_seed = 0
             inputs = {
                 **inputs,
-                "noise_mode": settings.get("noise_mode") or "GPU(=A1111)",
+                **_inspire_noise_inputs(settings, seed),
                 "batch_seed_mode": settings.get("batch_seed_mode") or "incremental",
                 "variation_seed": variation_seed,
                 "variation_strength": float(settings.get("subseed_strength") or 0),
@@ -2034,6 +2604,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 else "KSampler"
             ),
             "inputs": inputs,
+            "_meta": {"asteria_stage": settings.get("_prompt_trace_stage", "base")},
         }
 
     def _ksampler_advanced_node(
@@ -2055,6 +2626,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             seed = random.randint(0, 2**32 - 1)
         return {
             "class_type": mapping.class_type("ksampler_advanced", "KSamplerAdvanced"),
+            "_meta": {"asteria_stage": settings.get("_prompt_trace_stage", "base")},
             "inputs": {
                 "model": model_ref,
                 "add_noise": "enable" if add_noise else "disable",
@@ -2077,6 +2649,174 @@ class ComfyTxt2ImgWorkflowBuilder:
             return max(0, steps)
         switch_at = float(settings.get("refiner_switch_at") or 0.8)
         return max(1, min(steps - 1, int(round(steps * switch_at))))
+
+    def _request_prompt_syntax_plan(
+        self,
+        request: dict,
+        key: str,
+    ) -> PromptSyntaxPlan | None:
+        namespace = request.get("prompt_syntax")
+        if not isinstance(namespace, dict) or namespace.get(key) is None:
+            return None
+        try:
+            plan = prompt_syntax_plan_from_dict(namespace[key])
+        except PromptSyntaxError as exc:
+            raise RuntimeErrorResponse(f"Prompt syntax plan is invalid: {exc.code}") from exc
+        if plan.profile_id != request.get("profile"):
+            raise RuntimeErrorResponse("Prompt syntax profile does not match the runtime profile.")
+        return plan
+
+    @staticmethod
+    def _identity_prompt_plan(plan: PromptSyntaxPlan | None) -> bool:
+        return plan is None or plan.operation == "identity"
+
+    @staticmethod
+    def _allocate_prompt_node_id(workflow: dict[str, dict], next_id: int) -> tuple[str, int]:
+        while str(next_id) in workflow:
+            next_id += 1
+        return str(next_id), next_id + 1
+
+    def _append_sdxl_prompt_conditioning(
+        self,
+        *,
+        workflow: dict[str, dict],
+        next_id: int,
+        preferred_node: str,
+        plan: PromptSyntaxPlan | None,
+        fallback_text: str,
+        clip_ref: list[str | int],
+        model_ref: list[str | int],
+        mapping: WorkflowMapping,
+        width: int,
+        height: int,
+        stage_settings: dict,
+        embeddings: list[str],
+        refiner: bool = False,
+    ) -> tuple[list[str | int], int]:
+        def conditioning_node(text: str) -> dict:
+            normalized = self._comfy_prompt_text(text, embeddings)
+            if refiner:
+                return self._sdxl_refiner_conditioning_node(
+                    normalized,
+                    clip_ref,
+                    mapping,
+                    width,
+                    height,
+                )
+            return self._sdxl_conditioning_node(
+                normalized,
+                clip_ref,
+                mapping,
+                width,
+                height,
+            )
+
+        if plan is None or plan.operation == "identity":
+            workflow[preferred_node] = conditioning_node(fallback_text)
+            return [preferred_node, 0], next_id
+
+        encoded_refs: list[list[str | int]] = []
+        for index, segment in enumerate(plan.segments):
+            if index == 0:
+                node_id = preferred_node
+            else:
+                node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node_id] = conditioning_node(segment.text)
+            encoded_refs.append([node_id, 0])
+
+        if plan.operation == "token_weight":
+            return encoded_refs[0], next_id
+        if plan.operation == "scheduled_switch":
+            ranged_refs: list[list[str | int]] = []
+            for encoded_ref, segment in zip(encoded_refs, plan.segments, strict=True):
+                node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[node_id] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_time_range", "ConditioningSetTimestepRange"
+                    ),
+                    "inputs": {
+                        "conditioning": encoded_ref,
+                        "start": float(segment.start or 0),
+                        "end": float(segment.end or 1),
+                    },
+                }
+                ranged_refs.append([node_id, 0])
+            node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node_id] = {
+                "class_type": mapping.class_type(
+                    "conditioning_combine", "ConditioningCombine"
+                ),
+                "inputs": {
+                    "conditioning_1": ranged_refs[0],
+                    "conditioning_2": ranged_refs[1],
+                },
+            }
+            return [node_id, 0], next_id
+        if plan.operation == "alternating_switch":
+            node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node_id] = {
+                "class_type": mapping.class_type(
+                    "prompt_step_schedule", "AsteriaPromptStepSchedule"
+                ),
+                "inputs": {
+                    "model": model_ref,
+                    "conditioning_a": encoded_refs[0],
+                    "conditioning_b": encoded_refs[1],
+                    "steps": int(stage_settings["steps"]),
+                    "sampler_name": self._sampler_name(
+                        stage_settings.get("sampler", "Euler a")
+                    ),
+                    "scheduler": self._scheduler_name(
+                        stage_settings.get("scheduler", "Automatic")
+                    ),
+                    "denoise": float(stage_settings.get("denoise", 1.0)),
+                },
+            }
+            return [node_id, 0], next_id
+        if plan.operation == "conditioning_and":
+            weighted_refs: list[list[str | int]] = []
+            for encoded_ref, segment in zip(encoded_refs, plan.segments, strict=True):
+                node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[node_id] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_multiply", "ConditioningMultiply"
+                    ),
+                    "inputs": {
+                        "conditioning": encoded_ref,
+                        "multiplier": float(segment.weight),
+                    },
+                }
+                weighted_refs.append([node_id, 0])
+            combined_ref = weighted_refs[0]
+            for weighted_ref in weighted_refs[1:]:
+                node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[node_id] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_combine", "ConditioningCombine"
+                    ),
+                    "inputs": {
+                        "conditioning_1": combined_ref,
+                        "conditioning_2": weighted_ref,
+                    },
+                }
+                combined_ref = [node_id, 0]
+            return combined_ref, next_id
+        if plan.operation == "conditioning_break":
+            concatenated_ref = encoded_refs[0]
+            for encoded_ref in encoded_refs[1:]:
+                node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[node_id] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_concat", "ConditioningConcat"
+                    ),
+                    "inputs": {
+                        "conditioning_to": concatenated_ref,
+                        "conditioning_from": encoded_ref,
+                    },
+                }
+                concatenated_ref = [node_id, 0]
+            return concatenated_ref, next_id
+        raise RuntimeErrorResponse(f"Unsupported prompt syntax operation: {plan.operation}")
 
     def _sdxl_conditioning_node(
         self,
@@ -2119,6 +2859,456 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "clip": clip_ref,
             },
         }
+
+    def _spatial_stage_payload(
+        self,
+        request: dict,
+        stage: str,
+    ) -> tuple[
+        SpatialPromptPlan,
+        SpatialMaskBundle,
+        SpatialModelProfileReceipt,
+        str,
+        dict[str, str],
+    ] | None:
+        context = request.get("_spatial_runtime_context")
+        if context is None:
+            return None
+        try:
+            if (
+                not isinstance(context, dict)
+                or context.get("schema_version")
+                != "asteria.spatial-workflow-context.v1"
+            ):
+                raise ValueError("context")
+            prompt_plan = SpatialPromptPlan.model_validate(context["prompt_plan"])
+            if prompt_plan.profile_id != request.get("profile"):
+                raise ValueError("profile")
+            stages = context["stages"]
+            if not isinstance(stages, dict):
+                raise ValueError("stages")
+            stage_payload = stages[stage]
+            if not isinstance(stage_payload, dict):
+                raise ValueError("stage")
+            mask_bundle = SpatialMaskBundle.model_validate(stage_payload["mask_bundle"])
+            profile_receipt = SpatialModelProfileReceipt.model_validate(
+                stage_payload["profile_receipt"]
+            )
+            compatible_model_families = {
+                "sdxl": {"sdxl", "illustrious"},
+                "anima": {"anima"},
+            }.get(prompt_plan.profile_id, {prompt_plan.profile_id})
+            if profile_receipt.model_family not in compatible_model_families:
+                raise ValueError("profile_receipt")
+            profile_json = stage_payload["profile_json"]
+            mask_paths = stage_payload["mask_paths"]
+            if not isinstance(profile_json, str) or not isinstance(mask_paths, dict):
+                raise ValueError("payload")
+            normalized_paths = {
+                target_id: path
+                for target_id, path in mask_paths.items()
+                if isinstance(target_id, str)
+                and isinstance(path, str)
+                and path.strip()
+            }
+            if len(normalized_paths) != len(mask_paths):
+                raise ValueError("mask_paths")
+            spatial_prompt_stage(prompt_plan, stage)
+        except (KeyError, TypeError, ValueError, SpatialConditioningBuilderError) as error:
+            raise RuntimeErrorResponse(
+                f"Invalid internal spatial runtime context for {stage}."
+            ) from error
+        return prompt_plan, mask_bundle, profile_receipt, profile_json, normalized_paths
+
+    def _append_spatial_mask_loaders(
+        self,
+        *,
+        workflow: dict[str, dict],
+        next_id: int,
+        mask_paths: dict[str, str],
+        mapping: WorkflowMapping,
+    ) -> tuple[dict[str, list[str | int]], int]:
+        mask_refs: dict[str, list[str | int]] = {}
+        for target_id, mask_path in mask_paths.items():
+            node_id, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node_id] = {
+                "class_type": mapping.class_type("load_image", "LoadImage"),
+                "inputs": {"image": mask_path},
+            }
+            mask_refs[target_id] = [node_id, 1]
+        return mask_refs, next_id
+
+    @staticmethod
+    def _record_spatial_fragments_sha256(
+        request: dict,
+        *,
+        stage: str,
+        fragments_sha256: str,
+    ) -> None:
+        context = request.get("_spatial_runtime_context")
+        if not isinstance(context, dict):
+            raise RuntimeErrorResponse("Spatial prompt runtime context is invalid.")
+        stages = context.get("stages")
+        stage_payload = stages.get(stage) if isinstance(stages, dict) else None
+        if not isinstance(stage_payload, dict):
+            raise RuntimeErrorResponse("Spatial prompt runtime stage is invalid.")
+        stage_payload["fragments_sha256"] = fragments_sha256
+
+    @staticmethod
+    def _spatial_combined_prompt(global_prompt: str, target_prompt: str) -> str:
+        return join_prompt_contract_fragments((global_prompt, target_prompt))
+
+    def _append_sdxl_spatial_stage(
+        self,
+        *,
+        request: dict,
+        stage: str,
+        workflow: dict[str, dict],
+        next_id: int,
+        mapping: WorkflowMapping,
+        model_ref: list[str | int],
+        clip_ref: list[str | int],
+        global_ref: list[str | int],
+        negative_ref: list[str | int],
+        width: int,
+        height: int,
+        stage_settings: dict,
+        refiner: bool = False,
+    ) -> tuple[
+        list[str | int],
+        list[str | int],
+        list[str | int],
+        list[str | int],
+        int,
+    ] | None:
+        payload = self._spatial_stage_payload(request, stage)
+        if payload is None:
+            return None
+        # V5 establishes composition during the base denoise only. Hires and
+        # refiner stages keep the full prompt, but must not register another
+        # Cross/Self boundary router at the enlarged latent resolution.
+        if stage != "base":
+            return None
+        prompt_plan, mask_bundle, profile_receipt, profile_json, mask_paths = payload
+        if mask_bundle.width != width or mask_bundle.height != height:
+            raise RuntimeErrorResponse(
+                f"Spatial {stage} mask dimensions do not match the generation stage."
+            )
+        mask_refs, next_id = self._append_spatial_mask_loaders(
+            workflow=workflow,
+            next_id=next_id,
+            mask_paths=mask_paths,
+            mapping=mapping,
+        )
+        try:
+            bundle = build_spatial_conditioning_bundle(
+                prompt_plan=prompt_plan,
+                mask_bundle=mask_bundle,
+                profile_receipt=profile_receipt,
+                stage=stage,
+                encoder_id=(
+                    mapping.class_type(
+                        "clip_text_encode_sdxl_refiner", "CLIPTextEncodeSDXLRefiner"
+                    )
+                    if refiner
+                    else mapping.class_type(
+                        "clip_text_encode_sdxl", "CLIPTextEncodeSDXL"
+                    )
+                ),
+                text_encoder_ref=clip_ref,
+                full_positive_conditioning_ref=global_ref,
+                negative_conditioning_ref=negative_ref,
+            )
+            mapped = append_spatial_prompt_mapping(
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                model_ref=model_ref,
+                conditioning_bundle=bundle,
+                mask_bundle=mask_bundle,
+                mask_refs=mask_refs,
+                profile_json=profile_json,
+                initial_noise_seed=int(stage_settings["seed"]),
+                routing_geometry=request["_spatial_runtime_context"]["stages"][stage].get("routing_geometry"),
+                width=width,
+                height=height,
+            )
+            self._record_spatial_fragments_sha256(
+                request,
+                stage=stage,
+                fragments_sha256=mapped.fragments_sha256,
+            )
+        except (SpatialConditioningBuilderError, SpatialPromptMappingError) as error:
+            raise RuntimeErrorResponse(
+                f"Spatial prompt workflow mapping failed: {error}"
+            ) from error
+        return (
+            mapped.model_ref,
+            mapped.positive_ref,
+            mapped.negative_ref,
+            mapped.execution_state_ref,
+            mapped.next_id,
+        )
+
+    def _append_sdxl_spatial_global(
+        self,
+        *,
+        request: dict,
+        stage: str,
+        workflow: dict[str, dict],
+        next_id: int,
+        mapping: WorkflowMapping,
+        clip_ref: list[str | int],
+        model_ref: list[str | int],
+        width: int,
+        height: int,
+        stage_settings: dict,
+        refiner: bool = False,
+    ) -> tuple[list[str | int], int] | None:
+        payload = self._spatial_stage_payload(request, stage)
+        if payload is None:
+            return None
+        stage_plan = spatial_prompt_stage(payload[0], stage)
+        if stage_plan.full_text is None:
+            raise RuntimeErrorResponse("Spatial full prompt is missing.")
+        if stage_plan.scheduled_bindings:
+            ranged_refs: list[list[str | int]] = []
+            embeddings = list(payload[0].embeddings)
+            for scheduled in stage_plan.scheduled_bindings:
+                encode_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                normalized_text = self._comfy_prompt_text(scheduled.full_text, embeddings)
+                workflow[encode_node] = (
+                    self._sdxl_refiner_conditioning_node(
+                        normalized_text,
+                        clip_ref,
+                        mapping,
+                        width,
+                        height,
+                    )
+                    if refiner
+                    else self._sdxl_conditioning_node(
+                        normalized_text,
+                        clip_ref,
+                        mapping,
+                        width,
+                        height,
+                    )
+                )
+                range_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[range_node] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_time_range", "ConditioningSetTimestepRange"
+                    ),
+                    "inputs": {
+                        "conditioning": [encode_node, 0],
+                        "start": scheduled.start_percent,
+                        "end": scheduled.end_percent,
+                    },
+                }
+                ranged_refs.append([range_node, 0])
+            combined = ranged_refs[0]
+            for ranged_ref in ranged_refs[1:]:
+                combine_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[combine_node] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_combine", "ConditioningCombine"
+                    ),
+                    "inputs": {
+                        "conditioning_1": combined,
+                        "conditioning_2": ranged_ref,
+                    },
+                }
+                combined = [combine_node, 0]
+            return combined, next_id
+        preferred_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+        return self._append_sdxl_prompt_conditioning(
+            workflow=workflow,
+            next_id=next_id,
+            preferred_node=preferred_node,
+            plan=None,
+            fallback_text=stage_plan.full_text,
+            clip_ref=clip_ref,
+            model_ref=model_ref,
+            mapping=mapping,
+            width=width,
+            height=height,
+            stage_settings=stage_settings,
+            embeddings=list(payload[0].embeddings),
+            refiner=refiner,
+        )
+
+    def _append_anima_spatial_stage(
+        self,
+        *,
+        request: dict,
+        stage: str,
+        workflow: dict[str, dict],
+        next_id: int,
+        mapping: WorkflowMapping,
+        model_ref: list[str | int],
+        clip_ref: list[str | int],
+        vae_ref: list[str | int],
+        negative_ref: list[str | int],
+        width: int,
+        height: int,
+        is_anima_3_8b: bool,
+        qwen35_ref: list[str | int] | None = None,
+        progressive_adapter: str | None = None,
+        output_index: int = 0,
+    ) -> tuple[
+        list[str | int],
+        list[str | int],
+        list[str | int],
+        list[str | int] | None,
+        int,
+    ] | None:
+        payload = self._spatial_stage_payload(request, stage)
+        if payload is None:
+            return None
+        prompt_plan, mask_bundle, profile_receipt, profile_json, mask_paths = payload
+        if mask_bundle.width != width or mask_bundle.height != height:
+            raise RuntimeErrorResponse(
+                f"Spatial {stage} mask dimensions do not match the generation stage."
+            )
+        stage_plan = spatial_prompt_stage(prompt_plan, stage)
+        if stage_plan.full_text is None:
+            raise RuntimeErrorResponse("Spatial full prompt is missing.")
+        full_positive_prompt = stage_plan.full_text
+        schedule = tuple(stage_plan.scheduled_bindings or ())
+        prompts = (
+            tuple((item.full_text, item.start_percent, item.end_percent) for item in schedule)
+            if schedule
+            else ((full_positive_prompt, 0.0, 1.0),)
+        )
+        ranged_refs: list[list[str | int]] = []
+        for prompt_text, start_percent, end_percent in prompts:
+            global_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            if is_anima_3_8b:
+                if qwen35_ref is None or not progressive_adapter:
+                    raise RuntimeErrorResponse(
+                        "Anima 3.8B spatial prompt encoder inputs are incomplete."
+                    )
+                workflow[global_node] = {
+                    "class_type": mapping.class_type(
+                        "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                    ),
+                    "inputs": {
+                        "model": model_ref,
+                        "native_clip": clip_ref,
+                        "qwen35_clip": qwen35_ref,
+                        "adapter_name": progressive_adapter,
+                        "prompt": prompt_text,
+                        "adapter_strength": request["settings"].get(
+                            "anima_qwen35_adapter_strength", 1.0
+                        ),
+                    },
+                }
+            else:
+                workflow[global_node] = {
+                    "class_type": mapping.class_type(
+                        "conditioning", "TextEncodeQwenImageEdit"
+                    ),
+                    "inputs": {
+                        "clip": clip_ref,
+                        "prompt": prompt_text,
+                        "vae": vae_ref,
+                    },
+                }
+            encoded_ref: list[str | int] = [global_node, output_index]
+            if schedule:
+                range_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+                workflow[range_node] = {
+                    "class_type": mapping.class_type(
+                        "conditioning_time_range", "ConditioningSetTimestepRange"
+                    ),
+                    "inputs": {
+                        "conditioning": encoded_ref,
+                        "start": start_percent,
+                        "end": end_percent,
+                    },
+                }
+                encoded_ref = [range_node, 0]
+            ranged_refs.append(encoded_ref)
+        global_ref = ranged_refs[0]
+        for ranged_ref in ranged_refs[1:]:
+            combine_node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[combine_node] = {
+                "class_type": mapping.class_type(
+                    "conditioning_combine", "ConditioningCombine"
+                ),
+                "inputs": {
+                    "conditioning_1": global_ref,
+                    "conditioning_2": ranged_ref,
+                },
+            }
+            global_ref = [combine_node, 0]
+        # As with SDXL, the Anima V5 router is a base-stage composition aid.
+        # A later Hires/Topaz pass receives the complete conditioning but no
+        # second boundary mask, which bounds both memory and runtime overhead.
+        if stage != "base":
+            return model_ref, global_ref, negative_ref, None, next_id
+        mask_refs, next_id = self._append_spatial_mask_loaders(
+            workflow=workflow,
+            next_id=next_id,
+            mask_paths=mask_paths,
+            mapping=mapping,
+        )
+        try:
+            bundle = build_spatial_conditioning_bundle(
+                prompt_plan=prompt_plan,
+                mask_bundle=mask_bundle,
+                profile_receipt=profile_receipt,
+                stage=stage,
+                encoder_id=(
+                    mapping.class_type(
+                        "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
+                    )
+                    if is_anima_3_8b
+                    else mapping.class_type(
+                        "conditioning", "TextEncodeQwenImageEdit"
+                    )
+                ),
+                text_encoder_ref=clip_ref,
+                full_positive_conditioning_ref=global_ref,
+                negative_conditioning_ref=negative_ref,
+            )
+            mapped = append_spatial_prompt_mapping(
+                workflow=workflow,
+                next_id=next_id,
+                mapping=mapping,
+                model_ref=model_ref,
+                conditioning_bundle=bundle,
+                mask_bundle=mask_bundle,
+                mask_refs=mask_refs,
+                profile_json=profile_json,
+                initial_noise_seed=int(request["settings"]["seed"]),
+                routing_geometry=request["_spatial_runtime_context"]["stages"][stage].get("routing_geometry"),
+                width=width,
+                height=height,
+                secondary_text_encoder_ref=(qwen35_ref if is_anima_3_8b else None),
+                progressive_adapter_name=(
+                    progressive_adapter if is_anima_3_8b else None
+                ),
+                progressive_adapter_strength=float(
+                    request["settings"].get("anima_qwen35_adapter_strength", 1.0)
+                ),
+            )
+            self._record_spatial_fragments_sha256(
+                request,
+                stage=stage,
+                fragments_sha256=mapped.fragments_sha256,
+            )
+        except (SpatialConditioningBuilderError, SpatialPromptMappingError) as error:
+            raise RuntimeErrorResponse(
+                f"Spatial prompt workflow mapping failed: {error}"
+            ) from error
+        return (
+            mapped.model_ref,
+            mapped.positive_ref,
+            mapped.negative_ref,
+            mapped.execution_state_ref,
+            mapped.next_id,
+        )
 
     def _uses_comfy_hires(self, settings: dict) -> bool:
         if not settings.get("hires_enabled"):
@@ -2302,6 +3492,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         return_with_leftover_noise: bool,
     ) -> dict:
         return {
+            "_meta": {"asteria_stage": settings.get("_prompt_trace_stage", "base")},
             "class_type": mapping.class_type(
                 "ksampler_advanced_inspire",
                 "KSamplerAdvanced //Inspire",
@@ -2319,7 +3510,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "latent_image": latent_ref,
                 "start_at_step": start_at_step,
                 "end_at_step": end_at_step,
-                "noise_mode": "GPU(=A1111)",
+                **_inspire_noise_inputs(settings, seed),
                 "return_with_leftover_noise": return_with_leftover_noise,
                 "batch_seed_mode": "incremental",
                 "variation_seed": 0,
@@ -2442,7 +3633,12 @@ class ComfyTxt2ImgWorkflowBuilder:
         return int(float(value) / step + 0.5) * step
 
     def _model_name(self, value: str, model_dir_name: str) -> str:
-        return comfy_model_name(value, model_dir_name, model_root=self.model_root)
+        return comfy_model_name(
+            value,
+            model_dir_name,
+            model_root=self.model_root,
+            external_roots=self.external_roots,
+        )
 
     def _comfy_prompt_text(self, text: str, embeddings: list[str]) -> str:
         result = text
@@ -2494,6 +3690,57 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "model": model_ref,
                 "clip": clip_ref,
                 "lora_name": self._model_name(lora["name"], "loras"),
+                "strength_model": strength_model,
+                "strength_clip": strength_clip,
+            },
+        }
+
+    def _anima_lora_loader_node(
+        self,
+        lora: dict,
+        model_ref: list[str | int],
+        clip_ref: list[str | int],
+        mapping: WorkflowMapping,
+        settings: dict,
+        *,
+        remap_key: str = "anima_remap",
+    ) -> dict:
+        remap = lora.get(remap_key)
+        if (
+            remap_key == "hires_anima_remap"
+            and not isinstance(remap, dict)
+            and isinstance(lora.get("anima_remap"), dict)
+        ):
+            raise RuntimeErrorResponse(
+                "A verified Anima LoRA remap receipt is required for the Hires target model."
+            )
+        if not isinstance(remap, dict):
+            return self._lora_loader_node(
+                lora,
+                model_ref,
+                clip_ref,
+                mapping,
+                settings,
+            )
+        strength_model = lora.get("weight", 1.0)
+        strength_clip = lora.get("clip_weight")
+        if strength_clip is None:
+            strength_clip = strength_model
+        return {
+            "class_type": mapping.class_type(
+                "anima_lora_remap",
+                "AsteriaAnimaLoraRemap",
+            ),
+            "inputs": {
+                "model": model_ref,
+                "clip": clip_ref,
+                "lora_name": self._model_name(lora["name"], "loras"),
+                "expected_lora_sha256": str(remap.get("source_sha256") or ""),
+                "source_layout_id": str(remap.get("source_layout_id") or ""),
+                "target_layout_id": str(remap.get("target_layout_id") or ""),
+                "mode": str(remap.get("mode") or "preserve"),
+                "mapping_revision": int(remap.get("mapping_revision") or 0),
+                "mapping_hash": str(remap.get("mapping_hash") or ""),
                 "strength_model": strength_model,
                 "strength_clip": strength_clip,
             },
@@ -2563,6 +3810,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         }
         workflow[detailer_node] = {
             "class_type": mapping.class_type("face_detailer", "FaceDetailer"),
+            "_meta": {"asteria_stage": "detailer"},
             "inputs": {
                 "image": image_ref,
                 "model": model_ref,
@@ -2598,6 +3846,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "noise_mask_feather": 20,
             },
         }
+        mark_stage(settings, 'detailer', images=[detailer_node, 0])
         return [detailer_node, 0], next_id
 
     def _sampler_name(self, value: str) -> str:
@@ -2655,19 +3904,25 @@ class ComfyGenerationRuntime:
         client: ComfyClient,
         workflow_builder: ComfyTxt2ImgWorkflowBuilder | None = None,
         model_root: Path | None = None,
+        external_roots: tuple[ExternalModelRoot, ...] = (),
         comfy_output_dir: Path | None = None,
         topaz_executable: Path | None = None,
         topaz_processor: Callable[..., dict[str, str | list[str]]] = process_topaz_image,
         admission_service: ComfyAdmissionService = comfy_admission,
         admission_timeout_seconds: float | None = 30.0,
+        image_checker: Callable | None = None,
     ) -> None:
         self.client = client
-        self.workflow_builder = workflow_builder or ComfyTxt2ImgWorkflowBuilder(model_root=model_root)
+        self.workflow_builder = workflow_builder or ComfyTxt2ImgWorkflowBuilder(
+            model_root=model_root,
+            external_roots=external_roots,
+        )
         self.comfy_output_dir = Path(comfy_output_dir) if comfy_output_dir else None
         self.topaz_executable = topaz_executable
         self.topaz_processor = topaz_processor
         self.admission_service = admission_service
         self.admission_timeout_seconds = admission_timeout_seconds
+        self.image_checker = image_checker
 
     def generate_txt2img(self, request: dict, output_dir: Path) -> dict:
         with self._admission_scope(request):
@@ -2677,8 +3932,11 @@ class ComfyGenerationRuntime:
         request.setdefault("settings", {})["mode"] = "txt2img"
         self._ensure_controlnet_mode_runtime(request)
         self._apply_runtime_node_fallbacks(request)
+        if self._uses_image_check(request):
+            return self._generate_checked(request, output_dir)
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
+        self._prepare_spatial_runtime_masks(request)
         return self._generate(request, output_dir)
 
     def generate_img2img(self, request: dict, output_dir: Path) -> dict:
@@ -2690,8 +3948,11 @@ class ComfyGenerationRuntime:
         self._ensure_controlnet_mode_runtime(request)
         self._apply_runtime_node_fallbacks(request)
         self._prepare_init_image(request)
+        if self._uses_image_check(request):
+            return self._generate_checked(request, output_dir)
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
+        self._prepare_spatial_runtime_masks(request)
         return self._generate(request, output_dir)
 
     def generate_inpaint(self, request: dict, output_dir: Path) -> dict:
@@ -2711,8 +3972,14 @@ class ComfyGenerationRuntime:
         else:
             self._prepare_init_image(request)
             self._prepare_mask_image(request)
+        if self._uses_image_check(request):
+            result = self._generate_checked(request, output_dir)
+            if only_masked:
+                settings["width"], settings["height"] = _size_tuple(settings["inpaint_full_size"])
+            return result
         if self._uses_topaz_hires(request):
             return self._generate_topaz_hires(request, output_dir)
+        self._prepare_spatial_runtime_masks(request)
         result = self._generate(request, output_dir)
         if only_masked:
             full_size = _size_tuple(settings.get("inpaint_full_size"))
@@ -2720,6 +3987,18 @@ class ComfyGenerationRuntime:
                 raise RuntimeErrorResponse(api_errors.INPAINT_ONLY_MASKED_GEOMETRY_INVALID)
             settings["width"], settings["height"] = full_size
         return result
+
+    @staticmethod
+    def _uses_image_check(request: dict) -> bool:
+        operation = request.get("_image_check_operation")
+        return operation is not None and operation.settings.enabled
+
+    def _generate_checked(self, request: dict, output_dir: Path) -> dict:
+        from app.services.image_check_runtime import run_checked_generation
+        try:
+            return run_checked_generation(self, request, output_dir)
+        except (OSError, ValueError) as exc:
+            raise RuntimeErrorResponse(str(exc)) from exc
 
     def _ensure_supported_only_masked_runtime_request(self, request: dict) -> None:
         settings = request.get("settings", {})
@@ -2876,8 +4155,9 @@ class ComfyGenerationRuntime:
             raise
         except OSError as exc:
             raise RuntimeErrorResponse(f"Failed to prepare ComfyUI output directory: {output_dir}") from exc
-        self._prepare_control_images(request, output_dir / "controlnet")
-        self._prepare_anima_lllite_images(request)
+        if "_prepared_workflow" not in request:
+            self._prepare_control_images(request, output_dir / "controlnet")
+            self._prepare_anima_lllite_images(request)
         self._raise_if_generation_cancelled(request)
         batch_count = max(1, int(request.get("settings", {}).get("batch_count", 1)))
         base_seed = int(request.get("settings", {}).get("seed", -1))
@@ -2885,16 +4165,20 @@ class ComfyGenerationRuntime:
         self._publish_generation_progress(progress_callback, 0, batch_count)
         prompt_ids: list[str] = []
         generated_seeds: list[int] = []
+        sampler_noise_runtime: list[dict] = []
         output_paths: list[str] = []
         primary_outputs: list[dict[str, str | int]] = []
+        enhancement_stages: list[dict] = []
+        image_outputs: list[dict] = []
+        stage_paths: list[str] = []
         batch_state = {"index": 0}
         with self._preview_listener(
-            output_dir / "_previews",
+            Path(request.get('_preview_output_dir') or output_dir / '_previews'),
             self._preview_callback(progress_callback, batch_count, batch_state),
             self._step_callback(progress_callback, batch_count, batch_state),
         ):
             for batch_index in range(batch_count):
-                self._raise_if_generation_cancelled(request, output_paths)
+                self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
                 batch_state["index"] = batch_index
                 iteration_request = deepcopy(request)
                 settings = iteration_request.setdefault("settings", {})
@@ -2902,10 +4186,24 @@ class ComfyGenerationRuntime:
                 seed = self._iteration_seed(base_seed, batch_index)
                 settings["seed"] = seed
                 generated_seeds.append(seed)
-                workflow = self.workflow_builder.build(iteration_request)
+                workflow = (deepcopy(iteration_request["_prepared_workflow"])
+                            if "_prepared_workflow" in iteration_request
+                            else self.workflow_builder.build(iteration_request))
                 self._merge_builder_runtime_settings(request, iteration_request)
+                prepare_outputs = getattr(self.workflow_builder, "prepare_output_writes", None)
+                if callable(prepare_outputs):
+                    prepare_outputs(workflow, request["profile"])
+                from app.services.comfy_prompt_trace import instrument_prompt_encoders, record_prompt_execution
+                if request.get("_record_prompt_inputs", True):
+                    instrument_prompt_encoders(workflow, capture_words=bool(request.get('_word_maps')))
+                from app.services.comfy_sampling_receipts import instrument_sampling_inputs, record_sampling_execution
+                if request.get('_record_sampling_inputs', True):
+                    mapping = getattr(self.workflow_builder, '_mapping', lambda profile: None)(request['profile'])
+                    instrument_sampling_inputs(workflow, mapping)
                 prompt_id = self.client.queue_prompt(workflow)
                 prompt_ids.append(prompt_id)
+                from app.services.comfy_sampler_receipts import sampler_noise_receipts
+                sampler_noise_runtime.extend(sampler_noise_receipts(workflow, prompt_id))
                 runtime_job_callback = iteration_request.get("runtime_job_callback")
                 if callable(runtime_job_callback):
                     runtime_job_callback(prompt_id)
@@ -2914,28 +4212,105 @@ class ComfyGenerationRuntime:
                     try:
                         history = self.client.wait_for_history(
                             prompt_id,
+                            timeout_seconds=None,
                             runtime_stop_confirmed=runtime_stop_confirmed,
                         )
                     except RuntimeCancellationConfirmed:
-                        self._discard_unpublished_paths(output_paths)
+                        self._discard_unpublished_paths([*output_paths, *stage_paths])
                         raise
                 else:
                     history = self.client.wait_for_history(prompt_id)
-                self._raise_if_generation_cancelled(request, output_paths)
+                self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
+                if request.get('_record_sampling_inputs', True):
+                    record_sampling_execution(iteration_request, workflow, history, prompt_id,
+                        batch_index=batch_index + int(request.get('_sampling_batch_index_offset', request.get('_batch_index_offset', 0))))
+                    self._merge_builder_runtime_settings(request, iteration_request)
+                if request.get("_record_prompt_inputs", True):
+                    record_prompt_execution(iteration_request, workflow, history, prompt_id,
+                                            batch_index=batch_index + int(request.get('_batch_index_offset', 0)))
+                    self._merge_builder_runtime_settings(request, iteration_request)
+                spatial_receipts = self._spatial_receipts_from_history(
+                    history,
+                    prompt_id,
+                )
+                if iteration_request.get("_spatial_runtime_context") is not None:
+                    spatial_stage = str(
+                        iteration_request.get("_spatial_runtime_stage") or "base"
+                    )
+                    if spatial_stage == "base":
+                        if not spatial_receipts:
+                            raise RuntimeErrorResponse(
+                                "Spatial prompt execution receipt is missing."
+                            )
+                        self._validate_spatial_receipts_against_context(
+                            iteration_request["_spatial_runtime_context"],
+                            spatial_receipts,
+                        )
+                        if any(
+                            receipt.get("initial_noise_seed") != seed
+                            for receipt in spatial_receipts
+                        ):
+                            raise RuntimeErrorResponse(
+                                "Spatial prompt execution seed does not match the sampler seed."
+                            )
+                        recorded_receipts = request.setdefault("settings", {}).setdefault(
+                            "spatial_execution_receipts",
+                            [],
+                        )
+                        recorded_receipts.extend(
+                            {
+                                **receipt,
+                                "runtime_job_id": prompt_id,
+                                "batch_index": batch_index,
+                                "seed": seed,
+                            }
+                            for receipt in spatial_receipts
+                        )
+                        settings["spatial_execution_receipts"] = deepcopy(
+                            recorded_receipts
+                        )
+                    elif spatial_receipts:
+                        raise RuntimeErrorResponse(
+                            "Spatial prompt execution receipt is unexpected outside the base stage."
+                        )
                 images = self._images_from_history(history, prompt_id)
                 primary_node_ids = {
                     str(node_id) for node_id in settings.get("primary_output_node_ids", [])
                 }
+                stage_nodes = settings.get('_enhancement_output_nodes', {})
+                stage_image_indices: dict[str, int] = {}
+                output_image_indices: dict[str, int] = {}
                 for image in images:
                     filename = self._safe_filename(image.get("filename", "comfy-output.png"))
                     path = output_dir / f"{uuid4().hex}_{filename}"
+                    stage_meta = stage_nodes.get(str(image.get('node_id', '')))
+                    if stage_meta:
+                        directory = output_dir / '_stages'
+                        directory.mkdir(exist_ok=True)
+                        path = directory / path.name
                     image_bytes = self.client.download_image(image)
                     try:
                         path.write_bytes(image_bytes)
                     except OSError as exc:
                         raise RuntimeErrorResponse(f"Failed to save ComfyUI output image: {path}") from exc
+                    if stage_meta:
+                        stage_paths.append(str(path))
+                        self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
+                        key = str(image['node_id'])
+                        index = stage_image_indices.get(key, 0)
+                        stage_image_indices[key] = index + 1
+                        enhancement_stages.append(stage_receipt(path, stage_meta['kind'], seed=seed,
+                            batch_index=batch_index, image_index=index, runtime_job_id=prompt_id, ordinal=stage_meta['ordinal']))
+                        if self.comfy_output_dir is not None:
+                            self._remove_local_comfy_intermediate(image)
+                        continue
                     output_paths.append(str(path))
-                    self._raise_if_generation_cancelled(request, output_paths)
+                    image_node = str(image.get('node_id', ''))
+                    image_index = output_image_indices.get(image_node, 0)
+                    output_image_indices[image_node] = image_index + 1
+                    image_outputs.append({'path': str(path), 'batch_index': batch_index,
+                                          'image_index': image_index, 'seed': seed})
+                    self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
                     if settings.get("mode") == "inpaint":
                         if settings.get("inpaint_runtime") == "sdxl_only_masked_crop_composite":
                             try:
@@ -2975,10 +4350,11 @@ class ComfyGenerationRuntime:
                     batch_count,
                     output_paths[-1] if output_paths else "",
                 )
-        self._raise_if_generation_cancelled(request, output_paths)
+        self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
         if not output_paths:
             raise RuntimeErrorResponse(f"ComfyUI completed without image outputs: {', '.join(prompt_ids)}")
         request.setdefault("settings", {})["generated_seeds"] = generated_seeds
+        request["settings"]["sampler_noise_runtime"] = sampler_noise_runtime
         if base_seed < 0 and generated_seeds:
             request["settings"]["seed"] = generated_seeds[0]
         return {
@@ -2991,6 +4367,8 @@ class ComfyGenerationRuntime:
             "comfy_prompt_ids": prompt_ids,
             "generated_seeds": generated_seeds,
             "primary_outputs": primary_outputs,
+            "enhancement_stages": enhancement_stages,
+            "image_outputs": image_outputs,
         }
 
     def _remove_local_comfy_intermediate(self, image: dict) -> bool:
@@ -3039,6 +4417,10 @@ class ComfyGenerationRuntime:
             "seed_resize_noise_mode",
             "seed_resize_source_size",
             "seed_resize_target_size",
+            "sampler_noise_runtime",
+            "prompt_execution",
+            "prompt_execution_truncated",
+            "sampling_execution",
         ):
             if key in iteration_settings:
                 target_settings[key] = iteration_settings[key]
@@ -3159,12 +4541,13 @@ class ComfyGenerationRuntime:
         except OSError:
             settings["inpaint_composited"] = False
 
-    def _generate_topaz_hires(self, request: dict, output_dir: Path) -> dict:
+    def _generate_topaz_hires(self, request: dict, output_dir: Path, *, first_result: dict | None = None) -> dict:
         settings = request.setdefault("settings", {})
         source_mode = str(settings.get("mode") or "txt2img")
         settings["topaz_hires_source_mode"] = source_mode
         if self.topaz_executable is None or not _path_is_file_safely(self.topaz_executable):
             settings["topaz_hires_runtime"] = "skipped_missing_executable"
+            self._prepare_spatial_runtime_masks(request)
             return self._generate(request, output_dir)
 
         first_request = deepcopy(request)
@@ -3182,10 +4565,19 @@ class ComfyGenerationRuntime:
             first_settings["detailer_units"] = []
         settings["topaz_first_pass_batch_size"] = 1
         settings["topaz_first_pass_batch_count"] = first_pass_count
-        first_result = self._generate(first_request, output_dir)
+        self._prepare_spatial_runtime_masks(first_request)
+        if first_result is None:
+            first_result = self._generate(first_request, output_dir)
         self._merge_builder_runtime_settings(request, first_request)
+        # Topaz uses a copied request; retain the base execution evidence in the
+        # owning request so history and final-image sidecars receive it too.
+        if first_settings.get("spatial_execution_receipts"):
+            settings["spatial_execution_receipts"] = deepcopy(
+                first_settings["spatial_execution_receipts"]
+            )
         first_paths = [Path(path) for path in first_result["output_paths"]]
-        self._raise_if_generation_cancelled(request, first_paths)
+        enhancement_stages = list(first_result.get('enhancement_stages', []))
+        self._raise_if_generation_cancelled(request, [*first_paths, *(s['path'] for s in enhancement_stages)])
         generated_seeds = list(first_result.get("generated_seeds", []))
         if len(first_paths) != len(generated_seeds):
             raise RuntimeErrorResponse(
@@ -3201,8 +4593,8 @@ class ComfyGenerationRuntime:
         topaz_sizes: list[tuple[int, int]] = []
         topaz_source_sizes: list[tuple[int, int] | None] = []
         topaz_size_evidence: list[dict[str, object]] = []
-        for path in first_paths:
-            self._raise_if_generation_cancelled(request, [*first_paths, *topaz_paths])
+        for source_index, path in enumerate(first_paths):
+            self._raise_if_generation_cancelled(request, [*first_paths, *topaz_paths, *(s['path'] for s in enhancement_stages)])
             source_size = self._image_size(path)
             if source_size is None:
                 raise RuntimeErrorResponse(f"Could not read Topaz Hires first-pass image size: {path}")
@@ -3218,7 +4610,13 @@ class ComfyGenerationRuntime:
             if not _path_exists_safely(topaz_path) or not _path_is_file_safely(topaz_path):
                 raise RuntimeErrorResponse(f"Topaz Hires did not produce a valid image file: {topaz_path}")
             topaz_paths.append(topaz_path)
-            self._raise_if_generation_cancelled(request, [*first_paths, *topaz_paths])
+            if settings.get('record_enhancement_stages'):
+                identity = dict(seed=generated_seeds[source_index], batch_index=source_index,
+                                image_index=0, runtime_job_id=first_result.get('runtime_job_ids',
+                                    [first_result['runtime_job_id']])[source_index])
+                enhancement_stages.append(copy_stage(path, output_dir, 'before_topaz', ordinal=900, **identity))
+                enhancement_stages.append(copy_stage(topaz_path, output_dir, 'topaz', ordinal=1000, **identity))
+            self._raise_if_generation_cancelled(request, [*first_paths, *topaz_paths, *(s['path'] for s in enhancement_stages)])
             source_size = _size_tuple(result.get("source_size")) or source_size
             output_size = _size_tuple(result.get("output_size")) or self._image_size(topaz_path) or target_size
             topaz_source_sizes.append(source_size)
@@ -3248,14 +4646,18 @@ class ComfyGenerationRuntime:
 
         final_paths: list[str] = []
         second_prompt_ids: list[str] = []
+        topaz_image_outputs: list[dict] = []
         primary_outputs: list[dict[str, str | int]] = []
         for index, topaz_path in enumerate(topaz_paths):
             self._raise_if_generation_cancelled(
                 request,
-                [*first_paths, *topaz_paths, *(Path(path) for path in final_paths)],
+                [*first_paths, *topaz_paths, *(Path(path) for path in final_paths), *(s['path'] for s in enhancement_stages)],
             )
             second_request = deepcopy(request)
+            second_request["_spatial_runtime_stage"] = "hires"
+            second_request['_sampling_batch_index_offset'] = index
             second_settings = second_request.setdefault("settings", {})
+            second_settings["_prompt_trace_stage"] = "hires"
             second_width, second_height = topaz_sizes[index]
             second_settings["mode"] = "img2img"
             second_settings["seed_resize_from_w"] = 0
@@ -3295,11 +4697,24 @@ class ComfyGenerationRuntime:
             if settings.get("hires_negative_prompt"):
                 second_request["negative_prompt"] = settings["hires_negative_prompt"]
 
+            spatial_context = second_request.get("_spatial_runtime_context")
+            if spatial_context is not None:
+                try:
+                    second_request["_spatial_runtime_context"] = resize_spatial_runtime_stage(
+                        spatial_context,
+                        stage="hires",
+                        width=second_width,
+                        height=second_height,
+                    )
+                except SpatialGenerationContextError as exc:
+                    raise RuntimeErrorResponse(exc.code) from exc
+            self._prepare_spatial_runtime_masks(second_request)
+
             try:
                 second_result = self._generate(second_request, output_dir)
             except RuntimeCancellationConfirmed:
                 self._discard_unpublished_paths(
-                    [*first_paths, *topaz_paths, *(Path(path) for path in final_paths)],
+                    [*first_paths, *topaz_paths, *(Path(path) for path in final_paths), *(s['path'] for s in enhancement_stages)],
                 )
                 raise
             self._raise_if_generation_cancelled(
@@ -3309,10 +4724,15 @@ class ComfyGenerationRuntime:
                     *topaz_paths,
                     *(Path(path) for path in final_paths),
                     *(Path(path) for path in second_result["output_paths"]),
+                    *(s['path'] for s in enhancement_stages),
+                    *(s['path'] for s in second_result.get('enhancement_stages', [])),
                 ],
             )
             if request.get("profile") == "anima":
                 self._merge_builder_runtime_settings(request, second_request)
+            for trace_key in ("prompt_execution", "prompt_execution_truncated", "sampling_execution"):
+                if trace_key in second_settings:
+                    settings[trace_key] = deepcopy(second_settings[trace_key])
             if source_mode == "inpaint":
                 composite_failed_paths: list[str] = []
                 for final_path_value in second_result["output_paths"]:
@@ -3328,6 +4748,11 @@ class ComfyGenerationRuntime:
                         + ", ".join(composite_failed_paths)
                     )
             final_paths.extend(second_result["output_paths"])
+            topaz_image_outputs.extend({**item, 'batch_index': index, 'image_index': 0}
+                                       for item in second_result.get('image_outputs', []))
+            enhancement_stages.extend({**item, 'batch_index': index, 'image_index': 0,
+                                       'ordinal': 2000 + item['ordinal']}
+                                      for item in second_result.get('enhancement_stages', []))
             for primary_output in second_result.get("primary_outputs", []):
                 primary_outputs.append(
                     {
@@ -3336,6 +4761,9 @@ class ComfyGenerationRuntime:
                     }
                 )
             second_prompt_ids.extend(second_result.get("runtime_job_ids", [second_result["runtime_job_id"]]))
+            settings.setdefault("sampler_noise_runtime", []).extend(
+                second_settings.get("sampler_noise_runtime", [])
+            )
 
         settings["topaz_hires_runtime"] = "completed"
         settings["topaz_second_pass_runtime"] = {
@@ -3347,6 +4775,8 @@ class ComfyGenerationRuntime:
         settings["topaz_source_output_paths"] = [str(path) for path in first_paths]
         settings["topaz_upscaled_paths"] = [str(path) for path in topaz_paths]
         settings["generated_seeds"] = generated_seeds
+        if int(settings.get("seed", -1)) < 0 and generated_seeds:
+            settings["seed"] = generated_seeds[0]
         if not settings.get("hires_keep_first_pass"):
             skipped_deletes = []
             for path in first_paths:
@@ -3373,6 +4803,10 @@ class ComfyGenerationRuntime:
             else:
                 settings["topaz_upscaled_paths_deleted"] = True
         prompt_ids = [*first_result.get("runtime_job_ids", [first_result["runtime_job_id"]]), *second_prompt_ids]
+        topaz_image_outputs.extend({'path': str(path), 'batch_index': index, 'image_index': 0,
+                                    'seed': generated_seeds[index]}
+                                   for index, pair in enumerate(zip(first_paths, topaz_paths, strict=True))
+                                   for path in pair if str(path) in final_paths)
         return {
             "status": "completed",
             "output_paths": final_paths,
@@ -3383,6 +4817,8 @@ class ComfyGenerationRuntime:
             "comfy_prompt_ids": prompt_ids,
             "generated_seeds": generated_seeds,
             "primary_outputs": primary_outputs,
+            "enhancement_stages": enhancement_stages,
+            "image_outputs": topaz_image_outputs,
         }
 
     def _uses_topaz_hires(self, request: dict) -> bool:
@@ -3550,6 +4986,22 @@ class ComfyGenerationRuntime:
         settings["source_init_image_path"] = str(path)
         settings["init_image_path"] = self.client.upload_image(path)
 
+    def _prepare_spatial_runtime_masks(self, request: dict) -> None:
+        context = request.get("_spatial_runtime_context")
+        if context is None:
+            return
+        if isinstance(context, dict) and context.get("mask_transport") == "comfy_upload":
+            return
+        try:
+            uploaded = upload_spatial_runtime_masks(
+                context,
+                upload=self.client.upload_image,
+            )
+        except SpatialGenerationContextError as exc:
+            raise RuntimeErrorResponse(exc.code) from exc
+        uploaded["mask_transport"] = "comfy_upload"
+        request["_spatial_runtime_context"] = uploaded
+
     def _prepare_mask_image(self, request: dict) -> None:
         if request.get("profile") not in {"sdxl", "anima", "flux1", "flux2"}:
             raise RuntimeErrorResponse("ComfyUI inpaint currently supports the sdxl, anima, flux1, and flux2 profiles.")
@@ -3561,7 +5013,7 @@ class ComfyGenerationRuntime:
         if not _path_exists_safely(path) or not _path_is_file_safely(path):
             raise RuntimeErrorResponse(f"Mask image not found: {path}")
         settings["source_mask_image_path"] = str(path)
-        blur_radius = int(settings.get("mask_blur") or 0) if request.get("profile") in {"flux1", "flux2"} else 0
+        blur_radius = int(settings.get("mask_blur") or 0)
         normalized_path = self._normalize_inpaint_mask(path, blur_radius)
         if normalized_path != path:
             settings["processed_mask_image_path"] = str(normalized_path)
@@ -3687,6 +5139,1051 @@ class ComfyGenerationRuntime:
         for node_id, output in outputs.items():
             images.extend({**image, "node_id": str(node_id)} for image in output.get("images", []))
         return sorted(images, key=lambda image: "first_pass" in str(image.get("filename", "")).lower())
+
+    @staticmethod
+    def _validate_spatial_receipts_against_context(
+        context: object,
+        receipts: list[dict],
+    ) -> None:
+        try:
+            if (
+                not isinstance(context, dict)
+                or context.get("schema_version")
+                != "asteria.spatial-workflow-context.v1"
+                or len(receipts) != 1
+            ):
+                raise ValueError("context")
+            stages = context["stages"]
+            stage = stages["base"]
+            prompt_stage = context["prompt_plan"]["base"]
+            profile_receipt = stage["profile_receipt"]
+            profile_payload = json.loads(stage["profile_json"])
+            mask_bundle = stage["mask_bundle"]
+            ordered_masks = sorted(
+                mask_bundle["targets"],
+                key=lambda item: int(item["depth_index"]),
+            )
+            expected_target_ids = [item["target_id"] for item in ordered_masks]
+            expected_field_hashes = [item["mask_sha256"] for item in ordered_masks]
+            scheduled = prompt_stage.get("scheduled_bindings") or []
+            expected_full_text_hash: str | list[str] = (
+                [item["full_text_sha256"] for item in scheduled]
+                if scheduled
+                else prompt_stage["full_text_sha256"]
+            )
+            receipt = receipts[0]
+            matches = (
+                receipt.get("stage") == "base"
+                and receipt.get("target_ids") == expected_target_ids
+                and profile_receipt.get("target_ids") == expected_target_ids
+                and receipt.get("profile_id") == profile_receipt.get("profile_id")
+                and receipt.get("profile_revision")
+                == profile_receipt.get("profile_revision")
+                and receipt.get("profile_receipt_sha256")
+                == profile_receipt.get("receipt_sha256")
+                and receipt.get("profile_payload_sha256")
+                == profile_payload.get("profile_payload_sha256")
+                and receipt.get("mask_bundle_sha256")
+                == spatial_runtime_mask_receipt_sha256(mask_bundle)
+                and receipt.get("field_sha256") == expected_field_hashes
+                and (
+                    receipt.get("fragments_sha256")
+                    == stage.get("fragments_sha256")
+                    if receipt.get("schema_version")
+                    == "asteria.spatial-node-execution.v6"
+                    else receipt.get("full_text_sha256")
+                    == expected_full_text_hash
+                )
+            )
+            if receipt.get("schema_version") == "asteria.spatial-node-execution.v9":
+                matches = matches and receipt.get("geometry_sha256") == canonical_runtime_sha256(stage.get("routing_geometry"))
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+            raise RuntimeErrorResponse(
+                "Spatial prompt execution receipt does not match the submitted context."
+            ) from error
+        if not matches:
+            raise RuntimeErrorResponse(
+                "Spatial prompt execution receipt does not match the submitted context."
+            )
+
+    @staticmethod
+    def _spatial_receipts_from_history(
+        history: dict,
+        prompt_id: str,
+    ) -> list[dict]:
+        outputs = history.get(prompt_id, {}).get("outputs", {})
+        receipts: list[dict] = []
+        for output in outputs.values():
+            raw_receipts = output.get("asteria_spatial_receipts", [])
+            if not isinstance(raw_receipts, list):
+                raise RuntimeErrorResponse("Spatial prompt execution receipt is invalid.")
+            for raw in raw_receipts:
+                try:
+                    payload = json.loads(raw)
+                except (TypeError, ValueError, json.JSONDecodeError) as error:
+                    raise RuntimeErrorResponse(
+                        "Spatial prompt execution receipt is invalid."
+                    ) from error
+                if not isinstance(payload, dict):
+                    raise RuntimeErrorResponse(
+                        "Spatial prompt execution receipt is invalid."
+                    )
+                execution_sha256 = payload.get("execution_sha256")
+                body = {
+                    key: value
+                    for key, value in payload.items()
+                    if key != "execution_sha256"
+                }
+                target_ids = payload.get("target_ids")
+                if payload.get("schema_version") == "asteria.spatial-node-execution.v9":
+                    from app.services.spatial_native_receipt import validate_native_spatial_receipt
+                    try:
+                        validate_native_spatial_receipt(payload)
+                    except (KeyError, TypeError, ValueError) as error:
+                        raise RuntimeErrorResponse("Spatial prompt execution receipt is invalid.") from error
+                    receipts.append(payload)
+                    continue
+                if payload.get("schema_version") == "asteria.spatial-node-execution.v6":
+                    runtime = payload.get("runtime")
+                    structure_id = payload.get("verified_structure_id")
+                    expected_block_count = {
+                        "sdxl_unet_v1": 24,
+                        "anima_base_28": 28,
+                        "anima_2_9b_40": 40,
+                        "anima_3_8b_52": 52,
+                    }.get(structure_id)
+                    forbidden_counts = (
+                        "target_latent_count",
+                        "target_noise_prediction_count",
+                        "target_denoised_output_count",
+                        "target_only_attention_forward_count",
+                        "global_only_attention_forward_count",
+                        "spatial_output_blend_count",
+                        "background_substitution_count",
+                        "self_attention_spatial_mask_count",
+                        "hires_self_attention_mask_count",
+                        "negative_token_change_count",
+                        "global_token_block_count",
+                        "query_key_recompute_count",
+                        "extra_model_evaluation_count",
+                        "latent_update_count",
+                        "candidate_search_count",
+                    )
+                    runtime_forbidden_counts = (
+                        "extra_model_evaluation_count",
+                        "target_only_attention_forward_count",
+                        "spatial_output_blend_count",
+                        "latent_update_count",
+                    )
+                    declared_layers = payload.get("cross_attention_layers")
+                    applied_layers = (
+                        runtime.get("cross_attention_layers")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    target_ranges = (
+                        runtime.get("target_context_ranges")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    cross_count = (
+                        runtime.get("cross_attention_mask_count")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    cross_min = runtime.get("cross_mask_min") if isinstance(runtime, dict) else None
+                    cross_max = runtime.get("cross_mask_max") if isinstance(runtime, dict) else None
+                    schedule_min = runtime.get("cross_schedule_min") if isinstance(runtime, dict) else None
+                    schedule_max = runtime.get("cross_schedule_max") if isinstance(runtime, dict) else None
+                    query_counts = runtime.get("cross_query_token_counts") if isinstance(runtime, dict) else None
+                    key_counts = runtime.get("cross_key_token_counts") if isinstance(runtime, dict) else None
+                    latent_shape = payload.get("latent_shape")
+                    registered = payload.get("registered_patches")
+                    isolated_context_length = payload.get("isolated_context_length")
+                    aligned_value_count = (
+                        runtime.get("aligned_value_patch_count")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    router_revision = (
+                        runtime.get("router_revision")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    sdxl_v8 = payload.get("model_family") == "sdxl"
+                    sdxl_v6_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-isolated-conditioning-v6"
+                        and payload.get("adapter_id")
+                        == "sdxl.isolated-conditioning.v6"
+                        and payload.get("routing_mode")
+                        == "isolated_context_cross_attention_mask"
+                        and registered == ["attn2_replace", "attn1_replace"]
+                        and router_revision == "asteria-isolated-conditioning-v6"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                    )
+                    sdxl_v16_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-group-binding-vector-v16"
+                        and payload.get("adapter_id")
+                        == "sdxl.group-binding-vector.v16"
+                        and payload.get("routing_mode")
+                        == "full_prompt_group_binding_sparse_attention"
+                        and registered == ["attn2_replace"]
+                        and router_revision == "asteria-group-binding-vector-v16"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                    )
+                    sdxl_v17_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-attribute-value-binding-v17"
+                        and payload.get("adapter_id")
+                        == "sdxl.attribute-value-binding.v17"
+                        and payload.get("routing_mode")
+                        == "full_prompt_attribute_value_sparse_attention"
+                        and registered == ["attn2_patch", "attn2_replace"]
+                        and router_revision == "asteria-attribute-value-binding-v17"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count > 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                    )
+                    sdxl_v20_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-appended-appearance-v20-research"
+                        and payload.get("adapter_id")
+                        == "sdxl.appended-appearance.v20.research"
+                        and payload.get("routing_mode")
+                        == "single_attention_appended_multilayer_appearance_tokens"
+                        and registered == ["attn2_replace", "attn1_replace"]
+                        and router_revision
+                        == "asteria-appended-appearance-v20-research"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                    )
+                    sparse_grounding = (
+                        runtime.get("sparse_grounding")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    sdxl_v21_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-sparse-gligen-mid-v21-research"
+                        and payload.get("adapter_id")
+                        == "sdxl.sparse-gligen-mid.v21.research"
+                        and payload.get("routing_mode")
+                        == "single_latent_sparse_grounding_with_isolated_cross_attention"
+                        and registered == ["attn2_replace", "middle_patch"]
+                        and router_revision
+                        == "asteria-sparse-gligen-mid-v21-research"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                        and isinstance(sparse_grounding, dict)
+                        and sparse_grounding.get("revision")
+                        == "asteria-sparse-gligen-mid-v21-research"
+                        and sparse_grounding.get("layers")
+                        == (
+                            [f"block:input:7:{index}" for index in range(10)]
+                            + [f"block:input:8:{index}" for index in range(10)]
+                            + [f"block:middle:0:{index}" for index in range(10)]
+                            + [f"block:output:0:{index}" for index in range(10)]
+                            + [f"block:output:1:{index}" for index in range(10)]
+                            + [f"block:output:2:{index}" for index in range(10)]
+                        )
+                        and sparse_grounding.get("fuser_count") == 60
+                        and isinstance(
+                            sparse_grounding.get("layer_call_counts"), dict
+                        )
+                        and set(sparse_grounding["layer_call_counts"])
+                        == set(sparse_grounding["layers"])
+                        and all(
+                            isinstance(value, int)
+                            and not isinstance(value, bool)
+                            and value >= 1
+                            for value in sparse_grounding["layer_call_counts"].values()
+                        )
+                        and isinstance(sparse_grounding.get("call_count"), int)
+                        and not isinstance(sparse_grounding.get("call_count"), bool)
+                        and sparse_grounding["call_count"] >= 1
+                        and isinstance(sparse_grounding.get("query_token_counts"), list)
+                        and bool(sparse_grounding["query_token_counts"])
+                        and all(
+                            isinstance(value, int)
+                            and not isinstance(value, bool)
+                            and 1 <= value <= 1024
+                            for value in sparse_grounding["query_token_counts"]
+                        )
+                        and sparse_grounding.get("target_count") == len(target_ids or [])
+                        and sparse_grounding.get("object_capacity") == 30
+                        and isinstance(sparse_grounding.get("weight_bytes"), int)
+                        and not isinstance(sparse_grounding.get("weight_bytes"), bool)
+                        and sparse_grounding["weight_bytes"] > 0
+                        and all(
+                            isinstance(sparse_grounding.get(name), (int, float))
+                            and not isinstance(sparse_grounding.get(name), bool)
+                            and math.isfinite(float(sparse_grounding[name]))
+                            for name in ("gain", "schedule_min", "schedule_max")
+                        )
+                        and 0.25 <= float(sparse_grounding["gain"]) <= 16.0
+                        and 0.0
+                        < float(sparse_grounding["schedule_min"])
+                        <= float(sparse_grounding["schedule_max"])
+                        <= 1.0
+                        and all(
+                            sparse_grounding.get(name) == 0
+                            for name in runtime_forbidden_counts
+                        )
+                    )
+                    fused_adapter_layers = (
+                        runtime.get("fused_adapter_layers")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    expected_ifadapter_layers = (
+                        [f"block:middle:0:{index}" for index in range(4)]
+                        + [
+                            f"block:output:{block}:{index}"
+                            for block in range(3)
+                            for index in range(4)
+                        ]
+                    )
+                    sdxl_v22_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-faithful-ifadapter-v22-research"
+                        and payload.get("adapter_id")
+                        == "sdxl.faithful-ifadapter.v22.research"
+                        and payload.get("routing_mode")
+                        == "single_latent_learned_instance_feature_attention"
+                        and registered == ["attn2_replace"]
+                        and router_revision
+                        == "asteria-faithful-ifadapter-v22-research"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                        and fused_adapter_layers == expected_ifadapter_layers
+                        and isinstance(
+                            runtime.get("fused_adapter_layer_call_counts"), dict
+                        )
+                        and set(runtime["fused_adapter_layer_call_counts"])
+                        == set(expected_ifadapter_layers)
+                        and all(
+                            isinstance(value, int)
+                            and not isinstance(value, bool)
+                            and value >= 1
+                            for value in runtime[
+                                "fused_adapter_layer_call_counts"
+                            ].values()
+                        )
+                        and isinstance(
+                            runtime.get("fused_adapter_attention_count"), int
+                        )
+                        and runtime["fused_adapter_attention_count"] >= 1
+                        and runtime.get("fused_adapter_cbam_fusion_count")
+                        == runtime["fused_adapter_attention_count"]
+                        and isinstance(
+                            runtime.get("fused_adapter_cfg_positive_row_count"), int
+                        )
+                        and runtime["fused_adapter_cfg_positive_row_count"] >= 1
+                        and isinstance(
+                            runtime.get(
+                                "fused_adapter_cfg_unconditional_row_count"
+                            ),
+                            int,
+                        )
+                        and runtime[
+                            "fused_adapter_cfg_unconditional_row_count"
+                        ]
+                        >= 1
+                        and runtime.get("fused_adapter_aspect_ratio_aware") is True
+                        and runtime.get("fused_adapter_max_objects") == 10
+                        and isinstance(
+                            runtime.get("fused_adapter_control_ratio"), (int, float)
+                        )
+                        and not isinstance(
+                            runtime.get("fused_adapter_control_ratio"), bool
+                        )
+                        and 0.05
+                        <= float(runtime["fused_adapter_control_ratio"])
+                        <= 1.0
+                    )
+                    v20_self_count = (
+                        runtime.get("self_attention_boundary_mask_count")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_layers = (
+                        runtime.get("self_attention_layers")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_queries = (
+                        runtime.get("self_query_token_counts")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_stats = (
+                        runtime.get("self_boundary_stats")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_min = (
+                        runtime.get("self_mask_min")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_max = (
+                        runtime.get("self_mask_max")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_schedule_min = (
+                        runtime.get("self_schedule_min")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    v20_self_schedule_max = (
+                        runtime.get("self_schedule_max")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    valid_sparse_self = (
+                        (sdxl_v6_research or sdxl_v20_research)
+                        and isinstance(v20_self_count, int)
+                        and not isinstance(v20_self_count, bool)
+                        and v20_self_count >= 1
+                        and v20_self_layers == ["block:middle:0:0"]
+                        and isinstance(v20_self_queries, list)
+                        and bool(v20_self_queries)
+                        and all(
+                            isinstance(value, int)
+                            and not isinstance(value, bool)
+                            and 1 <= value <= 1024
+                            for value in v20_self_queries
+                        )
+                        and isinstance(v20_self_stats, dict)
+                        and isinstance(
+                            v20_self_stats.get("different_target_block_count"), int
+                        )
+                        and v20_self_stats["different_target_block_count"] > 0
+                        and all(
+                            isinstance(value, (int, float))
+                            and not isinstance(value, bool)
+                            and math.isfinite(float(value))
+                            for value in (
+                                v20_self_min,
+                                v20_self_max,
+                                v20_self_schedule_min,
+                                v20_self_schedule_max,
+                            )
+                        )
+                        and -6.0 <= float(v20_self_min) <= float(v20_self_max) <= 0.0
+                        and 0.0
+                        < float(v20_self_schedule_min)
+                        <= float(v20_self_schedule_max)
+                        <= 1.0
+                    )
+                    sdxl_v19_research = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-alternating-conditioning-v19-research"
+                        and payload.get("adapter_id")
+                        == "sdxl.alternating-conditioning.v19.research"
+                        and payload.get("routing_mode")
+                        == "early_alternating_target_context"
+                        and registered == ["attn2_replace"]
+                        and router_revision
+                        == "asteria-alternating-conditioning-v19-research"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                    )
+                    valid_mechanism = (
+                        sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-full-fragment-context-v8"
+                        and payload.get("adapter_id")
+                        == "sdxl.full-fragment-context.v8"
+                        and payload.get("routing_mode")
+                        == "full_fragment_context_sparse_attention_mask"
+                        and registered == ["attn2_replace"]
+                        and router_revision == "asteria-full-fragment-context-v8"
+                        and isinstance(aligned_value_count, int)
+                        and not isinstance(aligned_value_count, bool)
+                        and aligned_value_count == 0
+                        and isinstance(payload.get("adapter_context_length"), int)
+                        and payload.get("adapter_context_length")
+                        == isolated_context_length
+                        and isolated_context_length % 77 == 0
+                    ) or sdxl_v6_research or sdxl_v16_research or sdxl_v17_research or sdxl_v20_research or sdxl_v21_research or sdxl_v22_research or sdxl_v19_research or (
+                        not sdxl_v8
+                        and payload.get("adapter_revision")
+                        == "asteria-isolated-conditioning-v6"
+                        and payload.get("routing_mode")
+                        == "isolated_context_cross_attention_mask"
+                        and registered
+                        == [
+                            "attn2_patch",
+                            "optimized_attention_override",
+                            "diffusion_model.preprocess_text_embeds",
+                        ]
+                    )
+                    valid_anima = payload.get("model_family") != "anima" or (
+                        payload.get("token_position_source") == "T5_adapter_context"
+                        and payload.get("context_length") == 512
+                        and payload.get("padding_positions_preserved") is True
+                    )
+                    valid_ranges = (
+                        isinstance(isolated_context_length, int)
+                        and not isinstance(isolated_context_length, bool)
+                        and isolated_context_length > 0
+                        and isinstance(target_ranges, list)
+                        and isinstance(target_ids, list)
+                        and len(target_ranges) == len(target_ids)
+                        and [item.get("target_id") for item in target_ranges if isinstance(item, dict)]
+                        == target_ids
+                        and all(
+                            isinstance(item, dict)
+                            and isinstance(item.get("start"), int)
+                            and isinstance(item.get("end"), int)
+                            and 0 <= item["start"] < item["end"]
+                            <= isolated_context_length
+                            for item in target_ranges
+                        )
+                    )
+                    if (
+                        payload.get("contract_version")
+                        != ASTERIA_SPATIAL_NODE_CONTRACT_VERSION
+                        or not valid_mechanism
+                        or payload.get("stage") != "base"
+                        or payload.get("hires_mode") != "base_only"
+                        or expected_block_count is None
+                        or payload.get("diffusion_block_count") != expected_block_count
+                        or not isinstance(payload.get("model_slot_id"), str)
+                        or not payload["model_slot_id"]
+                        or not isinstance(payload.get("encoder_kind"), str)
+                        or not payload["encoder_kind"]
+                        or not all(
+                            _valid_sha256(payload.get(name))
+                            for name in (
+                                "layout_fingerprint",
+                                "structure_fingerprint",
+                                "profile_receipt_sha256",
+                                "profile_payload_sha256",
+                                "mask_bundle_sha256",
+                                "isolated_context_sha256",
+                                "fragments_sha256",
+                            )
+                        )
+                        or not _valid_sha256(execution_sha256)
+                        or canonical_runtime_sha256(body) != execution_sha256
+                        or not isinstance(target_ids, list)
+                        or not target_ids
+                        or len(target_ids) != len(set(target_ids))
+                        or not isinstance(runtime, dict)
+                        or any(payload.get(name) != 0 for name in forbidden_counts)
+                        or any(runtime.get(name) != 0 for name in runtime_forbidden_counts)
+                        or (
+                            not valid_sparse_self
+                            if (sdxl_v6_research or sdxl_v20_research)
+                            else runtime.get("self_attention_boundary_mask_count") != 0
+                        )
+                        or payload.get("initial_noise_candidate_count") != 1
+                        or isinstance(payload.get("initial_noise_seed"), bool)
+                        or not isinstance(payload.get("initial_noise_seed"), int)
+                        or not isinstance(declared_layers, list)
+                        or not declared_layers
+                        or not isinstance(applied_layers, list)
+                        or not applied_layers
+                        or not all(
+                            applied in declared_layers
+                            or any(
+                                applied.startswith(f"{declared}:")
+                                for declared in declared_layers
+                            )
+                            for applied in applied_layers
+                        )
+                        or isinstance(cross_count, bool)
+                        or not isinstance(cross_count, int)
+                        or cross_count < 1
+                        or not isinstance(query_counts, list)
+                        or not query_counts
+                        or not isinstance(key_counts, list)
+                        or not key_counts
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            for value in (*query_counts, *key_counts)
+                        )
+                        or not valid_ranges
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, (int, float))
+                            or not math.isfinite(float(value))
+                            for value in (
+                                cross_min,
+                                cross_max,
+                                schedule_min,
+                                schedule_max,
+                                payload.get("cross_penalty_cap"),
+                            )
+                        )
+                        or not -float(payload["cross_penalty_cap"])
+                        <= float(cross_min)
+                        <= float(cross_max)
+                        <= float(payload["cross_penalty_cap"])
+                        or (
+                            router_revision == "asteria-full-fragment-context-v8"
+                            and float(cross_max) > 0.0
+                        )
+                        or not 0.0 < float(schedule_min) <= float(schedule_max) <= 1.0
+                        or not isinstance(payload.get("field_sha256"), list)
+                        or len(payload["field_sha256"]) != len(target_ids)
+                        or not all(_valid_sha256(value) for value in payload["field_sha256"])
+                        or not isinstance(latent_shape, list)
+                        or not latent_shape
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            for value in latent_shape
+                        )
+                        or not valid_anima
+                    ):
+                        raise RuntimeErrorResponse(
+                            "Spatial prompt execution receipt is invalid."
+                        )
+                    receipts.append(payload)
+                    continue
+                if payload.get("schema_version") == "asteria.spatial-node-execution.v5":
+                    runtime = payload.get("runtime")
+                    forbidden_counts = (
+                        "target_latent_count",
+                        "target_noise_prediction_count",
+                        "target_denoised_output_count",
+                        "target_only_attention_forward_count",
+                        "global_only_attention_forward_count",
+                        "spatial_output_blend_count",
+                        "background_substitution_count",
+                        "hires_self_attention_mask_count",
+                        "negative_token_change_count",
+                        "global_token_block_count",
+                        "query_key_recompute_count",
+                        "extra_model_evaluation_count",
+                        "latent_update_count",
+                        "candidate_search_count",
+                    )
+                    runtime_forbidden_counts = (
+                        "target_only_attention_forward_count",
+                        "global_only_attention_forward_count",
+                        "spatial_output_blend_count",
+                        "background_substitution_count",
+                        "target_latent_count",
+                        "target_noise_prediction_count",
+                        "target_denoised_output_count",
+                        "hires_self_attention_mask_count",
+                        "negative_token_change_count",
+                        "global_token_block_count",
+                        "query_key_recompute_count",
+                        "extra_model_evaluation_count",
+                        "latent_update_count",
+                        "candidate_search_count",
+                    )
+                    declared_cross_layers = payload.get("cross_attention_layers")
+                    declared_self_layers = payload.get("self_attention_layers")
+                    applied_cross_layers = (
+                        runtime.get("cross_attention_layers")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    applied_self_layers = (
+                        runtime.get("self_attention_layers")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    cross_count = (
+                        runtime.get("cross_attention_boundary_mask_count")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    self_count = (
+                        runtime.get("self_attention_boundary_mask_count")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    cross_schedule_min = (
+                        runtime.get("cross_schedule_min")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    cross_schedule_max = (
+                        runtime.get("cross_schedule_max")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    self_schedule_min = (
+                        runtime.get("self_schedule_min")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    self_schedule_max = (
+                        runtime.get("self_schedule_max")
+                        if isinstance(runtime, dict)
+                        else None
+                    )
+                    self_stats = runtime.get("self_boundary_stats") if isinstance(runtime, dict) else None
+                    cross_cap = payload.get("cross_penalty_cap")
+                    self_cap = payload.get("self_penalty_cap")
+                    cross_min = runtime.get("cross_mask_min") if isinstance(runtime, dict) else None
+                    cross_max = runtime.get("cross_mask_max") if isinstance(runtime, dict) else None
+                    self_min = runtime.get("self_mask_min") if isinstance(runtime, dict) else None
+                    self_max = runtime.get("self_mask_max") if isinstance(runtime, dict) else None
+                    latent_shape = payload.get("latent_shape")
+                    full_text_sha256 = payload.get("full_text_sha256")
+                    structure_id = payload.get("verified_structure_id")
+                    expected_block_count = {
+                        "sdxl_unet_v1": 24,
+                        "anima_base_28": 28,
+                        "anima_2_9b_40": 40,
+                        "anima_3_8b_52": 52,
+                    }.get(structure_id)
+                    cross_query_tokens = runtime.get("cross_query_token_counts") if isinstance(runtime, dict) else None
+                    self_query_tokens = runtime.get("self_query_token_counts") if isinstance(runtime, dict) else None
+                    declared_self_token_counts = payload.get(
+                        "self_attention_token_counts"
+                    )
+                    self_token_limit = payload.get("self_attention_token_limit")
+                    target_token_indices = runtime.get("target_token_indices") if isinstance(runtime, dict) else None
+                    sigma_values = (
+                        runtime.get("stage_sigma_start") if isinstance(runtime, dict) else None,
+                        runtime.get("stage_sigma_end") if isinstance(runtime, dict) else None,
+                        runtime.get("cross_sigma_start") if isinstance(runtime, dict) else None,
+                        runtime.get("cross_sigma_end") if isinstance(runtime, dict) else None,
+                        runtime.get("self_sigma_start") if isinstance(runtime, dict) else None,
+                        runtime.get("self_sigma_end") if isinstance(runtime, dict) else None,
+                    )
+                    valid_full_text_hash = _valid_sha256(full_text_sha256) or (
+                        isinstance(full_text_sha256, list)
+                        and bool(full_text_sha256)
+                        and all(_valid_sha256(value) for value in full_text_sha256)
+                    )
+                    valid_anima = payload.get("model_family") != "anima" or (
+                        payload.get("token_position_source") == "T5_adapter_context"
+                        and payload.get("context_length") == 512
+                        and payload.get("padding_positions_preserved") is True
+                    )
+                    if (
+                        payload.get("contract_version")
+                        != ASTERIA_SPATIAL_NODE_CONTRACT_VERSION
+                        or payload.get("adapter_revision")
+                        != "asteria-cross-self-boundary-v5"
+                        or payload.get("routing_mode")
+                        != "cross_self_boundary_attention_mask"
+                        or payload.get("stage") != "base"
+                        or payload.get("hires_mode") != "base_only"
+                        or not isinstance(payload.get("model_slot_id"), str)
+                        or not payload["model_slot_id"]
+                        or not isinstance(payload.get("encoder_kind"), str)
+                        or not payload["encoder_kind"]
+                        or expected_block_count is None
+                        or payload.get("diffusion_block_count") != expected_block_count
+                        or not _valid_sha256(payload.get("layout_fingerprint"))
+                        or not _valid_sha256(payload.get("structure_fingerprint"))
+                        or not _valid_sha256(execution_sha256)
+                        or canonical_runtime_sha256(body) != execution_sha256
+                        or not isinstance(target_ids, list)
+                        or not target_ids
+                        or len(target_ids) != len(set(target_ids))
+                        or not isinstance(runtime, dict)
+                        or any(payload.get(name) != 0 for name in forbidden_counts)
+                        or any(runtime.get(name) != 0 for name in runtime_forbidden_counts)
+                        or payload.get("initial_noise_candidate_count") != 1
+                        or runtime.get("initial_noise_candidate_count") != 1
+                        or isinstance(payload.get("initial_noise_seed"), bool)
+                        or not isinstance(payload.get("initial_noise_seed"), int)
+                        or payload.get("registered_patches") != [
+                            "attn1_patch",
+                            "attn2_patch",
+                            "optimized_attention_override",
+                        ]
+                        or not isinstance(declared_cross_layers, list)
+                        or not declared_cross_layers
+                        or not isinstance(declared_self_layers, list)
+                        or not declared_self_layers
+                        or not isinstance(applied_cross_layers, list)
+                        or not applied_cross_layers
+                        or not set(applied_cross_layers).issubset(set(declared_cross_layers))
+                        or not isinstance(applied_self_layers, list)
+                        or (len(target_ids) > 1 and not applied_self_layers)
+                        or not set(applied_self_layers).issubset(set(declared_self_layers))
+                        or isinstance(cross_count, bool)
+                        or not isinstance(cross_count, int)
+                        or cross_count < 1
+                        or isinstance(self_count, bool)
+                        or not isinstance(self_count, int)
+                        or self_count < (1 if len(target_ids) > 1 else 0)
+                        or runtime.get("cross_original_attention_call_count") != cross_count
+                        or runtime.get("self_original_attention_call_count") != self_count
+                        or not isinstance(cross_query_tokens, list)
+                        or not cross_query_tokens
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            for value in cross_query_tokens
+                        )
+                        or not isinstance(self_query_tokens, list)
+                        or (self_count > 0 and not self_query_tokens)
+                        or not isinstance(declared_self_token_counts, list)
+                        or not declared_self_token_counts
+                        or len(declared_self_token_counts)
+                        != len(set(declared_self_token_counts))
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            for value in declared_self_token_counts
+                        )
+                        or isinstance(self_token_limit, bool)
+                        or not isinstance(self_token_limit, int)
+                        or self_token_limit < 1
+                        or self_token_limit > 65536
+                        or any(
+                            value > self_token_limit
+                            for value in declared_self_token_counts
+                        )
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            or value > self_token_limit
+                            for value in self_query_tokens
+                        )
+                        or not isinstance(target_token_indices, list)
+                        or len(target_token_indices) != len(target_ids)
+                        or any(
+                            not isinstance(indices, list)
+                            or not indices
+                            or any(
+                                isinstance(index, bool)
+                                or not isinstance(index, int)
+                                or index < 0
+                                for index in indices
+                            )
+                            for indices in target_token_indices
+                        )
+                        or len(
+                            [index for indices in target_token_indices for index in indices]
+                        )
+                        != len(
+                            set(index for indices in target_token_indices for index in indices)
+                        )
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, (int, float))
+                            or not math.isfinite(float(value))
+                            for value in sigma_values
+                        )
+                        or float(sigma_values[0]) <= float(sigma_values[1])
+                        or not float(sigma_values[0]) >= float(sigma_values[2]) > float(sigma_values[3]) >= float(sigma_values[1])
+                        or not float(sigma_values[0]) >= float(sigma_values[4]) > float(sigma_values[5]) >= float(sigma_values[1])
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, (int, float))
+                            or not math.isfinite(float(value))
+                            for value in (
+                                cross_schedule_min,
+                                cross_schedule_max,
+                                *(
+                                    (self_schedule_min, self_schedule_max)
+                                    if self_count
+                                    else ()
+                                ),
+                            )
+                        )
+                        or not 0.0 < float(cross_schedule_min)
+                        <= float(cross_schedule_max)
+                        <= 1.0
+                        or (self_count and not 0.0 < float(self_schedule_min) <= float(self_schedule_max) <= 1.0)
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, (int, float))
+                            or not math.isfinite(float(value))
+                            for value in (
+                                cross_cap,
+                                self_cap,
+                                cross_min,
+                                cross_max,
+                                self_min,
+                                self_max,
+                            )
+                        )
+                        or float(cross_cap) <= 0.0
+                        or float(self_cap) <= 0.0
+                        or not -float(cross_cap) <= float(cross_min) <= float(cross_max) <= 0.0
+                        or not -float(self_cap) <= float(self_min) <= float(self_max) <= 0.0
+                        or not isinstance(self_stats, dict)
+                        or self_stats.get("target_to_background_block_count") != 0
+                        or self_stats.get("background_to_target_block_count") != 0
+                        or not all(
+                            _valid_sha256(payload.get(name))
+                            for name in (
+                                "profile_receipt_sha256",
+                                "profile_payload_sha256",
+                                "mask_bundle_sha256",
+                                "token_binding_sha256",
+                            )
+                        )
+                        or not valid_full_text_hash
+                        or not isinstance(payload.get("field_sha256"), list)
+                        or len(payload["field_sha256"]) != len(target_ids)
+                        or not all(_valid_sha256(value) for value in payload["field_sha256"])
+                        or not isinstance(latent_shape, list)
+                        or not latent_shape
+                        or any(
+                            isinstance(value, bool)
+                            or not isinstance(value, int)
+                            or value < 1
+                            for value in latent_shape
+                        )
+                        or not valid_anima
+                    ):
+                        raise RuntimeErrorResponse(
+                            "Spatial prompt execution receipt is invalid."
+                        )
+                    receipts.append(payload)
+                    continue
+                solver_steps = payload.get("solver_steps")
+                loss_steps = payload.get("loss_steps")
+                forbidden_counts = (
+                    "target_latent_count",
+                    "target_noise_prediction_count",
+                    "target_denoised_output_count",
+                    "target_only_attention_forward_count",
+                    "global_only_attention_forward_count",
+                    "spatial_output_blend_count",
+                    "background_substitution_count",
+                )
+                valid_solver_steps = (
+                    isinstance(solver_steps, list)
+                    and bool(solver_steps)
+                    and all(
+                        isinstance(item, dict)
+                        and item.get("sampler_consumption_count") == 1
+                        and all(
+                            isinstance(item.get(field), str)
+                            and bool(re.fullmatch(r"[0-9a-f]{64}", item[field]))
+                            for field in (
+                                "input_latent_sha256",
+                                "guidance_input_latent_sha256",
+                                "updated_latent_sha256",
+                                "sampler_input_latent_sha256",
+                                "sampler_output_latent_sha256",
+                            )
+                        )
+                        and item.get("input_latent_sha256")
+                        == item.get("guidance_input_latent_sha256")
+                        and item.get("updated_latent_sha256")
+                        == item.get("sampler_input_latent_sha256")
+                        for item in solver_steps
+                    )
+                )
+                if valid_solver_steps:
+                    for index, item in enumerate(solver_steps):
+                        if item.get("step_index") != index:
+                            valid_solver_steps = False
+                            break
+                        next_input = item.get("next_step_input_latent_sha256")
+                        if index + 1 < len(solver_steps):
+                            if (
+                                next_input != item.get("sampler_output_latent_sha256")
+                                or next_input
+                                != solver_steps[index + 1].get("input_latent_sha256")
+                            ):
+                                valid_solver_steps = False
+                                break
+                        elif next_input is not None:
+                            valid_solver_steps = False
+                            break
+                valid_loss_steps = (
+                    isinstance(loss_steps, list)
+                    and bool(loss_steps)
+                    and all(
+                        isinstance(item, dict)
+                        and isinstance(item.get("cross_attention_call_count"), int)
+                        and item["cross_attention_call_count"] > 0
+                        and isinstance(item.get("self_attention_call_count"), int)
+                        and item["self_attention_call_count"] >= 0
+                        and isinstance(item.get("total"), (int, float))
+                        for item in loss_steps
+                    )
+                )
+                if (
+                    payload.get("schema_version") != "asteria.spatial-node-execution.v3"
+                    or payload.get("contract_version")
+                    != "asteria.spatial-prompt.node.v2"
+                    or payload.get("adapter_revision")
+                    != "asteria-layout-latent-guidance-v1"
+                    or payload.get("routing_mode")
+                    != "single_full_text_latent_guidance"
+                    or not isinstance(execution_sha256, str)
+                    or canonical_runtime_sha256(body) != execution_sha256
+                    or not isinstance(target_ids, list)
+                    or not target_ids
+                    or len(target_ids) != len(set(target_ids))
+                    or any(payload.get(name) != 0 for name in forbidden_counts)
+                    or not isinstance(payload.get("latent_update_count"), int)
+                    or payload["latent_update_count"] < 1
+                    or not isinstance(
+                        payload.get("sampler_attention_prior_count"), int
+                    )
+                    or payload["sampler_attention_prior_count"] < 1
+                    or payload.get("sampler_step_count") != len(solver_steps or ())
+                    or payload.get("sampler_consumption_count") != len(solver_steps or ())
+                    or not valid_solver_steps
+                    or not valid_loss_steps
+                    or not isinstance(payload.get("latent_shape"), list)
+                    or not payload["latent_shape"]
+                    or any(
+                        isinstance(value, bool) or not isinstance(value, int) or value < 1
+                        for value in payload["latent_shape"]
+                    )
+                ):
+                    raise RuntimeErrorResponse(
+                        "Spatial prompt execution receipt is invalid."
+                    )
+                receipts.append(payload)
+        return sorted(
+            receipts,
+            key=lambda item: {"base": 0, "hires": 1, "refiner": 2}.get(
+                str(item.get("stage")),
+                99,
+            ),
+        )
 
     def _safe_filename(self, filename: str) -> str:
         return re.sub(r"[^A-Za-z0-9._-]+", "_", Path(filename).name)

@@ -67,7 +67,8 @@ function Initialize-AsteriaModelDirectories {
         "adetailer",
         "bbox",
         "segm",
-        "upscalers"
+        "upscalers",
+        "latent_upscale_models"
     )) {
         [System.IO.Directory]::CreateDirectory([System.IO.Path]::Combine($ModelRoot, $directory)) | Out-Null
     }
@@ -129,6 +130,9 @@ function Write-AsteriaExtraModelPaths {
         "  controlnet: |-"
         "    controlnet"
         "    controlnets"
+        "  model_patches: |-"
+        "    controlnet"
+        "    controlnets"
         "  ultralytics_bbox: |-"
         "    adetailer"
         "    bbox"
@@ -141,6 +145,7 @@ function Write-AsteriaExtraModelPaths {
         "    upscalers"
         "    esrgan"
         "    realesrgan"
+        "    latent_upscale_models"
     )
     if ($ExternalRegistryPath -and [System.IO.File]::Exists($ExternalRegistryPath)) {
         try {
@@ -152,7 +157,7 @@ function Write-AsteriaExtraModelPaths {
                 tokenizer = @("tokenizers", "tokenizer")
                 lora = @("loras")
                 embedding = @("embeddings")
-                controlnet = @("controlnet")
+                controlnet = @("controlnet", "model_patches")
                 upscaler = @("upscale_models")
             }
             foreach ($root in @($registry.roots | Sort-Object @{ Expression = "priority"; Descending = $true }, display_name)) {
@@ -198,9 +203,9 @@ function Write-AsteriaExtraModelPaths {
             throw "External model registry could not be projected safely."
         }
     }
-    $transactionId = [Guid]::NewGuid().ToString("N")
-    $temporary = "$Path.$transactionId.tmp"
-    $backup = "$Path.$transactionId.bak"
+        $transactionId = [Guid]::NewGuid().ToString("N")
+        $temporary = "$Path.$transactionId.tmp"
+        $backup = "$Path.$transactionId.bak"
     try {
         $lines | Set-Content -LiteralPath $temporary -Encoding utf8
         if ([System.IO.File]::Exists($Path)) {
@@ -213,10 +218,10 @@ function Write-AsteriaExtraModelPaths {
         if ([System.IO.File]::Exists($temporary)) {
             [System.IO.File]::Delete($temporary)
         }
-        if ([System.IO.File]::Exists($backup)) {
-            [System.IO.File]::Delete($backup)
+          if ([System.IO.File]::Exists($backup)) {
+              [System.IO.File]::Delete($backup)
+          }
         }
-    }
 }
 
 function Start-AsteriaOwnedProcess {
@@ -272,20 +277,70 @@ function Start-AsteriaOwnedProcess {
     }
 }
 
+function Get-AsteriaLauncherPreferences {
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][string]$SettingsPath)
+
+    $result = [ordered]@{
+        RuntimeMonitorOnStart = $false
+        DisablePinnedMemory = $false
+        ReasonId = $null
+    }
+    if (-not (Test-Path -LiteralPath $SettingsPath -PathType Leaf)) {
+        return [pscustomobject]$result
+    }
+    try {
+        $content = Get-Content -LiteralPath $SettingsPath -Raw -Encoding utf8 -ErrorAction Stop
+    }
+    catch {
+        $result.ReasonId = "access_denied"
+        return [pscustomobject]$result
+    }
+    try {
+        $settings = $content | ConvertFrom-Json -ErrorAction Stop
+    }
+    catch {
+        $result.ReasonId = "json_invalid"
+        return [pscustomobject]$result
+    }
+    if ($null -eq $settings.launcher) { return [pscustomobject]$result }
+
+    $runtimeProperty = $settings.launcher.PSObject.Properties["runtime_monitor_on_start"]
+    if ($null -ne $runtimeProperty) {
+        $runtimeMonitor = $runtimeProperty.Value
+        $result.RuntimeMonitorOnStart = ($runtimeMonitor -is [bool]) -and $runtimeMonitor
+    }
+    if ($null -ne $settings.launcher.PSObject.Properties["disable_pinned_memory"]) {
+        $memoryPreference = $settings.launcher.disable_pinned_memory
+        if ($memoryPreference -is [bool]) {
+            $result.DisablePinnedMemory = $memoryPreference
+        }
+        else {
+            $result.ReasonId = "field_type_invalid"
+        }
+    }
+    return [pscustomobject]$result
+}
+
 function Get-AsteriaRuntimeMonitorPreference {
     [CmdletBinding()]
     param([Parameter(Mandatory = $true)][string]$SettingsPath)
 
-    if (-not (Test-Path -LiteralPath $SettingsPath -PathType Leaf)) { return $false }
-    try {
-        $settings = Get-Content -LiteralPath $SettingsPath -Raw -Encoding utf8 | ConvertFrom-Json
-        if ($null -eq $settings.launcher) { return $false }
-        $preference = $settings.launcher.runtime_monitor_on_start
-        return ($preference -is [bool]) -and $preference
+    return [bool](Get-AsteriaLauncherPreferences -SettingsPath $SettingsPath).RuntimeMonitorOnStart
+}
+
+function ConvertTo-AsteriaRuntimeMonitorLine {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Line
+    )
+
+    if ($Line -match '^\[ERROR\]\s+\[Inspire Pack\]\s+IPAdapterPlus is not installed\.\s*$') {
+        return "[INFO] [Asteria] Inspire Pack's optional IPAdapter integration is not installed. Asteria does not use this feature."
     }
-    catch {
-        return $false
-    }
+    return $Line
 }
 
 function Get-AsteriaOwnedProcessState {
@@ -326,12 +381,47 @@ function Wait-AsteriaOwnedProcessExit {
         [int]$TimeoutSeconds
     )
 
-    $watch = [Diagnostics.Stopwatch]::StartNew()
-    do {
-        if ((Get-AsteriaOwnedProcessState -Record $Record) -ne "owned") { return $true }
-        Start-Sleep -Milliseconds 50
-    } while ($watch.Elapsed.TotalSeconds -lt $TimeoutSeconds)
-    return (Get-AsteriaOwnedProcessState -Record $Record) -ne "owned"
+    $process = $null
+    try {
+        $process = [Diagnostics.Process]::GetProcessById([int]$Record.pid)
+        $milliseconds = [int][Math]::Min([int]::MaxValue, [Math]::Max(0, [long]$TimeoutSeconds) * 1000)
+        return $process.WaitForExit($milliseconds)
+    }
+    catch [System.ArgumentException] { return $true }
+    catch { return $false }
+    finally { if ($null -ne $process) { $process.Dispose() } }
+}
+
+function Stop-AsteriaOwnedProcessRecord {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]$Record,
+        [int]$TimeoutSeconds = 10
+    )
+
+    $ownership = Get-AsteriaOwnedProcessState -Record $Record
+    if ($ownership -eq "not-running") {
+        try {
+            $remaining = [Diagnostics.Process]::GetProcessById([int]$Record.pid)
+            $remaining.Dispose()
+            return $false
+        }
+        catch [System.ArgumentException] { return $true }
+        catch { return $false }
+    }
+    if ($ownership -ne "owned") { return $false }
+    try {
+        Stop-Process -Id ([int]$Record.pid) -ErrorAction Stop
+    }
+    catch {
+        if (Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds 0) { return $true }
+        throw
+    }
+    if (Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds $TimeoutSeconds) { return $true }
+    if ((Get-AsteriaOwnedProcessState -Record $Record) -eq "owned") {
+        Stop-Process -Id ([int]$Record.pid) -Force -ErrorAction Stop
+    }
+    return Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds $TimeoutSeconds
 }
 
 function Stop-AsteriaOwnedProcess {
@@ -342,18 +432,54 @@ function Stop-AsteriaOwnedProcess {
     )
 
     if ((Get-AsteriaOwnedProcessState -Record $Record) -ne "owned") { return $false }
-    try {
-        Stop-Process -Id ([int]$Record.pid) -ErrorAction Stop
+    $snapshot = @(Get-CimInstance Win32_Process -Property ProcessId, ParentProcessId, CreationDate -ErrorAction Stop)
+    $parents = @($Record)
+    $children = @()
+    $visited = @{}
+    $visited[[int]$Record.pid] = $true
+    for ($index = 0; $index -lt $parents.Count; $index++) {
+        $parent = $parents[$index]
+        if ((Get-AsteriaOwnedProcessState -Record $parent) -ne "owned") { continue }
+        $parentStart = (Get-Process -Id ([int]$parent.pid) -ErrorAction Stop).StartTime.ToUniversalTime()
+        $parentStartStamp = $parentStart.ToString('yyyyMMddHHmmss.ffffff')
+        foreach ($row in $snapshot) {
+            $childId = [int]$row.ProcessId
+            if ([int]$row.ParentProcessId -ne [int]$parent.pid -or $visited.ContainsKey($childId)) { continue }
+            # Parent IDs can outlive their original owner. Reject older or unknown
+            # records before querying potentially inaccessible unrelated processes.
+            if ($null -eq $row.CreationDate) { continue }
+            $snapshotStartStamp = $row.CreationDate.ToUniversalTime().ToString('yyyyMMddHHmmss.ffffff')
+            if ($snapshotStartStamp -lt $parentStartStamp) { continue }
+            try {
+                $child = Get-Process -Id $childId -ErrorAction Stop
+                $started = $child.StartTime.ToUniversalTime()
+                if ($started -lt $parentStart) { continue }
+                if ($started.ToString('yyyyMMddHHmmss.ffffff') -ne $snapshotStartStamp) { continue }
+                $childRecord = [pscustomobject]@{
+                    name = "$($Record.name)-child-$childId"
+                    pid = $childId
+                    executable_path = [System.IO.Path]::GetFullPath($child.Path)
+                    started_at_utc = $started.ToString('o')
+                }
+            }
+            catch {
+                if (-not (Get-Process -Id $childId -ErrorAction SilentlyContinue)) { continue }
+                throw
+            }
+            $visited[$childId] = $true
+            $children += $childRecord
+            $parents += $childRecord
+        }
     }
-    catch {
-        if ((Get-AsteriaOwnedProcessState -Record $Record) -ne "owned") { return $true }
-        throw
+    # Stop the spawning owner first, then its frozen descendants. Every stop
+    # still checks executable and creation time; reused PIDs remain untouched.
+    $stopped = Stop-AsteriaOwnedProcessRecord -Record $Record -TimeoutSeconds $TimeoutSeconds
+    [array]::Reverse($children)
+    foreach ($childRecord in $children) {
+        if ((Get-AsteriaOwnedProcessState -Record $childRecord) -ne "owned") { continue }
+        if (-not (Stop-AsteriaOwnedProcessRecord -Record $childRecord -TimeoutSeconds $TimeoutSeconds)) { $stopped = $false }
     }
-    if (Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds $TimeoutSeconds) { return $true }
-    if ((Get-AsteriaOwnedProcessState -Record $Record) -eq "owned") {
-        Stop-Process -Id ([int]$Record.pid) -Force -ErrorAction Stop
-    }
-    return Wait-AsteriaOwnedProcessExit -Record $Record -TimeoutSeconds $TimeoutSeconds
+    return $stopped
 }
 
 function Test-AsteriaTcpPortInUse {
@@ -415,4 +541,4 @@ function Read-AsteriaLauncherState {
     catch { throw "The launcher ownership state is invalid." }
 }
 
-Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Write-AsteriaExtraModelPaths, Start-AsteriaOwnedProcess, Get-AsteriaRuntimeMonitorPreference, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState
+Export-ModuleMember -Function Test-AsteriaFullyQualifiedPath, Get-AsteriaReleaseLayoutValue, Resolve-AsteriaPackagePath, Initialize-AsteriaModelDirectories, Write-AsteriaExtraModelPaths, Start-AsteriaOwnedProcess, Get-AsteriaLauncherPreferences, Get-AsteriaRuntimeMonitorPreference, ConvertTo-AsteriaRuntimeMonitorLine, Get-AsteriaOwnedProcessState, Stop-AsteriaOwnedProcess, Test-AsteriaTcpPortInUse, Wait-AsteriaHttpReady, Write-AsteriaLauncherState, Read-AsteriaLauncherState

@@ -334,6 +334,87 @@ dependencies:
       url: https://huggingface.co/circlestone-labs/Anima/blob/fa1c61a99d95dbede6beda996c69c739512df290/LICENSE.md
       requires_confirmation: true
 
+  - id: anima-3.8b-diffusion
+    label: Anima 3.8B Diffusion Model
+    profile: anima
+    type: checkpoint
+    release_class: optional-starter
+    starter_pack: anima-3.8b
+    selected_by_default: false
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: lylogummy/Anima-3.8B
+      filename: Anima-3.8B.safetensors
+      revision: dd05532037130bebe4d94f0d559b968c14ed1279
+      url: https://huggingface.co/lylogummy/Anima-3.8B/resolve/dd05532037130bebe4d94f0d559b968c14ed1279/difussion_models/Anima-3.8B.safetensors
+      verified_at: "2026-08-25"
+      provenance_url: https://huggingface.co/lylogummy/Anima-3.8B/blob/dd05532037130bebe4d94f0d559b968c14ed1279/difussion_models/Anima-3.8B.safetensors
+    target:
+      relative_path: checkpoints/anima/Anima-3.8B.safetensors
+      slot_id: diffusion_model
+    size_bytes: 7504189974
+    checksum_sha256: 1432c925752447df86da7b277e3797f077d358bc24e3950685b13cc0e465c7d5
+    repair_policy: replace-managed-component
+    license:
+      id: anima-3.8b-derived-model-license
+      url: https://huggingface.co/lylogummy/Anima-3.8B/blob/dd05532037130bebe4d94f0d559b968c14ed1279/README.md#licenses
+      requires_confirmation: true
+
+  - id: anima-3.8b-qwen35
+    label: Anima 3.8B Qwen3.5 4B Text Encoder
+    profile: anima
+    type: text_encoder
+    release_class: optional-starter
+    starter_pack: anima-3.8b
+    selected_by_default: false
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: lylogummy/Anima-3.8B
+      filename: qwen35_4b.safetensors
+      revision: dd05532037130bebe4d94f0d559b968c14ed1279
+      url: https://huggingface.co/lylogummy/Anima-3.8B/resolve/dd05532037130bebe4d94f0d559b968c14ed1279/text_encoders/qwen35_4b.safetensors
+      verified_at: "2026-08-25"
+      provenance_url: https://huggingface.co/lylogummy/Anima-3.8B/blob/dd05532037130bebe4d94f0d559b968c14ed1279/text_encoders/qwen35_4b.safetensors
+    target:
+      relative_path: text_encoders/anima/qwen35_4b.safetensors
+      slot_id: qwen35_text_encoder
+    size_bytes: 4779016600
+    checksum_sha256: ea289be7c916726d09953c7db9971c82b280e694b5d7c47f8ad9ffad6acb54ba
+    repair_policy: replace-managed-component
+    license:
+      id: anima-3.8b-derived-model-license
+      url: https://huggingface.co/lylogummy/Anima-3.8B/blob/dd05532037130bebe4d94f0d559b968c14ed1279/README.md#licenses
+      requires_confirmation: true
+
+  - id: anima-3.8b-progressive-adapter
+    label: Anima 3.8B Progressive Adapter
+    profile: anima
+    type: text_encoder
+    release_class: optional-starter
+    starter_pack: anima-3.8b
+    selected_by_default: false
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: lylogummy/Anima-3.8B
+      filename: Anima-3.8B-expanded_adapter.safetensors
+      revision: dd05532037130bebe4d94f0d559b968c14ed1279
+      url: https://huggingface.co/lylogummy/Anima-3.8B/resolve/dd05532037130bebe4d94f0d559b968c14ed1279/text_encoders/Anima-3.8B-expanded_adapter.safetensors
+      verified_at: "2026-08-25"
+      provenance_url: https://huggingface.co/lylogummy/Anima-3.8B/blob/dd05532037130bebe4d94f0d559b968c14ed1279/text_encoders/Anima-3.8B-expanded_adapter.safetensors
+    target:
+      relative_path: text_encoders/anima/Anima-3.8B-expanded_adapter.safetensors
+      slot_id: progressive_adapter
+    size_bytes: 88131712
+    checksum_sha256: f9851ac4668ce069f7be7cf99755335c98879b463f3d486aaa731083978f0d71
+    repair_policy: replace-managed-component
+    license:
+      id: anima-3.8b-derived-model-license
+      url: https://huggingface.co/lylogummy/Anima-3.8B/blob/dd05532037130bebe4d94f0d559b968c14ed1279/README.md#licenses
+      requires_confirmation: true
+
   - id: anima-lllite-regional-controlnet
     label: Anima LLLite Regional ControlNet
     profile: anima
@@ -524,4 +605,29 @@ dependencies:
     license:
       id: apache-2.0
       url: https://github.com/IDEA-Research/DWPose/blob/main/LICENSE
+      requires_confirmation: false
+
+  - id: minimax-h3-latent-upscaler-3d-fp16
+    label: MiniMax H3 Latent Upscaler 3D FP16
+    profile: minimax-h3
+    type: upscaler
+    release_class: user-owned
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: LBH-123-AI/Minimax_h3_latent_Upscaler
+      filename: minimax_h3_latent_upscaler_3d_fp16.safetensors
+      revision: 13ccf95d85d120bdbc92c05b1247a6e147bf54bf
+      url: https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler/resolve/13ccf95d85d120bdbc92c05b1247a6e147bf54bf/minimax_h3_latent_upscaler_3d_fp16.safetensors?download=true
+      verified_at: "2026-08-24"
+      provenance_url: https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler/tree/13ccf95d85d120bdbc92c05b1247a6e147bf54bf
+    target:
+      relative_path: latent_upscale_models/minimax_h3_latent_upscaler_3d_fp16.safetensors
+      slot_id:
+    size_bytes: 690592672
+    checksum_sha256: 043e5a48e161610ef6c3ea974645220354d06fa618abca15f76d084812eb55c2
+    repair_policy: replace-managed-component
+    license:
+      id: apache-2.0
+      url: https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler/blob/13ccf95d85d120bdbc92c05b1247a6e147bf54bf/README.md#license
       requires_confirmation: false

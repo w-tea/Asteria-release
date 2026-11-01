@@ -1,0 +1,133 @@
+{
+  "schema_version": "asteria.video.mapping.v1",
+  "mapping_id": "minimax-h3-local.v1",
+  "mapping_version": 1,
+  "provider": "local_h3",
+  "adapter_id": "minimax_h3_local",
+  "mode_mappings": {
+    "text": {
+      "provider_task": "t2va",
+      "payload_template": {
+        "task": "${provider_task}",
+        "workflow_template_id": "video_minimax_h3_t2v",
+        "model_profile": "${model_profile}",
+        "model_selection": "${model_selection}",
+        "conditioning": {
+          "prompt": "${prompt}",
+          "negative_prompt": "${negative_prompt}",
+          "audio_prompt": "${audio_prompt}"
+        },
+        "target": {
+          "width": "${width}",
+          "height": "${height}",
+          "aspect_ratio": "${aspect_ratio}",
+          "duration_seconds": "${duration_seconds}",
+          "fps": "${fps}"
+        },
+        "sampling": {
+          "seed": "${seed}",
+          "production": "${sampling}"
+        },
+        "loras": "${loras}",
+        "runtime": {}
+      }
+    },
+    "image": {
+      "provider_task": "fl2va",
+      "payload_template": {
+        "task": "${provider_task}",
+        "workflow_template_id": "video_minimax_h3_i2v",
+        "model_profile": "${model_profile}",
+        "model_selection": "${model_selection}",
+        "conditioning": {
+          "prompt": "${prompt}",
+          "audio_prompt": "${audio_prompt}",
+          "first_frame_artifact_id": "${first_frame_artifact_id}"
+        },
+        "target": {
+          "width": "${width}",
+          "height": "${height}",
+          "duration_seconds": "${duration_seconds}",
+          "fps": "${fps}"
+        },
+        "sampling": {
+          "seed": "${seed}",
+          "production": "${sampling}"
+        },
+        "loras": "${loras}",
+        "runtime": {}
+      }
+    },
+    "first_last": {
+      "provider_task": "fl2va",
+      "payload_template": {
+        "task": "${provider_task}",
+        "workflow_template_id": "asteria_minimax_h3_first_last.v1",
+        "model_profile": "${model_profile}",
+        "model_selection": "${model_selection}",
+        "conditioning": {
+          "prompt": "${prompt}",
+          "audio_prompt": "${audio_prompt}",
+          "first_frame_artifact_id": "${first_frame_artifact_id}",
+          "last_frame_artifact_id": "${last_frame_artifact_id}"
+        },
+        "target": {
+          "width": "${width}",
+          "height": "${height}",
+          "duration_seconds": "${duration_seconds}",
+          "fps": "${fps}"
+        },
+        "sampling": {
+          "seed": "${seed}",
+          "production": "${sampling}"
+        },
+        "loras": "${loras}",
+        "runtime": {}
+      }
+    },
+    "reference": {
+      "provider_task": "ref2va",
+      "payload_template": {
+        "task": "${provider_task}",
+        "workflow_template_id": "asteria_minimax_h3_reference.v1",
+        "model_profile": "${model_profile}",
+        "model_selection": "${model_selection}",
+        "conditioning": {
+          "prompt": "${prompt}",
+          "audio_prompt": "${audio_prompt}",
+          "references": "${references}"
+        },
+        "target": {
+          "width": "${width}",
+          "height": "${height}",
+          "aspect_ratio": "${aspect_ratio}",
+          "duration_seconds": "${duration_seconds}",
+          "fps": "${fps}"
+        },
+        "sampling": {
+          "seed": "${seed}",
+          "production": "${sampling}"
+        },
+        "loras": "${loras}",
+        "runtime": {}
+      }
+    }
+  },
+  "provider_options": {
+    "precision": {
+      "value_type": "enum",
+      "target": "runtime.precision",
+      "allowed_values": ["auto", "bf16", "fp16"]
+    },
+    "offload": {
+      "value_type": "enum",
+      "target": "runtime.offload",
+      "allowed_values": ["auto", "balanced", "maximum"]
+    },
+    "attention_backend": {
+      "value_type": "enum",
+      "target": "runtime.attention_backend",
+      "allowed_values": ["auto", "sdpa"]
+    }
+  }
+}

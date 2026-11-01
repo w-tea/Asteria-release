@@ -17,8 +17,6 @@ param(
 
     [string]$ModelRoot = "",
 
-    [string]$OutputRoot = "",
-
     [string]$ComfyRoot = "",
 
     [switch]$Json
@@ -171,7 +169,6 @@ $resolvedRoots = [ordered]@{}
 $rootInputs = [ordered]@{
     DataRoot = if ($DataRoot) { $DataRoot } else { [System.IO.Path]::Combine($appRootResolved, "data") }
     ModelRoot = if ($ModelRoot) { $ModelRoot } else { [System.IO.Path]::Combine($appRootResolved, "models") }
-    OutputRoot = if ($OutputRoot) { $OutputRoot } else { [System.IO.Path]::Combine($appRootResolved, "outputs") }
 }
 foreach ($entry in $rootInputs.GetEnumerator()) {
     $resolved = Resolve-AbsolutePath $entry.Value
@@ -199,7 +196,6 @@ $env:PYTHONPATH = $backendRoot
 $env:ASTERIA_ROOT_DIR = $appRootResolved
 $env:ASTERIA_DATA_DIR = $resolvedRoots.DataRoot
 $env:ASTERIA_MODEL_DIR = $resolvedRoots.ModelRoot
-$env:ASTERIA_OUTPUT_DIR = $resolvedRoots.OutputRoot
 $env:ASTERIA_MODEL_SELECTIONS_PATH = [System.IO.Path]::Combine($resolvedRoots.DataRoot, "model-selections.json")
 $env:ASTERIA_RELEASE_MANIFEST_PATH = [System.IO.Path]::Combine($appRootResolved, "release-manifest.yaml")
 $env:ASTERIA_DEFAULTS_DIR = [System.IO.Path]::Combine($appRootResolved, "defaults")

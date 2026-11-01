@@ -1,0 +1,351 @@
+{
+  "$id": "asteria.extension.v1",
+  "$defs": {
+    "ActionContribution": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "surface": {
+          "enum": [
+            "generate.inspector_action",
+            "image_edit.inspector_action",
+            "media_library.context_action",
+            "lora_training.action",
+            "merge_studio.action",
+            "backend.api_router",
+            "backend.operation"
+          ],
+          "title": "Surface",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "surface"
+      ],
+      "title": "ActionContribution",
+      "type": "object"
+    },
+    "AsteriaCompatibility": {
+      "additionalProperties": false,
+      "properties": {
+        "minimum": {
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
+          "title": "Minimum",
+          "type": "string"
+        },
+        "maximum_exclusive": {
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
+          "title": "Maximum Exclusive",
+          "type": "string"
+        }
+      },
+      "required": [
+        "minimum",
+        "maximum_exclusive"
+      ],
+      "title": "AsteriaCompatibility",
+      "type": "object"
+    },
+    "ExtensionContributions": {
+      "additionalProperties": false,
+      "properties": {
+        "workspaces": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/WorkspaceContribution"
+          },
+          "title": "Workspaces",
+          "type": "array"
+        },
+        "panels": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PanelContribution"
+          },
+          "title": "Panels",
+          "type": "array"
+        },
+        "actions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActionContribution"
+          },
+          "title": "Actions",
+          "type": "array"
+        }
+      },
+      "title": "ExtensionContributions",
+      "type": "object"
+    },
+    "ExtensionEntrypoints": {
+      "additionalProperties": false,
+      "properties": {
+        "backend": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*:[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Backend",
+          "type": "string"
+        },
+        "frontend": {
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\)(?!.*[<>:\\\"|?*#%\\x00-\\x1f])(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.[^/]*)?(?:/|$))(?!.*[ .](?:/|$)).+\\.(?:js|mjs)$",
+          "title": "Frontend",
+          "type": "string"
+        },
+        "frontend_element": {
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$",
+          "title": "Frontend Element",
+          "type": "string"
+        }
+      },
+      "required": [
+        "backend",
+        "frontend",
+        "frontend_element"
+      ],
+      "title": "ExtensionEntrypoints",
+      "type": "object"
+    },
+    "ExtensionLicense": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "minLength": 1,
+          "pattern": "^https?://",
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "url"
+      ],
+      "title": "ExtensionLicense",
+      "type": "object"
+    },
+    "ExtensionLocalhostPermission": {
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "enum": [
+            "localhost",
+            "127.0.0.1",
+            "::1"
+          ],
+          "title": "Host",
+          "type": "string"
+        },
+        "port": {
+          "maximum": 65535,
+          "minimum": 1,
+          "not": {
+            "enum": [
+              3000,
+              3001,
+              5173,
+              8000,
+              8188
+            ]
+          },
+          "title": "Port",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "host",
+        "port"
+      ],
+      "title": "ExtensionLocalhostPermission",
+      "type": "object"
+    },
+    "ExtensionStandardPermissions": {
+      "additionalProperties": false,
+      "properties": {
+        "asteria": {
+          "default": [],
+          "items": {
+            "const": "prompt.read",
+            "type": "string"
+          },
+          "title": "Asteria",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "network_hosts": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Network Hosts",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "localhost": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExtensionLocalhostPermission"
+          },
+          "title": "Localhost",
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "title": "ExtensionStandardPermissions",
+      "type": "object"
+    },
+    "PanelContribution": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "surface": {
+          "enum": [
+            "generate.inspector_panel",
+            "image_edit.inspector_panel",
+            "media_library.details",
+            "lora_training.tool",
+            "merge_studio.tool",
+            "settings.integration_card"
+          ],
+          "title": "Surface",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "surface"
+      ],
+      "title": "PanelContribution",
+      "type": "object"
+    },
+    "WorkspaceContribution": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "surface": {
+          "const": "independent_workspace",
+          "title": "Surface",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "surface"
+      ],
+      "title": "WorkspaceContribution",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "asteria.extension.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$",
+      "title": "Id",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "version": {
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
+      "title": "Version",
+      "type": "string"
+    },
+    "asteria": {
+      "$ref": "#/$defs/AsteriaCompatibility"
+    },
+    "entrypoints": {
+      "$ref": "#/$defs/ExtensionEntrypoints"
+    },
+    "contributions": {
+      "$ref": "#/$defs/ExtensionContributions"
+    },
+    "execution_level": {
+      "default": "full_access",
+      "enum": [
+        "standard",
+        "full_access"
+      ],
+      "title": "Execution Level",
+      "type": "string"
+    },
+    "permissions": {
+      "$ref": "#/$defs/ExtensionStandardPermissions"
+    },
+    "capabilities": {
+      "default": [],
+      "items": {
+        "enum": [
+          "network",
+          "filesystem",
+          "subprocess"
+        ],
+        "type": "string"
+      },
+      "title": "Capabilities",
+      "type": "array",
+      "uniqueItems": true
+    },
+    "license": {
+      "$ref": "#/$defs/ExtensionLicense"
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "name",
+    "version",
+    "asteria",
+    "entrypoints",
+    "contributions",
+    "license"
+  ],
+  "title": "ExtensionManifest",
+  "type": "object"
+}
