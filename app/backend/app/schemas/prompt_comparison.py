@@ -17,7 +17,7 @@ class PromptComparisonChange(BaseModel):
     polarity: Literal['positive', 'negative'] = 'positive'
     index: int = Field(default=0, ge=0, le=255)
     section: Literal['base', 'character', 'detail'] = 'character'
-    weight: float = Field(default=1, ge=-10, le=10)
+    weight: float = Field(default=1, allow_inf_nan=False)
 
 
 class PromptComparisonRequest(BaseModel):

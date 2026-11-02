@@ -13,7 +13,7 @@ class AsteriaPromptStepSchedule:
                 "model": ("MODEL",),
                 "conditioning_a": ("CONDITIONING",),
                 "conditioning_b": ("CONDITIONING",),
-                "steps": ("INT", {"default": 20, "min": 1, "max": 150}),
+                "steps": ("INT", {"default": 20, "min": 1}),
                 "sampler_name": (samplers,),
                 "scheduler": (schedulers,),
                 "denoise": (
@@ -40,7 +40,7 @@ class AsteriaPromptStepSchedule:
         if len(conditioning_a) != 1 or len(conditioning_b) != 1:
             raise ValueError("asteria_prompt_schedule_conditioning_entry_count")
         step_count = int(steps)
-        if step_count < 1 or step_count > 150:
+        if step_count < 1:
             raise ValueError("asteria_prompt_schedule_step_count")
 
         sampler = KSampler(

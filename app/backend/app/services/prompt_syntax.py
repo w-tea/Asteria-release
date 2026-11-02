@@ -79,6 +79,23 @@ class PromptSyntaxPlan:
         return hashlib.sha256(payload).hexdigest()
 
 
+def literal_prompt_plan(text: str, *, profile_id: str) -> PromptSyntaxPlan:
+    """Keep free-form input intact when Asteria does not transform it."""
+    return PromptSyntaxPlan(
+        profile_id=profile_id,
+        operation="identity",
+        enabled_features=(),
+        segments=(PromptSyntaxSegment(text=text),),
+    )
+
+
+def parse_prompt_syntax_or_literal(text: str, *, profile_id: str) -> PromptSyntaxPlan:
+    try:
+        return parse_prompt_syntax(text, profile_id=profile_id)
+    except PromptSyntaxError:
+        return literal_prompt_plan(text, profile_id=profile_id)
+
+
 def prompt_syntax_plan_from_dict(payload: object) -> PromptSyntaxPlan:
     if not isinstance(payload, dict):
         raise _syntax_error("plan_invalid", "The prompt syntax plan is not an object.", "Parse the prompt again before generating.")
@@ -437,7 +454,7 @@ def _normalize_weight_text(text: str) -> str:
         if char == "\\":
             if index + 1 >= len(text):
                 raise AssertionError("lexical validation must reject unfinished escapes")
-            result.append(text[index + 1])
+            result.append(text[index:index + 2])
             index += 2
             continue
         if quote:

@@ -100,7 +100,7 @@ def seed_resize_request_issues(
         reason = "seed_resize_is_mapped_only_for_sdxl_txt2img"
     elif not width or not height:
         reason = "seed_resize_requires_both_dimensions"
-    elif width < 8 or height < 8 or width > 4096 or height > 4096:
+    elif width < 8 or height < 8:
         reason = "seed_resize_dimensions_out_of_range"
     elif width % 8 or height % 8:
         reason = "seed_resize_dimensions_must_be_multiples_of_8"

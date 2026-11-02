@@ -68,12 +68,12 @@ dependencies:
       provider: bundled
       url: runtime-components/comfyui/Asteria-Prompt-Syntax
       ref: asteria.prompt.step-schedule.v1
-      verified_at: "2026-08-27"
+      verified_at: "2026-11-03"
       provenance_url: bundled://asteria/prompt-syntax/v1.2
     target:
       relative_path: custom_nodes/Asteria-Prompt-Syntax
-    size_bytes: 12693
-    checksum_sha256: 46fbb28e5e53b7e681ad963960c1eb549cc11bc7a95e823ca9d7075d806a5ac0
+    size_bytes: 12661
+    checksum_sha256: 27fbd40756d70df698eabdf87116066a7d6fb6cea45aac775f3a74de081d72bd
     license:
       id: mit
       url: bundled://asteria/license
@@ -114,12 +114,12 @@ dependencies:
       provider: bundled
       url: runtime-components/comfyui/Asteria-Anima-LoRA-Remap
       ref: asteria.anima_lora_remap.v1
-      verified_at: "2026-08-24"
+      verified_at: "2026-11-03"
       provenance_url: bundled://asteria/anima-lora-remap/v1.2
     target:
       relative_path: custom_nodes/Asteria-Anima-LoRA-Remap
-    size_bytes: 14994
-    checksum_sha256: 9d3e61d384287c2a2b5acac252d77f41410bafdc79247199a128a8b6795264f7
+    size_bytes: 14940
+    checksum_sha256: cd737340f2ff39e474bae96afdc1dea440ca9ee42de2b667142f2d7ec477a649
     license:
       id: proprietary
       url: bundled://asteria/license

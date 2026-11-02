@@ -1480,7 +1480,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "class_type": mapping.class_type("set_latent_noise_mask", "SetLatentNoiseMask"),
                 "inputs": {"samples": [encode_node, 0], "mask": [mask_node, 1]},
             }
-            settings["inpaint_runtime"] = "flux1_vae_noise_mask_img2img"
+            settings.setdefault("inpaint_runtime", "flux1_vae_noise_mask_img2img")
             latent_ref: list[str | int] = [noise_mask_node, 0]
         elif settings.get("mode") == "img2img":
             init_image = settings.get("init_image_path")
@@ -1558,6 +1558,18 @@ class ComfyTxt2ImgWorkflowBuilder:
                 },
             }
             hires_sampling_ref = [hires_sampling_node, 0]
+        hires_conditioning_ref = None
+        if self._uses_comfy_hires(settings) and (
+            settings.get("hires_prompt") or settings.get("hires_distilled_cfg_scale")
+        ):
+            hires_conditioning_node = str(max(int(node_id) for node_id in workflow) + 1)
+            workflow[hires_conditioning_node] = deepcopy(workflow[conditioning_node])
+            workflow[hires_conditioning_node]["inputs"].update(
+                clip_l=settings.get("hires_prompt") or request["expanded_prompt"],
+                t5xxl=settings.get("hires_prompt") or request["expanded_prompt"],
+                guidance=settings.get("hires_distilled_cfg_scale") or settings.get("distilled_cfg_scale", 3.5),
+            )
+            hires_conditioning_ref = [hires_conditioning_node, 0]
         return self._build_custom_sampler_tail(
             workflow,
             settings,
@@ -1567,6 +1579,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             vae_ref=[vae_node, 0],
             mapping=mapping,
             hires_model_ref=hires_sampling_ref,
+            hires_conditioning_ref=hires_conditioning_ref,
         )
 
     def _build_flux2(self, request: dict) -> dict:
@@ -1667,7 +1680,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 "class_type": mapping.class_type("set_latent_noise_mask", "SetLatentNoiseMask"),
                 "inputs": {"samples": [encode_node, 0], "mask": [mask_node, 1]},
             }
-            settings["inpaint_runtime"] = "flux2_vae_noise_mask_img2img"
+            settings.setdefault("inpaint_runtime", "flux2_vae_noise_mask_img2img")
             latent_ref: list[str | int] = [noise_mask_node, 0]
         elif settings.get("mode") == "img2img":
             init_image = settings.get("init_image_path")
@@ -1729,6 +1742,18 @@ class ComfyTxt2ImgWorkflowBuilder:
                 )
                 hires_model_ref = [hires_node_id, 0]
         workflow[conditioning_node]["inputs"]["clip"] = clip_ref
+        hires_conditioning_ref = None
+        if self._uses_comfy_hires(settings) and (settings.get("hires_prompt") or settings.get("hires_cfg_scale")):
+            next_id = max(int(node_id) for node_id in workflow) + 1
+            hires_conditioning_node, hires_guidance_node = str(next_id), str(next_id + 1)
+            workflow[hires_conditioning_node] = deepcopy(workflow[conditioning_node])
+            workflow[hires_conditioning_node]["inputs"]["text"] = settings.get("hires_prompt") or request["expanded_prompt"]
+            workflow[hires_guidance_node] = deepcopy(workflow[guidance_node])
+            workflow[hires_guidance_node]["inputs"].update(
+                conditioning=[hires_conditioning_node, 0],
+                guidance=settings.get("hires_cfg_scale") or settings.get("cfg_scale", 3.5),
+            )
+            hires_conditioning_ref = [hires_guidance_node, 0]
         return self._build_custom_sampler_tail(
             workflow,
             settings,
@@ -1739,6 +1764,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             mapping=mapping,
             scheduler_kind="flux2",
             hires_model_ref=hires_model_ref,
+            hires_conditioning_ref=hires_conditioning_ref,
         )
 
     def _build_anima(self, request: dict) -> dict:
@@ -1878,7 +1904,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                         "adapter_strength": negative_strength,
                     },
                 }
-                if negative_strength > 0
+                if negative_strength != 0
                 else {
                     "class_type": mapping.class_type(
                         "native_text_encode", "CLIPTextEncode"
@@ -2015,7 +2041,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                         "mask": [mask_node, 1],
                     },
                 }
-                settings["inpaint_runtime"] = "anima_vae_masked_img2img"
+                settings.setdefault("inpaint_runtime", "anima_vae_masked_img2img")
             else:
                 workflow[latent_node] = {
                     "class_type": mapping.class_type("vae_encode", "VAEEncode"),
@@ -2164,7 +2190,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 workflow, next_id
             )
             if is_anima_3_8b:
-                if negative_strength > 0:
+                if negative_strength != 0:
                     workflow[hires_negative_node] = {
                         "class_type": mapping.class_type(
                             "qwen35_unified_prompt", "AnimaQwen35UnifiedPrompt"
@@ -2233,6 +2259,27 @@ class ComfyTxt2ImgWorkflowBuilder:
                 ) = spatial_hires
         else:
             hires_execution_state_ref = None
+        if self._uses_comfy_hires(settings) and request.get("_spatial_runtime_context") is None:
+            for field, positive in (("hires_prompt", True), ("hires_negative_prompt", False)):
+                text = settings.get(field)
+                if not text:
+                    continue
+                node_id = str(max(int(key) for key in workflow) + 1)
+                if is_anima_3_8b:
+                    # The accepted 3.8B second pass uses native conditioning.
+                    workflow[node_id] = {
+                        "class_type": mapping.class_type("native_text_encode", "CLIPTextEncode"),
+                        "inputs": {"clip": clip_ref, "text": text},
+                    }
+                else:
+                    workflow[node_id] = {
+                        "class_type": mapping.class_type("conditioning", "TextEncodeQwenImageEdit"),
+                        "inputs": {"clip": clip_ref, "prompt": text, "vae": [vae_node, 0]},
+                    }
+                if positive:
+                    hires_positive_ref = [node_id, 0]
+                else:
+                    hires_negative_ref = [node_id, 0]
         workflow = self._build_custom_sampler_tail(
             workflow,
             settings,
@@ -2249,7 +2296,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                 if hires_negative_ref is not None
                 else (
                     [negative_conditioning_node, 1]
-                    if is_anima_3_8b and negative_strength > 0
+                    if is_anima_3_8b and negative_strength != 0
                     else None
                 )
             ),
@@ -3978,7 +4025,10 @@ class ComfyGenerationRuntime:
                 settings["width"], settings["height"] = _size_tuple(settings["inpaint_full_size"])
             return result
         if self._uses_topaz_hires(request):
-            return self._generate_topaz_hires(request, output_dir)
+            result = self._generate_topaz_hires(request, output_dir)
+            if only_masked:
+                settings["width"], settings["height"] = _size_tuple(settings["inpaint_full_size"])
+            return result
         self._prepare_spatial_runtime_masks(request)
         result = self._generate(request, output_dir)
         if only_masked:
@@ -4003,10 +4053,8 @@ class ComfyGenerationRuntime:
     def _ensure_supported_only_masked_runtime_request(self, request: dict) -> None:
         settings = request.get("settings", {})
         supported = (
-            request.get("profile") == "sdxl"
+            request.get("profile") in {"sdxl", "anima", "flux1", "flux2"}
             and str(settings.get("masked_content") or "original").strip().lower() == "original"
-            and not settings.get("hires_enabled")
-            and not settings.get("tiling")
         )
         if not supported:
             raise RuntimeErrorResponse(api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING)
@@ -4022,6 +4070,7 @@ class ComfyGenerationRuntime:
                 output_dir,
                 mask_blur=int(settings.get("mask_blur") or 0),
                 requested_size=(int(settings.get("width") or 0), int(settings.get("height") or 0)),
+                alignment=16 if request.get("profile") == "flux2" else 8,
             )
         except InpaintRegionError as exc:
             raise RuntimeErrorResponse(exc.code) from None
@@ -4037,7 +4086,7 @@ class ComfyGenerationRuntime:
         settings["width"], settings["height"] = prepared.region.size
         settings["init_image_path"] = self.client.upload_image(prepared.init_crop_path)
         settings["mask_image_path"] = self.client.upload_image(prepared.comfy_mask_crop_path)
-        settings["inpaint_runtime"] = "sdxl_only_masked_crop_composite"
+        settings["inpaint_runtime"] = f"{request['profile']}_only_masked_crop_composite"
         settings["inpaint_composited"] = False
 
     def generate_remaster(self, request: dict, output_dir: Path) -> dict:
@@ -4311,8 +4360,13 @@ class ComfyGenerationRuntime:
                     image_outputs.append({'path': str(path), 'batch_index': batch_index,
                                           'image_index': image_index, 'seed': seed})
                     self._raise_if_generation_cancelled(request, [*output_paths, *stage_paths])
+                    if settings.get("tiling"):
+                        self._apply_tiling_postprocess(path, settings)
+                        if settings.get("mode") == "inpaint":
+                            settings["tiling_scope"] = "masked_region"
+                        self._merge_builder_runtime_settings(request, iteration_request)
                     if settings.get("mode") == "inpaint":
-                        if settings.get("inpaint_runtime") == "sdxl_only_masked_crop_composite":
+                        if str(settings.get("inpaint_runtime") or "").endswith("_only_masked_crop_composite"):
                             try:
                                 compose_only_masked_output(
                                     path,
@@ -4329,9 +4383,6 @@ class ComfyGenerationRuntime:
                                 raise RuntimeErrorResponse(exc.code) from None
                         else:
                             self._composite_inpaint_output(path, settings)
-                        self._merge_builder_runtime_settings(request, iteration_request)
-                    if settings.get("tiling"):
-                        self._apply_tiling_postprocess(path, settings)
                         self._merge_builder_runtime_settings(request, iteration_request)
                     if str(image.get("node_id", "")) in primary_node_ids:
                         primary_outputs.append(
@@ -4969,9 +5020,9 @@ class ComfyGenerationRuntime:
                 source_width, source_height = image.size
         except OSError as exc:
             raise RuntimeErrorResponse(f"Failed to read init image dimensions: {path}") from exc
-        if not (256 <= source_width <= 4096 and 256 <= source_height <= 4096):
-            raise RuntimeErrorResponse("Init image dimensions must be between 256 and 4096 pixels.")
         alignment = 16 if request.get("profile") == "flux2" else 8
+        if min(source_width, source_height) < alignment:
+            raise RuntimeErrorResponse(f"Init image dimensions must be at least {alignment} pixels.")
         effective_width = source_width // alignment * alignment
         effective_height = source_height // alignment * alignment
         settings["requested_base_size"] = {

@@ -99,33 +99,33 @@ ResourceReference = Annotated[
 class CompatibleTxt2ImgSettings(StrictModel):
     profile: str | None = None
     runtime_adapter: str | None = None
-    steps: int | None = Field(default=None, ge=1, le=150)
-    cfg_scale: float | None = Field(default=None, ge=0, le=30)
-    distilled_cfg_scale: float | None = Field(default=None, ge=0, le=30)
-    width: int | None = Field(default=None, ge=1, le=8192)
-    height: int | None = Field(default=None, ge=1, le=8192)
-    batch_size: int | None = Field(default=None, ge=1, le=16)
-    batch_count: int | None = Field(default=None, ge=1, le=100)
+    steps: int | None = Field(default=None, ge=1)
+    cfg_scale: float | None = Field(default=None, allow_inf_nan=False)
+    distilled_cfg_scale: float | None = Field(default=None, allow_inf_nan=False)
+    width: int | None = Field(default=None, ge=1)
+    height: int | None = Field(default=None, ge=1)
+    batch_size: int | None = Field(default=None, ge=1)
+    batch_count: int | None = Field(default=None, ge=1)
     sampler: str | None = None
     scheduler: str | None = None
     restore_faces: bool | None = None
     tiling: bool | None = None
-    clip_skip: int | None = Field(default=None, ge=1, le=12)
+    clip_skip: int | None = Field(default=None, ge=1)
     refiner_enabled: bool | None = None
     refiner_switch_at: float | None = Field(default=None, ge=0, le=1)
     hires_enabled: bool | None = None
     hires_denoising_strength: float | None = Field(default=None, ge=0, le=1)
-    hires_scale: float | None = Field(default=None, ge=1, le=8)
-    hires_steps: int | None = Field(default=None, ge=0, le=150)
-    hires_resize_width: int | None = Field(default=None, ge=0, le=8192)
-    hires_resize_height: int | None = Field(default=None, ge=0, le=8192)
+    hires_scale: float | None = Field(default=None, gt=0, allow_inf_nan=False)
+    hires_steps: int | None = Field(default=None, ge=0)
+    hires_resize_width: int | None = Field(default=None, ge=0)
+    hires_resize_height: int | None = Field(default=None, ge=0)
     hires_upscaler: str | None = None
     hires_sampler: str | None = None
     hires_scheduler: str | None = None
     hires_prompt: str | None = None
     hires_negative_prompt: str | None = None
-    hires_cfg_scale: float | None = Field(default=None, ge=0, le=30)
-    hires_distilled_cfg_scale: float | None = Field(default=None, ge=0, le=30)
+    hires_cfg_scale: float | None = Field(default=None, allow_inf_nan=False)
+    hires_distilled_cfg_scale: float | None = Field(default=None, allow_inf_nan=False)
     hires_keep_first_pass: bool | None = None
     detailer_units: list[dict[str, Any]] | None = None
     topaz_enabled: bool | None = None

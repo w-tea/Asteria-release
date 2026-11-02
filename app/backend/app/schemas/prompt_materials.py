@@ -15,8 +15,8 @@ class MaterialAsset(MaterialModel):
     kind: Literal['lora', 'embedding']
     path: str = Field(min_length=1, max_length=4096)
     stable_model_id: str | None = Field(default=None, max_length=256)
-    weight: float = Field(default=1, ge=-10, le=10, allow_inf_nan=False)
-    clip_weight: float = Field(default=1, ge=-10, le=10, allow_inf_nan=False)
+    weight: float = Field(default=1, allow_inf_nan=False)
+    clip_weight: float = Field(default=1, allow_inf_nan=False)
 
 
 class MaterialSource(MaterialModel):

@@ -524,14 +524,6 @@ def validate_remaster_request(
         raise RemasterValidationError(api_errors.REMASTER_SOURCE_INVALID) from exc
 
     source_width, source_height = source_size
-    if not (256 <= source_width <= 4096 and 256 <= source_height <= 4096):
-        raise RemasterValidationError(
-            api_errors.REMASTER_DIMENSIONS_UNSUPPORTED,
-            stage="source",
-            width=source_width,
-            height=source_height,
-        )
-
     settings = resolve_remaster_settings(request.profile, request.remaster)
     option = upscaler_option(settings.anchor_upscaler)
     model_name = upscaler_model_name(settings.anchor_upscaler)
@@ -548,12 +540,7 @@ def validate_remaster_request(
         _round_to_step(target_size[1] * settings.buffer_ratio, dimension_step),
     )
     anchor_size = (source_width * 4, source_height * 4)
-    if (
-        min(buffer_size) < 8
-        or max(target_size) > 8192
-        or target_size[0] * target_size[1] > config.remaster_max_final_pixels
-        or anchor_size[0] * anchor_size[1] > config.remaster_max_anchor_pixels
-    ):
+    if min(buffer_size) < dimension_step:
         raise RemasterValidationError(
             api_errors.REMASTER_DIMENSIONS_UNSUPPORTED,
             source_size=source_size,

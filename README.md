@@ -1,4 +1,4 @@
-# Asteria V1.2.1.1 Windows Portable
+# Asteria V1.2.1.2 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -28,6 +28,17 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
 
 > **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトをベース・キャラクター・詳細に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
+
+### V1.2.1.2の修正
+
+- VAE内蔵のSDXL Checkpointは、別のVAEファイルを選ばずに生成できます。Anima／Fluxでは必要なVAEを引き続き選んでください。
+
+- Animaを含む各モデルで、強調・弱調などのプロンプト記法を入力できます。Asteriaで処理しない記法は原文のまま生成エンジンへ渡します。入力できることと、狙った効果が得られることは別です。
+- Steps、CFG、画像サイズ、batch数などに設けていたAsteria独自の上限を撤去しました。大きな値ほど処理時間やメモリが必要です。生成エンジン側の対応範囲や、実ファイル・入力形式の確認は維持します。
+- Anima／FluxのHires専用プロンプト、AnimaのHires専用ネガティブを二段目へ反映します。Animaの別モデルをフォルダー名だけで拒否しません。
+- 「マスク部分のみ」をSDXL・Anima・Fluxの既存inpaint経路へ接続し、Hires・タイルとの併用にも対応します。実行できない機能はモデルに応じて非表示にし、切り替え前の非対応設定を送信しません。
+
+V1.2.1.1までの修正を含みます。Krea 2／MOSS-Image対応や次版の画面再設計は含みません。
 
 ### V1.2.1.1の修正
 
@@ -355,6 +366,17 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
 
 > **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
+
+### V1.2.1.2 fixes
+
+- SDXL checkpoints with an embedded VAE no longer require a separate VAE file. Anima and Flux still require their compatible VAE.
+
+- Prompt notation, including emphasis and de-emphasis, can be entered for Anima and other models. Notation that Asteria does not process is passed to the generation engine unchanged. Acceptance does not guarantee the intended effect.
+- Removed Asteria-only ceilings on steps, CFG, image dimensions and batch counts. Large values require more time and memory. Engine constraints, valid input formats and actual asset checks still apply.
+- Hires uses its separate positive prompt for Anima and Flux, and its separate negative prompt for Anima. Anima Hires model selection no longer depends on a folder-name prefix.
+- Connected Only masked to the existing SDXL, Anima and Flux inpaint paths, including Hires and Tiling. Inapplicable controls are hidden, and old incompatible settings are excluded from new requests after a model switch.
+
+Includes the fixes through V1.2.1.1. Krea 2, MOSS-Image and the next-version interface redesign are not included.
 
 ### V1.2.1.1 fix
 

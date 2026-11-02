@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app.services.prompt_syntax import PromptSyntaxPlan, parse_prompt_syntax
+from app.services.prompt_syntax import PromptSyntaxPlan, parse_prompt_syntax_or_literal
 from app.schemas.prompt_choices import PromptChoicePins
 from app.services.prompt_choices import PromptChoice, expand_choices
 
@@ -225,7 +225,7 @@ def prepare_prompt(
     expansion = expand_dynamic_prompt(prompt, seed=seed, wildcard_dir=wildcard_dir)
     loras = tuple(extract_loras(expansion.expanded))
     embeddings = tuple(extract_embeddings(expansion.expanded, known_embedding_names or []))
-    syntax = parse_prompt_syntax(expansion.expanded, profile_id=profile_id)
+    syntax = parse_prompt_syntax_or_literal(expansion.expanded, profile_id=profile_id)
     return PreparedPrompt(
         expansion=expansion,
         loras=loras,
