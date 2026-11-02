@@ -7,10 +7,10 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from app.schemas.extensions import ASTERIA_EXTENSION_SCHEMA_ID, ExtensionManifest, compare_semver
+from app.schemas.extensions import ASTERIA_EXTENSION_SCHEMA_ID, ExtensionManifest, compare_application_version
 
 
-ASTERIA_VERSION = "1.2.1"
+ASTERIA_VERSION = "1.2.1.1"
 
 
 class ExtensionManifestError(ValueError):
@@ -28,8 +28,8 @@ def validate_extension_manifest(
     # JSON arrays without permitting Python-side coercion of scalar values.
     manifest = ExtensionManifest.model_validate_json(json.dumps(payload))
     if (
-        compare_semver(asteria_version, manifest.asteria.minimum) < 0
-        or compare_semver(asteria_version, manifest.asteria.maximum_exclusive) >= 0
+        compare_application_version(asteria_version, manifest.asteria.minimum) < 0
+        or compare_application_version(asteria_version, manifest.asteria.maximum_exclusive) >= 0
     ):
         raise ExtensionManifestError(
             f"extension is not compatible with Asteria {asteria_version}",

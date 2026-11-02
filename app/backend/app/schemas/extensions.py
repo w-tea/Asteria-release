@@ -20,6 +20,9 @@ SEMVER_PATTERN = (
     r"(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
 )
 _SEMVER_RE = re.compile(SEMVER_PATTERN)
+_HOTFIX_VERSION_PATTERN = r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
+APPLICATION_VERSION_PATTERN = rf"(?:{SEMVER_PATTERN}|^{_HOTFIX_VERSION_PATTERN}$)"
+_HOTFIX_VERSION_RE = re.compile(_HOTFIX_VERSION_PATTERN)
 _EXTENSION_ID_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$")
 _CONTRIBUTION_ID_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$")
 _SAFE_CODE_RE = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,127}$")
@@ -42,6 +45,7 @@ _WINDOWS_UNSAFE_PATH_CHARS = frozenset('<>:"\\|?*#%')
 
 
 StrictSemVer = Annotated[str, Field(pattern=SEMVER_PATTERN)]
+StrictApplicationVersion = Annotated[str, Field(pattern=APPLICATION_VERSION_PATTERN)]
 Capability = Literal["network", "filesystem", "subprocess"]
 ExecutionLevel = Literal["standard", "full_access"]
 ASTERIA_RESERVED_EXTENSION_LOCALHOST_PORTS = frozenset({3000, 3001, 5173, 8000, 8188})
@@ -114,6 +118,26 @@ def compare_semver(left: str, right: str) -> int:
             return -1 if left_numeric else 1
         return -1 if left_part < right_part else 1
     return -1 if len(left_parts) < len(right_parts) else 1
+
+
+def validate_application_version(value: str) -> str:
+    if _HOTFIX_VERSION_RE.fullmatch(value):
+        return value
+    return validate_semver(value)
+
+
+def compare_application_version(left: str, right: str) -> int:
+    def parts(value: str) -> tuple[str, int]:
+        validate_application_version(value)
+        if _HOTFIX_VERSION_RE.fullmatch(value):
+            base, revision = value.rsplit(".", 1)
+            return base, int(revision)
+        return value, 0
+
+    left_base, left_revision = parts(left)
+    right_base, right_revision = parts(right)
+    comparison = compare_semver(left_base, right_base)
+    return comparison or (left_revision > right_revision) - (left_revision < right_revision)
 
 
 class AsteriaCompatibility(_StrictFrozenModel):

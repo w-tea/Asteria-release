@@ -19,7 +19,7 @@ from app.schemas.extension_catalog import (
     ExtensionCatalogEntry,
     ExtensionCatalogRuntimeCompatibility,
 )
-from app.schemas.extensions import compare_semver, validate_semver
+from app.schemas.extensions import compare_application_version, validate_application_version
 from app.services.atomic_json import write_json_atomic
 from app.services.extension_sources import (
     ExtensionSourceDescriptor,
@@ -91,7 +91,7 @@ class ExtensionCatalogService:
         self.cache_root = cache_root
         self.cache_path = cache_root / "catalog-cache-v1.json"
         self.catalog_url = _validated_https_url(catalog_url)
-        self.asteria_version = validate_semver(asteria_version)
+        self.asteria_version = validate_application_version(asteria_version)
         self.fetcher = fetcher or _fetch_catalog
         self.clock = clock or (lambda: datetime.now(UTC))
         self._lock = RLock()
@@ -170,9 +170,9 @@ class ExtensionCatalogService:
         entry: ExtensionCatalogEntry,
     ) -> ExtensionCatalogRuntimeCompatibility:
         status: CatalogCompatibilityStatus
-        if compare_semver(self.asteria_version, entry.asteria.minimum) < 0:
+        if compare_application_version(self.asteria_version, entry.asteria.minimum) < 0:
             status = "requires_newer_asteria"
-        elif compare_semver(
+        elif compare_application_version(
             self.asteria_version,
             entry.asteria.maximum_exclusive,
         ) >= 0:

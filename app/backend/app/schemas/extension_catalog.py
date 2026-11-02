@@ -12,8 +12,10 @@ from app.schemas.extensions import (
     ExecutionLevel,
     ExtensionStandardPermissions,
     StrictSemVer,
+    StrictApplicationVersion,
     validate_extension_id,
     validate_semver,
+    validate_application_version,
 )
 
 
@@ -225,11 +227,16 @@ class ExtensionCatalogEntry(_StrictFrozenModel):
 
 class ExtensionCatalogRuntimeCompatibility(_StrictFrozenModel):
     status: CatalogCompatibilityStatus
-    current: StrictSemVer
+    current: StrictApplicationVersion
     minimum: StrictSemVer
     maximum_exclusive: StrictSemVer
 
-    @field_validator("current", "minimum", "maximum_exclusive")
+    @field_validator("current")
+    @classmethod
+    def _validate_current(cls, value: str) -> str:
+        return validate_application_version(value)
+
+    @field_validator("minimum", "maximum_exclusive")
     @classmethod
     def _validate_versions(cls, value: str) -> str:
         return validate_semver(value)
