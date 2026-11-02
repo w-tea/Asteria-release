@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from app.schemas.extensions import ASTERIA_EXTENSION_SCHEMA_ID, ExtensionManifest, compare_application_version
 
 
-ASTERIA_VERSION = "1.2.1.1"
+ASTERIA_VERSION = "1.2.1.2"
 
 
 class ExtensionManifestError(ValueError):

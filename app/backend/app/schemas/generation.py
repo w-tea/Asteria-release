@@ -32,7 +32,7 @@ class ControlNetUnit(BaseModel):
     model: str = ""
     preprocessor: str = "none"
     image_path: str = ""
-    weight: float = Field(default=1.0, ge=0, le=2)
+    weight: float = Field(default=1.0, allow_inf_nan=False)
     guidance_start: float = Field(default=0.0, ge=0, le=1)
     guidance_end: float = Field(default=1.0, ge=0, le=1)
     control_mode: ControlNetMode = "Balanced"
@@ -50,7 +50,7 @@ class AnimaLLLiteUnit(BaseModel):
     model: str = ""
     image_path: str = ""
     mask_image_path: str = ""
-    strength: float = Field(default=1.0, ge=-10, le=10)
+    strength: float = Field(default=1.0, allow_inf_nan=False)
     guidance_start: float = Field(default=0.0, ge=0, le=1)
     guidance_end: float = Field(default=0.45, ge=0, le=1)
     preserve_wrapper: bool = True
@@ -70,15 +70,15 @@ class DetailerUnit(BaseModel):
     prompt: str = ""
     negative_prompt: str = ""
     confidence: float = Field(default=0.3, ge=0, le=1)
-    mask_blur: int = Field(default=4, ge=0, le=64)
+    mask_blur: int = Field(default=4, ge=0)
     denoising_strength: float = Field(default=0.4, ge=0, le=1)
     inpaint_only_masked: bool = True
-    guide_size: int = Field(default=512, ge=64, le=2048)
-    max_size: int = Field(default=1024, ge=64, le=4096)
-    bbox_dilation: int = Field(default=10, ge=0, le=256)
-    bbox_crop_factor: float = Field(default=3.0, ge=1, le=10)
-    steps: int = Field(default=0, ge=0, le=150)
-    cfg_scale: float = Field(default=0.0, ge=0, le=30)
+    guide_size: int = Field(default=512, ge=1)
+    max_size: int = Field(default=1024, ge=1)
+    bbox_dilation: int = 10
+    bbox_crop_factor: float = Field(default=3.0, gt=0, allow_inf_nan=False)
+    steps: int = Field(default=0, ge=0)
+    cfg_scale: float = Field(default=0.0, allow_inf_nan=False)
     sampler: str = ""
     scheduler: str = ""
 
@@ -122,7 +122,7 @@ class PromptSyntaxPassPlanRecord(BaseModel):
     node_contract_revision: Literal["asteria.prompt.step-schedule.v1"]
     profile_id: str
     pass_id: Literal["base", "hires"]
-    steps: int = Field(ge=1, le=150)
+    steps: int = Field(ge=1)
     sampler: str
     scheduler: str
     denoise: float = Field(ge=0, le=1)
@@ -188,50 +188,50 @@ class Txt2ImgRequest(BaseModel):
 
     profile: str = "sdxl"
     runtime: str | None = None
-    prompt: str = Field(min_length=1)
+    prompt: str
     prompt_input: PromptInput | None = None
     prompt_pins: PromptChoicePins | None = None
     prompt_layout: PromptLayout | None = None
     negative_prompt: str = ""
-    steps: int = Field(default=30, ge=1, le=150)
-    cfg_scale: float = Field(default=6.5, ge=1, le=30)
-    distilled_cfg_scale: float = Field(default=3.5, ge=0, le=30)
+    steps: int = Field(default=30, ge=1)
+    cfg_scale: float = Field(default=6.5, allow_inf_nan=False)
+    distilled_cfg_scale: float = Field(default=3.5, allow_inf_nan=False)
     seed: int = -1
     subseed: int = -1
     subseed_strength: float = Field(default=0.0, ge=0, le=1)
-    seed_resize_from_w: int = Field(default=0, ge=0, le=4096)
-    seed_resize_from_h: int = Field(default=0, ge=0, le=4096)
-    width: int = Field(default=832, ge=256, le=4096)
-    height: int = Field(default=1216, ge=256, le=4096)
-    batch_size: int = Field(default=1, ge=1, le=16)
-    batch_count: int = Field(default=1, ge=1, le=100)
+    seed_resize_from_w: int = Field(default=0, ge=0)
+    seed_resize_from_h: int = Field(default=0, ge=0)
+    width: int = Field(default=832, ge=1)
+    height: int = Field(default=1216, ge=1)
+    batch_size: int = Field(default=1, ge=1)
+    batch_count: int = Field(default=1, ge=1)
     sampler: str = "Euler a"
     scheduler: str = "Automatic"
     restore_faces: bool = False
     tiling: bool = False
     vae: str = "Automatic"
-    clip_skip: int = Field(default=2, ge=1, le=12)
+    clip_skip: int = Field(default=2, ge=1)
     refiner_enabled: bool = True
     refiner_checkpoint: str = ""
     refiner_switch_at: float = Field(default=0.8, ge=0, le=1)
     hires_enabled: bool = True
     hires_denoising_strength: float = Field(default=0.38, ge=0, le=1)
-    hires_scale: float = Field(default=2.0, ge=1, le=8)
-    hires_steps: int = Field(default=18, ge=0, le=150)
-    hires_resize_width: int = Field(default=0, ge=0, le=8192)
-    hires_resize_height: int = Field(default=0, ge=0, le=8192)
+    hires_scale: float = Field(default=2.0, gt=0, allow_inf_nan=False)
+    hires_steps: int = Field(default=18, ge=0)
+    hires_resize_width: int = Field(default=0, ge=0)
+    hires_resize_height: int = Field(default=0, ge=0)
     hires_upscaler: str = "R-ESGAN4x"
     hires_checkpoint: str = "Use same checkpoint"
     hires_sampler: str = "Use same sampler"
     hires_scheduler: str = "Use same scheduler"
     hires_prompt: str = ""
     hires_negative_prompt: str = ""
-    hires_cfg_scale: float = Field(default=0.0, ge=0, le=30)
-    hires_distilled_cfg_scale: float = Field(default=0.0, ge=0, le=30)
+    hires_cfg_scale: float = Field(default=0.0, allow_inf_nan=False)
+    hires_distilled_cfg_scale: float = Field(default=0.0, allow_inf_nan=False)
     hires_keep_first_pass: bool = False
     record_enhancement_stages: bool = False
     record_making_video: bool = False
-    record_branch_step: int | None = Field(default=None, ge=1, le=149, strict=True)
+    record_branch_step: int | None = Field(default=None, ge=1, strict=True)
     record_word_masks: bool = False
     branch_source_id: int | None = Field(default=None, ge=1, strict=True)
     hires_noise_mode: str = ""
@@ -249,8 +249,8 @@ class Txt2ImgRequest(BaseModel):
     loras: list[LoraSelection] = Field(default_factory=list)
     controlnet_units: list[ControlNetUnit] = Field(default_factory=list)
     anima_lllite_units: list[AnimaLLLiteUnit] = Field(default_factory=list)
-    anima_qwen35_adapter_strength: float = Field(default=1.0, ge=0, le=2)
-    anima_qwen35_negative_adapter_strength: float = Field(default=0.0, ge=0, le=2)
+    anima_qwen35_adapter_strength: float = Field(default=1.0, allow_inf_nan=False)
+    anima_qwen35_negative_adapter_strength: float = Field(default=0.0, allow_inf_nan=False)
     detailer_units: list[DetailerUnit] = Field(default_factory=list)
     model_slot_overrides: dict[str, str] = Field(default_factory=dict)
     remaster: RemasterSettingsInput = Field(default_factory=RemasterSettingsInput)
@@ -310,7 +310,7 @@ class InpaintRequest(Img2ImgRequest):
     _spatial_generation_mode: ClassVar[Literal["inpaint"]] = "inpaint"
 
     mask_image_path: str = Field(min_length=1)
-    mask_blur: int = Field(default=4, ge=0, le=64)
+    mask_blur: int = Field(default=4, ge=0)
     masked_content: str = "original"
     inpaint_area: str = "whole_picture"
 

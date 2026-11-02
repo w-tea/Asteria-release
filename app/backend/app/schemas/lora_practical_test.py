@@ -20,7 +20,7 @@ class PracticalTestRequest(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     common_prompt: str = Field(min_length=1, max_length=4000)
     learned_features: str = Field(min_length=1, max_length=2000)
-    weight: float = Field(default=0.8, ge=-10, le=10)
+    weight: float = Field(default=0.8, allow_inf_nan=False)
     seed_count: int = Field(default=2, ge=2, le=4)
     reviewed_training: Literal[True]
     training_fingerprint: str = Field(pattern=r'^[a-f0-9]{64}$')

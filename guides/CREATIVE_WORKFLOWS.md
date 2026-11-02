@@ -12,6 +12,10 @@ AIへ依頼する機能は、先に設定画面で接続先を用意してくだ
 
 ### 1. プロンプトを組み立てる
 
+`(blue dress:1.5)`のような記法は、Animaを含むどのモデルでも入力できます。Asteriaが処理しない記法は、原文のまま生成エンジンへ渡します。重みや記法の効果はモデル・エンジンごとに異なり、入力したとおりの描写を保証するものではありません。プロンプトは空のままでも生成できます。
+
+Steps、CFG、画像サイズ、batch数にはAsteria独自の上限を設けていません。大きな値は処理時間とメモリ使用量が増えます。画像寸法の整列や有限値など、実際の処理形式に必要な条件は維持します。
+
 Generateの「AIプロンプト作成」では、描きたい場面を日本語などで説明し、ベース・キャラクター・詳細に分けたプロンプト案を作れます。
 
 1. AI接続先を選び、「描きたい場面」と任意の入れたい特徴や語句を入力します。
@@ -146,6 +150,10 @@ Configure an AI connection in Settings before using AI-assisted actions. Image r
 Use Search models at the top of Generate to filter a large model list by model or folder name. Editing the search keeps the selected model. Select an Advanced Style to read its full name in the detail panel when the card shortens it.
 
 ### 1. Assemble prompts
+
+You can enter notation such as `(blue dress:1.5)` for Anima and other models. Notation Asteria does not process is passed unchanged to the generation engine. Its effect depends on the model and engine; accepting the text does not guarantee a particular depiction. An empty prompt is also allowed.
+
+Steps, CFG, image dimensions and batch counts have no Asteria-only ceiling. Larger values require more time and memory. Actual format requirements, including latent alignment and finite numbers, remain in place.
 
 AI prompt builder turns a scene description and optional Details to include into Base, Character, Details, and negative-prompt suggestions. Choose an AI connection, request a proposal, and review or edit it before applying it. Applying replaces the three positive sections and switches to sectioned input, while preserving their names and order. Negative replacement is optional. Pinned wildcard choices are cleared. Requesting a proposal alone never changes your current text.
 

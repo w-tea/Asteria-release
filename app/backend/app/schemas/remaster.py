@@ -19,12 +19,12 @@ LatentInterpolation = Literal["bilinear", "bicubic", "nearest-exact"]
 
 class RemasterSettingsInput(BaseModel):
     enabled: bool = False
-    target_scale: float = Field(default=2.0, ge=1.0, le=4.0)
+    target_scale: float = Field(default=2.0, ge=1.0, allow_inf_nan=False)
     anchor_upscaler: str = "R-ESGAN4x"
     buffer_ratio: float = Field(default=0.75, ge=0.5, le=0.95)
     latent_interpolation: LatentInterpolation = "bilinear"
     denoise: float | None = Field(default=None, ge=0, le=1)
-    steps: int = Field(default=20, ge=1, le=150)
+    steps: int = Field(default=20, ge=1)
     sampler: str = ""
     scheduler: str = ""
     keep_original: bool = True
@@ -83,11 +83,11 @@ class RemasterRequest(BaseModel):
     source_output_index: int | None = None
     profile: RemasterProfile
     runtime: str = "comfy_workflow"
-    prompt: str = Field(min_length=1)
+    prompt: str
     negative_prompt: str = ""
     seed: int = -1
-    cfg_scale: float = Field(default=6.5, ge=1, le=30)
-    distilled_cfg_scale: float = Field(default=3.5, ge=0, le=30)
+    cfg_scale: float = Field(default=6.5, allow_inf_nan=False)
+    distilled_cfg_scale: float = Field(default=3.5, allow_inf_nan=False)
     model_slot_overrides: dict[str, str] = Field(default_factory=dict)
     loras: list[LoraSelection] = Field(default_factory=list)
     remaster: RemasterSettingsInput

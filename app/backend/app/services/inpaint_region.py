@@ -91,6 +91,7 @@ def _aligned_axis_interval(
     *,
     canvas_length: int,
     padding: int,
+    alignment: int = 8,
 ) -> tuple[int, int]:
     if canvas_length <= 0 or start < 0 or end <= start or end > canvas_length:
         raise InpaintRegionError(api_errors.INPAINT_ONLY_MASKED_GEOMETRY_INVALID)
@@ -98,7 +99,7 @@ def _aligned_axis_interval(
     padded_end = min(canvas_length, end + padding)
     minimum = min(256, canvas_length)
     target_length = max(padded_end - padded_start, minimum)
-    target_length = min(canvas_length, ((target_length + 7) // 8) * 8)
+    target_length = min(canvas_length, ((target_length + alignment - 1) // alignment) * alignment)
     extra = target_length - (padded_end - padded_start)
     resolved_start = padded_start - extra // 2
     resolved_end = padded_end + (extra - extra // 2)
@@ -112,7 +113,7 @@ def _aligned_axis_interval(
         resolved_start < 0
         or resolved_end > canvas_length
         or resolved_end - resolved_start != target_length
-        or target_length % 8 != 0
+        or target_length % alignment != 0
     ):
         raise InpaintRegionError(api_errors.INPAINT_ONLY_MASKED_GEOMETRY_INVALID)
     return resolved_start, resolved_end
@@ -123,6 +124,7 @@ def compute_inpaint_region(
     *,
     canvas_size: tuple[int, int],
     padding: int,
+    alignment: int = 8,
 ) -> InpaintRegion:
     if positive_mask.size != canvas_size:
         raise InpaintRegionError(api_errors.INPAINT_ONLY_MASKED_SIZE_MISMATCH)
@@ -135,12 +137,14 @@ def compute_inpaint_region(
         right,
         canvas_length=canvas_size[0],
         padding=padding,
+        alignment=alignment,
     )
     resolved_top, resolved_bottom = _aligned_axis_interval(
         top,
         bottom,
         canvas_length=canvas_size[1],
         padding=padding,
+        alignment=alignment,
     )
     return InpaintRegion(
         rect=(resolved_left, resolved_top, resolved_right, resolved_bottom),
@@ -161,6 +165,7 @@ def validate_only_masked_inputs(
     *,
     mask_blur: int = 0,
     requested_size: tuple[int, int] | None = None,
+    alignment: int = 8,
 ) -> InpaintRegionAnalysis:
     source = Path(source_path)
     mask = Path(mask_path)
@@ -172,7 +177,7 @@ def validate_only_masked_inputs(
             canonical_source = ImageOps.exif_transpose(source_image).convert("RGB")
     except (OSError, UnidentifiedImageError, ValueError):
         raise InpaintRegionError(api_errors.INPAINT_ONLY_MASKED_SOURCE_UNAVAILABLE) from None
-    if not (256 <= source_size[0] <= 4096 and 256 <= source_size[1] <= 4096):
+    if alignment < 1 or min(source_size) < alignment:
         raise InpaintRegionError(api_errors.INPAINT_ONLY_MASKED_GEOMETRY_INVALID)
     try:
         with Image.open(mask) as mask_image:
@@ -187,10 +192,10 @@ def validate_only_masked_inputs(
         raise InpaintRegionError(api_errors.INPAINT_ONLY_MASKED_SIZE_MISMATCH)
 
     effective_size = (
-        canonical_source.width // 8 * 8,
-        canonical_source.height // 8 * 8,
+        canonical_source.width // alignment * alignment,
+        canonical_source.height // alignment * alignment,
     )
-    if effective_size[0] < 256 or effective_size[1] < 256:
+    if min(effective_size) < alignment:
         raise InpaintRegionError(api_errors.INPAINT_ONLY_MASKED_GEOMETRY_INVALID)
     if canonical_source.size != effective_size:
         canonical_source = canonical_source.resize(effective_size, Image.Resampling.LANCZOS)
@@ -200,6 +205,7 @@ def validate_only_masked_inputs(
         positive_mask,
         canvas_size=effective_size,
         padding=padding,
+        alignment=alignment,
     )
     requested = requested_size or (0, 0)
     return InpaintRegionAnalysis(
@@ -222,12 +228,14 @@ def prepare_only_masked_region(
     mask_blur: int = 0,
     requested_size: tuple[int, int] | None = None,
     analysis: InpaintRegionAnalysis | None = None,
+    alignment: int = 8,
 ) -> PreparedInpaintRegion:
     resolved = analysis or validate_only_masked_inputs(
         source_path,
         mask_path,
         mask_blur=mask_blur,
         requested_size=requested_size,
+        alignment=alignment,
     )
     directory = Path(output_dir)
     directory.mkdir(parents=True, exist_ok=True)

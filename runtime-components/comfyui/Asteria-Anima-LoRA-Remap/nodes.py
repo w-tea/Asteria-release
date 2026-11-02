@@ -52,11 +52,11 @@ class AsteriaAnimaLoraRemap:
                 "mapping_hash": ("STRING", {"multiline": False}),
                 "strength_model": (
                     "FLOAT",
-                    {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01},
+                    {"default": 1.0, "step": 0.01},
                 ),
                 "strength_clip": (
                     "FLOAT",
-                    {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01},
+                    {"default": 1.0, "step": 0.01},
                 ),
             }
         }

@@ -24,7 +24,7 @@ profiles:
       - id: vae
         label: VAE
         type: vae
-        required: true
+        required: false
     setting_groups:
       - base_generation
       - sdxl_model

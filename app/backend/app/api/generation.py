@@ -146,7 +146,8 @@ from app.services.prompt_syntax import (
     PROMPT_PARSER_GENERATION,
     PromptSyntaxError,
     PromptSyntaxPlan,
-    parse_prompt_syntax,
+    literal_prompt_plan,
+    parse_prompt_syntax_or_literal,
 )
 from app.services.runtime import (
     ComfyClient,
@@ -1327,40 +1328,11 @@ def _unsupported_profile_runtime_settings(
     if settings.get("refiner_enabled"):
         unsupported.append({"field": "refiner", "reason": "refiner_is_not_mapped_to_this_comfy_profile"})
     if settings.get("hires_enabled"):
-        hires_checkpoint = str(settings.get("hires_checkpoint") or "").strip()
-        if hires_checkpoint and hires_checkpoint != "Use same checkpoint":
-            normalized_checkpoint = comfy_model_name(
-                hires_checkpoint,
-                "diffusion_models",
-                model_root=model_root,
-            )
-            if profile == "anima":
-                if not normalized_checkpoint.lower().startswith("anima\\"):
-                    unsupported.append(
-                        {
-                            "field": "hires_checkpoint",
-                            "reason": "hires_diffusion_model_must_be_anima_family",
-                        }
-                    )
-            elif profile not in {"flux1", "flux2"}:
-                unsupported.append(
-                    {
-                        "field": "hires_checkpoint",
-                        "reason": "hires_checkpoint_is_not_mapped_to_the_current_comfy_workflow",
-                    }
-                )
-        if profile in {"anima", "flux1", "flux2"} and str(settings.get("hires_prompt") or "").strip():
-            unsupported.append(
-                {
-                    "field": "hires_prompt",
-                    "reason": f"hires_prompt_is_not_mapped_to_{profile}_second_pass",
-                }
-            )
-        if profile in {"anima", "flux1", "flux2"} and str(settings.get("hires_negative_prompt") or "").strip():
+        if profile in {"flux1", "flux2"} and str(settings.get("hires_negative_prompt") or "").strip():
             unsupported.append(
                 {
                     "field": "hires_negative_prompt",
-                    "reason": f"hires_negative_prompt_is_not_mapped_to_{profile}_second_pass",
+                    "reason": f"negative_prompt_is_not_supported_by_{profile}",
                 }
             )
     return unsupported
@@ -3166,85 +3138,49 @@ def _prepare_prompt_syntax_record(
     expanded_negative_prompt: str,
     selected_runtime: str,
 ) -> dict[str, Any]:
-    try:
-        positive_plan = parse_prompt_syntax(expanded_prompt, profile_id=request.profile)
-        negative_plan = parse_prompt_syntax(expanded_negative_prompt, profile_id=request.profile)
-        semantic_plans: dict[str, PromptSyntaxPlan] = {
-            "positive": positive_plan,
-            "negative": negative_plan,
-        }
-        hires_positive_plan = positive_plan
-        hires_negative_plan = negative_plan
-        if settings.get("hires_enabled") and settings.get("hires_prompt"):
-            hires_positive_plan = parse_prompt_syntax(
-                str(settings["hires_prompt"]),
-                profile_id=request.profile,
-            )
-            semantic_plans["hires_positive"] = hires_positive_plan
-        if settings.get("hires_enabled") and settings.get("hires_negative_prompt"):
-            hires_negative_plan = parse_prompt_syntax(
-                str(settings["hires_negative_prompt"]),
-                profile_id=request.profile,
-            )
-            semantic_plans["hires_negative"] = hires_negative_plan
-    except PromptSyntaxError as exc:
-        raise _prompt_syntax_http_error(exc) from exc
-
+    source_texts = {"positive": expanded_prompt, "negative": expanded_negative_prompt}
+    if settings.get("hires_enabled"):
+        if settings.get("hires_prompt"):
+            source_texts["hires_positive"] = str(settings["hires_prompt"])
+        if settings.get("hires_negative_prompt"):
+            source_texts["hires_negative"] = str(settings["hires_negative_prompt"])
+    semantic_plans = {
+        key: parse_prompt_syntax_or_literal(text, profile_id=request.profile)
+        for key, text in source_texts.items()
+    }
     enabled_features = {
         feature
         for plan in semantic_plans.values()
         for feature in plan.enabled_features
     }
     if enabled_features:
-        profiles = ModelProfileRepository(config.model_profiles_path).list()
-        active_profile = next((item for item in profiles if item.id == request.profile), None)
-        if active_profile is None:
-            raise HTTPException(
-                status_code=400,
-                detail={"code": api_errors.MODEL_PROFILE_NOT_FOUND, "profile": request.profile},
-            )
-        unsupported = sorted(enabled_features - set(active_profile.prompt_syntax.features))
-        if (
-            active_profile.prompt_syntax.grammar != PROMPT_PARSER_GENERATION
-            or unsupported
-        ):
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": api_errors.PROMPT_SYNTAX_PROFILE_UNSUPPORTED,
-                    "profile": request.profile,
-                    "features": unsupported or sorted(enabled_features),
-                },
-            )
-        if selected_runtime != "comfy_workflow":
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": api_errors.PROMPT_SYNTAX_RUNTIME_UNSUPPORTED,
-                    "runtime": selected_runtime,
-                },
-            )
-        try:
-            mapping = WorkflowMappingRepository(config.mapping_dir).get_txt2img(request.profile)
-        except WorkflowMappingNotFound as exc:
-            raise HTTPException(
-                status_code=409,
-                detail={"code": api_errors.PROMPT_SYNTAX_MAPPING_UNAVAILABLE},
-            ) from exc
-        required_contracts = {
-            contract
-            for plan in semantic_plans.values()
-            for contract in _PROMPT_SYNTAX_CONTRACTS.get(plan.operation, set())
-        }
-        missing_contracts = sorted(required_contracts - set(mapping.node_contracts))
-        if missing_contracts:
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": api_errors.PROMPT_SYNTAX_MAPPING_UNAVAILABLE,
-                    "contracts": missing_contracts,
-                },
-            )
+        # These capabilities select Asteria's transformations, not permission
+        # to enter notation. Everything else remains the runtime's input.
+        transformation_features: set[str] = set()
+        transformation_contracts: set[str] = set()
+        if selected_runtime == "comfy_workflow":
+            profiles = ModelProfileRepository(config.model_profiles_path).list()
+            active_profile = next((item for item in profiles if item.id == request.profile), None)
+            if active_profile is not None and active_profile.prompt_syntax.grammar == PROMPT_PARSER_GENERATION:
+                try:
+                    mapping = WorkflowMappingRepository(config.mapping_dir).get_txt2img(request.profile)
+                except WorkflowMappingNotFound:
+                    pass
+                else:
+                    transformation_features = set(active_profile.prompt_syntax.features)
+                    transformation_contracts = set(mapping.node_contracts)
+        for key, plan in semantic_plans.items():
+            required_contracts = _PROMPT_SYNTAX_CONTRACTS.get(plan.operation, set())
+            if (
+                not set(plan.enabled_features).issubset(transformation_features)
+                or not required_contracts.issubset(transformation_contracts)
+            ):
+                semantic_plans[key] = literal_prompt_plan(source_texts[key], profile_id=request.profile)
+
+    positive_plan = semantic_plans["positive"]
+    negative_plan = semantic_plans["negative"]
+    hires_positive_plan = semantic_plans.get("hires_positive", positive_plan)
+    hires_negative_plan = semantic_plans.get("hires_negative", negative_plan)
 
     semantic_payloads = {
         key: plan.to_dict()
@@ -4829,32 +4765,11 @@ def _ensure_supported_inpaint_request(request: InpaintRequest) -> None:
             }
         )
     if inpaint_area == "only_masked":
-        if request.profile != "sdxl":
-            unsupported.append(
-                {
-                    "field": "inpaint_area",
-                    "reason": "only_masked_is_supported_only_for_sdxl",
-                }
-            )
         if selected_runtime != "comfy_workflow":
             unsupported.append(
                 {
                     "field": "inpaint_area",
                     "reason": "only_masked_requires_comfy_workflow",
-                }
-            )
-        if request.hires_enabled:
-            unsupported.append(
-                {
-                    "field": "inpaint_area",
-                    "reason": "only_masked_requires_hires_disabled",
-                }
-            )
-        if request.tiling:
-            unsupported.append(
-                {
-                    "field": "inpaint_area",
-                    "reason": "only_masked_requires_tiling_disabled",
                 }
             )
     elif inpaint_area != "whole_picture":
