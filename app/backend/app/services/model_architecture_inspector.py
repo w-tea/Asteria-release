@@ -29,6 +29,9 @@ _QWEN35_LAYER = re.compile(r"^layers\.(\d+)\.")
 _QWEN35_SELF_ATTENTION = re.compile(r"^layers\.(\d+)\.self_attn\.")
 _QWEN35_LINEAR_ATTENTION = re.compile(r"^layers\.(\d+)\.linear_attn\.")
 _NATIVE_QWEN_LAYER = re.compile(r"^model\.layers\.(\d+)\.")
+# Wrapper prefixes understood by the packaged diffusion loader, plus bare keys.
+# A matching suffix alone does not make an arbitrary prefix loadable.
+_DIFFUSION_NAMESPACES = ("net.", "model.diffusion_model.", "model.model.", "model.", "")
 
 
 class AnimaArchitectureInspector:
@@ -63,7 +66,24 @@ class AnimaArchitectureInspector:
                 status=ArchitectureDetectionStatus.SUPPORTED,
             )
 
-        diffusion_ordinals = self._ordinals(keys, _DIFFUSION_BLOCK)
+        namespaces = tuple(
+            namespace
+            for namespace in _DIFFUSION_NAMESPACES
+            if any(key.startswith(f"{namespace}blocks.") for key in keys)
+        )
+        if len(namespaces) > 1:
+            return self._unsupported("anima_diffusion_namespace_ambiguous")
+        if not namespaces:
+            return self._unsupported("anima_signature_not_recognized")
+        namespace = namespaces[0]
+        # Normalize only for structural inspection. Keep the raw keys below for
+        # merge identity; this does not rewrite or convert the model weights.
+        structure_keys = tuple(
+            "net." + key.removeprefix(namespace)
+            for key in keys
+            if key.startswith(namespace)
+        )
+        diffusion_ordinals = self._ordinals(structure_keys, _DIFFUSION_BLOCK)
         if not diffusion_ordinals:
             return self._unsupported("anima_signature_not_recognized")
 
@@ -74,13 +94,13 @@ class AnimaArchitectureInspector:
                 diffusion_block_count=len(diffusion_ordinals),
             )
 
-        if not self._has_complete_diffusion_structure(keys, diffusion_count):
+        if not self._has_complete_diffusion_structure(structure_keys, diffusion_count):
             return self._unsupported(
                 "anima_diffusion_structure_incomplete",
                 diffusion_block_count=diffusion_count,
             )
 
-        llm_ordinals = self._ordinals(keys, _LLM_ADAPTER_BLOCK)
+        llm_ordinals = self._ordinals(structure_keys, _LLM_ADAPTER_BLOCK)
         llm_count = max(llm_ordinals) + 1 if llm_ordinals else 0
         if llm_ordinals != set(range(llm_count)):
             return self._unsupported(

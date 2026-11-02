@@ -1,4 +1,4 @@
-# Asteria V1.2.0 Windows Portable
+# Asteria V1.2.1 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -29,7 +29,13 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 
 > **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトをベース・キャラクター・詳細に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
 
-### 今回の使いやすさの改善
+### V1.2.1の修正
+
+Animaの派生モデルを追加しても、モデル一覧に表示されない・選択を反映できない不具合を修正しました。重み名の保存形式が異なるモデルも、対応するAnimaの構造を確認して認識します。モデルファイルの変換や再取得は不要です。更新後にモデル一覧を更新し、使用するモデルを選び直してください。
+
+V1.2.1はこの不具合への修正版です。新しい生成モデルへの対応や画面の再設計は含みません。
+
+### V1.2.0の使いやすさの改善
 
 - GenerateとMergeに「モデルを検索」を追加しました。名前やフォルダー名で候補を絞り込み、選択中のモデルは検索語を変えても保持します。
 - Mergeはモデル・計算方式、詳細調整、候補比較、レシピ保存の順に操作できます。PCの通常幅では、右上の実行ボタンは設定や履歴をスクロールしても表示されたままです。
@@ -344,7 +350,13 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 
 > **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
 
-### Usability improvements in this build
+### V1.2.1 fix
+
+Fixed an issue where added Anima fine-tunes could be missing from the model list or fail to apply. Supported Anima structures are now recognized across common weight-key namespaces. There is no need to convert or download your model again. After updating Asteria, refresh the model list and select the model you want to use.
+
+V1.2.1 is a focused bug-fix release. It does not include new model families or the planned interface redesign.
+
+### Usability improvements in V1.2.0
 
 - Generate and Merge now include Search models. Filter by model or folder name without changing the selected model when you edit the search.
 - Merge follows models and method, advanced settings, candidate comparison, then recipe saving. At normal desktop widths, the execution button stays at the top right while settings and history scroll.

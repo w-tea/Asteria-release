@@ -817,8 +817,8 @@ def _block_id_for_key(key: str, schema: str) -> str:
         tail = lowered.split(".blocks.", 1)[1]
         digits = "".join(ch for ch in tail[:5] if ch.isdigit())
         return f"B{int(digits):03d}" if digits else "BASE"
-    if lowered.startswith("net.blocks.") and is_anima_schema(schema):
-        tail = lowered.split("net.blocks.", 1)[1]
+    if lowered.startswith("blocks.") and is_anima_schema(schema):
+        tail = lowered.removeprefix("blocks.")
         digits = "".join(ch for ch in tail[:5] if ch.isdigit())
         return f"B{int(digits):03d}" if digits else "BASE"
     if "final_layer" in lowered and (is_anima_schema(schema) or is_flux_schema(schema)):
