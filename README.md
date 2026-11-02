@@ -1,4 +1,4 @@
-# Asteria V1.2.1 Windows Portable
+# Asteria V1.2.1.1 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -28,6 +28,12 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
 
 > **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトをベース・キャラクター・詳細に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
+
+### V1.2.1.1の修正
+
+スターターパックや不足モデルの導入後、生成画面のモデル一覧と選択が更新されず、すぐに生成できない場合がある不具合を修正しました。導入完了後は、現在開いているモデルプロファイルの一覧と選択を読み直します。
+
+V1.2.1のAnima派生モデル対応も含みます。新しい生成モデルへの対応や画面の再設計は含みません。
 
 ### V1.2.1の修正
 
@@ -349,6 +355,12 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
 
 > **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
+
+### V1.2.1.1 fix
+
+Fixed stale model lists and selections after installing a starter pack or a missing model, which could prevent generation immediately after setup. On completion, Asteria refreshes the catalog and selections for the currently active model profile.
+
+This release also includes the V1.2.1 Anima fine-tune fix. It does not add new model families or the planned interface redesign.
 
 ### V1.2.1 fix
 

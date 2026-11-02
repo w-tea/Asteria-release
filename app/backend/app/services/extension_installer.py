@@ -623,7 +623,7 @@ def configure_extension_operation_coordinator(
     coordinator: Any,
     *,
     extension_root: Path,
-    asteria_version: str = "1.2.1",
+    asteria_version: str = "1.2.1.1",
 ) -> None:
     register_extension_operations(
         coordinator,

@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 
 _KEY_ID = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
-_SEMANTIC_VERSION = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$")
+_SEMANTIC_VERSION = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?(?:[-+].*)?$")
 
 
 class ReleaseSignatureError(RuntimeError):
@@ -190,11 +190,11 @@ def _safe_relative_path(value: object) -> PurePosixPath:
     return posix
 
 
-def _parse_version(value: str) -> tuple[int, int, int] | None:
+def _parse_version(value: str) -> tuple[int, int, int, int] | None:
     match = _SEMANTIC_VERSION.fullmatch(value.strip())
     if match is None:
         return None
-    return tuple(int(part) for part in match.groups())  # type: ignore[return-value]
+    return tuple(int(part or 0) for part in match.groups())  # type: ignore[return-value]
 
 
 def _version_is_older(candidate: str, current: str) -> bool:
