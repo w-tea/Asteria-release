@@ -12564,7 +12564,10 @@ const _sfc_main$2r = /* @__PURE__ */ defineComponent({
     const modelSelectionReady = computed(() => modelDependencies.selectionReady(generation.profile));
     const activeProfileDependencyIds = computed(() => new Set(activeProfile.value?.dependency_ids ?? []));
     const activeProfileDependencies = computed(() => modelDependencies.dependencies.filter((dependency) => activeProfileDependencyIds.value.has(dependency.id)));
-    const missingProfileDependencies = computed(() => activeProfileDependencies.value.filter((dependency) => dependencyNeedsAttention(dependency, modelDependencies.selections)));
+    const missingProfileDependencies = computed(() => activeProfileDependencies.value.filter((dependency) => {
+      const slot = activeProfile.value?.model_slots.find((candidate) => candidate.id === dependency.slot_id);
+      return slot?.required !== false && dependencyNeedsAttention(dependency, modelDependencies.selections);
+    }));
     const primarySlotIds = /* @__PURE__ */ new Set(["checkpoint", "diffusion_model", "vae"]);
     const primaryModelSlots = computed(() => activeProfile.value?.model_slots.filter((slot) => primarySlotIds.has(slot.id)) ?? []);
     const secondaryModelSlots = computed(() => activeProfile.value?.model_slots.filter((slot) => !primarySlotIds.has(slot.id)) ?? []);
@@ -12647,74 +12650,74 @@ const _sfc_main$2r = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "model-bar",
         "aria-label": unref(t)("modelSettings.aria")
-      }, _attrs))} data-v-340bdc13><label class="field model-bar__search" data-v-340bdc13><span data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.searchModels"))}</span><input${ssrRenderAttr("value", unref(modelSearch))} type="search"${ssrRenderAttr("placeholder", unref(t)("modelSettings.searchModelsPlaceholder"))} data-v-340bdc13></label><div class="model-bar__primary" data-v-340bdc13><label class="field slot-field model-bar__field model-bar__profile" data-v-340bdc13><span data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select${ssrRenderAttr("value", unref(generation).profile)} data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-340bdc13><!--[-->`);
+      }, _attrs))} data-v-c1cfc831><label class="field model-bar__search" data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.searchModels"))}</span><input${ssrRenderAttr("value", unref(modelSearch))} type="search"${ssrRenderAttr("placeholder", unref(t)("modelSettings.searchModelsPlaceholder"))} data-v-c1cfc831></label><div class="model-bar__primary" data-v-c1cfc831><label class="field slot-field model-bar__field model-bar__profile" data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select${ssrRenderAttr("value", unref(generation).profile)} data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-c1cfc831><!--[-->`);
       ssrRenderList(unref(modelDependencies).profiles, (profile) => {
-        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-340bdc13>${ssrInterpolate(profile.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-c1cfc831>${ssrInterpolate(profile.label)}</option>`);
       });
       _push(`<!--]--></select></label><!--[-->`);
       ssrRenderList(unref(primaryModelSlots), (slot) => {
-        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-340bdc13><span data-v-340bdc13>${ssrInterpolate(slot.label)}</span>`);
+        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(slot.label)}</span>`);
         if (usesModelSelect(slot)) {
-          _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || unref(generation).profile === "anima" && slot.id === "diffusion_model" && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-340bdc13><option value="" data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+          _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || unref(generation).profile === "anima" && slot.id === "diffusion_model" && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-c1cfc831><option value="" data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
           ssrRenderList(filteredSlotOptions(slot), (item) => {
-            _push(`<option${ssrRenderAttr("value", item.path)} data-v-340bdc13>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
+            _push(`<option${ssrRenderAttr("value", item.path)} data-v-c1cfc831>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
           });
           _push(`<!--]--></select>`);
         } else {
-          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-340bdc13>`);
+          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-c1cfc831>`);
         }
         _push(`</label>`);
       });
-      _push(`<!--]--><div class="model-bar__slot-status" data-v-340bdc13><span data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-340bdc13>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div><div class="model-bar__actions" data-v-340bdc13><button${ssrRenderAttrs(mergeProps({
+      _push(`<!--]--><div class="model-bar__slot-status" data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-c1cfc831>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div><div class="model-bar__actions" data-v-c1cfc831><button${ssrRenderAttrs(mergeProps({
         type: "button",
         disabled: unref(refreshingModelAssets) || unref(modelDependencies).loading || unref(runtime).loading
-      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("modelSettings.refreshHelp"))))} data-v-340bdc13>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
+      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("modelSettings.refreshHelp"))))} data-v-c1cfc831>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
       if (!unref(activeProfile)) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-340bdc13><strong data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-340bdc13>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
+        _push(`<div class="model-bar__recovery" role="status" data-v-c1cfc831><strong data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-c1cfc831>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(modelAssetError)) {
-        _push(`<div class="model-bar__message-row" data-v-340bdc13><p class="error" aria-live="assertive" data-v-340bdc13>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
+        _push(`<div class="model-bar__message-row" data-v-c1cfc831><p class="error" aria-live="assertive" data-v-c1cfc831>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).profile === "anima" && unref(imageModelCatalog).error.value) {
-        _push(`<div class="model-bar__message-row" data-v-340bdc13><p class="error" aria-live="assertive" data-v-340bdc13>${ssrInterpolate(unref(imageModelCatalog).error.value)}</p></div>`);
+        _push(`<div class="model-bar__message-row" data-v-c1cfc831><p class="error" aria-live="assertive" data-v-c1cfc831>${ssrInterpolate(unref(imageModelCatalog).error.value)}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(selectedAnimaDiffusion)) {
-        _push(`<div class="model-bar__message-row" role="status" data-v-340bdc13><p class="muted" data-v-340bdc13>${ssrInterpolate(animaVariantLabel(unref(selectedAnimaDiffusion).variant))}</p></div>`);
+        _push(`<div class="model-bar__message-row" role="status" data-v-c1cfc831><p class="muted" data-v-c1cfc831>${ssrInterpolate(animaVariantLabel(unref(selectedAnimaDiffusion).variant))}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(anima38MissingComponentLabels).length) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-340bdc13><strong data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsRequired"))}</strong><small data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsHelp", { components: unref(anima38MissingComponentLabels).join(" / ") }))}</small></div>`);
+        _push(`<div class="model-bar__recovery" role="status" data-v-c1cfc831><strong data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsRequired"))}</strong><small data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsHelp", { components: unref(anima38MissingComponentLabels).join(" / ") }))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(missingProfileDependencies).length) {
-        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-340bdc13><div data-v-340bdc13><strong data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-340bdc13><!--[-->`);
+        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-c1cfc831><div data-v-c1cfc831><strong data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-c1cfc831><!--[-->`);
         ssrRenderList(unref(missingProfileDependencies), (dependency) => {
-          _push(`<li data-v-340bdc13><span data-v-340bdc13><strong data-v-340bdc13>${ssrInterpolate(dependency.label)}</strong></span></li>`);
+          _push(`<li data-v-c1cfc831><span data-v-c1cfc831><strong data-v-c1cfc831>${ssrInterpolate(dependency.label)}</strong></span></li>`);
         });
         _push(`<!--]--></ul></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(secondaryModelSlots).length) {
-        _push(`<details class="model-bar__extra" data-v-340bdc13><summary data-v-340bdc13><span data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-340bdc13>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-340bdc13><!--[-->`);
+        _push(`<details class="model-bar__extra" data-v-c1cfc831><summary data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-c1cfc831>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-c1cfc831><!--[-->`);
         ssrRenderList(unref(secondaryModelSlots), (slot) => {
-          _push(`<label class="field slot-field model-bar__field" data-v-340bdc13><span data-v-340bdc13>${ssrInterpolate(slot.label)}</span>`);
+          _push(`<label class="field slot-field model-bar__field" data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(slot.label)}</span>`);
           if (usesModelSelect(slot)) {
-            _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-340bdc13><option value="" data-v-340bdc13>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+            _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-c1cfc831><option value="" data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
             ssrRenderList(filteredSlotOptions(slot), (item) => {
-              _push(`<option${ssrRenderAttr("value", item.path)} data-v-340bdc13>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
+              _push(`<option${ssrRenderAttr("value", item.path)} data-v-c1cfc831>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
             });
             _push(`<!--]--></select>`);
           } else {
-            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-340bdc13>`);
+            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-c1cfc831>`);
           }
           _push(`</label>`);
         });
@@ -12733,7 +12736,7 @@ _sfc_main$2r.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ModelSettingsPanel.vue");
   return _sfc_setup$2r ? _sfc_setup$2r(props, ctx) : void 0;
 };
-const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2r, [["__scopeId", "data-v-340bdc13"]]), { __name: "StudioModelSettingsPanel" });
+const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2r, [["__scopeId", "data-v-c1cfc831"]]), { __name: "StudioModelSettingsPanel" });
 const _sfc_main$2q = /* @__PURE__ */ defineComponent({
   __name: "PromptChoicesPreview",
   __ssrInlineRender: true,

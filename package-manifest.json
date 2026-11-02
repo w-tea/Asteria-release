@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.1.2",
   "platform": "windows-x64",
-  "source_commit": "47346949dce9c45a2ced882b0d625c0d01611b1f",
-  "build_timestamp_utc": "2026-11-02T19:53:17Z",
+  "source_commit": "e84a9eb6a1db13856cb65d7c8290e5cb1f6ec543",
+  "build_timestamp_utc": "2026-11-02T20:27:05Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -1562,34 +1562,34 @@
       "sha256": "7dc00e00c0b113ab1a0020779d96b49c7cd0caf52f769507a3d7fafeb3d25104"
     },
     {
-      "path": "app/frontend/public/_nuxt/B5kQbmL8.js",
-      "size_bytes": 3451,
-      "sha256": "0c0cefe6d9c6bccd40fcc607cf0f7e63e0bf58aa412fdf702ee8e78234a16b22"
+      "path": "app/frontend/public/_nuxt/BCnoQEV6.js",
+      "size_bytes": 2367512,
+      "sha256": "8ea99b5c1f133150b06cbf4f099352260581eb553f0fa128e53b8ea4c49bc4f6"
     },
     {
-      "path": "app/frontend/public/_nuxt/CA4_iO6w.js",
-      "size_bytes": 2367447,
-      "sha256": "181c785782b0a72db794b409155bdfd23a5c617965d193ba7533dcb6743a51bb"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/DBBcs9BO.js",
+      "path": "app/frontend/public/_nuxt/CcC-1ae1.js",
       "size_bytes": 9504,
-      "sha256": "aa2d7c94d4d763318ec4769e25cf0a2cd714ba89d7a063a85cf2684bbef374ab"
+      "sha256": "c35ac0fd7a6a69844b703f0421baaa6a3024b1c1f011f3d0ffb5b8d7e0d72d77"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/CyH56rXm.js",
+      "size_bytes": 3451,
+      "sha256": "1e16391630de12717afe7c979e3ca7d32a99447cf06d966abd60c3b12005760a"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "72589e1e34893c680aabe55eb79f533b80662b0b4289d109427569b1fdaea57a"
+      "sha256": "d1bf091fe341b7da31e1bc963782027138682f087c7b5ffba62f8c267624e3ed"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/2c7be8ab-63a3-4aa7-a284-3ba100281304.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/72e47009-f24a-4679-b4ff-1a30ac801815.json",
       "size_bytes": 88,
-      "sha256": "8128734bc82eb52f0e6d34a6108223d8c53b9c8229855a23a500063d73687f0c"
+      "sha256": "63dd6fd63289db1774ff3f416a892524b28934c18d767574d5bd905e3709ae68"
     },
     {
-      "path": "app/frontend/public/_nuxt/entry.D8e2IvNz.css",
+      "path": "app/frontend/public/_nuxt/entry.BXNy5uM_.css",
       "size_bytes": 504271,
-      "sha256": "89b0ecf1541d1ce262b7ef8fbe00dbe95cfa81dc259ab6b451ac63371178ef47"
+      "sha256": "d619192898e136428e2155e1d17aaf6a7b8df3c509ddd4b141581abf02df45d0"
     },
     {
       "path": "app/frontend/public/_nuxt/error-404.B-TAmNEY.css",
@@ -2192,9 +2192,9 @@
       "sha256": "9ac5513dd3d9ff7755748819a31514d18ddfbfc41b51d644fe59743aa1612a89"
     },
     {
-      "path": "app/frontend/server/chunks/_/ModelSettingsPanel-styles.6skTen5P.mjs",
+      "path": "app/frontend/server/chunks/_/ModelSettingsPanel-styles.CddGOopI.mjs",
       "size_bytes": 3504,
-      "sha256": "fe845322620426c4ca2fb6f7b78aa50b8157b2f072ac76f963a7304222f03ea8"
+      "sha256": "cb5d5992cc6c0493233743168708614657b2f23da8974b3f47e9785e4557cf5d"
     },
     {
       "path": "app/frontend/server/chunks/_/MusicGenerationForm-styles.BIhk2vt6.mjs",
@@ -2519,7 +2519,7 @@
     {
       "path": "app/frontend/server/chunks/_/client.precomputed.mjs",
       "size_bytes": 3276,
-      "sha256": "1166c668f4d0a0d7083a4670ff2f51954506dceb0423acf3dfdea1353d84ad3b"
+      "sha256": "0ad16b527c43d67814d6ccfdf72f583bb09b5713e5fa2ed6b724de1c86b523ed"
     },
     {
       "path": "app/frontend/server/chunks/_/error-404-BACVib4k.mjs",
@@ -2549,17 +2549,17 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 169035,
-      "sha256": "059976890d4060d1a592ef2bd9579ca1bab68f0212d57f6bfeade78d7122854f"
+      "sha256": "1e642db39a165cad8a08d19ce24b107856e5f754a7a2f0e6c8f7090c4c9c1059"
     },
     {
       "path": "app/frontend/server/chunks/_/server.mjs",
-      "size_bytes": 3720669,
-      "sha256": "36c55a474d09cb4c10e63f0e9e114c6489f791575cecda0a90c9d580c6bac7b2"
+      "size_bytes": 3720829,
+      "sha256": "7d2e6441eed4858c01b12764f5e3ddff1d743983d9b3162ba8ac06bebea685dd"
     },
     {
       "path": "app/frontend/server/chunks/_/styles.mjs",
       "size_bytes": 21006,
-      "sha256": "2d425e016e7e9e8cee53d57f7046a954bb327c1f98e65fd8b4a76b0289a346a2"
+      "sha256": "e7169f9ec80e6a470389bb91e02113d2c2bfa2b8a27b59d84dc019773adde00e"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
