@@ -143,3 +143,27 @@ profiles:
       - base_generation
       - flux_runtime
       - hires_fix
+
+  - id: krea2
+    label: Krea 2 Turbo
+    prompt_syntax:
+      grammar: asteria-prompt-v1
+      features: []
+    dependency_ids: [krea2-turbo-fp8, krea2-text-encoder, krea2-vae]
+    model_slots:
+      - {id: diffusion_model, label: Krea 2 Transformer, type: checkpoint, required: true}
+      - {id: text_encoder, label: Qwen3-VL 4B Text Encoder, type: text_encoder, required: true}
+      - {id: vae, label: Qwen Image VAE, type: vae, required: true}
+    setting_groups: [base_generation]
+
+  - id: moss_image
+    label: MOSS-Image SFT
+    prompt_syntax:
+      grammar: asteria-prompt-v1
+      features: []
+    dependency_ids: [moss-image-sft-int8-convrot, moss-image-text-encoder-w4a8-gptq, moss-image-vae]
+    model_slots:
+      - {id: diffusion_model, label: MOSS-Image Transformer, type: checkpoint, required: true}
+      - {id: text_encoder, label: Qwen3.5 9B Text Encoder, type: text_encoder, required: true}
+      - {id: vae, label: FLUX.2 Small VAE, type: vae, required: true}
+    setting_groups: [base_generation]

@@ -117,9 +117,9 @@ globalThis.__publicAssetsURL = publicAssetsURL;
 const APP_ROOT_OPEN_TAG = `<${appRootTag}${propsToString(appRootAttrs)}>`;
 const APP_ROOT_CLOSE_TAG = `</${appRootTag}>`;
 // @ts-expect-error file will be produced after app build
-const getServerEntry = () => import('../_/server.mjs').then((r) => r.default || r);
+const getServerEntry = () => import('../build/server.mjs').then((r) => r.default || r);
 // @ts-expect-error file will be produced after app build
-const getPrecomputedDependencies = () => import('../_/client.precomputed.mjs').then((r) => r.default || r).then((r) => typeof r === "function" ? r() : r);
+const getPrecomputedDependencies = () => import('../build/client.precomputed.mjs').then((r) => r.default || r).then((r) => typeof r === "function" ? r() : r);
 
 const getSSRRenderer = lazyCachedFunction(async () => {
 	
@@ -194,7 +194,7 @@ function getRenderer(ssrContext) {
 	return ssrContext.noSSR ? getSPARenderer() : getSSRRenderer();
 }
 // @ts-expect-error file will be produced after app build
-const getSSRStyles = lazyCachedFunction(() => import('../_/styles.mjs').then((r) => r.default || r));
+const getSSRStyles = lazyCachedFunction(() => import('../build/styles.mjs').then((r) => r.default || r));
 
 function renderPayloadResponse(ssrContext) {
 	return {

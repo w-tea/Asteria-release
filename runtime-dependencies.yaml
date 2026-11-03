@@ -13,7 +13,7 @@ security_contracts:
 feature_requirements:
   minimax_music3_local:
     minimum_comfyui_version: "0.33.0"
-    managed_comfyui_version: "0.33.1"
+    managed_comfyui_version: "0.43.0"
     minimum_comfyui_commit: efd4e951a00e85bd92e79f1d685427912b0dad5e
     implementation: comfyui-native
     cuda_required: true
@@ -25,7 +25,7 @@ feature_requirements:
 
   minimax_h3_local:
     minimum_comfyui_version: "0.30.0"
-    managed_comfyui_version: "0.33.1"
+    managed_comfyui_version: "0.43.0"
     implementation: comfyui-native
     verified_at: "2026-08-18"
     provenance_url: https://docs.comfy.org/tutorials/video/minimax/minimax-h3

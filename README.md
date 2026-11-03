@@ -1,4 +1,6 @@
-# Asteria V1.2.1.2 Windows Portable
+# Asteria V1.2.2 Windows Portable
+
+> dev確認用の候補です。正式版の公開ZIPは更新していません。 / Development candidate; the public stable ZIP is unchanged.
 
 [日本語](#日本語) | [English](#english)
 
@@ -6,7 +8,7 @@
 
 **A local AI creation app for Windows: generate images, video and music, then edit, organize, train LoRAs and merge models.**
 
-![Darkモードの生成画面。左でプロンプト、右で生成条件を設定 / Generate in Dark mode](guides/images/generate-dark-ja.jpg)
+![Darkモードの生成画面。左が画像と結果情報、右がプロンプトと生成操作 / Generate in Dark mode](guides/images/generate-v122-dark-ja.png)
 
 画面例はDarkモード・日本語表示です。必要な情報は以下の日本語・英語の案内から確認できます。
 
@@ -28,6 +30,16 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
 
 > **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトをベース・キャラクター・詳細に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
+
+### V1.2.2 devの変更
+
+- Generateは画像を左、プロンプトと生成操作を右に配置しました。モデル設定と生成設定は必要なときに開けます。適用中のLoRAと詳細スタイルも確認できます。
+- 画像の再利用・処理ボタンを「結果情報」にまとめ、Eagleの送信先は一行から開く形にしました。
+- Image Editはキャンバスを広く使える配置に変更し、道具と入力画像の切り替えを縦にまとめました。
+- Krea 2 TurboとMOSS-Image SFTの通常の画像生成に対応します。モデルは任意導入です。新モデルでのHires、ControlNet、LoRA、参照画像編集は今回の対応に含みません。
+- 管理するComfyUIを固定0.43.0へ更新します。MOSSの軽量構成はINT8生成モデル・W4A8 encoder・small VAEを使います。必要メモリや処理時間は環境によって異なります。
+
+このdevは確認用の候補です。以下のV1.2.1.2以前の説明は過去の修正内容で、現在の機能範囲は本節を参照してください。正式版の公開ZIPは変更していません。
 
 ### V1.2.1.2の修正
 
@@ -354,7 +366,7 @@ Qwen2D-Anime VAE対応では、Anzhc氏が公開している[anzhc-qwen2d-comfyu
 
 Asteria is a Windows application for local AI creation. It combines image generation and editing, video generation, music generation, artifact comparison and organization, LoRA training, and model merging. Runtime components are acquired on first launch. Image checkpoints and optional video or music models are not bundled.
 
-![Generate in Dark mode: prompt input on the left and generation settings on the right](guides/images/generate-dark-ja.jpg)
+![Generate in Dark mode: image and result information on the left, prompts and generation actions on the right](guides/images/generate-v122-dark-ja.png)
 
 Screenshots show the Japanese interface in Dark mode. Language and theme are selectable in Settings. See the illustrated [Quick start](guides/QUICK_START.md) for your first steps after launch.
 
@@ -366,6 +378,16 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
 
 > **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
+
+### V1.2.2 dev changes
+
+- Generate now places the image on the left and prompts and generation actions on the right. Open model and generation settings when needed, and review active LoRAs and detailed styles in place.
+- Image reuse and processing actions are grouped under Result information. The Eagle destination expands from a single line.
+- Image Edit provides more canvas space, with tools and input-image switching arranged vertically.
+- Added basic text-to-image generation with Krea 2 Turbo and MOSS-Image SFT. Models are optional. Hires, ControlNet, LoRA and reference-image editing for these new models are not part of this update.
+- The managed ComfyUI is pinned to 0.43.0. The lightweight MOSS configuration uses an INT8 diffusion model, W4A8 encoder and small VAE. Memory requirements and processing time depend on the environment.
+
+This dev build is a candidate for testing. Sections for V1.2.1.2 and earlier describe historical fixes; this section defines the current additions. The public stable ZIP has not changed.
 
 ### V1.2.1.2 fixes
 

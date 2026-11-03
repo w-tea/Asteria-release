@@ -68,6 +68,14 @@ from app.services.external_model_libraries import (
 from app.services.generation_schema import GenerationSchema, GenerationSchemaNotFound, GenerationSchemaRepository
 from app.services import api_errors
 from app.services.comfy_model_paths import comfy_model_name
+from app.services.comfy_native_image_families import (
+    NATIVE_IMAGE_DEFAULTS,
+    native_image_model_slot_checks,
+    native_image_required_nodes,
+    native_image_runtime_contract_issues,
+    unsupported_native_image_settings,
+)
+from app.services.native_image_assets import NativeImageModelClassifier, prepare_native_image_bundle
 from app.services.controlnet_preprocessor import SUPPORTED_PREPROCESSORS
 from app.services.anima_lllite_runtime import (
     anima_lllite_missing_nodes,
@@ -1288,6 +1296,12 @@ def _unsupported_profile_runtime_settings(
 ) -> list[dict[str, str]]:
     if profile == "sdxl":
         return []
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        return [
+            *({"field": field, "reason": "native_image_txt2img_only"}
+              for field in unsupported_native_image_settings(profile, settings)),
+            *_unsupported_seed_variation_runtime_settings(profile, set(), settings),
+        ]
     unsupported = _unsupported_comfy_runtime_settings(settings, profile)
     unsupported.extend(_unsupported_seed_variation_runtime_settings(profile, set(), settings))
     if int(settings.get("clip_skip") or 1) > 1:
@@ -1737,6 +1751,9 @@ def _record_refiner_runtime(settings: dict, selected_runtime: str, profile: str)
 
 
 def _runtime_model_slot_checks(profile: str) -> tuple[tuple[str, str, str, str], ...]:
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        mapping = WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
+        return native_image_model_slot_checks(mapping)
     if profile == "sdxl":
         return (
             ("checkpoint", "checkpoints", "CheckpointLoaderSimple", "ckpt_name"),
@@ -1844,6 +1861,9 @@ def _missing_anima_bundle_runtime_models(
 
 
 def _profile_base_required_nodes(profile: str, settings: dict, *, requires_lora: bool = False) -> set[str]:
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        mapping = WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
+        return native_image_required_nodes(mapping)
     if profile == "anima":
         bundle = settings.get("anima_generation_bundle")
         is_anima_3_8b = (
@@ -2048,10 +2068,24 @@ def _validate_comfy_sampling_options(object_info: dict, settings: dict) -> None:
 
 
 def _validate_profile_sampling_options(profile: str, object_info: dict, settings: dict) -> None:
-    if profile not in {"anima", "flux1", "flux2"}:
+    if profile not in {"anima", "flux1", "flux2", *NATIVE_IMAGE_DEFAULTS}:
         return
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        mapping = WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
+        contract_issues = native_image_runtime_contract_issues(mapping, object_info)
+        if contract_issues:
+            raise HTTPException(status_code=409, detail={
+                "code": api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING, "unsupported": contract_issues,
+            })
     sampler_values = _node_input_values(object_info, "KSamplerSelect", "sampler_name")
     unsupported: list[dict[str, str]] = []
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        for field, values in (
+            ("sampler", sampler_values),
+            ("scheduler", _node_input_values(object_info, "BasicScheduler", "scheduler")),
+        ):
+            if not values:
+                unsupported.append({"field": field, "reason": "runtime_options_unavailable"})
     _append_unsupported_sampling_option(
         unsupported,
         field="sampler",
@@ -3045,6 +3079,17 @@ def _preflight_profile_prompt_request(request: Txt2ImgRequest) -> None:
         *_unsupported_profile_prompt_settings(request.profile, styled_negative_prompt),
         *_unsupported_flux2_scheduler_settings(request),
     ]
+    if request.profile in NATIVE_IMAGE_DEFAULTS:
+        settings = request.model_dump()
+        settings["mode"] = getattr(request, "_spatial_generation_mode", "txt2img")
+        unsupported.extend(
+            {"field": field, "reason": "native_image_txt2img_only"}
+            for field in unsupported_native_image_settings(
+                request.profile, settings, loras=request.loras or extract_loras(_styled_prompt),
+            )
+        )
+        if _selected_runtime_id(AppConfig(), request.runtime) != "comfy_workflow":
+            unsupported.append({"field": "runtime", "reason": "native_image_requires_comfy_workflow"})
     if unsupported:
         raise HTTPException(
             status_code=409,
@@ -3599,6 +3644,19 @@ def _generate_with_recording(
         making.begin(check_operation.output_root, expected_images=request.batch_count * request.batch_size)
     model_slots = _model_slots_for_request(request, config)
     _validate_required_model_slots(request.profile, model_slots, config)
+    if request.profile in NATIVE_IMAGE_DEFAULTS:
+        try:
+            native_bundle = prepare_native_image_bundle(
+                request.profile, model_slots, NativeImageModelClassifier.from_config(config),
+            )
+        except ValueError as exc:
+            _, _, slot = str(exc).partition(":")
+            raise HTTPException(status_code=409, detail={
+                "code": api_errors.MODEL_SELECTION_PROFILE_MISMATCH,
+                "profile": request.profile, "slot_id": slot,
+            }) from exc
+    else:
+        native_bundle = None
     external_model_snapshots = _external_model_reference_snapshots(model_slots, config)
     runtime_model_slots = _runtime_model_slots_for_request(
         request.profile,
@@ -3617,6 +3675,8 @@ def _generate_with_recording(
         else _expand_with_pins(styled_prompt, request, config)
     )
     settings, negative_prompt = _settings_from_request(request, config, mode)
+    if native_bundle is not None:
+        settings["native_image_generation_bundle"] = native_bundle
     if comparison_metadata is not None:
         settings['prompt_comparison'] = dict(comparison_metadata)
     if request.profile == "anima":

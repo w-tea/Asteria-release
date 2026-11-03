@@ -1,0 +1,37 @@
+id: krea2_txt2img_workflow
+profile: krea2
+schema: schemas/krea2_txt2img.yaml
+builder: ComfyTxt2ImgWorkflowBuilder._build_native_image
+mode: txt2img
+nodes:
+  unet_loader: "1"
+  clip_loader: "2"
+  vae_loader: "3"
+  positive: "4"
+  negative: "5"
+  latent: "6"
+class_types:
+  unet_loader: UNETLoader
+  clip_loader: CLIPLoader
+  vae_loader: VAELoader
+  positive: CLIPTextEncode
+  negative: ConditioningZeroOut
+  latent: EmptyLatentImage
+  random_noise: RandomNoise
+  cfg_guider: CFGGuider
+  sampler_select: KSamplerSelect
+  basic_scheduler: BasicScheduler
+  sampler_custom: SamplerCustomAdvanced
+  vae_decode: VAEDecode
+  save_image: SaveImage
+  generation_stage_save: AsteriaSaveGenerationStage
+  generation_stage_load: AsteriaLoadGenerationStage
+  generation_stage_sampler: AsteriaGenerationStageSampler
+  generation_stage_noise: AsteriaSelectedGenerationNoise
+  generation_stage_sample_filter: AsteriaSelectedGenerationSampler
+node_contracts:
+  clip_loader:
+    required_inputs: [clip_name, type]
+    required_input_values: {type: [krea2]}
+    outputs_by_index: {0: CLIP}
+dynamic_sections: []
