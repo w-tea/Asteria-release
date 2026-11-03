@@ -1,7 +1,5 @@
 # Asteria V1.2.2 Windows Portable
 
-> dev確認用の候補です。正式版の公開ZIPは更新していません。 / Development candidate; the public stable ZIP is unchanged.
-
 [日本語](#日本語) | [English](#english)
 
 **画像・動画・音楽の生成から、編集、整理、LoRA学習、モデルのMergeまで。Windowsで使うローカルAI制作アプリです。**
@@ -35,11 +33,11 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 
 - Generateは画像を左、プロンプトと生成操作を右に配置しました。モデル設定と生成設定は必要なときに開けます。適用中のLoRAと詳細スタイルも確認できます。
 - 画像の再利用・処理ボタンを「結果情報」にまとめ、Eagleの送信先は一行から開く形にしました。
+- 生成設定ではHiresなどの調整を先に表示し、工程画像などの保存設定は「保存・記録」から開けます。履歴は画像とプロンプトの冒頭を表示し、操作・全文・メモを展開して確認できます。
+- LoRAを使わないときの表示をコンパクトにし、結果情報には生成時に保存されたモデルと日時を表示します。記録のない値は推測して補いません。
 - Image Editはキャンバスを広く使える配置に変更し、道具と入力画像の切り替えを縦にまとめました。
 - Krea 2 TurboとMOSS-Image SFTの通常の画像生成に対応します。モデルは任意導入です。新モデルでのHires、ControlNet、LoRA、参照画像編集は今回の対応に含みません。
 - 管理するComfyUIを固定0.43.0へ更新します。MOSSの軽量構成はINT8生成モデル・W4A8 encoder・small VAEを使います。必要メモリや処理時間は環境によって異なります。
-
-このdevは確認用の候補です。以下のV1.2.1.2以前の説明は過去の修正内容で、現在の機能範囲は本節を参照してください。正式版の公開ZIPは変更していません。
 
 ### V1.2.1.2の修正
 
@@ -49,8 +47,6 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - Steps、CFG、画像サイズ、batch数などに設けていたAsteria独自の上限を撤去しました。大きな値ほど処理時間やメモリが必要です。生成エンジン側の対応範囲や、実ファイル・入力形式の確認は維持します。
 - Anima／FluxのHires専用プロンプト、AnimaのHires専用ネガティブを二段目へ反映します。Animaの別モデルをフォルダー名だけで拒否しません。
 - 「マスク部分のみ」をSDXL・Anima・Fluxの既存inpaint経路へ接続し、Hires・タイルとの併用にも対応します。実行できない機能はモデルに応じて非表示にし、切り替え前の非対応設定を送信しません。
-
-V1.2.1.1までの修正を含みます。Krea 2／MOSS-Image対応や次版の画面再設計は含みません。
 
 ### V1.2.1.1の修正
 
@@ -383,11 +379,11 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 
 - Generate now places the image on the left and prompts and generation actions on the right. Open model and generation settings when needed, and review active LoRAs and detailed styles in place.
 - Image reuse and processing actions are grouped under Result information. The Eagle destination expands from a single line.
+- Generation settings show Hires and other adjustments before the optional Saving and recording section. History shows an image and prompt excerpt; expand an entry for actions, the full prompt and notes.
+- The empty LoRA summary takes less space. Result information uses the model and date saved with the generation, without guessing values missing from the record.
 - Image Edit provides more canvas space, with tools and input-image switching arranged vertically.
 - Added basic text-to-image generation with Krea 2 Turbo and MOSS-Image SFT. Models are optional. Hires, ControlNet, LoRA and reference-image editing for these new models are not part of this update.
 - The managed ComfyUI is pinned to 0.43.0. The lightweight MOSS configuration uses an INT8 diffusion model, W4A8 encoder and small VAE. Memory requirements and processing time depend on the environment.
-
-This dev build is a candidate for testing. Sections for V1.2.1.2 and earlier describe historical fixes; this section defines the current additions. The public stable ZIP has not changed.
 
 ### V1.2.1.2 fixes
 
@@ -397,8 +393,6 @@ This dev build is a candidate for testing. Sections for V1.2.1.2 and earlier des
 - Removed Asteria-only ceilings on steps, CFG, image dimensions and batch counts. Large values require more time and memory. Engine constraints, valid input formats and actual asset checks still apply.
 - Hires uses its separate positive prompt for Anima and Flux, and its separate negative prompt for Anima. Anima Hires model selection no longer depends on a folder-name prefix.
 - Connected Only masked to the existing SDXL, Anima and Flux inpaint paths, including Hires and Tiling. Inapplicable controls are hidden, and old incompatible settings are excluded from new requests after a model switch.
-
-Includes the fixes through V1.2.1.1. Krea 2, MOSS-Image and the next-version interface redesign are not included.
 
 ### V1.2.1.1 fix
 
