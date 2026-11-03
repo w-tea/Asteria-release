@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.1.2",
   "platform": "windows-x64",
-  "source_commit": "e84a9eb6a1db13856cb65d7c8290e5cb1f6ec543",
-  "build_timestamp_utc": "2026-11-02T20:27:05Z",
+  "source_commit": "fb2841e16d906645fd147e1adc1ac8661047d978",
+  "build_timestamp_utc": "2026-11-03T11:00:00Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 70636,
-      "sha256": "775b465c8c123ba54fa3de3fc3c2a7938d84b8053d44c3594241f2fc0303defd"
+      "size_bytes": 70401,
+      "sha256": "c4a50a27912c6a2688c82aa50d6fa59e81f4fae42f8fd3ff9a5af7837f26e2e9"
     },
     {
       "path": "Repair-Asteria.cmd",

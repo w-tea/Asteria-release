@@ -38,8 +38,6 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - Anima／FluxのHires専用プロンプト、AnimaのHires専用ネガティブを二段目へ反映します。Animaの別モデルをフォルダー名だけで拒否しません。
 - 「マスク部分のみ」をSDXL・Anima・Fluxの既存inpaint経路へ接続し、Hires・タイルとの併用にも対応します。実行できない機能はモデルに応じて非表示にし、切り替え前の非対応設定を送信しません。
 
-V1.2.1.1までの修正を含みます。Krea 2／MOSS-Image対応や次版の画面再設計は含みません。
-
 ### V1.2.1.1の修正
 
 スターターパックや不足モデルの導入後、生成画面のモデル一覧と選択が更新されず、すぐに生成できない場合がある不具合を修正しました。導入完了後は、現在開いているモデルプロファイルの一覧と選択を読み直します。
@@ -375,8 +373,6 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 - Removed Asteria-only ceilings on steps, CFG, image dimensions and batch counts. Large values require more time and memory. Engine constraints, valid input formats and actual asset checks still apply.
 - Hires uses its separate positive prompt for Anima and Flux, and its separate negative prompt for Anima. Anima Hires model selection no longer depends on a folder-name prefix.
 - Connected Only masked to the existing SDXL, Anima and Flux inpaint paths, including Hires and Tiling. Inapplicable controls are hidden, and old incompatible settings are excluded from new requests after a model switch.
-
-Includes the fixes through V1.2.1.1. Krea 2, MOSS-Image and the next-version interface redesign are not included.
 
 ### V1.2.1.1 fix
 
