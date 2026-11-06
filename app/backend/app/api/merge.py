@@ -28,6 +28,7 @@ from app.services.comfy_admission import (
     acknowledge_comfy_cleanup,
     comfy_admission,
 )
+from app.services.runtime_process import RuntimeProcessManager
 from app.services.merge_recipes import (
     BLOCK_SCHEMAS,
     CALCULATION_MODES,
@@ -1954,6 +1955,7 @@ def _merge_xyz_runtime_session(config: AppConfig):
                     }
                 },
                 timeout_seconds=60.0,
+                runtime_owner=RuntimeProcessManager(config, client).owned_listener(),
             )
         except (ComfyCleanupPendingError, RuntimeErrorResponse, TimeoutError, OSError) as exc:
             raise HTTPException(status_code=503, detail="comfy_cleanup_pending") from exc

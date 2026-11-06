@@ -247,7 +247,7 @@ class LoRATrainingOperationExecutor:
                 if latest is None or latest.operation_id != context.operation.operation_id:
                     raise OperationCancelled()
                 if context.cancel_requested:
-                    cancel_lora_training_run(run_id, repository)
+                    cancel_lora_training_run(run_id, repository, project_root=AppConfig().root_dir)
                     raise OperationCancelled()
             current = int(run.progress_current or 0)
             total = int(run.progress_total) if run.progress_total is not None else None
@@ -1727,7 +1727,9 @@ def refresh_run(run_id: str) -> LoRATrainingRun:
             else:
                 if operation.status in {"failed", "cancelled", "interrupted"}:
                     run.status = "cancelled" if operation.status == "cancelled" else "failed"
-                    if operation.error_code in {"comfy_cleanup_pending", "lora_training_output_name_in_use"}:
+                    if operation.error_code in {
+                        "comfy_cleanup_pending", "lora_training_output_name_in_use", "lora_training_trainer_config_conflict",
+                    }:
                         run.failure_code = operation.error_code
                     run.finished_at = operation.updated_at.isoformat()
                     run.updated_at = run.finished_at
@@ -1773,10 +1775,13 @@ def cancel_run(run_id: str) -> LoRATrainingRun:
 
 
 def _cancel_run_with_operation(run_id: str) -> LoRATrainingRun:
-    run = cancel_lora_training_run(run_id, _run_repository())
+    try:
+        run = cancel_lora_training_run(run_id, _run_repository(), project_root=AppConfig().root_dir)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if run is None:
         raise HTTPException(status_code=404, detail="lora_training_run_not_found")
-    if run.operation_id:
+    if run.operation_id and run.status == "cancelled":
         try:
             _lora_operation_coordinator().request_cancel(run.operation_id)
         except OperationNotFoundError:

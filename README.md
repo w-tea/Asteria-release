@@ -38,6 +38,7 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - Image Editはキャンバスを広く使える配置に変更し、道具と入力画像の切り替えを縦にまとめました。
 - Krea 2 TurboとMOSS-Image SFTの通常の画像生成に対応します。モデルは任意導入です。新モデルでのHires、ControlNet、LoRA、参照画像編集は今回の対応に含みません。
 - 管理するComfyUIを固定0.43.0へ更新します。MOSSの軽量構成はINT8生成モデル・W4A8 encoder・small VAEを使います。必要メモリや処理時間は環境によって異なります。
+- SDXLのLoRA学習は、Asteriaの再起動後も正常終了を確認できれば、既存ファイルを上書きせずに結果を保存します。終了を確認できない場合や学習を中止した場合は、残っているファイルの場所を学習履歴で確認できます。
 
 ### V1.2.1.2の修正
 
@@ -384,6 +385,7 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 - Image Edit provides more canvas space, with tools and input-image switching arranged vertically.
 - Added basic text-to-image generation with Krea 2 Turbo and MOSS-Image SFT. Models are optional. Hires, ControlNet, LoRA and reference-image editing for these new models are not part of this update.
 - The managed ComfyUI is pinned to 0.43.0. The lightweight MOSS configuration uses an INT8 diffusion model, W4A8 encoder and small VAE. Memory requirements and processing time depend on the environment.
+- After Asteria restarts, SDXL LoRA training saves the result without replacing existing files if it can confirm that training finished successfully. If completion cannot be confirmed or training was stopped, the run shows where to find any remaining files.
 
 ### V1.2.1.2 fixes
 

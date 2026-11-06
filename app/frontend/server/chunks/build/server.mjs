@@ -3077,6 +3077,9 @@ const messages = {
   "lora.error.planRun": { en: "Could not plan the LoRA training run. Review the dataset and run settings, then try again.", ja: "LoRA学習の実行計画を作成できませんでした。データセットと実行設定を確認してから再試行してください。" },
   "lora.error.startRun": { en: "Could not start the LoRA training run. Review the setup and try again.", ja: "LoRA学習を開始できませんでした。セットアップを確認してから再試行してください。" },
   "lora.error.outputNameInUse": { en: "A file with this output name already exists. Choose a different output name and prepare the run again.", ja: "同じ出力名のファイルがすでにあります。出力名を変えて、学習を準備し直してください。" },
+  "lora.error.exitUnconfirmed": { en: "Asteria could not confirm that training ended. Once training stops, select Refresh run.", ja: "学習が終了したか確認できませんでした。学習が止まってから「実行を更新」を押してください。" },
+  "lora.error.outputNotPublished": { en: "The trained LoRA could not be saved. Check the output folder before trying again.", ja: "学習したLoRAを保存できませんでした。出力先のフォルダーを確認してから再試行してください。" },
+  "lora.error.trainerConfigConflict": { en: "An SDXL training-script config can change the output folder. To load an Accelerate config, put --config_file before the training script.", ja: "SDXLの学習スクリプトに設定ファイルを渡すと、出力先が変わることがあります。Accelerateの設定を読み込むには、学習スクリプトの前に --config_file を指定してください。" },
   "lora.error.runActive": { en: "This training run is queued or in progress. Cancel it or wait for it to finish before deleting its record.", ja: "この学習は待機中か実行中です。中止するか完了を待ってから、記録を削除してください。" },
   "lora.error.refreshRun": { en: "Could not refresh the LoRA training run. Try again after a moment.", ja: "LoRA学習の実行状態を更新できませんでした。少し待ってから再試行してください。" },
   "lora.error.registerModels": { en: "Could not register the trained LoRA models. Refresh model assets and try again.", ja: "学習済みLoRAモデルを登録できませんでした。モデルアセットを更新してから再試行してください。" },
@@ -5028,7 +5031,7 @@ const messages = {
   "lora.run.registerLora": { en: "Register LoRA", ja: "LoRAを登録" },
   "lora.run.scoreSamples": { en: "Score samples", ja: "サンプルを評価" },
   "lora.run.progressAria": { en: "LoRA training run progress", ja: "LoRA学習実行進捗" },
-  "lora.run.preservedOutputFolder": { en: "You can find the unsaved result in this folder: {path}", ja: "今回の学習結果は、次のフォルダーに残っています。{path}" },
+  "lora.run.preservedOutputFolder": { en: "Check this folder for files saved during training: {path}", ja: "学習中に保存したファイルは、次のフォルダーで確認できます。{path}" },
   "lora.run.waitingForLog": { en: "Waiting for training progress.", ja: "学習の進捗を待機中です。" },
   "lora.run.started": { en: "Started", ja: "開始" },
   "lora.run.notStarted": { en: "not started", ja: "未開始" },
@@ -9101,6 +9104,9 @@ const knownErrorCodeKeys = {
   managed_download_destination_not_allowed: "common.error.managedDownloadDestination",
   lora_training_run_not_found: "common.error.notFound",
   lora_training_output_name_in_use: "lora.error.outputNameInUse",
+  lora_training_exit_unconfirmed: "lora.error.exitUnconfirmed",
+  lora_training_output_not_published: "lora.error.outputNotPublished",
+  lora_training_trainer_config_conflict: "lora.error.trainerConfigConflict",
   lora_training_run_active: "lora.error.runActive",
   lora_training_dataset_not_found: "common.error.notFound",
   lora_caption_assist_provider_endpoint_invalid: "common.error.invalidProviderEndpoint",
@@ -35959,6 +35965,7 @@ const _sfc_main$1b = /* @__PURE__ */ defineComponent({
     const activityLabel = computed(() => {
       const run = props.activeRun;
       if (!run) return t("lora.run.noRunSelected");
+      if (run.failure_code === "lora_training_exit_unconfirmed") return "";
       if (run.status === "planned" && run.operation_id) return t("operations.status.queued");
       if (run.status === "running" && typeof run.progress_current === "number" && typeof run.progress_total === "number") {
         return t("lora.standard.activityTrainingStep", { current: String(run.progress_current), total: String(run.progress_total) });
@@ -35981,62 +35988,62 @@ const _sfc_main$1b = /* @__PURE__ */ defineComponent({
       return hours > 0 ? `${hours}h ${minutes}m` : minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
     };
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "lora-standard-workspace" }, _attrs))} data-v-0bcfc0ac><aside class="lora-standard-rail" data-lora-standard-region="dataset-runs"${ssrRenderAttr("aria-label", unref(t)("lora.standard.datasetRunsTitle"))} data-v-0bcfc0ac><div class="lora-standard-heading" data-v-0bcfc0ac><div data-v-0bcfc0ac><p class="eyebrow" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.contextEyebrow"))}</p><h2 data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.datasetRunsTitle"))}</h2></div><button type="button" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.openCaptionStudio"))}</button></div><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.dataset"))}</span><select${ssrRenderAttr("value", __props.draft.dataset_id)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac><option value="" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.noDataset"))}</option><!--[-->`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "lora-standard-workspace" }, _attrs))} data-v-ae8113a8><aside class="lora-standard-rail" data-lora-standard-region="dataset-runs"${ssrRenderAttr("aria-label", unref(t)("lora.standard.datasetRunsTitle"))} data-v-ae8113a8><div class="lora-standard-heading" data-v-ae8113a8><div data-v-ae8113a8><p class="eyebrow" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.contextEyebrow"))}</p><h2 data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.datasetRunsTitle"))}</h2></div><button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.openCaptionStudio"))}</button></div><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.dataset"))}</span><select${ssrRenderAttr("value", __props.draft.dataset_id)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8><option value="" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.noDataset"))}</option><!--[-->`);
       ssrRenderList(__props.datasets, (dataset) => {
-        _push(`<option${ssrRenderAttr("value", dataset.id)} data-v-0bcfc0ac>${ssrInterpolate(dataset.name)} · ${ssrInterpolate(dataset.items.length)}</option>`);
+        _push(`<option${ssrRenderAttr("value", dataset.id)} data-v-ae8113a8>${ssrInterpolate(dataset.name)} · ${ssrInterpolate(dataset.items.length)}</option>`);
       });
       _push(`<!--]--></select></label>`);
       if (unref(selectedDataset)) {
-        _push(`<div class="lora-standard-context" data-v-0bcfc0ac><strong data-v-0bcfc0ac>${ssrInterpolate(unref(selectedDataset).name)}</strong><small data-v-0bcfc0ac>${ssrInterpolate(unref(selectedDataset).profile)} · ${ssrInterpolate(unref(selectedDataset).training_type)}</small><small data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.datasetCount", { count: String(unref(selectedDataset).items.length) }))}</small></div>`);
+        _push(`<div class="lora-standard-context" data-v-ae8113a8><strong data-v-ae8113a8>${ssrInterpolate(unref(selectedDataset).name)}</strong><small data-v-ae8113a8>${ssrInterpolate(unref(selectedDataset).profile)} · ${ssrInterpolate(unref(selectedDataset).training_type)}</small><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.datasetCount", { count: String(unref(selectedDataset).items.length) }))}</small></div>`);
       } else {
-        _push(`<p class="muted" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.datasetRequired"))}</p>`);
+        _push(`<p class="muted" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.datasetRequired"))}</p>`);
       }
-      _push(`<div class="lora-standard-run-list" data-v-0bcfc0ac><div class="lora-standard-section-title" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.recentRuns"))}</span><small data-v-0bcfc0ac>${ssrInterpolate(__props.runs.length)}</small></div><!--[-->`);
+      _push(`<div class="lora-standard-run-list" data-v-ae8113a8><div class="lora-standard-section-title" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.recentRuns"))}</span><small data-v-ae8113a8>${ssrInterpolate(__props.runs.length)}</small></div><!--[-->`);
       ssrRenderList(__props.runs, (run) => {
-        _push(`<button class="${ssrRenderClass(["lora-standard-run", { "lora-standard-run--active": run.id === __props.activeRun?.id }])}" type="button" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(run.dataset_name)}</span><small data-v-0bcfc0ac>${ssrInterpolate(filenameFromPath2(run.output_name))}</small><em${ssrRenderAttr("data-status", run.status)} data-v-0bcfc0ac>${ssrInterpolate(run.status)}</em></button>`);
+        _push(`<button class="${ssrRenderClass(["lora-standard-run", { "lora-standard-run--active": run.id === __props.activeRun?.id }])}" type="button" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(run.dataset_name)}</span><small data-v-ae8113a8>${ssrInterpolate(filenameFromPath2(run.output_name))}</small><em${ssrRenderAttr("data-status", run.status)} data-v-ae8113a8>${ssrInterpolate(run.status)}</em></button>`);
       });
       _push(`<!--]-->`);
       if (!__props.runs.length) {
-        _push(`<small class="muted" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.noRuns"))}</small>`);
+        _push(`<small class="muted" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.noRuns"))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</div></aside><main class="lora-standard-setup" data-lora-standard-region="training-setup"${ssrRenderAttr("aria-label", unref(t)("lora.standard.trainingSetupTitle"))} data-v-0bcfc0ac><div class="lora-standard-heading" data-v-0bcfc0ac><div data-v-0bcfc0ac><p class="eyebrow" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.setupEyebrow"))}</p><h2 data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.trainingSetupTitle"))}</h2></div><span class="status-pill"${ssrRenderAttr("data-draft-state", __props.planState.draft_state)} data-v-0bcfc0ac>${ssrInterpolate(unref(t)(`lora.standard.state.${unref(draftStateKey)}`))}</span></div><div class="lora-standard-setup-grid" data-v-0bcfc0ac><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.preset"))}</span><select${ssrRenderAttr("value", __props.draft.preset_id)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac><!--[-->`);
+      _push(`</div></aside><main class="lora-standard-setup" data-lora-standard-region="training-setup"${ssrRenderAttr("aria-label", unref(t)("lora.standard.trainingSetupTitle"))} data-v-ae8113a8><div class="lora-standard-heading" data-v-ae8113a8><div data-v-ae8113a8><p class="eyebrow" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.setupEyebrow"))}</p><h2 data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.trainingSetupTitle"))}</h2></div><span class="status-pill"${ssrRenderAttr("data-draft-state", __props.planState.draft_state)} data-v-ae8113a8>${ssrInterpolate(unref(t)(`lora.standard.state.${unref(draftStateKey)}`))}</span></div><div class="lora-standard-setup-grid" data-v-ae8113a8><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.preset"))}</span><select${ssrRenderAttr("value", __props.draft.preset_id)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8><!--[-->`);
       ssrRenderList(__props.presets, (preset) => {
-        _push(`<option${ssrRenderAttr("value", preset.id)} data-v-0bcfc0ac>${ssrInterpolate(preset.name)}</option>`);
+        _push(`<option${ssrRenderAttr("value", preset.id)} data-v-ae8113a8>${ssrInterpolate(preset.name)}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.baseModel"))}</span><input${ssrRenderAttr("value", __props.draft.pretrained_model_name_or_path)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.outputName"))}</span><input${ssrRenderAttr("value", __props.draft.output_name)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.repeats"))}</span><input${ssrRenderAttr("value", __props.draft.repeats ?? "")}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} min="0" type="number" data-v-0bcfc0ac></label><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.classTokens"))}</span><input${ssrRenderAttr("value", __props.draft.class_tokens)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.captionExtension"))}</span><input${ssrRenderAttr("value", __props.draft.caption_extension)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label></div>`);
+      _push(`<!--]--></select></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.baseModel"))}</span><input${ssrRenderAttr("value", __props.draft.pretrained_model_name_or_path)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.outputName"))}</span><input${ssrRenderAttr("value", __props.draft.output_name)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.repeats"))}</span><input${ssrRenderAttr("value", __props.draft.repeats ?? "")}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} min="0" type="number" data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.classTokens"))}</span><input${ssrRenderAttr("value", __props.draft.class_tokens)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.captionExtension"))}</span><input${ssrRenderAttr("value", __props.draft.caption_extension)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label></div>`);
       if (unref(selectedPreset)) {
-        _push(`<div class="lora-standard-resolved" data-v-0bcfc0ac><div data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.profile"))}</span><strong data-v-0bcfc0ac>${ssrInterpolate(unref(selectedPreset).profile)}</strong></div><div data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.trainingType"))}</span><strong data-v-0bcfc0ac>${ssrInterpolate(unref(selectedPreset).training_type)}</strong></div><div data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.network"))}</span><strong data-v-0bcfc0ac>${ssrInterpolate(unref(selectedPreset).network_dim)} / ${ssrInterpolate(unref(selectedPreset).network_alpha)}</strong></div><div data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.keepTokens"))}</span><strong data-v-0bcfc0ac>${ssrInterpolate(unref(selectedPreset).keep_tokens)}</strong></div></div>`);
+        _push(`<div class="lora-standard-resolved" data-v-ae8113a8><div data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.profile"))}</span><strong data-v-ae8113a8>${ssrInterpolate(unref(selectedPreset).profile)}</strong></div><div data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.trainingType"))}</span><strong data-v-ae8113a8>${ssrInterpolate(unref(selectedPreset).training_type)}</strong></div><div data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.network"))}</span><strong data-v-ae8113a8>${ssrInterpolate(unref(selectedPreset).network_dim)} / ${ssrInterpolate(unref(selectedPreset).network_alpha)}</strong></div><div data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.keepTokens"))}</span><strong data-v-ae8113a8>${ssrInterpolate(unref(selectedPreset).keep_tokens)}</strong></div></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<details class="lora-standard-advanced" data-v-0bcfc0ac><summary data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.advanced"))}</summary><div class="lora-standard-setup-grid" data-v-0bcfc0ac><label class="field field-with-action" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.imageDirectory"))} <button type="button" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.image_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label><label class="field field-with-action" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.outputDirectory"))} <button type="button" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.output_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>VAE</span><input${ssrRenderAttr("value", __props.draft.vae)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>Qwen3</span><input${ssrRenderAttr("value", __props.draft.qwen3)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label><label class="field field-with-action" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.sdScriptsDir"))} <button type="button" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.working_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.accelerateCommand"))}</span><input${ssrRenderAttr("value", __props.draft.accelerate_command)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.optimizer"))}</span><input${ssrRenderAttr("value", __props.draft.optimizer_type)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label><label class="field" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.optimizerArgs"))}</span><input${ssrRenderAttr("value", __props.draft.optimizer_args)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac></label></div><label class="field field--checkbox" data-v-0bcfc0ac><input${ssrIncludeBooleanAttr(__props.draft.optimizer_low_vram) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} type="checkbox" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.optimizerLowVram"))}</span></label></details><div class="lora-standard-actions" data-v-0bcfc0ac><button type="button"${ssrIncludeBooleanAttr(__props.busy || __props.planState.inputs_locked) ? " disabled" : ""} data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.previewConfig"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.busy || __props.planState.inputs_locked || !unref(selectedDataset) || !unref(selectedDataset).items.length || !unref(selectedPreset)) ? " disabled" : ""} data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.prepareAndPlan"))}</button><button type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.refreshPresets"))}</button></div>`);
+      _push(`<details class="lora-standard-advanced" data-v-ae8113a8><summary data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.advanced"))}</summary><div class="lora-standard-setup-grid" data-v-ae8113a8><label class="field field-with-action" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.imageDirectory"))} <button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.image_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field field-with-action" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.outputDirectory"))} <button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.output_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>VAE</span><input${ssrRenderAttr("value", __props.draft.vae)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>Qwen3</span><input${ssrRenderAttr("value", __props.draft.qwen3)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field field-with-action" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.sdScriptsDir"))} <button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.working_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.accelerateCommand"))}</span><input${ssrRenderAttr("value", __props.draft.accelerate_command)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.optimizer"))}</span><input${ssrRenderAttr("value", __props.draft.optimizer_type)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.optimizerArgs"))}</span><input${ssrRenderAttr("value", __props.draft.optimizer_args)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label></div><label class="field field--checkbox" data-v-ae8113a8><input${ssrIncludeBooleanAttr(__props.draft.optimizer_low_vram) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} type="checkbox" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.optimizerLowVram"))}</span></label></details><div class="lora-standard-actions" data-v-ae8113a8><button type="button"${ssrIncludeBooleanAttr(__props.busy || __props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.previewConfig"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.busy || __props.planState.inputs_locked || !unref(selectedDataset) || !unref(selectedDataset).items.length || !unref(selectedPreset)) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.prepareAndPlan"))}</button><button type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.refreshPresets"))}</button></div>`);
       if (__props.error) {
-        _push(`<p class="error" aria-live="assertive" data-v-0bcfc0ac>${ssrInterpolate(__props.error)}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-ae8113a8>${ssrInterpolate(__props.error)}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.message) {
-        _push(`<small class="muted" data-v-0bcfc0ac>${ssrInterpolate(__props.message)}</small>`);
+        _push(`<small class="muted" data-v-ae8113a8>${ssrInterpolate(__props.message)}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.preview?.warnings.length) {
-        _push(`<small class="lora-standard-warning" data-v-0bcfc0ac>${ssrInterpolate(__props.preview.warnings.map((item) => item.replaceAll("_", " ")).join(" · "))}</small>`);
+        _push(`<small class="lora-standard-warning" data-v-ae8113a8>${ssrInterpolate(__props.preview.warnings.map((item) => item.replaceAll("_", " ")).join(" · "))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</main><aside class="lora-standard-readiness" data-lora-standard-region="readiness-run"${ssrRenderAttr("aria-label", unref(t)("lora.standard.readinessTitle"))} data-v-0bcfc0ac><div class="lora-standard-heading" data-v-0bcfc0ac><div data-v-0bcfc0ac><p class="eyebrow" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.snapshotEyebrow"))}</p><h2 data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.readinessTitle"))}</h2></div><span class="status-pill"${ssrRenderAttr("data-plan-state", __props.planState.state)} data-v-0bcfc0ac>${ssrInterpolate(unref(t)(`lora.standard.state.${__props.planState.state}`))}</span></div>`);
+      _push(`</main><aside class="lora-standard-readiness" data-lora-standard-region="readiness-run"${ssrRenderAttr("aria-label", unref(t)("lora.standard.readinessTitle"))} data-v-ae8113a8><div class="lora-standard-heading" data-v-ae8113a8><div data-v-ae8113a8><p class="eyebrow" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.snapshotEyebrow"))}</p><h2 data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.readinessTitle"))}</h2></div><span class="status-pill"${ssrRenderAttr("data-plan-state", __props.planState.state)} data-v-ae8113a8>${ssrInterpolate(unref(t)(`lora.standard.state.${__props.planState.state}`))}</span></div>`);
       if (__props.materialized || __props.activeRun) {
-        _push(`<div class="lora-standard-snapshot" data-v-0bcfc0ac><strong data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.training.preparedFilesSummary", { count: String(unref(snapshotItemCount)), skipped: String(unref(snapshotSkippedCount)) }))}</strong><small data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.immutableSnapshot"))}</small></div>`);
+        _push(`<div class="lora-standard-snapshot" data-v-ae8113a8><strong data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.preparedFilesSummary", { count: String(unref(snapshotItemCount)), skipped: String(unref(snapshotSkippedCount)) }))}</strong><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.immutableSnapshot"))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(characterGate)?.applicable) {
-        _push(`<section class="lora-standard-gate" data-v-0bcfc0ac><div class="lora-standard-section-title" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.characterGate"))}</span><em${ssrRenderAttr("data-ready", unref(characterGate).passed)} data-v-0bcfc0ac>${ssrInterpolate(unref(characterGate).passed ? unref(t)("lora.standard.pass") : unref(t)("lora.run.blocked"))}</em></div><small data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.triggerFirst", { ready: String(unref(characterGate).trigger_first_count), total: String(unref(characterGate).total_count) }))}</small><small data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.keepTokensValue", { count: String(unref(characterGate).effective_keep_tokens) }))}</small><small data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.identityHits", { count: String(unref(characterGate).identity_hit_count) }))}</small>`);
+        _push(`<section class="lora-standard-gate" data-v-ae8113a8><div class="lora-standard-section-title" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.characterGate"))}</span><em${ssrRenderAttr("data-ready", unref(characterGate).passed)} data-v-ae8113a8>${ssrInterpolate(unref(characterGate).passed ? unref(t)("lora.standard.pass") : unref(t)("lora.run.blocked"))}</em></div><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.triggerFirst", { ready: String(unref(characterGate).trigger_first_count), total: String(unref(characterGate).total_count) }))}</small><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.keepTokensValue", { count: String(unref(characterGate).effective_keep_tokens) }))}</small><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.identityHits", { count: String(unref(characterGate).identity_hit_count) }))}</small>`);
         if (!unref(characterGate).passed) {
-          _push(`<button type="button" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.openCaptionStudio"))}</button>`);
+          _push(`<button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.openCaptionStudio"))}</button>`);
         } else {
           _push(`<!---->`);
         }
@@ -36044,76 +36051,87 @@ const _sfc_main$1b = /* @__PURE__ */ defineComponent({
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="lora-standard-checks" data-v-0bcfc0ac><!--[-->`);
+      _push(`<div class="lora-standard-checks" data-v-ae8113a8><!--[-->`);
       ssrRenderList(unref(allReadinessChecks), (check) => {
-        _push(`<div class="lora-standard-check" data-v-0bcfc0ac><span${ssrRenderAttr("data-ready", check.passed)} data-v-0bcfc0ac>${ssrInterpolate(check.passed ? "✓" : "!")}</span><div data-v-0bcfc0ac><strong data-v-0bcfc0ac>${ssrInterpolate(check.label)}</strong><small data-v-0bcfc0ac>${ssrInterpolate(check.detail)}</small></div></div>`);
+        _push(`<div class="lora-standard-check" data-v-ae8113a8><span${ssrRenderAttr("data-ready", check.passed)} data-v-ae8113a8>${ssrInterpolate(check.passed ? "✓" : "!")}</span><div data-v-ae8113a8><strong data-v-ae8113a8>${ssrInterpolate(check.label)}</strong><small data-v-ae8113a8>${ssrInterpolate(check.detail)}</small></div></div>`);
       });
       _push(`<!--]--></div>`);
       if (__props.readiness.errors.length || __props.readiness.warnings.length) {
-        _push(`<div class="lora-standard-issues" data-v-0bcfc0ac><!--[-->`);
+        _push(`<div class="lora-standard-issues" data-v-ae8113a8><!--[-->`);
         ssrRenderList(__props.readiness.errors, (issue2) => {
-          _push(`<small class="error" data-v-0bcfc0ac>${ssrInterpolate(issue2)}</small>`);
+          _push(`<small class="error" data-v-ae8113a8>${ssrInterpolate(issue2)}</small>`);
         });
         _push(`<!--]--><!--[-->`);
         ssrRenderList(__props.readiness.warnings, (issue2) => {
-          _push(`<small data-v-0bcfc0ac>${ssrInterpolate(issue2)}</small>`);
+          _push(`<small data-v-ae8113a8>${ssrInterpolate(issue2)}</small>`);
         });
         _push(`<!--]--></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<button class="primary-button lora-standard-primary-action" type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.canStart) ? " disabled" : ""} data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.run.start"))}</button></aside><section class="lora-standard-progress" data-lora-standard-region="progress"${ssrRenderAttr("aria-label", unref(t)("lora.run.progressAria"))} data-v-0bcfc0ac>`);
+      _push(`<button class="primary-button lora-standard-primary-action" type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.canStart) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.start"))}</button></aside><section class="lora-standard-progress" data-lora-standard-region="progress"${ssrRenderAttr("aria-label", unref(t)("lora.run.progressAria"))} data-v-ae8113a8>`);
       if (__props.activeRun) {
         _push(`<!--[-->`);
         if (__props.activeRun.status === "failed" && __props.activeRun.failure_code) {
-          _push(`<p class="error lora-standard-run-error" role="alert" data-v-0bcfc0ac>${ssrInterpolate(("userFacingErrorMessage" in _ctx ? _ctx.userFacingErrorMessage : unref(userFacingErrorMessage))({ data: { detail: { code: __props.activeRun.failure_code } } }))} `);
-          if (__props.activeRun.failure_code === "lora_training_output_name_in_use" && __props.activeRun.exit_code === -2 && __props.activeRun.sdxl_output_stage) {
-            _push(`<!--[--><br data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.run.preservedOutputFolder", { path: __props.activeRun.sdxl_output_stage }))}<!--]-->`);
-          } else {
-            _push(`<!---->`);
-          }
-          _push(`</p>`);
+          _push(`<p class="error lora-standard-run-error" role="alert" data-v-ae8113a8>${ssrInterpolate(("userFacingErrorMessage" in _ctx ? _ctx.userFacingErrorMessage : unref(userFacingErrorMessage))({ data: { detail: { code: __props.activeRun.failure_code } } }))}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="lora-standard-heading" data-v-0bcfc0ac><div data-v-0bcfc0ac><p class="eyebrow" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.activityEyebrow"))}</p><h2 data-v-0bcfc0ac>${ssrInterpolate(__props.activeRun.dataset_name)}</h2></div><span class="status-pill"${ssrRenderAttr("data-status", __props.activeRun.status)} data-v-0bcfc0ac>${ssrInterpolate(__props.activeRun.status === "planned" && __props.activeRun.operation_id ? unref(t)("operations.status.queued") : __props.activeRun.status)}</span></div><div class="run-progress" data-v-0bcfc0ac><div class="run-progress__meta" data-v-0bcfc0ac><span data-v-0bcfc0ac>${ssrInterpolate(unref(progressLabel))}</span><small data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.elapsed", { value: formatElapsedTime(__props.activeRun) }))} · ${ssrInterpolate(unref(activityLabel))}</small></div><div class="run-progress__track" data-v-0bcfc0ac><span style="${ssrRenderStyle({ width: `${unref(progressPercent)}%` })}" data-v-0bcfc0ac></span></div></div>`);
-        if (__props.activeRun.status === "running" || __props.activeRun.status === "planned" && __props.activeRun.operation_id) {
-          _push(`<div class="lora-standard-actions" data-v-0bcfc0ac><button type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.run.refresh"))}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.run.cancel"))}</button></div>`);
+        if (__props.activeRun.preserved_output_dir && (__props.activeRun.status === "failed" || __props.activeRun.status === "cancelled")) {
+          _push(`<p class="lora-standard-run-error" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.preservedOutputFolder", { path: __props.activeRun.preserved_output_dir }))}</p>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`<div class="lora-standard-heading" data-v-ae8113a8><div data-v-ae8113a8><p class="eyebrow" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.activityEyebrow"))}</p><h2 data-v-ae8113a8>${ssrInterpolate(__props.activeRun.dataset_name)}</h2></div><span class="status-pill"${ssrRenderAttr("data-status", __props.activeRun.status)} data-v-ae8113a8>${ssrInterpolate(__props.activeRun.status === "planned" && __props.activeRun.operation_id ? unref(t)("operations.status.queued") : __props.activeRun.status)}</span></div><div class="run-progress" data-v-ae8113a8><div class="run-progress__meta" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(progressLabel))}</span><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.elapsed", { value: formatElapsedTime(__props.activeRun) }))}`);
+        if (unref(activityLabel)) {
+          _push(`<!--[--> · ${ssrInterpolate(unref(activityLabel))}<!--]-->`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</small></div><div class="run-progress__track" data-v-ae8113a8><span style="${ssrRenderStyle({ width: `${unref(progressPercent)}%` })}" data-v-ae8113a8></span></div></div>`);
+        if (__props.activeRun.status === "running" || __props.activeRun.status === "planned" && __props.activeRun.operation_id || __props.activeRun.failure_code === "lora_training_exit_unconfirmed") {
+          _push(`<div class="lora-standard-actions" data-v-ae8113a8><button type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.refresh"))}</button>`);
+          if (__props.activeRun.status !== "failed") {
+            _push(`<button class="destructive-button" type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.cancel"))}</button>`);
+          } else {
+            _push(`<!---->`);
+          }
+          _push(`</div>`);
         } else {
           _push(`<!---->`);
         }
         _push(`<!--]-->`);
       } else {
-        _push(`<small data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.run.noRunSelected"))}</small>`);
+        _push(`<small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.noRunSelected"))}</small>`);
       }
-      _push(`</section><section class="lora-standard-artifacts" data-lora-standard-region="artifacts"${ssrRenderAttr("aria-label", unref(t)("lora.standard.artifactsTitle"))} data-v-0bcfc0ac><div class="lora-standard-heading" data-v-0bcfc0ac><div data-v-0bcfc0ac><p class="eyebrow" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.reviewEyebrow"))}</p><h2 data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.artifactsTitle"))}</h2></div></div>`);
+      _push(`</section><section class="lora-standard-artifacts" data-lora-standard-region="artifacts"${ssrRenderAttr("aria-label", unref(t)("lora.standard.artifactsTitle"))} data-v-ae8113a8><div class="lora-standard-heading" data-v-ae8113a8><div data-v-ae8113a8><p class="eyebrow" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.reviewEyebrow"))}</p><h2 data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.artifactsTitle"))}</h2></div></div>`);
       if (__props.activeRun?.status === "completed") {
-        _push(`<!--[--><div class="lora-standard-models" data-v-0bcfc0ac><!--[-->`);
+        _push(`<!--[--><div class="lora-standard-models" data-v-ae8113a8><!--[-->`);
         ssrRenderList(__props.activeRun.trained_model_paths, (path) => {
-          _push(`<article data-v-0bcfc0ac><strong data-v-0bcfc0ac>${ssrInterpolate(filenameFromPath2(path))}</strong><small data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.trainedModel"))}</small></article>`);
+          _push(`<article data-v-ae8113a8><strong data-v-ae8113a8>${ssrInterpolate(filenameFromPath2(path))}</strong><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.trainedModel"))}</small></article>`);
         });
         _push(`<!--]--></div>`);
         if (__props.activeRun.sample_image_paths.length) {
-          _push(`<div class="lora-standard-samples" data-v-0bcfc0ac><!--[-->`);
+          _push(`<div class="lora-standard-samples" data-v-ae8113a8><!--[-->`);
           ssrRenderList(__props.activeRun.sample_image_paths, (path, sampleIndex) => {
-            _push(`<figure data-v-0bcfc0ac><img${ssrRenderAttr("src", sampleImageUrl(__props.activeRun.id, sampleIndex))}${ssrRenderAttr("alt", filenameFromPath2(path))} loading="lazy" data-v-0bcfc0ac><figcaption data-v-0bcfc0ac>${ssrInterpolate(filenameFromPath2(path))}</figcaption></figure>`);
+            _push(`<figure data-v-ae8113a8><img${ssrRenderAttr("src", sampleImageUrl(__props.activeRun.id, sampleIndex))}${ssrRenderAttr("alt", filenameFromPath2(path))} loading="lazy" data-v-ae8113a8><figcaption data-v-ae8113a8>${ssrInterpolate(filenameFromPath2(path))}</figcaption></figure>`);
           });
           _push(`<!--]--></div>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.activeRun.sample_image_scores.length) {
-          _push(`<div class="lora-standard-scores" data-v-0bcfc0ac><!--[-->`);
+          _push(`<div class="lora-standard-scores" data-v-ae8113a8><!--[-->`);
           ssrRenderList(__props.activeRun.sample_image_scores, (score) => {
-            _push(`<article data-v-0bcfc0ac><strong data-v-0bcfc0ac>${ssrInterpolate(score.score)} / 100 · ${ssrInterpolate(score.width)}×${ssrInterpolate(score.height)}</strong><small data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.mechanicalScore"))}</small></article>`);
+            _push(`<article data-v-ae8113a8><strong data-v-ae8113a8>${ssrInterpolate(score.score)} / 100 · ${ssrInterpolate(score.width)}×${ssrInterpolate(score.height)}</strong><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.mechanicalScore"))}</small></article>`);
           });
           _push(`<!--]--></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<p class="lora-standard-review-note" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.visualReviewRequired"))}</p><div class="lora-standard-actions" data-v-0bcfc0ac><button type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.activeRun.sample_image_paths.length) ? " disabled" : ""} data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.run.scoreSamples"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.activeRun.trained_model_paths.length) ? " disabled" : ""} data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.run.registerLora"))}</button>`);
+        _push(`<p class="lora-standard-review-note" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.visualReviewRequired"))}</p><div class="lora-standard-actions" data-v-ae8113a8><button type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.activeRun.sample_image_paths.length) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.scoreSamples"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.activeRun.trained_model_paths.length) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.registerLora"))}</button>`);
         if (__props.activeRun.registered_model_paths.length) {
-          _push(`<button type="button" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.testInGenerate"))}</button>`);
+          _push(`<button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.testInGenerate"))}</button>`);
         } else {
           _push(`<!---->`);
         }
@@ -36127,7 +36145,7 @@ const _sfc_main$1b = /* @__PURE__ */ defineComponent({
         }
         _push(`</div><!--]-->`);
       } else {
-        _push(`<small class="muted" data-v-0bcfc0ac>${ssrInterpolate(unref(t)("lora.standard.artifactsPending"))}</small>`);
+        _push(`<small class="muted" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.artifactsPending"))}</small>`);
       }
       _push(`</section></div>`);
     };
@@ -36139,7 +36157,7 @@ _sfc_main$1b.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRAStandardWorkspace.vue");
   return _sfc_setup$1b ? _sfc_setup$1b(props, ctx) : void 0;
 };
-const LoRAStandardWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1b, [["__scopeId", "data-v-0bcfc0ac"]]), { __name: "StudioLoraTrainingLoRAStandardWorkspace" });
+const LoRAStandardWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1b, [["__scopeId", "data-v-ae8113a8"]]), { __name: "StudioLoraTrainingLoRAStandardWorkspace" });
 const _sfc_main$1a = /* @__PURE__ */ defineComponent({
   __name: "LoRADatasetRail",
   __ssrInlineRender: true,
@@ -57004,8 +57022,8 @@ const _sfc_main$1 = {
     const statusText = _error.statusMessage ?? (is404 ? "Page Not Found" : "Internal Server Error");
     const description = _error.message || _error.toString();
     const stack = void 0;
-    const _Error404 = defineAsyncComponent(() => import('./error-404-CJ9IyzJ2.mjs'));
-    const _Error = defineAsyncComponent(() => import('./error-500-DTwfyVmq.mjs'));
+    const _Error404 = defineAsyncComponent(() => import('./error-404-3tuSdBtu.mjs'));
+    const _Error = defineAsyncComponent(() => import('./error-500-Phqhahpe.mjs'));
     const ErrorTemplate = is404 ? _Error404 : _Error;
     return (_ctx, _push, _parent, _attrs) => {
       _push(ssrRenderComponent(unref(ErrorTemplate), mergeProps({ status: unref(status), statusText: unref(statusText), statusCode: unref(status), statusMessage: unref(statusText), description: unref(description), stack: unref(stack) }, _attrs), null, _parent));

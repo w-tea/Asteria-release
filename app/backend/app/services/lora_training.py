@@ -24,13 +24,15 @@ from uuid import uuid4
 from urllib.parse import urlparse
 
 import httpx
+import psutil
 from PIL import ExifTags, Image, ImageFilter, ImageOps, ImageStat
 from pydantic import BaseModel, Field
 
 from app.services.image_metadata_text import metadata_value_to_text
 from app.services.atomic_json import write_json_atomic
 from app.services.image_check_recovery import move_without_replacement
-from app.services.training_process import popen_training_process
+from app.services.runtime_ownership import terminate_process_tree
+from app.services.training_process import owned_training_relay, popen_training_process, read_training_receipt
 
 TrainingProfile = Literal["sdxl", "anima"]
 TrainingType = Literal["copy_lora", "character_lora", "style_lora"]
@@ -70,6 +72,9 @@ LoRACopyMachineAdapterStatus = Literal["ready", "missing"]
 LoRACopyMachineTrainingRunStatus = Literal["planned", "blocked", "running", "completed", "failed"]
 SAMPLE_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
 _TRAINING_SNAPSHOT_OWNER = ".asteria-training-run"
+_SDXL_EXIT_RECEIPT = ".asteria-training-exit.json"
+_SDXL_PUBLICATION_PLAN = ".asteria-training-publication.json"
+_TRAINING_EXIT_UNCONFIRMED = "lora_training_exit_unconfirmed"
 _logger = logging.getLogger(__name__)
 
 
@@ -605,6 +610,7 @@ class LoRATrainingRun(BaseModel):
     output_dir: str
     output_name: str
     sdxl_output_stage: str = ""
+    preserved_output_dir: str = ""
     failure_code: str = ""
     working_dir: str
     command_args: list[str] = Field(default_factory=list)
@@ -2035,12 +2041,28 @@ def start_lora_training_run(
         raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
     log_path = (log_dir / f"{run.id}.log").resolve()
     working_dir = _resolve_training_working_dir(run.working_dir, project_root)
+    stage: Path | None = None
     try:
         with log_path.open("w", encoding="utf-8", errors="replace") as log_file:
             command = run.command_args
             if run.profile == "sdxl":
                 command, stage = _stage_sdxl_training_command(run, project_root)
                 run.sdxl_output_stage = str(stage)
+                # Persist the attempt before any independent process can write to it.
+                now = _utc_now()
+                run.status, run.log_path, run.started_at, run.updated_at = "running", str(log_path), now, now
+                run.pid = run.exit_code = None
+                run.finished_at = None
+                run.preserved_output_dir = ""
+                run.trained_model_paths = []
+                run.sample_image_paths = []
+                run.sample_image_scores = []
+                run.registered_model_paths = []
+                try:
+                    repository.save(run)
+                except LoRATrainingStorageError:
+                    stage.rmdir()
+                    raise
             log_file.write(f"Asteria LoRA training run {run.id}\n")
             log_file.write(f"Command: {' '.join(command)}\n\n")
             log_file.flush()
@@ -2049,6 +2071,7 @@ def start_lora_training_run(
                     command,
                     cwd=working_dir,
                     stdout=log_file,
+                    receipt_path=stage / _SDXL_EXIT_RECEIPT if stage is not None else None,
                 )
             except OSError as exc:
                 now = _utc_now()
@@ -2077,7 +2100,8 @@ def start_lora_training_run(
     run.sample_image_scores = []
     run.registered_model_paths = []
     _apply_run_progress_from_log(run)
-    run.started_at = now
+    if stage is None:
+        run.started_at = now
     run.finished_at = None
     run.updated_at = now
     try:
@@ -2101,6 +2125,7 @@ def refresh_lora_training_run(
         return None
     process = _RUN_PROCESSES.get(run.id)
     completed_now = False
+    stage = _sdxl_attempt_directory(run, project_root)
     if process is not None:
         exit_code = process.poll()
         if exit_code is not None:
@@ -2109,6 +2134,34 @@ def refresh_lora_training_run(
             run.status = "completed" if exit_code == 0 else "failed"
             completed_now = exit_code == 0
             run.finished_at = _utc_now()
+    elif stage is not None and (
+        run.status == "running" or (run.status == "failed" and run.failure_code == _TRAINING_EXIT_UNCONFIRMED)
+    ):
+        receipt_path = stage / _SDXL_EXIT_RECEIPT
+        receipt = read_training_receipt(receipt_path)
+        relay = None
+        if receipt is not None and receipt.exit_code is None:
+            try:
+                relay = owned_training_relay(receipt_path, receipt)
+            except psutil.AccessDenied:
+                return run  # Do not treat an inaccessible process as stopped.
+            if relay is not None:
+                run.status, run.exit_code, run.failure_code = "running", None, ""
+                run.finished_at = None
+            # The relay writes the exit code before exiting; re-read in case it
+            # finished between the initial read and the process observation.
+            receipt = read_training_receipt(receipt_path)
+        if receipt is not None and receipt.exit_code is not None:
+            run.exit_code = receipt.exit_code
+            completed_now = receipt.exit_code == 0
+            run.status = "completed" if completed_now else "failed"
+            run.failure_code = ""
+            run.finished_at = receipt.finished_at or _utc_now()
+        elif receipt is None or relay is None:
+            if run.failure_code != _TRAINING_EXIT_UNCONFIRMED:
+                run.log_tail = _append_log_tail_note(run.log_path, "Asteria could not verify the SDXL trainer exit.")
+            run.status, run.exit_code, run.failure_code = "failed", -1, _TRAINING_EXIT_UNCONFIRMED
+            run.finished_at = run.finished_at or _utc_now()
     elif run.status == "running":
         run.status = "failed"
         run.exit_code = run.exit_code if run.exit_code is not None else -1
@@ -2118,16 +2171,35 @@ def refresh_lora_training_run(
         run.log_tail = _read_text_tail(Path(run.log_path))
     _apply_run_progress_from_log(run)
     if completed_now and run.sdxl_output_stage:
-        _publish_sdxl_training_output(run)
+        _publish_sdxl_training_output(run, stage)
     if run.status == "completed":
         _finalize_anima_training_output(run, project_root=project_root, completed_now=completed_now)
     if run.status == "completed":
         _apply_run_trained_model_paths(run, project_root=project_root)
         _apply_run_sample_image_paths(run, project_root=project_root)
         _apply_run_sample_image_scores(run, project_root=project_root)
+    _apply_preserved_sdxl_output(run, stage)
     run.updated_at = _utc_now()
     repository.save(run)
+    if completed_now and run.status == "completed" and stage is not None:
+        _remove_published_sdxl_stage(stage)
     return run
+
+
+def recover_sdxl_training_outputs(repository: "LoRATrainingRunRepository", *, project_root: Path) -> None:
+    for run in repository.list():
+        if run.profile != "sdxl" or not run.sdxl_output_stage or run.status not in {"running", "failed", "cancelled"}:
+            continue
+        try:
+            if run.status == "running" or run.failure_code == _TRAINING_EXIT_UNCONFIRMED:
+                refresh_lora_training_run(run.id, repository, project_root=project_root)
+            else:
+                previous = run.preserved_output_dir
+                _apply_preserved_sdxl_output(run, _sdxl_attempt_directory(run, project_root))
+                if run.preserved_output_dir != previous:
+                    repository.save(run)
+        except (LoRATrainingStorageError, OSError, RuntimeError, ValueError):
+            _logger.exception("Could not recover SDXL training output for run %s", run.id)
 
 
 def score_lora_training_run_samples(
@@ -2155,11 +2227,27 @@ def score_lora_training_sample_image(path: Path) -> LoRATrainingSampleImageScore
 def cancel_lora_training_run(
     run_id: str,
     repository: "LoRATrainingRunRepository",
+    *,
+    project_root: Path | None = None,
 ) -> LoRATrainingRun | None:
     run = repository.get(run_id)
     if run is None:
         return None
     process = _RUN_PROCESSES.get(run.id)
+    stage = _sdxl_attempt_directory(run, project_root)
+    if process is None and stage is not None and run.status == "running":
+        receipt_path = stage / _SDXL_EXIT_RECEIPT
+        receipt = read_training_receipt(receipt_path)
+        if receipt is not None and receipt.exit_code is not None:
+            return refresh_lora_training_run(run.id, repository, project_root=project_root)
+        try:
+            relay = owned_training_relay(receipt_path, receipt) if receipt is not None else None
+        except psutil.AccessDenied as exc:
+            raise ValueError(_TRAINING_EXIT_UNCONFIRMED) from exc
+        if relay is None:
+            return refresh_lora_training_run(run.id, repository, project_root=project_root)
+        if not terminate_process_tree(relay):
+            raise ValueError(_TRAINING_EXIT_UNCONFIRMED)
     _stop_training_process(process)
     _RUN_PROCESSES.pop(run.id, None)
     run.status = "cancelled"
@@ -2168,6 +2256,7 @@ def cancel_lora_training_run(
     if run.log_path:
         run.log_tail = _append_log_tail_note(run.log_path, "Asteria cancelled the LoRA training run.")
     _apply_run_progress_from_log(run)
+    _apply_preserved_sdxl_output(run, stage)
     run.updated_at = _utc_now()
     repository.save(run)
     return run
@@ -4063,8 +4152,15 @@ def _with_accelerate_command(
     command = _command_prefix(accelerate_command, project_root)
     if args:
         rest = args[1:]
-        if _command_uses_python_module(command, "accelerate.commands.launch") and rest[:1] == ["launch"]:
-            rest = rest[1:]
+        if rest[:1] == ["launch"]:
+            uses_launch_module = _command_uses_python_module(command, "accelerate.commands.launch")
+            uses_launch_subcommand = (
+                (Path(command[0]).stem.casefold() == "accelerate" and command[1:2] == ["launch"])
+                or any(command[i:i + 3] == ["-m", "accelerate.commands.accelerate_cli", "launch"]
+                       for i in range(len(command) - 2))
+            )
+            if uses_launch_module or uses_launch_subcommand:
+                rest = rest[1:]
         args = command + rest
     return args
 
@@ -4191,13 +4287,19 @@ def validate_training_output_available(run: LoRATrainingRun, *, project_root: Pa
 
 def _stage_sdxl_training_command(run: LoRATrainingRun, project_root: Path) -> tuple[list[str], Path]:
     command = list(run.command_args)
+    preset = get_lora_training_preset(run.preset_id)
+    script_name = preset.script if preset is not None else ""
+    trainer_start = next(
+        (i + 1 for i, arg in enumerate(command[1:], 1) if Path(arg).name == script_name), 0,
+    )
+    trainer_args = list(enumerate(command[trainer_start:], trainer_start))
     indices = {}
     for option in ("--output_dir", "--output_name"):
         # The prepared command uses one explicit argument per field. Do not
         # start if another occurrence (including an argparse abbreviation)
         # or a config file could override the private output directory.
         matches = [
-            index for index, arg in enumerate(command)
+            index for index, arg in trainer_args
             if arg.startswith("--") and option.startswith(arg.split("=", 1)[0])
         ]
         if len(matches) != 1:
@@ -4206,9 +4308,10 @@ def _stage_sdxl_training_command(run: LoRATrainingRun, project_root: Path) -> tu
         if command[index] != option or index + 1 >= len(command):
             raise ValueError("lora_training_run_preflight_not_ready")
         indices[option] = index + 1
-    if (command[indices["--output_name"]] != run.output_name
-            or any(arg.startswith("--") and "--config_file".startswith(arg.split("=", 1)[0]) for arg in command)):
+    if command[indices["--output_name"]] != run.output_name:
         raise ValueError("lora_training_run_preflight_not_ready")
+    if any(arg.startswith("--") and "--config_file".startswith(arg.split("=", 1)[0]) for _, arg in trainer_args):
+        raise ValueError("lora_training_trainer_config_conflict")
     directory = _resolve_source_path(run.output_dir.strip(), project_root)
     directory.mkdir(parents=True, exist_ok=True)
     stage = Path(mkdtemp(prefix=".asteria-sdxl-", dir=directory))
@@ -4221,62 +4324,136 @@ def _is_local_training_entry(path: Path, mode_check) -> bool:
     return mode_check(details.st_mode) and not getattr(details, "st_file_attributes", 0) & 0x400
 
 
-def _publish_sdxl_training_output(run: LoRATrainingRun) -> None:
+def _sdxl_attempt_directory(run: LoRATrainingRun, project_root: Path | None) -> Path | None:
+    if run.profile != "sdxl" or not run.sdxl_output_stage or not run.output_dir.strip():
+        return None
     stage = Path(run.sdxl_output_stage)
-    directory = stage.parent
+    try:
+        directory = _resolve_source_path(run.output_dir.strip(), project_root or Path.cwd())
+        if (stage.is_absolute() and stage.parent == directory and stage.name.startswith(".asteria-sdxl-")
+                and stage.resolve(strict=True) == stage and _is_local_training_entry(stage, stat.S_ISDIR)):
+            return stage
+    except (OSError, RuntimeError, ValueError):
+        pass
+    return None
+
+
+def _apply_preserved_sdxl_output(run: LoRATrainingRun, stage: Path | None) -> None:
+    run.preserved_output_dir = ""
+    if stage is not None and run.status in {"failed", "cancelled"}:
+        try:
+            if any(item.suffix.casefold() == ".safetensors" or item.name in {"sample", "samples"}
+                   for item in stage.iterdir()):
+                run.preserved_output_dir = str(stage)
+        except OSError:
+            pass
+
+
+def _sdxl_artifact_identity(path: Path) -> list[int]:
+    info = path.lstat()
+    if not stat.S_ISREG(info.st_mode) or not info.st_ino or getattr(info, "st_file_attributes", 0) & 0x400:
+        raise OSError("SDXL training output is not a regular file")
+    return [info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns]
+
+
+def _sdxl_publication_plan(stage: Path, output_name: str) -> dict[str, list[int]]:
+    manifest = stage / _SDXL_PUBLICATION_PLAN
+    final_name = _sdxl_training_output_filename(output_name)
+    prefix = (f"{output_name}_", f"{output_name}-")
+    if os.path.lexists(manifest):
+        if not _is_local_training_entry(manifest, stat.S_ISREG):
+            raise OSError("SDXL publication plan is not a regular file")
+        plan = json.loads(manifest.read_text(encoding="utf-8"))
+        if not isinstance(plan, dict) or final_name not in plan:
+            raise ValueError("Invalid SDXL publication plan")
+        for name, identity in plan.items():
+            path = Path(name)
+            is_model = len(path.parts) == 1 and path.suffix == ".safetensors"
+            is_sample = (len(path.parts) == 2 and path.parts[0] in {"sample", "samples"}
+                         and path.suffix.lower() in SAMPLE_IMAGE_EXTENSIONS)
+            if (path.is_absolute() or path.drive or ":" in name or path.as_posix() != name
+                    or not (is_model or is_sample) or (name != final_name and not path.name.startswith(prefix))
+                    or not isinstance(identity, list) or len(identity) != 4
+                    or any(type(value) is not int for value in identity)):
+                raise ValueError("Invalid SDXL publication entry")
+        return plan
+    candidates: list[Path] = []
+    for name in ("sample", "samples"):
+        source = stage / name
+        if not os.path.lexists(source):
+            continue
+        if not _is_local_training_entry(source, stat.S_ISDIR):
+            raise OSError("SDXL trainer returned an invalid sample directory")
+        candidates.extend(
+            sample for sample in source.iterdir()
+            if sample.suffix.lower() in SAMPLE_IMAGE_EXTENSIONS and sample.name.startswith(prefix)
+            and _is_local_training_entry(sample, stat.S_ISREG)
+        )
+    candidates.extend(
+        model for model in stage.glob("*.safetensors")
+        if model.name.startswith(prefix) and _is_local_training_entry(model, stat.S_ISREG)
+    )
+    candidates.append(stage / final_name)
+    plan = {file.relative_to(stage).as_posix(): _sdxl_artifact_identity(file) for file in candidates}
+    _require_unused_training_outputs(stage.parent / name for name in plan)
+    write_json_atomic(manifest, plan)
+    return plan
+
+
+def _publish_sdxl_training_output(run: LoRATrainingRun, stage: Path | None) -> None:
     filename = _sdxl_training_output_filename(run.output_name)
     published_models: list[str] = []
     published_samples: list[str] = []
     try:
-        if (stage.resolve() != stage or not _is_local_training_entry(stage, stat.S_ISDIR)
-                or not _is_local_training_entry(stage / filename, stat.S_ISREG)):
-            raise OSError("SDXL trainer did not produce the expected file in its output folder")
-        _require_unused_training_outputs((directory / filename,))
-        samples = []
-        for name in ("sample", "samples"):
+        if stage is None:
+            raise OSError("SDXL training output folder is unavailable")
+        plan = _sdxl_publication_plan(stage, run.output_name)
+        # Record identity before the first move and place the final model last.
+        # A subsequent recovery only recognizes the same files, not name matches.
+        for name in [*(value for value in plan if value != filename), filename]:
             source = stage / name
-            if not source.exists():
-                continue
-            if not _is_local_training_entry(source, stat.S_ISDIR):
-                raise OSError("SDXL trainer returned an invalid sample directory")
-            target = directory / name
-            target.mkdir(exist_ok=True)
-            if not _is_local_training_entry(target, stat.S_ISDIR):
-                raise OSError("SDXL sample destination is not a regular directory")
-            for sample in source.iterdir():
-                if (sample.suffix.lower() in SAMPLE_IMAGE_EXTENSIONS
-                        and sample.name.startswith((f"{run.output_name}_", f"{run.output_name}-"))
-                        and _is_local_training_entry(sample, stat.S_ISREG)):
-                    samples.append((sample, target / sample.name))
-        models = [
-            (file, directory / file.name)
-            for file in stage.glob("*.safetensors")
-            if (file.name.startswith((f"{run.output_name}-", f"{run.output_name}_"))
-                and _is_local_training_entry(file, stat.S_ISREG))
-        ]
-        models.append((stage / filename, directory / filename))
-        _require_unused_training_outputs(target for _, target in [*samples, *models])
-        for source, target in samples:
-            move_without_replacement(source, target)
-            if _is_valid_image_file(target):
+            target = stage.parent / name
+            sample = source.parent != stage
+            if sample:
+                if not _is_local_training_entry(source.parent, stat.S_ISDIR):
+                    raise OSError("SDXL sample source is not a regular directory")
+                target.parent.mkdir(exist_ok=True)
+                if not _is_local_training_entry(target.parent, stat.S_ISDIR):
+                    raise OSError("SDXL sample destination is not a regular directory")
+            if os.path.lexists(target):
+                if _sdxl_artifact_identity(target) != plan[name]:
+                    raise FileExistsError(target)
+            else:
+                if _sdxl_artifact_identity(source) != plan[name]:
+                    raise OSError("SDXL staged artifact changed before publication")
+                move_without_replacement(source, target)
+            if not sample:
+                published_models.append(str(target))
+            elif _is_valid_image_file(target):
                 published_samples.append(str(target))
-        # Publish the final model last. Keep unsaved files in the attempt
-        # folder if an external process creates any destination meanwhile.
-        for source, target in models:
-            move_without_replacement(source, target)
-            published_models.append(str(target))
     except (OSError, ValueError, LoRATrainingStorageError) as exc:
         run.status = "failed"
         run.exit_code = -2
-        if isinstance(exc, FileExistsError) or str(exc) == "lora_training_output_name_in_use":
-            run.failure_code = "lora_training_output_name_in_use"
+        run.failure_code = (
+            "lora_training_output_name_in_use"
+            if isinstance(exc, FileExistsError) or str(exc) == "lora_training_output_name_in_use"
+            else "lora_training_output_not_published"
+        )
         run.log_tail = _append_log_tail_note(
-            run.log_path, f"SDXL LoRA could not save its output without replacing a file: {exc}. "
-            f"Remaining files were kept in {stage}. Check the destination and choose a different output name if needed.",
+            run.log_path, f"SDXL LoRA could not publish its output: {exc}. Output stage: {run.sdxl_output_stage}.",
         )
         return
     run.trained_model_paths = sorted(published_models, key=str.casefold)
     run.sample_image_paths = sorted(published_samples, key=str.casefold)
+
+
+def _remove_published_sdxl_stage(stage: Path) -> None:
+    # Clear the recovery markers only after the completed run record was saved.
+    for name in (_SDXL_EXIT_RECEIPT, _SDXL_PUBLICATION_PLAN):
+        try:
+            (stage / name).unlink(missing_ok=True)
+        except OSError:
+            pass
     for path in (stage / "sample", stage / "samples", stage):
         try:
             path.rmdir()  # Never remove unrecognized or partial trainer files.

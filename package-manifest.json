@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.2",
   "platform": "windows-x64",
-  "source_commit": "c79c51b381ea1d8037c03faf102136448813f2e8",
-  "build_timestamp_utc": "2026-11-06T09:19:36Z",
+  "source_commit": "8d46f4a4b7ccd5ca9fc1f2a2401234c420b8798d",
+  "build_timestamp_utc": "2026-11-06T10:41:47Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 73075,
-      "sha256": "1b7d417796c84cb39833d8b4b72afe124bca9120c6a925c87c841aa9845200ab"
+      "size_bytes": 73632,
+      "sha256": "50042e414cfb9b054155d16e9ea6a971f6aa04377d94ac8de95f27ac8a9b91da"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -43,33 +43,33 @@
     },
     {
       "path": "app/backend/app/adapters/image_check_codex.py",
-      "size_bytes": 13194,
-      "sha256": "2261c4c744e1bae2dcf915a74d3b11215ab543803b25903994cd66389b5fd669"
+      "size_bytes": 13475,
+      "sha256": "dcdc5289f97155db1cdf237d8ca435a7981b79e8023a7afb201ebb2b11025131"
     },
     {
       "path": "app/backend/app/adapters/image_check_image.py",
-      "size_bytes": 6968,
-      "sha256": "a1c97d85206cd5b1b8727261defd90cbdc2d8c8f4f41490826e711f244cc580d"
+      "size_bytes": 7125,
+      "sha256": "32d34b11f4b2fd27f2d14c4c531a4315dec01cb85809c5d2160f9d1fa67f7479"
     },
     {
       "path": "app/backend/app/adapters/image_check_llm.py",
-      "size_bytes": 14841,
-      "sha256": "90e9d150cec35b4e421d10fd1509ae72c182ba0b1610c439c579df44cfbba86b"
+      "size_bytes": 15162,
+      "sha256": "a760c68b86855822c1c52268ecae6464c921ad5f2d2e2e68b4c88bf7aeb88d27"
     },
     {
       "path": "app/backend/app/adapters/image_conditions.py",
-      "size_bytes": 5382,
-      "sha256": "d578953ac8d9dccf7e48b1fcd482299072ba149cc6e3bd062313e528686753d7"
+      "size_bytes": 5454,
+      "sha256": "ea072f694c25fe4aa159b0fc6f5b1050e2aa19c763cbeb9a9cf20dd143c91ce8"
     },
     {
       "path": "app/backend/app/adapters/lora_dataset_review.py",
-      "size_bytes": 3729,
-      "sha256": "e3bb90f3585fbe8efc53d9b101b4d1912b2760802c234eeda35331a781ca591a"
+      "size_bytes": 3779,
+      "sha256": "f5921e07cce3ea923535d9f7c23c92e0ff74681d1148cf3dc3d044365e8bed7d"
     },
     {
       "path": "app/backend/app/adapters/material_vision.py",
-      "size_bytes": 3416,
-      "sha256": "39317fe9ade7a9c7786ca0278f194b4076dee2ed551b4ed1ff25760e987f88fa"
+      "size_bytes": 3468,
+      "sha256": "c76f7c0de52b4822dccb938a7e80f613fbda42e708a066f6374d13089c9380b8"
     },
     {
       "path": "app/backend/app/adapters/traintrain_copy_machine_runner.py",
@@ -93,8 +93,8 @@
     },
     {
       "path": "app/backend/app/api/body_review.py",
-      "size_bytes": 5882,
-      "sha256": "e1a1df571df1171501d0014dfc8399fa517035be1cc753bd122bb3ad6e6b4220"
+      "size_bytes": 6031,
+      "sha256": "812f8d773949f77229dfef5c6e758b33b7c2867bfcf7819e6dbcbc303c061ee5"
     },
     {
       "path": "app/backend/app/api/diagnostics.py",
@@ -118,8 +118,8 @@
     },
     {
       "path": "app/backend/app/api/enhancement_comparison.py",
-      "size_bytes": 1169,
-      "sha256": "ce1f9540f478fcaf530bedf237bc730794c34300cf421c38269fb631797da19e"
+      "size_bytes": 1196,
+      "sha256": "db752f6bbcdca7c6ea275f2dc6b6bf3993bcb882b461b7b7e9b3fa255526275f"
     },
     {
       "path": "app/backend/app/api/extensions.py",
@@ -143,8 +143,8 @@
     },
     {
       "path": "app/backend/app/api/image_conditions.py",
-      "size_bytes": 4323,
-      "sha256": "5ed1e0f7bb8c369bbdfe52ccb892c2740126ad0e3b21acc3a99cda5ffc8a3553"
+      "size_bytes": 4417,
+      "sha256": "b4b2b71d84ed74db07b53d0f0d3ba3ae31ac7e2800fef2317034f63981aa87ac"
     },
     {
       "path": "app/backend/app/api/image_metadata.py",
@@ -153,18 +153,18 @@
     },
     {
       "path": "app/backend/app/api/lora_dataset_review.py",
-      "size_bytes": 6269,
-      "sha256": "e4ae9dc6fcdd7c8934409b35d257943cc55fc4ae251fd2f2db341f4b3604fbd5"
+      "size_bytes": 6412,
+      "sha256": "76371f01f3ebeda148efe5baa17b53e23bf7be90d49fb6d68308e130d36fa0ca"
     },
     {
       "path": "app/backend/app/api/lora_practical_tests.py",
-      "size_bytes": 4972,
-      "sha256": "e753f6dcf55e6274e1179f3fa62d5d1cd0e709b645084499038d2076dd33d658"
+      "size_bytes": 5074,
+      "sha256": "eff20071125d96cdbb19f837f96c4677c69c84c518fcd920a08af6d1b0a558d1"
     },
     {
       "path": "app/backend/app/api/lora_training.py",
-      "size_bytes": 96530,
-      "sha256": "e314b16f71e9aedb76ac816aaa8593148861798f3ab49b12d279aa6d61e24f15"
+      "size_bytes": 96837,
+      "sha256": "606b242f98d980fdbab30706eeeb0d48fe2c4a38bec30257de148dee211bef7f"
     },
     {
       "path": "app/backend/app/api/maintenance.py",
@@ -173,8 +173,8 @@
     },
     {
       "path": "app/backend/app/api/merge.py",
-      "size_bytes": 98529,
-      "sha256": "992891de3fa1ed292645d88edec9aa6fbd59c92716676e3d25e44355e5815a93"
+      "size_bytes": 98680,
+      "sha256": "63b6eb32496d06f0528006fc8aef46bd3f30900145fd38aa05e60a82e9e3497f"
     },
     {
       "path": "app/backend/app/api/models.py",
@@ -208,13 +208,13 @@
     },
     {
       "path": "app/backend/app/api/prompt_comparisons.py",
-      "size_bytes": 5982,
-      "sha256": "8b8253deacd0f36ce3350d82e8794c5b6efc51a4046fc2448b5fd9adec934e3a"
+      "size_bytes": 6119,
+      "sha256": "9deaa1c90973f473a26442b123504b6dbddd8a81610e47b54b3ef8a6ccfdbc20"
     },
     {
       "path": "app/backend/app/api/prompt_materials.py",
-      "size_bytes": 2928,
-      "sha256": "4e442aa2f1c7f0d53710c17283a6b9ae52232727b1fb93b0bf1a6cef566c4f8b"
+      "size_bytes": 2992,
+      "sha256": "c6fe9373d6fbf295c49a955365f4a90b106150568e372431023464950221d735"
     },
     {
       "path": "app/backend/app/api/prompt_presets.py",
@@ -223,8 +223,8 @@
     },
     {
       "path": "app/backend/app/api/prompt_workshop.py",
-      "size_bytes": 1194,
-      "sha256": "191598a51fab274faf32205df816f815a068c1ff63fd2f59c2cfee003499a055"
+      "size_bytes": 1227,
+      "sha256": "683ab2ef040a43842d5cc1537094631b833cad673f563853d2a51adaff50f58f"
     },
     {
       "path": "app/backend/app/api/remaster.py",
@@ -248,8 +248,8 @@
     },
     {
       "path": "app/backend/app/api/series_consistency.py",
-      "size_bytes": 6939,
-      "sha256": "f8a2c0fc5ec1c06ce149abe949115d4173c7b64ef3f330dcf1551c7bacf89b82"
+      "size_bytes": 7092,
+      "sha256": "25bac16e66bc4d2d5eb2d535a28103b6ae7015c143f7a067e8dd83bc22d95067"
     },
     {
       "path": "app/backend/app/api/settings.py",
@@ -363,8 +363,8 @@
     },
     {
       "path": "app/backend/app/main.py",
-      "size_bytes": 10425,
-      "sha256": "8d66bd82b590b25ad0b7f804504ea8a3e2e9614fab05f1af76d10350d87f8b2c"
+      "size_bytes": 10689,
+      "sha256": "7a8d3eba858968d0cdb2dbc0f02a31bc112a9ca6f3a58bdeec8824ccd23811a4"
     },
     {
       "path": "app/backend/app/schemas/__init__.py",
@@ -373,8 +373,8 @@
     },
     {
       "path": "app/backend/app/schemas/body_review.py",
-      "size_bytes": 1348,
-      "sha256": "76b3d6fd95247babb75c563aee9963f34fbd6f807d10e3bcaec9268516ff5241"
+      "size_bytes": 1387,
+      "sha256": "4a6233518e2ad88599a06a994772a21385175dbe3190c9b2ec9602b558f21614"
     },
     {
       "path": "app/backend/app/schemas/common.py",
@@ -418,8 +418,8 @@
     },
     {
       "path": "app/backend/app/schemas/image_conditions.py",
-      "size_bytes": 1482,
-      "sha256": "f807035261e3cb46c651de396e381dded463fc28f257a74ee841f354e6b152d4"
+      "size_bytes": 1527,
+      "sha256": "2d867ea723cbe99c58c308dd24dc52de279455d3f76b63a45b00b2004b1a29b2"
     },
     {
       "path": "app/backend/app/schemas/image_edit.py",
@@ -433,8 +433,8 @@
     },
     {
       "path": "app/backend/app/schemas/lora_dataset_review.py",
-      "size_bytes": 1580,
-      "sha256": "917994cd8db81d1954e1364d7206cee3a08efd6e493e0f8453de0054a0698a50"
+      "size_bytes": 1627,
+      "sha256": "1881d993ed2211a130cbb3f65c4b9ae962af4af9e584413ce619f38cb2ce5abd"
     },
     {
       "path": "app/backend/app/schemas/lora_practical_test.py",
@@ -478,8 +478,8 @@
     },
     {
       "path": "app/backend/app/schemas/prompt_choices.py",
-      "size_bytes": 630,
-      "sha256": "8317f0ef0d2a760dff9edf04f719265183ef6e6f63e1effedeffaa75b2d4051b"
+      "size_bytes": 648,
+      "sha256": "6294b1284582669c9a7f9b69e8224bbb98cd358b510f0e72b1c9eb5c2672c4e7"
     },
     {
       "path": "app/backend/app/schemas/prompt_comparison.py",
@@ -503,8 +503,8 @@
     },
     {
       "path": "app/backend/app/schemas/prompt_workshop.py",
-      "size_bytes": 2487,
-      "sha256": "e25dae1228b821d30b2db2e9dc1cf8701d94c4e5c1f6c578b23f54c521e5595f"
+      "size_bytes": 2557,
+      "sha256": "09055d3ab90f9d1b0d3345aa00de3bf93f26eda105df6da5ac47a4045f859141"
     },
     {
       "path": "app/backend/app/schemas/provider_capabilities.py",
@@ -523,18 +523,18 @@
     },
     {
       "path": "app/backend/app/schemas/series_consistency.py",
-      "size_bytes": 1005,
-      "sha256": "d44a9a0a3b1b34246bd883d2b8d84687822fd6c04261e63acfc9e217c572a2e5"
+      "size_bytes": 1033,
+      "sha256": "5601ae6416aecef3c6769f4250da11a5a056800014506f2d910626b1143a7499"
     },
     {
       "path": "app/backend/app/schemas/spatial_prompt_guidance.py",
-      "size_bytes": 3365,
-      "sha256": "026bd1132f1771f7f2eb3f9a9fbcdabac64b08c3b141be2c46efabc4a222c800"
+      "size_bytes": 3448,
+      "sha256": "e644587d9df6302394c600248127375d122b36d9593f19b53485ad31650b692b"
     },
     {
       "path": "app/backend/app/schemas/spatial_prompt_runtime.py",
-      "size_bytes": 26322,
-      "sha256": "50526a770ddede897df2ab609a4cebfa6e0550e5a59c885af18d0ca951dcbac3"
+      "size_bytes": 26587,
+      "sha256": "068d0fda82ada5344734214ac3eeee8ac1b969123f490e51013d1a79518d5117"
     },
     {
       "path": "app/backend/app/schemas/video.py",
@@ -598,33 +598,33 @@
     },
     {
       "path": "app/backend/app/services/body_review.py",
-      "size_bytes": 11672,
-      "sha256": "90d476022f70e0955db7cdecc091bbe7cff99cfdb75c6b275e37137dd7aeb99e"
+      "size_bytes": 11913,
+      "sha256": "0ea608cdaa8dcc7603eb6f507ee7ad466f21fdca5ce310b20bbbbebad34ebdfd"
     },
     {
       "path": "app/backend/app/services/body_review_worker.py",
-      "size_bytes": 5760,
-      "sha256": "0be634899569b5add534bcaf40321f7b4aa640bb0bfa1d7afa04c90387d00cff"
+      "size_bytes": 5865,
+      "sha256": "59e84d4d740168c57140e0a99e3892f2f2e54a66534176ed09fdf32c54384a5f"
     },
     {
       "path": "app/backend/app/services/comfy_admission.py",
-      "size_bytes": 9289,
-      "sha256": "04e56b3513b53f9e9b9ec542bdfbec6972f00c7e4e1c5a294621c0a34f6b4fa5"
+      "size_bytes": 10481,
+      "sha256": "a08968b8967c9d9fdf190c347f3cd716ff9fa7c2f76b723b1c92b01727d671ad"
     },
     {
       "path": "app/backend/app/services/comfy_enhancement_stages.py",
-      "size_bytes": 2423,
-      "sha256": "3eb2e84cdac2bb62ee6c25917c313702b6808b2e78cc3a2e550cdcb967c005e9"
+      "size_bytes": 2468,
+      "sha256": "ab7e472ee820411e6679bd16e493e2b6f0a7e3fabd30af325d405e30438bdaeb"
     },
     {
       "path": "app/backend/app/services/comfy_generation_branch.py",
-      "size_bytes": 1022,
-      "sha256": "e7bde8b446ab4f227a5bd0de17a61fc4ffa3eea24ca392aee8e7c69c57a6ad32"
+      "size_bytes": 1044,
+      "sha256": "86af958a391c4374d5b75297bbb7af29d5e29ca49a8b9e0947885613b9340cf7"
     },
     {
       "path": "app/backend/app/services/comfy_model_paths.py",
-      "size_bytes": 10446,
-      "sha256": "b8c3b61171c61d1418327fe58354be8f83dc999ce27b54ba3e23da128c6d0875"
+      "size_bytes": 10487,
+      "sha256": "b1184e69f9a841d5cfe0967ee4165e7e5cd77bef6abe863a7bab80b051832b57"
     },
     {
       "path": "app/backend/app/services/comfy_native_image_families.py",
@@ -633,28 +633,28 @@
     },
     {
       "path": "app/backend/app/services/comfy_prompt_trace.py",
-      "size_bytes": 6216,
-      "sha256": "3f0f17101c599924fdd798c2f46ee243a6c8117c704c1a1acd0140f8fa923791"
+      "size_bytes": 6333,
+      "sha256": "68eed9ef7a84bf914c4487cf7fbbcdb989a526d8886fa6ca32b6d087975a2adc"
     },
     {
       "path": "app/backend/app/services/comfy_sampler_receipts.py",
-      "size_bytes": 1080,
-      "sha256": "dbb04ad51236e937e4be93c342b5a45595c31804f58dd10cec2edc48088d74dd"
+      "size_bytes": 1105,
+      "sha256": "131022c2bbe9d50033070c4acba2288ceebec4ce3a2a6a612581421b7464837f"
     },
     {
       "path": "app/backend/app/services/comfy_sampling_receipts.py",
-      "size_bytes": 3849,
-      "sha256": "361eeff219655ce3e433318ec4bd21975d8c4da7fe507461d1b60e9a706a3ddb"
+      "size_bytes": 3924,
+      "sha256": "021aa90688bf139d496901e1bcf29e3d309ac7dd3c4f50c2f7644ffa2458cd6f"
     },
     {
       "path": "app/backend/app/services/comfy_word_masks.py",
-      "size_bytes": 1045,
-      "sha256": "cc6bf51a73edb79007e93c12898607af13c5a3450e0a8bc797d19cf2a058e9b7"
+      "size_bytes": 1067,
+      "sha256": "d614e0abb075fe8e20c21494c54bc45d7c067393d9d381f0b6b0586a36fff337"
     },
     {
       "path": "app/backend/app/services/comparison_sampling.py",
-      "size_bytes": 5559,
-      "sha256": "8350096a4db1ab3335af0ba8c3613baa32be310f5a2a97468da58239f7ddb206"
+      "size_bytes": 5676,
+      "sha256": "917f7c6931494b6febb174e7d3d6f5a3cacbf49c3f9c2d0c8dd4ec7d76cfc53a"
     },
     {
       "path": "app/backend/app/services/controlnet_mode.py",
@@ -728,13 +728,13 @@
     },
     {
       "path": "app/backend/app/services/enhancement_comparison.py",
-      "size_bytes": 2365,
-      "sha256": "d4a04a02b484685d523c1414d7fcb1e3df0c5c9732b4276c5896034df9a47f3e"
+      "size_bytes": 2410,
+      "sha256": "47cd669a349b2d317ef38ab5ab4dd2a6f9cc8b9d65f86faed8c8c890688a53ba"
     },
     {
       "path": "app/backend/app/services/enhancement_stages.py",
-      "size_bytes": 2125,
-      "sha256": "9b20e2495e4eb6d6cfbabbb16cf9f0fb6162f099474baebaec709d36c08705eb"
+      "size_bytes": 2170,
+      "sha256": "ca871402e88ebc242e5dff9cb903f5a878c5a1155855c829d9bf338c1da41d4e"
     },
     {
       "path": "app/backend/app/services/extension_assets.py",
@@ -823,8 +823,8 @@
     },
     {
       "path": "app/backend/app/services/generation_branch.py",
-      "size_bytes": 13519,
-      "sha256": "e96b33031b8a10c91385e73e999933c8952b29e3d252ed0ed5a68374edb16b09"
+      "size_bytes": 13783,
+      "sha256": "c5723fea5da659b72c1c344fece324cd0e3796a3dffc175af3cd6a4adb74ee1c"
     },
     {
       "path": "app/backend/app/services/generation_metadata.py",
@@ -838,8 +838,8 @@
     },
     {
       "path": "app/backend/app/services/generation_reproduction.py",
-      "size_bytes": 8244,
-      "sha256": "7a53e01417d8026ba1ee75cefb73ae982aeef579c7626460e8185c56fecf504a"
+      "size_bytes": 8397,
+      "sha256": "0c26d17c981ef057544a46adaa1229981f160fd27cf75b80d2e7f2ea4c078b0e"
     },
     {
       "path": "app/backend/app/services/generation_schema.py",
@@ -868,33 +868,33 @@
     },
     {
       "path": "app/backend/app/services/image_check_finalization.py",
-      "size_bytes": 12468,
-      "sha256": "7397b72335f3a34e0e81b52ffb3b6c07d197873be61cc67c9dd40f17cdc90866"
+      "size_bytes": 12725,
+      "sha256": "dac47950903dacb14c5f70c85236155621c2d0616cf92ecf93879e97e38389ba"
     },
     {
       "path": "app/backend/app/services/image_check_operation.py",
-      "size_bytes": 2517,
-      "sha256": "ee93e5f83d6cfc3efae5ab2ca1f98f46427c27ba97fece018b6cb66c007b3993"
+      "size_bytes": 2585,
+      "sha256": "3f8f735b7acb3b524c8be9ce30961a3020885ef78a8d32b8526fc25d4ae36d27"
     },
     {
       "path": "app/backend/app/services/image_check_recovery.py",
-      "size_bytes": 4915,
-      "sha256": "0bcdd28a0cff70b939f3df8b420e4344cbf9751ae3fcf483e2eb4ae022f1f3c8"
+      "size_bytes": 5022,
+      "sha256": "e5e8b0293bfef9e57b3f5bd17e96d04edd3e409b98da93e61b3866bea8a42bd3"
     },
     {
       "path": "app/backend/app/services/image_check_runtime.py",
-      "size_bytes": 6941,
-      "sha256": "81bdb4c0b2d74d9c209d7acdd88976fda293da444970bbea2d67f0690eba9a61"
+      "size_bytes": 7074,
+      "sha256": "c836257a88a43a0340668d18269e329c105a0af0913231d5af82bf68d16dc3c3"
     },
     {
       "path": "app/backend/app/services/image_check_workflow.py",
-      "size_bytes": 5311,
-      "sha256": "333d3af88be1f8d49beae7e3de3aa66bba9666b48b51c299d7bbeb52c6a7b2b4"
+      "size_bytes": 5420,
+      "sha256": "ee88a01791557b2fcc7fb90e532f13da0c576bc5b79448dd05d51997205ce4d9"
     },
     {
       "path": "app/backend/app/services/image_conditions.py",
-      "size_bytes": 5965,
-      "sha256": "f4a7511b2a59e2657aaa89c27cc19fb6390d8a57f0e0f8c1dc2e95c6c7e68e5c"
+      "size_bytes": 6075,
+      "sha256": "adfd9fec4eeb54dc0d39a88763d0093bd71f42db231985ef43105f483477f752"
     },
     {
       "path": "app/backend/app/services/image_edit_lineage.py",
@@ -943,8 +943,8 @@
     },
     {
       "path": "app/backend/app/services/local_api_boundary.py",
-      "size_bytes": 3225,
-      "sha256": "390a2dba62d01b48915658c6455471f4701a83cd45437140234c3b1e7096c497"
+      "size_bytes": 3305,
+      "sha256": "d238d02cc2b2304d7948d33f2095791af8045cccebae61f50405a6cf39f24d7a"
     },
     {
       "path": "app/backend/app/services/log_rotation.py",
@@ -953,18 +953,18 @@
     },
     {
       "path": "app/backend/app/services/lora_dataset_review.py",
-      "size_bytes": 10638,
-      "sha256": "a36ecf4c5b98648c2a5b3f2a381d18a18eb1b4705c05b32345a21803ff46f81c"
+      "size_bytes": 10826,
+      "sha256": "f697bb9c17a24de7faef7e677115af1e4367a890eb2641173c6a45d94ecd62c3"
     },
     {
       "path": "app/backend/app/services/lora_practical_test.py",
-      "size_bytes": 7846,
-      "sha256": "2d5476e2b1e85477aaf390a18b23efdc6e0bf6c2468a6627efefee1843f5dc2f"
+      "size_bytes": 8000,
+      "sha256": "714c9a2f7b47200843b4b5819695a0091786268e66bc2a8ed80422466705b249"
     },
     {
       "path": "app/backend/app/services/lora_training.py",
-      "size_bytes": 252435,
-      "sha256": "2326aee7d139e108dd04c711c92c6b7f67b6ebbe72eff816d5d53ec39040cc26"
+      "size_bytes": 261641,
+      "sha256": "681164b7ae772ef234a4bd251595f11c84587d59642a3880b5ea329ecc622270"
     },
     {
       "path": "app/backend/app/services/maintenance_backup.py",
@@ -978,8 +978,8 @@
     },
     {
       "path": "app/backend/app/services/making_video.py",
-      "size_bytes": 13733,
-      "sha256": "b23e22c2736445aac4d185fab9d9f48280fb7560bd62308530ed12348730a8d7"
+      "size_bytes": 13989,
+      "sha256": "72528b9ae22b292357ccb4629090521f98ab193e84ee5f78dd0c857a824e0176"
     },
     {
       "path": "app/backend/app/services/managed_artifacts.py",
@@ -1058,8 +1058,8 @@
     },
     {
       "path": "app/backend/app/services/model_library.py",
-      "size_bytes": 15943,
-      "sha256": "b39fccb0fbe907d6cafd509a9710a7c84a71c1a4a4aaa509525652b78b37dc45"
+      "size_bytes": 15964,
+      "sha256": "cd03f6507933c891f4c33703464b020dc28dd3ef2bd15ee00c42db0d3eddd82a"
     },
     {
       "path": "app/backend/app/services/model_library_cache.py",
@@ -1198,23 +1198,23 @@
     },
     {
       "path": "app/backend/app/services/prompt_choices.py",
-      "size_bytes": 7308,
-      "sha256": "81689f77394414c684eb87a3e7c2bc2464eede2b07e55582e2153a0290f186f4"
+      "size_bytes": 7497,
+      "sha256": "bbf5edf683c67bb3b6063ecd93d67fe218a5f4a9ee1786788f8e1f87299ef292"
     },
     {
       "path": "app/backend/app/services/prompt_comparison.py",
-      "size_bytes": 5810,
-      "sha256": "ced3a3b27b06443ac999c10f70d9477c8ab493149073befe4e430c7b715757a6"
+      "size_bytes": 5902,
+      "sha256": "be56f55181ca8a49a9bf0fca00acc1643117fccd88c9f8d7c1d5fbdb53d37ec0"
     },
     {
       "path": "app/backend/app/services/prompt_comparison_jobs.py",
-      "size_bytes": 6584,
-      "sha256": "2bff6b96f40c0ecde594c23c66cae297b33499f9a54c3c32cc01da090101f2a2"
+      "size_bytes": 6691,
+      "sha256": "94fa6786f809c6f07584b292837da5e6bf378247189aad1888d3cfecca3d181b"
     },
     {
       "path": "app/backend/app/services/prompt_comparison_repository.py",
-      "size_bytes": 5269,
-      "sha256": "9f4f65e78bbdce1b692cffa03a296ac8c4662477608f326175a98258cf8f9ee0"
+      "size_bytes": 5366,
+      "sha256": "c63175bab92cab782de264b98b519a1ac315ca3b02baeafa9a883880f1003377"
     },
     {
       "path": "app/backend/app/services/prompt_input.py",
@@ -1223,8 +1223,8 @@
     },
     {
       "path": "app/backend/app/services/prompt_materials.py",
-      "size_bytes": 2604,
-      "sha256": "80ad568f59bc01148e51534f911f0f0b08a1de4a6d58f363537f9ac070faab98"
+      "size_bytes": 2660,
+      "sha256": "bdac706f5b89794cbe91ce8c5e3a1c1024d2358d2ba6eac2f3ef77a51df8c7ba"
     },
     {
       "path": "app/backend/app/services/prompt_pipeline.py",
@@ -1238,8 +1238,8 @@
     },
     {
       "path": "app/backend/app/services/prompt_styles.py",
-      "size_bytes": 665,
-      "sha256": "833e6c456c9ec3c32c72b7c8b3c5fb4a332b774494f77f4f9a60896aa3158234"
+      "size_bytes": 681,
+      "sha256": "da17fd2663f8a588833df812522e59256e90b1b05c690dcb1426197af8011f1c"
     },
     {
       "path": "app/backend/app/services/prompt_syntax.py",
@@ -1248,8 +1248,8 @@
     },
     {
       "path": "app/backend/app/services/prompt_workshop.py",
-      "size_bytes": 5093,
-      "sha256": "3c145892c7b2dab3495c78398f82bf83b88419aaf9afd760d2ec223cca3ecd1a"
+      "size_bytes": 5165,
+      "sha256": "6399645b5c168ab7ace308682de1b39ae61f8999f8bb4509e42b1707377be823"
     },
     {
       "path": "app/backend/app/services/reference_mutation.py",
@@ -1283,8 +1283,8 @@
     },
     {
       "path": "app/backend/app/services/reproduction_numbers.py",
-      "size_bytes": 3336,
-      "sha256": "c968689812e87b52554a5b4c693e08d0341cd6dd024b93e917fc4ed8cbc0c28f"
+      "size_bytes": 3397,
+      "sha256": "31d07b045c6d19012fced7225daa1f1a5725bddf6afd756d725b537b002487c7"
     },
     {
       "path": "app/backend/app/services/resource_advisor.py",
@@ -1323,13 +1323,13 @@
     },
     {
       "path": "app/backend/app/services/runtime_ownership.py",
-      "size_bytes": 7055,
-      "sha256": "2f5f16d817863d9fbea4462c9f0e0b2e09e0fe783f2fe9673d42e75b738585b0"
+      "size_bytes": 7204,
+      "sha256": "97a82686c96ef6d2807f22c2bb3a5715a9ec7a70aca2117683926b611e0d8625"
     },
     {
       "path": "app/backend/app/services/runtime_process.py",
-      "size_bytes": 10882,
-      "sha256": "a178829829ca604ee8619fb8022af5dfc0bfcf39d75dddb6d52afed754db8c7b"
+      "size_bytes": 12166,
+      "sha256": "0bb4e6af35a8a110fc7c3185171edb4eadcd8f9f6891f6f70aa807f21d2d4e68"
     },
     {
       "path": "app/backend/app/services/runtime_recovery.py",
@@ -1358,8 +1358,8 @@
     },
     {
       "path": "app/backend/app/services/series_consistency.py",
-      "size_bytes": 5220,
-      "sha256": "474aec6e4d921db4f0cab59f5faecaa54aa10d8a8f267600d2944c6ef671139c"
+      "size_bytes": 5326,
+      "sha256": "2dae09b036cda03eff5469a94bf6fd62db3babae02e7c5be256afd5d307c6aeb"
     },
     {
       "path": "app/backend/app/services/spatial_asset_resolver.py",
@@ -1368,18 +1368,18 @@
     },
     {
       "path": "app/backend/app/services/spatial_conditioning_builder.py",
-      "size_bytes": 7318,
-      "sha256": "0a8d8902875a4175a008a7e964cd844d354844fb5f5faae4e6860978e65496ec"
+      "size_bytes": 7433,
+      "sha256": "016114b46d899cd4b06f558e70206eecae7baa1a6f82043381a7789db0f9062a"
     },
     {
       "path": "app/backend/app/services/spatial_generation_context.py",
-      "size_bytes": 18856,
-      "sha256": "8e8377751a8ff6c860c91e68ad41acb786eca78a7f184eb91969b60b4cdec268"
+      "size_bytes": 18900,
+      "sha256": "1afe07f97bdb6b8e7e307c8509071c1e988d9a44b51041d80602fb2343aece6e"
     },
     {
       "path": "app/backend/app/services/spatial_layout_field.py",
-      "size_bytes": 9378,
-      "sha256": "f311e2297d3ced2defeadd1f2d8eea71bcca9575f516e4667d22203f83e3e14e"
+      "size_bytes": 9620,
+      "sha256": "bbb6a02cf2ccecfbbe4f5a2da41d7ab955153c6473110f7128a77f5b3fb1ee13"
     },
     {
       "path": "app/backend/app/services/spatial_layout_import.py",
@@ -1393,18 +1393,18 @@
     },
     {
       "path": "app/backend/app/services/spatial_model_profiles.py",
-      "size_bytes": 4577,
-      "sha256": "209d43af4a93b00f03199472e5939f4c8a9614f34bef203d738b008967b19ca4"
+      "size_bytes": 4625,
+      "sha256": "cb42f2903e4718109fd51cf893ce76c5162347e022c60945554053aff5482bfb"
     },
     {
       "path": "app/backend/app/services/spatial_native_receipt.py",
-      "size_bytes": 3440,
-      "sha256": "e90c361e235fb90bdd9c4ca66a641bab3a4169f8e62e53c4f665406c26a3d8fe"
+      "size_bytes": 3497,
+      "sha256": "b58fb1ed7e722272864534eb0143ee8a90a3dcab3816a191f6e77d90687315dc"
     },
     {
       "path": "app/backend/app/services/spatial_profile_resolver.py",
-      "size_bytes": 13807,
-      "sha256": "a4e73706c5fd1c8b0417a51426cc1d9bff2c596a8721c73244560d669f2859b2"
+      "size_bytes": 13859,
+      "sha256": "f601af9f23e3047c99ecee1dc0cdbc49067637de681da3a71b4990a7cad58359"
     },
     {
       "path": "app/backend/app/services/spatial_prompt_contract.py",
@@ -1413,18 +1413,18 @@
     },
     {
       "path": "app/backend/app/services/spatial_prompt_mapping.py",
-      "size_bytes": 16813,
-      "sha256": "b807a46ac13c8923a30672dc697d173eafda5714d43dcf82ff888b2dc7debb83"
+      "size_bytes": 17242,
+      "sha256": "317c6170643c00b8f6a0da5c786efc1a5f310d9ccff82715e3cc8584e919d33d"
     },
     {
       "path": "app/backend/app/services/spatial_prompt_planner.py",
-      "size_bytes": 19419,
-      "sha256": "a3ff96bb6d07b6f269062457cc6dad5a4ea86f81a241735a3e2f2f11930ffe07"
+      "size_bytes": 19608,
+      "sha256": "26698da485e32902089977e072d4d42b7ecade01f05b1e73bdaa9acdc30ebcc7"
     },
     {
       "path": "app/backend/app/services/spatial_runtime_contract.py",
-      "size_bytes": 2339,
-      "sha256": "51135ce9d9c322edaaaaa18370df968fa0a15895e75634496c7e6669226af257"
+      "size_bytes": 2418,
+      "sha256": "8af7efe9df3877d5ab751b3e38e5b53ac09af4d50498d10aca4a92d3ce58b9ba"
     },
     {
       "path": "app/backend/app/services/startup_readiness.py",
@@ -1443,8 +1443,8 @@
     },
     {
       "path": "app/backend/app/services/training_process.py",
-      "size_bytes": 2439,
-      "sha256": "38319645c8b50ed1f22c11e577d039d094b75a8177cc3692ebdf32ce149cd311"
+      "size_bytes": 5570,
+      "sha256": "0450244ef6dfc383c611e21536406ab16705f80028e4592c32d94e87922f227f"
     },
     {
       "path": "app/backend/app/services/upscaler_catalog.py",
@@ -1558,8 +1558,8 @@
     },
     {
       "path": "app/backend/app/services/word_masks.py",
-      "size_bytes": 11109,
-      "sha256": "aaee698e2fed6e5b7989d13cd1b275f23deeb8f17b8838a926cf1e8ba44d2ee3"
+      "size_bytes": 11335,
+      "sha256": "9041424ef6fb139f167f88cd740d39c43d80a0c671983bc13641831df521417c"
     },
     {
       "path": "app/backend/app/services/workflow_mapping.py",
@@ -1582,34 +1582,34 @@
       "sha256": "7dc00e00c0b113ab1a0020779d96b49c7cd0caf52f769507a3d7fafeb3d25104"
     },
     {
-      "path": "app/frontend/public/_nuxt/C3rWofCj.js",
-      "size_bytes": 9504,
-      "sha256": "822112631c7e987774b04bdece8c422984b9644f49868a479bfaf3d7e6537fe2"
+      "path": "app/frontend/public/_nuxt/CVF98C8B.js",
+      "size_bytes": 2386447,
+      "sha256": "8a1f145ee768e33429f0c951d3d9798d32b6831dc0df68e0c7d5a889a87b1054"
     },
     {
-      "path": "app/frontend/public/_nuxt/Dn90OpT7.js",
-      "size_bytes": 2385114,
-      "sha256": "4f941ed22903a440f50b2f9aad394a91053244ef1f01aee63feaf5a584f74ae2"
+      "path": "app/frontend/public/_nuxt/Gxg4DVsM.js",
+      "size_bytes": 3451,
+      "sha256": "f8d261115a3e7ed33e54ff21fa09994bb071a64b25985b9697d29e3110046e92"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/X_XTXaX-.js",
+      "size_bytes": 9504,
+      "sha256": "faa3f018ada7bb0f946b498e89ff0847998d436035fcfe0bcf66828894b08354"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "4b2220870de6781faddae84d4732a1b342834349dd6ad245ea32f70c58235226"
+      "sha256": "1213a22542abe30c068a7dcebda230aa338975e65b7569025d6db02213765ee9"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/0ea37b40-a922-495e-a442-72f7204649be.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/69f966fd-0523-4c22-ab37-dab733e4d488.json",
       "size_bytes": 88,
-      "sha256": "9d77d71bdfbd3f08fedec03110dd5778b325961f3551010196d0ab298fab04f5"
+      "sha256": "ce7f49467f801c6d114ac20b4c2c5dd2e0de8514e614f3f70a5123cb276b5044"
     },
     {
-      "path": "app/frontend/public/_nuxt/e8xMh7xl.js",
-      "size_bytes": 3451,
-      "sha256": "fdfc54a7e235e54f3b3f4bb785f25b7ce2f3ecc575b2cd9dc8dd78108598ff13"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/entry.DgZrIy_x.css",
+      "path": "app/frontend/public/_nuxt/entry.Cyg6_pcs.css",
       "size_bytes": 526783,
-      "sha256": "1f067010e50c62db0087cb456859f129388a6a99f43134da4539f10c1d210c35"
+      "sha256": "476f9f63ace4ee5b71bf4942bec18089c30ea256b643571c7cedabf87b3419f7"
     },
     {
       "path": "app/frontend/public/_nuxt/error-404.BBhU_iaz.css",
@@ -1774,7 +1774,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 169035,
-      "sha256": "bf38d6317c4ede0021dc00abe064cdce63271ddaca45933ce42e7eeb7624bec8"
+      "sha256": "6c6c806b6d03c88d05ea06daad4844367f104168bbe1d74e5eeaf30f1fb06720"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.Br3zh7eU.mjs",
@@ -2157,9 +2157,9 @@
       "sha256": "6b69cf5cb91ff958ae77b9576a233fd8923f0debe38845a554e72d5871389a18"
     },
     {
-      "path": "app/frontend/server/chunks/build/LoRAStandardWorkspace-styles.Co0h2l7v.mjs",
+      "path": "app/frontend/server/chunks/build/LoRAStandardWorkspace-styles.CkzprD2S.mjs",
       "size_bytes": 5021,
-      "sha256": "c9db75c6c3520766f2c7bc4fcc9e451cf8dbccf8b2d847fddc1a6449f9a9c6d1"
+      "sha256": "8ecda143e3f8001a0009e0864c243cd99d0e82d826958ffb5feb04d57db66a5f"
     },
     {
       "path": "app/frontend/server/chunks/build/LoRATrainingView-styles.Cf6ElQCr.mjs",
@@ -2574,12 +2574,12 @@
     {
       "path": "app/frontend/server/chunks/build/client.precomputed.mjs",
       "size_bytes": 2916,
-      "sha256": "ed6f39b21d55cdcfd1fd15e33db428a7e6ecc9bc3bba11cf0b4242e340c2b3d8"
+      "sha256": "5726be2a0e512bfebf4dca4a15131f2796d9622236c9ec4f57ba1265e66b25fa"
     },
     {
-      "path": "app/frontend/server/chunks/build/error-404-CJ9IyzJ2.mjs",
+      "path": "app/frontend/server/chunks/build/error-404-3tuSdBtu.mjs",
       "size_bytes": 15072,
-      "sha256": "2a3a8f0b8911d6830e6a8e17719a74eeae9dcecb0129850aacb1b27083f0f804"
+      "sha256": "e458e3935ce47cd296b45af8771029a22c791a8eb96161ef4c555b6ef99fa999"
     },
     {
       "path": "app/frontend/server/chunks/build/error-404-styles.xf2R7Kcb.mjs",
@@ -2587,9 +2587,9 @@
       "sha256": "f9c602ea3f67524433b90b8219deecd9f59ba3346cb9789810ce5175903855d2"
     },
     {
-      "path": "app/frontend/server/chunks/build/error-500-DTwfyVmq.mjs",
+      "path": "app/frontend/server/chunks/build/error-500-Phqhahpe.mjs",
       "size_bytes": 4788,
-      "sha256": "0ea08d536802267c4ccec9ed01087c30fb46b67d28140332107f0f093c3c0d5f"
+      "sha256": "7d3f71cbee5b0da9e69f12c3e05192aa09745f1a571d24058edaf02db89588ce"
     },
     {
       "path": "app/frontend/server/chunks/build/error-500-styles.CkOlAevR.mjs",
@@ -2598,13 +2598,13 @@
     },
     {
       "path": "app/frontend/server/chunks/build/server.mjs",
-      "size_bytes": 3777727,
-      "sha256": "5e42166ff2fd7a510259e0cac91828083a40233bfd70adfdaa34131afd1a4722"
+      "size_bytes": 3779338,
+      "sha256": "693e246131b5518a4c072e3175ce704e292ddeeba8638c7fbff4224be3367882"
     },
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 21649,
-      "sha256": "3ec0193fd51ea6eeccdd9406dc47fa7fe4210ba2872c88e12e4ae95efb1fa20d"
+      "sha256": "a18ebf1ea4b1772b9336aed933285126f79a75cfaf6a9eefbb5149d07a4350a5"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -3128,8 +3128,8 @@
     },
     {
       "path": "bootstrap/locks/pytorch-cu130.lock",
-      "size_bytes": 71,
-      "sha256": "4636b644ff1ef11dc3fcbabbc51f19019f28edc04390714bb53d1922f05354c5"
+      "size_bytes": 74,
+      "sha256": "fe61c86402749b6232fee4beceaeb917c019866681bd8dc48a539e2869972077"
     },
     {
       "path": "defaults/advanced-styles/styles_v2.json",
@@ -3163,8 +3163,8 @@
     },
     {
       "path": "guides/IMAGE_CHECK.md",
-      "size_bytes": 9067,
-      "sha256": "34dc3fce154b8a839b6f08c335269316cfdfcf237748ca151c40070f2020b8fb"
+      "size_bytes": 9172,
+      "sha256": "17375f6c8c93447e047bdbf6b0b18ec203041900ef3f104ec4ea642aaacca171"
     },
     {
       "path": "guides/MEDIA_LIBRARY.md",
@@ -3178,8 +3178,8 @@
     },
     {
       "path": "guides/QUICK_START.md",
-      "size_bytes": 10127,
-      "sha256": "98406b570f2cda28d2a313b51e506de6e9cb76ea613df4b5d070e6911ec7eea5"
+      "size_bytes": 10250,
+      "sha256": "0bc3fdb0418ed811bfc9e2ae908366f86857d93f27b21031002ce3685a4b6ab5"
     },
     {
       "path": "guides/VIDEO_STUDIO.md",
@@ -3278,8 +3278,8 @@
     },
     {
       "path": "licenses/body-review/Apache-2.0.txt",
-      "size_bytes": 11324,
-      "sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a"
+      "size_bytes": 11525,
+      "sha256": "313605fbac6945e9324d4825470796b5b7dbc012f523fdc181f6e6fd234eb88f"
     },
     {
       "path": "mappings/anima/lora-block-remap.v1.json",
@@ -3288,8 +3288,8 @@
     },
     {
       "path": "mappings/anima_txt2img.yaml",
-      "size_bytes": 3294,
-      "sha256": "2b02486657cd7efa6d75a1f8acf87b6809dcfdf1a4e60f5b47b45e94c4313496"
+      "size_bytes": 3412,
+      "sha256": "2a8dd8ad7c574ae6acd6418315c6cdfefb0e51472669748363b2d3b601d05bf6"
     },
     {
       "path": "mappings/flux2_txt2img.yaml",
@@ -3353,13 +3353,13 @@
     },
     {
       "path": "mappings/sdxl_txt2img.yaml",
-      "size_bytes": 5908,
-      "sha256": "1480dc86dd3ba9bd926ad613f1ea9bb3fb19eee7e8f958113f90662475658177"
+      "size_bytes": 6142,
+      "sha256": "7315118831a3500f6463ff783064b7cad4ecd21d84e59febf5e3c2f3688abc76"
     },
     {
       "path": "mappings/spatial-model-profiles.yaml",
-      "size_bytes": 6987,
-      "sha256": "db8117c7a599482c193b56b8d2a329641694234f5b181a7890e0f77e586c3686"
+      "size_bytes": 7227,
+      "sha256": "476a2a76c8d1dbffcefcf7ef389a192075740a20905dcc409fe51f9ab7943738"
     },
     {
       "path": "mappings/video/minimax-h3-local-sequence.v1.json",
