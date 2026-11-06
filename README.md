@@ -1,4 +1,4 @@
-# Asteria V1.2.1.3 Windows Portable
+# Asteria V1.2.1.4 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -28,6 +28,11 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
 
 > 描写位置を指定する配置機能はV1.2.0から利用できません。通常の生成と項目別のプロンプト入力は引き続き使えます。過去の配置付き設定を再利用すると、文章は対応する欄へ戻ります。位置は引き継がず、元の履歴や画像は変更しません。
+
+### V1.2.1.4の修正
+
+- SDXLで、プロンプトに書いたLoRAの強度と、LoRA設定で選んだ層ごとの重みを併用できます。例えば、`<lora:名前:0.8>` を書いた場合も、同じLoRAの層設定を保ったまま強度0.8が反映されます。
+- プロンプトに書いたLoRAが設定欄にも表示されます。そこで強度や層を変更すると、タグの指定も更新されます。同じLoRAは二重に適用されません。
 
 ### V1.2.1.3の修正
 
@@ -370,6 +375,11 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
 
 > Spatial prompt placement is unavailable as of V1.2.0. You can still generate normally and use the sectioned prompt editor. Reusing older placement settings restores the text to the corresponding fields, without restoring positions or modifying the original history or images.
+
+### V1.2.1.4 fixes
+
+- In SDXL, a LoRA strength written in the prompt now works with the layer weights selected in LoRA settings. For example, `<lora:name:0.8>` applies strength 0.8 without discarding the layer settings for that LoRA.
+- LoRAs written in the prompt also appear in LoRA settings. Changing the strength or layer weights there updates the tag. A LoRA is not applied twice.
 
 ### V1.2.1.3 fixes
 

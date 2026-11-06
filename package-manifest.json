@@ -1,10 +1,10 @@
 {
   "manifest_version": 1,
   "product": "Asteria",
-  "version": "1.2.1.3",
+  "version": "1.2.1.4",
   "platform": "windows-x64",
-  "source_commit": "d9b814d0e56b032aa670494c0a49f005e6fa9397",
-  "build_timestamp_utc": "2026-11-06T14:53:27Z",
+  "source_commit": "06003d382fba20ff036675e6d8792621b6073036",
+  "build_timestamp_utc": "2026-11-06T19:36:34Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 71027,
-      "sha256": "a5183cf21a76d641fbca8a1aca295d32a880bbfcfc5b62c2576d31fd5307e17f"
+      "size_bytes": 71899,
+      "sha256": "a147a6540b83d10bfe44b3a42bceb02b5cfd787ba511921c598812a836a64b42"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -138,8 +138,8 @@
     },
     {
       "path": "app/backend/app/api/generation.py",
-      "size_bytes": 248811,
-      "sha256": "0b29148beab35b65fc4092f6db517708ed8c088b271cdcc5a711f4c6eedb04f8"
+      "size_bytes": 250081,
+      "sha256": "c8227f477a35da70d51f5d7b7c17ab5da5a0da703bd6c6a61359b922ec38d483"
     },
     {
       "path": "app/backend/app/api/image_conditions.py",
@@ -739,7 +739,7 @@
     {
       "path": "app/backend/app/services/extension_backup.py",
       "size_bytes": 23427,
-      "sha256": "4785e061094552ca6dc7f3e39ef50c415d8a4a8539a9f58a05a5dc35a51a66d2"
+      "sha256": "561854638ed0bdf258ae9d4939fb52984f655b26cc4da622902336b3f57bc9de"
     },
     {
       "path": "app/backend/app/services/extension_catalog.py",
@@ -749,7 +749,7 @@
     {
       "path": "app/backend/app/services/extension_installer.py",
       "size_bytes": 35522,
-      "sha256": "4708e440593749013cbaf10d9fba2a70ee4f5623ba666e4958de9ba00a45c05b"
+      "sha256": "ae433fdd2ba9d625a53cb42eeed7ea4b19ee795d54b73093fbdd4f720d0c98bf"
     },
     {
       "path": "app/backend/app/services/extension_loader.py",
@@ -759,7 +759,7 @@
     {
       "path": "app/backend/app/services/extension_manifest.py",
       "size_bytes": 2209,
-      "sha256": "26c041767172e37561f9475a8e81be78dd76fa421434cfe5c26872cceb541f0c"
+      "sha256": "c9c2c307de5fa054770537584fcb4d1456b23017775af72102a775e336fefa6e"
     },
     {
       "path": "app/backend/app/services/extension_package.py",
@@ -820,6 +820,11 @@
       "path": "app/backend/app/services/generation_branch.py",
       "size_bytes": 13783,
       "sha256": "c5723fea5da659b72c1c344fece324cd0e3796a3dffc175af3cd6a4adb74ee1c"
+    },
+    {
+      "path": "app/backend/app/services/generation_loras.py",
+      "size_bytes": 4300,
+      "sha256": "bc3af221a9ad964754cd189992d601cb06953083671052352af9354c00e69df8"
     },
     {
       "path": "app/backend/app/services/generation_metadata.py",
@@ -1213,8 +1218,8 @@
     },
     {
       "path": "app/backend/app/services/prompt_pipeline.py",
-      "size_bytes": 7908,
-      "sha256": "10306904226243b42507863f9b5748c3bf1016566d689a35149e73b3cd94a0ab"
+      "size_bytes": 8189,
+      "sha256": "91f6c7543dd3d2231b4a5ff20149a44a89833ab02f50801284d0edc5bc190225"
     },
     {
       "path": "app/backend/app/services/prompt_presets.py",
@@ -1334,7 +1339,7 @@
     {
       "path": "app/backend/app/services/schema_versions.py",
       "size_bytes": 655,
-      "sha256": "08f9c4443dacc55c1a2f02757950dcd95c10d4b0f654b1308c2e696d36b71bda"
+      "sha256": "4b869c0c4560d46e4a7bc922b18fab9334955c7fe3a6f22b332954eae9167325"
     },
     {
       "path": "app/backend/app/services/seed_resize.py",
@@ -1567,34 +1572,34 @@
       "sha256": "7dc00e00c0b113ab1a0020779d96b49c7cd0caf52f769507a3d7fafeb3d25104"
     },
     {
-      "path": "app/frontend/public/_nuxt/ClkLlqd-.js",
+      "path": "app/frontend/public/_nuxt/BHWPDp4D.js",
+      "size_bytes": 2375290,
+      "sha256": "7cde25559fe97f97502417b3100719d75aa22d351ea0a80f1b76ebbdb93c1a5a"
+    },
+    {
+      "path": "app/frontend/public/_nuxt/Bes2Y5Yk.js",
       "size_bytes": 9504,
-      "sha256": "2fb8c5e335c03558e62eeba5486b4bbbaf84a6ed4077c14bcaad8853fba13b99"
+      "sha256": "c2da162aa4caea10b2f0b01ec4905fcba8f9148582d618ad6d24928165c5e0d4"
     },
     {
-      "path": "app/frontend/public/_nuxt/CrIzNTYL.js",
-      "size_bytes": 2367555,
-      "sha256": "bbdf044e7ff200aa1dcc34cc7d42af739951762a9993b1d55ec83428455fd04d"
-    },
-    {
-      "path": "app/frontend/public/_nuxt/_eRmgQyX.js",
+      "path": "app/frontend/public/_nuxt/WD28WizB.js",
       "size_bytes": 3451,
-      "sha256": "13c9a3ef3dba9413e51d45e13030ff5accc1057ce8e96f01b72a70ef583c19bc"
+      "sha256": "79def6c383e4527d6586ccef32fcc8eb58e3eab5e41c9e78418f6d408b032423"
     },
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "b8d4ff69ca05188b5187d901cfe9ea740022bf315dd5adf60d68a1934d0a02c3"
+      "sha256": "6d97ee8ae24770f8756c048053433a1c1cfb1bae45cb865a03a0dd7e73569f96"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/9285defb-fcb4-4417-ba41-7e67cf897338.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/145d7af3-b51a-4dd9-b933-56521f6fa9f1.json",
       "size_bytes": 88,
-      "sha256": "15ca4d46e07394aa0649c65bf67163fa4a60435bc5d2926b7d8dfdb2885f0838"
+      "sha256": "019acfecba7c317c1e0b174ef72c2dc697839f3e18ab20a5e31094f03189b78b"
     },
     {
-      "path": "app/frontend/public/_nuxt/entry.9hnC3U0r.css",
-      "size_bytes": 504271,
-      "sha256": "5f1230cbbf9ede76b7e11d1b515603df871efc6210018f93fd4b89a4a8289875"
+      "path": "app/frontend/public/_nuxt/entry.DHBSq8rp.css",
+      "size_bytes": 504430,
+      "sha256": "213de02eee1cebc86b535e6d1582ceed43df5d845921f2df38869af9b9a72150"
     },
     {
       "path": "app/frontend/public/_nuxt/error-404.BBhU_iaz.css",
@@ -1759,7 +1764,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 169035,
-      "sha256": "b4f9e460dd715013e78230d6ce4f0886d0174b4c3b05bf897ca8603030cead4a"
+      "sha256": "d2359cfdf74e88ef9ebbe7f86b2b78e6b5e3bfdb115878e1ba226c229ac80a29"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.Br3zh7eU.mjs",
@@ -2092,9 +2097,9 @@
       "sha256": "5645ea3d97f80fea6373ce8e0b193a37ad7de8f9978159c9928e86854e5d3f0b"
     },
     {
-      "path": "app/frontend/server/chunks/build/LoRABrowser-styles.m2bYMD4y.mjs",
+      "path": "app/frontend/server/chunks/build/LoRABrowser-styles.TAsFNAcc.mjs",
       "size_bytes": 2015,
-      "sha256": "e8624af450b8c176388d3888799764c903a2efd1982eebb974a4ec592f211cbb"
+      "sha256": "0149df16cbe71347836d6c6c61c3e0a894b8bc2ecbfae62a028b81fa40d033c5"
     },
     {
       "path": "app/frontend/server/chunks/build/LoRACaptionInspector-styles.DbAQ5YPN.mjs",
@@ -2277,9 +2282,9 @@
       "sha256": "d8063ec6a2cd1d17933d4cbfb75317be1023b3047050087364c6ba5ff9fe847d"
     },
     {
-      "path": "app/frontend/server/chunks/build/PromptPane-styles.CDqkRGHu.mjs",
-      "size_bytes": 8833,
-      "sha256": "ab88fbcb65943e6c3909b5f66546969a0d311543e735f87573c81b835554b574"
+      "path": "app/frontend/server/chunks/build/PromptPane-styles.BvqTt-Km.mjs",
+      "size_bytes": 8831,
+      "sha256": "224db32c38890a4295309d3652ff21ae1920f0545df07d4ba06cf2d2aca9981b"
     },
     {
       "path": "app/frontend/server/chunks/build/PromptSectionsEditor-styles.CXasYr9J.mjs",
@@ -2317,9 +2322,9 @@
       "sha256": "49c155371814b889beb147fe1a9e63be0aa54386e68ff028a2c7a5255ff5b238"
     },
     {
-      "path": "app/frontend/server/chunks/build/SelectedLoRAStack-styles.JtTSoM0s.mjs",
-      "size_bytes": 1961,
-      "sha256": "be2583588f29f1449f1f26e6146c15f9ab36f894eaabfe3feab799d592f5050d"
+      "path": "app/frontend/server/chunks/build/SelectedLoRAStack-styles.JEe9kin7.mjs",
+      "size_bytes": 2120,
+      "sha256": "60e18faeffd9883d1e6ac2be76bd328d36f8430d21a2faaf4a8ff791927c2d49"
     },
     {
       "path": "app/frontend/server/chunks/build/SeriesConsistency-styles.BBoB7yiF.mjs",
@@ -2534,12 +2539,12 @@
     {
       "path": "app/frontend/server/chunks/build/client.precomputed.mjs",
       "size_bytes": 2916,
-      "sha256": "b991ed83835bcd2d5b2827391981cca21946b796e0b75da717640a3112db9aae"
+      "sha256": "333a7d2cda818d19466e6d56c7d2d8d6577a41a18f2d42e14baa501dc458a474"
     },
     {
-      "path": "app/frontend/server/chunks/build/error-404-DlmHFS2V.mjs",
-      "size_bytes": 15072,
-      "sha256": "7e771f6324e23f774e0eb226289e763745dfd30042356266386568e35391569c"
+      "path": "app/frontend/server/chunks/build/error-404-DjG8cJ3_.mjs",
+      "size_bytes": 15423,
+      "sha256": "3c6aac5978f56be86e2085e59958f91ce5a926e24f8f5c5ffce60b536cd48fa5"
     },
     {
       "path": "app/frontend/server/chunks/build/error-404-styles.xf2R7Kcb.mjs",
@@ -2547,9 +2552,9 @@
       "sha256": "f9c602ea3f67524433b90b8219deecd9f59ba3346cb9789810ce5175903855d2"
     },
     {
-      "path": "app/frontend/server/chunks/build/error-500-CkYXzGJH.mjs",
+      "path": "app/frontend/server/chunks/build/error-500-CDLqYfNQ.mjs",
       "size_bytes": 4788,
-      "sha256": "e4cc9fa034078c91a89cde7a4b6ba05d438acd53d61e659e88038c7152262da9"
+      "sha256": "2fb66bdefa912c1c9e3301766062c6320b5e51526abe0c900fa5ba4fca42b53c"
     },
     {
       "path": "app/frontend/server/chunks/build/error-500-styles.CkOlAevR.mjs",
@@ -2558,13 +2563,13 @@
     },
     {
       "path": "app/frontend/server/chunks/build/server.mjs",
-      "size_bytes": 3720839,
-      "sha256": "7e18b3f22d58f6eb9149187723567adfffe3440a3e240a6461b13fa4b763d4f3"
+      "size_bytes": 3735525,
+      "sha256": "bf9c52e7602ef3281aec28879c2895fa0cc590b1f96b00fc8ce1a7a59b184ee8"
     },
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 20970,
-      "sha256": "07f67424ba801f929de39a40637bf0d0aefd5ab5d7b36281dee26e470ba3a8c5"
+      "sha256": "11c23f11af8910ced0aa52716cb42e48da950f86b88dba1c0f92d53653d8fad1"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -3339,12 +3344,12 @@
     {
       "path": "release-manifest.sig.json",
       "size_bytes": 199,
-      "sha256": "d36a053f45fd4b3d6a0a8f5708350cecbc35579f03e608ffd06528cab20505a8"
+      "sha256": "3f3dc0207581a7ba67d8b8339bce3c85046d584b8f62e0cf8515e09ae22d5aad"
     },
     {
       "path": "release-manifest.yaml",
       "size_bytes": 3603,
-      "sha256": "83bb71b54f793ecc8e7af0fd7dee09062b23eb7a32d291bd7946ffcfd5e4dfac"
+      "sha256": "075891e2a063536beaafb868753b005a487747199c542021596092c7ef6b9156"
     },
     {
       "path": "release-public-keys.json",
