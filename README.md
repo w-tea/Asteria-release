@@ -27,7 +27,7 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 3. [画面付きクイックスタート](guides/QUICK_START.md)で、一枚の生成、画像の選択、マスク編集を試します。
 4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
 
-> **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトをベース・キャラクター・詳細に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
+> 描写位置を指定する配置機能はV1.2.0から利用できません。通常の生成と項目別のプロンプト入力は引き続き使えます。過去の配置付き設定を再利用すると、文章は対応する欄へ戻ります。位置は引き継がず、元の履歴や画像は変更しません。
 
 ### V1.2.2 devの変更
 
@@ -39,6 +39,12 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - Krea 2 TurboとMOSS-Image SFTの通常の画像生成に対応します。モデルは任意導入です。新モデルでのHires、ControlNet、LoRA、参照画像編集は今回の対応に含みません。
 - 管理するComfyUIを固定0.43.0へ更新します。MOSSの軽量構成はINT8生成モデル・W4A8 encoder・small VAEを使います。必要メモリや処理時間は環境によって異なります。
 - SDXLのLoRA学習は、Asteriaの再起動後も正常終了を確認できれば、既存ファイルを上書きせずに結果を保存します。終了を確認できない場合や学習を中止した場合は、残っているファイルの場所を学習履歴で確認できます。
+
+### V1.2.1.3から引き継いだ修正
+
+- Anima 1.0で、Kohya形式や一部の層だけを調整するLoRAを選ぶと生成が止まる問題を修正しました。対応するLoRAは変換や再取得なしで使えます。
+- SDXLで「LoRA tokenを挿入」を使い、`<lora:名前:2.0:0.6>` のように強さが2つ入ったタグをプロンプトに追加すると、LoRAが反映されない問題を修正しました。
+- 外部のWebサイトからローカルAPIを操作する要求を拒否し、ダウンロードが許可された保存先の外へ書き込まれないようにしました。
 
 ### V1.2.1.2の修正
 
@@ -374,7 +380,7 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 3. Use the illustrated [Quick start](guides/QUICK_START.md) to generate one image, select a result and edit a mask.
 4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
 
-> **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
+> Spatial prompt placement is unavailable as of V1.2.0. You can still generate normally and use the sectioned prompt editor. Reusing older placement settings restores the text to the corresponding fields, without restoring positions or modifying the original history or images.
 
 ### V1.2.2 dev changes
 
@@ -386,6 +392,12 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 - Added basic text-to-image generation with Krea 2 Turbo and MOSS-Image SFT. Models are optional. Hires, ControlNet, LoRA and reference-image editing for these new models are not part of this update.
 - The managed ComfyUI is pinned to 0.43.0. The lightweight MOSS configuration uses an INT8 diffusion model, W4A8 encoder and small VAE. Memory requirements and processing time depend on the environment.
 - After Asteria restarts, SDXL LoRA training saves the result without replacing existing files if it can confirm that training finished successfully. If completion cannot be confirmed or training was stopped, the run shows where to find any remaining files.
+
+### Fixes carried over from V1.2.1.3
+
+- Fixed Anima 1.0 generation failing with Kohya-format LoRAs and LoRAs that adjust only some layers. Compatible files do not need to be converted or downloaded again.
+- Fixed SDXL ignoring a LoRA when the prompt included a tag with two strengths, such as `<lora:name:2.0:0.6>`, added with **Insert LoRA token**.
+- Blocked requests from external websites to the local API and prevented downloads from writing outside their permitted destinations.
 
 ### V1.2.1.2 fixes
 

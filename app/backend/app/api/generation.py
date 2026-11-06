@@ -1619,22 +1619,20 @@ def _missing_lora_models(
         )
         block_vector = str(lora.get("block_weight") or lora.get("block_weight_preset") or "").strip()
         uses_block_loader = bool(block_vector and lora.get("hierarchy_mode") != "disabled")
-        uses_anima_remap = isinstance(lora.get("anima_remap"), dict)
-        loader_present = (
-            anima_remap_loader_present
-            if uses_anima_remap
-            else block_loader_present
-            if uses_block_loader
-            else lora_loader_present
+        uses_anima_remap = {
+            isinstance(lora.get("anima_remap"), dict),
+            isinstance(lora.get("hires_anima_remap", lora.get("anima_remap")), dict),
+        }
+        standard_catalog = (
+            (block_loader_present, block_loader_values)
+            if uses_block_loader else (lora_loader_present, lora_loader_values)
         )
-        available = (
-            anima_remap_loader_values
-            if uses_anima_remap
-            else block_loader_values
-            if uses_block_loader
-            else lora_loader_values
+        catalogs = (
+            (anima_remap_loader_present, anima_remap_loader_values)
+            if remap else standard_catalog
+            for remap in uses_anima_remap
         )
-        if loader_present and model_name not in available:
+        if any(present and model_name not in available for present, available in catalogs):
             missing.append({"index": index, "name": name, "model_name": model_name})
     return missing
 
@@ -1901,9 +1899,15 @@ def _profile_base_required_nodes(profile: str, settings: dict, *, requires_lora:
         elif not is_anima_3_8b:
             required.add("EmptyQwenImageLayeredLatentImage")
         if requires_lora:
-            if int(settings.get("anima_remap_lora_count") or 0) > 0:
+            remap_count = int(settings.get("anima_remap_lora_count") or 0)
+            native_count = int(settings.get("anima_standard_lora_count") or 0)
+            hires_remap_count = len(settings.get("anima_hires_lora_remap_receipts") or ())
+            if remap_count or hires_remap_count:
                 required.add("AsteriaAnimaLoraRemap")
-            if int(settings.get("anima_standard_lora_count") or 0) > 0:
+            if native_count or (
+                settings.get("anima_hires_generation_bundle")
+                and hires_remap_count < remap_count + native_count
+            ):
                 required.add("LoraLoader")
         return required
     if profile == "flux1":
@@ -3862,9 +3866,8 @@ def _generate_with_recording(
                     )
                 )
                 for runtime_lora, hires_lora in zip(loras, hires_loras, strict=True):
-                    hires_receipt = hires_lora.get("anima_remap")
-                    if isinstance(hires_receipt, dict):
-                        runtime_lora["hires_anima_remap"] = hires_receipt
+                    # None explicitly selects native loading for this target.
+                    runtime_lora["hires_anima_remap"] = hires_lora.get("anima_remap")
         except (AnimaLoraRemapRegistryError, KeyError) as exc:
             reason_code = (
                 exc.reason_code

@@ -3769,7 +3769,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         remap = lora.get(remap_key)
         if (
             remap_key == "hires_anima_remap"
-            and not isinstance(remap, dict)
+            and remap_key not in lora
             and isinstance(lora.get("anima_remap"), dict)
         ):
             raise RuntimeErrorResponse(
