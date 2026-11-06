@@ -40,6 +40,11 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 - 管理するComfyUIを固定0.43.0へ更新します。MOSSの軽量構成はINT8生成モデル・W4A8 encoder・small VAEを使います。必要メモリや処理時間は環境によって異なります。
 - SDXLのLoRA学習は、Asteriaの再起動後も正常終了を確認できれば、既存ファイルを上書きせずに結果を保存します。終了を確認できない場合や学習を中止した場合は、残っているファイルの場所を学習履歴で確認できます。
 
+### V1.2.1.4から引き継いだ修正
+
+- SDXLで、プロンプトに書いたLoRAの強度と、LoRA設定で選んだ層ごとの重みを併用できます。例えば、`<lora:名前:0.8>` を書いた場合も、同じLoRAの層設定を保ったまま強度0.8が反映されます。
+- プロンプトに書いたLoRAが設定欄にも表示されます。そこで強度や層を変更すると、タグの指定も更新されます。同じLoRAは二重に適用されません。
+
 ### V1.2.1.3から引き継いだ修正
 
 - Anima 1.0で、Kohya形式や一部の層だけを調整するLoRAを選ぶと生成が止まる問題を修正しました。対応するLoRAは変換や再取得なしで使えます。
@@ -392,6 +397,11 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 - Added basic text-to-image generation with Krea 2 Turbo and MOSS-Image SFT. Models are optional. Hires, ControlNet, LoRA and reference-image editing for these new models are not part of this update.
 - The managed ComfyUI is pinned to 0.43.0. The lightweight MOSS configuration uses an INT8 diffusion model, W4A8 encoder and small VAE. Memory requirements and processing time depend on the environment.
 - After Asteria restarts, SDXL LoRA training saves the result without replacing existing files if it can confirm that training finished successfully. If completion cannot be confirmed or training was stopped, the run shows where to find any remaining files.
+
+### Fixes carried over from V1.2.1.4
+
+- In SDXL, a LoRA strength written in the prompt now works with the layer weights selected in LoRA settings. For example, `<lora:name:0.8>` applies strength 0.8 without discarding the layer settings for that LoRA.
+- LoRAs written in the prompt also appear in LoRA settings. Changing the strength or layer weights there updates the tag. A LoRA is not applied twice.
 
 ### Fixes carried over from V1.2.1.3
 

@@ -119,6 +119,7 @@ from app.services.model_library_cache import get_model_library
 from app.services.model_library import ModelLibrary
 from app.services.model_fingerprints import ModelFingerprintService
 from app.services.generation_reproduction import capture_generation_assets, compare_generation_assets
+from app.services.generation_loras import merge_generation_loras as _merge_loras
 from app.services.prompt_styles import (
     apply_advanced_style_text as _apply_advanced_style_text,
     compose_with_advanced_styles as _compose_with_advanced_styles,
@@ -3030,13 +3031,6 @@ def expand_prompt_preview(request: PromptExpandRequest) -> PromptExpandResponse:
     )
 
 
-def _merge_loras(prompt_loras: list[dict], request_loras: list[dict]) -> list[dict]:
-    merged: dict[str, dict] = {}
-    for lora in [*prompt_loras, *request_loras]:
-        merged[str(lora["name"])] = lora
-    return list(merged.values())
-
-
 def _unsupported_profile_prompt_settings(profile: str, negative_prompt: str) -> list[dict[str, str]]:
     if profile not in {"flux1", "flux2"} or not negative_prompt.strip():
         return []
@@ -3597,6 +3591,7 @@ def _generate(
     merge_xyz_metadata: dict[str, Any] | None = None,
     comparison_metadata: dict[str, Any] | None = None,
     comparison_session=None,
+    xyz_lora_weights: dict[str, float] | None = None,
 ) -> GenerationResponse:
     from contextlib import ExitStack, nullcontext
     from app.services.making_video import MakingRecorder
@@ -3613,6 +3608,7 @@ def _generate(
             merge_xyz_metadata=merge_xyz_metadata, comparison_metadata=comparison_metadata,
             comparison_session=comparison_session,
             finalization_stack=finalization_stack,
+            xyz_lora_weights=xyz_lora_weights,
         )
 
 
@@ -3630,6 +3626,7 @@ def _generate_with_recording(
     comparison_metadata: dict[str, Any] | None = None,
     comparison_session=None,
     finalization_stack=None,
+    xyz_lora_weights: dict[str, float] | None = None,
 ) -> GenerationResponse:
     from contextlib import nullcontext
     generation_started = time.perf_counter()
@@ -3834,10 +3831,25 @@ def _generate_with_recording(
             "prompt_hash": prompt_expansion.prompt_hash,
             "choices": [asdict(item) for item in prompt_expansion.choices],
         }
+    prompt_loras = spatial_loras if spatial_loras is not None else extract_loras(expanded_prompt)
+    requested_loras = [lora.model_dump(exclude_none=True) for lora in request.loras]
+    applied_prompt_overrides: list[dict[str, Any]] | None = [] if xyz_lora_weights else None
     loras = _merge_loras(
-        spatial_loras if spatial_loras is not None else extract_loras(expanded_prompt),
-        [lora.model_dump(exclude_none=True) for lora in request.loras],
+        prompt_loras,
+        requested_loras,
+        library=get_model_library(_model_root(config), config=config) if prompt_loras else None,
+        model_root=_model_root(config),
+        external_roots=_registered_external_model_roots(config) if prompt_loras or request.loras else (),
+        weight_overrides=xyz_lora_weights,
+        applied_prompt_overrides=applied_prompt_overrides,
     )
+    if prompt_loras:
+        settings["lora_selections"] = requested_loras
+    if applied_prompt_overrides:
+        settings["xyz_lora_restore"] = {
+            "weights": applied_prompt_overrides,
+            "use_expanded": bool(request.advanced_styles or expanded_prompt != request.prompt),
+        }
     if request.profile == "anima" and loras:
         try:
             anima_library = get_model_library(_model_root(config), config=config)
@@ -4442,7 +4454,9 @@ def _xyz_axis_key(axis: XYZAxis, index: int) -> str:
     return axis.label.strip() or axis.target.strip() or f"axis_{index + 1}"
 
 
-def _apply_xyz_value(request: Txt2ImgRequest, axis: XYZAxis, value: str) -> Txt2ImgRequest:
+def _apply_xyz_value(
+    request: Txt2ImgRequest, axis: XYZAxis, value: str, *, lora_weights: dict[str, float] | None = None,
+) -> Txt2ImgRequest:
     next_request = request.model_copy(deep=True)
     target = axis.target.strip().lower()
     value = str(value)
@@ -4497,12 +4511,16 @@ def _apply_xyz_value(request: Txt2ImgRequest, axis: XYZAxis, value: str) -> Txt2
             if not matched:
                 next_request.loras.append(LoraSelection(name=lora_name, weight=weight))
         elif next_request.loras:
-            next_request.loras[0].weight = weight
+            first_lora = next_request.loras[0]
+            lora_name = first_lora.name
+            first_lora.weight = weight
         else:
             raise HTTPException(
                 status_code=400,
                 detail={"code": api_errors.XYZ_LORA_WEIGHT_TARGET_REQUIRED, "target": target},
             )
+        if lora_weights is not None:
+            lora_weights[lora_name] = weight
     else:
         raise HTTPException(
             status_code=400,
@@ -4511,13 +4529,16 @@ def _apply_xyz_value(request: Txt2ImgRequest, axis: XYZAxis, value: str) -> Txt2
     return next_request
 
 
-def _xyz_cell_request(base: Txt2ImgRequest, axes: list[XYZAxis], values: tuple[str, ...]) -> tuple[Txt2ImgRequest, dict[str, str]]:
+def _xyz_cell_request(
+    base: Txt2ImgRequest, axes: list[XYZAxis], values: tuple[str, ...],
+) -> tuple[Txt2ImgRequest, dict[str, str], dict[str, float]]:
     request = base
     labels: dict[str, str] = {}
+    lora_weights: dict[str, float] = {}
     for index, (axis, value) in enumerate(zip(axes, values, strict=True)):
         labels[_xyz_axis_key(axis, index)] = str(value)
-        request = _apply_xyz_value(request, axis, str(value))
-    return request, labels
+        request = _apply_xyz_value(request, axis, str(value), lora_weights=lora_weights)
+    return request, labels, lora_weights
 
 
 def _first_image_output(output_paths: list[str]) -> Path | None:
@@ -4723,16 +4744,16 @@ def _generate_xyz_plot(request: XYZPlotRequest) -> XYZPlotResponse:
     _preflight_profile_prompt_request(request.base)
     _preflight_controlnet_mode_request(request.base, request.mode)
     _preflight_seed_resize_request(request.base, request.mode)
-    prepared_cells: list[tuple[int, dict[str, str], Txt2ImgRequest]] = []
+    prepared_cells: list[tuple[int, dict[str, str], Txt2ImgRequest, dict[str, float]]] = []
     for index, values in enumerate(combinations):
-        cell_request, labels = _xyz_cell_request(request.base, request.axes, tuple(str(value) for value in values))
+        cell_request, labels, lora_weights = _xyz_cell_request(request.base, request.axes, tuple(str(value) for value in values))
         _preflight_profile_prompt_request(cell_request)
         _preflight_controlnet_mode_request(cell_request, request.mode)
         _preflight_seed_resize_request(cell_request, request.mode)
-        prepared_cells.append((index, labels, cell_request))
+        prepared_cells.append((index, labels, cell_request, lora_weights))
     cells: list[XYZCellResult] = []
-    for index, labels, cell_request in prepared_cells:
-        generation = _generate(cell_request, request.mode)
+    for index, labels, cell_request, lora_weights in prepared_cells:
+        generation = _generate(cell_request, request.mode, **({"xyz_lora_weights": lora_weights} if lora_weights else {}))
         cells.append(XYZCellResult(index=index, labels=labels, generation=generation))
     contact_sheet_path = ""
     contact_sheet_warning = ""
