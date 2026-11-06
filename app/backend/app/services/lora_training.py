@@ -6,8 +6,10 @@ from io import BytesIO
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
+import logging
 import os
 import signal
+import stat
 import subprocess
 import re
 import shlex
@@ -67,6 +69,8 @@ LoRACopyMachineTargetTransform = Literal[
 LoRACopyMachineAdapterStatus = Literal["ready", "missing"]
 LoRACopyMachineTrainingRunStatus = Literal["planned", "blocked", "running", "completed", "failed"]
 SAMPLE_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
+_TRAINING_SNAPSHOT_OWNER = ".asteria-training-run"
+_logger = logging.getLogger(__name__)
 
 
 class LoRATrainingStorageError(Exception):
@@ -600,6 +604,8 @@ class LoRATrainingRun(BaseModel):
     sample_prompts_path: str = ""
     output_dir: str
     output_name: str
+    sdxl_output_stage: str = ""
+    failure_code: str = ""
     working_dir: str
     command_args: list[str] = Field(default_factory=list)
     preflight: LoRATrainingRunPreflight
@@ -1797,18 +1803,36 @@ def materialize_lora_training_dataset(
     if not dataset.items:
         raise ValueError("lora_training_dataset_empty")
 
-    materialized_root = (request.data_dir / "lora-training" / "materialized").resolve()
+    materialized_root = request.data_dir.resolve() / "lora-training" / "materialized"
     caption_extension = _safe_caption_extension(request.caption_extension or preset.caption_extension)
     try:
+        if materialized_root.resolve() != materialized_root:
+            raise OSError("Materialized data must remain inside the configured data directory")
         materialized_root.mkdir(parents=True, exist_ok=True)
         # A prepared run keeps its own image, caption and config snapshot.
         # A standalone export must not replace it or any older shared directory.
         root_dir = Path(mkdtemp(prefix=f"{_safe_slug(dataset.name)[:48]}-", dir=materialized_root))
-        image_dir = root_dir / "images"
+    except OSError as exc:
+        raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
+    try:
+        return _write_materialized_dataset(dataset, request, preset, root_dir, caption_extension)
+    except Exception:
+        _discard_training_snapshot(materialized_root, root_dir)
+        raise
+
+
+def _write_materialized_dataset(
+    dataset: LoRATrainingDataset,
+    request: DatasetMaterializeRequestData,
+    preset: LoRATrainingPreset,
+    root_dir: Path,
+    caption_extension: str,
+) -> MaterializedDataset:
+    image_dir = root_dir / "images"
+    try:
         image_dir.mkdir()
     except OSError as exc:
         raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
-
     items: list[MaterializedDatasetItem] = []
     skipped_items: list[str] = []
     materialize_warnings: list[str] = []
@@ -1952,26 +1976,32 @@ def prepare_lora_training_run(
             optimizer_low_vram=request.optimizer_low_vram,
         ),
     )
-    preset = get_lora_training_preset(dataset.preset_id)
-    if preset is None:
-        raise ValueError("lora_training_preset_not_found")
-
-    command_args = _with_accelerate_command(materialized.command_args, request.accelerate_command, request.project_root)
-    preflight = _build_run_preflight(
-        preset=preset,
-        request=request,
-        dataset_config_path=Path(materialized.dataset_config_path),
-        character_caption_gate=materialized.character_caption_gate,
-    )
-    return repository.create(
-        dataset=dataset,
-        materialized=materialized,
-        output_dir=request.output_dir,
-        output_name=request.output_name,
-        working_dir=request.working_dir,
-        command_args=command_args,
-        preflight=preflight,
-    )
+    try:
+        preset = get_lora_training_preset(dataset.preset_id)
+        if preset is None:
+            raise ValueError("lora_training_preset_not_found")
+        command_args = _with_accelerate_command(materialized.command_args, request.accelerate_command, request.project_root)
+        preflight = _build_run_preflight(
+            preset=preset,
+            request=request,
+            dataset_config_path=Path(materialized.dataset_config_path),
+            character_caption_gate=materialized.character_caption_gate,
+        )
+        return repository.create(
+            dataset=dataset,
+            materialized=materialized,
+            output_dir=request.output_dir,
+            output_name=request.output_name,
+            working_dir=request.working_dir,
+            command_args=command_args,
+            preflight=preflight,
+            snapshot_owner_root=request.data_dir.resolve() / "lora-training" / "materialized",
+        )
+    except Exception:
+        _discard_training_snapshot(
+            request.data_dir.resolve() / "lora-training" / "materialized", Path(materialized.root_dir),
+        )
+        raise
 
 
 def start_lora_training_run(
@@ -1995,7 +2025,8 @@ def start_lora_training_run(
         raise ValueError("lora_training_run_not_startable")
     if not run.command_args:
         raise ValueError("lora_training_run_command_empty")
-    validate_anima_training_output_available(run, project_root=project_root)
+    validate_training_output_available(run, project_root=project_root)
+    run.failure_code = ""
 
     log_dir = data_dir / "lora-training" / "logs"
     try:
@@ -2006,12 +2037,16 @@ def start_lora_training_run(
     working_dir = _resolve_training_working_dir(run.working_dir, project_root)
     try:
         with log_path.open("w", encoding="utf-8", errors="replace") as log_file:
+            command = run.command_args
+            if run.profile == "sdxl":
+                command, stage = _stage_sdxl_training_command(run, project_root)
+                run.sdxl_output_stage = str(stage)
             log_file.write(f"Asteria LoRA training run {run.id}\n")
-            log_file.write(f"Command: {' '.join(run.command_args)}\n\n")
+            log_file.write(f"Command: {' '.join(command)}\n\n")
             log_file.flush()
             try:
                 process = popen_training_process(
-                    run.command_args,
+                    command,
                     cwd=working_dir,
                     stdout=log_file,
                 )
@@ -2082,6 +2117,8 @@ def refresh_lora_training_run(
     if run.log_path:
         run.log_tail = _read_text_tail(Path(run.log_path))
     _apply_run_progress_from_log(run)
+    if completed_now and run.sdxl_output_stage:
+        _publish_sdxl_training_output(run)
     if run.status == "completed":
         _finalize_anima_training_output(run, project_root=project_root, completed_now=completed_now)
     if run.status == "completed":
@@ -4121,7 +4158,11 @@ def _anima_training_output_paths(run: LoRATrainingRun, project_root: Path) -> tu
 
 
 def validate_anima_training_output_available(run: LoRATrainingRun, *, project_root: Path) -> None:
-    for path in _anima_training_output_paths(run, project_root) or ():
+    _require_unused_training_outputs(_anima_training_output_paths(run, project_root) or ())
+
+
+def _require_unused_training_outputs(paths) -> None:
+    for path in paths:
         try:
             path.lstat()
         except FileNotFoundError:
@@ -4129,6 +4170,118 @@ def validate_anima_training_output_available(run: LoRATrainingRun, *, project_ro
         except OSError as exc:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
         raise ValueError("lora_training_output_name_in_use")
+
+
+def _sdxl_training_output_filename(name: str) -> str:
+    if (not name.strip() or name in {".", ".."}
+            or any(char in '<>:"/\\|?*' or ord(char) < 32 for char in name)
+            or PureWindowsPath(name).is_reserved()):
+        raise ValueError("lora_training_run_preflight_not_ready")
+    return f"{name}.safetensors"
+
+
+def validate_training_output_available(run: LoRATrainingRun, *, project_root: Path) -> None:
+    if run.profile == "sdxl":
+        filename = _sdxl_training_output_filename(run.output_name)
+        directory = _resolve_source_path(run.output_dir.strip(), project_root)
+        _require_unused_training_outputs((directory / filename,))
+    else:
+        validate_anima_training_output_available(run, project_root=project_root)
+
+
+def _stage_sdxl_training_command(run: LoRATrainingRun, project_root: Path) -> tuple[list[str], Path]:
+    command = list(run.command_args)
+    indices = {}
+    for option in ("--output_dir", "--output_name"):
+        # The prepared command uses one explicit argument per field. Do not
+        # start if another occurrence (including an argparse abbreviation)
+        # or a config file could override the private output directory.
+        matches = [
+            index for index, arg in enumerate(command)
+            if arg.startswith("--") and option.startswith(arg.split("=", 1)[0])
+        ]
+        if len(matches) != 1:
+            raise ValueError("lora_training_run_preflight_not_ready")
+        index = matches[0]
+        if command[index] != option or index + 1 >= len(command):
+            raise ValueError("lora_training_run_preflight_not_ready")
+        indices[option] = index + 1
+    if (command[indices["--output_name"]] != run.output_name
+            or any(arg.startswith("--") and "--config_file".startswith(arg.split("=", 1)[0]) for arg in command)):
+        raise ValueError("lora_training_run_preflight_not_ready")
+    directory = _resolve_source_path(run.output_dir.strip(), project_root)
+    directory.mkdir(parents=True, exist_ok=True)
+    stage = Path(mkdtemp(prefix=".asteria-sdxl-", dir=directory))
+    command[indices["--output_dir"]] = str(stage)
+    return command, stage
+
+
+def _is_local_training_entry(path: Path, mode_check) -> bool:
+    details = path.lstat()
+    return mode_check(details.st_mode) and not getattr(details, "st_file_attributes", 0) & 0x400
+
+
+def _publish_sdxl_training_output(run: LoRATrainingRun) -> None:
+    stage = Path(run.sdxl_output_stage)
+    directory = stage.parent
+    filename = _sdxl_training_output_filename(run.output_name)
+    published_models: list[str] = []
+    published_samples: list[str] = []
+    try:
+        if (stage.resolve() != stage or not _is_local_training_entry(stage, stat.S_ISDIR)
+                or not _is_local_training_entry(stage / filename, stat.S_ISREG)):
+            raise OSError("SDXL trainer did not produce the expected file in its output folder")
+        _require_unused_training_outputs((directory / filename,))
+        samples = []
+        for name in ("sample", "samples"):
+            source = stage / name
+            if not source.exists():
+                continue
+            if not _is_local_training_entry(source, stat.S_ISDIR):
+                raise OSError("SDXL trainer returned an invalid sample directory")
+            target = directory / name
+            target.mkdir(exist_ok=True)
+            if not _is_local_training_entry(target, stat.S_ISDIR):
+                raise OSError("SDXL sample destination is not a regular directory")
+            for sample in source.iterdir():
+                if (sample.suffix.lower() in SAMPLE_IMAGE_EXTENSIONS
+                        and sample.name.startswith((f"{run.output_name}_", f"{run.output_name}-"))
+                        and _is_local_training_entry(sample, stat.S_ISREG)):
+                    samples.append((sample, target / sample.name))
+        models = [
+            (file, directory / file.name)
+            for file in stage.glob("*.safetensors")
+            if (file.name.startswith((f"{run.output_name}-", f"{run.output_name}_"))
+                and _is_local_training_entry(file, stat.S_ISREG))
+        ]
+        models.append((stage / filename, directory / filename))
+        _require_unused_training_outputs(target for _, target in [*samples, *models])
+        for source, target in samples:
+            move_without_replacement(source, target)
+            if _is_valid_image_file(target):
+                published_samples.append(str(target))
+        # Publish the final model last. Keep unsaved files in the attempt
+        # folder if an external process creates any destination meanwhile.
+        for source, target in models:
+            move_without_replacement(source, target)
+            published_models.append(str(target))
+    except (OSError, ValueError, LoRATrainingStorageError) as exc:
+        run.status = "failed"
+        run.exit_code = -2
+        if isinstance(exc, FileExistsError) or str(exc) == "lora_training_output_name_in_use":
+            run.failure_code = "lora_training_output_name_in_use"
+        run.log_tail = _append_log_tail_note(
+            run.log_path, f"SDXL LoRA could not save its output without replacing a file: {exc}. "
+            f"Remaining files were kept in {stage}. Check the destination and choose a different output name if needed.",
+        )
+        return
+    run.trained_model_paths = sorted(published_models, key=str.casefold)
+    run.sample_image_paths = sorted(published_samples, key=str.casefold)
+    for path in (stage / "sample", stage / "samples", stage):
+        try:
+            path.rmdir()  # Never remove unrecognized or partial trainer files.
+        except OSError:
+            pass
 
 
 def _finalize_anima_training_output(
@@ -4221,6 +4374,10 @@ def _finalize_anima_training_output(
 
 
 def _apply_run_trained_model_paths(run: LoRATrainingRun, *, project_root: Path | None) -> None:
+    if run.sdxl_output_stage:
+        # Only files published by this attempt belong to a new SDXL run.
+        run.trained_model_paths = [value for value in run.trained_model_paths if _path_is_file(Path(value))]
+        return
     output_dir = run.output_dir.strip()
     output_name = run.output_name.strip()
     if not output_dir or not output_name:
@@ -4256,6 +4413,9 @@ def _apply_run_trained_model_paths(run: LoRATrainingRun, *, project_root: Path |
 
 
 def _apply_run_sample_image_paths(run: LoRATrainingRun, *, project_root: Path | None) -> None:
+    if run.sdxl_output_stage:
+        run.sample_image_paths = [value for value in run.sample_image_paths if _is_valid_image_file(Path(value))]
+        return
     output_dir = run.output_dir.strip()
     output_name = run.output_name.strip()
     root = project_root or Path.cwd()
@@ -5241,6 +5401,52 @@ class LoRATrainingDatasetRepository:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
 
 
+def _is_training_snapshot(root: Path, directory: Path) -> bool:
+    return (
+        directory.parent == root and root.resolve(strict=True) == root
+        and directory.resolve(strict=True) == directory
+        and _is_local_training_entry(directory, stat.S_ISDIR)
+    )
+
+
+def _training_snapshot_entries(directory: Path) -> set[str]:
+    entries = set()
+    for path in directory.iterdir():
+        if path.name == _TRAINING_SNAPSHOT_OWNER:
+            continue
+        entries.add(path.name)
+        if path.name == "images" and _is_local_training_entry(path, stat.S_ISDIR):
+            for child in path.iterdir():
+                if not _is_local_training_entry(child, stat.S_ISREG):
+                    raise OSError("Unexpected entry in the LoRA training snapshot")
+                entries.add(child.relative_to(directory).as_posix())
+        elif not _is_local_training_entry(path, stat.S_ISREG):
+            raise OSError("Unexpected entry in the LoRA training snapshot")
+    return entries
+
+
+def _discard_training_snapshot(root: Path, directory: Path, *, owner: str | None = None) -> None:
+    try:
+        if not _is_training_snapshot(root, directory):
+            return
+        if owner is not None:
+            marker = directory / _TRAINING_SNAPSHOT_OWNER
+            if not _is_local_training_entry(marker, stat.S_ISREG):
+                return
+            recorded = json.loads(marker.read_text(encoding="utf-8"))
+            if not isinstance(recorded, dict) or recorded.get("run_id") != owner:
+                return
+            expected = set(recorded["entries"])
+            # Unexpected files may belong to the user, not to this run.
+            if not _training_snapshot_entries(directory).issubset(expected):
+                return
+        shutil.rmtree(directory)
+    except FileNotFoundError:
+        pass  # Legacy runs and manual exports have no ownership marker.
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError):
+        _logger.warning("Could not remove the LoRA training work copy at %s", directory, exc_info=True)
+
+
 class LoRATrainingRunRepository:
     _lock = RLock()
 
@@ -5269,6 +5475,7 @@ class LoRATrainingRunRepository:
         working_dir: str,
         command_args: list[str],
         preflight: LoRATrainingRunPreflight,
+        snapshot_owner_root: Path | None = None,
     ) -> LoRATrainingRun:
         now = _utc_now()
         run = LoRATrainingRun(
@@ -5293,6 +5500,16 @@ class LoRATrainingRunRepository:
         )
         with self._lock:
             runs = self._read(strict=True)
+            if snapshot_owner_root is not None:
+                directory = Path(materialized.root_dir)
+                try:
+                    if not _is_training_snapshot(snapshot_owner_root, directory):
+                        raise OSError("Invalid LoRA training snapshot")
+                    entries = sorted(_training_snapshot_entries(directory))
+                    with (directory / _TRAINING_SNAPSHOT_OWNER).open("x", encoding="utf-8") as marker:
+                        json.dump({"run_id": run.id, "entries": entries}, marker)
+                except OSError as exc:
+                    raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
             runs.insert(0, run)
             self._write(runs)
         return run
@@ -5313,10 +5530,15 @@ class LoRATrainingRunRepository:
     def delete(self, run_id: str) -> bool:
         with self._lock:
             runs = self._read(strict=True)
-            next_runs = [run for run in runs if run.id != run_id]
-            if len(next_runs) == len(runs):
+            removed = next((run for run in runs if run.id == run_id), None)
+            if removed is None:
                 return False
+            next_runs = [run for run in runs if run.id != run_id]
             self._write(next_runs)
+            directory = Path(removed.materialized_root)
+            if not any(Path(run.materialized_root) == directory for run in next_runs):
+                root = self.path.parent.parent.resolve() / self.path.parent.name / "materialized"
+                _discard_training_snapshot(root, directory, owner=run_id)
             return True
 
     def _read(self, *, strict: bool = False) -> list[LoRATrainingRun]:
