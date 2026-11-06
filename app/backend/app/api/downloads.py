@@ -13,8 +13,10 @@ from app.services.managed_downloads import (
     ManagedDownloadOperationExecutor,
     ManagedDownloadTelemetryRepository,
     request_partial_discard,
+    validate_public_download_destination,
 )
 from app.services.operation_coordinator import OperationCoordinator
+from app.services.operation_executor import OperationExecutionError
 from app.services.operation_repository import OperationNotFoundError
 from app.services.runtime_process import RuntimeProcessManager
 
@@ -45,6 +47,13 @@ class ManagedDownloadRequest(BaseModel):
         return value
 
 
+def _public_destination(config: AppConfig, path: Path) -> Path:
+    return validate_public_download_destination(
+        path, allowed_roots=(config.data_dir, config.model_dir),
+        runtime_root=config.root_dir / "runtime",
+    )
+
+
 def configure_download_operation_coordinator(
     coordinator: OperationCoordinator,
     *,
@@ -58,6 +67,7 @@ def configure_download_operation_coordinator(
             temp_root=config.data_dir / "temp",
             db_path=coordinator.repository.db_path,
             runtime_stopper=lambda: RuntimeProcessManager(config).stop(),
+            public_destination_check=lambda path: _public_destination(config, path),
         ),
     )
     _coordinator = coordinator
@@ -99,28 +109,10 @@ def _download_payload(operation_id: str) -> dict:
 @router.post("")
 def enqueue_download(request: ManagedDownloadRequest) -> dict:
     config = AppConfig()
-    destination = Path(request.destination).absolute()
-    runtime_root = (config.root_dir / "runtime").absolute()
-    if destination != runtime_root and destination.is_relative_to(runtime_root):
-        raise HTTPException(
-            status_code=400,
-            detail={"code": "managed_download_runtime_destination_requires_setup"},
-        )
-    allowed_roots = tuple(
-        path.absolute()
-        for path in (
-            config.data_dir,
-            config.model_dir,
-        )
-    )
-    if not any(
-        destination != root and destination.is_relative_to(root)
-        for root in allowed_roots
-    ):
-        raise HTTPException(
-            status_code=400,
-            detail={"code": "managed_download_destination_not_allowed"},
-        )
+    try:
+        destination = _public_destination(config, Path(request.destination))
+    except OperationExecutionError as exc:
+        raise HTTPException(status_code=400, detail={"code": exc.error_code}) from exc
     snapshot = request.model_dump(exclude={"idempotency_key"})
     snapshot["destination"] = str(destination)
     operation = _operations().enqueue(

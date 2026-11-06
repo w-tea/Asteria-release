@@ -1,5 +1,5 @@
 import { mergeProps, withCtx, createTextVNode, toDisplayString, defineComponent, shallowRef, h, resolveComponent, computed, unref, useSSRContext } from 'vue';
-import { r as parseQuery, l as hasProtocol, q as joinURL, C as withTrailingSlash, D as withoutTrailingSlash } from './nitro.mjs';
+import { r as parseQuery, l as hasProtocol, q as joinURL, C as withTrailingSlash, D as withoutTrailingSlash } from '../_/nitro.mjs';
 import { _ as _export_sfc, u as useHead, c as useRouter, e as encodeRoutePath, r as resolveRouteObject, n as navigateTo, b as useNuxtApp, d as useRuntimeConfig, a as nuxtLinkDefaults } from './server.mjs';
 import { ssrRenderAttrs, ssrInterpolate, ssrRenderComponent } from 'vue/server-renderer';
 import 'node:http';
@@ -343,7 +343,7 @@ const _sfc_main = {
     });
     return (_ctx, _push, _parent, _attrs) => {
       const _component_NuxtLink = __nuxt_component_0;
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "antialiased bg-white dark:bg-[#020420] dark:text-white font-sans grid min-h-screen overflow-hidden place-content-center text-[#020420] tracking-wide" }, _attrs))} data-v-85e48c57><div class="max-w-520px text-center" data-v-85e48c57><h1 class="font-semibold leading-none mb-4 sm:text-[110px] tabular-nums text-[80px]" data-v-85e48c57>${ssrInterpolate(__props.status)}</h1><h2 class="font-semibold mb-2 sm:text-3xl text-2xl" data-v-85e48c57>${ssrInterpolate(__props.statusText)}</h2><p class="mb-4 px-2 text-[#64748B] text-md" data-v-85e48c57>${ssrInterpolate(__props.description)}</p><div class="flex items-center justify-center w-full" data-v-85e48c57>`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "antialiased bg-white dark:bg-[#020420] dark:text-white font-sans grid min-h-screen overflow-hidden place-content-center text-[#020420] tracking-wide" }, _attrs))} data-v-4d196fb5><div class="max-w-520px text-center" data-v-4d196fb5><h1 class="font-semibold leading-none mb-4 sm:text-[110px] tabular-nums text-[80px]" data-v-4d196fb5>${ssrInterpolate(__props.status)}</h1><h2 class="font-semibold mb-2 sm:text-3xl text-2xl" data-v-4d196fb5>${ssrInterpolate(__props.statusText)}</h2><p class="mb-4 px-2 text-[#64748B] text-md" data-v-4d196fb5>${ssrInterpolate(__props.description)}</p><div class="flex items-center justify-center w-full" data-v-4d196fb5>`);
       _push(ssrRenderComponent(_component_NuxtLink, {
         to: "/",
         class: "font-medium hover:text-[#00DC82] text-sm underline underline-offset-3"
@@ -366,10 +366,10 @@ const _sfc_main = {
 const _sfc_setup = _sfc_main.setup;
 _sfc_main.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../../../frontend/node_modules/nuxt/dist/app/components/error-404.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("node_modules/nuxt/dist/app/components/error-404.vue");
   return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
 };
-const error404 = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-85e48c57"]]);
+const error404 = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-4d196fb5"]]);
 
 export { error404 as default };
-//# sourceMappingURL=error-404-BACVib4k.mjs.map
+//# sourceMappingURL=error-404-DlmHFS2V.mjs.map

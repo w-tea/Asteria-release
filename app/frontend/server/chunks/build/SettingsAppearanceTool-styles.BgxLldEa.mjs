@@ -1,6 +1,6 @@
 import { p as publicAssetsURL } from '../routes/renderer.mjs';
 import 'vue-bundle-renderer/runtime';
-import './nitro.mjs';
+import '../_/nitro.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';

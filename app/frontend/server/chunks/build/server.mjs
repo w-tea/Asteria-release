@@ -1,5 +1,5 @@
 import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { hasInjectionContext, getCurrentInstance, inject, defineComponent, createElementBlock, shallowRef, provide, cloneVNode, h, useSSRContext, nextTick, toRaw, createApp, computed, watch, mergeProps, unref, resolveDirective, ref, watchEffect, reactive, withCtx, createVNode, toDisplayString, withDirectives, isRef, openBlock, createBlock, Fragment, renderList, vModelSelect, createCommentVNode, createTextVNode, vModelText, resolveDynamicComponent, vShow, Teleport, withModifiers, vModelCheckbox, withKeys, onErrorCaptured, onServerPrefetch, shallowReactive, effectScope, toRef, readonly, defineAsyncComponent, getCurrentScope, watchPostEffect, isReadonly, toValue, isShallow, isReactive } from 'vue';
-import { s as parseURL, f as encodePath, d as decodePath, l as hasProtocol, o as isScriptProtocol, q as joinURL, B as withQuery, t as sanitizeStatusCode, g as getContext, $ as $fetch$1, c as createError$1, n as isEqual, m as hash, v as stringifyParsedURL, w as stringifyQuery, r as parseQuery, b as defu } from './nitro.mjs';
+import { s as parseURL, f as encodePath, d as decodePath, l as hasProtocol, o as isScriptProtocol, q as joinURL, B as withQuery, t as sanitizeStatusCode, g as getContext, $ as $fetch$1, c as createError$1, n as isEqual, m as hash, v as stringifyParsedURL, w as stringifyQuery, r as parseQuery, b as defu } from '../_/nitro.mjs';
 import { u as useHead$1, h as headSymbol, b as baseURL } from '../routes/renderer.mjs';
 import { defineStore, setActivePinia, createPinia, shouldHydrate } from 'pinia';
 import { isPlainObject } from '@vue/shared';
@@ -703,7 +703,7 @@ function freezeHead(head) {
     head.push = realPush;
   };
 }
-const unhead_jhs_eE6wBfRiTVtn2ViEGeM3PtGstwj_bxp1mHx_4bU = /* @__PURE__ */ defineNuxtPlugin({
+const unhead_k2P3m_ZDyjlr2mMYnoDPwavjsDN8hBlk9cFai0bbopU = /* @__PURE__ */ defineNuxtPlugin({
   name: "nuxt:head",
   enforce: "pre",
   setup(nuxtApp) {
@@ -747,7 +747,7 @@ function getRouteFromPath(fullPath) {
     href: fullPath
   };
 }
-const router_pSCchE4hWYvFLsJ7gbtP1bM61n7i4miwtC3kM8CFPio = /* @__PURE__ */ defineNuxtPlugin({
+const router_DclsWNDeVV7SyG4lslgLnjbQUK1ws8wgf2FHaAbo7Cw = /* @__PURE__ */ defineNuxtPlugin({
   name: "nuxt:router",
   enforce: "pre",
   setup(nuxtApp) {
@@ -928,7 +928,7 @@ const reducers = [
   ["Ref", (data) => isRef(data) && data.value],
   ["Reactive", (data) => isReactive(data) && toRaw(data)]
 ];
-const revive_payload_server_zkax7x5Evj7QlW_Wa4yuqIDn0_N9oxu5Re6fm9xB8ro = /* @__PURE__ */ defineNuxtPlugin({
+const revive_payload_server_MVtmlZaQpj6ApFmshWfUWl5PehCebzaBf2NuRMiIbms = /* @__PURE__ */ defineNuxtPlugin({
   name: "nuxt:revive-payload:server",
   setup() {
     for (const [reducer, fn] of reducers) {
@@ -1576,9 +1576,9 @@ const asteria_tooltip_fSFARtpwGbHlO1KB4At5caYKXgNivLM9kmiwguLVh5w = /* @__PURE__
 });
 const plugins = [
   payloadPlugin,
-  unhead_jhs_eE6wBfRiTVtn2ViEGeM3PtGstwj_bxp1mHx_4bU,
-  router_pSCchE4hWYvFLsJ7gbtP1bM61n7i4miwtC3kM8CFPio,
-  revive_payload_server_zkax7x5Evj7QlW_Wa4yuqIDn0_N9oxu5Re6fm9xB8ro,
+  unhead_k2P3m_ZDyjlr2mMYnoDPwavjsDN8hBlk9cFai0bbopU,
+  router_DclsWNDeVV7SyG4lslgLnjbQUK1ws8wgf2FHaAbo7Cw,
+  revive_payload_server_MVtmlZaQpj6ApFmshWfUWl5PehCebzaBf2NuRMiIbms,
   plugin,
   components_plugin_4kY4pyzJIYX99vmMAAIorFf3CnAaptHitJgf7JxiED8,
   asteria_tooltip_fSFARtpwGbHlO1KB4At5caYKXgNivLM9kmiwguLVh5w
@@ -18229,49 +18229,49 @@ const _sfc_main$21 = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "expert-tools-inspector",
         "aria-label": unref(t)("expertTools.title")
-      }, _attrs))} data-v-5921350b><div class="expert-tools-inspector__selector" data-v-5921350b><!--[-->`);
+      }, _attrs))} data-v-655aefc9><div class="expert-tools-inspector__selector" data-v-655aefc9><!--[-->`);
       ssrRenderList(tools, (tool) => {
-        _push(`<button type="button" class="${ssrRenderClass(["expert-tools-inspector__item", { "expert-tools-inspector__item--active": unref(activeTool) === tool.id }])}"${ssrRenderAttr("aria-pressed", unref(activeTool) === tool.id)} data-v-5921350b><span data-v-5921350b>${ssrInterpolate(tool.label())}</span><small data-v-5921350b>${ssrInterpolate(tool.summary())}</small></button>`);
+        _push(`<button type="button" class="${ssrRenderClass(["expert-tools-inspector__item", { "expert-tools-inspector__item--active": unref(activeTool) === tool.id }])}"${ssrRenderAttr("aria-pressed", unref(activeTool) === tool.id)} data-v-655aefc9><span data-v-655aefc9>${ssrInterpolate(tool.label())}</span><small data-v-655aefc9>${ssrInterpolate(tool.summary())}</small></button>`);
       });
-      _push(`<!--]--></div><section class="setting-section xyz-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.xyzAria"))} style="${ssrRenderStyle(unref(activeTool) === "xyz" ? null : { display: "none" })}" data-v-5921350b><div class="setting-section__header" data-v-5921350b><h2 data-v-5921350b>${ssrInterpolate(unref(t)("expertTools.xyz"))}</h2><small data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.cells", { count: unref(xyzCellCount) }))}</small></div><!--[-->`);
+      _push(`<!--]--></div><section class="setting-section xyz-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.xyzAria"))} style="${ssrRenderStyle(unref(activeTool) === "xyz" ? null : { display: "none" })}" data-v-655aefc9><div class="setting-section__header" data-v-655aefc9><h2 data-v-655aefc9>${ssrInterpolate(unref(t)("expertTools.xyz"))}</h2><small data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.cells", { count: unref(xyzCellCount) }))}</small></div><!--[-->`);
       ssrRenderList(unref(generation).xyzAxes, (axis, index) => {
-        _push(`<div class="xyz-axis" data-v-5921350b><div class="field-grid" data-v-5921350b><label class="field" data-v-5921350b><span data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.axisTarget"))}</span><select data-v-5921350b><option value="seed" data-v-5921350b${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "seed") : ssrLooseEqual(axis.target, "seed")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSeed"))}</option><option value="checkpoint" data-v-5921350b${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "checkpoint") : ssrLooseEqual(axis.target, "checkpoint")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisCheckpoint"))}</option><option value="vae" data-v-5921350b${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "vae") : ssrLooseEqual(axis.target, "vae")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisVae"))}</option><option value="sampler" data-v-5921350b${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "sampler") : ssrLooseEqual(axis.target, "sampler")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSampler"))}</option>`);
+        _push(`<div class="xyz-axis" data-v-655aefc9><div class="field-grid" data-v-655aefc9><label class="field" data-v-655aefc9><span data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.axisTarget"))}</span><select data-v-655aefc9><option value="seed" data-v-655aefc9${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "seed") : ssrLooseEqual(axis.target, "seed")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSeed"))}</option><option value="checkpoint" data-v-655aefc9${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "checkpoint") : ssrLooseEqual(axis.target, "checkpoint")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisCheckpoint"))}</option><option value="vae" data-v-655aefc9${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "vae") : ssrLooseEqual(axis.target, "vae")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisVae"))}</option><option value="sampler" data-v-655aefc9${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "sampler") : ssrLooseEqual(axis.target, "sampler")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSampler"))}</option>`);
         if (!unref(schedulerIsFixed)) {
-          _push(`<option value="scheduler" data-v-5921350b${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "scheduler") : ssrLooseEqual(axis.target, "scheduler")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisScheduler"))}</option>`);
+          _push(`<option value="scheduler" data-v-655aefc9${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "scheduler") : ssrLooseEqual(axis.target, "scheduler")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisScheduler"))}</option>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<option value="steps" data-v-5921350b${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "steps") : ssrLooseEqual(axis.target, "steps")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSteps"))}</option><option value="cfg_scale" data-v-5921350b${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "cfg_scale") : ssrLooseEqual(axis.target, "cfg_scale")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisCfgScale"))}</option><option value="prompt_replace" data-v-5921350b${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "prompt_replace") : ssrLooseEqual(axis.target, "prompt_replace")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisPromptReplace"))}</option><option value="lora_weight" data-v-5921350b${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "lora_weight") : ssrLooseEqual(axis.target, "lora_weight")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisLoraWeight"))}</option></select></label><label class="field" data-v-5921350b><span data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.label"))}</span><input${ssrRenderAttr("value", axis.label)}${ssrRenderAttr("placeholder", unref(t)("runtimePane.optional"))} data-v-5921350b></label></div><label class="field" data-v-5921350b><span data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.values"))}</span><textarea rows="4"${ssrRenderAttr("placeholder", unref(t)("runtimePane.oneValuePerLine"))} data-v-5921350b>${ssrInterpolate(axis.values)}</textarea></label>`);
+        _push(`<option value="steps" data-v-655aefc9${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "steps") : ssrLooseEqual(axis.target, "steps")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSteps"))}</option><option value="cfg_scale" data-v-655aefc9${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "cfg_scale") : ssrLooseEqual(axis.target, "cfg_scale")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisCfgScale"))}</option><option value="prompt_replace" data-v-655aefc9${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "prompt_replace") : ssrLooseEqual(axis.target, "prompt_replace")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisPromptReplace"))}</option><option value="lora_weight" data-v-655aefc9${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "lora_weight") : ssrLooseEqual(axis.target, "lora_weight")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisLoraWeight"))}</option></select></label><label class="field" data-v-655aefc9><span data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.label"))}</span><input${ssrRenderAttr("value", axis.label)}${ssrRenderAttr("placeholder", unref(t)("runtimePane.optional"))} data-v-655aefc9></label></div><label class="field" data-v-655aefc9><span data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.values"))}</span><textarea rows="4"${ssrRenderAttr("placeholder", unref(t)("runtimePane.oneValuePerLine"))} data-v-655aefc9>${ssrInterpolate(axis.values)}</textarea></label>`);
         if (axis.target === "prompt_replace") {
-          _push(`<small class="muted" data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.promptReplaceHelp"))}</small>`);
+          _push(`<small class="muted" data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.promptReplaceHelp"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (axis.target === "lora_weight") {
-          _push(`<small class="muted" data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.loraWeightHelp"))}</small>`);
+          _push(`<small class="muted" data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.loraWeightHelp"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (["steps", "cfg_scale"].includes(axis.target)) {
-          _push(`<small class="muted" data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.numericValuesHelp"))}</small>`);
+          _push(`<small class="muted" data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.numericValuesHelp"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (["vae", "sampler", "scheduler"].includes(axis.target)) {
-          _push(`<small class="muted" data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.catalogValuesHelp"))}</small>`);
+          _push(`<small class="muted" data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.catalogValuesHelp"))}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(generation).xyzAxes.length <= 1) ? " disabled" : ""} data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.removeAxis"))}</button></div>`);
+        _push(`<button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(generation).xyzAxes.length <= 1) ? " disabled" : ""} data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.removeAxis"))}</button></div>`);
       });
-      _push(`<!--]--><div class="asset-actions" data-v-5921350b><button type="button"${ssrIncludeBooleanAttr(unref(generation).xyzAxes.length >= 3) ? " disabled" : ""} data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.addAxis"))}</button><label class="inline-check" data-v-5921350b><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).xyzContactSheet) ? ssrLooseContain(unref(generation).xyzContactSheet, null) : unref(generation).xyzContactSheet) ? " checked" : ""} type="checkbox" data-v-5921350b><span data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.contactSheet"))}</span></label></div><button type="button"${ssrIncludeBooleanAttr(unref(generation).xyzLoading || !unref(generation).prompt.trim() || unref(xyzCellCount) > 64) ? " disabled" : ""} data-v-5921350b>${ssrInterpolate(unref(generation).xyzLoading ? unref(t)("runtimePane.runningXyz") : unref(t)("runtimePane.runXyzPlot"))}</button>`);
+      _push(`<!--]--><div class="asset-actions" data-v-655aefc9><button type="button"${ssrIncludeBooleanAttr(unref(generation).xyzAxes.length >= 3) ? " disabled" : ""} data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.addAxis"))}</button><label class="inline-check" data-v-655aefc9><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).xyzContactSheet) ? ssrLooseContain(unref(generation).xyzContactSheet, null) : unref(generation).xyzContactSheet) ? " checked" : ""} type="checkbox" data-v-655aefc9><span data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.contactSheet"))}</span></label></div><button type="button"${ssrIncludeBooleanAttr(unref(generation).xyzLoading || !unref(generation).prompt.trim() || unref(xyzCellCount) > 64) ? " disabled" : ""} data-v-655aefc9>${ssrInterpolate(unref(generation).xyzLoading ? unref(t)("runtimePane.runningXyz") : unref(t)("runtimePane.runXyzPlot"))}</button>`);
       if (unref(xyzCellCount) > 64) {
-        _push(`<p class="error" aria-live="assertive" data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.xyzLimit"))}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.xyzLimit"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(xyzOutputUrl)) {
-        _push(`<a class="xyz-result-link"${ssrRenderAttr("href", unref(xyzOutputUrl))} target="_blank" rel="noreferrer" data-v-5921350b>${ssrInterpolate(unref(t)("runtimePane.openContactSheet"))}</a>`);
+        _push(`<a class="xyz-result-link"${ssrRenderAttr("href", unref(xyzOutputUrl))} target="_blank" rel="noopener" referrerpolicy="origin" data-v-655aefc9>${ssrInterpolate(unref(t)("runtimePane.openContactSheet"))}</a>`);
       } else {
         _push(`<!---->`);
       }
@@ -18292,7 +18292,7 @@ _sfc_main$21.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ExpertToolsInspector.vue");
   return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
 };
-const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-5921350b"]]), { __name: "StudioGenerateExpertToolsInspector" });
+const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-655aefc9"]]), { __name: "StudioGenerateExpertToolsInspector" });
 const _sfc_main$20 = /* @__PURE__ */ defineComponent({
   __name: "GenerateBaseControlsPanel",
   __ssrInlineRender: true,
@@ -19448,7 +19448,7 @@ const _sfc_main$1W = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: ["extension-contribution-workspace", { "extension-contribution-workspace--compact": __props.compact }],
         "aria-label": __props.item.label
-      }, _attrs))} data-v-878e8efb><header data-v-878e8efb><p data-v-878e8efb>${ssrInterpolate(unref(t)("extensions.contribution.eyebrow"))}</p>`);
+      }, _attrs))} data-v-a812e459><header data-v-a812e459><p data-v-a812e459>${ssrInterpolate(unref(t)("extensions.contribution.eyebrow"))}</p>`);
       ssrRenderVNode(_push, createVNode(resolveDynamicComponent(__props.compact ? "h3" : "h1"), null, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
@@ -19463,18 +19463,18 @@ const _sfc_main$1W = /* @__PURE__ */ defineComponent({
       }), _parent);
       _push(`</header>`);
       if (unref(loading)) {
-        _push(`<p class="contribution-state" aria-live="polite" data-v-878e8efb>${ssrInterpolate(unref(t)("extensions.contribution.loading"))}</p>`);
+        _push(`<p class="contribution-state" aria-live="polite" data-v-a812e459>${ssrInterpolate(unref(t)("extensions.contribution.loading"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(error)) {
-        _push(`<p class="contribution-state contribution-state--error" role="alert" data-v-878e8efb>${ssrInterpolate(unref(error))}</p>`);
+        _push(`<p class="contribution-state contribution-state--error" role="alert" data-v-a812e459>${ssrInterpolate(unref(error))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="extension-contribution-frame-shell"${ssrRenderAttr("aria-busy", unref(loading))} data-v-878e8efb>`);
+      _push(`<div class="extension-contribution-frame-shell"${ssrRenderAttr("aria-busy", unref(loading))} data-v-a812e459>`);
       if (unref(frameSource)) {
-        _push(`<iframe class="extension-contribution-frame"${ssrRenderAttr("src", unref(frameSource))}${ssrRenderAttr("aria-label", __props.item.label)} sandbox="allow-scripts" referrerpolicy="no-referrer" data-v-878e8efb></iframe>`);
+        _push(`<iframe class="extension-contribution-frame"${ssrRenderAttr("src", unref(frameSource))}${ssrRenderAttr("aria-label", __props.item.label)} sandbox="allow-scripts" referrerpolicy="origin" data-v-a812e459></iframe>`);
       } else {
         _push(`<!---->`);
       }
@@ -19488,7 +19488,7 @@ _sfc_main$1W.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/StandardExtensionFrame.vue");
   return _sfc_setup$1W ? _sfc_setup$1W(props, ctx) : void 0;
 };
-const StandardExtensionFrame = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-878e8efb"]]), { __name: "StudioExtensionsStandardExtensionFrame" });
+const StandardExtensionFrame = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-a812e459"]]), { __name: "StudioExtensionsStandardExtensionFrame" });
 const _sfc_main$1V = /* @__PURE__ */ defineComponent({
   __name: "ExtensionContributionHost",
   __ssrInlineRender: true,
@@ -46696,76 +46696,76 @@ const _sfc_main$I = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "video-result-panel",
         "aria-label": unref(t)("video.result.title")
-      }, _attrs))} data-v-a1eaf549><section class="video-preview-stage" data-v-a1eaf549><header data-v-a1eaf549><h2 data-v-a1eaf549>${ssrInterpolate(unref(t)("video.preview.title"))}</h2>`);
+      }, _attrs))} data-v-3978cb51><section class="video-preview-stage" data-v-3978cb51><header data-v-3978cb51><h2 data-v-3978cb51>${ssrInterpolate(unref(t)("video.preview.title"))}</h2>`);
       if (__props.result) {
-        _push(`<span data-v-a1eaf549>${ssrInterpolate(unref(t)("video.preview.ready"))}</span>`);
+        _push(`<span data-v-3978cb51>${ssrInterpolate(unref(t)("video.preview.ready"))}</span>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</header>`);
       if (unref(displayedResult)) {
-        _push(`<video${ssrRenderAttr("src", unref(displayedResult).url)} controls playsinline preload="metadata" data-v-a1eaf549></video>`);
+        _push(`<video${ssrRenderAttr("src", unref(displayedResult).url)} controls playsinline preload="metadata" data-v-3978cb51></video>`);
       } else {
-        _push(`<div class="video-preview-empty" data-v-a1eaf549><span aria-hidden="true" data-v-a1eaf549>▶</span><strong data-v-a1eaf549>${ssrInterpolate(__props.loading ? unref(t)("video.result.loading") : unref(t)("video.preview.empty"))}</strong><small data-v-a1eaf549>${ssrInterpolate(unref(t)("video.preview.emptyHelp"))}</small></div>`);
+        _push(`<div class="video-preview-empty" data-v-3978cb51><span aria-hidden="true" data-v-3978cb51>▶</span><strong data-v-3978cb51>${ssrInterpolate(__props.loading ? unref(t)("video.result.loading") : unref(t)("video.preview.empty"))}</strong><small data-v-3978cb51>${ssrInterpolate(unref(t)("video.preview.emptyHelp"))}</small></div>`);
       }
       if (__props.result && __props.upscaleResult) {
-        _push(`<div class="video-preview-variants"${ssrRenderAttr("aria-label", unref(t)("video.upscale.comparisonAria"))} data-v-a1eaf549><button type="button" class="${ssrRenderClass({ selected: unref(selectedPreview) === "original" })}" data-v-a1eaf549>${ssrInterpolate(unref(t)("video.upscale.comparison.original"))}</button><button type="button" class="${ssrRenderClass({ selected: unref(selectedPreview) === "upscaled" })}" data-v-a1eaf549>${ssrInterpolate(unref(t)("video.upscale.comparison.upscaled"))}</button></div>`);
+        _push(`<div class="video-preview-variants"${ssrRenderAttr("aria-label", unref(t)("video.upscale.comparisonAria"))} data-v-3978cb51><button type="button" class="${ssrRenderClass({ selected: unref(selectedPreview) === "original" })}" data-v-3978cb51>${ssrInterpolate(unref(t)("video.upscale.comparison.original"))}</button><button type="button" class="${ssrRenderClass({ selected: unref(selectedPreview) === "upscaled" })}" data-v-3978cb51>${ssrInterpolate(unref(t)("video.upscale.comparison.upscaled"))}</button></div>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.job?.batch) {
-        _push(`<div class="video-batch-candidates"${ssrRenderAttr("aria-label", unref(t)("video.batch.title"))} data-v-a1eaf549><!--[-->`);
+        _push(`<div class="video-batch-candidates"${ssrRenderAttr("aria-label", unref(t)("video.batch.title"))} data-v-3978cb51><!--[-->`);
         ssrRenderList(__props.job.batch.candidates, (candidate) => {
-          _push(`<button type="button" class="${ssrRenderClass({ selected: candidate.index === __props.selectedBatchIndex })}"${ssrIncludeBooleanAttr(candidate.status !== "completed") ? " disabled" : ""} data-v-a1eaf549><strong data-v-a1eaf549>${ssrInterpolate(unref(t)("video.batch.candidate", { number: candidate.index + 1 }))}</strong><small data-v-a1eaf549>${ssrInterpolate(unref(t)("video.batch.seed", { seed: candidate.seed }))} · ${ssrInterpolate(unref(t)(`video.status.${statusKey(candidate.status)}`))}</small></button>`);
+          _push(`<button type="button" class="${ssrRenderClass({ selected: candidate.index === __props.selectedBatchIndex })}"${ssrIncludeBooleanAttr(candidate.status !== "completed") ? " disabled" : ""} data-v-3978cb51><strong data-v-3978cb51>${ssrInterpolate(unref(t)("video.batch.candidate", { number: candidate.index + 1 }))}</strong><small data-v-3978cb51>${ssrInterpolate(unref(t)("video.batch.seed", { seed: candidate.seed }))} · ${ssrInterpolate(unref(t)(`video.status.${statusKey(candidate.status)}`))}</small></button>`);
         });
         _push(`<!--]--></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</section><section class="video-job-card" aria-live="polite" data-v-a1eaf549><header data-v-a1eaf549><h2 data-v-a1eaf549>${ssrInterpolate(unref(t)("video.job.title"))}</h2>`);
+      _push(`</section><section class="video-job-card" aria-live="polite" data-v-3978cb51><header data-v-3978cb51><h2 data-v-3978cb51>${ssrInterpolate(unref(t)("video.job.title"))}</h2>`);
       if (__props.job) {
-        _push(`<button type="button"${ssrIncludeBooleanAttr(__props.refreshing || __props.retrying || __props.cancelling) ? " disabled" : ""} data-v-a1eaf549>${ssrInterpolate(__props.refreshing ? unref(t)("video.job.refreshing") : unref(t)("video.job.refresh"))}</button>`);
+        _push(`<button type="button"${ssrIncludeBooleanAttr(__props.refreshing || __props.retrying || __props.cancelling) ? " disabled" : ""} data-v-3978cb51>${ssrInterpolate(__props.refreshing ? unref(t)("video.job.refreshing") : unref(t)("video.job.refresh"))}</button>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</header>`);
       if (__props.error) {
-        _push(`<p class="video-result-error" role="alert" data-v-a1eaf549>${ssrInterpolate(unref(t)("video.result.error"))} ${ssrInterpolate(__props.error)}</p>`);
+        _push(`<p class="video-result-error" role="alert" data-v-3978cb51>${ssrInterpolate(unref(t)("video.result.error"))} ${ssrInterpolate(__props.error)}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.job) {
-        _push(`<div class="video-job-state" data-v-a1eaf549><div data-v-a1eaf549><strong data-v-a1eaf549>${ssrInterpolate(unref(t)(`video.status.${statusKey(__props.job.status)}`))}</strong><small data-v-a1eaf549>${ssrInterpolate(unref(t)(`video.status.${statusKey(__props.job.status)}Help`))}</small></div>`);
+        _push(`<div class="video-job-state" data-v-3978cb51><div data-v-3978cb51><strong data-v-3978cb51>${ssrInterpolate(unref(t)(`video.status.${statusKey(__props.job.status)}`))}</strong><small data-v-3978cb51>${ssrInterpolate(unref(t)(`video.status.${statusKey(__props.job.status)}Help`))}</small></div>`);
         if (__props.job.progress_total) {
-          _push(`<progress${ssrRenderAttr("value", __props.job.progress_current ?? 0)}${ssrRenderAttr("max", __props.job.progress_total)} data-v-a1eaf549></progress>`);
+          _push(`<progress${ssrRenderAttr("value", __props.job.progress_current ?? 0)}${ssrRenderAttr("max", __props.job.progress_total)} data-v-3978cb51></progress>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.job.error_code) {
-          _push(`<p data-v-a1eaf549>${ssrInterpolate(unref(t)(errorReasonKey(__props.job.error_code)))}</p>`);
+          _push(`<p data-v-3978cb51>${ssrInterpolate(unref(t)(errorReasonKey(__props.job.error_code)))}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="video-job-actions" data-v-a1eaf549>`);
+        _push(`<div class="video-job-actions" data-v-3978cb51>`);
         if (["queued", "preparing", "running", "cancelling"].includes(__props.job.status)) {
-          _push(`<button type="button"${ssrIncludeBooleanAttr(__props.cancelling || __props.job.status === "cancelling") ? " disabled" : ""} data-v-a1eaf549>${ssrInterpolate(__props.cancelling ? unref(t)("video.action.cancelling") : unref(t)("video.action.cancel"))}</button>`);
+          _push(`<button type="button"${ssrIncludeBooleanAttr(__props.cancelling || __props.job.status === "cancelling") ? " disabled" : ""} data-v-3978cb51>${ssrInterpolate(__props.cancelling ? unref(t)("video.action.cancelling") : unref(t)("video.action.cancel"))}</button>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.job.retryable && ["failed", "cancelled", "interrupted"].includes(__props.job.status)) {
-          _push(`<button type="button"${ssrIncludeBooleanAttr(__props.retrying) ? " disabled" : ""} data-v-a1eaf549>${ssrInterpolate(__props.retrying ? unref(t)("video.action.retrying") : __props.retryAcknowledgementRequired ? unref(t)("video.action.runAnyway") : unref(t)("video.action.retry"))}</button>`);
+          _push(`<button type="button"${ssrIncludeBooleanAttr(__props.retrying) ? " disabled" : ""} data-v-3978cb51>${ssrInterpolate(__props.retrying ? unref(t)("video.action.retrying") : __props.retryAcknowledgementRequired ? unref(t)("video.action.runAnyway") : unref(t)("video.action.retry"))}</button>`);
         } else {
           _push(`<!---->`);
         }
         _push(`</div></div>`);
       } else {
-        _push(`<div class="video-job-empty" data-v-a1eaf549><strong data-v-a1eaf549>${ssrInterpolate(unref(t)("video.result.empty"))}</strong><p data-v-a1eaf549>${ssrInterpolate(unref(t)("video.result.emptyHelp"))}</p></div>`);
+        _push(`<div class="video-job-empty" data-v-3978cb51><strong data-v-3978cb51>${ssrInterpolate(unref(t)("video.result.empty"))}</strong><p data-v-3978cb51>${ssrInterpolate(unref(t)("video.result.emptyHelp"))}</p></div>`);
       }
-      _push(`<section class="video-recent-result" data-v-a1eaf549><h3 data-v-a1eaf549>${ssrInterpolate(unref(t)("video.result.recent"))}</h3>`);
+      _push(`<section class="video-recent-result" data-v-3978cb51><h3 data-v-3978cb51>${ssrInterpolate(unref(t)("video.result.recent"))}</h3>`);
       if (__props.result) {
-        _push(`<div data-v-a1eaf549><span data-v-a1eaf549>${ssrInterpolate(unref(t)("video.result.completed"))}</span><div class="video-recent-result__actions" data-v-a1eaf549><button type="button"${ssrIncludeBooleanAttr(__props.parameterRestoring) ? " disabled" : ""} data-v-a1eaf549>${ssrInterpolate(__props.parameterRestoring ? unref(t)("video.parameterRestore.restoring") : unref(t)("video.parameterRestore.action"))}</button><a${ssrRenderAttr("href", __props.result.url)} target="_blank" rel="noopener noreferrer" data-v-a1eaf549>${ssrInterpolate(unref(t)("video.result.openArtifact"))}</a></div></div>`);
+        _push(`<div data-v-3978cb51><span data-v-3978cb51>${ssrInterpolate(unref(t)("video.result.completed"))}</span><div class="video-recent-result__actions" data-v-3978cb51><button type="button"${ssrIncludeBooleanAttr(__props.parameterRestoring) ? " disabled" : ""} data-v-3978cb51>${ssrInterpolate(__props.parameterRestoring ? unref(t)("video.parameterRestore.restoring") : unref(t)("video.parameterRestore.action"))}</button><a${ssrRenderAttr("href", __props.result.url)} target="_blank" rel="noopener" referrerpolicy="origin" data-v-3978cb51>${ssrInterpolate(unref(t)("video.result.openArtifact"))}</a></div></div>`);
       } else {
-        _push(`<p data-v-a1eaf549>${ssrInterpolate(unref(t)("video.result.none"))}</p>`);
+        _push(`<p data-v-3978cb51>${ssrInterpolate(unref(t)("video.result.none"))}</p>`);
       }
       _push(`</section>`);
       _push(ssrRenderComponent(VideoResultActions, {
@@ -46784,7 +46784,7 @@ _sfc_main$I.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/video/VideoResultPanel.vue");
   return _sfc_setup$I ? _sfc_setup$I(props, ctx) : void 0;
 };
-const VideoResultPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$I, [["__scopeId", "data-v-a1eaf549"]]), { __name: "StudioVideoResultPanel" });
+const VideoResultPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$I, [["__scopeId", "data-v-3978cb51"]]), { __name: "StudioVideoResultPanel" });
 const _sfc_main$H = /* @__PURE__ */ defineComponent({
   __name: "VideoSetupDialog",
   __ssrInlineRender: true,
@@ -47352,103 +47352,103 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
     return (_ctx, _push, _parent, _attrs) => {
       ssrRenderTeleport(_push, (_push2) => {
         if (__props.open) {
-          _push2(`<div class="video-upscale-backdrop" role="presentation" data-v-5cff974e><section class="video-upscale-panel" role="dialog" aria-modal="true" aria-labelledby="video-upscale-title" aria-describedby="video-upscale-description" tabindex="-1" data-v-5cff974e><header class="video-upscale-panel__header" data-v-5cff974e><div data-v-5cff974e><p data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.eyebrow"))}</p><h2 id="video-upscale-title" data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.title"))}</h2></div><button type="button"${ssrRenderAttr("aria-label", unref(t)("video.upscale.action.close"))}${ssrIncludeBooleanAttr(!unref(canClose)) ? " disabled" : ""} data-v-5cff974e>×</button></header><p id="video-upscale-description" class="video-upscale-panel__description" data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.description"))}</p>`);
+          _push2(`<div class="video-upscale-backdrop" role="presentation" data-v-edd15847><section class="video-upscale-panel" role="dialog" aria-modal="true" aria-labelledby="video-upscale-title" aria-describedby="video-upscale-description" tabindex="-1" data-v-edd15847><header class="video-upscale-panel__header" data-v-edd15847><div data-v-edd15847><p data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.eyebrow"))}</p><h2 id="video-upscale-title" data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.title"))}</h2></div><button type="button"${ssrRenderAttr("aria-label", unref(t)("video.upscale.action.close"))}${ssrIncludeBooleanAttr(!unref(canClose)) ? " disabled" : ""} data-v-edd15847>×</button></header><p id="video-upscale-description" class="video-upscale-panel__description" data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.description"))}</p>`);
           if (__props.source) {
-            _push2(`<section class="video-upscale-source"${ssrRenderAttr("aria-label", unref(t)("video.upscale.source.title"))} data-v-5cff974e><div data-v-5cff974e><strong data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.source.title"))}</strong><small data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.source.summary", { width: __props.source.source_width, height: __props.source.source_height, frames: __props.source.frame_count, fps: unref(sourceFps) }))}</small></div><span data-v-5cff974e>${ssrInterpolate(__props.source.has_audio ? unref(t)("video.upscale.source.audioIncluded") : unref(t)("video.upscale.source.noAudio"))}</span></section>`);
+            _push2(`<section class="video-upscale-source"${ssrRenderAttr("aria-label", unref(t)("video.upscale.source.title"))} data-v-edd15847><div data-v-edd15847><strong data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.source.title"))}</strong><small data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.source.summary", { width: __props.source.source_width, height: __props.source.source_height, frames: __props.source.frame_count, fps: unref(sourceFps) }))}</small></div><span data-v-edd15847>${ssrInterpolate(__props.source.has_audio ? unref(t)("video.upscale.source.audioIncluded") : unref(t)("video.upscale.source.noAudio"))}</span></section>`);
           } else {
             _push2(`<!---->`);
           }
           if (__props.source && !unref(sourceReady)) {
-            _push2(`<p class="video-upscale-error" role="alert" data-v-5cff974e>${ssrInterpolate(__props.sourceStatus === "loading" ? unref(t)("video.upscale.source.loading") : __props.source.setup_ready ? unref(t)("video.upscale.source.unavailable") : unref(t)("video.upscale.source.setupRequired"))}</p>`);
+            _push2(`<p class="video-upscale-error" role="alert" data-v-edd15847>${ssrInterpolate(__props.sourceStatus === "loading" ? unref(t)("video.upscale.source.loading") : __props.source.setup_ready ? unref(t)("video.upscale.source.unavailable") : unref(t)("video.upscale.source.setupRequired"))}</p>`);
           } else if (__props.sourceStatus === "loading") {
-            _push2(`<p class="video-upscale-state" role="status" data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.source.loading"))}</p>`);
+            _push2(`<p class="video-upscale-state" role="status" data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.source.loading"))}</p>`);
           } else if (__props.sourceStatus === "unavailable") {
-            _push2(`<p class="video-upscale-error" role="alert" data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.source.unavailable"))}</p>`);
+            _push2(`<p class="video-upscale-error" role="alert" data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.source.unavailable"))}</p>`);
           } else {
             _push2(`<!---->`);
           }
           if (__props.error) {
-            _push2(`<p class="video-upscale-error" role="alert" data-v-5cff974e>${ssrInterpolate(__props.error)}</p>`);
+            _push2(`<p class="video-upscale-error" role="alert" data-v-edd15847>${ssrInterpolate(__props.error)}</p>`);
           } else {
             _push2(`<!---->`);
           }
           if (__props.confirmationRequired) {
-            _push2(`<p class="video-upscale-warning" role="status" data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.retryAcknowledgement"))}</p>`);
+            _push2(`<p class="video-upscale-warning" role="status" data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.retryAcknowledgement"))}</p>`);
           } else {
             _push2(`<!---->`);
           }
           if (unref(validationIssues).length) {
-            _push2(`<section class="video-upscale-validation" role="alert"${ssrRenderAttr("aria-label", unref(t)("video.upscale.validation.blocked"))} data-v-5cff974e><strong data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.validation.blocked"))}</strong><ul data-v-5cff974e><!--[-->`);
+            _push2(`<section class="video-upscale-validation" role="alert"${ssrRenderAttr("aria-label", unref(t)("video.upscale.validation.blocked"))} data-v-edd15847><strong data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.validation.blocked"))}</strong><ul data-v-edd15847><!--[-->`);
             ssrRenderList(unref(validationIssues), (issue2) => {
-              _push2(`<li data-v-5cff974e>${ssrInterpolate(unref(t)(`video.reason.${issue2}`))}</li>`);
+              _push2(`<li data-v-edd15847>${ssrInterpolate(unref(t)(`video.reason.${issue2}`))}</li>`);
             });
             _push2(`<!--]--></ul></section>`);
           } else {
             _push2(`<!---->`);
           }
           if (unref(sourceReady)) {
-            _push2(`<!--[--><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.target.title"))} data-v-5cff974e><div class="video-upscale-section__heading" data-v-5cff974e><h3 data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.target.title"))}</h3><small data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.target.gridHelp"))}</small></div><div class="video-upscale-choice-row" role="radiogroup"${ssrRenderAttr("aria-label", unref(t)("video.upscale.target.mode"))} data-v-5cff974e><label data-v-5cff974e><input${ssrIncludeBooleanAttr(__props.draft.targetKind === "scale") ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="radio" name="video-upscale-target" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.target.scaleMode"))}</span></label><label data-v-5cff974e><input${ssrIncludeBooleanAttr(__props.draft.targetKind === "dimensions") ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="radio" name="video-upscale-target" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.target.dimensionsMode"))}</span></label></div>`);
+            _push2(`<!--[--><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.target.title"))} data-v-edd15847><div class="video-upscale-section__heading" data-v-edd15847><h3 data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.target.title"))}</h3><small data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.target.gridHelp"))}</small></div><div class="video-upscale-choice-row" role="radiogroup"${ssrRenderAttr("aria-label", unref(t)("video.upscale.target.mode"))} data-v-edd15847><label data-v-edd15847><input${ssrIncludeBooleanAttr(__props.draft.targetKind === "scale") ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="radio" name="video-upscale-target" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.target.scaleMode"))}</span></label><label data-v-edd15847><input${ssrIncludeBooleanAttr(__props.draft.targetKind === "dimensions") ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="radio" name="video-upscale-target" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.target.dimensionsMode"))}</span></label></div>`);
             if (__props.draft.targetKind === "scale") {
-              _push2(`<label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.target.scale"))}</span><input${ssrRenderAttr("value", __props.draft.scale)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="1.01" max="4" step="0.05" inputmode="decimal" data-v-5cff974e></label>`);
+              _push2(`<label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.target.scale"))}</span><input${ssrRenderAttr("value", __props.draft.scale)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="1.01" max="4" step="0.05" inputmode="decimal" data-v-edd15847></label>`);
             } else {
-              _push2(`<div class="video-upscale-grid" data-v-5cff974e><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.target.width"))}</span><input${ssrRenderAttr("value", __props.draft.width)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="64" max="4096" step="32" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.target.height"))}</span><input${ssrRenderAttr("value", __props.draft.height)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="64" max="4096" step="32" inputmode="numeric" data-v-5cff974e></label></div>`);
+              _push2(`<div class="video-upscale-grid" data-v-edd15847><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.target.width"))}</span><input${ssrRenderAttr("value", __props.draft.width)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="64" max="4096" step="32" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.target.height"))}</span><input${ssrRenderAttr("value", __props.draft.height)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="64" max="4096" step="32" inputmode="numeric" data-v-edd15847></label></div>`);
             }
-            _push2(`</section><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.mode.title"))} data-v-5cff974e><div class="video-upscale-section__heading" data-v-5cff974e><h3 data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.mode.title"))}</h3><small data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.mode.help"))}</small></div><div class="video-upscale-choice-row" role="radiogroup"${ssrRenderAttr("aria-label", unref(t)("video.upscale.mode.title"))} data-v-5cff974e><label data-v-5cff974e><input${ssrIncludeBooleanAttr(__props.draft.mode === "model_free") ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive) || !(__props.source?.supported_modes.includes("model_free") ?? false)) ? " disabled" : ""} type="radio" name="video-upscale-mode" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.mode.modelFree"))}</span></label><label data-v-5cff974e><input${ssrIncludeBooleanAttr(__props.draft.mode === "h3_3d_model") ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive) || !unref(modelModeSupported)) ? " disabled" : ""} type="radio" name="video-upscale-mode" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.mode.modelBased"))}</span></label></div>`);
+            _push2(`</section><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.mode.title"))} data-v-edd15847><div class="video-upscale-section__heading" data-v-edd15847><h3 data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.mode.title"))}</h3><small data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.mode.help"))}</small></div><div class="video-upscale-choice-row" role="radiogroup"${ssrRenderAttr("aria-label", unref(t)("video.upscale.mode.title"))} data-v-edd15847><label data-v-edd15847><input${ssrIncludeBooleanAttr(__props.draft.mode === "model_free") ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive) || !(__props.source?.supported_modes.includes("model_free") ?? false)) ? " disabled" : ""} type="radio" name="video-upscale-mode" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.mode.modelFree"))}</span></label><label data-v-edd15847><input${ssrIncludeBooleanAttr(__props.draft.mode === "h3_3d_model") ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive) || !unref(modelModeSupported)) ? " disabled" : ""} type="radio" name="video-upscale-mode" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.mode.modelBased"))}</span></label></div>`);
             if (!unref(modelModeSupported)) {
-              _push2(`<p class="video-upscale-blocked" data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.mode.modelUnavailable"))}</p>`);
+              _push2(`<p class="video-upscale-blocked" data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.mode.modelUnavailable"))}</p>`);
             } else {
               _push2(`<!---->`);
             }
             if (__props.draft.mode === "h3_3d_model") {
-              _push2(`<label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.mode.model"))}</span><select${ssrRenderAttr("value", __props.draft.upscalerModel?.stable_asset_id ?? "")}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive) || unref(compatibleModels).length === 0) ? " disabled" : ""} data-v-5cff974e><option value="" disabled data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.mode.selectModel"))}</option><!--[-->`);
+              _push2(`<label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.mode.model"))}</span><select${ssrRenderAttr("value", __props.draft.upscalerModel?.stable_asset_id ?? "")}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive) || unref(compatibleModels).length === 0) ? " disabled" : ""} data-v-edd15847><option value="" disabled data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.mode.selectModel"))}</option><!--[-->`);
               ssrRenderList(unref(compatibleModels), (model) => {
-                _push2(`<option${ssrRenderAttr("value", model.stable_asset_id)} data-v-5cff974e>${ssrInterpolate(model.display_name)}</option>`);
+                _push2(`<option${ssrRenderAttr("value", model.stable_asset_id)} data-v-edd15847>${ssrInterpolate(model.display_name)}</option>`);
               });
               _push2(`<!--]--></select>`);
               if (!unref(modelSelectionValid)) {
-                _push2(`<small class="video-upscale-field__error" data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.mode.modelRequired"))}</small>`);
+                _push2(`<small class="video-upscale-field__error" data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.mode.modelRequired"))}</small>`);
               } else {
                 _push2(`<!---->`);
               }
               _push2(`</label>`);
             } else {
-              _push2(`<label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.mode.interpolation"))}</span><select${ssrRenderAttr("value", __props.draft.interpolation ?? "")}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-5cff974e><!--[-->`);
+              _push2(`<label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.mode.interpolation"))}</span><select${ssrRenderAttr("value", __props.draft.interpolation ?? "")}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-edd15847><!--[-->`);
               ssrRenderList(interpolationOptions, (option) => {
-                _push2(`<option${ssrRenderAttr("value", option)} data-v-5cff974e>${ssrInterpolate(unref(t)(`video.upscale.interpolation.${option}`))}</option>`);
+                _push2(`<option${ssrRenderAttr("value", option)} data-v-edd15847>${ssrInterpolate(unref(t)(`video.upscale.interpolation.${option}`))}</option>`);
               });
               _push2(`<!--]--></select></label>`);
             }
-            _push2(`</section><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.temporal.title"))} data-v-5cff974e><div class="video-upscale-section__heading" data-v-5cff974e><h3 data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.temporal.title"))}</h3><label class="video-upscale-toggle" data-v-5cff974e><input${ssrIncludeBooleanAttr(__props.draft.temporalEnabled) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="checkbox" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.enabled"))}</span></label></div>`);
+            _push2(`</section><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.temporal.title"))} data-v-edd15847><div class="video-upscale-section__heading" data-v-edd15847><h3 data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.temporal.title"))}</h3><label class="video-upscale-toggle" data-v-edd15847><input${ssrIncludeBooleanAttr(__props.draft.temporalEnabled) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="checkbox" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.enabled"))}</span></label></div>`);
             if (__props.draft.temporalEnabled) {
-              _push2(`<div class="video-upscale-grid video-upscale-grid--three" data-v-5cff974e><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.temporal.chunkLength"))}</span><input${ssrRenderAttr("value", __props.draft.chunkLength)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="17" step="17" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.temporal.overlap"))}</span><input${ssrRenderAttr("value", __props.draft.temporalOverlap)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="17" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.temporal.anchorStrength"))}</span><input${ssrRenderAttr("value", __props.draft.anchorStrength)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" max="1" step="0.001" inputmode="decimal" data-v-5cff974e></label></div>`);
+              _push2(`<div class="video-upscale-grid video-upscale-grid--three" data-v-edd15847><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.temporal.chunkLength"))}</span><input${ssrRenderAttr("value", __props.draft.chunkLength)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="17" step="17" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.temporal.overlap"))}</span><input${ssrRenderAttr("value", __props.draft.temporalOverlap)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="17" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.temporal.anchorStrength"))}</span><input${ssrRenderAttr("value", __props.draft.anchorStrength)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" max="1" step="0.001" inputmode="decimal" data-v-edd15847></label></div>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</section><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.spatial.title"))} data-v-5cff974e><div class="video-upscale-section__heading" data-v-5cff974e><h3 data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.spatial.title"))}</h3><label class="video-upscale-toggle" data-v-5cff974e><input${ssrIncludeBooleanAttr(__props.draft.spatialEnabled) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="checkbox" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.enabled"))}</span></label></div>`);
+            _push2(`</section><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.spatial.title"))} data-v-edd15847><div class="video-upscale-section__heading" data-v-edd15847><h3 data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.spatial.title"))}</h3><label class="video-upscale-toggle" data-v-edd15847><input${ssrIncludeBooleanAttr(__props.draft.spatialEnabled) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="checkbox" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.enabled"))}</span></label></div>`);
             if (__props.draft.spatialEnabled) {
-              _push2(`<div class="video-upscale-grid video-upscale-grid--three" data-v-5cff974e><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.spatial.tileWidth"))}</span><input${ssrRenderAttr("value", __props.draft.tileWidth)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="32" step="32" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.spatial.tileHeight"))}</span><input${ssrRenderAttr("value", __props.draft.tileHeight)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="32" step="32" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.spatial.minimumTileSize"))}</span><input${ssrRenderAttr("value", __props.draft.minimumTileSize)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="32" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.spatial.widthOverlap"))}</span><input${ssrRenderAttr("value", __props.draft.widthOverlap)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="32" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.spatial.heightOverlap"))}</span><input${ssrRenderAttr("value", __props.draft.heightOverlap)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="32" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.spatial.overlapMode"))}</span><select${ssrRenderAttr("value", __props.draft.overlapMode)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-5cff974e><!--[-->`);
+              _push2(`<div class="video-upscale-grid video-upscale-grid--three" data-v-edd15847><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.spatial.tileWidth"))}</span><input${ssrRenderAttr("value", __props.draft.tileWidth)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="32" step="32" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.spatial.tileHeight"))}</span><input${ssrRenderAttr("value", __props.draft.tileHeight)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="32" step="32" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.spatial.minimumTileSize"))}</span><input${ssrRenderAttr("value", __props.draft.minimumTileSize)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="32" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.spatial.widthOverlap"))}</span><input${ssrRenderAttr("value", __props.draft.widthOverlap)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="32" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.spatial.heightOverlap"))}</span><input${ssrRenderAttr("value", __props.draft.heightOverlap)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="32" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.spatial.overlapMode"))}</span><select${ssrRenderAttr("value", __props.draft.overlapMode)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-edd15847><!--[-->`);
               ssrRenderList(overlapModeOptions, (option) => {
-                _push2(`<option${ssrRenderAttr("value", option)} data-v-5cff974e>${ssrInterpolate(unref(t)(`video.upscale.overlapMode.${option}`))}</option>`);
+                _push2(`<option${ssrRenderAttr("value", option)} data-v-edd15847>${ssrInterpolate(unref(t)(`video.upscale.overlapMode.${option}`))}</option>`);
               });
-              _push2(`<!--]--></select></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.spatial.fadeWidth"))}</span><input${ssrRenderAttr("value", __props.draft.fadeWidth)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="32" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.spatial.fadeHeight"))}</span><input${ssrRenderAttr("value", __props.draft.fadeHeight)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="32" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.spatial.overlapBlend"))}</span><select${ssrRenderAttr("value", __props.draft.overlapBlend)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-5cff974e><!--[-->`);
+              _push2(`<!--]--></select></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.spatial.fadeWidth"))}</span><input${ssrRenderAttr("value", __props.draft.fadeWidth)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="32" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.spatial.fadeHeight"))}</span><input${ssrRenderAttr("value", __props.draft.fadeHeight)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="0" step="32" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.spatial.overlapBlend"))}</span><select${ssrRenderAttr("value", __props.draft.overlapBlend)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-edd15847><!--[-->`);
               ssrRenderList(overlapBlendOptions, (option) => {
-                _push2(`<option${ssrRenderAttr("value", option)} data-v-5cff974e>${ssrInterpolate(unref(t)(`video.upscale.overlapBlend.${option}`))}</option>`);
+                _push2(`<option${ssrRenderAttr("value", option)} data-v-edd15847>${ssrInterpolate(unref(t)(`video.upscale.overlapBlend.${option}`))}</option>`);
               });
               _push2(`<!--]--></select></label></div>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</section><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.sampling.title"))} data-v-5cff974e><div class="video-upscale-section__heading" data-v-5cff974e><h3 data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.sampling.title"))}</h3><small data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.sampling.cfgFixed", { value: 1 }))}</small></div><div class="video-upscale-grid video-upscale-grid--three" data-v-5cff974e><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.sampling.steps"))}</span><input${ssrRenderAttr("value", __props.draft.steps)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="1" max="200" step="1" inputmode="numeric" data-v-5cff974e></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.sampling.sampler"))}</span><select${ssrRenderAttr("value", __props.draft.sampler)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive) || __props.samplerOptions.length === 0) ? " disabled" : ""} data-v-5cff974e><!--[-->`);
+            _push2(`</section><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.sampling.title"))} data-v-edd15847><div class="video-upscale-section__heading" data-v-edd15847><h3 data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.sampling.title"))}</h3><small data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.sampling.cfgFixed", { value: 1 }))}</small></div><div class="video-upscale-grid video-upscale-grid--three" data-v-edd15847><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.sampling.steps"))}</span><input${ssrRenderAttr("value", __props.draft.steps)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="1" max="200" step="1" inputmode="numeric" data-v-edd15847></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.sampling.sampler"))}</span><select${ssrRenderAttr("value", __props.draft.sampler)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive) || __props.samplerOptions.length === 0) ? " disabled" : ""} data-v-edd15847><!--[-->`);
             ssrRenderList(__props.samplerOptions, (sampler) => {
-              _push2(`<option${ssrRenderAttr("value", sampler)} data-v-5cff974e>${ssrInterpolate(sampler)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", sampler)} data-v-edd15847>${ssrInterpolate(sampler)}</option>`);
             });
-            _push2(`<!--]--></select></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.sampling.scheduler"))}</span><select${ssrRenderAttr("value", __props.draft.scheduler)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive) || __props.schedulerOptions.length === 0) ? " disabled" : ""} data-v-5cff974e><!--[-->`);
+            _push2(`<!--]--></select></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.sampling.scheduler"))}</span><select${ssrRenderAttr("value", __props.draft.scheduler)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive) || __props.schedulerOptions.length === 0) ? " disabled" : ""} data-v-edd15847><!--[-->`);
             ssrRenderList(__props.schedulerOptions, (scheduler) => {
-              _push2(`<option${ssrRenderAttr("value", scheduler)} data-v-5cff974e>${ssrInterpolate(scheduler)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", scheduler)} data-v-edd15847>${ssrInterpolate(scheduler)}</option>`);
             });
-            _push2(`<!--]--></select></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.sampling.seed"))}</span><input${ssrRenderAttr("value", __props.draft.seed)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="-1" step="1" inputmode="numeric" data-v-5cff974e></label></div></section><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.runtime.title"))} data-v-5cff974e><h3 data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.runtime.title"))}</h3><div class="video-upscale-grid video-upscale-grid--three" data-v-5cff974e><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.runtime.device"))}</span><select${ssrRenderAttr("value", __props.draft.device)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-5cff974e><option value="cuda" data-v-5cff974e>CUDA</option><option value="cpu" data-v-5cff974e>CPU</option></select></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.runtime.precision"))}</span><select${ssrRenderAttr("value", __props.draft.precision)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-5cff974e><option value="fp16" data-v-5cff974e>FP16</option><option value="bf16" data-v-5cff974e>BF16</option><option value="fp32" data-v-5cff974e>FP32</option></select></label><label class="video-upscale-field" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.runtime.offload"))}</span><select${ssrRenderAttr("value", __props.draft.offload)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-5cff974e><option value="auto" data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.runtime.offloadAuto"))}</option><option value="balanced" data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.runtime.offloadBalanced"))}</option><option value="maximum" data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.runtime.offloadMaximum"))}</option></select></label></div></section>`);
+            _push2(`<!--]--></select></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.sampling.seed"))}</span><input${ssrRenderAttr("value", __props.draft.seed)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} type="number" min="-1" step="1" inputmode="numeric" data-v-edd15847></label></div></section><section class="video-upscale-section"${ssrRenderAttr("aria-label", unref(t)("video.upscale.runtime.title"))} data-v-edd15847><h3 data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.runtime.title"))}</h3><div class="video-upscale-grid video-upscale-grid--three" data-v-edd15847><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.runtime.device"))}</span><select${ssrRenderAttr("value", __props.draft.device)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-edd15847><option value="cuda" data-v-edd15847>CUDA</option><option value="cpu" data-v-edd15847>CPU</option></select></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.runtime.precision"))}</span><select${ssrRenderAttr("value", __props.draft.precision)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-edd15847><option value="fp16" data-v-edd15847>FP16</option><option value="bf16" data-v-edd15847>BF16</option><option value="fp32" data-v-edd15847>FP32</option></select></label><label class="video-upscale-field" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.runtime.offload"))}</span><select${ssrRenderAttr("value", __props.draft.offload)}${ssrIncludeBooleanAttr(__props.busy || unref(jobActive)) ? " disabled" : ""} data-v-edd15847><option value="auto" data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.runtime.offloadAuto"))}</option><option value="balanced" data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.runtime.offloadBalanced"))}</option><option value="maximum" data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.runtime.offloadMaximum"))}</option></select></label></div></section>`);
             if (!unref(jobActive) && !unref(retryable) && !__props.resultUrl) {
-              _push2(`<label class="video-upscale-confirmation" data-v-5cff974e><input${ssrIncludeBooleanAttr(Array.isArray(unref(reviewedPreview)) ? ssrLooseContain(unref(reviewedPreview), null) : unref(reviewedPreview)) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} type="checkbox" data-v-5cff974e><span data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.confirmation.reviewedPreview"))}</span></label>`);
+              _push2(`<label class="video-upscale-confirmation" data-v-edd15847><input${ssrIncludeBooleanAttr(Array.isArray(unref(reviewedPreview)) ? ssrLooseContain(unref(reviewedPreview), null) : unref(reviewedPreview)) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} type="checkbox" data-v-edd15847><span data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.confirmation.reviewedPreview"))}</span></label>`);
             } else {
               _push2(`<!---->`);
             }
@@ -47457,14 +47457,14 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
             _push2(`<!---->`);
           }
           if (__props.job) {
-            _push2(`<section class="video-upscale-job" aria-live="polite" data-v-5cff974e><div data-v-5cff974e><strong data-v-5cff974e>${ssrInterpolate(unref(t)(`video.upscale.status.${__props.job.status}`))}</strong></div>`);
+            _push2(`<section class="video-upscale-job" aria-live="polite" data-v-edd15847><div data-v-edd15847><strong data-v-edd15847>${ssrInterpolate(unref(t)(`video.upscale.status.${__props.job.status}`))}</strong></div>`);
             if (unref(progressTotal)) {
-              _push2(`<progress${ssrRenderAttr("value", unref(progressCurrent))}${ssrRenderAttr("max", unref(progressTotal))} data-v-5cff974e></progress>`);
+              _push2(`<progress${ssrRenderAttr("value", unref(progressCurrent))}${ssrRenderAttr("max", unref(progressTotal))} data-v-edd15847></progress>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(progressTotal)) {
-              _push2(`<small data-v-5cff974e>${ssrInterpolate(unref(t)(__props.draft.spatialEnabled ? "video.upscale.progress.spatial" : "video.upscale.progress", { current: unref(progressCurrent), total: unref(progressTotal) }))}</small>`);
+              _push2(`<small data-v-edd15847>${ssrInterpolate(unref(t)(__props.draft.spatialEnabled ? "video.upscale.progress.spatial" : "video.upscale.progress", { current: unref(progressCurrent), total: unref(progressTotal) }))}</small>`);
             } else {
               _push2(`<!---->`);
             }
@@ -47472,11 +47472,11 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
           } else {
             _push2(`<!---->`);
           }
-          _push2(`<footer class="video-upscale-panel__actions" data-v-5cff974e><button type="button"${ssrIncludeBooleanAttr(!unref(canClose)) ? " disabled" : ""} data-v-5cff974e>${ssrInterpolate(unref(t)("video.upscale.action.close"))}</button>`);
+          _push2(`<footer class="video-upscale-panel__actions" data-v-edd15847><button type="button"${ssrIncludeBooleanAttr(!unref(canClose)) ? " disabled" : ""} data-v-edd15847>${ssrInterpolate(unref(t)("video.upscale.action.close"))}</button>`);
           if (__props.resultUrl && !unref(jobActive) && !unref(retryable)) {
-            _push2(`<a class="video-upscale-primary"${ssrRenderAttr("href", __props.resultUrl)} target="_blank" rel="noopener noreferrer" data-v-5cff974e>${ssrInterpolate(unref(primaryLabel))}</a>`);
+            _push2(`<a class="video-upscale-primary"${ssrRenderAttr("href", __props.resultUrl)} target="_blank" rel="noopener" referrerpolicy="origin" data-v-edd15847>${ssrInterpolate(unref(primaryLabel))}</a>`);
           } else {
-            _push2(`<button class="video-upscale-primary" type="button"${ssrIncludeBooleanAttr(unref(jobActive) ? props.job?.status === "cancelling" || __props.busy : unref(retryable) ? __props.busy : unref(submitDisabled)) ? " disabled" : ""} data-v-5cff974e>${ssrInterpolate(unref(primaryLabel))}</button>`);
+            _push2(`<button class="video-upscale-primary" type="button"${ssrIncludeBooleanAttr(unref(jobActive) ? props.job?.status === "cancelling" || __props.busy : unref(retryable) ? __props.busy : unref(submitDisabled)) ? " disabled" : ""} data-v-edd15847>${ssrInterpolate(unref(primaryLabel))}</button>`);
           }
           _push2(`</footer></section></div>`);
         } else {
@@ -47492,7 +47492,7 @@ _sfc_main$A.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/video/VideoUpscalePanel.vue");
   return _sfc_setup$A ? _sfc_setup$A(props, ctx) : void 0;
 };
-const VideoUpscalePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$A, [["__scopeId", "data-v-5cff974e"]]), { __name: "StudioVideoUpscalePanel" });
+const VideoUpscalePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$A, [["__scopeId", "data-v-edd15847"]]), { __name: "StudioVideoUpscalePanel" });
 const _sfc_main$z = /* @__PURE__ */ defineComponent({
   __name: "VideoStudioView",
   __ssrInlineRender: true,
@@ -56046,8 +56046,8 @@ const _sfc_main$1 = {
     const statusText = _error.statusMessage ?? (is404 ? "Page Not Found" : "Internal Server Error");
     const description = _error.message || _error.toString();
     const stack = void 0;
-    const _Error404 = defineAsyncComponent(() => import('./error-404-BACVib4k.mjs'));
-    const _Error = defineAsyncComponent(() => import('./error-500-BsroL_2c.mjs'));
+    const _Error404 = defineAsyncComponent(() => import('./error-404-DlmHFS2V.mjs'));
+    const _Error = defineAsyncComponent(() => import('./error-500-CkYXzGJH.mjs'));
     const ErrorTemplate = is404 ? _Error404 : _Error;
     return (_ctx, _push, _parent, _attrs) => {
       _push(ssrRenderComponent(unref(ErrorTemplate), mergeProps({ status: unref(status), statusText: unref(statusText), statusCode: unref(status), statusMessage: unref(statusText), description: unref(description), stack: unref(stack) }, _attrs), null, _parent));
@@ -56057,7 +56057,7 @@ const _sfc_main$1 = {
 const _sfc_setup$1 = _sfc_main$1.setup;
 _sfc_main$1.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../../../frontend/node_modules/nuxt/dist/app/components/nuxt-error-page.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("node_modules/nuxt/dist/app/components/nuxt-error-page.vue");
   return _sfc_setup$1 ? _sfc_setup$1(props, ctx) : void 0;
 };
 const _sfc_main = {
@@ -56116,7 +56116,7 @@ const _sfc_main = {
 const _sfc_setup = _sfc_main.setup;
 _sfc_main.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../../../frontend/node_modules/nuxt/dist/app/components/nuxt-root.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("node_modules/nuxt/dist/app/components/nuxt-root.vue");
   return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
 };
 let entry;

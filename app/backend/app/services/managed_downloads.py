@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+import os
 from pathlib import Path
 import sqlite3
 from threading import Lock
@@ -57,6 +58,26 @@ def managed_download_snapshot(
     if requires_runtime_stop:
         snapshot["requires_runtime_stop"] = True
     return snapshot
+
+
+def validate_public_download_destination(
+    destination: Path, *, allowed_roots: tuple[Path, ...], runtime_root: Path,
+) -> Path:
+    # Use the same lexical normalization as ManagedArtifactService before
+    # testing containment. Do not resolve links here: the writer rejects
+    # symlinks and reparse points on the original normalized path.
+    target = Path(os.path.abspath(destination))
+    if target.is_relative_to(Path(os.path.abspath(runtime_root))):
+        raise OperationExecutionError("managed_download_runtime_destination_requires_setup")
+    if os.name == "nt" and any(
+        part != part.rstrip(" .") or ":" in part for part in target.parts[1:]
+    ):
+        raise OperationExecutionError("managed_download_destination_not_allowed")
+    for allowed in allowed_roots:
+        root = Path(os.path.abspath(allowed))
+        if target != root and target.is_relative_to(root):
+            return target
+    raise OperationExecutionError("managed_download_destination_not_allowed")
 
 
 def create_managed_download_tables(connection: sqlite3.Connection) -> None:
@@ -160,6 +181,7 @@ class ManagedDownloadOperationExecutor:
         disk_reservations: DiskReservationService | None = None,
         service_factory: Callable[..., ManagedArtifactService] = ManagedArtifactService,
         runtime_stopper: Callable[[], object] | None = None,
+        public_destination_check: Callable[[Path], Path] | None = None,
         monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
         self.temp_root = temp_root
@@ -167,14 +189,21 @@ class ManagedDownloadOperationExecutor:
         self.disk_reservations = disk_reservations or DiskReservationService()
         self.service_factory = service_factory
         self.runtime_stopper = runtime_stopper
+        self.public_destination_check = public_destination_check
         self.monotonic = monotonic
 
     def resource_claims(self, _snapshot: dict[str, Any]) -> tuple[str, ...]:
         return ("network_download", "disk_write_heavy")
 
     def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
-        spec = self._spec(context.request_snapshot)
-        requires_runtime_stop = context.request_snapshot.get("requires_runtime_stop") is True
+        snapshot = context.request_snapshot
+        spec = self._spec(snapshot)
+        # Only server-built setup snapshots have this key. The public request
+        # schema forbids it, and retry takes its snapshot from the repository.
+        # Recheck pre-update public jobs as well as newly queued ones.
+        if self.public_destination_check is not None and "allow_unverified" not in snapshot:
+            spec = replace(spec, destination=self.public_destination_check(spec.destination))
+        requires_runtime_stop = snapshot.get("requires_runtime_stop") is True
         if requires_runtime_stop and self.runtime_stopper is None:
             raise OperationExecutionError(
                 "managed_download_runtime_stop_unavailable",

@@ -1,4 +1,4 @@
-# Asteria V1.2.1.2 Windows Portable
+# Asteria V1.2.1.3 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -27,7 +27,13 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 3. [画面付きクイックスタート](guides/QUICK_START.md)で、一枚の生成、画像の選択、マスク編集を試します。
 4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
 
-> **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトをベース・キャラクター・詳細に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
+> 描写位置を指定する配置機能はV1.2.0から利用できません。通常の生成と項目別のプロンプト入力は引き続き使えます。過去の配置付き設定を再利用すると、文章は対応する欄へ戻ります。位置は引き継がず、元の履歴や画像は変更しません。
+
+### V1.2.1.3の修正
+
+- Anima 1.0で、Kohya形式や一部の層だけを調整するLoRAを選ぶと生成が止まる問題を修正しました。対応するLoRAは変換や再取得なしで使えます。
+- モデルとCLIPの強度を別々に指定したLoRA記法が無視される問題を修正しました。プロンプトに挿入した両方の強度を生成へ渡します。
+- 外部のWebサイトからローカルAPIを操作する要求を拒否し、ダウンロードが許可された保存先の外へ書き込まれないようにしました。
 
 ### V1.2.1.2の修正
 
@@ -363,7 +369,13 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 3. Use the illustrated [Quick start](guides/QUICK_START.md) to generate one image, select a result and edit a mask.
 4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
 
-> **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
+> Spatial prompt placement is unavailable as of V1.2.0. You can still generate normally and use the sectioned prompt editor. Reusing older placement settings restores the text to the corresponding fields, without restoring positions or modifying the original history or images.
+
+### V1.2.1.3 fixes
+
+- Fixed Anima 1.0 generation failing with Kohya-format LoRAs and LoRAs that adjust only some layers. Compatible files do not need to be converted or downloaded again.
+- Fixed LoRA tags with separate model and CLIP strengths being ignored. Both strengths are now passed to generation when the tag is inserted in the prompt.
+- Blocked requests from external websites to the local API and prevented downloads from writing outside their permitted destinations.
 
 ### V1.2.1.2 fixes
 
