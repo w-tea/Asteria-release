@@ -13,7 +13,7 @@ security_contracts:
 feature_requirements:
   minimax_music3_local:
     minimum_comfyui_version: "0.33.0"
-    managed_comfyui_version: "0.43.0"
+    managed_comfyui_version: "0.33.1"
     minimum_comfyui_commit: efd4e951a00e85bd92e79f1d685427912b0dad5e
     implementation: comfyui-native
     cuda_required: true
@@ -25,7 +25,7 @@ feature_requirements:
 
   minimax_h3_local:
     minimum_comfyui_version: "0.30.0"
-    managed_comfyui_version: "0.43.0"
+    managed_comfyui_version: "0.33.1"
     implementation: comfyui-native
     verified_at: "2026-08-18"
     provenance_url: https://docs.comfy.org/tutorials/video/minimax/minimax-h3
@@ -91,12 +91,12 @@ dependencies:
       provider: bundled
       url: runtime-components/comfyui/Asteria-Merge-Runtime
       ref: asteria.merge.runtime.v1
-      verified_at: "2026-11-06"
+      verified_at: "2026-08-21"
       provenance_url: bundled://asteria/merge-runtime/v1.2
     target:
       relative_path: custom_nodes/Asteria-Merge-Runtime
-    size_bytes: 50549
-    checksum_sha256: e5fc765661391de9b23f49cbd161cc662c750e0c3b0dbfa505380b891f7c1805
+    size_bytes: 50370
+    checksum_sha256: 937581c29a902d6f122cfe8e38f38305cbf2c75559b4702b141a2e87bc02166c
     license:
       id: proprietary
       url: bundled://asteria/license

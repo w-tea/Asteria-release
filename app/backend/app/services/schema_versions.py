@@ -19,7 +19,7 @@ class SchemaVersions:
 
 
 CURRENT_SCHEMA_VERSIONS = SchemaVersions(
-    application="1.2.2",
+    application="1.2.1.3",
     settings=3,
     database=9,
     generation=1,

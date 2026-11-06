@@ -1,4 +1,4 @@
-# Asteria V1.2.2 Windows Portable
+# Asteria V1.2.1.3 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -6,7 +6,7 @@
 
 **A local AI creation app for Windows: generate images, video and music, then edit, organize, train LoRAs and merge models.**
 
-![Darkモードの生成画面。左が画像と結果情報、右がプロンプトと生成操作 / Generate in Dark mode](guides/images/generate-v122-dark-ja.png)
+![Darkモードの生成画面。左でプロンプト、右で生成条件を設定 / Generate in Dark mode](guides/images/generate-dark-ja.jpg)
 
 画面例はDarkモード・日本語表示です。必要な情報は以下の日本語・英語の案内から確認できます。
 
@@ -27,18 +27,13 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 3. [画面付きクイックスタート](guides/QUICK_START.md)で、一枚の生成、画像の選択、マスク編集を試します。
 4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
 
-> **dev版を利用する方へ（2026年10月21日更新）**：描写位置を指定する配置機能はV1.2.0から外しました。配置画面と配置付き生成は利用できません。通常の生成と、ポジティブプロンプトをベース・キャラクター・詳細に分ける項目別入力は引き続き利用できます。過去の配置付き設定を再利用すると、対象の文章は対応する欄へまとめられます。位置の指定は引き継がず、元の履歴や画像は変更しません。V1.1.2までの修正も含みます。
+> 描写位置を指定する配置機能はV1.2.0から利用できません。通常の生成と項目別のプロンプト入力は引き続き使えます。過去の配置付き設定を再利用すると、文章は対応する欄へ戻ります。位置は引き継がず、元の履歴や画像は変更しません。
 
-### V1.2.2 devの変更
+### V1.2.1.3の修正
 
-- Generateは画像を左、プロンプトと生成操作を右に配置しました。モデル設定と生成設定は必要なときに開けます。適用中のLoRAと詳細スタイルも確認できます。
-- 画像の再利用・処理ボタンを「結果情報」にまとめ、Eagleの送信先は一行から開く形にしました。
-- 生成設定ではHiresなどの調整を先に表示し、工程画像などの保存設定は「保存・記録」から開けます。履歴は画像とプロンプトの冒頭を表示し、操作・全文・メモを展開して確認できます。
-- LoRAを使わないときの表示をコンパクトにし、結果情報には生成時に保存されたモデルと日時を表示します。記録のない値は推測して補いません。
-- Image Editはキャンバスを広く使える配置に変更し、道具と入力画像の切り替えを縦にまとめました。
-- Krea 2 TurboとMOSS-Image SFTの通常の画像生成に対応します。モデルは任意導入です。新モデルでのHires、ControlNet、LoRA、参照画像編集は今回の対応に含みません。
-- 管理するComfyUIを固定0.43.0へ更新します。MOSSの軽量構成はINT8生成モデル・W4A8 encoder・small VAEを使います。必要メモリや処理時間は環境によって異なります。
-- SDXLのLoRA学習は、Asteriaの再起動後も正常終了を確認できれば、既存ファイルを上書きせずに結果を保存します。終了を確認できない場合や学習を中止した場合は、残っているファイルの場所を学習履歴で確認できます。
+- Anima 1.0で、Kohya形式や一部の層だけを調整するLoRAを選ぶと生成が止まる問題を修正しました。対応するLoRAは変換や再取得なしで使えます。
+- モデルとCLIPの強度を別々に指定したLoRA記法が無視される問題を修正しました。プロンプトに挿入した両方の強度を生成へ渡します。
+- 外部のWebサイトからローカルAPIを操作する要求を拒否し、ダウンロードが許可された保存先の外へ書き込まれないようにしました。
 
 ### V1.2.1.2の修正
 
@@ -363,7 +358,7 @@ Qwen2D-Anime VAE対応では、Anzhc氏が公開している[anzhc-qwen2d-comfyu
 
 Asteria is a Windows application for local AI creation. It combines image generation and editing, video generation, music generation, artifact comparison and organization, LoRA training, and model merging. Runtime components are acquired on first launch. Image checkpoints and optional video or music models are not bundled.
 
-![Generate in Dark mode: image and result information on the left, prompts and generation actions on the right](guides/images/generate-v122-dark-ja.png)
+![Generate in Dark mode: prompt input on the left and generation settings on the right](guides/images/generate-dark-ja.jpg)
 
 Screenshots show the Japanese interface in Dark mode. Language and theme are selectable in Settings. See the illustrated [Quick start](guides/QUICK_START.md) for your first steps after launch.
 
@@ -374,18 +369,13 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 3. Use the illustrated [Quick start](guides/QUICK_START.md) to generate one image, select a result and edit a mask.
 4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
 
-> **For dev users (October 21, 2026)**: Spatial prompt placement has been removed from V1.2.0. The placement editor and placement-controlled generation are unavailable. Normal generation and the three-section positive-prompt editor remain available. Reusing old placement settings combines every target's text into its corresponding section without restoring positions or changing the original history or images. This build also includes fixes through V1.1.2.
+> Spatial prompt placement is unavailable as of V1.2.0. You can still generate normally and use the sectioned prompt editor. Reusing older placement settings restores the text to the corresponding fields, without restoring positions or modifying the original history or images.
 
-### V1.2.2 dev changes
+### V1.2.1.3 fixes
 
-- Generate now places the image on the left and prompts and generation actions on the right. Open model and generation settings when needed, and review active LoRAs and detailed styles in place.
-- Image reuse and processing actions are grouped under Result information. The Eagle destination expands from a single line.
-- Generation settings show Hires and other adjustments before the optional Saving and recording section. History shows an image and prompt excerpt; expand an entry for actions, the full prompt and notes.
-- The empty LoRA summary takes less space. Result information uses the model and date saved with the generation, without guessing values missing from the record.
-- Image Edit provides more canvas space, with tools and input-image switching arranged vertically.
-- Added basic text-to-image generation with Krea 2 Turbo and MOSS-Image SFT. Models are optional. Hires, ControlNet, LoRA and reference-image editing for these new models are not part of this update.
-- The managed ComfyUI is pinned to 0.43.0. The lightweight MOSS configuration uses an INT8 diffusion model, W4A8 encoder and small VAE. Memory requirements and processing time depend on the environment.
-- After Asteria restarts, SDXL LoRA training saves the result without replacing existing files if it can confirm that training finished successfully. If completion cannot be confirmed or training was stopped, the run shows where to find any remaining files.
+- Fixed Anima 1.0 generation failing with Kohya-format LoRAs and LoRAs that adjust only some layers. Compatible files do not need to be converted or downloaded again.
+- Fixed LoRA tags with separate model and CLIP strengths being ignored. Both strengths are now passed to generation when the tag is inserted in the prompt.
+- Blocked requests from external websites to the local API and prevented downloads from writing outside their permitted destinations.
 
 ### V1.2.1.2 fixes
 

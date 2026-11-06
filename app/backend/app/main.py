@@ -71,7 +71,6 @@ from app.services.video_runtime_adapters import default_video_adapters
 from app.services.music_runtime_adapters import default_music_adapters
 from app.services.history import HistoryRepository
 from app.services.image_check_recovery import recover_image_publications
-from app.services.lora_training import LoRATrainingRunRepository, recover_sdxl_training_outputs
 from app.services.local_api_boundary import ASTERIA_UI_ORIGINS, LocalApiBoundaryMiddleware
 
 
@@ -100,10 +99,6 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         extension_root=config.extension_root,
     )
     coordinator.recover_startup()
-    recover_sdxl_training_outputs(
-        LoRATrainingRunRepository(config.data_dir / "lora-training" / "runs.json"),
-        project_root=config.root_dir,
-    )
     history = HistoryRepository(config.data_dir / 'asteria.db')
     history.recover_interrupted_media_generations()
     history.recover_interrupted_upscale_inputs()
