@@ -1,9 +1,9 @@
-import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { hasInjectionContext, getCurrentInstance, inject, defineComponent, createElementBlock, shallowRef, provide, cloneVNode, h, useSSRContext, nextTick, toRaw, createApp, computed, watch, mergeProps, unref, resolveDirective, ref, reactive, watchEffect, withCtx, createVNode, toDisplayString, withDirectives, isRef, openBlock, createBlock, Fragment, renderList, vModelSelect, createCommentVNode, createTextVNode, vModelText, resolveDynamicComponent, vShow, Teleport, withModifiers, vModelCheckbox, withKeys, onErrorCaptured, onServerPrefetch, shallowReactive, effectScope, toRef, readonly, defineAsyncComponent, getCurrentScope, watchPostEffect, isReadonly, toValue, isShallow, isReactive } from 'vue';
+import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { hasInjectionContext, getCurrentInstance, inject, defineComponent, createElementBlock, shallowRef, provide, cloneVNode, h, useSSRContext, nextTick, toRaw, createApp, computed, watch, mergeProps, unref, resolveDirective, ref, withCtx, withDirectives, openBlock, createBlock, createVNode, toDisplayString, withModifiers, createTextVNode, Fragment, createCommentVNode, watchEffect, vModelCheckbox, vModelText, reactive, isRef, renderList, vModelSelect, resolveDynamicComponent, renderSlot, vShow, Teleport, withKeys, createSlots, onErrorCaptured, onServerPrefetch, shallowReactive, effectScope, toRef, readonly, defineAsyncComponent, getCurrentScope, watchPostEffect, isReadonly, toValue, isShallow, isReactive } from 'vue';
 import { s as parseURL, f as encodePath, d as decodePath, l as hasProtocol, o as isScriptProtocol, q as joinURL, B as withQuery, t as sanitizeStatusCode, g as getContext, $ as $fetch$1, c as createError$1, n as isEqual, m as hash, v as stringifyParsedURL, w as stringifyQuery, r as parseQuery, b as defu } from '../_/nitro.mjs';
 import { u as useHead$1, h as headSymbol, b as baseURL } from '../routes/renderer.mjs';
 import { defineStore, setActivePinia, createPinia, shouldHydrate } from 'pinia';
 import { isPlainObject } from '@vue/shared';
-import { ssrRenderAttrs, ssrInterpolate, ssrRenderAttr, ssrRenderList, ssrGetDirectiveProps, ssrIncludeBooleanAttr, ssrLooseContain, ssrLooseEqual, ssrRenderClass, ssrRenderComponent, ssrRenderStyle, ssrRenderSlot, ssrRenderTeleport, ssrRenderVNode, ssrRenderSuspense } from 'vue/server-renderer';
+import { ssrRenderAttrs, ssrInterpolate, ssrIncludeBooleanAttr, ssrRenderAttr, ssrGetDirectiveProps, ssrRenderList, ssrRenderClass, ssrRenderSlot, ssrRenderComponent, ssrLooseContain, ssrLooseEqual, ssrRenderTeleport, ssrRenderStyle, ssrRenderVNode, ssrRenderSuspense } from 'vue/server-renderer';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -1584,6 +1584,17 @@ const plugins = [
   asteria_tooltip_fSFARtpwGbHlO1KB4At5caYKXgNivLM9kmiwguLVh5w
 ];
 const messages = {
+  "generationOverview.settings": { en: "Generation settings", ja: "生成設定" },
+  "generationOverview.recording": { en: "Saving and recording", ja: "保存・記録" },
+  "generationOverview.openSettings": { en: "Open generation settings", ja: "生成設定を開く" },
+  "generationOverview.closeSettings": { en: "Close generation settings", ja: "生成設定を閉じる" },
+  "generationOverview.models": { en: "Model settings", ja: "モデル設定" },
+  "generationOverview.chooseModel": { en: "Choose a model", ja: "モデルを選択" },
+  "generationOverview.size": { en: "Size / batch", ja: "サイズ・枚数" },
+  "generationOverview.managePresets": { en: "Save and manage presets", ja: "プリセットの保存・管理" },
+  "generationOverview.appliedCount": { en: "{enabled} enabled / {total}", ja: "{enabled}件有効・全{total}件" },
+  "generationOverview.expand": { en: "Show remaining {count}", ja: "残り{count}件を表示" },
+  "generationOverview.collapse": { en: "Show fewer", ja: "表示を折りたたむ" },
   "bodyCompare.open": { en: "Compare body parts…", ja: "部位を比較…" },
   "bodyCompare.title": { en: "Compare parts across images", ja: "複数画像の部位を比較" },
   "bodyCompare.help": { en: "Compare the same kind of part across 2–32 Library images. Choose one candidate in each column. Saved corrections and exclusions are kept; detection runs only when you request it.", ja: "選択した2〜32画像の同じ部位を見比べます。各列で候補を一つ選んでください。保存済みの修正・除外を使い、検出は自分で実行したときだけ始まります。" },
@@ -3065,6 +3076,11 @@ const messages = {
   "lora.error.prepareFiles": { en: "Could not prepare LoRA training files. Check the dataset and output path, then try again.", ja: "LoRA学習ファイルを準備できませんでした。データセットと出力先を確認してから再試行してください。" },
   "lora.error.planRun": { en: "Could not plan the LoRA training run. Review the dataset and run settings, then try again.", ja: "LoRA学習の実行計画を作成できませんでした。データセットと実行設定を確認してから再試行してください。" },
   "lora.error.startRun": { en: "Could not start the LoRA training run. Review the setup and try again.", ja: "LoRA学習を開始できませんでした。セットアップを確認してから再試行してください。" },
+  "lora.error.outputNameInUse": { en: "A file with this output name already exists. Choose a different output name and prepare the run again.", ja: "同じ出力名のファイルがすでにあります。出力名を変えて、学習を準備し直してください。" },
+  "lora.error.exitUnconfirmed": { en: "Asteria could not confirm that training ended. Once training stops, select Refresh run.", ja: "学習が終了したか確認できませんでした。学習が止まってから「実行を更新」を押してください。" },
+  "lora.error.outputNotPublished": { en: "The trained LoRA could not be saved. Check the output folder before trying again.", ja: "学習したLoRAを保存できませんでした。出力先のフォルダーを確認してから再試行してください。" },
+  "lora.error.trainerConfigConflict": { en: "An SDXL training-script config can change the output folder. To load an Accelerate config, put --config_file before the training script.", ja: "SDXLの学習スクリプトに設定ファイルを渡すと、出力先が変わることがあります。Accelerateの設定を読み込むには、学習スクリプトの前に --config_file を指定してください。" },
+  "lora.error.runActive": { en: "This training run is queued or in progress. Cancel it or wait for it to finish before deleting its record.", ja: "この学習は待機中か実行中です。中止するか完了を待ってから、記録を削除してください。" },
   "lora.error.refreshRun": { en: "Could not refresh the LoRA training run. Try again after a moment.", ja: "LoRA学習の実行状態を更新できませんでした。少し待ってから再試行してください。" },
   "lora.error.registerModels": { en: "Could not register the trained LoRA models. Refresh model assets and try again.", ja: "学習済みLoRAモデルを登録できませんでした。モデルアセットを更新してから再試行してください。" },
   "lora.error.scoreSamples": { en: "Could not score LoRA sample images. Check the sample outputs and try again.", ja: "LoRAサンプル画像を採点できませんでした。サンプル出力を確認してから再試行してください。" },
@@ -3413,6 +3429,7 @@ const messages = {
   "generation.error.modelSelectionIncomplete": { en: "Required model files are not selected. Choose the models at the top of Generate, then try again.", ja: "必須モデルが未選択です。Generate画面上部のモデル欄で選択してから、再試行してください。" },
   "merge.error.seedNotExact": { en: "The Dice seed or challenge start seed cannot be sent as an exact integer from this screen. Leave it blank, or enter a whole number from 0 to 9,007,199,254,740,991.", ja: "入力されたDice seedまたはチャレンジ開始seedを、この画面から整数として正確に送信できません。空欄にするか、0〜9,007,199,254,740,991の整数に変更してください。" },
   "generation.error.runtimeUnavailable": { en: "Cannot connect to the generation environment. Open Settings → Runtime, start it or refresh its status, then try again.", ja: "生成環境に接続できません。「設定」→「実行環境」で起動または状態の更新を試してから、再試行してください。" },
+  "generation.error.comfyCleanupPending": { en: "Asteria could not confirm that memory was freed after the last merge. Wait a moment and try again. If the problem persists, restart the generation environment in Settings.", ja: "前回のマージで使ったメモリの解放を確認できませんでした。少し待ってから再試行してください。解消しない場合は、設定から実行環境を再起動してください。" },
   "generation.error.runtimeFeatureUnavailable": { en: "This feature is not ready in the current generation setup. Refresh the generation setup in Settings, then try again.", ja: "現在の生成環境ではこの機能をまだ使えません。Settingsで生成環境を更新してから再試行してください。" },
   "generation.error.controlNetModeUnavailable": { en: "This ControlNet mode is not ready. Install or refresh the generation dependency, or choose Balanced.", ja: "このControlNetモードはまだ使えません。生成依存を導入・更新するか、バランスを選択してください。" },
   "generation.error.unsupportedSettings": { en: "The current generation setup cannot use one of the enabled options yet. Turn off unavailable runtime options and try again.", ja: "現在の生成環境では、有効になっている一部の設定をまだ使えません。利用できないランタイム設定をオフにして再試行してください。" },
@@ -3469,6 +3486,8 @@ const messages = {
   "prompt.prompt": { en: "Prompt", ja: "プロンプト" },
   "prompt.negative": { en: "Negative Prompt", ja: "ネガティブプロンプト" },
   "prompt.negativeFluxGuidance": { en: "FLUX uses positive descriptions instead of negative prompts.", ja: "FLUXではネガティブプロンプトの代わりに、望む内容をポジティブに記述します。" },
+  "prompt.negativeKreaGuidance": { en: "Krea 2 does not apply negative prompts. Your text is kept for other models.", ja: "Krea 2ではネガティブプロンプトを使用しません。入力した文章は、ほかのモデルで使えるよう保持します。" },
+  "modelSettings.basicNativeSupport": { en: "Supports txt2img with the three listed components. Hires.fix, ControlNet, ADetailer and LoRA are not supported.", ja: "一覧にある3つのモデルを選ぶと、txt2imgで生成できます。Hires.fix・ControlNet・ADetailer・LoRAには対応していません。" },
   "prompt.inputMode.label": { en: "Prompt input", ja: "入力方法" },
   "prompt.inputMode.single": { en: "Single prompt", ja: "まとめて入力" },
   "prompt.inputMode.sections": { en: "Prompt sections", ja: "項目別に入力" },
@@ -3743,9 +3762,9 @@ const messages = {
   "loraBrowser.compatibility.incompatible": { en: "Incompatible: {model}", ja: "非互換: {model}" },
   "loraBrowser.compatibility.unknown": { en: "Compatibility unknown", ja: "互換性不明" },
   "selectedLora.more": { en: "+{count} more", ja: "+{count} 件" },
-  "promptAssets.drawerAria": { en: "Prompt asset tools", ja: "プロンプトアセットツール" },
-  "promptAssets.drawerTitle": { en: "Prompt & Assets", ja: "プロンプトとアセット" },
-  "promptAssets.drawerHelp": { en: "Focused browsing and detailed asset controls.", ja: "アセットを検索し、詳細を設定できます。" },
+  "promptAssets.drawerAria": { en: "Prompt tools", ja: "プロンプト作成ツール" },
+  "promptAssets.drawerTitle": { en: "Prompt tools", ja: "プロンプト作成ツール" },
+  "promptAssets.drawerHelp": { en: "Choose styles and LoRAs, insert saved phrases, or ask AI for suggestions. Review the result before applying it.", ja: "スタイルやLoRAの選択、保存した語句の挿入、AIへの相談ができます。内容を確認してから適用してください。" },
   "promptAssets.close": { en: "Close", ja: "閉じる" },
   "promptAssets.tabsAria": { en: "Prompt asset tool tabs", ja: "プロンプトアセットのタブ" },
   "promptAssets.tabs.advancedStyles": { en: "Advanced Styles", ja: "詳細スタイル" },
@@ -3781,9 +3800,6 @@ const messages = {
   "selectedLora.blockWeightPreset": { en: "Block weight preset", ja: "ブロック重みプリセット" },
   "selectedLora.blockWeightPresetPlaceholder": { en: "default / style name", ja: "default / style名" },
   "selectedLora.blockWeight": { en: "Block weight", ja: "ブロック重み" },
-  "selectedLora.fromPrompt": { en: "From prompt", ja: "プロンプトで指定" },
-  "selectedLora.fromPromptShort": { en: "Prompt tag", ja: "タグで指定" },
-  "selectedLora.disablePromptLora": { en: "Turning this off removes its tag from the prompt.", ja: "オフにすると、このLoRAのタグをプロンプトから外します。" },
   "selectedLora.blockWeightPlaceholder": { en: "Example: 1,1,1,1,1,1,1,1,1,1,1,1", ja: "例: 1,1,1,1,1,1,1,1,1,1,1,1" },
   "selectedLora.triggerWords": { en: "Trigger Words", ja: "トリガーワード" },
   "selectedLora.insertLoraToken": { en: "Insert LoRA token", ja: "LoRA tokenを挿入" },
@@ -3819,6 +3835,7 @@ const messages = {
   "modelSettings.filePathPlaceholder": { en: "{type} file path", ja: "{type} ファイルパス" },
   "historyPanel.aria": { en: "Generation history", ja: "生成履歴" },
   "historyPanel.title": { en: "History", ja: "履歴" },
+  "historyPanel.expand": { en: "Prompt and actions", ja: "プロンプト全文・操作" },
   "historyPanel.refresh": { en: "Refresh", ja: "更新" },
   "historyPanel.reset": { en: "Reset", ja: "リセット" },
   "historyPanel.searchHistory": { en: "Search history", ja: "履歴検索" },
@@ -3916,6 +3933,9 @@ const messages = {
   "external.eagleSentSized": { en: "Sent {filename} to Eagle ({size})", ja: "{filename} をEagleへ送りました ({size})" },
   "external.eagleDuplicateSized": { en: "{filename} is already in Eagle ({size})", ja: "{filename} はすでにEagleにあります ({size})" },
   "external.eagleFolder": { en: "Eagle destination", ja: "Eagle送信先" },
+  "external.eagleSelectedFolder": { en: "Selected folder", ja: "選択中のフォルダー" },
+  "resultPane.reuseActions": { en: "Reuse and process", ja: "再利用・処理" },
+  "resultPane.infoTools": { en: "Generation info and tools", ja: "生成情報・ツール" },
   "external.eagleFolderSearch": { en: "Search Eagle folders", ja: "Eagleフォルダを検索" },
   "external.eagleFolderCount": { en: "{count} folders", ja: "{count} フォルダ" },
   "external.eagleLibraryRoot": { en: "Library root", ja: "ライブラリ直下" },
@@ -4381,9 +4401,9 @@ const messages = {
   "imageEditor.saveMask": { en: "Save mask", ja: "マスクを保存" },
   "imageEditor.cropAria": { en: "Crop setup", ja: "切り抜き設定" },
   "imageEditor.crop": { en: "Crop", ja: "切り抜き" },
-  "imageEditor.cropTitle": { en: "Cut a new init image", ja: "新しい初期画像として切り抜く" },
+  "imageEditor.cropTitle": { en: "Crop source image", ja: "入力画像を切り抜く" },
   "imageEditor.noCrop": { en: "No crop selected", ja: "切り抜き範囲なし" },
-  "imageEditor.cropHelp": { en: "Select Crop in the canvas toolbar, drag a rectangle, then apply it as the new source.", ja: "キャンバスツールバーで切り抜きを選び、矩形をドラッグして新しい入力画像として適用します。" },
+  "imageEditor.cropHelp": { en: "Choose Crop from the tools beside the canvas and drag a selection. Check the area, then apply it as the new source image.", ja: "キャンバス脇の道具から「切り抜き」を選び、画像をドラッグします。範囲を確認して、入力画像として適用してください。" },
   "imageEditor.applyCrop": { en: "Apply crop as init", ja: "切り抜きを初期画像にする" },
   "imageEditor.clearCrop": { en: "Clear crop", ja: "切り抜きを解除" },
   "imageEditor.cropStateNone": { en: "No selection", ja: "範囲未選択" },
@@ -4409,6 +4429,7 @@ const messages = {
   "imageEditor.zoomOut": { en: "Zoom out", ja: "縮小" },
   "imageEditor.zoomReset": { en: "Reset zoom", ja: "表示倍率をリセット" },
   "imageEditor.zoomIn": { en: "Zoom in", ja: "拡大" },
+  "imageEditor.canvasShortcuts": { en: "Zoom in with Ctrl + Space + click. Hold Space and drag to pan.", ja: "Ctrl＋Space＋クリックで拡大します。Spaceを押しながらドラッグすると移動できます。" },
   "imageEditor.invert": { en: "Invert", ja: "反転" },
   "imageEditor.canvasNavigationAria": { en: "Image editing canvas", ja: "画像編集キャンバス" },
   "imageEditor.historyUnavailable": { en: "Undo history is unavailable for this image size.", ja: "この画像サイズでは操作履歴を保存できません。" },
@@ -5010,6 +5031,7 @@ const messages = {
   "lora.run.registerLora": { en: "Register LoRA", ja: "LoRAを登録" },
   "lora.run.scoreSamples": { en: "Score samples", ja: "サンプルを評価" },
   "lora.run.progressAria": { en: "LoRA training run progress", ja: "LoRA学習実行進捗" },
+  "lora.run.preservedOutputFolder": { en: "Check this folder for files saved during training: {path}", ja: "学習中に保存したファイルは、次のフォルダーで確認できます。{path}" },
   "lora.run.waitingForLog": { en: "Waiting for training progress.", ja: "学習の進捗を待機中です。" },
   "lora.run.started": { en: "Started", ja: "開始" },
   "lora.run.notStarted": { en: "not started", ja: "未開始" },
@@ -6574,6 +6596,13 @@ const messages = {
   "settings.startup.setup.cancel": { en: "Cancel", ja: "キャンセル" },
   "settings.startup.setup.execute": { en: "Run this step", ja: "この手順を実行" },
   "settings.startup.setup.starterTitle": { en: "Optional starter models", ja: "任意のスターターモデル" },
+  "settings.startup.setup.starterChoicesDetail": { en: "Choose the models you want to download. You can select more than one, or continue without any. Nothing is selected automatically.", ja: "ダウンロードするモデルを選んでください。複数選択も、選ばずに続行もできます。自動では選択されません。" },
+  "settings.startup.setup.starterSkipAll": { en: "No starter models are selected. You can register your own models later.", ja: "モデルは選択されていません。手持ちのモデルは後から登録できます。" },
+  "settings.startup.setup.starterLicenseConsent": { en: "I reviewed and accept the linked licenses for: {models}.", ja: "リンク先の利用条件を確認し、{models}のライセンスに同意します。" },
+  "settings.startup.setup.starter.krea2.title": { en: "Krea 2 Turbo model set", ja: "Krea 2 Turboモデルセット" },
+  "settings.startup.setup.starter.krea2.detail": { en: "Turbo FP8, Qwen3-VL 4B text encoder, and Qwen Image VAE. Weights use the Krea 2 Community License.", ja: "Turbo FP8、Qwen3-VL 4Bテキストエンコーダー、Qwen Image VAEです。モデル本体にはKrea 2 Community Licenseが適用されます。" },
+  "settings.startup.setup.starter.moss_image.title": { en: "MOSS-Image SFT model set", ja: "MOSS-Image SFTモデルセット" },
+  "settings.startup.setup.starter.moss_image.detail": { en: "SFT INT8, Qwen3.5 9B W4A8 text encoder, and FLUX.2 small VAE.", ja: "SFT INT8、Qwen3.5 9B W4A8テキストエンコーダー、FLUX.2 small VAEです。" },
   "settings.startup.setup.starterDetail": { en: "Choose SDXL, Anima, both, or neither. Nothing is selected automatically.", ja: "SDXL、Anima、両方、またはどちらも不要を選べます。自動では選択されません。" },
   "settings.startup.setup.starter.sdxl.title": { en: "SDXL starter pack", ja: "SDXLスターターパック" },
   "settings.startup.setup.starter.sdxl.detail": { en: "endlustria LUMICA v4 and the official SDXL VAE.", ja: "endlustria LUMICA v4と公式SDXL VAEです。" },
@@ -7166,7 +7195,7 @@ const useAsteriaI18n = () => {
     vocabularyTerm
   };
 };
-const _sfc_main$2u = /* @__PURE__ */ defineComponent({
+const _sfc_main$2y = /* @__PURE__ */ defineComponent({
   __name: "AssetRefreshIndicator",
   __ssrInlineRender: true,
   props: {
@@ -7224,14 +7253,14 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const _sfc_setup$2u = _sfc_main$2u.setup;
-_sfc_main$2u.setup = (props, ctx) => {
+const _sfc_setup$2y = _sfc_main$2y.setup;
+_sfc_main$2y.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AssetRefreshIndicator.vue");
-  return _sfc_setup$2u ? _sfc_setup$2u(props, ctx) : void 0;
+  return _sfc_setup$2y ? _sfc_setup$2y(props, ctx) : void 0;
 };
-const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2u, [["__scopeId", "data-v-580e201b"]]), { __name: "StudioAssetRefreshIndicator" });
-const _sfc_main$2t = /* @__PURE__ */ defineComponent({
+const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2y, [["__scopeId", "data-v-580e201b"]]), { __name: "StudioAssetRefreshIndicator" });
+const _sfc_main$2x = /* @__PURE__ */ defineComponent({
   __name: "GenerateActionStrip",
   __ssrInlineRender: true,
   props: {
@@ -7265,66 +7294,67 @@ const _sfc_main$2t = /* @__PURE__ */ defineComponent({
       const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
       _push(`<div${ssrRenderAttrs(mergeProps({
         class: ["generate-action-strip", { "generate-action-strip--active": __props.loading || __props.repeatActive }]
-      }, _attrs))} data-v-f02894c0><div class="generate-action-strip__context" data-v-f02894c0><strong data-v-f02894c0>${ssrInterpolate(unref(t)("generation.activityBar"))}</strong><span data-v-f02894c0>${ssrInterpolate(__props.mode)} / ${ssrInterpolate(__props.sizeLabel)} / ${ssrInterpolate(__props.status)}</span>`);
-      if (__props.imageCheckSummary) {
-        _push(`<small class="generate-action-strip__outcome" role="status" data-v-f02894c0>${ssrInterpolate(__props.imageCheckSummary)}</small>`);
+      }, _attrs))} data-v-8d0aef49><div class="generate-action-strip__main" data-v-8d0aef49><button class="generate-action-strip__primary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canGenerate) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.loading)} data-v-8d0aef49>`);
+      if (__props.loading) {
+        _push(`<span class="generate-action-strip__loading-indicator" aria-hidden="true" data-v-8d0aef49></span>`);
       } else {
         _push(`<!---->`);
       }
-      if (__props.repeatSummary) {
-        _push(`<small class="generate-action-strip__outcome" role="status" data-v-f02894c0>${ssrInterpolate(__props.repeatSummary)}</small>`);
+      _push(` ${ssrInterpolate(__props.repeatActive ? unref(t)("generation.repeating") : __props.loading ? unref(t)("generation.generating") : unref(t)("generation.generate"))}</button>`);
+      if (__props.canCancel || __props.repeatActive) {
+        _push(`<button class="generate-action-strip__secondary" type="button" data-v-8d0aef49>${ssrInterpolate(unref(t)("generation.stop"))}</button>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (__props.repeatActive) {
+        _push(`<button class="generate-action-strip__secondary generate-action-strip__repeat-stop" type="button"${ssrIncludeBooleanAttr(__props.repeatStopRequested) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.repeatStopRequested)} data-v-8d0aef49>${ssrInterpolate(__props.repeatStopRequested ? unref(t)("generation.repeatStopping") : unref(t)("generation.stopRepeat"))}</button>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (!__props.loading && __props.canRetry) {
+        _push(`<button class="generate-action-strip__secondary" type="button" data-v-8d0aef49>${ssrInterpolate(unref(t)("generation.retry"))}</button>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div><div class="generate-action-strip__controls" data-v-8d0aef49><label class="generate-action-strip__repeat" data-v-8d0aef49><input type="checkbox"${ssrIncludeBooleanAttr(__props.autoRepeat) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.loading && !__props.repeatActive || __props.repeatActive && __props.repeatStopRequested) ? " disabled" : ""} data-v-8d0aef49><span data-v-8d0aef49>${ssrInterpolate(unref(t)("generation.autoRepeat"))}</span></label>`);
+      if (__props.autoRepeat) {
+        _push(`<button type="button"${ssrIncludeBooleanAttr(__props.loading || __props.repeatActive) ? " disabled" : ""} data-v-8d0aef49>${ssrInterpolate(unref(t)("generation.repeatLimits.open"))}</button>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<label${ssrRenderAttrs(mergeProps({ class: "generate-action-strip__repeat" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("imageCheck.shortHelp"))))} data-v-8d0aef49><input type="checkbox"${ssrIncludeBooleanAttr(__props.imageCheck) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.loading || __props.repeatActive) ? " disabled" : ""} data-v-8d0aef49><span data-v-8d0aef49>${ssrInterpolate(unref(t)("imageCheck.toggle"))}</span></label>`);
+      if (__props.imageCheck) {
+        _push(`<button type="button" data-v-8d0aef49>${ssrInterpolate(unref(t)("imageCheck.settings"))}</button>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div><div class="generate-action-strip__context" data-v-8d0aef49>`);
+      if (__props.imageCheckSummary) {
+        _push(`<small class="generate-action-strip__outcome" role="status" data-v-8d0aef49>${ssrInterpolate(__props.imageCheckSummary)}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.repeatActive && __props.repeatStopRequested && !__props.hardStopRequested) {
-        _push(`<small data-v-f02894c0>${ssrInterpolate(unref(t)("generation.repeatStoppingDetail"))}</small>`);
+        _push(`<small data-v-8d0aef49>${ssrInterpolate(unref(t)("generation.repeatStoppingDetail"))}</small>`);
       } else if (__props.autoRepeat && __props.seed !== -1) {
-        _push(`<small data-v-f02894c0>${ssrInterpolate(unref(t)("generation.fixedSeedRepeat", { seed: __props.seed }))}</small>`);
-      } else if (__props.repeatActive) {
-        _push(`<small data-v-f02894c0>${ssrInterpolate(unref(t)("generation.repeatQueued", { count: __props.repeatCount + 1 }))}</small>`);
-      } else if (__props.disabledReason) {
-        _push(`<small data-v-f02894c0>${ssrInterpolate(__props.disabledReason)}</small>`);
+        _push(`<small data-v-8d0aef49>${ssrInterpolate(unref(t)("generation.fixedSeedRepeat", { seed: __props.seed }))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="generate-action-strip__readiness"${ssrRenderAttr("aria-label", unref(t)("generation.readiness.needsAttention"))} data-v-f02894c0><!--[-->`);
-      ssrRenderList(__props.readinessItems, (item) => {
-        _push(`<span${ssrRenderAttrs(mergeProps({
-          key: item.id,
-          class: [
-            "generate-action-strip__readiness-chip",
-            item.ready ? "generate-action-strip__readiness-chip--ready" : "generate-action-strip__readiness-chip--missing",
-            item.advisory ? "generate-action-strip__readiness-chip--advisory" : ""
-          ]
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.message)))} data-v-f02894c0>${ssrInterpolate(item.label)}</span>`);
-      });
-      _push(`<!--]--></div></div><div class="generate-action-strip__controls" data-v-f02894c0><label${ssrRenderAttrs(mergeProps({ class: "generate-action-strip__repeat" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("imageCheck.shortHelp"))))} data-v-f02894c0><input type="checkbox"${ssrIncludeBooleanAttr(__props.imageCheck) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.loading || __props.repeatActive) ? " disabled" : ""} data-v-f02894c0><span data-v-f02894c0>${ssrInterpolate(unref(t)("imageCheck.toggle"))}</span></label>`);
-      if (__props.imageCheck) {
-        _push(`<button type="button" data-v-f02894c0>${ssrInterpolate(unref(t)("imageCheck.settings"))}</button>`);
+      if (__props.disabledReason) {
+        _push(`<small data-v-8d0aef49>${ssrInterpolate(__props.disabledReason)}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="generate-action-strip__repeat" data-v-f02894c0><input type="checkbox"${ssrIncludeBooleanAttr(__props.autoRepeat) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.loading && !__props.repeatActive || __props.repeatActive && __props.repeatStopRequested) ? " disabled" : ""} data-v-f02894c0><span data-v-f02894c0>${ssrInterpolate(unref(t)("generation.autoRepeat"))}</span></label>`);
-      if (__props.autoRepeat) {
-        _push(`<button type="button"${ssrIncludeBooleanAttr(__props.loading || __props.repeatActive) ? " disabled" : ""} data-v-f02894c0>${ssrInterpolate(unref(t)("generation.repeatLimits.open"))}</button>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`<button class="generate-action-strip__primary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canGenerate) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.loading)} data-v-f02894c0>${ssrInterpolate(__props.repeatActive ? unref(t)("generation.repeating") : __props.loading ? unref(t)("generation.generating") : unref(t)("generation.generate"))}</button>`);
-      if (__props.loading) {
-        _push(`<span class="generate-action-strip__loading-indicator" aria-hidden="true" data-v-f02894c0></span>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`<button class="generate-action-strip__secondary generate-action-strip__discord" type="button"${ssrIncludeBooleanAttr(__props.discordPublishing || !__props.canPublishDiscord) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.discordPublishing)} data-v-f02894c0>${ssrInterpolate(__props.discordPublishing ? unref(t)("generation.discordPublishing") : __props.discordPublishedRevision ? unref(t)("generation.discordRepublish", { revision: __props.discordPublishedRevision }) : unref(t)("generation.discordPublish"))}</button>`);
-      if (__props.repeatActive) {
-        _push(`<button class="generate-action-strip__secondary generate-action-strip__repeat-stop" type="button"${ssrIncludeBooleanAttr(__props.repeatStopRequested) ? " disabled" : ""}${ssrRenderAttr("aria-busy", __props.repeatStopRequested)} data-v-f02894c0>${ssrInterpolate(__props.repeatStopRequested ? unref(t)("generation.repeatStopping") : unref(t)("generation.stopRepeat"))}</button>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`<button class="generate-action-strip__secondary" type="button"${ssrIncludeBooleanAttr(!__props.canCancel && !__props.repeatActive) ? " disabled" : ""} data-v-f02894c0>${ssrInterpolate(unref(t)("generation.stop"))}</button><button class="generate-action-strip__secondary" type="button"${ssrIncludeBooleanAttr(__props.loading || !__props.canRetry) ? " disabled" : ""} data-v-f02894c0>${ssrInterpolate(unref(t)("generation.retry"))}</button>`);
-      if (__props.discordPublishError) {
-        _push(`<small class="generate-action-strip__discord-error" data-v-f02894c0>${ssrInterpolate(__props.discordPublishError)}</small>`);
+      if (__props.readinessItems.some((item) => !item.ready)) {
+        _push(`<div class="generate-action-strip__readiness"${ssrRenderAttr("aria-label", unref(t)("generation.readiness.needsAttention"))} data-v-8d0aef49><!--[-->`);
+        ssrRenderList(__props.readinessItems.filter((item) => !item.ready), (item) => {
+          _push(`<span${ssrRenderAttrs(mergeProps({
+            key: item.id,
+            class: ["generate-action-strip__readiness-chip", { "generate-action-strip__readiness-chip--advisory": item.advisory }]
+          }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.message)))} data-v-8d0aef49>${ssrInterpolate(item.label)}</span>`);
+        });
+        _push(`<!--]--></div>`);
       } else {
         _push(`<!---->`);
       }
@@ -7332,13 +7362,39 @@ const _sfc_main$2t = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2t = _sfc_main$2t.setup;
-_sfc_main$2t.setup = (props, ctx) => {
+const _sfc_setup$2x = _sfc_main$2x.setup;
+_sfc_main$2x.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerateActionStrip.vue");
-  return _sfc_setup$2t ? _sfc_setup$2t(props, ctx) : void 0;
+  return _sfc_setup$2x ? _sfc_setup$2x(props, ctx) : void 0;
 };
-const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2t, [["__scopeId", "data-v-f02894c0"]]), { __name: "StudioGenerateActionStrip" });
+const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2x, [["__scopeId", "data-v-8d0aef49"]]), { __name: "StudioGenerateActionStrip" });
+const isBasicNativeImageProfile = (profile) => profile === "krea2" || profile === "moss_image";
+const nativeImageProfileReset = (profile) => isBasicNativeImageProfile(profile) ? {
+  mode: "txt2img",
+  runtime: "comfy_workflow",
+  clipSkip: 1,
+  hiresEnabled: false,
+  refinerEnabled: false,
+  topazEnabled: false,
+  restoreFaces: false,
+  tiling: false,
+  recordWordMasks: false,
+  recordBranchStep: 0,
+  subseed: -1,
+  subseedStrength: 0,
+  seedResizeFromW: 0,
+  seedResizeFromH: 0
+} : {};
+const NATIVE_SELECTION_UNVERIFIED = "asteria_native_selection_unverified";
+const nativeImageModelOptions = (profile, slotId, library, descriptors, selectedPath) => {
+  const role = slotId === "vae" ? "image_vae" : slotId;
+  const verifiedIds = new Set(descriptors.filter((d) => d.compatibility === "supported" && d.component_role === role && d.compatible_profile_ids.includes(profile)).map((d) => d.stable_asset_id));
+  const verified = library.filter((item) => Boolean(item.stable_model_id) && verifiedIds.has(item.stable_model_id));
+  if (!selectedPath || verified.some((item) => item.path === selectedPath)) return verified;
+  const selected = library.find((item) => item.path === selectedPath);
+  return selected ? [{ ...selected, metadata: { ...selected.metadata, [NATIVE_SELECTION_UNVERIFIED]: "true" } }, ...verified] : verified;
+};
 function restorePromptPins(value) {
   if (!value || typeof value !== "object") return null;
   const data = value;
@@ -7420,132 +7476,6 @@ function imageCheckReasonKey(reason) {
     "image_check_provider_authentication_failed"
   ].includes(reason)) return "imageCheck.settingsRequired";
   return "imageCheck.unknown";
-}
-const pathKey = (value) => value.replace(/\\/g, "/").toLowerCase();
-const loaderKey = (value) => pathKey(value).replace(/^(?:loras?|merged\/lora|external\/[^/]+\/lora)\//, "");
-const noExtension = (value) => value.replace(/\.(?:safetensors|ckpt|pt2?|bin|pth|pkl|sft)$/, "");
-function promptLoraIdentity(name, assets) {
-  const key = pathKey(name);
-  const exact = assets.find((item) => pathKey(item.relative_path) === key || pathKey(item.path) === key);
-  const loader = loaderKey(name);
-  const matches = exact ? [exact] : assets.filter((item) => {
-    const path = loaderKey(item.relative_path);
-    const basename2 = path.split("/").at(-1);
-    return [path, noExtension(path), basename2, noExtension(basename2)].includes(loader);
-  });
-  const asset = matches.length === 1 ? matches[0] : void 0;
-  return { key: loaderKey(asset?.relative_path ?? name), name: asset?.relative_path ?? name, asset };
-}
-const numberValue = (value) => /^[+-]?(?:\d(?:_?\d)*(?:\.(?:\d(?:_?\d)*)?)?|\.\d(?:_?\d)*)(?:e[+-]?\d(?:_?\d)*)?$/i.test(value) ? Number(value.replace(/_/g, "")) : NaN;
-function directTags(prompt, includeChoices = false) {
-  const choices = includeChoices ? [] : [...prompt.matchAll(/\{[^{}]+\}/g)];
-  return [...prompt.matchAll(/<lora:([^:<>]+):([^<>]+)>/g)].flatMap((match) => {
-    const start = match.index;
-    if (choices.some((choice) => choice.index < start && start < choice.index + choice[0].length)) return [];
-    const name = match[1].trim().replace(/^"+|"+$/g, "").trim();
-    const parts = match[2].split(":").map((part) => part.trim());
-    const last = parts.at(-1);
-    const block = last.startsWith("lbw=") ? parts.pop().slice(4).trim() : last.includes(",") ? parts.pop() : void 0;
-    const weights = parts.map(numberValue);
-    if (!name || block === "" || weights.length > 2 || weights.some((value) => !Number.isFinite(value))) return [];
-    return [{ name, weight: weights[0], clipWeight: weights[1], block, start, end: start + match[0].length }];
-  });
-}
-function activePromptLoras(prompt, selections, assets) {
-  const selected = /* @__PURE__ */ new Map();
-  for (const selection of selections) {
-    const { key, name } = promptLoraIdentity(selection.name, assets);
-    selected.set(key, {
-      ...selection,
-      key,
-      name,
-      savedName: selection.name,
-      fromPrompt: false,
-      blockFromPrompt: false,
-      clipWeight: selection.clipWeight ?? selection.clip_weight ?? selection.weight,
-      blockWeight: selection.blockWeight ?? selection.block_weight ?? "",
-      blockWeightPreset: selection.blockWeightPreset ?? selection.block_weight_preset ?? "",
-      hierarchyMode: selection.hierarchyMode ?? selection.hierarchy_mode ?? "chain"
-    });
-  }
-  const rows = /* @__PURE__ */ new Map();
-  const explicitClip = /* @__PURE__ */ new Set();
-  for (const tag of directTags(prompt)) {
-    const { key, name } = promptLoraIdentity(tag.name, assets);
-    const current = rows.get(key) ?? selected.get(key);
-    const row = current && current.enabled !== false ? current : {
-      key,
-      name,
-      savedName: current?.savedName,
-      weight: 1,
-      hierarchyMode: "chain",
-      fromPrompt: true,
-      blockFromPrompt: false
-    };
-    row.fromPrompt = true;
-    row.enabled = true;
-    if (tag.weight !== void 0) {
-      if (!explicitClip.has(key) && (row.clipWeight == null || row.clipWeight === row.weight)) row.clipWeight = tag.weight;
-      row.weight = tag.weight;
-    }
-    if (tag.clipWeight !== void 0) {
-      row.clipWeight = tag.clipWeight;
-      explicitClip.add(key);
-    }
-    if (tag.block !== void 0) {
-      row.blockWeight = tag.block.includes(",") ? tag.block : "";
-      row.blockWeightPreset = row.blockWeight ? "" : tag.block;
-      row.hierarchyMode = "chain";
-      row.blockFromPrompt = true;
-    }
-    rows.set(key, row);
-  }
-  return [...rows.values(), ...[...selected.values()].filter((row) => !rows.has(row.key))];
-}
-function formatTag(name, weight, clipWeight, block) {
-  const weights = weight !== void 0 || clipWeight !== void 0 || !block ? [weight ?? 1] : [];
-  if (clipWeight !== void 0) weights.push(clipWeight);
-  return `<lora:${[name, ...weights, ...block ? [`lbw=${block}`] : []].join(":")}>`;
-}
-function applyRecordedLoraAxisWeights(prompt, weights) {
-  const byName = new Map(weights.flatMap((row) => row.prompt_names.map((name) => [pathKey(name), row])));
-  let updated = prompt;
-  for (const tag of directTags(prompt, true).reverse()) {
-    const row = byName.get(pathKey(tag.name));
-    if (row) {
-      const replacement = formatTag(tag.name, row.weight, row.clip_weight, tag.block);
-      updated = updated.slice(0, tag.start) + replacement + updated.slice(tag.end);
-    }
-  }
-  return updated;
-}
-function hasPromptLoraTag(prompt, name, assets) {
-  const key = promptLoraIdentity(name, assets).key;
-  return directTags(prompt).some((tag) => promptLoraIdentity(tag.name, assets).key === key);
-}
-function replacePromptLoraTags(prompt, name, assets, edit) {
-  const key = promptLoraIdentity(name, assets).key;
-  const tags = directTags(prompt).filter((tag) => promptLoraIdentity(tag.name, assets).key === key);
-  const last = tags.at(-1);
-  let updated = prompt;
-  for (const tag of tags.reverse()) {
-    if (edit && tag !== last && edit.block !== "") continue;
-    if (edit) {
-      const clip = edit.clipWeight ?? tag.clipWeight;
-      const weight = edit.weight ?? tag.weight ?? (clip !== void 0 || edit.block === "" ? edit.fallbackWeight : void 0);
-      const next = formatTag(tag.name, weight, clip, edit.block ?? tag.block);
-      updated = updated.slice(0, tag.start) + next + updated.slice(tag.end);
-    } else {
-      let start = tag.start;
-      let end = tag.end;
-      const before = updated.slice(0, start).match(/,\s*$/);
-      const after = updated.slice(end).match(/^\s*,[ \t]*/);
-      if (before) start -= before[0].length;
-      else if (after) end += after[0].length;
-      updated = updated.slice(0, start) + updated.slice(end);
-    }
-  }
-  return updated;
 }
 const cloneJsonValue = (value) => JSON.parse(JSON.stringify(value));
 const PROMPT_INPUT_V1_SCHEMA_VERSION = "asteria.prompt-input.v1";
@@ -7904,45 +7834,6 @@ const restorePromptInputState = (prompt, rawPromptInput, transitionRevision = 0)
     notice: ""
   };
 };
-const object$2 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
-function savedPromptInput(item, mode) {
-  const settings = item.settings;
-  const syntax = object$2(settings.prompt_syntax);
-  if (mode === "expanded") return {
-    prompt: item.expanded_prompt || item.prompt,
-    negative: typeof syntax.expanded_negative_prompt === "string" ? syntax.expanded_negative_prompt : item.negative_prompt,
-    promptInput: void 0,
-    styles: [],
-    pins: null
-  };
-  return {
-    prompt: item.prompt,
-    negative: typeof settings.raw_negative_prompt === "string" ? settings.raw_negative_prompt : typeof syntax.raw_negative_prompt === "string" ? syntax.raw_negative_prompt : item.negative_prompt,
-    promptInput: settings.prompt_input,
-    styles: Array.isArray(settings.advanced_styles) ? settings.advanced_styles.map(object$2) : [],
-    pins: settings.prompt_pins ?? null
-  };
-}
-function xyzLoraHistoryInput(item, mode) {
-  const receipt = object$2(item.settings.xyz_lora_restore);
-  const weights = (Array.isArray(receipt.weights) ? receipt.weights : []).filter((value) => {
-    const row = object$2(value);
-    return typeof row.name === "string" && Array.isArray(row.prompt_names) && row.prompt_names.length > 0 && row.prompt_names.every((name) => typeof name === "string") && typeof row.weight === "number" && Number.isFinite(row.weight) && typeof row.clip_weight === "number" && Number.isFinite(row.clip_weight);
-  });
-  if (!weights.length) return null;
-  const input = savedPromptInput(item, receipt.use_expanded === true ? "expanded" : mode);
-  const restoreWeights = (text) => applyRecordedLoraAxisWeights(text, weights);
-  const editor = restorePromptInputState(input.prompt, input.promptInput);
-  if (editor.mode === "sections") {
-    const sections = editor.sections.map((section) => ({ ...section, text: restoreWeights(section.text) }));
-    return { ...input, prompt: combinePromptSections(sections), promptInput: {
-      schema_version: "asteria.prompt-input.v2",
-      mode: "sections",
-      sections: promptSectionsToV2(sections)
-    }, pins: null };
-  }
-  return { ...input, prompt: restoreWeights(input.prompt), pins: null };
-}
 const buildSceneEditorState = (source, fields) => {
   const sections = source.sections.map((section) => ({ ...section, text: fields[section.id] }));
   return {
@@ -8041,8 +7932,8 @@ const schedulerOptionsForProfile = (profile, runtimeOptions) => {
   };
 };
 const xyzTargetForProfile = (profile, target) => profile === "flux2" && target === "scheduler" ? "seed" : target;
-const negativePromptRuntimeSupport = (profile) => profile === "sdxl" || profile === "anima";
-const negativePromptValueForProfile = (profile, value) => negativePromptRuntimeSupport(profile) ? value : "";
+const negativePromptRuntimeSupport = (profile) => profile === "sdxl" || profile === "anima" || profile === "moss_image";
+const negativePromptValueForProfile = (profile, value) => profile === "krea2" || negativePromptRuntimeSupport(profile) ? value : "";
 const negativePromptTargetForProfile = (profile, target) => negativePromptRuntimeSupport(profile) || target !== "negative" ? target : "enhance";
 const negativePromptValueForWrite = (profile, currentValue, nextValue) => negativePromptRuntimeSupport(profile) ? nextValue : currentValue;
 const requestHiresEnabled = (_mode, enabled) => enabled;
@@ -9065,7 +8956,7 @@ const knownErrorCodeKeys = {
   generation_runtime_unsupported: "generation.error.runtimeUnavailable",
   generation_runtime_unreachable: "generation.error.runtimeUnavailable",
   comfy_admission_busy: "generation.error.runtimeUnavailable",
-  comfy_cleanup_pending: "generation.error.runtimeUnavailable",
+  comfy_cleanup_pending: "generation.error.comfyCleanupPending",
   xyz_precheck_confirmation_required: "merge.error.xyzConfirmationRequired",
   xyz_precheck_confirmation_stale: "merge.error.xyzConfirmationStale",
   merge_candidate_source_changed: "merge.candidateSourceChanged",
@@ -9212,6 +9103,11 @@ const knownErrorCodeKeys = {
   managed_download_runtime_destination_requires_setup: "common.error.runtimeCoreInstall",
   managed_download_destination_not_allowed: "common.error.managedDownloadDestination",
   lora_training_run_not_found: "common.error.notFound",
+  lora_training_output_name_in_use: "lora.error.outputNameInUse",
+  lora_training_exit_unconfirmed: "lora.error.exitUnconfirmed",
+  lora_training_output_not_published: "lora.error.outputNotPublished",
+  lora_training_trainer_config_conflict: "lora.error.trainerConfigConflict",
+  lora_training_run_active: "lora.error.runActive",
   lora_training_dataset_not_found: "common.error.notFound",
   lora_caption_assist_provider_endpoint_invalid: "common.error.invalidProviderEndpoint",
   lora_caption_assist_provider_api_key_required: "common.error.providerApiKeyRequired",
@@ -10246,10 +10142,10 @@ const serializeLoraSelections = (loras, profile) => {
     const serialized = {
       name: lora.name,
       weight: lora.weight,
-      clip_weight: lora.clipWeight ?? lora.clip_weight ?? lora.weight,
-      block_weight: profile === "sdxl" ? lora.blockWeight ?? lora.block_weight ?? "" : "",
-      block_weight_preset: profile === "sdxl" ? lora.blockWeightPreset ?? lora.block_weight_preset ?? "" : "",
-      hierarchy_mode: profile === "sdxl" ? lora.hierarchyMode ?? lora.hierarchy_mode ?? "chain" : "chain"
+      clip_weight: lora.clipWeight ?? lora.weight,
+      block_weight: lora.blockWeight ?? lora.block_weight ?? "",
+      block_weight_preset: lora.blockWeightPreset ?? lora.block_weight_preset ?? "",
+      hierarchy_mode: lora.hierarchyMode ?? lora.hierarchy_mode ?? "chain"
     };
     const receipt = profile === "anima" ? completeLoraCatalogReceipt(lora) : null;
     return receipt ? {
@@ -10843,6 +10739,14 @@ const useGenerationStore = defineStore("generation", {
       }
     },
     setGenerationProfile(profile) {
+      if (this.profile !== profile && isBasicNativeImageProfile(profile)) {
+        Object.assign(this, nativeImageProfileReset(profile));
+        this.loras = this.loras.map((item) => ({ ...item, enabled: false }));
+        this.controlNetUnits = this.controlNetUnits.map((item) => ({ ...item, enabled: false }));
+        this.animaLLLiteUnits = this.animaLLLiteUnits.map((item) => ({ ...item, enabled: false }));
+        this.detailerUnits = this.detailerUnits.map((item) => ({ ...item, enabled: false }));
+        this.remaster.enabled = false;
+      }
       this.profile = profile;
       if (!this.promptLayout || this.promptLayout.model_profile_selection == null) return;
       this.promptLayout.model_profile_selection = spatialProfileSelectionForGenerationProfile(
@@ -10983,8 +10887,10 @@ const useGenerationStore = defineStore("generation", {
         if (requestId !== this.schemaRequestId || this.profile !== profile) return;
         this.schema = response;
         const state = this;
+        const keepPromptText = isBasicNativeImageProfile(profile) || isBasicNativeImageProfile(previousProfile ?? "");
         for (const [fieldId, value] of Object.entries(response.defaults)) {
           const stateKey = defaultBindings[fieldId];
+          if (keepPromptText && (stateKey === "prompt" || stateKey === "negativePrompt")) continue;
           if (stateKey) {
             state[stateKey] = value;
           }
@@ -12547,16 +12453,14 @@ const useGenerationStore = defineStore("generation", {
     selectHistoryItem(item) {
       this.result = item;
       this.profile = item.profile;
-      const xyzInput = xyzLoraHistoryInput(item, "original");
       this.applyPromptState(
-        xyzInput?.prompt ?? item.prompt,
-        xyzInput ? xyzInput.promptInput : item.settings.prompt_input,
+        item.prompt,
+        item.settings.prompt_input,
         [],
-        xyzInput ? void 0 : item.settings.prompt_layout
+        item.settings.prompt_layout
       );
-      this.negativePrompt = xyzInput?.negative ?? item.negative_prompt;
-      const selections = Array.isArray(item.settings.lora_selections) ? item.settings.lora_selections : item.loras;
-      this.loras = selections.map((lora) => ({
+      this.negativePrompt = item.negative_prompt;
+      this.loras = item.loras.map((lora) => ({
         ...lora,
         enabled: lora.enabled ?? true,
         clipWeight: lora.clipWeight ?? lora.clip_weight ?? lora.weight,
@@ -12565,11 +12469,6 @@ const useGenerationStore = defineStore("generation", {
         hierarchyMode: lora.hierarchyMode ?? lora.hierarchy_mode ?? "chain"
       }));
       this.applySettings(item.settings);
-      if (xyzInput) {
-        this.promptPins = null;
-        this.advancedStyles = [];
-        useAdvancedStylesStore().replaceActiveChain([]);
-      }
       this.controlNetUnits = asControlNetUnits(item.settings.controlnet_units);
       this.animaLLLiteUnits = asAnimaLLLiteUnits(item.settings.anima_lllite_units);
       this.detailerUnits = asDetailerUnits(item.settings.detailer_units);
@@ -12583,336 +12482,7 @@ const useGenerationStore = defineStore("generation", {
     }
   }
 });
-const _sfc_main$2s = /* @__PURE__ */ defineComponent({
-  __name: "GenerationPresetBar",
-  __ssrInlineRender: true,
-  setup(__props) {
-    const generation = useGenerationStore();
-    const modelDependencies = useModelDependenciesStore();
-    const { t } = useAsteriaI18n();
-    const selectedPresetId = ref("");
-    const presetError = ref("");
-    const presetBusy = ref(false);
-    const modelSelectionReady = computed(() => modelDependencies.selectionReady(generation.profile));
-    const presets = computed(() => generation.studioPresetsByKind.generation ?? generation.studioPresets.filter((preset) => preset.kind === "generation"));
-    const selectedPreset = computed(() => presets.value.find((preset) => preset.id === selectedPresetId.value) ?? null);
-    watch(
-      () => generation.profile,
-      () => {
-        selectedPresetId.value = "";
-        presetError.value = "";
-      }
-    );
-    watch(presets, (items) => {
-      if (selectedPresetId.value && !items.some((preset) => preset.id === selectedPresetId.value)) {
-        selectedPresetId.value = "";
-      }
-    });
-    return (_ctx, _push, _parent, _attrs) => {
-      _push(`<section${ssrRenderAttrs(mergeProps({
-        class: "generation-preset-bar",
-        "aria-label": unref(t)("generationPresetBar.aria")
-      }, _attrs))} data-v-69e20fe6><div class="generation-preset-bar__title" data-v-69e20fe6><span data-v-69e20fe6>${ssrInterpolate(unref(t)("generationPresetBar.title"))}</span><small data-v-69e20fe6>${ssrInterpolate(unref(t)("generationPresetBar.help"))}</small></div><label class="field generation-preset-bar__select" data-v-69e20fe6><span data-v-69e20fe6>${ssrInterpolate(unref(t)("generationPresetBar.saved"))}</span><select${ssrIncludeBooleanAttr(unref(presetBusy)) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("generationPresetBar.saved"))} data-v-69e20fe6><option value="" data-v-69e20fe6${ssrIncludeBooleanAttr(Array.isArray(unref(selectedPresetId)) ? ssrLooseContain(unref(selectedPresetId), "") : ssrLooseEqual(unref(selectedPresetId), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("generationPresetBar.select"))}</option><!--[-->`);
-      ssrRenderList(unref(presets), (preset) => {
-        _push(`<option${ssrRenderAttr("value", preset.id)} data-v-69e20fe6${ssrIncludeBooleanAttr(Array.isArray(unref(selectedPresetId)) ? ssrLooseContain(unref(selectedPresetId), preset.id) : ssrLooseEqual(unref(selectedPresetId), preset.id)) ? " selected" : ""}>${ssrInterpolate(preset.name)}</option>`);
-      });
-      _push(`<!--]--></select></label><div class="generation-preset-bar__actions" data-v-69e20fe6><button type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(selectedPreset)) ? " disabled" : ""} data-v-69e20fe6>${ssrInterpolate(unref(t)("generationPresetBar.apply"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(selectedPreset) || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-69e20fe6>${ssrInterpolate(unref(t)("generationPresetBar.overwrite"))}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(selectedPreset)) ? " disabled" : ""} data-v-69e20fe6>${ssrInterpolate(unref(t)("generationPresetBar.delete"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(presetBusy)) ? " disabled" : ""} data-v-69e20fe6>${ssrInterpolate(unref(t)("generationPresetBar.reload"))}</button></div><label class="field generation-preset-bar__name" data-v-69e20fe6><span data-v-69e20fe6>${ssrInterpolate(unref(t)("generationPresetBar.name"))}</span><input${ssrRenderAttr("value", unref(generation).studioPresetName)}${ssrIncludeBooleanAttr(unref(presetBusy)) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("generationPresetBar.name"))}${ssrRenderAttr("placeholder", unref(t)("generationPresetBar.namePlaceholder", { profile: unref(generation).profile }))} data-v-69e20fe6></label><button class="generation-preset-bar__save" type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-69e20fe6>${ssrInterpolate(unref(t)("generationPresetBar.save"))}</button>`);
-      if (unref(presetError)) {
-        _push(`<p class="error generation-preset-bar__error" aria-live="assertive" data-v-69e20fe6>${ssrInterpolate(unref(presetError))}</p>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`</section>`);
-    };
-  }
-});
-const _sfc_setup$2s = _sfc_main$2s.setup;
-_sfc_main$2s.setup = (props, ctx) => {
-  const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationPresetBar.vue");
-  return _sfc_setup$2s ? _sfc_setup$2s(props, ctx) : void 0;
-};
-const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2s, [["__scopeId", "data-v-69e20fe6"]]), { __name: "StudioGenerateGenerationPresetBar" });
-const searchableText = (value) => value.normalize("NFKC").toLowerCase().replace(/\\/g, "/");
-function filterModelOptions(items, query, selectedPath = "") {
-  const terms = searchableText(query).trim().split(/\s+/).filter(Boolean);
-  if (!terms.length) return items;
-  return items.filter((item) => {
-    if (item.path === selectedPath) return true;
-    const text = searchableText(`${item.name ?? ""} ${item.relative_path ?? ""} ${item.path}`);
-    return terms.every((term) => text.includes(term));
-  });
-}
-const dependencyNeedsAttention = (dependency, selections) => {
-  if (dependency.status === "installed") {
-    return false;
-  }
-  if (!dependency.slot_id) {
-    return true;
-  }
-  return !String(selections[dependency.slot_id] ?? "").trim();
-};
-const CURRENT_ANIMA_SELECTION_MARKER = "asteria_current_selection_unverified";
-const buildAnimaDiffusionOptions = (library, descriptors, selectedPath) => {
-  const verifiedIds = new Set(
-    descriptors.filter((descriptor) => descriptor.architecture === "anima" && descriptor.component_role === "diffusion_model" && descriptor.compatibility === "supported").map((descriptor) => descriptor.stable_asset_id)
-  );
-  const verified = library.filter((item) => Boolean(item.stable_model_id) && verifiedIds.has(item.stable_model_id));
-  if (!selectedPath || verified.some((item) => item.path === selectedPath)) return verified;
-  const selectedItem = library.find((item) => item.path === selectedPath);
-  const filename2 = selectedPath.replace(/\\/g, "/").split("/").at(-1) || selectedPath;
-  const fallback = selectedItem ? {
-    ...selectedItem,
-    metadata: {
-      ...selectedItem.metadata,
-      [CURRENT_ANIMA_SELECTION_MARKER]: "true"
-    }
-  } : {
-    type: "checkpoint",
-    name: filename2,
-    path: selectedPath,
-    relative_path: filename2,
-    size_bytes: 0,
-    metadata: { [CURRENT_ANIMA_SELECTION_MARKER]: "true" },
-    source: "selection",
-    root_id: "selection",
-    stable_model_id: null,
-    fingerprint_algorithm: null,
-    fingerprint_version: null,
-    fingerprint_value: null
-  };
-  return [fallback, ...verified];
-};
-const useMediaModelCatalog = (domain) => {
-  const items = ref([]);
-  const loading = ref(false);
-  const error = ref("");
-  let requestVersion = 0;
-  const load = async (refresh2 = false) => {
-    const version = ++requestVersion;
-    loading.value = true;
-    error.value = "";
-    try {
-      const endpoint = refresh2 ? "/api/models/media-catalog/refresh" : "/api/models/media-catalog";
-      const response = await $fetch(
-        useApiUrl(`${endpoint}?domain=${encodeURIComponent(domain)}`),
-        { method: refresh2 ? "POST" : "GET" }
-      );
-      if (version !== requestVersion) return false;
-      if (response.domain !== domain) throw new Error("media_model_catalog_domain_mismatch");
-      items.value = response.items;
-      return true;
-    } catch (cause) {
-      if (version !== requestVersion) return false;
-      error.value = userFacingErrorMessage(
-        cause,
-        domain === "video" ? "video.error.modelCatalog" : "common.error.modelDependencies"
-      );
-      return false;
-    } finally {
-      if (version === requestVersion) loading.value = false;
-    }
-  };
-  const refresh = () => load(true);
-  return {
-    items: readonly(items),
-    loading: readonly(loading),
-    error: readonly(error),
-    load,
-    refresh
-  };
-};
-const _sfc_main$2r = /* @__PURE__ */ defineComponent({
-  __name: "ModelSettingsPanel",
-  __ssrInlineRender: true,
-  setup(__props) {
-    const generation = useGenerationStore();
-    const modelDependencies = useModelDependenciesStore();
-    const runtime = useRuntimeStore();
-    const imageModelCatalog = useMediaModelCatalog("image");
-    const { t } = useAsteriaI18n();
-    const modelAssetError = ref("");
-    const refreshingModelAssets = ref(false);
-    const modelSearch = ref("");
-    const filteredSlotOptions = (slot) => filterModelOptions(slotOptions(slot), modelSearch.value, modelDependencies.selections[slot.id]);
-    const activeProfile = computed(() => modelDependencies.selectedProfile(generation.profile));
-    const modelSelectionReady = computed(() => modelDependencies.selectionReady(generation.profile));
-    const activeProfileDependencyIds = computed(() => new Set(activeProfile.value?.dependency_ids ?? []));
-    const activeProfileDependencies = computed(() => modelDependencies.dependencies.filter((dependency) => activeProfileDependencyIds.value.has(dependency.id)));
-    const missingProfileDependencies = computed(() => activeProfileDependencies.value.filter((dependency) => {
-      const slot = activeProfile.value?.model_slots.find((candidate) => candidate.id === dependency.slot_id);
-      return slot?.required !== false && dependencyNeedsAttention(dependency, modelDependencies.selections);
-    }));
-    const primarySlotIds = /* @__PURE__ */ new Set(["checkpoint", "diffusion_model", "vae"]);
-    const primaryModelSlots = computed(() => activeProfile.value?.model_slots.filter((slot) => primarySlotIds.has(slot.id)) ?? []);
-    const secondaryModelSlots = computed(() => activeProfile.value?.model_slots.filter((slot) => !primarySlotIds.has(slot.id)) ?? []);
-    const selectedSlotCount = computed(() => activeProfile.value?.model_slots.filter((slot) => Boolean(modelDependencies.selections[slot.id])).length ?? 0);
-    const verifiedAnimaDiffusionDescriptor = (item) => item.stable_model_id ? imageModelCatalog.items.value.find((descriptor) => descriptor.stable_asset_id === item.stable_model_id && descriptor.architecture === "anima" && descriptor.component_role === "diffusion_model" && descriptor.compatibility === "supported") ?? null : null;
-    const selectedAnimaDiffusion = computed(() => {
-      if (generation.profile !== "anima") return null;
-      const selectedPath = modelDependencies.selections.diffusion_model;
-      const item = modelDependencies.library.find((candidate) => candidate.path === selectedPath);
-      return item ? verifiedAnimaDiffusionDescriptor(item) : null;
-    });
-    const anima38MissingComponentLabels = computed(() => {
-      if (selectedAnimaDiffusion.value?.variant !== "anima_3_8b_52") return [];
-      const required = /* @__PURE__ */ new Set(["qwen35_text_encoder", "progressive_adapter"]);
-      return (activeProfile.value?.model_slots ?? []).filter((slot) => required.has(slot.id) && !modelDependencies.selections[slot.id]).map((slot) => slot.label);
-    });
-    const animaVariantLabel = (variant) => {
-      const keys = {
-        anima_base_28: "modelSettings.animaBaseVariant",
-        anima_2_9b_40: "modelSettings.anima29Variant",
-        anima_3_8b_52: "modelSettings.anima38Variant"
-      };
-      return variant && keys[variant] ? t(keys[variant]) : "";
-    };
-    const modelOptionLabel = (item, slot) => {
-      if (generation.profile !== "anima" || slot.id !== "diffusion_model") return item.relative_path;
-      if (item.metadata[CURRENT_ANIMA_SELECTION_MARKER] === "true") {
-        return `${item.relative_path} — ${t("modelSettings.animaCurrentSelectionUnverified")}`;
-      }
-      const label = animaVariantLabel(verifiedAnimaDiffusionDescriptor(item)?.variant ?? null);
-      return label ? `${item.relative_path} — ${label}` : item.relative_path;
-    };
-    const usesModelSelect = (slot) => generation.profile === "anima" && slot.id === "diffusion_model" || slotOptions(slot).length > 0;
-    const slotOptions = (slot) => {
-      const profileKeywords = {
-        sdxl: ["sdxl", "sd_xl", "illustrious", "pony"],
-        anima: ["anima", "qwen"],
-        flux1: ["flux1", "flux.1", "flux"],
-        flux2: ["flux2", "flux.2", "klein"]
-      };
-      const modelProfileForPath = (value) => {
-        const normalized = value.replace(/\\/g, "/").toLowerCase();
-        if (normalized.includes("flux2") || normalized.includes("flux.2") || normalized.includes("klein")) return "flux2";
-        if (normalized.includes("flux1") || normalized.includes("flux.1") || normalized.includes("/flux/")) return "flux1";
-        if (normalized.includes("anima") || normalized.includes("qwen")) return "anima";
-        if (normalized.includes("sdxl") || normalized.includes("sd_xl") || normalized.includes("illustrious") || normalized.includes("pony")) return "sdxl";
-        return "";
-      };
-      const otherProfileKeywords = Object.entries(profileKeywords).filter(([profile]) => profile !== generation.profile).flatMap(([, keywords]) => keywords);
-      const activeKeywords = profileKeywords[generation.profile] ?? [];
-      const items = modelDependencies.libraryByType(slot.type);
-      if (generation.profile === "anima" && slot.id === "diffusion_model") {
-        return buildAnimaDiffusionOptions(
-          items,
-          imageModelCatalog.items.value,
-          modelDependencies.selections.diffusion_model ?? ""
-        );
-      }
-      return items.filter((item) => !/\.json$/i.test(item.relative_path)).filter((item) => {
-        const normalized = item.relative_path.replace(/\\/g, "/").toLowerCase();
-        const detectedProfile = modelProfileForPath(normalized);
-        if (detectedProfile) {
-          return detectedProfile === generation.profile;
-        }
-        if (activeKeywords.some((keyword) => normalized.includes(keyword))) {
-          return true;
-        }
-        return !otherProfileKeywords.some((keyword) => normalized.includes(keyword));
-      });
-    };
-    watch(
-      [() => generation.profile, () => modelDependencies.library],
-      ([profile]) => {
-        if (profile === "anima") void imageModelCatalog.load();
-      },
-      { immediate: true }
-    );
-    return (_ctx, _push, _parent, _attrs) => {
-      const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
-      _push(`<section${ssrRenderAttrs(mergeProps({
-        class: "model-bar",
-        "aria-label": unref(t)("modelSettings.aria")
-      }, _attrs))} data-v-c1cfc831><label class="field model-bar__search" data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.searchModels"))}</span><input${ssrRenderAttr("value", unref(modelSearch))} type="search"${ssrRenderAttr("placeholder", unref(t)("modelSettings.searchModelsPlaceholder"))} data-v-c1cfc831></label><div class="model-bar__primary" data-v-c1cfc831><label class="field slot-field model-bar__field model-bar__profile" data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select${ssrRenderAttr("value", unref(generation).profile)} data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-c1cfc831><!--[-->`);
-      ssrRenderList(unref(modelDependencies).profiles, (profile) => {
-        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-c1cfc831>${ssrInterpolate(profile.label)}</option>`);
-      });
-      _push(`<!--]--></select></label><!--[-->`);
-      ssrRenderList(unref(primaryModelSlots), (slot) => {
-        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(slot.label)}</span>`);
-        if (usesModelSelect(slot)) {
-          _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || unref(generation).profile === "anima" && slot.id === "diffusion_model" && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-c1cfc831><option value="" data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
-          ssrRenderList(filteredSlotOptions(slot), (item) => {
-            _push(`<option${ssrRenderAttr("value", item.path)} data-v-c1cfc831>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
-          });
-          _push(`<!--]--></select>`);
-        } else {
-          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-c1cfc831>`);
-        }
-        _push(`</label>`);
-      });
-      _push(`<!--]--><div class="model-bar__slot-status" data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-c1cfc831>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div><div class="model-bar__actions" data-v-c1cfc831><button${ssrRenderAttrs(mergeProps({
-        type: "button",
-        disabled: unref(refreshingModelAssets) || unref(modelDependencies).loading || unref(runtime).loading
-      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("modelSettings.refreshHelp"))))} data-v-c1cfc831>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
-      if (!unref(activeProfile)) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-c1cfc831><strong data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-c1cfc831>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
-      } else {
-        _push(`<!---->`);
-      }
-      if (unref(modelAssetError)) {
-        _push(`<div class="model-bar__message-row" data-v-c1cfc831><p class="error" aria-live="assertive" data-v-c1cfc831>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
-      } else {
-        _push(`<!---->`);
-      }
-      if (unref(generation).profile === "anima" && unref(imageModelCatalog).error.value) {
-        _push(`<div class="model-bar__message-row" data-v-c1cfc831><p class="error" aria-live="assertive" data-v-c1cfc831>${ssrInterpolate(unref(imageModelCatalog).error.value)}</p></div>`);
-      } else {
-        _push(`<!---->`);
-      }
-      if (unref(selectedAnimaDiffusion)) {
-        _push(`<div class="model-bar__message-row" role="status" data-v-c1cfc831><p class="muted" data-v-c1cfc831>${ssrInterpolate(animaVariantLabel(unref(selectedAnimaDiffusion).variant))}</p></div>`);
-      } else {
-        _push(`<!---->`);
-      }
-      if (unref(anima38MissingComponentLabels).length) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-c1cfc831><strong data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsRequired"))}</strong><small data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsHelp", { components: unref(anima38MissingComponentLabels).join(" / ") }))}</small></div>`);
-      } else {
-        _push(`<!---->`);
-      }
-      if (unref(missingProfileDependencies).length) {
-        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-c1cfc831><div data-v-c1cfc831><strong data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-c1cfc831><!--[-->`);
-        ssrRenderList(unref(missingProfileDependencies), (dependency) => {
-          _push(`<li data-v-c1cfc831><span data-v-c1cfc831><strong data-v-c1cfc831>${ssrInterpolate(dependency.label)}</strong></span></li>`);
-        });
-        _push(`<!--]--></ul></div>`);
-      } else {
-        _push(`<!---->`);
-      }
-      if (unref(secondaryModelSlots).length) {
-        _push(`<details class="model-bar__extra" data-v-c1cfc831><summary data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-c1cfc831>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-c1cfc831><!--[-->`);
-        ssrRenderList(unref(secondaryModelSlots), (slot) => {
-          _push(`<label class="field slot-field model-bar__field" data-v-c1cfc831><span data-v-c1cfc831>${ssrInterpolate(slot.label)}</span>`);
-          if (usesModelSelect(slot)) {
-            _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-c1cfc831><option value="" data-v-c1cfc831>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
-            ssrRenderList(filteredSlotOptions(slot), (item) => {
-              _push(`<option${ssrRenderAttr("value", item.path)} data-v-c1cfc831>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
-            });
-            _push(`<!--]--></select>`);
-          } else {
-            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-c1cfc831>`);
-          }
-          _push(`</label>`);
-        });
-        _push(`<!--]--></div></details>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(ssrRenderComponent(GenerationPresetBar, null, null, _parent));
-      _push(`</section>`);
-    };
-  }
-});
-const _sfc_setup$2r = _sfc_main$2r.setup;
-_sfc_main$2r.setup = (props, ctx) => {
-  const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ModelSettingsPanel.vue");
-  return _sfc_setup$2r ? _sfc_setup$2r(props, ctx) : void 0;
-};
-const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2r, [["__scopeId", "data-v-c1cfc831"]]), { __name: "StudioModelSettingsPanel" });
-const _sfc_main$2q = /* @__PURE__ */ defineComponent({
+const _sfc_main$2w = /* @__PURE__ */ defineComponent({
   __name: "PromptChoicesPreview",
   __ssrInlineRender: true,
   setup(__props) {
@@ -12967,13 +12537,13 @@ const _sfc_main$2q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2q = _sfc_main$2q.setup;
-_sfc_main$2q.setup = (props, ctx) => {
+const _sfc_setup$2w = _sfc_main$2w.setup;
+_sfc_main$2w.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptChoicesPreview.vue");
-  return _sfc_setup$2q ? _sfc_setup$2q(props, ctx) : void 0;
+  return _sfc_setup$2w ? _sfc_setup$2w(props, ctx) : void 0;
 };
-const PromptChoicesPreview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2q, [["__scopeId", "data-v-6cf5ca93"]]), { __name: "StudioPromptChoicesPreview" });
+const PromptChoicesPreview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2w, [["__scopeId", "data-v-6cf5ca93"]]), { __name: "StudioPromptChoicesPreview" });
 const promptAssistStructurePayload = (snapshot2) => ({
   prompt: snapshot2.prompt,
   prompt_input: structuredClone(snapshot2.promptInput),
@@ -13310,7 +12880,57 @@ const adjustPromptWeight = (value, selectionStart, selectionEnd, direction) => {
   }
   return replacePromptSelection(value, span.start, span.end, replacement);
 };
-const _sfc_main$2p = /* @__PURE__ */ defineComponent({
+const _sfc_main$2v = /* @__PURE__ */ defineComponent({
+  __name: "ProgressiveResourceList",
+  __ssrInlineRender: true,
+  props: {
+    items: {},
+    initial: {},
+    compact: { type: Boolean },
+    inline: { type: Boolean },
+    itemKey: { type: Function }
+  },
+  setup(__props) {
+    const props = __props;
+    const { t } = useAsteriaI18n();
+    const expanded = ref(false);
+    const hiddenCount = computed(() => Math.max(0, props.items.length - props.initial));
+    return (_ctx, _push, _parent, _attrs) => {
+      const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
+      _push(`<div${ssrRenderAttrs(mergeProps({
+        class: ["progressive-resource-list", { "progressive-resource-list--inline": __props.inline }]
+      }, _attrs))} data-v-83df5fe9><!--[-->`);
+      ssrRenderList(__props.items, (item, index) => {
+        _push(`<div class="${ssrRenderClass([{ "is-collapsed": __props.compact && !unref(expanded) && index >= __props.initial }, "progressive-resource-list__row"])}"${ssrIncludeBooleanAttr(Boolean(__props.compact && !unref(expanded) && index >= __props.initial)) ? " inert" : ""} data-v-83df5fe9><div class="progressive-resource-list__inner" data-v-83df5fe9>`);
+        ssrRenderSlot(_ctx.$slots, "default", {
+          item,
+          index
+        }, null, _push, _parent);
+        _push(`</div></div>`);
+      });
+      _push(`<!--]-->`);
+      if (__props.compact && unref(hiddenCount)) {
+        _push(`<button${ssrRenderAttrs(mergeProps({
+          type: "button",
+          class: "progressive-resource-list__toggle",
+          "aria-expanded": unref(expanded),
+          "aria-label": unref(expanded) ? unref(t)("generationOverview.collapse") : unref(t)("generationOverview.expand", { count: unref(hiddenCount) })
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(expanded) ? unref(t)("generationOverview.collapse") : unref(t)("generationOverview.expand", { count: unref(hiddenCount) }))))} data-v-83df5fe9><svg viewBox="0 0 24 24" aria-hidden="true" class="${ssrRenderClass({ "is-expanded": unref(expanded) })}" data-v-83df5fe9><path d="m7 10 5 5 5-5" data-v-83df5fe9></path></svg></button>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div>`);
+    };
+  }
+});
+const _sfc_setup$2v = _sfc_main$2v.setup;
+_sfc_main$2v.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ProgressiveResourceList.vue");
+  return _sfc_setup$2v ? _sfc_setup$2v(props, ctx) : void 0;
+};
+const ProgressiveResourceList = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2v, [["__scopeId", "data-v-83df5fe9"]]), { __name: "StudioGenerateProgressiveResourceList" });
+const _sfc_main$2u = /* @__PURE__ */ defineComponent({
   __name: "StyleChain",
   __ssrInlineRender: true,
   props: {
@@ -13320,65 +12940,189 @@ const _sfc_main$2p = /* @__PURE__ */ defineComponent({
   setup(__props, { emit: __emit }) {
     const advancedStyles = useAdvancedStylesStore();
     const { t } = useAsteriaI18n();
-    const props = __props;
+    const emit = __emit;
     const draggedStyleChainIndex = ref(null);
     const styleChainDropTarget = ref(null);
-    const visibleStyles = computed(() => props.compact ? advancedStyles.activeChain.slice(0, 3) : advancedStyles.activeChain);
-    const hiddenStyleCount = computed(() => Math.max(0, advancedStyles.activeChain.length - visibleStyles.value.length));
+    const startStyleChainDrag = (index, event) => {
+      draggedStyleChainIndex.value = index;
+      styleChainDropTarget.value = null;
+      event.dataTransfer?.setData("text/plain", String(index));
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+      }
+    };
+    const updateStyleChainDropTarget = (index, event) => {
+      if (draggedStyleChainIndex.value === null) {
+        return;
+      }
+      const target = event.currentTarget;
+      if (!target) {
+        return;
+      }
+      const rect = target.getBoundingClientRect();
+      const position = event.clientY < rect.top + rect.height / 2 ? "before" : "after";
+      styleChainDropTarget.value = { index, position };
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move";
+      }
+    };
+    const dropStyleChainItem = (index, event) => {
+      const rawIndex = event.dataTransfer?.getData("text/plain");
+      const fromIndex = rawIndex ? Number(rawIndex) : draggedStyleChainIndex.value;
+      if (Number.isInteger(fromIndex)) {
+        const dropTarget = styleChainDropTarget.value;
+        const requestedIndex = dropTarget?.index === index && dropTarget.position === "after" ? index + 1 : index;
+        const toIndex = Number(fromIndex) < requestedIndex ? requestedIndex - 1 : requestedIndex;
+        advancedStyles.moveChainItemTo(Number(fromIndex), toIndex);
+      }
+      draggedStyleChainIndex.value = null;
+      styleChainDropTarget.value = null;
+    };
+    const endStyleChainDrag = () => {
+      draggedStyleChainIndex.value = null;
+      styleChainDropTarget.value = null;
+    };
     return (_ctx, _push, _parent, _attrs) => {
       const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
       _push(`<div${ssrRenderAttrs(mergeProps({
-        class: "style-chain",
+        class: ["style-chain", { "style-chain--compact": __props.compact }],
         "aria-label": unref(t)("styleChain.aria")
-      }, _attrs))}><div class="style-chain__header"><span class="style-chain__label">${ssrInterpolate(unref(t)("styleChain.activeChain"))}</span><div class="style-chain__actions"><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).activeChain.length) ? " disabled" : ""}>${ssrInterpolate(unref(t)("styleChain.clear"))}</button><button class="icon-button" type="button">${ssrInterpolate(unref(t)("styleChain.manage"))}</button></div></div>`);
-      if (unref(advancedStyles).activeChain.length) {
-        _push(`<div class="style-chain__list"><!--[-->`);
-        ssrRenderList(unref(visibleStyles), (style, index) => {
-          _push(`<article class="${ssrRenderClass([{
-            "style-chain__item--dragging": unref(draggedStyleChainIndex) === index,
-            "style-chain__item--drop-before": unref(styleChainDropTarget)?.index === index && unref(styleChainDropTarget).position === "before",
-            "style-chain__item--drop-after": unref(styleChainDropTarget)?.index === index && unref(styleChainDropTarget).position === "after"
-          }, "style-chain__item"])}" draggable="true"><span class="style-chain__drag" aria-hidden="true">::</span><b>${ssrInterpolate(index + 1)}</b><span class="style-chain__text"><strong>${ssrInterpolate(style.name)}</strong><small>${ssrInterpolate(style.group)}`);
-          if (style.source_type === "group-random") {
-            _push(`<!--[--> / ${ssrInterpolate(unref(t)("styleChain.random"))}<!--]-->`);
-          } else {
-            _push(`<!---->`);
-          }
-          _push(`</small></span><div class="style-chain__item-actions"><button${ssrRenderAttrs(mergeProps({
-            class: "style-chain__action",
-            type: "button",
-            disabled: index === 0
-          }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("styleChain.moveUp"))))}>↑</button><button${ssrRenderAttrs(mergeProps({
-            class: "style-chain__action",
-            type: "button",
-            disabled: index === unref(advancedStyles).activeChain.length - 1
-          }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("styleChain.moveDown"))))}>↓</button><button${ssrRenderAttrs(mergeProps({
-            class: "style-chain__action style-chain__action--remove destructive-button",
-            type: "button"
-          }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("styleChain.removeStyle"))))}>x</button></div></article>`);
-        });
-        _push(`<!--]-->`);
-        if (unref(hiddenStyleCount)) {
-          _push(`<button class="style-chain__more" type="button">${ssrInterpolate(unref(t)("styleChain.more", { count: unref(hiddenStyleCount) }))}</button>`);
-        } else {
-          _push(`<!---->`);
-        }
-        _push(`</div>`);
+      }, _attrs))} data-v-67132c72>`);
+      if (!__props.compact) {
+        _push(`<div class="style-chain__header" data-v-67132c72><span class="style-chain__label" data-v-67132c72>${ssrInterpolate(unref(t)("styleChain.activeChain"))}</span><div class="style-chain__actions" data-v-67132c72><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).activeChain.length) ? " disabled" : ""} data-v-67132c72>${ssrInterpolate(unref(t)("styleChain.clear"))}</button><button class="icon-button" type="button" data-v-67132c72>${ssrInterpolate(unref(t)("styleChain.manage"))}</button></div></div>`);
       } else {
-        _push(`<span class="muted">${ssrInterpolate(unref(t)("styleChain.noActiveStyles"))}</span>`);
+        _push(`<!---->`);
+      }
+      if (unref(advancedStyles).activeChain.length) {
+        _push(ssrRenderComponent(ProgressiveResourceList, {
+          items: unref(advancedStyles).activeChain,
+          initial: 3,
+          compact: __props.compact,
+          inline: __props.compact,
+          "item-key": (style, index) => `${style.id}-${index}`
+        }, {
+          default: withCtx(({ item: style, index }, _push2, _parent2, _scopeId) => {
+            if (_push2) {
+              if (__props.compact) {
+                _push2(`<button${ssrRenderAttrs(mergeProps({
+                  type: "button",
+                  class: "style-chain__chip"
+                }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, `${index + 1}. ${style.name}`)))} data-v-67132c72${_scopeId}><b data-v-67132c72${_scopeId}>${ssrInterpolate(index + 1)}</b><span data-v-67132c72${_scopeId}>${ssrInterpolate(style.name)}</span></button>`);
+              } else {
+                _push2(`<article class="${ssrRenderClass([{
+                  "style-chain__item--dragging": unref(draggedStyleChainIndex) === index,
+                  "style-chain__item--drop-before": unref(styleChainDropTarget)?.index === index && unref(styleChainDropTarget).position === "before",
+                  "style-chain__item--drop-after": unref(styleChainDropTarget)?.index === index && unref(styleChainDropTarget).position === "after"
+                }, "style-chain__item"])}" draggable="true" data-v-67132c72${_scopeId}><span class="style-chain__drag" aria-hidden="true" data-v-67132c72${_scopeId}>::</span><b data-v-67132c72${_scopeId}>${ssrInterpolate(index + 1)}</b><span class="style-chain__text" data-v-67132c72${_scopeId}><strong data-v-67132c72${_scopeId}>${ssrInterpolate(style.name)}</strong><small data-v-67132c72${_scopeId}>${ssrInterpolate(style.group)}`);
+                if (style.source_type === "group-random") {
+                  _push2(`<!--[--> / ${ssrInterpolate(unref(t)("styleChain.random"))}<!--]-->`);
+                } else {
+                  _push2(`<!---->`);
+                }
+                _push2(`</small></span><div class="style-chain__item-actions" data-v-67132c72${_scopeId}><button${ssrRenderAttrs(mergeProps({
+                  class: "style-chain__action",
+                  type: "button",
+                  disabled: index === 0
+                }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("styleChain.moveUp"))))} data-v-67132c72${_scopeId}>↑</button><button${ssrRenderAttrs(mergeProps({
+                  class: "style-chain__action",
+                  type: "button",
+                  disabled: index === unref(advancedStyles).activeChain.length - 1
+                }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("styleChain.moveDown"))))} data-v-67132c72${_scopeId}>↓</button><button${ssrRenderAttrs(mergeProps({
+                  class: "style-chain__action style-chain__action--remove destructive-button",
+                  type: "button"
+                }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("styleChain.removeStyle"))))} data-v-67132c72${_scopeId}>x</button></div></article>`);
+              }
+            } else {
+              return [
+                __props.compact ? withDirectives((openBlock(), createBlock("button", {
+                  key: 0,
+                  type: "button",
+                  class: "style-chain__chip",
+                  onClick: ($event) => emit("open-details")
+                }, [
+                  createVNode("b", null, toDisplayString(index + 1), 1),
+                  createVNode("span", null, toDisplayString(style.name), 1)
+                ], 8, ["onClick"])), [
+                  [_directive_asteria_tooltip, `${index + 1}. ${style.name}`]
+                ]) : (openBlock(), createBlock("article", {
+                  key: 1,
+                  class: ["style-chain__item", {
+                    "style-chain__item--dragging": unref(draggedStyleChainIndex) === index,
+                    "style-chain__item--drop-before": unref(styleChainDropTarget)?.index === index && unref(styleChainDropTarget).position === "before",
+                    "style-chain__item--drop-after": unref(styleChainDropTarget)?.index === index && unref(styleChainDropTarget).position === "after"
+                  }],
+                  draggable: "true",
+                  onDragstart: ($event) => startStyleChainDrag(index, $event),
+                  onDragover: withModifiers(($event) => updateStyleChainDropTarget(index, $event), ["prevent"]),
+                  onDrop: withModifiers(($event) => dropStyleChainItem(index, $event), ["prevent"]),
+                  onDragend: endStyleChainDrag
+                }, [
+                  createVNode("span", {
+                    class: "style-chain__drag",
+                    "aria-hidden": "true"
+                  }, "::"),
+                  createVNode("b", null, toDisplayString(index + 1), 1),
+                  createVNode("span", { class: "style-chain__text" }, [
+                    createVNode("strong", null, toDisplayString(style.name), 1),
+                    createVNode("small", null, [
+                      createTextVNode(toDisplayString(style.group), 1),
+                      style.source_type === "group-random" ? (openBlock(), createBlock(Fragment, { key: 0 }, [
+                        createTextVNode(" / " + toDisplayString(unref(t)("styleChain.random")), 1)
+                      ], 64)) : createCommentVNode("", true)
+                    ])
+                  ]),
+                  createVNode("div", { class: "style-chain__item-actions" }, [
+                    withDirectives((openBlock(), createBlock("button", {
+                      class: "style-chain__action",
+                      type: "button",
+                      disabled: index === 0,
+                      onClick: ($event) => unref(advancedStyles).moveChainItem(index, -1)
+                    }, [
+                      createTextVNode("↑")
+                    ], 8, ["disabled", "onClick"])), [
+                      [_directive_asteria_tooltip, unref(t)("styleChain.moveUp")]
+                    ]),
+                    withDirectives((openBlock(), createBlock("button", {
+                      class: "style-chain__action",
+                      type: "button",
+                      disabled: index === unref(advancedStyles).activeChain.length - 1,
+                      onClick: ($event) => unref(advancedStyles).moveChainItem(index, 1)
+                    }, [
+                      createTextVNode("↓")
+                    ], 8, ["disabled", "onClick"])), [
+                      [_directive_asteria_tooltip, unref(t)("styleChain.moveDown")]
+                    ]),
+                    withDirectives((openBlock(), createBlock("button", {
+                      class: "style-chain__action style-chain__action--remove destructive-button",
+                      type: "button",
+                      onClick: ($event) => unref(advancedStyles).removeFromChain(index)
+                    }, [
+                      createTextVNode("x")
+                    ], 8, ["onClick"])), [
+                      [_directive_asteria_tooltip, unref(t)("styleChain.removeStyle")]
+                    ])
+                  ])
+                ], 42, ["onDragstart", "onDragover", "onDrop"]))
+              ];
+            }
+          }),
+          _: 1
+        }, _parent));
+      } else {
+        _push(`<span class="muted" data-v-67132c72>${ssrInterpolate(unref(t)("styleChain.noActiveStyles"))}</span>`);
       }
       _push(`</div>`);
     };
   }
 });
-const _sfc_setup$2p = _sfc_main$2p.setup;
-_sfc_main$2p.setup = (props, ctx) => {
+const _sfc_setup$2u = _sfc_main$2u.setup;
+_sfc_main$2u.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StyleChain.vue");
-  return _sfc_setup$2p ? _sfc_setup$2p(props, ctx) : void 0;
+  return _sfc_setup$2u ? _sfc_setup$2u(props, ctx) : void 0;
 };
-const StyleChain = Object.assign(_sfc_main$2p, { __name: "StudioStyleChain" });
-const _sfc_main$2o = /* @__PURE__ */ defineComponent({
+const StyleChain = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2u, [["__scopeId", "data-v-67132c72"]]), { __name: "StudioStyleChain" });
+const _sfc_main$2t = /* @__PURE__ */ defineComponent({
   __name: "AdvancedStylesPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -13467,118 +13211,14 @@ const _sfc_main$2o = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2o = _sfc_main$2o.setup;
-_sfc_main$2o.setup = (props, ctx) => {
+const _sfc_setup$2t = _sfc_main$2t.setup;
+_sfc_main$2t.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AdvancedStylesPanel.vue");
-  return _sfc_setup$2o ? _sfc_setup$2o(props, ctx) : void 0;
+  return _sfc_setup$2t ? _sfc_setup$2t(props, ctx) : void 0;
 };
-const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2o, [["__scopeId", "data-v-c7e97ed2"]]), { __name: "StudioAdvancedStylesPanel" });
-function useGenerationLoraSettings() {
-  const generation = useGenerationStore();
-  const models = useModelDependenciesStore();
-  const assets = computed(() => models.libraryByType("lora"));
-  const rows = computed(() => activePromptLoras(
-    generation.promptRequestSnapshot().prompt,
-    generation.loras,
-    assets.value
-  ));
-  const find = (name) => rows.value.find((row) => row.key === promptLoraIdentity(name, assets.value).key);
-  const saved = (row) => generation.loras.find((lora) => lora.name === row.savedName);
-  const ensureSaved = (row) => {
-    const current = saved(row);
-    if (current) return current;
-    generation.addLora(row.name, promptLoraIdentity(row.name, assets.value).asset);
-    return generation.loras.find((lora) => lora.name === row.name);
-  };
-  const editPrompt = (name, edit) => {
-    const replace = (text) => replacePromptLoraTags(text, name, assets.value, edit);
-    if (generation.promptInputMode === "single") {
-      const next = replace(generation.prompt);
-      if (next !== generation.prompt) {
-        generation.prompt = next;
-        generation.promptStructureRevision += 1;
-        generation.promptPins = null;
-      }
-      return;
-    }
-    const sections = [...generation.promptSections].sort((a, b) => a.order - b.order);
-    const targets = !edit || edit.block === "" ? sections : sections.slice().reverse().filter((section) => hasPromptLoraTag(section.text, name, assets.value)).slice(0, 1);
-    for (const section of targets) {
-      const next = replace(section.text);
-      if (next !== section.text) {
-        generation.setPromptSectionText(section.id, next);
-        generation.promptPins = null;
-      }
-    }
-  };
-  const appendPrompt = (token) => {
-    const append = (text) => text.trimEnd() ? `${text.trimEnd()}, ${token}` : token;
-    if (generation.promptInputMode === "sections") {
-      const section = [...generation.promptSections].sort((a, b) => a.order - b.order)[0];
-      if (section) generation.setPromptSectionText(section.id, append(section.text));
-    } else {
-      generation.prompt = append(generation.prompt);
-      generation.promptStructureRevision += 1;
-    }
-    generation.promptPins = null;
-  };
-  const setWeight = (row, field, value) => {
-    if (!Number.isFinite(value)) return;
-    if (row.fromPrompt) editPrompt(row.name, { [field]: value, fallbackWeight: row.weight });
-    else {
-      const selection = ensureSaved(row);
-      if (selection) selection[field] = value;
-    }
-  };
-  const setBlock = (row, field, value) => {
-    if (row.blockFromPrompt) {
-      const block = value.trim();
-      if (!block) {
-        const selection = saved(row);
-        if (selection) {
-          selection.blockWeight = "";
-          selection.blockWeightPreset = "";
-        }
-      }
-      editPrompt(row.name, { block, fallbackWeight: row.weight });
-    } else {
-      const selection = ensureSaved(row);
-      if (selection) selection[field] = value;
-    }
-  };
-  const setHierarchy = (row, value) => {
-    const selection = ensureSaved(row);
-    if (selection) {
-      selection.hierarchyMode = value;
-      if (row.blockFromPrompt && value === "disabled") {
-        selection.blockWeight = row.blockWeight;
-        selection.blockWeightPreset = row.blockWeightPreset;
-      }
-    }
-    if (row.blockFromPrompt && value === "disabled") editPrompt(row.name, { block: "", fallbackWeight: row.weight });
-  };
-  const setEnabled = (row, enabled) => {
-    const selection = ensureSaved(row);
-    if (selection) {
-      if (!row.savedName) {
-        selection.weight = row.weight;
-        selection.clipWeight = row.clipWeight ?? row.weight;
-        selection.blockWeight = row.blockWeight;
-        selection.blockWeightPreset = row.blockWeightPreset;
-        selection.hierarchyMode = row.hierarchyMode;
-      }
-      selection.enabled = enabled;
-    }
-    if (!enabled && row.fromPrompt) editPrompt(row.name, null);
-  };
-  const remove = (row) => {
-    if (row.savedName) generation.removeLora(row.savedName);
-    if (row.fromPrompt) editPrompt(row.name, null);
-  };
-  return { rows, find, appendPrompt, setWeight, setBlock, setHierarchy, setEnabled, remove };
-}
-const _sfc_main$2n = /* @__PURE__ */ defineComponent({
+const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2t, [["__scopeId", "data-v-c7e97ed2"]]), { __name: "StudioAdvancedStylesPanel" });
+const _sfc_main$2s = /* @__PURE__ */ defineComponent({
   __name: "SelectedLoRAStack",
   __ssrInlineRender: true,
   props: {
@@ -13589,12 +13229,7 @@ const _sfc_main$2n = /* @__PURE__ */ defineComponent({
     const modelDependencies = useModelDependenciesStore();
     const runtime = useRuntimeStore();
     const { t } = useAsteriaI18n();
-    const loraSettings = useGenerationLoraSettings();
-    const props = __props;
-    const compactExpanded = ref(false);
     const selectedLoraDetailName = ref("");
-    const visibleLoras = computed(() => props.compact && !compactExpanded.value ? loraSettings.rows.value.slice(0, 3) : loraSettings.rows.value);
-    const hiddenLoraCount = computed(() => Math.max(0, loraSettings.rows.value.length - visibleLoras.value.length));
     const blocksLoraBlockWeight = computed(() => !loraBlockWeightRuntimeSupport(
       generation.profile,
       runtime.capabilities?.features.lora_block_weight?.available
@@ -13612,7 +13247,7 @@ const _sfc_main$2n = /* @__PURE__ */ defineComponent({
     const selectedLoraItem = (name) => {
       return loraOptions.value.find((item) => item.relative_path === name || item.path === name);
     };
-    const selectedLoraDetail = computed(() => selectedLoraDetailName.value ? loraSettings.find(selectedLoraDetailName.value) : null);
+    const selectedLoraDetail = computed(() => generation.loras.find((lora) => lora.name === selectedLoraDetailName.value) ?? null);
     const selectedLoraDetailItem = computed(() => selectedLoraDetail.value ? selectedLoraItem(selectedLoraDetail.value.name) : void 0);
     const selectedLoraPreviewUrl = (name) => {
       const item = selectedLoraItem(name);
@@ -13627,7 +13262,6 @@ const _sfc_main$2n = /* @__PURE__ */ defineComponent({
       const family = resolveModelAssetFamily(item ?? { relative_path: path });
       return family === "unknown" ? "LoRA" : modelAssetFamilyLabel(family);
     };
-    const savedIndex = (lora) => generation.loras.findIndex((item) => item.name === lora.savedName);
     const selectedLoraTriggerWords = computed(() => {
       return modelAssetTriggerWords(selectedLoraDetailItem.value?.metadata ?? {});
     });
@@ -13635,106 +13269,238 @@ const _sfc_main$2n = /* @__PURE__ */ defineComponent({
       const metadata = selectedLoraDetailItem.value?.metadata ?? {};
       return Object.entries(metadata).filter(([key, value]) => key !== "preview_image_path" && value).slice(0, 12);
     });
+    const openLoraDetail = (name) => {
+      selectedLoraDetailName.value = name;
+    };
+    watchEffect(() => {
+      if (!blocksLoraBlockWeight.value) {
+        return;
+      }
+      for (const lora of generation.loras) {
+        lora.blockWeight = "";
+        lora.block_weight = "";
+        lora.blockWeightPreset = "";
+        lora.block_weight_preset = "";
+        lora.hierarchyMode = "chain";
+        lora.hierarchy_mode = "chain";
+      }
+    });
     return (_ctx, _push, _parent, _attrs) => {
       const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
-      _push(`<!--[--><div class="selected-lora-stack"${ssrRenderAttr("aria-label", unref(t)("selectedLora.stackAria"))} data-v-c49d11d9><!--[-->`);
-      ssrRenderList(unref(visibleLoras), (lora, index) => {
-        _push(`<div class="selected-lora" data-v-c49d11d9><span class="selected-lora__order" data-v-c49d11d9>${ssrInterpolate(index + 1)}</span>`);
-        if (selectedLoraPreviewUrl(lora.name)) {
-          _push(`<img class="selected-lora__thumb"${ssrRenderAttr("src", selectedLoraPreviewUrl(lora.name))}${ssrRenderAttr("alt", selectedLoraDisplayName(lora.name))} data-v-c49d11d9>`);
-        } else {
-          _push(`<span class="selected-lora__thumb" data-v-c49d11d9>${ssrInterpolate(selectedLoraDisplayName(lora.name).slice(0, 2).toUpperCase())}</span>`);
-        }
-        _push(`<span class="selected-lora__name" data-v-c49d11d9><strong data-v-c49d11d9>${ssrInterpolate(selectedLoraDisplayName(lora.name))}</strong>`);
-        if (lora.fromPrompt) {
-          _push(`<small${ssrRenderAttrs(ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("selectedLora.fromPrompt")))} data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.fromPromptShort"))}</small>`);
-        } else {
-          _push(`<small data-v-c49d11d9>${ssrInterpolate(loraFamilyTag(lora.name))}</small>`);
-        }
-        if (!unref(blocksLoraBlockWeight) && lora.hierarchyMode !== "disabled" && (lora.blockWeight || lora.blockWeightPreset)) {
-          _push(`<small${ssrRenderAttrs(ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, lora.blockWeight || lora.blockWeightPreset))} data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.blockWeight"))}: ${ssrInterpolate(lora.blockWeight || lora.blockWeightPreset)}</small>`);
-        } else {
-          _push(`<!---->`);
-        }
-        _push(`</span><label${ssrRenderAttrs(mergeProps({ class: "selected-lora__enable" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)(lora.fromPrompt ? "selectedLora.disablePromptLora" : "selectedLora.enableLora"))))} data-v-c49d11d9><input${ssrIncludeBooleanAttr(lora.enabled !== false) ? " checked" : ""} type="checkbox"${ssrRenderAttr("aria-label", unref(t)("selectedLora.enableLora"))} data-v-c49d11d9><span data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.on"))}</span></label><label class="selected-lora__weight" data-v-c49d11d9><span data-v-c49d11d9>M</span><input${ssrRenderAttr("value", lora.weight)}${ssrRenderAttr("aria-label", unref(t)("selectedLora.modelWeight"))} type="number" step="any" data-v-c49d11d9></label><div class="selected-lora__actions" data-v-c49d11d9><button${ssrRenderAttrs(mergeProps({
-          class: "selected-lora__action",
-          type: "button",
-          "aria-label": unref(t)("selectedLora.detailSettings")
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("selectedLora.detailSettings"))))} data-v-c49d11d9><svg aria-hidden="true" viewBox="0 0 24 24" data-v-c49d11d9><path d="M9.6 3.2 10 1h4l.4 2.2a9 9 0 0 1 1.6.9L18.1 3 21 5.9 19.9 8a9 9 0 0 1 .9 1.6L23 10v4l-2.2.4a9 9 0 0 1-.9 1.6l1.1 2.1-2.9 2.9-2.1-1.1a9 9 0 0 1-1.6.9L14 23h-4l-.4-2.2a9 9 0 0 1-1.6-.9L5.9 21 3 18.1 4.1 16a9 9 0 0 1-.9-1.6L1 14v-4l2.2-.4A9 9 0 0 1 4.1 8L3 5.9 5.9 3 8 4.1a9 9 0 0 1 1.6-.9ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" data-v-c49d11d9></path></svg></button>`);
-        if (lora.savedName && !lora.fromPrompt) {
-          _push(`<div class="selected-lora__move"${ssrRenderAttr("aria-label", unref(t)("selectedLora.orderControlsAria"))} data-v-c49d11d9><button${ssrRenderAttrs(mergeProps({
-            class: "selected-lora__action",
-            type: "button",
-            "aria-label": unref(t)("selectedLora.moveUp"),
-            disabled: savedIndex(lora) <= 0
-          }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("selectedLora.moveUp"))))} data-v-c49d11d9>↑</button><button${ssrRenderAttrs(mergeProps({
-            class: "selected-lora__action",
-            type: "button",
-            "aria-label": unref(t)("selectedLora.moveDown"),
-            disabled: savedIndex(lora) >= unref(generation).loras.length - 1
-          }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("selectedLora.moveDown"))))} data-v-c49d11d9>↓</button></div>`);
-        } else {
-          _push(`<!---->`);
-        }
-        _push(`<button${ssrRenderAttrs(mergeProps({
-          class: "selected-lora__action selected-lora__action--remove",
-          type: "button",
-          "aria-label": unref(t)("selectedLora.removeLora")
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("selectedLora.removeLora"))))} data-v-c49d11d9><svg aria-hidden="true" viewBox="0 0 24 24" data-v-c49d11d9><path d="m6.7 5.3 5.3 5.3 5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z" data-v-c49d11d9></path></svg></button></div></div>`);
-      });
-      _push(`<!--]-->`);
-      if (unref(hiddenLoraCount)) {
-        _push(`<button class="selected-lora-stack__more" type="button" data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.more", { count: unref(hiddenLoraCount) }))}</button>`);
-      } else {
-        _push(`<!---->`);
-      }
+      _push(`<!--[--><div class="${ssrRenderClass([{ "selected-lora-stack--compact": __props.compact }, "selected-lora-stack"])}"${ssrRenderAttr("aria-label", unref(t)("selectedLora.stackAria"))} data-v-1ae6545d>`);
+      _push(ssrRenderComponent(ProgressiveResourceList, {
+        items: unref(generation).loras,
+        initial: 1,
+        compact: __props.compact,
+        "item-key": (lora) => lora.name
+      }, {
+        default: withCtx(({ item: lora, index }, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(`<div class="selected-lora" data-v-1ae6545d${_scopeId}><span class="selected-lora__order" data-v-1ae6545d${_scopeId}>${ssrInterpolate(index + 1)}</span>`);
+            if (selectedLoraPreviewUrl(lora.name)) {
+              _push2(`<img class="selected-lora__thumb"${ssrRenderAttr("src", selectedLoraPreviewUrl(lora.name))}${ssrRenderAttr("alt", selectedLoraDisplayName(lora.name))} data-v-1ae6545d${_scopeId}>`);
+            } else {
+              _push2(`<span class="selected-lora__thumb" data-v-1ae6545d${_scopeId}>${ssrInterpolate(selectedLoraDisplayName(lora.name).slice(0, 2).toUpperCase())}</span>`);
+            }
+            _push2(`<span class="selected-lora__name" data-v-1ae6545d${_scopeId}><strong${ssrRenderAttrs(ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, selectedLoraDisplayName(lora.name)))} data-v-1ae6545d${_scopeId}>${ssrInterpolate(selectedLoraDisplayName(lora.name))}</strong><small data-v-1ae6545d${_scopeId}>${ssrInterpolate(loraFamilyTag(lora.name))} · CLIP ${ssrInterpolate(lora.clipWeight ?? lora.clip_weight ?? lora.weight)}</small>`);
+            if (lora.blockWeight || lora.block_weight) {
+              _push2(`<small${ssrRenderAttrs(ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, lora.blockWeight || lora.block_weight))} data-v-1ae6545d${_scopeId}>${ssrInterpolate(unref(t)("selectedLora.blockWeight"))}: ${ssrInterpolate(lora.blockWeight || lora.block_weight)}</small>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`</span><label${ssrRenderAttrs(mergeProps({ class: "selected-lora__enable" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("selectedLora.enableLora"))))} data-v-1ae6545d${_scopeId}><input${ssrIncludeBooleanAttr(Array.isArray(lora.enabled) ? ssrLooseContain(lora.enabled, null) : lora.enabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(isBasicNativeImageProfile)(unref(generation).profile)) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("selectedLora.enableLora"))} data-v-1ae6545d${_scopeId}><span data-v-1ae6545d${_scopeId}>${ssrInterpolate(unref(t)("selectedLora.on"))}</span></label><label class="selected-lora__weight" data-v-1ae6545d${_scopeId}><span data-v-1ae6545d${_scopeId}>M</span><input${ssrRenderAttr("value", lora.weight)}${ssrRenderAttr("aria-label", unref(t)("selectedLora.modelWeight"))} type="number" step="0.05" data-v-1ae6545d${_scopeId}></label><div class="selected-lora__actions" data-v-1ae6545d${_scopeId}><button${ssrRenderAttrs(mergeProps({
+              class: "selected-lora__action",
+              type: "button",
+              "aria-label": unref(t)("selectedLora.detailSettings")
+            }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("selectedLora.detailSettings"))))} data-v-1ae6545d${_scopeId}><svg aria-hidden="true" viewBox="0 0 24 24" data-v-1ae6545d${_scopeId}><path d="M9.6 3.2 10 1h4l.4 2.2a9 9 0 0 1 1.6.9L18.1 3 21 5.9 19.9 8a9 9 0 0 1 .9 1.6L23 10v4l-2.2.4a9 9 0 0 1-.9 1.6l1.1 2.1-2.9 2.9-2.1-1.1a9 9 0 0 1-1.6.9L14 23h-4l-.4-2.2a9 9 0 0 1-1.6-.9L5.9 21 3 18.1 4.1 16a9 9 0 0 1-.9-1.6L1 14v-4l2.2-.4A9 9 0 0 1 4.1 8L3 5.9 5.9 3 8 4.1a9 9 0 0 1 1.6-.9ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" data-v-1ae6545d${_scopeId}></path></svg></button>`);
+            if (!__props.compact) {
+              _push2(`<div class="selected-lora__move"${ssrRenderAttr("aria-label", unref(t)("selectedLora.orderControlsAria"))} data-v-1ae6545d${_scopeId}><button${ssrRenderAttrs(mergeProps({
+                class: "selected-lora__action",
+                type: "button",
+                "aria-label": unref(t)("selectedLora.moveUp"),
+                disabled: index === 0
+              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("selectedLora.moveUp"))))} data-v-1ae6545d${_scopeId}>↑</button><button${ssrRenderAttrs(mergeProps({
+                class: "selected-lora__action",
+                type: "button",
+                "aria-label": unref(t)("selectedLora.moveDown"),
+                disabled: index === unref(generation).loras.length - 1
+              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("selectedLora.moveDown"))))} data-v-1ae6545d${_scopeId}>↓</button></div>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            if (!__props.compact) {
+              _push2(`<button${ssrRenderAttrs(mergeProps({
+                class: "selected-lora__action selected-lora__action--remove",
+                type: "button",
+                "aria-label": unref(t)("selectedLora.removeLora")
+              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("selectedLora.removeLora"))))} data-v-1ae6545d${_scopeId}><svg aria-hidden="true" viewBox="0 0 24 24" data-v-1ae6545d${_scopeId}><path d="m6.7 5.3 5.3 5.3 5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z" data-v-1ae6545d${_scopeId}></path></svg></button>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`</div></div>`);
+          } else {
+            return [
+              createVNode("div", { class: "selected-lora" }, [
+                createVNode("span", { class: "selected-lora__order" }, toDisplayString(index + 1), 1),
+                selectedLoraPreviewUrl(lora.name) ? (openBlock(), createBlock("img", {
+                  key: 0,
+                  class: "selected-lora__thumb",
+                  src: selectedLoraPreviewUrl(lora.name),
+                  alt: selectedLoraDisplayName(lora.name)
+                }, null, 8, ["src", "alt"])) : (openBlock(), createBlock("span", {
+                  key: 1,
+                  class: "selected-lora__thumb"
+                }, toDisplayString(selectedLoraDisplayName(lora.name).slice(0, 2).toUpperCase()), 1)),
+                createVNode("span", { class: "selected-lora__name" }, [
+                  withDirectives((openBlock(), createBlock("strong", null, [
+                    createTextVNode(toDisplayString(selectedLoraDisplayName(lora.name)), 1)
+                  ])), [
+                    [_directive_asteria_tooltip, selectedLoraDisplayName(lora.name)]
+                  ]),
+                  createVNode("small", null, toDisplayString(loraFamilyTag(lora.name)) + " · CLIP " + toDisplayString(lora.clipWeight ?? lora.clip_weight ?? lora.weight), 1),
+                  lora.blockWeight || lora.block_weight ? withDirectives((openBlock(), createBlock("small", { key: 0 }, [
+                    createTextVNode(toDisplayString(unref(t)("selectedLora.blockWeight")) + ": " + toDisplayString(lora.blockWeight || lora.block_weight), 1)
+                  ])), [
+                    [_directive_asteria_tooltip, lora.blockWeight || lora.block_weight]
+                  ]) : createCommentVNode("", true)
+                ]),
+                withDirectives((openBlock(), createBlock("label", { class: "selected-lora__enable" }, [
+                  withDirectives(createVNode("input", {
+                    "onUpdate:modelValue": ($event) => lora.enabled = $event,
+                    type: "checkbox",
+                    disabled: unref(isBasicNativeImageProfile)(unref(generation).profile),
+                    "aria-label": unref(t)("selectedLora.enableLora")
+                  }, null, 8, ["onUpdate:modelValue", "disabled", "aria-label"]), [
+                    [vModelCheckbox, lora.enabled]
+                  ]),
+                  createVNode("span", null, toDisplayString(unref(t)("selectedLora.on")), 1)
+                ])), [
+                  [_directive_asteria_tooltip, unref(t)("selectedLora.enableLora")]
+                ]),
+                createVNode("label", { class: "selected-lora__weight" }, [
+                  createVNode("span", null, "M"),
+                  withDirectives(createVNode("input", {
+                    "onUpdate:modelValue": ($event) => lora.weight = $event,
+                    "aria-label": unref(t)("selectedLora.modelWeight"),
+                    type: "number",
+                    step: "0.05"
+                  }, null, 8, ["onUpdate:modelValue", "aria-label"]), [
+                    [
+                      vModelText,
+                      lora.weight,
+                      void 0,
+                      { number: true }
+                    ]
+                  ])
+                ]),
+                createVNode("div", { class: "selected-lora__actions" }, [
+                  withDirectives((openBlock(), createBlock("button", {
+                    class: "selected-lora__action",
+                    type: "button",
+                    "aria-label": unref(t)("selectedLora.detailSettings"),
+                    onClick: ($event) => openLoraDetail(lora.name)
+                  }, [
+                    (openBlock(), createBlock("svg", {
+                      "aria-hidden": "true",
+                      viewBox: "0 0 24 24"
+                    }, [
+                      createVNode("path", { d: "M9.6 3.2 10 1h4l.4 2.2a9 9 0 0 1 1.6.9L18.1 3 21 5.9 19.9 8a9 9 0 0 1 .9 1.6L23 10v4l-2.2.4a9 9 0 0 1-.9 1.6l1.1 2.1-2.9 2.9-2.1-1.1a9 9 0 0 1-1.6.9L14 23h-4l-.4-2.2a9 9 0 0 1-1.6-.9L5.9 21 3 18.1 4.1 16a9 9 0 0 1-.9-1.6L1 14v-4l2.2-.4A9 9 0 0 1 4.1 8L3 5.9 5.9 3 8 4.1a9 9 0 0 1 1.6-.9ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" })
+                    ]))
+                  ], 8, ["aria-label", "onClick"])), [
+                    [_directive_asteria_tooltip, unref(t)("selectedLora.detailSettings")]
+                  ]),
+                  !__props.compact ? (openBlock(), createBlock("div", {
+                    key: 0,
+                    class: "selected-lora__move",
+                    "aria-label": unref(t)("selectedLora.orderControlsAria")
+                  }, [
+                    withDirectives((openBlock(), createBlock("button", {
+                      class: "selected-lora__action",
+                      type: "button",
+                      "aria-label": unref(t)("selectedLora.moveUp"),
+                      disabled: index === 0,
+                      onClick: ($event) => unref(generation).moveLora(lora.name, -1)
+                    }, [
+                      createTextVNode("↑")
+                    ], 8, ["aria-label", "disabled", "onClick"])), [
+                      [_directive_asteria_tooltip, unref(t)("selectedLora.moveUp")]
+                    ]),
+                    withDirectives((openBlock(), createBlock("button", {
+                      class: "selected-lora__action",
+                      type: "button",
+                      "aria-label": unref(t)("selectedLora.moveDown"),
+                      disabled: index === unref(generation).loras.length - 1,
+                      onClick: ($event) => unref(generation).moveLora(lora.name, 1)
+                    }, [
+                      createTextVNode("↓")
+                    ], 8, ["aria-label", "disabled", "onClick"])), [
+                      [_directive_asteria_tooltip, unref(t)("selectedLora.moveDown")]
+                    ])
+                  ], 8, ["aria-label"])) : createCommentVNode("", true),
+                  !__props.compact ? withDirectives((openBlock(), createBlock("button", {
+                    key: 1,
+                    class: "selected-lora__action selected-lora__action--remove",
+                    type: "button",
+                    "aria-label": unref(t)("selectedLora.removeLora"),
+                    onClick: ($event) => unref(generation).removeLora(lora.name)
+                  }, [
+                    (openBlock(), createBlock("svg", {
+                      "aria-hidden": "true",
+                      viewBox: "0 0 24 24"
+                    }, [
+                      createVNode("path", { d: "m6.7 5.3 5.3 5.3 5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z" })
+                    ]))
+                  ], 8, ["aria-label", "onClick"])), [
+                    [_directive_asteria_tooltip, unref(t)("selectedLora.removeLora")]
+                  ]) : createCommentVNode("", true)
+                ])
+              ])
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
       _push(`</div>`);
       if (unref(selectedLoraDetail)) {
-        _push(`<div class="modal-backdrop" role="presentation" data-v-c49d11d9><section class="lora-detail-modal" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("selectedLora.detailSettings"))} data-v-c49d11d9><div class="lora-detail-modal__header" data-v-c49d11d9><span data-v-c49d11d9><strong data-v-c49d11d9>${ssrInterpolate(selectedLoraDisplayName(unref(selectedLoraDetail).name))}</strong><small data-v-c49d11d9>${ssrInterpolate(unref(selectedLoraDetail).name)}</small>`);
-        if (unref(selectedLoraDetail).fromPrompt) {
-          _push(`<small data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.fromPrompt"))}</small>`);
-        } else {
-          _push(`<!---->`);
-        }
-        _push(`</span><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("selectedLora.close"))} data-v-c49d11d9>×</button></div><div class="lora-detail-modal__body" data-v-c49d11d9>`);
+        _push(`<div class="modal-backdrop" role="presentation" data-v-1ae6545d><section class="lora-detail-modal" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("selectedLora.detailSettings"))} data-v-1ae6545d><div class="lora-detail-modal__header" data-v-1ae6545d><span data-v-1ae6545d><strong data-v-1ae6545d>${ssrInterpolate(selectedLoraDisplayName(unref(selectedLoraDetail).name))}</strong><small data-v-1ae6545d>${ssrInterpolate(unref(selectedLoraDetail).name)}</small></span><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("selectedLora.close"))} data-v-1ae6545d>×</button></div><div class="lora-detail-modal__body" data-v-1ae6545d>`);
         if (selectedLoraPreviewUrl(unref(selectedLoraDetail).name)) {
-          _push(`<img class="lora-detail-modal__preview"${ssrRenderAttr("src", selectedLoraPreviewUrl(unref(selectedLoraDetail).name))}${ssrRenderAttr("alt", selectedLoraDisplayName(unref(selectedLoraDetail).name))} data-v-c49d11d9>`);
+          _push(`<img class="lora-detail-modal__preview"${ssrRenderAttr("src", selectedLoraPreviewUrl(unref(selectedLoraDetail).name))}${ssrRenderAttr("alt", selectedLoraDisplayName(unref(selectedLoraDetail).name))} data-v-1ae6545d>`);
         } else {
-          _push(`<div class="lora-detail-modal__preview" data-v-c49d11d9>${ssrInterpolate(selectedLoraDisplayName(unref(selectedLoraDetail).name).slice(0, 2).toUpperCase())}</div>`);
+          _push(`<div class="lora-detail-modal__preview" data-v-1ae6545d>${ssrInterpolate(selectedLoraDisplayName(unref(selectedLoraDetail).name).slice(0, 2).toUpperCase())}</div>`);
         }
-        _push(`<div class="lora-detail-modal__settings" data-v-c49d11d9><label${ssrRenderAttrs(mergeProps({ class: "check-field" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(selectedLoraDetail).fromPrompt ? unref(t)("selectedLora.disablePromptLora") : "")))} data-v-c49d11d9><input${ssrIncludeBooleanAttr(unref(selectedLoraDetail).enabled !== false) ? " checked" : ""} type="checkbox" data-v-c49d11d9><span data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.enableThisLora"))}</span></label><div class="field-grid" data-v-c49d11d9><label class="field" data-v-c49d11d9><span data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.modelWeight"))}</span><input${ssrRenderAttr("value", unref(selectedLoraDetail).weight)} type="number" step="any" data-v-c49d11d9></label><label class="field" data-v-c49d11d9><span data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.clipWeight"))}</span><input${ssrRenderAttr("value", unref(selectedLoraDetail).clipWeight ?? unref(selectedLoraDetail).weight)} type="number" step="any" data-v-c49d11d9></label></div><label class="field" data-v-c49d11d9><span data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.blockWeightHierarchy"))}</span><select${ssrRenderAttr("value", unref(selectedLoraDetail).hierarchyMode)}${ssrIncludeBooleanAttr(unref(blocksLoraBlockWeight) || unref(runtime).loading) ? " disabled" : ""} data-v-c49d11d9><option value="chain" data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.chainSelectedOrder"))}</option><option value="disabled" data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.ignoreBlockWeights"))}</option></select></label>`);
+        _push(`<div class="lora-detail-modal__settings" data-v-1ae6545d>`);
+        if (__props.compact) {
+          _push(`<div class="asset-actions" data-v-1ae6545d><button type="button"${ssrIncludeBooleanAttr(unref(generation).loras.indexOf(unref(selectedLoraDetail)) === 0) ? " disabled" : ""} data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.moveUp"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(generation).loras.indexOf(unref(selectedLoraDetail)) === unref(generation).loras.length - 1) ? " disabled" : ""} data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.moveDown"))}</button></div>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`<label class="check-field" data-v-1ae6545d><input${ssrIncludeBooleanAttr(Array.isArray(unref(selectedLoraDetail).enabled) ? ssrLooseContain(unref(selectedLoraDetail).enabled, null) : unref(selectedLoraDetail).enabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(isBasicNativeImageProfile)(unref(generation).profile)) ? " disabled" : ""} data-v-1ae6545d><span data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.enableThisLora"))}</span></label><div class="field-grid" data-v-1ae6545d><label class="field" data-v-1ae6545d><span data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.modelWeight"))}</span><input${ssrRenderAttr("value", unref(selectedLoraDetail).weight)} type="number" step="0.05" data-v-1ae6545d></label><label class="field" data-v-1ae6545d><span data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.clipWeight"))}</span><input${ssrRenderAttr("value", unref(selectedLoraDetail).clipWeight)} type="number" step="0.05" data-v-1ae6545d></label></div><label class="field" data-v-1ae6545d><span data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.blockWeightHierarchy"))}</span><select${ssrIncludeBooleanAttr(unref(blocksLoraBlockWeight) || unref(runtime).loading) ? " disabled" : ""} data-v-1ae6545d><option value="chain" data-v-1ae6545d${ssrIncludeBooleanAttr(Array.isArray(unref(selectedLoraDetail).hierarchyMode) ? ssrLooseContain(unref(selectedLoraDetail).hierarchyMode, "chain") : ssrLooseEqual(unref(selectedLoraDetail).hierarchyMode, "chain")) ? " selected" : ""}>${ssrInterpolate(unref(t)("selectedLora.chainSelectedOrder"))}</option><option value="disabled" data-v-1ae6545d${ssrIncludeBooleanAttr(Array.isArray(unref(selectedLoraDetail).hierarchyMode) ? ssrLooseContain(unref(selectedLoraDetail).hierarchyMode, "disabled") : ssrLooseEqual(unref(selectedLoraDetail).hierarchyMode, "disabled")) ? " selected" : ""}>${ssrInterpolate(unref(t)("selectedLora.ignoreBlockWeights"))}</option></select></label>`);
         if (unref(blocksLoraBlockWeight)) {
-          _push(`<p class="capability-warning" data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.blockWeightBlocked"))}</p>`);
+          _push(`<p class="capability-warning" data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.blockWeightBlocked"))}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="field-grid" data-v-c49d11d9><label class="field" data-v-c49d11d9><span data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.blockWeightPreset"))}</span><input${ssrRenderAttr("value", unref(selectedLoraDetail).blockWeightPreset)}${ssrRenderAttr("placeholder", unref(t)("selectedLora.blockWeightPresetPlaceholder"))}${ssrIncludeBooleanAttr(unref(blocksLoraBlockWeight) || unref(runtime).loading) ? " disabled" : ""} data-v-c49d11d9></label><label class="field" data-v-c49d11d9><span data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.blockWeight"))}</span><input${ssrRenderAttr("value", unref(selectedLoraDetail).blockWeight)}${ssrRenderAttr("placeholder", unref(t)("selectedLora.blockWeightPlaceholder"))}${ssrIncludeBooleanAttr(unref(blocksLoraBlockWeight) || unref(runtime).loading) ? " disabled" : ""} data-v-c49d11d9></label></div></div></div><section class="lora-detail-modal__section" data-v-c49d11d9><div class="asset-panel__header" data-v-c49d11d9><span data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.triggerWords"))}</span>`);
-        if (!unref(selectedLoraDetail).fromPrompt) {
-          _push(`<button type="button" data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.insertLoraToken"))}</button>`);
-        } else {
-          _push(`<!---->`);
-        }
-        _push(`</div>`);
+        _push(`<div class="field-grid" data-v-1ae6545d><label class="field" data-v-1ae6545d><span data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.blockWeightPreset"))}</span><input${ssrRenderAttr("value", unref(selectedLoraDetail).blockWeightPreset)}${ssrRenderAttr("placeholder", unref(t)("selectedLora.blockWeightPresetPlaceholder"))}${ssrIncludeBooleanAttr(unref(blocksLoraBlockWeight) || unref(runtime).loading) ? " disabled" : ""} data-v-1ae6545d></label><label class="field" data-v-1ae6545d><span data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.blockWeight"))}</span><input${ssrRenderAttr("value", unref(selectedLoraDetail).blockWeight)}${ssrRenderAttr("placeholder", unref(t)("selectedLora.blockWeightPlaceholder"))}${ssrIncludeBooleanAttr(unref(blocksLoraBlockWeight) || unref(runtime).loading) ? " disabled" : ""} data-v-1ae6545d></label></div></div></div><section class="lora-detail-modal__section" data-v-1ae6545d><div class="asset-panel__header" data-v-1ae6545d><span data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.triggerWords"))}</span><button type="button" data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.insertLoraToken"))}</button></div>`);
         if (unref(selectedLoraTriggerWords).length) {
-          _push(`<div class="trigger-word-list" data-v-c49d11d9><!--[-->`);
+          _push(`<div class="trigger-word-list" data-v-1ae6545d><!--[-->`);
           ssrRenderList(unref(selectedLoraTriggerWords), (word) => {
-            _push(`<button class="setting-chip" type="button" data-v-c49d11d9>${ssrInterpolate(word)}</button>`);
+            _push(`<button class="setting-chip" type="button" data-v-1ae6545d>${ssrInterpolate(word)}</button>`);
           });
           _push(`<!--]--></div>`);
         } else {
-          _push(`<small class="muted" data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.noTriggerWords"))}</small>`);
+          _push(`<small class="muted" data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.noTriggerWords"))}</small>`);
         }
         _push(`</section>`);
         if (unref(selectedLoraMetadataRows).length) {
-          _push(`<section class="lora-detail-modal__section" data-v-c49d11d9><span class="modal-section-title" data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.metadata"))}</span><dl class="metadata-list" data-v-c49d11d9><!--[-->`);
+          _push(`<section class="lora-detail-modal__section" data-v-1ae6545d><span class="modal-section-title" data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.metadata"))}</span><dl class="metadata-list" data-v-1ae6545d><!--[-->`);
           ssrRenderList(unref(selectedLoraMetadataRows), ([key, value]) => {
-            _push(`<!--[--><dt data-v-c49d11d9>${ssrInterpolate(key)}</dt><dd data-v-c49d11d9>${ssrInterpolate(value)}</dd><!--]-->`);
+            _push(`<!--[--><dt data-v-1ae6545d>${ssrInterpolate(key)}</dt><dd data-v-1ae6545d>${ssrInterpolate(value)}</dd><!--]-->`);
           });
           _push(`<!--]--></dl></section>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="lora-detail-modal__actions" data-v-c49d11d9><button class="destructive-button" type="button" data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.removeLora"))}</button><button type="button" data-v-c49d11d9>${ssrInterpolate(unref(t)("selectedLora.done"))}</button></div></section></div>`);
+        _push(`<div class="lora-detail-modal__actions" data-v-1ae6545d><button class="destructive-button" type="button" data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.removeLora"))}</button><button type="button" data-v-1ae6545d>${ssrInterpolate(unref(t)("selectedLora.done"))}</button></div></section></div>`);
       } else {
         _push(`<!---->`);
       }
@@ -13742,14 +13508,14 @@ const _sfc_main$2n = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2n = _sfc_main$2n.setup;
-_sfc_main$2n.setup = (props, ctx) => {
+const _sfc_setup$2s = _sfc_main$2s.setup;
+_sfc_main$2s.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/SelectedLoRAStack.vue");
-  return _sfc_setup$2n ? _sfc_setup$2n(props, ctx) : void 0;
+  return _sfc_setup$2s ? _sfc_setup$2s(props, ctx) : void 0;
 };
-const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2n, [["__scopeId", "data-v-c49d11d9"]]), { __name: "StudioSelectedLoRAStack" });
-const _sfc_main$2m = /* @__PURE__ */ defineComponent({
+const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2s, [["__scopeId", "data-v-1ae6545d"]]), { __name: "StudioSelectedLoRAStack" });
+const _sfc_main$2r = /* @__PURE__ */ defineComponent({
   __name: "LoRABrowser",
   __ssrInlineRender: true,
   props: {
@@ -13757,9 +13523,9 @@ const _sfc_main$2m = /* @__PURE__ */ defineComponent({
   },
   setup(__props) {
     const generation = useGenerationStore();
+    const basicNativeProfile = computed(() => isBasicNativeImageProfile(generation.profile));
     const modelDependencies = useModelDependenciesStore();
     const { t } = useAsteriaI18n();
-    const loraSettings = useGenerationLoraSettings();
     const props = __props;
     const selectedLoraPath = ref("");
     const selectedLoraDraftWeight = ref(1);
@@ -13787,19 +13553,18 @@ const _sfc_main$2m = /* @__PURE__ */ defineComponent({
       ].some((value) => value.toLowerCase().includes(query)));
     });
     const selectedLoraItem = computed(() => loraOptions.value.find((item) => item.relative_path === selectedLoraPath.value || item.path === selectedLoraPath.value) ?? null);
-    const selectedLoraDetail = computed(() => selectedLoraPath.value ? loraSettings.find(selectedLoraPath.value) : null);
+    const selectedLoraDetail = computed(() => generation.loras.find((lora) => lora.name === selectedLoraPath.value) ?? null);
     const selectedLoraWeight = computed({
       get: () => selectedLoraDetail.value?.weight ?? selectedLoraDraftWeight.value,
       set: (value) => {
-        if (!Number.isFinite(value)) return;
-        if (selectedLoraDetail.value) loraSettings.setWeight(selectedLoraDetail.value, "weight", value);
+        if (selectedLoraDetail.value) selectedLoraDetail.value.weight = value;
         else selectedLoraDraftWeight.value = value;
       }
     });
     const selectedLoraEnabled = computed({
       get: () => selectedLoraDetail.value?.enabled ?? selectedLoraDraftEnabled.value,
       set: (value) => {
-        if (selectedLoraDetail.value) loraSettings.setEnabled(selectedLoraDetail.value, value);
+        if (selectedLoraDetail.value) selectedLoraDetail.value.enabled = value;
         else selectedLoraDraftEnabled.value = value;
       }
     });
@@ -13823,53 +13588,47 @@ const _sfc_main$2m = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "asset-panel",
         "aria-label": unref(t)("loraBrowser.aria")
-      }, _attrs))} data-v-d60b04bc><div class="asset-panel__header" data-v-d60b04bc><span data-v-d60b04bc>LoRA <small data-v-d60b04bc>${ssrInterpolate(unref(loraOptions).length)}</small></span></div><div class="lora-workspace" data-v-d60b04bc><div class="lora-browser-column" data-v-d60b04bc><input${ssrRenderAttr("value", unref(loraQuery))}${ssrRenderAttr("aria-label", unref(t)("loraBrowser.search"))}${ssrRenderAttr("placeholder", unref(t)("loraBrowser.searchPlaceholder"))} data-v-d60b04bc><div class="lora-browser"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.browserAria"))} data-v-d60b04bc><!--[-->`);
+      }, _attrs))} data-v-8ecbde85><div class="asset-panel__header" data-v-8ecbde85><span data-v-8ecbde85>LoRA <small data-v-8ecbde85>${ssrInterpolate(unref(loraOptions).length)}</small></span></div><div class="lora-workspace" data-v-8ecbde85><div class="lora-browser-column" data-v-8ecbde85><input${ssrRenderAttr("value", unref(loraQuery))}${ssrRenderAttr("aria-label", unref(t)("loraBrowser.search"))}${ssrRenderAttr("placeholder", unref(t)("loraBrowser.searchPlaceholder"))} data-v-8ecbde85><div class="lora-browser"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.browserAria"))} data-v-8ecbde85><!--[-->`);
       ssrRenderList(unref(filteredLoraOptions), (item) => {
         _push(`<button${ssrRenderAttrs(mergeProps({
           key: item.path,
           class: ["lora-card", { "lora-card--selected": unref(selectedLoraPath) === item.relative_path }],
           type: "button"
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.relative_path)))} data-v-d60b04bc>`);
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.relative_path)))} data-v-8ecbde85>`);
         if (loraPreviewUrl(item)) {
-          _push(`<img class="lora-card__thumb"${ssrRenderAttr("src", loraPreviewUrl(item))}${ssrRenderAttr("alt", loraItemDisplayName(item))} loading="lazy" decoding="async" data-v-d60b04bc>`);
+          _push(`<img class="lora-card__thumb"${ssrRenderAttr("src", loraPreviewUrl(item))}${ssrRenderAttr("alt", loraItemDisplayName(item))} loading="lazy" decoding="async" data-v-8ecbde85>`);
         } else {
-          _push(`<span class="lora-card__thumb" data-v-d60b04bc>${ssrInterpolate(loraItemDisplayName(item).slice(0, 2).toUpperCase())}</span>`);
+          _push(`<span class="lora-card__thumb" data-v-8ecbde85>${ssrInterpolate(loraItemDisplayName(item).slice(0, 2).toUpperCase())}</span>`);
         }
-        _push(`<span class="lora-card__name" data-v-d60b04bc>${ssrInterpolate(loraItemDisplayName(item))}</span><small data-v-d60b04bc>${ssrInterpolate(item.metadata.base_model || loraFamilyTag(item))}</small></button>`);
+        _push(`<span class="lora-card__name" data-v-8ecbde85>${ssrInterpolate(loraItemDisplayName(item))}</span><small data-v-8ecbde85>${ssrInterpolate(item.metadata.base_model || loraFamilyTag(item))}</small></button>`);
       });
       _push(`<!--]-->`);
       if (unref(loraQuery) && !unref(filteredLoraOptions).length) {
-        _push(`<small class="muted" data-v-d60b04bc>${ssrInterpolate(unref(t)("loraBrowser.noMatches"))}</small>`);
+        _push(`<small class="muted" data-v-8ecbde85>${ssrInterpolate(unref(t)("loraBrowser.noMatches"))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</div></div><div class="lora-detail-column" data-v-d60b04bc><select${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectLora"))} data-v-d60b04bc><option value="" data-v-d60b04bc${ssrIncludeBooleanAttr(Array.isArray(unref(selectedLoraPath)) ? ssrLooseContain(unref(selectedLoraPath), "") : ssrLooseEqual(unref(selectedLoraPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("loraBrowser.selectLora"))}</option><!--[-->`);
+      _push(`</div></div><div class="lora-detail-column" data-v-8ecbde85><select${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectLora"))} data-v-8ecbde85><option value="" data-v-8ecbde85${ssrIncludeBooleanAttr(Array.isArray(unref(selectedLoraPath)) ? ssrLooseContain(unref(selectedLoraPath), "") : ssrLooseEqual(unref(selectedLoraPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("loraBrowser.selectLora"))}</option><!--[-->`);
       ssrRenderList(unref(filteredLoraOptions), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-d60b04bc${ssrIncludeBooleanAttr(Array.isArray(unref(selectedLoraPath)) ? ssrLooseContain(unref(selectedLoraPath), item.relative_path) : ssrLooseEqual(unref(selectedLoraPath), item.relative_path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
+        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-8ecbde85${ssrIncludeBooleanAttr(Array.isArray(unref(selectedLoraPath)) ? ssrLooseContain(unref(selectedLoraPath), item.relative_path) : ssrLooseEqual(unref(selectedLoraPath), item.relative_path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
       });
       _push(`<!--]--></select>`);
       if (unref(selectedLoraItem)) {
-        _push(`<aside class="lora-browser-detail"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectedDetails"))} data-v-d60b04bc><div class="lora-browser-detail__heading" data-v-d60b04bc><span data-v-d60b04bc><strong data-v-d60b04bc>${ssrInterpolate(loraItemDisplayName(unref(selectedLoraItem)))}</strong><small data-v-d60b04bc>${ssrInterpolate(unref(selectedLoraItem).relative_path)}</small>`);
-        if (unref(selectedLoraDetail)?.fromPrompt) {
-          _push(`<small data-v-d60b04bc>${ssrInterpolate(unref(t)("selectedLora.fromPrompt"))}</small>`);
-        } else {
-          _push(`<!---->`);
-        }
-        _push(`</span><small class="${ssrRenderClass(`lora-browser-detail__compatibility lora-browser-detail__compatibility--${unref(selectedLoraCompatibility)}`)}" data-v-d60b04bc>${ssrInterpolate(unref(t)(`loraBrowser.compatibility.${unref(selectedLoraCompatibility)}`, { model: unref(selectedLoraCompatibilityModel) }))}</small></div><div class="field-grid" data-v-d60b04bc><label class="field" data-v-d60b04bc><span data-v-d60b04bc>${ssrInterpolate(unref(t)("selectedLora.modelWeight"))}</span><input${ssrRenderAttr("value", unref(selectedLoraWeight))} type="number" step="any" data-v-d60b04bc></label><label${ssrRenderAttrs(mergeProps({ class: "check-field" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(selectedLoraDetail)?.fromPrompt ? unref(t)("selectedLora.disablePromptLora") : "")))} data-v-d60b04bc><input${ssrIncludeBooleanAttr(Array.isArray(unref(selectedLoraEnabled)) ? ssrLooseContain(unref(selectedLoraEnabled), null) : unref(selectedLoraEnabled)) ? " checked" : ""} type="checkbox" data-v-d60b04bc><span data-v-d60b04bc>${ssrInterpolate(unref(t)("selectedLora.enableThisLora"))}</span></label></div><section data-v-d60b04bc><small data-v-d60b04bc>${ssrInterpolate(unref(t)("selectedLora.triggerWords"))}</small>`);
+        _push(`<aside class="lora-browser-detail"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectedDetails"))} data-v-8ecbde85><div class="lora-browser-detail__heading" data-v-8ecbde85><span data-v-8ecbde85><strong data-v-8ecbde85>${ssrInterpolate(loraItemDisplayName(unref(selectedLoraItem)))}</strong><small data-v-8ecbde85>${ssrInterpolate(unref(selectedLoraItem).relative_path)}</small></span><small class="${ssrRenderClass(`lora-browser-detail__compatibility lora-browser-detail__compatibility--${unref(selectedLoraCompatibility)}`)}" data-v-8ecbde85>${ssrInterpolate(unref(t)(`loraBrowser.compatibility.${unref(selectedLoraCompatibility)}`, { model: unref(selectedLoraCompatibilityModel) }))}</small></div><div class="field-grid" data-v-8ecbde85><label class="field" data-v-8ecbde85><span data-v-8ecbde85>${ssrInterpolate(unref(t)("selectedLora.modelWeight"))}</span><input${ssrRenderAttr("value", unref(selectedLoraWeight))} type="number" step="0.05" data-v-8ecbde85></label><label class="check-field" data-v-8ecbde85><input${ssrIncludeBooleanAttr(Array.isArray(unref(selectedLoraEnabled)) ? ssrLooseContain(unref(selectedLoraEnabled), null) : unref(selectedLoraEnabled)) ? " checked" : ""} type="checkbox" data-v-8ecbde85><span data-v-8ecbde85>${ssrInterpolate(unref(t)("selectedLora.enableThisLora"))}</span></label></div><section data-v-8ecbde85><small data-v-8ecbde85>${ssrInterpolate(unref(t)("selectedLora.triggerWords"))}</small>`);
         if (unref(selectedLoraTriggerWords).length) {
-          _push(`<div class="trigger-word-list" data-v-d60b04bc><!--[-->`);
+          _push(`<div class="trigger-word-list" data-v-8ecbde85><!--[-->`);
           ssrRenderList(unref(selectedLoraTriggerWords), (word) => {
-            _push(`<button class="setting-chip" type="button" data-v-d60b04bc>${ssrInterpolate(word)}</button>`);
+            _push(`<button class="setting-chip" type="button" data-v-8ecbde85>${ssrInterpolate(word)}</button>`);
           });
           _push(`<!--]--></div>`);
         } else {
-          _push(`<small class="muted" data-v-d60b04bc>${ssrInterpolate(unref(t)("selectedLora.noTriggerWords"))}</small>`);
+          _push(`<small class="muted" data-v-8ecbde85>${ssrInterpolate(unref(t)("selectedLora.noTriggerWords"))}</small>`);
         }
-        _push(`</section><div class="asset-actions" data-v-d60b04bc>`);
+        _push(`</section><div class="asset-actions" data-v-8ecbde85>`);
         if (!unref(selectedLoraDetail)) {
-          _push(`<button type="button" data-v-d60b04bc>${ssrInterpolate(unref(t)("loraBrowser.addSelected"))}</button>`);
+          _push(`<button type="button"${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-8ecbde85>${ssrInterpolate(unref(t)("loraBrowser.addSelected"))}</button>`);
         } else {
-          _push(`<button class="destructive-button" type="button" data-v-d60b04bc>${ssrInterpolate(unref(t)("selectedLora.removeLora"))}</button>`);
+          _push(`<button class="destructive-button" type="button" data-v-8ecbde85>${ssrInterpolate(unref(t)("selectedLora.removeLora"))}</button>`);
         }
         _push(`</div></aside>`);
       } else {
@@ -13884,14 +13643,14 @@ const _sfc_main$2m = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2m = _sfc_main$2m.setup;
-_sfc_main$2m.setup = (props, ctx) => {
+const _sfc_setup$2r = _sfc_main$2r.setup;
+_sfc_main$2r.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/LoRABrowser.vue");
-  return _sfc_setup$2m ? _sfc_setup$2m(props, ctx) : void 0;
+  return _sfc_setup$2r ? _sfc_setup$2r(props, ctx) : void 0;
 };
-const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2m, [["__scopeId", "data-v-d60b04bc"]]), { __name: "StudioLoRABrowser" });
-const _sfc_main$2l = /* @__PURE__ */ defineComponent({
+const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2r, [["__scopeId", "data-v-8ecbde85"]]), { __name: "StudioLoRABrowser" });
+const _sfc_main$2q = /* @__PURE__ */ defineComponent({
   __name: "PromptAssetsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -13901,6 +13660,12 @@ const _sfc_main$2l = /* @__PURE__ */ defineComponent({
   emits: ["close", "select-tab"],
   setup(__props, { emit: __emit }) {
     const props = __props;
+    const dialog = ref(null);
+    const synchronize = () => {
+      if (props.open && !dialog.value?.open) dialog.value?.showModal();
+      else if (!props.open && dialog.value?.open) dialog.value.close();
+    };
+    watch(() => props.open, synchronize, { flush: "post" });
     const { t } = useAsteriaI18n();
     const tabs = computed(() => [
       { id: "advanced-styles", label: t("promptAssets.tabs.advancedStyles") },
@@ -13913,45 +13678,40 @@ const _sfc_main$2l = /* @__PURE__ */ defineComponent({
       { id: "semantic-review", label: t("promptWorkshop.tab.review") }
     ]);
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<aside${ssrRenderAttrs(mergeProps({
-        class: "prompt-assets-drawer",
-        role: "dialog",
-        "aria-modal": "false",
-        "aria-label": unref(t)("promptAssets.drawerAria")
-      }, _attrs, {
-        style: __props.open ? null : { display: "none" }
-      }))} data-v-4c767174><header class="prompt-assets-drawer__header" data-v-4c767174><div data-v-4c767174><strong data-v-4c767174>${ssrInterpolate(unref(t)("promptAssets.drawerTitle"))}</strong><small data-v-4c767174>${ssrInterpolate(unref(t)("promptAssets.drawerHelp"))}</small></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("promptAssets.close"))} data-v-4c767174>×</button></header><div class="prompt-assets-drawer__workspace" data-v-4c767174><nav class="prompt-assets-drawer__tabs"${ssrRenderAttr("aria-label", unref(t)("promptAssets.tabsAria"))} data-v-4c767174><!--[-->`);
-      ssrRenderList(unref(tabs), (tab) => {
-        _push(`<button type="button" class="${ssrRenderClass({ "is-active": props.activeTab === tab.id })}" data-v-4c767174>${ssrInterpolate(tab.label)}</button>`);
-      });
-      _push(`<!--]--></nav><div class="prompt-assets-drawer__content" data-v-4c767174><section id="prompt-assets-panel-advanced-styles" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "advanced-styles" ? null : { display: "none" })}" data-v-4c767174>`);
-      ssrRenderSlot(_ctx.$slots, "advanced-styles", {}, null, _push, _parent);
-      _push(`</section><section id="prompt-assets-panel-lora" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "lora" ? null : { display: "none" })}" data-v-4c767174>`);
-      ssrRenderSlot(_ctx.$slots, "lora", {}, null, _push, _parent);
-      _push(`</section><section id="prompt-assets-panel-wildcards" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "wildcards" ? null : { display: "none" })}" data-v-4c767174>`);
-      ssrRenderSlot(_ctx.$slots, "wildcards", {}, null, _push, _parent);
-      _push(`</section><section id="prompt-assets-panel-embeddings" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "embeddings" ? null : { display: "none" })}" data-v-4c767174>`);
-      ssrRenderSlot(_ctx.$slots, "embeddings", {}, null, _push, _parent);
-      _push(`</section><section id="prompt-assets-panel-prompt-assist" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "prompt-assist" ? null : { display: "none" })}" data-v-4c767174>`);
-      ssrRenderSlot(_ctx.$slots, "prompt-assist", {}, null, _push, _parent);
-      _push(`</section><section id="prompt-assets-panel-scene" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "scene" ? null : { display: "none" })}" data-v-4c767174>`);
-      ssrRenderSlot(_ctx.$slots, "scene", {}, null, _push, _parent);
-      _push(`</section><section id="prompt-assets-panel-materials" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "materials" ? null : { display: "none" })}" data-v-4c767174>`);
-      ssrRenderSlot(_ctx.$slots, "materials", {}, null, _push, _parent);
-      _push(`</section><section id="prompt-assets-panel-semantic-review" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "semantic-review" ? null : { display: "none" })}" data-v-4c767174>`);
-      ssrRenderSlot(_ctx.$slots, "semantic-review", {}, null, _push, _parent);
-      _push(`</section></div></div></aside>`);
+      ssrRenderTeleport(_push, (_push2) => {
+        _push2(`<dialog class="prompt-assets-drawer"${ssrRenderAttr("aria-label", unref(t)("promptAssets.drawerAria"))} data-v-af30c1ba><header class="prompt-assets-drawer__header" data-v-af30c1ba><div data-v-af30c1ba><strong data-v-af30c1ba>${ssrInterpolate(unref(t)("promptAssets.drawerTitle"))}</strong><small data-v-af30c1ba>${ssrInterpolate(unref(t)("promptAssets.drawerHelp"))}</small></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("promptAssets.close"))} data-v-af30c1ba>×</button></header><div class="prompt-assets-drawer__workspace" data-v-af30c1ba><nav class="prompt-assets-drawer__tabs"${ssrRenderAttr("aria-label", unref(t)("promptAssets.tabsAria"))} data-v-af30c1ba><!--[-->`);
+        ssrRenderList(unref(tabs), (tab) => {
+          _push2(`<button type="button" class="${ssrRenderClass({ "is-active": props.activeTab === tab.id })}" data-v-af30c1ba>${ssrInterpolate(tab.label)}</button>`);
+        });
+        _push2(`<!--]--></nav><div class="prompt-assets-drawer__content" data-v-af30c1ba><section id="prompt-assets-panel-advanced-styles" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "advanced-styles" ? null : { display: "none" })}" data-v-af30c1ba>`);
+        ssrRenderSlot(_ctx.$slots, "advanced-styles", {}, null, _push2, _parent);
+        _push2(`</section><section id="prompt-assets-panel-lora" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "lora" ? null : { display: "none" })}" data-v-af30c1ba>`);
+        ssrRenderSlot(_ctx.$slots, "lora", {}, null, _push2, _parent);
+        _push2(`</section><section id="prompt-assets-panel-wildcards" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "wildcards" ? null : { display: "none" })}" data-v-af30c1ba>`);
+        ssrRenderSlot(_ctx.$slots, "wildcards", {}, null, _push2, _parent);
+        _push2(`</section><section id="prompt-assets-panel-embeddings" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "embeddings" ? null : { display: "none" })}" data-v-af30c1ba>`);
+        ssrRenderSlot(_ctx.$slots, "embeddings", {}, null, _push2, _parent);
+        _push2(`</section><section id="prompt-assets-panel-prompt-assist" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "prompt-assist" ? null : { display: "none" })}" data-v-af30c1ba>`);
+        ssrRenderSlot(_ctx.$slots, "prompt-assist", {}, null, _push2, _parent);
+        _push2(`</section><section id="prompt-assets-panel-scene" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "scene" ? null : { display: "none" })}" data-v-af30c1ba>`);
+        ssrRenderSlot(_ctx.$slots, "scene", {}, null, _push2, _parent);
+        _push2(`</section><section id="prompt-assets-panel-materials" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "materials" ? null : { display: "none" })}" data-v-af30c1ba>`);
+        ssrRenderSlot(_ctx.$slots, "materials", {}, null, _push2, _parent);
+        _push2(`</section><section id="prompt-assets-panel-semantic-review" class="prompt-assets-drawer__panel" style="${ssrRenderStyle(__props.activeTab === "semantic-review" ? null : { display: "none" })}" data-v-af30c1ba>`);
+        ssrRenderSlot(_ctx.$slots, "semantic-review", {}, null, _push2, _parent);
+        _push2(`</section></div></div></dialog>`);
+      }, "body", false, _parent);
     };
   }
 });
-const _sfc_setup$2l = _sfc_main$2l.setup;
-_sfc_main$2l.setup = (props, ctx) => {
+const _sfc_setup$2q = _sfc_main$2q.setup;
+_sfc_main$2q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptAssetsDrawer.vue");
-  return _sfc_setup$2l ? _sfc_setup$2l(props, ctx) : void 0;
+  return _sfc_setup$2q ? _sfc_setup$2q(props, ctx) : void 0;
 };
-const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2l, [["__scopeId", "data-v-4c767174"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
-const _sfc_main$2k = /* @__PURE__ */ defineComponent({
+const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2q, [["__scopeId", "data-v-af30c1ba"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
+const _sfc_main$2p = /* @__PURE__ */ defineComponent({
   __name: "PromptSectionsEditor",
   __ssrInlineRender: true,
   props: {
@@ -13993,13 +13753,13 @@ const _sfc_main$2k = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2k = _sfc_main$2k.setup;
-_sfc_main$2k.setup = (props, ctx) => {
+const _sfc_setup$2p = _sfc_main$2p.setup;
+_sfc_main$2p.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptSectionsEditor.vue");
-  return _sfc_setup$2k ? _sfc_setup$2k(props, ctx) : void 0;
+  return _sfc_setup$2p ? _sfc_setup$2p(props, ctx) : void 0;
 };
-const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2k, [["__scopeId", "data-v-b5d45062"]]), { __name: "StudioGeneratePromptSectionsEditor" });
+const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2p, [["__scopeId", "data-v-b5d45062"]]), { __name: "StudioGeneratePromptSectionsEditor" });
 const useAppSettingsStore = defineStore("appSettings", {
   state: () => ({
     outputRoot: "",
@@ -14209,7 +13969,7 @@ const usePromptMaterialsStore = defineStore("prompt-materials", {
     }
   }
 });
-const _sfc_main$2j = /* @__PURE__ */ defineComponent({
+const _sfc_main$2o = /* @__PURE__ */ defineComponent({
   __name: "PromptWorkshopPanel",
   __ssrInlineRender: true,
   props: {
@@ -14353,14 +14113,14 @@ const _sfc_main$2j = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2j = _sfc_main$2j.setup;
-_sfc_main$2j.setup = (props, ctx) => {
+const _sfc_setup$2o = _sfc_main$2o.setup;
+_sfc_main$2o.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptWorkshopPanel.vue");
-  return _sfc_setup$2j ? _sfc_setup$2j(props, ctx) : void 0;
+  return _sfc_setup$2o ? _sfc_setup$2o(props, ctx) : void 0;
 };
-const PromptWorkshopPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2j, [["__scopeId", "data-v-b61ec21c"]]), { __name: "StudioGeneratePromptWorkshopPanel" });
-const _sfc_main$2i = /* @__PURE__ */ defineComponent({
+const PromptWorkshopPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2o, [["__scopeId", "data-v-b61ec21c"]]), { __name: "StudioGeneratePromptWorkshopPanel" });
+const _sfc_main$2n = /* @__PURE__ */ defineComponent({
   __name: "PromptMaterialsPanel",
   __ssrInlineRender: true,
   emits: ["scene"],
@@ -14533,17 +14293,164 @@ const _sfc_main$2i = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2i = _sfc_main$2i.setup;
-_sfc_main$2i.setup = (props, ctx) => {
+const _sfc_setup$2n = _sfc_main$2n.setup;
+_sfc_main$2n.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptMaterialsPanel.vue");
-  return _sfc_setup$2i ? _sfc_setup$2i(props, ctx) : void 0;
+  return _sfc_setup$2n ? _sfc_setup$2n(props, ctx) : void 0;
 };
-const PromptMaterialsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2i, [["__scopeId", "data-v-14403795"]]), { __name: "StudioGeneratePromptMaterialsPanel" });
-const _sfc_main$2h = /* @__PURE__ */ defineComponent({
+const PromptMaterialsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2n, [["__scopeId", "data-v-14403795"]]), { __name: "StudioGeneratePromptMaterialsPanel" });
+const modeSourceState = (mode, initImagePath, maskImagePath) => {
+  if (mode === "txt2img") {
+    return "not-required";
+  }
+  if (!initImagePath.trim()) {
+    return "source-required";
+  }
+  if (mode === "img2img") {
+    return "source-ready";
+  }
+  if (!maskImagePath.trim()) {
+    return "mask-required";
+  }
+  return "mask-ready";
+};
+const modeSourceSummaryKey = (state) => ({
+  "not-required": "modeSource.notRequired",
+  "source-required": "modeSource.sourceRequired",
+  "source-ready": "modeSource.sourceReady",
+  "mask-required": "modeSource.maskRequired",
+  "mask-ready": "modeSource.maskReady"
+})[state];
+const modeSourceSummary = (mode, initImagePath, maskImagePath, translate) => `${mode} · ${translate(modeSourceSummaryKey(modeSourceState(mode, initImagePath, maskImagePath)))}`;
+const _sfc_main$2m = /* @__PURE__ */ defineComponent({
+  __name: "AppliedGenerationSummary",
+  __ssrInlineRender: true,
+  setup(__props) {
+    const generation = useGenerationStore();
+    const { t } = useAsteriaI18n();
+    const availableModuleIds = computed(() => generationModuleIdsForProfile(generation.profile));
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<section${ssrRenderAttrs(mergeProps({
+        class: "applied-generation-summary",
+        "aria-label": unref(t)("generationOverview.settings")
+      }, _attrs))} data-v-c3dcf6c2><strong data-v-c3dcf6c2>${ssrInterpolate(unref(t)("generationOverview.settings"))}</strong><dl data-v-c3dcf6c2>`);
+      if (unref(generation).mode !== "txt2img") {
+        _push(`<div data-v-c3dcf6c2><dt data-v-c3dcf6c2>${ssrInterpolate(unref(t)("generationInspector.modeSource"))}</dt><dd data-v-c3dcf6c2>${ssrInterpolate(unref(modeSourceSummary)(unref(generation).mode, unref(generation).initImagePath, unref(generation).maskImagePath, unref(t)))}</dd></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<div data-v-c3dcf6c2><dt data-v-c3dcf6c2>${ssrInterpolate(unref(t)("runtimePane.samplingMethod"))}</dt><dd data-v-c3dcf6c2>${ssrInterpolate(unref(generation).sampler)} · ${ssrInterpolate(unref(generation).scheduler)}</dd></div><div data-v-c3dcf6c2><dt data-v-c3dcf6c2>${ssrInterpolate(unref(t)("runtimePane.samplingSteps"))} / CFG</dt><dd data-v-c3dcf6c2>${ssrInterpolate(unref(generation).steps)} / ${ssrInterpolate(unref(generation).cfgScale)}</dd></div><div data-v-c3dcf6c2><dt data-v-c3dcf6c2>${ssrInterpolate(unref(t)("generationOverview.size"))}</dt><dd data-v-c3dcf6c2>${ssrInterpolate(unref(generation).width)} × ${ssrInterpolate(unref(generation).height)} · ${ssrInterpolate(unref(generation).batchSize)} × ${ssrInterpolate(unref(generation).batchCount)}</dd></div><div data-v-c3dcf6c2><dt data-v-c3dcf6c2>Seed</dt><dd data-v-c3dcf6c2>${ssrInterpolate(unref(generation).seed)}</dd></div></dl><div class="applied-generation-summary__features" data-v-c3dcf6c2><span class="${ssrRenderClass({ "is-enabled": unref(generation).hiresEnabled })}" data-v-c3dcf6c2>Hires.fix `);
+      if (unref(generation).hiresEnabled) {
+        _push(`<!--[-->${ssrInterpolate(unref(generation).hiresScale)}×<!--]-->`);
+      } else {
+        _push(`<!--[-->OFF<!--]-->`);
+      }
+      _push(`</span>`);
+      if (unref(availableModuleIds).includes("detailer")) {
+        _push(`<span class="${ssrRenderClass({ "is-enabled": unref(generation).detailerUnits.some((unit) => unit.enabled) })}" data-v-c3dcf6c2>ADetailer ${ssrInterpolate(unref(generation).detailerUnits.filter((unit) => unit.enabled).length)}</span>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(availableModuleIds).includes("controlnet")) {
+        _push(`<span class="${ssrRenderClass({ "is-enabled": unref(generation).controlNetUnits.some((unit) => unit.enabled) })}" data-v-c3dcf6c2>ControlNet ${ssrInterpolate(unref(generation).controlNetUnits.filter((unit) => unit.enabled).length)}</span>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(availableModuleIds).includes("anima")) {
+        _push(`<span class="${ssrRenderClass({ "is-enabled": unref(generation).animaLLLiteUnits.some((unit) => unit.enabled) })}" data-v-c3dcf6c2>LLLite ${ssrInterpolate(unref(generation).animaLLLiteUnits.filter((unit) => unit.enabled).length)}</span>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div></section>`);
+    };
+  }
+});
+const _sfc_setup$2m = _sfc_main$2m.setup;
+_sfc_main$2m.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/AppliedGenerationSummary.vue");
+  return _sfc_setup$2m ? _sfc_setup$2m(props, ctx) : void 0;
+};
+const AppliedGenerationSummary = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2m, [["__scopeId", "data-v-c3dcf6c2"]]), { __name: "StudioGenerateAppliedGenerationSummary" });
+const _sfc_main$2l = /* @__PURE__ */ defineComponent({
+  __name: "GenerationPresetBar",
+  __ssrInlineRender: true,
+  props: {
+    compact: { type: Boolean }
+  },
+  setup(__props) {
+    const generation = useGenerationStore();
+    const modelDependencies = useModelDependenciesStore();
+    const { t } = useAsteriaI18n();
+    const selectedPresetId = ref("");
+    const presetError = ref("");
+    const presetBusy = ref(false);
+    const modelSelectionReady = computed(() => modelDependencies.selectionReady(generation.profile));
+    const presets = computed(() => generation.studioPresetsByKind.generation ?? generation.studioPresets.filter((preset) => preset.kind === "generation"));
+    const selectedPreset = computed(() => presets.value.find((preset) => preset.id === selectedPresetId.value) ?? null);
+    watch(
+      () => generation.profile,
+      () => {
+        selectedPresetId.value = "";
+        presetError.value = "";
+      }
+    );
+    watch(presets, (items) => {
+      if (selectedPresetId.value && !items.some((preset) => preset.id === selectedPresetId.value)) {
+        selectedPresetId.value = "";
+      }
+    });
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<section${ssrRenderAttrs(mergeProps({
+        class: ["generation-preset-bar", { "generation-preset-bar--compact": __props.compact }],
+        "aria-label": unref(t)("generationPresetBar.aria")
+      }, _attrs))} data-v-63133139><div class="generation-preset-bar__title" data-v-63133139><span data-v-63133139>${ssrInterpolate(unref(t)("generationPresetBar.title"))}</span><small data-v-63133139>${ssrInterpolate(unref(t)("generationPresetBar.help"))}</small></div><label class="field generation-preset-bar__select" data-v-63133139><span data-v-63133139>${ssrInterpolate(unref(t)("generationPresetBar.saved"))}</span><select${ssrIncludeBooleanAttr(unref(presetBusy)) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("generationPresetBar.saved"))} data-v-63133139><option value="" data-v-63133139${ssrIncludeBooleanAttr(Array.isArray(unref(selectedPresetId)) ? ssrLooseContain(unref(selectedPresetId), "") : ssrLooseEqual(unref(selectedPresetId), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("generationPresetBar.select"))}</option><!--[-->`);
+      ssrRenderList(unref(presets), (preset) => {
+        _push(`<option${ssrRenderAttr("value", preset.id)} data-v-63133139${ssrIncludeBooleanAttr(Array.isArray(unref(selectedPresetId)) ? ssrLooseContain(unref(selectedPresetId), preset.id) : ssrLooseEqual(unref(selectedPresetId), preset.id)) ? " selected" : ""}>${ssrInterpolate(preset.name)}</option>`);
+      });
+      _push(`<!--]--></select></label>`);
+      if (__props.compact) {
+        _push(`<button type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(selectedPreset)) ? " disabled" : ""} data-v-63133139>${ssrInterpolate(unref(t)("generationPresetBar.apply"))}</button>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<details${ssrIncludeBooleanAttr(!__props.compact) ? " open" : ""} class="generation-preset-bar__manage" data-v-63133139>`);
+      if (__props.compact) {
+        _push(`<summary data-v-63133139><svg class="generation-preset-bar__disclosure-arrow" viewBox="0 0 12 12" aria-hidden="true" data-v-63133139><path d="m2 4 4 4 4-4" data-v-63133139></path></svg>${ssrInterpolate(unref(t)("generationOverview.managePresets"))}</summary>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<div class="generation-preset-bar__manage-content" data-v-63133139><div class="generation-preset-bar__actions" data-v-63133139>`);
+      if (!__props.compact) {
+        _push(`<button type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(selectedPreset)) ? " disabled" : ""} data-v-63133139>${ssrInterpolate(unref(t)("generationPresetBar.apply"))}</button>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<button type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(selectedPreset) || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-63133139>${ssrInterpolate(unref(t)("generationPresetBar.overwrite"))}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(selectedPreset)) ? " disabled" : ""} data-v-63133139>${ssrInterpolate(unref(t)("generationPresetBar.delete"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(presetBusy)) ? " disabled" : ""} data-v-63133139>${ssrInterpolate(unref(t)("generationPresetBar.reload"))}</button></div><label class="field generation-preset-bar__name" data-v-63133139><span data-v-63133139>${ssrInterpolate(unref(t)("generationPresetBar.name"))}</span><input${ssrRenderAttr("value", unref(generation).studioPresetName)}${ssrIncludeBooleanAttr(unref(presetBusy)) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("generationPresetBar.name"))}${ssrRenderAttr("placeholder", unref(t)("generationPresetBar.namePlaceholder", { profile: unref(generation).profile }))} data-v-63133139></label><button class="generation-preset-bar__save" type="button"${ssrIncludeBooleanAttr(unref(presetBusy) || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-63133139>${ssrInterpolate(unref(t)("generationPresetBar.save"))}</button></div></details>`);
+      if (unref(presetError)) {
+        _push(`<p class="error generation-preset-bar__error" aria-live="assertive" data-v-63133139>${ssrInterpolate(unref(presetError))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</section>`);
+    };
+  }
+});
+const _sfc_setup$2l = _sfc_main$2l.setup;
+_sfc_main$2l.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationPresetBar.vue");
+  return _sfc_setup$2l ? _sfc_setup$2l(props, ctx) : void 0;
+};
+const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2l, [["__scopeId", "data-v-63133139"]]), { __name: "StudioGenerateGenerationPresetBar" });
+const _sfc_main$2k = /* @__PURE__ */ defineComponent({
   __name: "PromptPane",
   __ssrInlineRender: true,
-  emits: ["open-help", "open-image-metadata"],
+  props: {
+    settingsOpen: { type: Boolean }
+  },
+  emits: ["open-help", "open-image-metadata", "toggle-settings"],
   setup(__props, { emit: __emit }) {
     const generation = useGenerationStore();
     const modelDependencies = useModelDependenciesStore();
@@ -14555,6 +14462,10 @@ const _sfc_main$2h = /* @__PURE__ */ defineComponent({
     const selectedQuickLoraPath = ref("");
     const promptAssetsOpen = ref(false);
     const promptAssetsTab = ref("advanced-styles");
+    const openPromptHelp = () => {
+      promptAssetsOpen.value = false;
+      emit("open-help", "ai-agent");
+    };
     const selectedWildcard = ref("");
     const wildcardError = ref("");
     const wildcards = ref([]);
@@ -14758,15 +14669,14 @@ const _sfc_main$2h = /* @__PURE__ */ defineComponent({
       return [...new Set((promptAssist.value?.warnings ?? []).map(promptAssistWarningMessage))];
     });
     const embeddingOptions = computed(() => modelDependencies.libraryByType("embedding"));
-    const { rows: effectiveLoras } = useGenerationLoraSettings();
     const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const activeLoraNames = computed(() => {
-      return effectiveLoras.value.filter((lora) => lora.enabled !== false).map((lora) => lora.name).filter(Boolean);
+      return generation.loras.filter((lora) => lora.enabled !== false).map((lora) => lora.name).filter(Boolean);
     });
     const activePromptAssistProtectedTokens = computed(() => {
       const targetText = promptAssistTarget.value === "negative" ? generation.negativePrompt : editorValue(activePositiveEditorTarget.value);
       const normalizedTargetText = targetText.toLocaleLowerCase("en-US");
-      return resolveActiveLoraProtectedTokens(effectiveLoras.value, loraOptions.value).filter((token) => normalizedTargetText.includes(token.toLocaleLowerCase("en-US")));
+      return resolveActiveLoraProtectedTokens(generation.loras, loraOptions.value).filter((token) => normalizedTargetText.includes(token.toLocaleLowerCase("en-US")));
     });
     const activeEmbeddingNames = computed(() => {
       const names = /* @__PURE__ */ new Set();
@@ -15059,25 +14969,33 @@ ${generation.negativePrompt}`;
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "pane pane-left prompt-composer",
         "aria-label": unref(t)("prompt.editorAria")
-      }, _attrs))} data-v-0b9a6d3f><div class="pane-title" data-v-0b9a6d3f><span data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.title"))}</span><div class="prompt-pane-title-actions" data-v-0b9a6d3f><small data-v-0b9a6d3f>${ssrInterpolate(unref(generation).mode)}</small><button data-image-metadata-picker type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("imageMetadata.chooseImage"))}</button></div></div><div class="prompt-input-mode" role="group"${ssrRenderAttr("aria-label", unref(t)("prompt.inputMode.label"))} data-v-0b9a6d3f><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "single" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "single")} data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.inputMode.single"))}</button><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "sections" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "sections")} data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.inputMode.sections"))}</button></div>`);
+      }, _attrs))} data-v-42f8c4f4>`);
+      _push(ssrRenderComponent(GenerationPresetBar, { compact: "" }, null, _parent));
+      _push(`<div class="prompt-input-mode" role="group"${ssrRenderAttr("aria-label", unref(t)("prompt.inputMode.label"))} data-v-42f8c4f4><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "single" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "single")} data-v-42f8c4f4>${ssrInterpolate(unref(t)("prompt.inputMode.single"))}</button><button type="button" class="${ssrRenderClass({ "prompt-input-mode__option--active": unref(generation).promptInputMode === "sections" })}"${ssrRenderAttr("aria-pressed", unref(generation).promptInputMode === "sections")} data-v-42f8c4f4>${ssrInterpolate(unref(t)("prompt.inputMode.sections"))}</button></div>`);
       if (unref(promptInputNoticeText)) {
-        _push(`<small class="prompt-input-notice" aria-live="polite" data-v-0b9a6d3f>${ssrInterpolate(unref(promptInputNoticeText))}</small>`);
+        _push(`<small class="prompt-input-notice" aria-live="polite" data-v-42f8c4f4>${ssrInterpolate(unref(promptInputNoticeText))}</small>`);
       } else {
         _push(`<!---->`);
       }
+      _push(`<div class="prompt-positive-editor" data-v-42f8c4f4><div class="prompt-editor-heading" data-v-42f8c4f4>`);
       if (unref(generation).promptInputMode === "single") {
-        _push(`<div class="field prompt-primary-editor" data-v-0b9a6d3f><div class="prompt-editor-heading" data-v-0b9a6d3f><label for="generation-prompt" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.prompt"))}</label><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.prompt"))} rows="6" data-v-0b9a6d3f>${ssrInterpolate(unref(generation).prompt)}</textarea></div>`);
+        _push(`<label for="generation-prompt" data-v-42f8c4f4>${ssrInterpolate(unref(t)("prompt.prompt"))}</label>`);
+      } else {
+        _push(`<span data-v-42f8c4f4>${ssrInterpolate(unref(t)("prompt.prompt"))}</span>`);
+      }
+      _push(`<div class="prompt-editor-heading__actions" data-v-42f8c4f4><button data-image-metadata-picker type="button" data-v-42f8c4f4>${ssrInterpolate(unref(t)("imageMetadata.chooseImage"))}</button><button type="button" data-v-42f8c4f4>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div></div>`);
+      if (unref(generation).promptInputMode === "single") {
+        _push(`<div class="field prompt-primary-editor" data-v-42f8c4f4><textarea id="generation-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.prompt"))} rows="6" data-v-42f8c4f4>${ssrInterpolate(unref(generation).prompt)}</textarea></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).promptInputMode === "sections") {
-        _push(`<div class="prompt-primary-editor prompt-primary-editor--sections" data-v-0b9a6d3f>`);
+        _push(`<div class="prompt-primary-editor prompt-primary-editor--sections" data-v-42f8c4f4>`);
         if (unref(promptSectionsEmptyText)) {
-          _push(`<small class="prompt-input-notice" aria-live="polite" data-v-0b9a6d3f>${ssrInterpolate(unref(promptSectionsEmptyText))}</small>`);
+          _push(`<small class="prompt-input-notice" aria-live="polite" data-v-42f8c4f4>${ssrInterpolate(unref(promptSectionsEmptyText))}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="prompt-editor-heading" data-v-0b9a6d3f><span data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.prompt"))}</span><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div>`);
         _push(ssrRenderComponent(PromptSectionsEditor, {
           ref_key: "promptSectionsEditor",
           ref: promptSectionsEditor,
@@ -15094,19 +15012,20 @@ ${generation.negativePrompt}`;
       } else {
         _push(`<!---->`);
       }
+      _push(`</div>`);
       if (unref(supportsNegativePrompt)) {
-        _push(`<div class="field prompt-negative-editor" data-v-0b9a6d3f><div class="prompt-editor-heading" data-v-0b9a6d3f><label for="generation-negative-prompt" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.negative"))}</label><button type="button"${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-negative-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.negative"))}${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} rows="4" data-v-0b9a6d3f>${ssrInterpolate(unref(generation).negativePrompt)}</textarea></div>`);
+        _push(`<div class="field prompt-negative-editor" data-v-42f8c4f4><div class="prompt-editor-heading" data-v-42f8c4f4><label for="generation-negative-prompt" data-v-42f8c4f4>${ssrInterpolate(unref(t)("prompt.negative"))}</label><button type="button"${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} data-v-42f8c4f4>${ssrInterpolate(unref(t)("prompt.notation.open"))}</button></div><textarea id="generation-negative-prompt"${ssrRenderAttr("aria-label", unref(t)("prompt.negative"))}${ssrIncludeBooleanAttr(!unref(supportsNegativePrompt)) ? " disabled" : ""} rows="4" data-v-42f8c4f4>${ssrInterpolate(unref(generation).negativePrompt)}</textarea></div>`);
       } else {
-        _push(`<small class="field-hint" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.negativeFluxGuidance"))}</small>`);
+        _push(`<small class="field-hint" data-v-42f8c4f4>${ssrInterpolate(unref(t)(unref(generation).profile === "krea2" ? "prompt.negativeKreaGuidance" : "prompt.negativeFluxGuidance"))}</small>`);
       }
       if (unref(notationMenuTarget)) {
-        _push(`<section class="prompt-notation-menu"${ssrRenderAttr("aria-label", unref(t)("prompt.notation.menuAria"))} data-v-0b9a6d3f><div class="prompt-notation-menu__header" data-v-0b9a6d3f><strong data-v-0b9a6d3f>${ssrInterpolate(editorTargetLabel(unref(notationMenuTarget)))}</strong><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("common.close"))}</button></div><div class="prompt-notation-menu__actions" data-v-0b9a6d3f><!--[-->`);
+        _push(`<section class="prompt-notation-menu"${ssrRenderAttr("aria-label", unref(t)("prompt.notation.menuAria"))} data-v-42f8c4f4><div class="prompt-notation-menu__header" data-v-42f8c4f4><strong data-v-42f8c4f4>${ssrInterpolate(editorTargetLabel(unref(notationMenuTarget)))}</strong><button type="button" data-v-42f8c4f4>${ssrInterpolate(unref(t)("common.close"))}</button></div><div class="prompt-notation-menu__actions" data-v-42f8c4f4><!--[-->`);
         ssrRenderList(unref(notationActions), (action) => {
-          _push(`<button type="button" data-v-0b9a6d3f>${ssrInterpolate(action.label)}</button>`);
+          _push(`<button type="button" data-v-42f8c4f4>${ssrInterpolate(action.label)}</button>`);
         });
-        _push(`<!--]--></div><small data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.notation.shortcut"))}</small>`);
+        _push(`<!--]--></div><small data-v-42f8c4f4>${ssrInterpolate(unref(t)("prompt.notation.shortcut"))}</small>`);
         if (unref(notationMessage)) {
-          _push(`<small class="prompt-notation-menu__message" aria-live="polite" data-v-0b9a6d3f>${ssrInterpolate(unref(notationMessage))}</small>`);
+          _push(`<small class="prompt-notation-menu__message" aria-live="polite" data-v-42f8c4f4>${ssrInterpolate(unref(notationMessage))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -15115,57 +15034,34 @@ ${generation.negativePrompt}`;
         _push(`<!---->`);
       }
       if (unref(notationDialog)) {
-        _push(`<div class="prompt-notation-dialog-backdrop" role="presentation" data-v-0b9a6d3f><section class="prompt-notation-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)(`prompt.notation.${unref(notationDialog)}`))} data-v-0b9a6d3f><strong data-v-0b9a6d3f>${ssrInterpolate(unref(t)(`prompt.notation.${unref(notationDialog)}`))}</strong>`);
+        _push(`<div class="prompt-notation-dialog-backdrop" role="presentation" data-v-42f8c4f4><section class="prompt-notation-dialog" role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)(`prompt.notation.${unref(notationDialog)}`))} data-v-42f8c4f4><strong data-v-42f8c4f4>${ssrInterpolate(unref(t)(`prompt.notation.${unref(notationDialog)}`))}</strong>`);
         if (unref(notationDialog) === "weight") {
-          _push(`<label class="field" data-v-0b9a6d3f><span data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.notation.targetText"))}</span><input${ssrRenderAttr("value", unref(notationDraft).text)} data-v-0b9a6d3f></label>`);
+          _push(`<label class="field" data-v-42f8c4f4><span data-v-42f8c4f4>${ssrInterpolate(unref(t)("prompt.notation.targetText"))}</span><input${ssrRenderAttr("value", unref(notationDraft).text)} data-v-42f8c4f4></label>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(notationDialog) === "weight") {
-          _push(`<label class="field" data-v-0b9a6d3f><span data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.notation.weightValue"))}</span><input${ssrRenderAttr("value", unref(notationDraft).value)} type="number" step="any" data-v-0b9a6d3f></label>`);
+          _push(`<label class="field" data-v-42f8c4f4><span data-v-42f8c4f4>${ssrInterpolate(unref(t)("prompt.notation.weightValue"))}</span><input${ssrRenderAttr("value", unref(notationDraft).value)} type="number" step="any" data-v-42f8c4f4></label>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="prompt-notation-dialog__actions" data-v-0b9a6d3f><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("common.cancel"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(notationDraftValid)) ? " disabled" : ""} data-v-0b9a6d3f>${ssrInterpolate(unref(t)("common.apply"))}</button></div></section></div>`);
+        _push(`<div class="prompt-notation-dialog__actions" data-v-42f8c4f4><button type="button" data-v-42f8c4f4>${ssrInterpolate(unref(t)("common.cancel"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(notationDraftValid)) ? " disabled" : ""} data-v-42f8c4f4>${ssrInterpolate(unref(t)("common.apply"))}</button></div></section></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<section class="prompt-asset-quick prompt-asset-quick--wildcards"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-0b9a6d3f><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-0b9a6d3f><option value="" data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
-      ssrRenderList(unref(wildcards), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.name)} data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
-      });
-      _push(`<!--]--></select><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-0b9a6d3f>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("promptAssets.open"))}</button>`);
-      if (unref(wildcardError)) {
-        _push(`<small class="error prompt-asset-quick__message" aria-live="assertive" data-v-0b9a6d3f>${ssrInterpolate(unref(wildcardError))}</small>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--styles"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.aria"))} data-v-0b9a6d3f><div class="asset-panel__header" data-v-0b9a6d3f><span data-v-0b9a6d3f>${ssrInterpolate(unref(t)("advancedStyles.title"))}</span><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("promptAssets.openStyleGallery"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-0b9a6d3f><input${ssrRenderAttr("value", unref(advancedStyles).query)}${ssrRenderAttr("aria-label", unref(t)("advancedStyles.searchStyles"))}${ssrRenderAttr("placeholder", unref(t)("advancedStyles.searchStylesPlaceholder"))} data-v-0b9a6d3f><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("promptAssets.open"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(advancedStyles).filteredStyles.length) ? " disabled" : ""} data-v-0b9a6d3f>${ssrInterpolate(unref(t)("advancedStyles.random"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(advancedStyles).loading) ? " disabled" : ""} data-v-0b9a6d3f>${ssrInterpolate(unref(t)("advancedStyles.reload"))}</button></div>`);
+      _push(`<section class="${ssrRenderClass([{ "prompt-asset-summary--empty": unref(generation).loras.length === 0 }, "prompt-asset-summary prompt-asset-summary--lora"])}"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.aria"))} data-v-42f8c4f4><div class="asset-panel__header" data-v-42f8c4f4><span data-v-42f8c4f4>LoRA <small data-v-42f8c4f4>${ssrInterpolate(unref(t)("generationOverview.appliedCount", { enabled: unref(generation).loras.filter((lora) => lora.enabled).length, total: unref(generation).loras.length }))}</small></span><button type="button" data-v-42f8c4f4>${ssrInterpolate(unref(t)("promptAssets.openLoraBrowser"))}</button></div>`);
+      _push(ssrRenderComponent(SelectedLoRAStack, {
+        style: unref(generation).loras.length ? null : { display: "none" },
+        compact: ""
+      }, null, _parent));
+      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--styles"${ssrRenderAttr("aria-label", unref(t)("advancedStyles.aria"))} data-v-42f8c4f4><div class="asset-panel__header" data-v-42f8c4f4><span data-v-42f8c4f4>${ssrInterpolate(unref(t)("advancedStyles.title"))} <small data-v-42f8c4f4>${ssrInterpolate(unref(advancedStyles).activeChain.length)}</small></span><button type="button" data-v-42f8c4f4>${ssrInterpolate(unref(t)("promptAssets.openStyleGallery"))}</button></div>`);
       _push(ssrRenderComponent(StyleChain, {
         compact: "",
         onOpenDetails: ($event) => openPromptAssets("advanced-styles")
       }, null, _parent));
-      _push(`</section><section class="prompt-asset-summary prompt-asset-summary--lora"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.aria"))} data-v-0b9a6d3f><div class="asset-panel__header" data-v-0b9a6d3f><span data-v-0b9a6d3f>LoRA <small data-v-0b9a6d3f>${ssrInterpolate(unref(loraOptions).length)}</small></span><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("promptAssets.openLoraBrowser"))}</button></div><div class="prompt-asset-summary__toolbar" data-v-0b9a6d3f><input${ssrRenderAttr("value", unref(selectedQuickLoraPath))} list="prompt-quick-lora-options"${ssrRenderAttr("aria-label", unref(t)("loraBrowser.selectLora"))}${ssrRenderAttr("placeholder", unref(t)("loraBrowser.selectLora"))} data-v-0b9a6d3f><datalist id="prompt-quick-lora-options" data-v-0b9a6d3f><!--[-->`);
-      ssrRenderList(unref(loraOptions), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-0b9a6d3f></option>`);
-      });
-      _push(`<!--]--></datalist><button type="button"${ssrIncludeBooleanAttr(!unref(selectedQuickLoraPath)) ? " disabled" : ""} data-v-0b9a6d3f>${ssrInterpolate(unref(t)("loraBrowser.add"))}</button></div>`);
-      _push(ssrRenderComponent(SelectedLoRAStack, { compact: "" }, null, _parent));
-      _push(`</section><section class="prompt-asset-quick prompt-asset-quick--assist"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-0b9a6d3f><span data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-0b9a6d3f><!--[-->`);
-      ssrRenderList(unref(promptAssistProviderModeOptions), (option) => {
-        _push(`<option${ssrRenderAttr("value", option.id)} data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}>${ssrInterpolate(option.label)}</option>`);
-      });
-      _push(`<!--]--></select><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section><section class="prompt-asset-quick prompt-asset-quick--embeddings"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-0b9a6d3f><div class="prompt-asset-embedding__header" data-v-0b9a6d3f><span data-v-0b9a6d3f>${ssrInterpolate(unref(t)("prompt.embedding.title"))}</span></div><div class="prompt-asset-embedding__content" data-v-0b9a6d3f><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-0b9a6d3f><option value="" data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
-      ssrRenderList(unref(embeddingOptions), (item) => {
-        _push(`<option${ssrRenderAttr("value", item.relative_path)} data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}>${ssrInterpolate(item.relative_path)}</option>`);
-      });
-      _push(`<!--]--></select></div><div class="asset-actions prompt-asset-embedding__actions" data-v-0b9a6d3f>`);
-      if (unref(supportsNegativePrompt)) {
-        _push(`<button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-0b9a6d3f>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`<button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-0b9a6d3f>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div><button type="button" data-v-0b9a6d3f>${ssrInterpolate(unref(t)("promptAssets.open"))}</button></section>`);
+      _push(`</section>`);
+      _push(ssrRenderComponent(AppliedGenerationSummary, null, null, _parent));
+      _push(`<div class="prompt-composer__tools" data-v-42f8c4f4><button type="button"${ssrRenderAttr("aria-expanded", __props.settingsOpen)} data-v-42f8c4f4>${ssrInterpolate(__props.settingsOpen ? unref(t)("generationOverview.closeSettings") : unref(t)("generationOverview.openSettings"))}</button><button type="button" data-v-42f8c4f4>${ssrInterpolate(unref(t)("promptAssets.drawerTitle"))}</button></div>`);
       _push(ssrRenderComponent(PromptAssetsDrawer, {
         open: unref(promptAssetsOpen),
         "active-tab": unref(promptAssetsTab),
@@ -15205,58 +15101,58 @@ ${generation.negativePrompt}`;
         }),
         "prompt-assist": withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel prompt-assist-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-0b9a6d3f${_scopeId}><div class="asset-panel__header" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><div class="prompt-assist-header-actions" data-v-0b9a6d3f${_scopeId}><small data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(promptAssistTargetLabel(unref(promptAssist)?.target ?? unref(promptAssistTarget)))}</small><button class="prompt-assist-guide-link" type="button" data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.guide"))}</button></div></div><div class="prompt-assist-provider-draft" data-v-0b9a6d3f${_scopeId}><label class="field" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.purpose"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.purpose"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider)) ? " disabled" : ""} data-v-0b9a6d3f${_scopeId}><!--[-->`);
+            _push2(`<section class="asset-panel prompt-assist-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.assist.title"))} data-v-42f8c4f4${_scopeId}><div class="asset-panel__header" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.title"))}</span><div class="prompt-assist-header-actions" data-v-42f8c4f4${_scopeId}><small data-v-42f8c4f4${_scopeId}>${ssrInterpolate(promptAssistTargetLabel(unref(promptAssist)?.target ?? unref(promptAssistTarget)))}</small><button class="prompt-assist-guide-link" type="button" data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.guide"))}</button></div></div><div class="prompt-assist-provider-draft" data-v-42f8c4f4${_scopeId}><label class="field" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.purpose"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.purpose"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider)) ? " disabled" : ""} data-v-42f8c4f4${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistPurposeOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistPurposePreset)) ? ssrLooseContain(unref(promptAssistPurposePreset), option.id) : ssrLooseEqual(unref(promptAssistPurposePreset), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-42f8c4f4${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistPurposePreset)) ? ssrLooseContain(unref(promptAssistPurposePreset), option.id) : ssrLooseEqual(unref(promptAssistPurposePreset), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select><small class="field-hint" data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(promptAssistPurposeHelp))}</small></label><div class="field-grid" data-v-0b9a6d3f${_scopeId}><label class="field" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.target"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.target"))} data-v-0b9a6d3f${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select><small class="field-hint" data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(promptAssistPurposeHelp))}</small></label><div class="field-grid" data-v-42f8c4f4${_scopeId}><label class="field" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.target"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.target"))} data-v-42f8c4f4${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistTargetOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistTarget)) ? ssrLooseContain(unref(promptAssistTarget), option.id) : ssrLooseEqual(unref(promptAssistTarget), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-42f8c4f4${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistTarget)) ? ssrLooseContain(unref(promptAssistTarget), option.id) : ssrLooseEqual(unref(promptAssistTarget), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label><label class="field" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.language"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.language"))} data-v-0b9a6d3f${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select></label><label class="field" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.language"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.language"))} data-v-42f8c4f4${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistLanguageOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistLanguage)) ? ssrLooseContain(unref(promptAssistLanguage), option.id) : ssrLooseEqual(unref(promptAssistLanguage), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-42f8c4f4${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistLanguage)) ? ssrLooseContain(unref(promptAssistLanguage), option.id) : ssrLooseEqual(unref(promptAssistLanguage), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label></div><div class="field-grid" data-v-0b9a6d3f${_scopeId}><label class="field" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.provider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-0b9a6d3f${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select></label></div><div class="field-grid" data-v-42f8c4f4${_scopeId}><label class="field" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.provider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.provider"))} data-v-42f8c4f4${_scopeId}><!--[-->`);
             ssrRenderList(unref(promptAssistProviderModeOptions), (option) => {
-              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", option.id)} data-v-42f8c4f4${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderMode)) ? ssrLooseContain(unref(promptAssistProviderMode), option.id) : ssrLooseEqual(unref(promptAssistProviderMode), option.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(option.label)}</option>`);
             });
-            _push2(`<!--]--></select></label><label class="${ssrRenderClass([{ "field--disabled": !unref(promptAssistUsesProvider) }, "field"])}" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.model"))}</span><input${ssrRenderAttr("value", unref(promptAssistModelInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.model"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.modelPlaceholder"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider) || Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-0b9a6d3f${_scopeId}></label></div>`);
+            _push2(`<!--]--></select></label><label class="${ssrRenderClass([{ "field--disabled": !unref(promptAssistUsesProvider) }, "field"])}" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.model"))}</span><input${ssrRenderAttr("value", unref(promptAssistModelInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.model"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.modelPlaceholder"))}${ssrIncludeBooleanAttr(!unref(promptAssistUsesProvider) || Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-42f8c4f4${_scopeId}></label></div>`);
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-0b9a6d3f${_scopeId}><label class="field" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.savedProvider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.savedProvider"))} data-v-0b9a6d3f${_scopeId}><option value="" data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), "") : ssrLooseEqual(unref(promptAssistProviderPresetId), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.manualPerRequest"))}</option><!--[-->`);
+              _push2(`<div class="field-grid" data-v-42f8c4f4${_scopeId}><label class="field" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.savedProvider"))}</span><select${ssrRenderAttr("aria-label", unref(t)("prompt.assist.savedProvider"))} data-v-42f8c4f4${_scopeId}><option value="" data-v-42f8c4f4${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), "") : ssrLooseEqual(unref(promptAssistProviderPresetId), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.manualPerRequest"))}</option><!--[-->`);
               ssrRenderList(unref(promptAssistProviders), (provider) => {
-                _push2(`<option${ssrRenderAttr("value", provider.id)} data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), provider.id) : ssrLooseEqual(unref(promptAssistProviderPresetId), provider.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(provider.name)} / ${ssrInterpolate(provider.model)}</option>`);
+                _push2(`<option${ssrRenderAttr("value", provider.id)} data-v-42f8c4f4${ssrIncludeBooleanAttr(Array.isArray(unref(promptAssistProviderPresetId)) ? ssrLooseContain(unref(promptAssistProviderPresetId), provider.id) : ssrLooseEqual(unref(promptAssistProviderPresetId), provider.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(provider.name)} / ${ssrInterpolate(provider.model)}</option>`);
               });
-              _push2(`<!--]--></select></label><label class="field" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKey"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKey))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKey"))} type="password"${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyPlaceholder"))} autocomplete="off" data-v-0b9a6d3f${_scopeId}></label></div>`);
+              _push2(`<!--]--></select></label><label class="field" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKey"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKey))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKey"))} type="password"${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyPlaceholder"))} autocomplete="off" data-v-42f8c4f4${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-0b9a6d3f${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKeyEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVar))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKeyEnvVar"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyEnvVarPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-0b9a6d3f${_scopeId}></label><label class="field field--disabled" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVarValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEnvVar"))} disabled data-v-0b9a6d3f${_scopeId}></label></div>`);
+              _push2(`<div class="field-grid" data-v-42f8c4f4${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.apiKeyEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVar))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.apiKeyEnvVar"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.apiKeyEnvVarPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-42f8c4f4${_scopeId}></label><label class="field field--disabled" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEnvVar"))}</span><input${ssrRenderAttr("value", unref(promptAssistApiKeyEnvVarValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEnvVar"))} disabled data-v-42f8c4f4${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<div class="field-grid" data-v-0b9a6d3f${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.endpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpoint))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.endpoint"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.endpointPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-0b9a6d3f${_scopeId}></label><label class="field" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.timeout"))}</span><input${ssrRenderAttr("value", unref(promptAssistTimeoutInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.timeout"))} type="number" min="1" max="300"${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-0b9a6d3f${_scopeId}></label></div>`);
+              _push2(`<div class="field-grid" data-v-42f8c4f4${_scopeId}><label class="${ssrRenderClass([{ "field--disabled": Boolean(unref(selectedPromptAssistProvider)) }, "field"])}" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.endpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpoint))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.endpoint"))}${ssrRenderAttr("placeholder", unref(t)("prompt.assist.endpointPlaceholder"))}${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-42f8c4f4${_scopeId}></label><label class="field" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.timeout"))}</span><input${ssrRenderAttr("value", unref(promptAssistTimeoutInput))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.timeout"))} type="number" min="1" max="300"${ssrIncludeBooleanAttr(Boolean(unref(selectedPromptAssistProvider))) ? " disabled" : ""} data-v-42f8c4f4${_scopeId}></label></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistUsesProvider)) {
-              _push2(`<label class="field field--disabled" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEndpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpointValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEndpoint"))} disabled data-v-0b9a6d3f${_scopeId}></label>`);
+              _push2(`<label class="field field--disabled" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.selectedEndpoint"))}</span><input${ssrRenderAttr("value", unref(promptAssistEndpointValue))}${ssrRenderAttr("aria-label", unref(t)("prompt.assist.selectedEndpoint"))} disabled data-v-42f8c4f4${_scopeId}></label>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<label class="field" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.extraInstruction"))}</span><textarea${ssrRenderAttr("aria-label", unref(t)("prompt.assist.extraInstruction"))} rows="2" data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(promptAssistInstruction))}</textarea></label></div><div class="asset-actions" data-v-0b9a6d3f${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promptAssistLoading)) ? " disabled" : ""} data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(promptAssistActionLabel))}</button></div>`);
+            _push2(`<label class="field" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.extraInstruction"))}</span><textarea${ssrRenderAttr("aria-label", unref(t)("prompt.assist.extraInstruction"))} rows="2" data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(promptAssistInstruction))}</textarea></label></div><div class="asset-actions" data-v-42f8c4f4${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(promptAssistLoading)) ? " disabled" : ""} data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(promptAssistActionLabel))}</button></div>`);
             if (unref(promptAssist)) {
-              _push2(`<div class="prompt-assist-output" data-v-0b9a6d3f${_scopeId}><div class="runtime-log" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedPrompt"))}</span><pre data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_prompt)}</pre></div><div class="runtime-log" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedNegative"))}</span><pre data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_negative_prompt || unref(t)("prompt.assist.negativeUnavailable"))}</pre></div><div class="tag-suggestion-list" data-v-0b9a6d3f${_scopeId}><!--[-->`);
+              _push2(`<div class="prompt-assist-output" data-v-42f8c4f4${_scopeId}><div class="runtime-log" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedPrompt"))}</span><pre data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_prompt)}</pre></div><div class="runtime-log" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.suggestedNegative"))}</span><pre data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(promptAssist).suggested_negative_prompt || unref(t)("prompt.assist.negativeUnavailable"))}</pre></div><div class="tag-suggestion-list" data-v-42f8c4f4${_scopeId}><!--[-->`);
               ssrRenderList(unref(promptAssist).suggested_tags, (tag) => {
-                _push2(`<small data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(tag)}</small>`);
+                _push2(`<small data-v-42f8c4f4${_scopeId}>${ssrInterpolate(tag)}</small>`);
               });
               _push2(`<!--]--></div>`);
               if (unref(promptAssistWarningMessages).length) {
-                _push2(`<div class="tag-suggestion-list tag-suggestion-list--warning" data-v-0b9a6d3f${_scopeId}><!--[-->`);
+                _push2(`<div class="tag-suggestion-list tag-suggestion-list--warning" data-v-42f8c4f4${_scopeId}><!--[-->`);
                 ssrRenderList(unref(promptAssistWarningMessages), (warning) => {
-                  _push2(`<small data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(warning)}</small>`);
+                  _push2(`<small data-v-42f8c4f4${_scopeId}>${ssrInterpolate(warning)}</small>`);
                 });
                 _push2(`<!--]--></div>`);
               } else {
@@ -15266,23 +15162,23 @@ ${generation.negativePrompt}`;
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<div class="asset-actions prompt-assist-apply-actions" data-v-0b9a6d3f${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(promptAssistResultState).canApplyPrompt) ? " disabled" : ""} data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyPrompt"))}</button>`);
+            _push2(`<div class="asset-actions prompt-assist-apply-actions" data-v-42f8c4f4${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(promptAssistResultState).canApplyPrompt) ? " disabled" : ""} data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyPrompt"))}</button>`);
             if (unref(supportsNegativePrompt)) {
               _push2(`<button${ssrRenderAttrs(mergeProps({
                 type: "button",
                 disabled: !unref(promptAssistResultState).canApplyNegative
-              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(promptAssistResultState).canApplyNegative ? "" : unref(promptAssistStateMessage))))} data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyNegative"))}</button>`);
+              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(promptAssistResultState).canApplyNegative ? "" : unref(promptAssistStateMessage))))} data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.applyNegative"))}</button>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</div><div class="${ssrRenderClass([`prompt-assist-state--${unref(promptAssistResultState).id}`, "prompt-assist-state"])}"${ssrRenderAttr("aria-live", unref(promptAssistError) ? "assertive" : "polite")} data-v-0b9a6d3f${_scopeId}><strong data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(promptAssistStateMessage))}</strong>`);
+            _push2(`</div><div class="${ssrRenderClass([`prompt-assist-state--${unref(promptAssistResultState).id}`, "prompt-assist-state"])}"${ssrRenderAttr("aria-live", unref(promptAssistError) ? "assertive" : "polite")} data-v-42f8c4f4${_scopeId}><strong data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(promptAssistStateMessage))}</strong>`);
             if (unref(promptAssistError)) {
-              _push2(`<small class="error" data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(promptAssistError))}</small>`);
+              _push2(`<small class="error" data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(promptAssistError))}</small>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(promptAssistError) && unref(promptAssistRequestContext)) {
-              _push2(`<small data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.requestContext"))}: ${ssrInterpolate(unref(promptAssistRequestContext))}</small>`);
+              _push2(`<small data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.assist.requestContext"))}: ${ssrInterpolate(unref(promptAssistRequestContext))}</small>`);
             } else {
               _push2(`<!---->`);
             }
@@ -15300,8 +15196,8 @@ ${generation.negativePrompt}`;
                     createVNode("button", {
                       class: "prompt-assist-guide-link",
                       type: "button",
-                      onClick: ($event) => emit("open-help", "ai-agent")
-                    }, toDisplayString(unref(t)("prompt.assist.guide")), 9, ["onClick"])
+                      onClick: openPromptHelp
+                    }, toDisplayString(unref(t)("prompt.assist.guide")), 1)
                   ])
                 ]),
                 createVNode("div", { class: "prompt-assist-provider-draft" }, [
@@ -15592,25 +15488,25 @@ ${generation.negativePrompt}`;
         }),
         embeddings: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-0b9a6d3f${_scopeId}><div class="asset-panel__header prompt-asset-embedding__header" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.title"))} <small data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(embeddingOptions).length)}</small></span></div><div class="prompt-asset-embedding__content" data-v-0b9a6d3f${_scopeId}><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-0b9a6d3f${_scopeId}><option value="" data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
+            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-42f8c4f4${_scopeId}><div class="asset-panel__header prompt-asset-embedding__header" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.title"))} <small data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(embeddingOptions).length)}</small></span></div><div class="prompt-asset-embedding__content" data-v-42f8c4f4${_scopeId}><select${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.title"))} data-v-42f8c4f4${_scopeId}><option value="" data-v-42f8c4f4${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), "") : ssrLooseEqual(unref(selectedEmbeddingPath), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.embedding.select"))}</option><!--[-->`);
             ssrRenderList(unref(embeddingOptions), (item) => {
-              _push2(`<option${ssrRenderAttr("value", item.relative_path)} data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.relative_path)}</option>`);
+              _push2(`<option${ssrRenderAttr("value", item.relative_path)} data-v-42f8c4f4${ssrIncludeBooleanAttr(Array.isArray(unref(selectedEmbeddingPath)) ? ssrLooseContain(unref(selectedEmbeddingPath), item.relative_path) : ssrLooseEqual(unref(selectedEmbeddingPath), item.relative_path)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.relative_path)}</option>`);
             });
-            _push2(`<!--]--></select><div class="embedding-browser"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.browserAria"))} data-v-0b9a6d3f${_scopeId}><!--[-->`);
+            _push2(`<!--]--></select><div class="embedding-browser"${ssrRenderAttr("aria-label", unref(t)("prompt.embedding.browserAria"))} data-v-42f8c4f4${_scopeId}><!--[-->`);
             ssrRenderList(unref(embeddingOptions), (item) => {
               _push2(`<button${ssrRenderAttrs(mergeProps({
                 key: item.path,
                 class: "embedding-row",
                 type: "button"
-              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.relative_path)))} data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(embeddingToken(String(item.relative_path)))}</span><small data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(item.relative_path)}</small></button>`);
+              }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.relative_path)))} data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(embeddingToken(String(item.relative_path)))}</span><small data-v-42f8c4f4${_scopeId}>${ssrInterpolate(item.relative_path)}</small></button>`);
             });
-            _push2(`<!--]--></div></div><div class="asset-actions prompt-asset-embedding__actions" data-v-0b9a6d3f${_scopeId}>`);
+            _push2(`<!--]--></div></div><div class="asset-actions prompt-asset-embedding__actions" data-v-42f8c4f4${_scopeId}>`);
             if (unref(supportsNegativePrompt)) {
-              _push2(`<button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button>`);
+              _push2(`<button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToNegative"))}</button>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div></section>`);
+            _push2(`<button type="button"${ssrIncludeBooleanAttr(!unref(selectedEmbeddingPath)) ? " disabled" : ""} data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button></div></section>`);
           } else {
             return [
               createVNode("section", {
@@ -15676,13 +15572,13 @@ ${generation.negativePrompt}`;
         }),
         wildcards: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-0b9a6d3f${_scopeId}><div class="asset-panel__header" data-v-0b9a6d3f${_scopeId}><span data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.title"))}</span></div><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-0b9a6d3f${_scopeId}><option value="" data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
+            _push2(`<section class="asset-panel"${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-42f8c4f4${_scopeId}><div class="asset-panel__header" data-v-42f8c4f4${_scopeId}><span data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.title"))}</span></div><select${ssrRenderAttr("aria-label", unref(t)("prompt.wildcards.title"))} data-v-42f8c4f4${_scopeId}><option value="" data-v-42f8c4f4${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), "") : ssrLooseEqual(unref(selectedWildcard), "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.select"))}</option><!--[-->`);
             ssrRenderList(unref(wildcards), (item) => {
-              _push2(`<option${ssrRenderAttr("value", item.name)} data-v-0b9a6d3f${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
+              _push2(`<option${ssrRenderAttr("value", item.name)} data-v-42f8c4f4${ssrIncludeBooleanAttr(Array.isArray(unref(selectedWildcard)) ? ssrLooseContain(unref(selectedWildcard), item.name) : ssrLooseEqual(unref(selectedWildcard), item.name)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(item.name)} (${ssrInterpolate(item.option_count)}) </option>`);
             });
-            _push2(`<!--]--></select><div class="asset-actions" data-v-0b9a6d3f${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button></div>`);
+            _push2(`<!--]--></select><div class="asset-actions" data-v-42f8c4f4${_scopeId}><button type="button"${ssrIncludeBooleanAttr(!unref(selectedWildcard)) ? " disabled" : ""} data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("promptAssets.insertToPrompt"))}</button><button type="button" data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(t)("prompt.wildcards.refresh"))}</button></div>`);
             if (unref(wildcardError)) {
-              _push2(`<small class="error" aria-live="assertive" data-v-0b9a6d3f${_scopeId}>${ssrInterpolate(unref(wildcardError))}</small>`);
+              _push2(`<small class="error" aria-live="assertive" data-v-42f8c4f4${_scopeId}>${ssrInterpolate(unref(wildcardError))}</small>`);
             } else {
               _push2(`<!---->`);
             }
@@ -15738,13 +15634,13 @@ ${generation.negativePrompt}`;
     };
   }
 });
-const _sfc_setup$2h = _sfc_main$2h.setup;
-_sfc_main$2h.setup = (props, ctx) => {
+const _sfc_setup$2k = _sfc_main$2k.setup;
+_sfc_main$2k.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptPane.vue");
-  return _sfc_setup$2h ? _sfc_setup$2h(props, ctx) : void 0;
+  return _sfc_setup$2k ? _sfc_setup$2k(props, ctx) : void 0;
 };
-const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2h, [["__scopeId", "data-v-0b9a6d3f"]]), { __name: "StudioPromptPane" });
+const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2k, [["__scopeId", "data-v-42f8c4f4"]]), { __name: "StudioPromptPane" });
 const normalizeEagleFolderSelection = (folders, selectedId) => selectedId && folders.some((folder) => folder.id === selectedId) ? selectedId : "";
 const errorMessage$2 = (error) => {
   return userFacingErrorMessage(error, "common.error.external");
@@ -16050,13 +15946,17 @@ const useExternalIntegrationsStore = defineStore("externalIntegrations", {
     }
   }
 });
-const _sfc_main$2g = /* @__PURE__ */ defineComponent({
+const _sfc_main$2j = /* @__PURE__ */ defineComponent({
   __name: "EagleFolderSelect",
   __ssrInlineRender: true,
+  props: {
+    compact: { type: Boolean }
+  },
   setup(__props) {
     const externalIntegrations = useExternalIntegrationsStore();
     const { t } = useAsteriaI18n();
     const query = ref("");
+    const selectedFolderLabel = computed(() => externalIntegrations.eagleFolderId ? externalIntegrations.eagleFolders.find((folder) => folder.id === externalIntegrations.eagleFolderId)?.path ?? t("external.eagleSelectedFolder") : t("external.eagleLibraryRoot"));
     const visibleFolders = computed(() => {
       const normalized = query.value.trim().toLocaleLowerCase();
       if (!normalized) return externalIntegrations.eagleFolders;
@@ -16064,6 +15964,7 @@ const _sfc_main$2g = /* @__PURE__ */ defineComponent({
       const selected = externalIntegrations.eagleFolders.find((folder) => folder.id === externalIntegrations.eagleFolderId);
       return selected && !matching.some((folder) => folder.id === selected.id) ? [selected, ...matching] : matching;
     });
+    const refreshFolders = () => externalIntegrations.fetchEagleFolders(true);
     watch(
       () => externalIntegrations.eagleStatus?.connected,
       (connected) => {
@@ -16072,21 +15973,98 @@ const _sfc_main$2g = /* @__PURE__ */ defineComponent({
       { immediate: true }
     );
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<label${ssrRenderAttrs(mergeProps({ class: "field eagle-folder-select" }, _attrs))} data-v-aa9affef><span data-v-aa9affef>${ssrInterpolate(unref(t)("external.eagleFolder"))}</span><input${ssrRenderAttr("value", unref(query))} type="search"${ssrRenderAttr("aria-label", unref(t)("external.eagleFolderSearch"))}${ssrRenderAttr("placeholder", unref(t)("external.eagleFolderSearch"))}${ssrIncludeBooleanAttr(!unref(externalIntegrations).eagleStatus?.connected || unref(externalIntegrations).eagleFoldersLoading) ? " disabled" : ""} data-v-aa9affef><select${ssrRenderAttr("aria-label", unref(t)("external.eagleFolder"))}${ssrIncludeBooleanAttr(!unref(externalIntegrations).eagleStatus?.connected || unref(externalIntegrations).eagleFoldersLoading) ? " disabled" : ""} data-v-aa9affef><option value="" data-v-aa9affef${ssrIncludeBooleanAttr(Array.isArray(unref(externalIntegrations).eagleFolderId) ? ssrLooseContain(unref(externalIntegrations).eagleFolderId, "") : ssrLooseEqual(unref(externalIntegrations).eagleFolderId, "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("external.eagleLibraryRoot"))}</option><!--[-->`);
-      ssrRenderList(unref(visibleFolders), (folder) => {
-        _push(`<option${ssrRenderAttr("value", folder.id)} data-v-aa9affef${ssrIncludeBooleanAttr(Array.isArray(unref(externalIntegrations).eagleFolderId) ? ssrLooseContain(unref(externalIntegrations).eagleFolderId, folder.id) : ssrLooseEqual(unref(externalIntegrations).eagleFolderId, folder.id)) ? " selected" : ""}>${ssrInterpolate(folder.path)}</option>`);
-      });
-      _push(`<!--]--></select><small data-v-aa9affef>${ssrInterpolate(unref(t)("external.eagleFolderCount", { count: unref(visibleFolders).length }))}</small><button class="icon-button icon-button--compact" type="button"${ssrIncludeBooleanAttr(!unref(externalIntegrations).eagleStatus?.connected || unref(externalIntegrations).eagleFoldersLoading) ? " disabled" : ""} data-v-aa9affef>${ssrInterpolate(unref(externalIntegrations).eagleFoldersLoading ? unref(t)("external.eagleFoldersLoading") : unref(t)("external.eagleFoldersRefresh"))}</button></label>`);
+      const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
+      ssrRenderVNode(_push, createVNode(resolveDynamicComponent(__props.compact ? "details" : "div"), mergeProps({
+        class: ["eagle-folder-control", { "eagle-folder-disclosure": __props.compact }]
+      }, _attrs), {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            if (__props.compact) {
+              _push2(`<summary class="eagle-folder-disclosure__summary" data-v-5f988f5a${_scopeId}><svg class="eagle-folder-disclosure__arrow" viewBox="0 0 12 12" aria-hidden="true" data-v-5f988f5a${_scopeId}><path d="m2 4 4 4 4-4" data-v-5f988f5a${_scopeId}></path></svg><span class="eagle-folder-disclosure__label" data-v-5f988f5a${_scopeId}>${ssrInterpolate(unref(t)("external.eagleFolder"))}</span><span${ssrRenderAttrs(mergeProps({ class: "eagle-folder-disclosure__value" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(selectedFolderLabel))))} data-v-5f988f5a${_scopeId}>${ssrInterpolate(unref(selectedFolderLabel))}</span></summary>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`<div class="${ssrRenderClass({ "eagle-folder-disclosure__content": __props.compact })}" data-v-5f988f5a${_scopeId}><label class="field eagle-folder-select" data-v-5f988f5a${_scopeId}><span data-v-5f988f5a${_scopeId}>${ssrInterpolate(unref(t)("external.eagleFolder"))}</span><input${ssrRenderAttr("value", unref(query))} type="search"${ssrRenderAttr("aria-label", unref(t)("external.eagleFolderSearch"))}${ssrRenderAttr("placeholder", unref(t)("external.eagleFolderSearch"))}${ssrIncludeBooleanAttr(!unref(externalIntegrations).eagleStatus?.connected || unref(externalIntegrations).eagleFoldersLoading) ? " disabled" : ""} data-v-5f988f5a${_scopeId}><select${ssrRenderAttr("aria-label", unref(t)("external.eagleFolder"))}${ssrIncludeBooleanAttr(!unref(externalIntegrations).eagleStatus?.connected || unref(externalIntegrations).eagleFoldersLoading) ? " disabled" : ""} data-v-5f988f5a${_scopeId}><option value="" data-v-5f988f5a${ssrIncludeBooleanAttr(Array.isArray(unref(externalIntegrations).eagleFolderId) ? ssrLooseContain(unref(externalIntegrations).eagleFolderId, "") : ssrLooseEqual(unref(externalIntegrations).eagleFolderId, "")) ? " selected" : ""}${_scopeId}>${ssrInterpolate(unref(t)("external.eagleLibraryRoot"))}</option><!--[-->`);
+            ssrRenderList(unref(visibleFolders), (folder) => {
+              _push2(`<option${ssrRenderAttr("value", folder.id)} data-v-5f988f5a${ssrIncludeBooleanAttr(Array.isArray(unref(externalIntegrations).eagleFolderId) ? ssrLooseContain(unref(externalIntegrations).eagleFolderId, folder.id) : ssrLooseEqual(unref(externalIntegrations).eagleFolderId, folder.id)) ? " selected" : ""}${_scopeId}>${ssrInterpolate(folder.path)}</option>`);
+            });
+            _push2(`<!--]--></select><small data-v-5f988f5a${_scopeId}>${ssrInterpolate(unref(t)("external.eagleFolderCount", { count: unref(visibleFolders).length }))}</small><button class="icon-button icon-button--compact" type="button"${ssrIncludeBooleanAttr(!unref(externalIntegrations).eagleStatus?.connected || unref(externalIntegrations).eagleFoldersLoading) ? " disabled" : ""} data-v-5f988f5a${_scopeId}>${ssrInterpolate(unref(externalIntegrations).eagleFoldersLoading ? unref(t)("external.eagleFoldersLoading") : unref(t)("external.eagleFoldersRefresh"))}</button></label>`);
+            ssrRenderSlot(_ctx.$slots, "default", {}, null, _push2, _parent2, _scopeId);
+            _push2(`</div>`);
+          } else {
+            return [
+              __props.compact ? (openBlock(), createBlock("summary", {
+                key: 0,
+                class: "eagle-folder-disclosure__summary"
+              }, [
+                (openBlock(), createBlock("svg", {
+                  class: "eagle-folder-disclosure__arrow",
+                  viewBox: "0 0 12 12",
+                  "aria-hidden": "true"
+                }, [
+                  createVNode("path", { d: "m2 4 4 4 4-4" })
+                ])),
+                createVNode("span", { class: "eagle-folder-disclosure__label" }, toDisplayString(unref(t)("external.eagleFolder")), 1),
+                withDirectives((openBlock(), createBlock("span", { class: "eagle-folder-disclosure__value" }, [
+                  createTextVNode(toDisplayString(unref(selectedFolderLabel)), 1)
+                ])), [
+                  [_directive_asteria_tooltip, unref(selectedFolderLabel)]
+                ])
+              ])) : createCommentVNode("", true),
+              createVNode("div", {
+                class: { "eagle-folder-disclosure__content": __props.compact }
+              }, [
+                createVNode("label", { class: "field eagle-folder-select" }, [
+                  createVNode("span", null, toDisplayString(unref(t)("external.eagleFolder")), 1),
+                  withDirectives(createVNode("input", {
+                    "onUpdate:modelValue": ($event) => isRef(query) ? query.value = $event : null,
+                    type: "search",
+                    "aria-label": unref(t)("external.eagleFolderSearch"),
+                    placeholder: unref(t)("external.eagleFolderSearch"),
+                    disabled: !unref(externalIntegrations).eagleStatus?.connected || unref(externalIntegrations).eagleFoldersLoading
+                  }, null, 8, ["onUpdate:modelValue", "aria-label", "placeholder", "disabled"]), [
+                    [vModelText, unref(query)]
+                  ]),
+                  withDirectives(createVNode("select", {
+                    "onUpdate:modelValue": ($event) => unref(externalIntegrations).eagleFolderId = $event,
+                    "aria-label": unref(t)("external.eagleFolder"),
+                    disabled: !unref(externalIntegrations).eagleStatus?.connected || unref(externalIntegrations).eagleFoldersLoading
+                  }, [
+                    createVNode("option", { value: "" }, toDisplayString(unref(t)("external.eagleLibraryRoot")), 1),
+                    (openBlock(true), createBlock(Fragment, null, renderList(unref(visibleFolders), (folder) => {
+                      return openBlock(), createBlock("option", {
+                        key: folder.id,
+                        value: folder.id
+                      }, toDisplayString(folder.path), 9, ["value"]);
+                    }), 128))
+                  ], 8, ["onUpdate:modelValue", "aria-label", "disabled"]), [
+                    [vModelSelect, unref(externalIntegrations).eagleFolderId]
+                  ]),
+                  createVNode("small", null, toDisplayString(unref(t)("external.eagleFolderCount", { count: unref(visibleFolders).length })), 1),
+                  createVNode("button", {
+                    class: "icon-button icon-button--compact",
+                    type: "button",
+                    disabled: !unref(externalIntegrations).eagleStatus?.connected || unref(externalIntegrations).eagleFoldersLoading,
+                    onClick: withModifiers(refreshFolders, ["prevent"])
+                  }, toDisplayString(unref(externalIntegrations).eagleFoldersLoading ? unref(t)("external.eagleFoldersLoading") : unref(t)("external.eagleFoldersRefresh")), 9, ["disabled"])
+                ]),
+                renderSlot(_ctx.$slots, "default", {}, void 0, true)
+              ], 2)
+            ];
+          }
+        }),
+        _: 3
+      }), _parent);
     };
   }
 });
-const _sfc_setup$2g = _sfc_main$2g.setup;
-_sfc_main$2g.setup = (props, ctx) => {
+const _sfc_setup$2j = _sfc_main$2j.setup;
+_sfc_main$2j.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/EagleFolderSelect.vue");
-  return _sfc_setup$2g ? _sfc_setup$2g(props, ctx) : void 0;
+  return _sfc_setup$2j ? _sfc_setup$2j(props, ctx) : void 0;
 };
-const __nuxt_component_0$1 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2g, [["__scopeId", "data-v-aa9affef"]]), { __name: "StudioEagleFolderSelect" });
+const __nuxt_component_0$1 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2j, [["__scopeId", "data-v-5f988f5a"]]), { __name: "StudioEagleFolderSelect" });
 const object$1 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 const list = (value) => Array.isArray(value) ? value : [];
 const string = (value) => typeof value === "string" ? value : "";
@@ -16136,7 +16114,7 @@ function promptInterpretation(settings) {
   }));
   return { partial: Boolean(settings.prompt_execution_truncated) || records.some((x) => x.status === "partial"), encodings };
 }
-const _sfc_main$2f = /* @__PURE__ */ defineComponent({
+const _sfc_main$2i = /* @__PURE__ */ defineComponent({
   __name: "PromptInterpretation",
   __ssrInlineRender: true,
   props: {
@@ -16261,14 +16239,14 @@ const _sfc_main$2f = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2f = _sfc_main$2f.setup;
-_sfc_main$2f.setup = (props, ctx) => {
+const _sfc_setup$2i = _sfc_main$2i.setup;
+_sfc_main$2i.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptInterpretation.vue");
-  return _sfc_setup$2f ? _sfc_setup$2f(props, ctx) : void 0;
+  return _sfc_setup$2i ? _sfc_setup$2i(props, ctx) : void 0;
 };
-const PromptInterpretation = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2f, [["__scopeId", "data-v-6791e795"]]), { __name: "StudioPromptInterpretation" });
-const _sfc_main$2e = /* @__PURE__ */ defineComponent({
+const PromptInterpretation = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2i, [["__scopeId", "data-v-6791e795"]]), { __name: "StudioPromptInterpretation" });
+const _sfc_main$2h = /* @__PURE__ */ defineComponent({
   __name: "GenerationReproduction",
   __ssrInlineRender: true,
   props: {
@@ -16379,13 +16357,13 @@ const _sfc_main$2e = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2e = _sfc_main$2e.setup;
-_sfc_main$2e.setup = (props, ctx) => {
+const _sfc_setup$2h = _sfc_main$2h.setup;
+_sfc_main$2h.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerationReproduction.vue");
-  return _sfc_setup$2e ? _sfc_setup$2e(props, ctx) : void 0;
+  return _sfc_setup$2h ? _sfc_setup$2h(props, ctx) : void 0;
 };
-const GenerationReproduction = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2e, [["__scopeId", "data-v-d35e4ce0"]]), { __name: "StudioGenerationReproduction" });
+const GenerationReproduction = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2h, [["__scopeId", "data-v-d35e4ce0"]]), { __name: "StudioGenerationReproduction" });
 const notSent = () => ({ status: "not_sent", createdAt: "", folderId: "" });
 const normalizedArtifactPath = (path) => path.trim().replace(/\\/g, "/").replace(/\/{2,}/g, "/").toLocaleLowerCase();
 const resolveEagleRegistration = (settings, selectedPath, selectedSha256 = "") => {
@@ -16410,7 +16388,7 @@ const resolveEagleRegistration = (settings, selectedPath, selectedSha256 = "") =
   }
   return notSent();
 };
-const _sfc_main$2d = /* @__PURE__ */ defineComponent({
+const _sfc_main$2g = /* @__PURE__ */ defineComponent({
   __name: "HistoryPanel",
   __ssrInlineRender: true,
   emits: ["openImage"],
@@ -16513,47 +16491,47 @@ const _sfc_main$2d = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "history-panel",
         "aria-label": unref(t)("historyPanel.aria")
-      }, _attrs))} data-v-636c05c7><div class="history-panel__header" data-v-636c05c7><span data-v-636c05c7>${ssrInterpolate(unref(t)("historyPanel.title"))}</span><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(generationHistory).historyLoading) ? " disabled" : ""} data-v-636c05c7>${ssrInterpolate(unref(t)("historyPanel.refresh"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(generationHistory).historyLoading) ? " disabled" : ""} data-v-636c05c7>${ssrInterpolate(unref(t)("historyPanel.reset"))}</button></div>`);
-      _push(ssrRenderComponent(_component_StudioEagleFolderSelect, null, null, _parent));
+      }, _attrs))} data-v-2b594c3c><div class="history-panel__header" data-v-2b594c3c><span data-v-2b594c3c>${ssrInterpolate(unref(t)("historyPanel.title"))}</span><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(generationHistory).historyLoading) ? " disabled" : ""} data-v-2b594c3c>${ssrInterpolate(unref(t)("historyPanel.refresh"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(generationHistory).historyLoading) ? " disabled" : ""} data-v-2b594c3c>${ssrInterpolate(unref(t)("historyPanel.reset"))}</button></div>`);
+      _push(ssrRenderComponent(_component_StudioEagleFolderSelect, { compact: "" }, null, _parent));
       if (unref(generationHistory).error) {
-        _push(`<p class="error" aria-live="assertive" data-v-636c05c7>${ssrInterpolate(unref(generationHistory).error)}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-2b594c3c>${ssrInterpolate(unref(generationHistory).error)}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(externalIntegrations).eagleError) {
-        _push(`<p class="error" aria-live="assertive" data-v-636c05c7>${ssrInterpolate(unref(externalIntegrations).eagleError)}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-2b594c3c>${ssrInterpolate(unref(externalIntegrations).eagleError)}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(eagleHistoryMessage)) {
-        _push(`<small class="history-panel__external-message" aria-live="polite" data-v-636c05c7>${ssrInterpolate(unref(eagleHistoryMessage))}</small>`);
+        _push(`<small class="history-panel__external-message" aria-live="polite" data-v-2b594c3c>${ssrInterpolate(unref(eagleHistoryMessage))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="history-filters" data-v-636c05c7><input${ssrRenderAttr("value", unref(generationHistory).historyQuery)}${ssrRenderAttr("aria-label", unref(t)("historyPanel.searchHistory"))}${ssrRenderAttr("placeholder", unref(t)("historyPanel.searchPlaceholder"))} data-v-636c05c7><select${ssrRenderAttr("aria-label", unref(t)("historyPanel.filterProfile"))} data-v-636c05c7><option value="" data-v-636c05c7${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyProfile) ? ssrLooseContain(unref(generationHistory).historyProfile, "") : ssrLooseEqual(unref(generationHistory).historyProfile, "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("historyPanel.allProfiles"))}</option><option value="sdxl" data-v-636c05c7${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyProfile) ? ssrLooseContain(unref(generationHistory).historyProfile, "sdxl") : ssrLooseEqual(unref(generationHistory).historyProfile, "sdxl")) ? " selected" : ""}>SDXL</option><option value="anima" data-v-636c05c7${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyProfile) ? ssrLooseContain(unref(generationHistory).historyProfile, "anima") : ssrLooseEqual(unref(generationHistory).historyProfile, "anima")) ? " selected" : ""}>Anima</option><option value="flux1" data-v-636c05c7${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyProfile) ? ssrLooseContain(unref(generationHistory).historyProfile, "flux1") : ssrLooseEqual(unref(generationHistory).historyProfile, "flux1")) ? " selected" : ""}>Flux.1</option><option value="flux2" data-v-636c05c7${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyProfile) ? ssrLooseContain(unref(generationHistory).historyProfile, "flux2") : ssrLooseEqual(unref(generationHistory).historyProfile, "flux2")) ? " selected" : ""}>Flux.2</option></select><input${ssrRenderAttr("value", unref(generationHistory).historyTag)}${ssrRenderAttr("aria-label", unref(t)("historyPanel.filterTag"))}${ssrRenderAttr("placeholder", unref(t)("historyPanel.tagPlaceholder"))} data-v-636c05c7><label class="check-field history-filter-check" data-v-636c05c7><input${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyFavoriteOnly) ? ssrLooseContain(unref(generationHistory).historyFavoriteOnly, null) : unref(generationHistory).historyFavoriteOnly) ? " checked" : ""} type="checkbox" data-v-636c05c7><span data-v-636c05c7>${ssrInterpolate(unref(t)("historyPanel.favorites"))}</span></label></div><!--[-->`);
+      _push(`<div class="history-filters" data-v-2b594c3c><input${ssrRenderAttr("value", unref(generationHistory).historyQuery)}${ssrRenderAttr("aria-label", unref(t)("historyPanel.searchHistory"))}${ssrRenderAttr("placeholder", unref(t)("historyPanel.searchPlaceholder"))} data-v-2b594c3c><select${ssrRenderAttr("aria-label", unref(t)("historyPanel.filterProfile"))} data-v-2b594c3c><option value="" data-v-2b594c3c${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyProfile) ? ssrLooseContain(unref(generationHistory).historyProfile, "") : ssrLooseEqual(unref(generationHistory).historyProfile, "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("historyPanel.allProfiles"))}</option><option value="sdxl" data-v-2b594c3c${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyProfile) ? ssrLooseContain(unref(generationHistory).historyProfile, "sdxl") : ssrLooseEqual(unref(generationHistory).historyProfile, "sdxl")) ? " selected" : ""}>SDXL</option><option value="anima" data-v-2b594c3c${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyProfile) ? ssrLooseContain(unref(generationHistory).historyProfile, "anima") : ssrLooseEqual(unref(generationHistory).historyProfile, "anima")) ? " selected" : ""}>Anima</option><option value="flux1" data-v-2b594c3c${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyProfile) ? ssrLooseContain(unref(generationHistory).historyProfile, "flux1") : ssrLooseEqual(unref(generationHistory).historyProfile, "flux1")) ? " selected" : ""}>Flux.1</option><option value="flux2" data-v-2b594c3c${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyProfile) ? ssrLooseContain(unref(generationHistory).historyProfile, "flux2") : ssrLooseEqual(unref(generationHistory).historyProfile, "flux2")) ? " selected" : ""}>Flux.2</option></select><input${ssrRenderAttr("value", unref(generationHistory).historyTag)}${ssrRenderAttr("aria-label", unref(t)("historyPanel.filterTag"))}${ssrRenderAttr("placeholder", unref(t)("historyPanel.tagPlaceholder"))} data-v-2b594c3c><label class="check-field history-filter-check" data-v-2b594c3c><input${ssrIncludeBooleanAttr(Array.isArray(unref(generationHistory).historyFavoriteOnly) ? ssrLooseContain(unref(generationHistory).historyFavoriteOnly, null) : unref(generationHistory).historyFavoriteOnly) ? " checked" : ""} type="checkbox" data-v-2b594c3c><span data-v-2b594c3c>${ssrInterpolate(unref(t)("historyPanel.favorites"))}</span></label></div><!--[-->`);
       ssrRenderList(unref(generationHistory).history, (item) => {
-        _push(`<article class="history-item" data-v-636c05c7>`);
+        _push(`<article class="history-item" data-v-2b594c3c>`);
         if (displayedImageOutput(item)) {
-          _push(`<img${ssrRenderAttr("src", outputUrl(displayedImageOutput(item)))}${ssrRenderAttr("alt", `Generation ${item.id}`)} data-v-636c05c7>`);
+          _push(`<img${ssrRenderAttr("src", outputUrl(displayedImageOutput(item)))}${ssrRenderAttr("alt", `Generation ${item.id}`)} data-v-2b594c3c>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<span class="history-item__body" data-v-636c05c7><strong data-v-636c05c7>#${ssrInterpolate(item.id)} ${ssrInterpolate(item.status)}</strong>`);
+        _push(`<span class="history-item__body" data-v-2b594c3c><strong data-v-2b594c3c>#${ssrInterpolate(item.id)} ${ssrInterpolate(item.status)}</strong>`);
         if (checkLabel(item)) {
-          _push(`<span data-v-636c05c7>${ssrInterpolate(checkLabel(item))}</span>`);
+          _push(`<span data-v-2b594c3c>${ssrInterpolate(checkLabel(item))}</span>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<small data-v-636c05c7>${ssrInterpolate(item.profile)} / ${ssrInterpolate(historySizeLabel(item))} / ${ssrInterpolate(unref(t)("historyPanel.seed"))} ${ssrInterpolate(historySeedLabel(item))}</small><small class="${ssrRenderClass({ error: eagleRegistration(item).status === "failed" })}" data-v-636c05c7>${ssrInterpolate(eagleRegistrationLabel(item))}</small><span data-v-636c05c7>${ssrInterpolate(item.expanded_prompt)}</span></span><div class="history-actions" data-v-636c05c7>`);
+        _push(`<small data-v-2b594c3c>${ssrInterpolate(item.profile)} / ${ssrInterpolate(historySizeLabel(item))} / ${ssrInterpolate(unref(t)("historyPanel.seed"))} ${ssrInterpolate(historySeedLabel(item))}</small><small class="${ssrRenderClass({ error: eagleRegistration(item).status === "failed" })}" data-v-2b594c3c>${ssrInterpolate(eagleRegistrationLabel(item))}</small><span class="history-prompt-preview" data-v-2b594c3c>${ssrInterpolate(item.expanded_prompt)}</span></span><details class="history-item__details" data-v-2b594c3c><summary data-v-2b594c3c><svg class="ui-quality-arrow" viewBox="0 0 12 12" aria-hidden="true" data-v-2b594c3c><path d="m2 4 4 4 4-4" data-v-2b594c3c></path></svg>${ssrInterpolate(unref(t)("historyPanel.expand"))}</summary><div class="history-actions" data-v-2b594c3c>`);
         _push(ssrRenderComponent(PromptInterpretation, { item }, null, _parent));
         _push(ssrRenderComponent(GenerationReproduction, {
           item,
           output: selectedOutput(item)
         }, null, _parent));
         if (selectableOutputs(item).length > 1) {
-          _push(`<label class="history-output-picker" data-v-636c05c7><span data-v-636c05c7>${ssrInterpolate(unref(t)("historyPanel.output"))}</span><select${ssrRenderAttr("value", unref(selectedOutputPaths)[item.id])}${ssrRenderAttr("aria-label", unref(t)("historyPanel.output"))} data-v-636c05c7><!--[-->`);
+          _push(`<label class="history-output-picker" data-v-2b594c3c><span data-v-2b594c3c>${ssrInterpolate(unref(t)("historyPanel.output"))}</span><select${ssrRenderAttr("value", unref(selectedOutputPaths)[item.id])}${ssrRenderAttr("aria-label", unref(t)("historyPanel.output"))} data-v-2b594c3c><!--[-->`);
           ssrRenderList(selectableOutputs(item), (output) => {
-            _push(`<option${ssrRenderAttr("value", output.path)} data-v-636c05c7>${ssrInterpolate(unref(t)(`outputKind.${output.kind}`))} · ${ssrInterpolate(outputFilename(output.path))}</option>`);
+            _push(`<option${ssrRenderAttr("value", output.path)} data-v-2b594c3c>${ssrInterpolate(unref(t)(`outputKind.${output.kind}`))} · ${ssrInterpolate(outputFilename(output.path))}</option>`);
           });
           _push(`<!--]--></select></label>`);
         } else {
@@ -16563,43 +16541,43 @@ const _sfc_main$2d = /* @__PURE__ */ defineComponent({
           class: "icon-button icon-button--compact",
           type: "button",
           "aria-label": item.favorite ? unref(t)("historyPanel.favorite") : unref(t)("historyPanel.markFavorite")
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.favorite ? unref(t)("historyPanel.favorite") : unref(t)("historyPanel.markFavorite"))))} data-v-636c05c7>${ssrInterpolate(item.favorite ? "★" : "☆")}</button><select${ssrRenderAttr("value", item.rating || 0)}${ssrRenderAttr("aria-label", unref(t)("historyPanel.rating"))} data-v-636c05c7><!--[-->`);
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, item.favorite ? unref(t)("historyPanel.favorite") : unref(t)("historyPanel.markFavorite"))))} data-v-2b594c3c>${ssrInterpolate(item.favorite ? "★" : "☆")}</button><select${ssrRenderAttr("value", item.rating || 0)}${ssrRenderAttr("aria-label", unref(t)("historyPanel.rating"))} data-v-2b594c3c><!--[-->`);
         ssrRenderList([0, 1, 2, 3, 4, 5], (rating) => {
-          _push(`<option${ssrRenderAttr("value", rating)} data-v-636c05c7>${ssrInterpolate(rating)}</option>`);
+          _push(`<option${ssrRenderAttr("value", rating)} data-v-2b594c3c>${ssrInterpolate(rating)}</option>`);
         });
-        _push(`<!--]--></select><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(reusableGenerationSeed)(selectedOutput(item)) === null) ? " disabled" : ""} data-v-636c05c7>${ssrInterpolate(unref(t)("generation.useSeed", { seed: unref(reusableGenerationSeed)(selectedOutput(item)) ?? "—" }))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(item)) ? " disabled" : ""} data-v-636c05c7>${ssrInterpolate(unref(t)("historyPanel.sendToImg2img"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(item)) ? " disabled" : ""} data-v-636c05c7>${ssrInterpolate(unref(t)("historyPanel.sendToControlNet"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(item)) ? " disabled" : ""} data-v-636c05c7>${ssrInterpolate(unref(t)("historyPanel.openInImageEditor"))}</button><button${ssrRenderAttrs(mergeProps({
+        _push(`<!--]--></select><button class="icon-button" type="button"${ssrIncludeBooleanAttr(unref(reusableGenerationSeed)(selectedOutput(item)) === null) ? " disabled" : ""} data-v-2b594c3c>${ssrInterpolate(unref(t)("generation.useSeed", { seed: unref(reusableGenerationSeed)(selectedOutput(item)) ?? "—" }))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(item)) ? " disabled" : ""} data-v-2b594c3c>${ssrInterpolate(unref(t)("historyPanel.sendToImg2img"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(item)) ? " disabled" : ""} data-v-2b594c3c>${ssrInterpolate(unref(t)("historyPanel.sendToControlNet"))}</button><button class="icon-button" type="button"${ssrIncludeBooleanAttr(!selectedImageOutput(item)) ? " disabled" : ""} data-v-2b594c3c>${ssrInterpolate(unref(t)("historyPanel.openInImageEditor"))}</button><button${ssrRenderAttrs(mergeProps({
           class: "icon-button",
           type: "button",
           disabled: unref(generation).remasterLoading || !selectedImageOutput(item) || !unref(remasterAnchorAvailable),
           "aria-label": unref(t)("remaster.run")
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("remaster.run"))))} data-v-636c05c7>${ssrInterpolate(unref(t)("remaster.run"))}</button><button${ssrRenderAttrs(mergeProps({
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("remaster.run"))))} data-v-2b594c3c>${ssrInterpolate(unref(t)("remaster.run"))}</button><button${ssrRenderAttrs(mergeProps({
           class: "icon-button",
           type: "button",
           disabled: unref(externalIntegrations).eagleLoading || !unref(externalIntegrations).eagleStatus?.connected || !selectedImageOutput(item),
           "aria-label": eagleActionLabel(item)
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, eagleActionLabel(item))))} data-v-636c05c7>${ssrInterpolate(eagleActionLabel(item))}</button><button class="icon-button history-item__delete" type="button"${ssrIncludeBooleanAttr(unref(generationHistory).historyDeletingId !== null) ? " disabled" : ""} data-v-636c05c7>${ssrInterpolate(unref(t)("historyPanel.delete"))}</button></div><textarea class="history-notes"${ssrRenderAttr("aria-label", unref(t)("historyPanel.notes"))} rows="2"${ssrRenderAttr("placeholder", unref(t)("historyPanel.notesPlaceholder"))} data-v-636c05c7>${ssrInterpolate(item.notes ?? "")}</textarea>`);
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, eagleActionLabel(item))))} data-v-2b594c3c>${ssrInterpolate(eagleActionLabel(item))}</button><button class="icon-button history-item__delete" type="button"${ssrIncludeBooleanAttr(unref(generationHistory).historyDeletingId !== null) ? " disabled" : ""} data-v-2b594c3c>${ssrInterpolate(unref(t)("historyPanel.delete"))}</button></div><p class="history-prompt-full" data-v-2b594c3c>${ssrInterpolate(item.expanded_prompt)}</p><textarea class="history-notes"${ssrRenderAttr("aria-label", unref(t)("historyPanel.notes"))} rows="2"${ssrRenderAttr("placeholder", unref(t)("historyPanel.notesPlaceholder"))} data-v-2b594c3c>${ssrInterpolate(item.notes ?? "")}</textarea>`);
         if (controlNetArtifactImages(item).length) {
-          _push(`<div class="history-artifacts" data-v-636c05c7><!--[-->`);
+          _push(`<div class="history-artifacts" data-v-2b594c3c><!--[-->`);
           ssrRenderList(controlNetArtifactImages(item), (path) => {
-            _push(`<img${ssrRenderAttr("src", assetUrl(path))}${ssrRenderAttr("alt", outputFilename(path))} data-v-636c05c7>`);
+            _push(`<img${ssrRenderAttr("src", assetUrl(path))}${ssrRenderAttr("alt", outputFilename(path))} data-v-2b594c3c>`);
           });
           _push(`<!--]--></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</article>`);
+        _push(`</details></article>`);
       });
       _push(`<!--]--></section>`);
     };
   }
 });
-const _sfc_setup$2d = _sfc_main$2d.setup;
-_sfc_main$2d.setup = (props, ctx) => {
+const _sfc_setup$2g = _sfc_main$2g.setup;
+_sfc_main$2g.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/HistoryPanel.vue");
-  return _sfc_setup$2d ? _sfc_setup$2d(props, ctx) : void 0;
+  return _sfc_setup$2g ? _sfc_setup$2g(props, ctx) : void 0;
 };
-const HistoryPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2d, [["__scopeId", "data-v-636c05c7"]]), { __name: "StudioHistoryPanel" });
+const HistoryPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2g, [["__scopeId", "data-v-2b594c3c"]]), { __name: "StudioHistoryPanel" });
 const object = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 function makingVideo(item) {
   const settings = item.settings ?? {};
@@ -16623,7 +16601,7 @@ function makingVideo(item) {
   };
 }
 const makingArtifactUrl = (base, id, artifact, download = false) => `${base}/api/generations/history/${id}/artifacts/${encodeURIComponent(artifact)}${download ? "?download=true" : ""}`;
-const _sfc_main$2c = /* @__PURE__ */ defineComponent({
+const _sfc_main$2f = /* @__PURE__ */ defineComponent({
   __name: "MakingVideo",
   __ssrInlineRender: true,
   props: {
@@ -16682,13 +16660,13 @@ const _sfc_main$2c = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2c = _sfc_main$2c.setup;
-_sfc_main$2c.setup = (props, ctx) => {
+const _sfc_setup$2f = _sfc_main$2f.setup;
+_sfc_main$2f.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/MakingVideo.vue");
-  return _sfc_setup$2c ? _sfc_setup$2c(props, ctx) : void 0;
+  return _sfc_setup$2f ? _sfc_setup$2f(props, ctx) : void 0;
 };
-const MakingVideo = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2c, [["__scopeId", "data-v-9916a03d"]]), { __name: "StudioMakingVideo" });
+const MakingVideo = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2f, [["__scopeId", "data-v-9916a03d"]]), { __name: "StudioMakingVideo" });
 function branchInfo(item) {
   const value = item.settings?.generation_branch;
   const receipt = value && typeof value === "object" ? value : {};
@@ -16704,7 +16682,7 @@ function branchInfo(item) {
 function branchCaptureSupported(state) {
   return ["sdxl", "anima"].includes(state.profile) && state.mode === "txt2img" && state.batchSize === 1 && state.batchCount === 1 && state.steps > 1 && ["Euler", "Euler a", "DPM++ 2M", "DPM++ 2M SDE", "DPM++ 3M SDE", "ER SDE"].includes(state.sampler);
 }
-const _sfc_main$2b = /* @__PURE__ */ defineComponent({
+const _sfc_main$2e = /* @__PURE__ */ defineComponent({
   __name: "GenerationBranch",
   __ssrInlineRender: true,
   props: {
@@ -16775,13 +16753,13 @@ const _sfc_main$2b = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2b = _sfc_main$2b.setup;
-_sfc_main$2b.setup = (props, ctx) => {
+const _sfc_setup$2e = _sfc_main$2e.setup;
+_sfc_main$2e.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerationBranch.vue");
-  return _sfc_setup$2b ? _sfc_setup$2b(props, ctx) : void 0;
+  return _sfc_setup$2e ? _sfc_setup$2e(props, ctx) : void 0;
 };
-const GenerationBranch = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2b, [["__scopeId", "data-v-6d56ca5a"]]), { __name: "StudioGenerationBranch" });
+const GenerationBranch = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2e, [["__scopeId", "data-v-6d56ca5a"]]), { __name: "StudioGenerationBranch" });
 const wordMaskInfo = (item) => {
   const record = item.settings?.word_masks;
   return { available: record?.status === "recorded", failed: record?.status === "not_saved" };
@@ -16790,7 +16768,7 @@ const wordLabel = (column) => {
   const values2 = Object.values(column.labels);
   return new Set(values2).size === 1 ? values2[0] ?? "" : Object.entries(column.labels).map(([encoder, text]) => `${encoder.toUpperCase()}: ${text}`).join(" / ");
 };
-const _sfc_main$2a = /* @__PURE__ */ defineComponent({
+const _sfc_main$2d = /* @__PURE__ */ defineComponent({
   __name: "WordMaskEdit",
   __ssrInlineRender: true,
   props: {
@@ -16895,25 +16873,42 @@ const _sfc_main$2a = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2a = _sfc_main$2a.setup;
-_sfc_main$2a.setup = (props, ctx) => {
+const _sfc_setup$2d = _sfc_main$2d.setup;
+_sfc_main$2d.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/WordMaskEdit.vue");
-  return _sfc_setup$2a ? _sfc_setup$2a(props, ctx) : void 0;
+  return _sfc_setup$2d ? _sfc_setup$2d(props, ctx) : void 0;
 };
-const WordMaskEdit = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2a, [["__scopeId", "data-v-3cdfd47b"]]), { __name: "StudioWordMaskEdit" });
-const _sfc_main$29 = /* @__PURE__ */ defineComponent({
+const WordMaskEdit = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2d, [["__scopeId", "data-v-3cdfd47b"]]), { __name: "StudioWordMaskEdit" });
+const showGenerationProgress = (status, imageCheckStatus) => Boolean(status) && (status !== "completed" || imageCheckStatus === "unknown" || imageCheckStatus === "reject");
+const savedText = (value) => typeof value === "string" ? value.trim() : "";
+const storedGenerationModel = (result) => {
+  const slots = result.model_slots ?? {};
+  const settings = result.settings ?? {};
+  const keys = result.profile === "sdxl" ? ["checkpoint", "diffusion_model"] : ["diffusion_model", "checkpoint"];
+  for (const values2 of [slots, settings]) {
+    for (const key of keys) {
+      const value = savedText(values2[key]);
+      if (value) return value;
+    }
+  }
+  return "—";
+};
+const storedGenerationCreatedAt = (result, history) => savedText(result.created_at) || savedText(history.find((item) => item.id === result.id && result.id != null)?.created_at) || "—";
+const _sfc_main$2c = /* @__PURE__ */ defineComponent({
   __name: "ResultPane",
   __ssrInlineRender: true,
   emits: ["openImage", "openImageMask", "openDetails", "openSettings"],
   setup(__props, { emit: __emit }) {
     const generation = useGenerationStore();
+    const generationHistory = useGenerationHistoryStore();
     const externalIntegrations = useExternalIntegrationsStore();
     const runtime = useRuntimeStore();
     const { t } = useAsteriaI18n();
     const emit = __emit;
     const jobStatusLabel = computed(() => generation.currentJob?.status ?? t("resultPane.idle"));
     const isGenerating = computed(() => Boolean(generation.currentJob && ["queued", "running", "cancelling"].includes(generation.currentJob.status)));
+    const showJobProgress = computed(() => showGenerationProgress(generation.currentJob?.status, imageCheckSummary(generation.result?.settings)?.status));
     const jobModeLabel = computed(() => {
       if (!generation.currentJob) {
         return generation.mode;
@@ -17007,12 +17002,12 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
       if (!result) return [];
       return [
         [t("resultPane.status"), result.status],
-        [t("resultPane.profileModel"), `${result.profile} · ${result.model_slots?.checkpoint ?? resultSetting("checkpoint")}`],
+        [t("resultPane.profileModel"), `${result.profile} · ${storedGenerationModel(result)}`],
         [t("resultPane.size"), `${resultSetting("width")} × ${resultSetting("height")}`],
         [t("resultPane.seed"), selectedResultOutput.value?.seed ?? resultSetting("seed")],
         [t("resultPane.sampling"), `${resultSetting("sampler")} · ${resultSetting("steps")} steps · CFG ${resultSetting("cfg_scale")}`],
         [t("resultPane.generationTime"), formatGenerationDuration(result.settings.generation_duration_seconds)],
-        [t("resultPane.created"), result.created_at ?? "—"],
+        [t("resultPane.created"), storedGenerationCreatedAt(result, generationHistory.history)],
         [t("resultPane.outputPosition"), selectedOutputPosition.value]
       ];
     });
@@ -17075,11 +17070,11 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "pane pane-center preview-workspace",
         "aria-label": unref(t)("resultPane.aria")
-      }, _attrs))} data-v-3a2ad367><div class="pane-title" data-v-3a2ad367><span data-v-3a2ad367>${ssrInterpolate(unref(t)("resultPane.title"))}</span><small data-v-3a2ad367>${ssrInterpolate(unref(jobStatusLabel))} · ${ssrInterpolate(unref(jobModeLabel))}</small></div>`);
-      if (unref(generation).currentJob) {
-        _push(`<section class="${ssrRenderClass([{ "generation-status--active": unref(isGenerating) }, "generation-status"])}"${ssrRenderAttr("aria-label", unref(t)("resultPane.statusAria"))} data-v-3a2ad367><div class="generation-status__header" data-v-3a2ad367><strong data-v-3a2ad367>${ssrInterpolate(unref(jobProgressLabel))}</strong><span data-v-3a2ad367>${ssrInterpolate(unref(jobProgressPercent))}%</span></div><div class="generation-status__bar" role="progressbar"${ssrRenderAttr("aria-valuenow", unref(jobProgressPercent))} aria-valuemin="0" aria-valuemax="100" data-v-3a2ad367><span style="${ssrRenderStyle({ width: `${unref(jobProgressPercent)}%` })}" data-v-3a2ad367></span></div><div class="generation-status__meta" data-v-3a2ad367><span data-v-3a2ad367>${ssrInterpolate(unref(generation).currentJob.mode)} / ${ssrInterpolate(unref(t)("resultPane.jobCount", { current: unref(generation).currentJob.current, total: unref(generation).currentJob.total }))}</span>`);
+      }, _attrs))} data-v-2410186a><div class="pane-title" data-v-2410186a><span data-v-2410186a>${ssrInterpolate(unref(t)("resultPane.title"))}</span><small data-v-2410186a>${ssrInterpolate(unref(jobStatusLabel))} · ${ssrInterpolate(unref(jobModeLabel))}</small></div>`);
+      if (unref(showJobProgress)) {
+        _push(`<section class="${ssrRenderClass([{ "generation-status--active": unref(isGenerating) }, "generation-status"])}"${ssrRenderAttr("aria-label", unref(t)("resultPane.statusAria"))} data-v-2410186a><div class="generation-status__header" data-v-2410186a><strong data-v-2410186a>${ssrInterpolate(unref(jobProgressLabel))}</strong><span data-v-2410186a>${ssrInterpolate(unref(jobProgressPercent))}%</span></div><div class="generation-status__bar" role="progressbar"${ssrRenderAttr("aria-valuenow", unref(jobProgressPercent))} aria-valuemin="0" aria-valuemax="100" data-v-2410186a><span style="${ssrRenderStyle({ width: `${unref(jobProgressPercent)}%` })}" data-v-2410186a></span></div><div class="generation-status__meta" data-v-2410186a><span data-v-2410186a>${ssrInterpolate(unref(generation).currentJob.mode)} / ${ssrInterpolate(unref(t)("resultPane.jobCount", { current: unref(generation).currentJob.current, total: unref(generation).currentJob.total }))}</span>`);
         if (unref(jobPreviewStatus)) {
-          _push(`<span data-v-3a2ad367>${ssrInterpolate(unref(jobPreviewStatus))}</span>`);
+          _push(`<span data-v-2410186a>${ssrInterpolate(unref(jobPreviewStatus))}</span>`);
         } else {
           _push(`<!---->`);
         }
@@ -17088,39 +17083,44 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
         _push(`<!---->`);
       }
       if (unref(generation).error) {
-        _push(`<p class="error" aria-live="assertive" data-v-3a2ad367>${ssrInterpolate(unref(generation).error)}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-2410186a>${ssrInterpolate(unref(generation).error)}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(resultImages).length) {
-        _push(`<button class="result-canvas result-canvas--button" type="button"${ssrRenderAttr("aria-label", unref(t)("resultPane.openPreview"))} data-v-3a2ad367><img${ssrRenderAttr("src", outputUrl(unref(displayedResultPath)))}${ssrRenderAttr("alt", outputFilename(unref(displayedResultPath)))} data-v-3a2ad367><small class="preview-caption" data-v-3a2ad367>${ssrInterpolate(unref(previewCaption))}</small></button>`);
+        _push(`<button class="result-canvas result-canvas--button" type="button"${ssrRenderAttr("aria-label", unref(t)("resultPane.openPreview"))} data-v-2410186a><img${ssrRenderAttr("src", outputUrl(unref(displayedResultPath)))}${ssrRenderAttr("alt", outputFilename(unref(displayedResultPath)))} data-v-2410186a><small class="preview-caption" data-v-2410186a>${ssrInterpolate(unref(previewCaption))}</small></button>`);
       } else if (unref(previewImages).length) {
-        _push(`<div class="result-canvas result-canvas--live" data-v-3a2ad367><img${ssrRenderAttr("src", outputUrl(unref(previewImages)[0]))}${ssrRenderAttr("alt", outputFilename(unref(previewImages)[0]))} data-v-3a2ad367><small class="preview-caption" data-v-3a2ad367>${ssrInterpolate(unref(previewCaption))}</small></div>`);
+        _push(`<div class="result-canvas result-canvas--live" data-v-2410186a><img${ssrRenderAttr("src", outputUrl(unref(previewImages)[0]))}${ssrRenderAttr("alt", outputFilename(unref(previewImages)[0]))} data-v-2410186a><small class="preview-caption" data-v-2410186a>${ssrInterpolate(unref(previewCaption))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(resultImages).length > 1) {
-        _push(`<div class="result-output-filmstrip"${ssrRenderAttr("aria-label", unref(t)("resultPane.primaryOutputs"))} data-v-3a2ad367><!--[-->`);
+        _push(`<div class="result-output-filmstrip"${ssrRenderAttr("aria-label", unref(t)("resultPane.primaryOutputs"))} data-v-2410186a><!--[-->`);
         ssrRenderList(unref(resultImages), (path) => {
-          _push(`<button type="button" class="${ssrRenderClass([{ "result-image-button--selected": path === unref(displayedResultPath) }, "result-image-button"])}" data-v-3a2ad367><img${ssrRenderAttr("src", outputUrl(path))}${ssrRenderAttr("alt", outputFilename(path))} data-v-3a2ad367></button>`);
+          _push(`<button type="button" class="${ssrRenderClass([{ "result-image-button--selected": path === unref(displayedResultPath) }, "result-image-button"])}" data-v-2410186a><img${ssrRenderAttr("src", outputUrl(path))}${ssrRenderAttr("alt", outputFilename(path))} data-v-2410186a></button>`);
         });
         _push(`<!--]--></div>`);
       } else {
         _push(`<!---->`);
       }
-      if (unref(resultImages).length) {
-        _push(`<div class="result-actions" data-v-3a2ad367><button type="button"${ssrIncludeBooleanAttr(unref(selectedResultSeed) === null) ? " disabled" : ""} data-v-3a2ad367>${ssrInterpolate(unref(t)("generation.useSeed", { seed: unref(selectedResultSeed) ?? "—" }))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedResultOutput)) ? " disabled" : ""} data-v-3a2ad367>${ssrInterpolate(unref(t)("resultPane.useAsImg2img"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedResultOutput)) ? " disabled" : ""} data-v-3a2ad367>${ssrInterpolate(unref(t)("resultPane.useAsControlNet"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedResultOutput)) ? " disabled" : ""} data-v-3a2ad367>${ssrInterpolate(unref(t)("resultPane.openInImage"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedResultOutput) || unref(remasterActive) || unref(generation).remasterLoading || !unref(remasterAnchorAvailable)) ? " disabled" : ""} data-v-3a2ad367>${ssrInterpolate(unref(t)("remaster.run"))}</button>`);
-        if (unref(remasterActive) && unref(remasterJobMatchesSelection)) {
-          _push(`<button type="button" data-v-3a2ad367>${ssrInterpolate(unref(t)("remaster.cancel"))}</button>`);
+      if (unref(generation).result) {
+        _push(`<section class="result-info prepared-panel"${ssrRenderAttr("aria-label", unref(t)("resultPane.resultInfo"))} data-v-2410186a><div class="result-info__header" data-v-2410186a><strong data-v-2410186a>${ssrInterpolate(unref(t)("resultPane.resultInfo"))}</strong><small class="result-info__summary" data-v-2410186a>${ssrInterpolate(resultSetting("width"))} × ${ssrInterpolate(resultSetting("height"))} · Seed ${ssrInterpolate(unref(selectedResultOutput)?.seed ?? resultSetting("seed"))} · ${ssrInterpolate(formatGenerationDuration(unref(generation).result.settings.generation_duration_seconds))}</small></div>`);
+        if (unref(resultImages).length) {
+          _push(`<div class="result-info__actions" data-v-2410186a><button type="button"${ssrIncludeBooleanAttr(!unref(selectedResultOutput)) ? " disabled" : ""} data-v-2410186a>${ssrInterpolate(unref(t)("resultPane.openInImage"))}</button><details class="result-info__reuse result-info__disclosure" data-v-2410186a><summary data-v-2410186a><svg class="result-info__arrow" viewBox="0 0 12 12" aria-hidden="true" data-v-2410186a><path d="m2 4 4 4 4-4" data-v-2410186a></path></svg>${ssrInterpolate(unref(t)("resultPane.reuseActions"))}</summary><div class="result-info__reuse-content" data-v-2410186a><button type="button"${ssrIncludeBooleanAttr(unref(selectedResultSeed) === null) ? " disabled" : ""} data-v-2410186a>${ssrInterpolate(unref(t)("generation.useSeed", { seed: unref(selectedResultSeed) ?? "—" }))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedResultOutput)) ? " disabled" : ""} data-v-2410186a>${ssrInterpolate(unref(t)("resultPane.useAsImg2img"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedResultOutput)) ? " disabled" : ""} data-v-2410186a>${ssrInterpolate(unref(t)("resultPane.useAsControlNet"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selectedResultOutput) || unref(remasterActive) || unref(generation).remasterLoading || !unref(remasterAnchorAvailable)) ? " disabled" : ""} data-v-2410186a>${ssrInterpolate(unref(t)("remaster.run"))}</button></div></details>`);
+          if (unref(remasterActive) && unref(remasterJobMatchesSelection)) {
+            _push(`<button type="button" data-v-2410186a>${ssrInterpolate(unref(t)("remaster.cancel"))}</button>`);
+          } else {
+            _push(`<!---->`);
+          }
+          _push(`</div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`</div>`);
-      } else {
-        _push(`<!---->`);
-      }
-      if (unref(generation).result) {
-        _push(`<section class="result-info prepared-panel"${ssrRenderAttr("aria-label", unref(t)("resultPane.resultInfo"))} data-v-3a2ad367><div class="result-info__header" data-v-3a2ad367><strong data-v-3a2ad367>${ssrInterpolate(unref(t)("resultPane.resultInfo"))}</strong>`);
+        _push(`<details class="result-info__advanced result-info__disclosure" data-v-2410186a><summary data-v-2410186a><svg class="result-info__arrow" viewBox="0 0 12 12" aria-hidden="true" data-v-2410186a><path d="m2 4 4 4 4-4" data-v-2410186a></path></svg>${ssrInterpolate(unref(t)("resultPane.infoTools"))}</summary><div class="result-info__advanced-content" data-v-2410186a><dl data-v-2410186a><!--[-->`);
+        ssrRenderList(unref(resultInfo), ([label, value]) => {
+          _push(`<!--[--><dt data-v-2410186a>${ssrInterpolate(label)}</dt><dd class="${ssrRenderClass({ "selected-output-position": label === unref(t)("resultPane.outputPosition") })}" data-v-2410186a>${ssrInterpolate(value)}</dd><!--]-->`);
+        });
+        _push(`<!--]--></dl><div class="result-info__tools" data-v-2410186a>`);
         _push(ssrRenderComponent(PromptInterpretation, {
           item: unref(generation).result
         }, null, _parent));
@@ -17139,50 +17139,46 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
           "selected-path": unref(selectedResultOutput)?.path,
           onEdit: ($event) => emit("openImageMask", $event)
         }, null, _parent));
-        _push(`<button type="button" data-v-3a2ad367>${ssrInterpolate(unref(t)("resultPane.details"))}</button></div><dl data-v-3a2ad367><!--[-->`);
-        ssrRenderList(unref(resultInfo), ([label, value]) => {
-          _push(`<!--[--><dt data-v-3a2ad367>${ssrInterpolate(label)}</dt><dd class="${ssrRenderClass({ "selected-output-position": label === unref(t)("resultPane.outputPosition") })}" data-v-3a2ad367>${ssrInterpolate(value)}</dd><!--]-->`);
-        });
-        _push(`<!--]--></dl></section>`);
+        _push(`<button type="button" data-v-2410186a>${ssrInterpolate(unref(t)("resultPane.details"))}</button></div></div></details></section>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).remasterError && unref(remasterJobMatchesSelection)) {
-        _push(`<p class="error" aria-live="assertive" data-v-3a2ad367>${ssrInterpolate(unref(generation).remasterError)}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-2410186a>${ssrInterpolate(unref(generation).remasterError)}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(canRetryLiveRemaster)) {
-        _push(`<button type="button"${ssrIncludeBooleanAttr(unref(generation).remasterLoading) ? " disabled" : ""} data-v-3a2ad367>${ssrInterpolate(unref(t)("remaster.retry"))}</button>`);
+        _push(`<button type="button"${ssrIncludeBooleanAttr(unref(generation).remasterLoading) ? " disabled" : ""} data-v-2410186a>${ssrInterpolate(unref(t)("remaster.retry"))}</button>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(displayedRemasterResult)) {
-        _push(`<section class="prepared-panel remaster-result"${ssrRenderAttr("aria-label", unref(t)("remaster.result"))} data-v-3a2ad367><strong data-v-3a2ad367>${ssrInterpolate(unref(t)("remaster.result"))}</strong><span data-v-3a2ad367>${ssrInterpolate(unref(remasterStatusLabel))}</span>`);
+        _push(`<section class="prepared-panel remaster-result"${ssrRenderAttr("aria-label", unref(t)("remaster.result"))} data-v-2410186a><strong data-v-2410186a>${ssrInterpolate(unref(t)("remaster.result"))}</strong><span data-v-2410186a>${ssrInterpolate(unref(remasterStatusLabel))}</span>`);
         if (unref(displayedRemasterResult).warnings.length) {
-          _push(`<small data-v-3a2ad367>${ssrInterpolate(unref(t)("remaster.warningCount", { count: unref(displayedRemasterResult).warnings.length }))}</small>`);
+          _push(`<small data-v-2410186a>${ssrInterpolate(unref(t)("remaster.warningCount", { count: unref(displayedRemasterResult).warnings.length }))}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="remaster-result__images" data-v-3a2ad367><img${ssrRenderAttr("src", assetUrl(unref(displayedRemasterResult).source_image_path))}${ssrRenderAttr("alt", unref(t)("remaster.source"))} data-v-3a2ad367>`);
+        _push(`<div class="remaster-result__images" data-v-2410186a><img${ssrRenderAttr("src", assetUrl(unref(displayedRemasterResult).source_image_path))}${ssrRenderAttr("alt", unref(t)("remaster.source"))} data-v-2410186a>`);
         if (unref(displayedRemasterResult).output_path) {
-          _push(`<img${ssrRenderAttr("src", outputUrl(unref(displayedRemasterResult).output_path))}${ssrRenderAttr("alt", unref(t)("remaster.result"))} data-v-3a2ad367>`);
+          _push(`<img${ssrRenderAttr("src", outputUrl(unref(displayedRemasterResult).output_path))}${ssrRenderAttr("alt", unref(t)("remaster.result"))} data-v-2410186a>`);
         } else {
           _push(`<!---->`);
         }
         _push(`</div>`);
         if (unref(displayedRemasterResult).status === "failed" || unref(displayedRemasterResult).status === "cancelled") {
-          _push(`<button type="button" data-v-3a2ad367>${ssrInterpolate(unref(t)("remaster.retry"))}</button>`);
+          _push(`<button type="button" data-v-2410186a>${ssrInterpolate(unref(t)("remaster.retry"))}</button>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(displayedRemasterResult).contact_sheet_path) {
-          _push(`<a class="icon-button"${ssrRenderAttr("href", outputUrl(unref(displayedRemasterResult).contact_sheet_path))} target="_blank" rel="noopener" data-v-3a2ad367>${ssrInterpolate(unref(t)("remaster.openComparison"))}</a>`);
+          _push(`<a class="icon-button"${ssrRenderAttr("href", outputUrl(unref(displayedRemasterResult).contact_sheet_path))} target="_blank" rel="noopener" data-v-2410186a>${ssrInterpolate(unref(t)("remaster.openComparison"))}</a>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(displayedRemasterResult).report_path) {
-          _push(`<a class="icon-button"${ssrRenderAttr("href", outputUrl(unref(displayedRemasterResult).report_path))} target="_blank" rel="noopener" data-v-3a2ad367>${ssrInterpolate(unref(t)("remaster.report"))}</a>`);
+          _push(`<a class="icon-button"${ssrRenderAttr("href", outputUrl(unref(displayedRemasterResult).report_path))} target="_blank" rel="noopener" data-v-2410186a>${ssrInterpolate(unref(t)("remaster.report"))}</a>`);
         } else {
           _push(`<!---->`);
         }
@@ -17191,20 +17187,32 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
         _push(`<!---->`);
       }
       if (unref(resultImages).length) {
-        _push(`<section class="prepared-panel"${ssrRenderAttr("aria-label", unref(t)("resultPane.eagleExportAria"))} data-v-3a2ad367><strong data-v-3a2ad367>Eagle</strong><span data-v-3a2ad367>${ssrInterpolate(unref(externalIntegrations).eagleStatus?.connected ? unref(selectedEagleRegistrationLabel) : unref(t)("resultPane.notConnected"))}</span><small data-v-3a2ad367>${ssrInterpolate(unref(t)("resultPane.duplicateCheck"))}</small>`);
-        _push(ssrRenderComponent(_component_StudioEagleFolderSelect, null, null, _parent));
+        _push(`<section class="result-eagle-tools"${ssrRenderAttr("aria-label", unref(t)("resultPane.eagleExportAria"))} data-v-2410186a>`);
+        _push(ssrRenderComponent(_component_StudioEagleFolderSelect, { compact: "" }, {
+          default: withCtx((_, _push2, _parent2, _scopeId) => {
+            if (_push2) {
+              _push2(`<small data-v-2410186a${_scopeId}>${ssrInterpolate(unref(externalIntegrations).eagleStatus?.connected ? unref(selectedEagleRegistrationLabel) : unref(t)("resultPane.notConnected"))}</small><small data-v-2410186a${_scopeId}>${ssrInterpolate(unref(t)("resultPane.duplicateCheck"))}</small>`);
+            } else {
+              return [
+                createVNode("small", null, toDisplayString(unref(externalIntegrations).eagleStatus?.connected ? unref(selectedEagleRegistrationLabel) : unref(t)("resultPane.notConnected")), 1),
+                createVNode("small", null, toDisplayString(unref(t)("resultPane.duplicateCheck")), 1)
+              ];
+            }
+          }),
+          _: 1
+        }, _parent));
         if (!unref(externalIntegrations).eagleStatus?.connected) {
-          _push(`<button type="button" data-v-3a2ad367>${ssrInterpolate(unref(t)("enhancementInspector.openSettings"))}</button>`);
+          _push(`<button type="button" data-v-2410186a>${ssrInterpolate(unref(t)("enhancementInspector.openSettings"))}</button>`);
         } else {
-          _push(`<button type="button"${ssrIncludeBooleanAttr(!unref(selectedResultOutput) || unref(externalIntegrations).eagleLoading || !unref(externalIntegrations).eagleStatus?.connected) ? " disabled" : ""} data-v-3a2ad367>${ssrInterpolate(unref(selectedEagleActionLabel))}</button>`);
+          _push(`<button type="button"${ssrIncludeBooleanAttr(!unref(selectedResultOutput) || unref(externalIntegrations).eagleLoading || !unref(externalIntegrations).eagleStatus?.connected) ? " disabled" : ""} data-v-2410186a>${ssrInterpolate(unref(selectedEagleActionLabel))}</button>`);
         }
         if (unref(externalIntegrations).eagleError) {
-          _push(`<p class="error" aria-live="assertive" data-v-3a2ad367>${ssrInterpolate(unref(externalIntegrations).eagleError)}</p>`);
+          _push(`<p class="result-eagle-tools__message error" aria-live="assertive" data-v-2410186a>${ssrInterpolate(unref(externalIntegrations).eagleError)}</p>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(eagleIntegrationMessage)) {
-          _push(`<small aria-live="polite" data-v-3a2ad367>${ssrInterpolate(unref(eagleIntegrationMessage))}</small>`);
+          _push(`<small class="result-eagle-tools__message" aria-live="polite" data-v-2410186a>${ssrInterpolate(unref(eagleIntegrationMessage))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -17213,7 +17221,7 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
         _push(`<!---->`);
       }
       if (!unref(previewImages).length) {
-        _push(`<div class="empty" data-v-3a2ad367>${ssrInterpolate(unref(t)("resultPane.noGenerationYet"))}</div>`);
+        _push(`<div class="empty" data-v-2410186a>${ssrInterpolate(unref(t)("resultPane.noGenerationYet"))}</div>`);
       } else {
         _push(`<!---->`);
       }
@@ -17222,19 +17230,19 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
       }, null, _parent));
       ssrRenderTeleport(_push, (_push2) => {
         if (unref(resultLightboxOpen) && unref(selectedResultOutput)) {
-          _push2(`<div class="result-lightbox" role="dialog" aria-modal="true" tabindex="-1"${ssrRenderAttr("aria-label", unref(t)("resultPane.previewDialog"))} data-v-3a2ad367>`);
+          _push2(`<div class="result-lightbox" role="dialog" aria-modal="true" tabindex="-1"${ssrRenderAttr("aria-label", unref(t)("resultPane.previewDialog"))} data-v-2410186a>`);
           if (unref(resultImages).length > 1) {
-            _push2(`<button class="result-lightbox__nav result-lightbox__nav--previous" type="button"${ssrRenderAttr("aria-label", unref(t)("resultPane.previousImage"))} data-v-3a2ad367> ‹ </button>`);
+            _push2(`<button class="result-lightbox__nav result-lightbox__nav--previous" type="button"${ssrRenderAttr("aria-label", unref(t)("resultPane.previousImage"))} data-v-2410186a> ‹ </button>`);
           } else {
             _push2(`<!---->`);
           }
-          _push2(`<img${ssrRenderAttr("src", outputUrl(unref(displayedResultPath)))}${ssrRenderAttr("alt", outputFilename(unref(displayedResultPath)))} data-v-3a2ad367>`);
+          _push2(`<img${ssrRenderAttr("src", outputUrl(unref(displayedResultPath)))}${ssrRenderAttr("alt", outputFilename(unref(displayedResultPath)))} data-v-2410186a>`);
           if (unref(resultImages).length > 1) {
-            _push2(`<button class="result-lightbox__nav result-lightbox__nav--next" type="button"${ssrRenderAttr("aria-label", unref(t)("resultPane.nextImage"))} data-v-3a2ad367> › </button>`);
+            _push2(`<button class="result-lightbox__nav result-lightbox__nav--next" type="button"${ssrRenderAttr("aria-label", unref(t)("resultPane.nextImage"))} data-v-2410186a> › </button>`);
           } else {
             _push2(`<!---->`);
           }
-          _push2(`<button class="result-lightbox__close icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("resultPane.closePreview"))} data-v-3a2ad367> × </button></div>`);
+          _push2(`<button class="result-lightbox__close icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("resultPane.closePreview"))} data-v-2410186a> × </button></div>`);
         } else {
           _push2(`<!---->`);
         }
@@ -17243,14 +17251,14 @@ const _sfc_main$29 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$29 = _sfc_main$29.setup;
-_sfc_main$29.setup = (props, ctx) => {
+const _sfc_setup$2c = _sfc_main$2c.setup;
+_sfc_main$2c.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ResultPane.vue");
-  return _sfc_setup$29 ? _sfc_setup$29(props, ctx) : void 0;
+  return _sfc_setup$2c ? _sfc_setup$2c(props, ctx) : void 0;
 };
-const ResultPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$29, [["__scopeId", "data-v-3a2ad367"]]), { __name: "StudioResultPane" });
-const _sfc_main$28 = /* @__PURE__ */ defineComponent({
+const ResultPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2c, [["__scopeId", "data-v-2410186a"]]), { __name: "StudioResultPane" });
+const _sfc_main$2b = /* @__PURE__ */ defineComponent({
   __name: "AnimaLLLitePanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -17334,14 +17342,14 @@ const _sfc_main$28 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$28 = _sfc_main$28.setup;
-_sfc_main$28.setup = (props, ctx) => {
+const _sfc_setup$2b = _sfc_main$2b.setup;
+_sfc_main$2b.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AnimaLLLitePanel.vue");
-  return _sfc_setup$28 ? _sfc_setup$28(props, ctx) : void 0;
+  return _sfc_setup$2b ? _sfc_setup$2b(props, ctx) : void 0;
 };
-const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$28, [["__scopeId", "data-v-5be66bff"]]), { __name: "StudioAnimaLLLitePanel" });
-const _sfc_main$27 = /* @__PURE__ */ defineComponent({
+const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2b, [["__scopeId", "data-v-5be66bff"]]), { __name: "StudioAnimaLLLitePanel" });
+const _sfc_main$2a = /* @__PURE__ */ defineComponent({
   __name: "ControlNetPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -17454,14 +17462,14 @@ const _sfc_main$27 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$27 = _sfc_main$27.setup;
-_sfc_main$27.setup = (props, ctx) => {
+const _sfc_setup$2a = _sfc_main$2a.setup;
+_sfc_main$2a.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ControlNetPanel.vue");
-  return _sfc_setup$27 ? _sfc_setup$27(props, ctx) : void 0;
+  return _sfc_setup$2a ? _sfc_setup$2a(props, ctx) : void 0;
 };
-const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$27, [["__scopeId", "data-v-bbeef287"]]), { __name: "StudioControlNetPanel" });
-const _sfc_main$26 = /* @__PURE__ */ defineComponent({
+const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2a, [["__scopeId", "data-v-bbeef287"]]), { __name: "StudioControlNetPanel" });
+const _sfc_main$29 = /* @__PURE__ */ defineComponent({
   __name: "DetailerPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -17618,17 +17626,22 @@ const _sfc_main$26 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$26 = _sfc_main$26.setup;
-_sfc_main$26.setup = (props, ctx) => {
+const _sfc_setup$29 = _sfc_main$29.setup;
+_sfc_main$29.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/DetailerPanel.vue");
-  return _sfc_setup$26 ? _sfc_setup$26(props, ctx) : void 0;
+  return _sfc_setup$29 ? _sfc_setup$29(props, ctx) : void 0;
 };
-const DetailerPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$26, [["__scopeId", "data-v-87b5b8fc"]]), { __name: "StudioDetailerPanel" });
-const _sfc_main$25 = /* @__PURE__ */ defineComponent({
+const DetailerPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$29, [["__scopeId", "data-v-87b5b8fc"]]), { __name: "StudioDetailerPanel" });
+const _sfc_main$28 = /* @__PURE__ */ defineComponent({
   __name: "ControlModulesInspector",
   __ssrInlineRender: true,
-  setup(__props) {
+  props: {
+    requestedModule: {}
+  },
+  emits: ["openModelSettings"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
     const generation = useGenerationStore();
     const runtime = useRuntimeStore();
     const { t } = useAsteriaI18n();
@@ -17638,6 +17651,9 @@ const _sfc_main$25 = /* @__PURE__ */ defineComponent({
       if (!activeModule.value || !ids.includes(activeModule.value)) {
         activeModule.value = ids[0] ?? null;
       }
+    }, { immediate: true });
+    watch(() => props.requestedModule, (value) => {
+      if (value && availableModuleIds.value.includes(value)) activeModule.value = value;
     }, { immediate: true });
     const controlNetCapabilityAvailable = computed(() => runtime.capabilities?.features.controlnet?.available === true);
     const detailerCapabilityAvailable = computed(() => runtime.capabilities?.features.detailer?.available === true);
@@ -17678,11 +17694,21 @@ const _sfc_main$25 = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "control-modules",
         "aria-label": unref(t)("generationInspector.modules")
-      }, _attrs))} data-v-2bf73349><header class="control-modules__heading" data-v-2bf73349><div data-v-2bf73349><h2 data-v-2bf73349>${ssrInterpolate(unref(t)("generationInspector.modules"))}</h2><small data-v-2bf73349>${ssrInterpolate(unref(t)("modulesInspector.help"))}</small></div></header><nav class="control-modules__tabs"${ssrRenderAttr("aria-label", unref(t)("modulesInspector.tabsAria"))} data-v-2bf73349><!--[-->`);
-      ssrRenderList(unref(modules), (module) => {
-        _push(`<button type="button" class="${ssrRenderClass(["control-modules__tab", { "control-modules__tab--active": unref(activeModule) === module.id }])}"${ssrRenderAttr("aria-pressed", unref(activeModule) === module.id)} data-v-2bf73349><span data-v-2bf73349>${ssrInterpolate(module.label)}</span><small data-v-2bf73349>${ssrInterpolate(module.summary)}</small><em data-v-2bf73349>${ssrInterpolate(module.status)}</em></button>`);
-      });
-      _push(`<!--]--></nav>`);
+      }, _attrs))} data-v-1aca3a79>`);
+      if (!__props.requestedModule) {
+        _push(`<header class="control-modules__heading" data-v-1aca3a79><div data-v-1aca3a79><h2 data-v-1aca3a79>${ssrInterpolate(unref(t)("generationInspector.modules"))}</h2><small data-v-1aca3a79>${ssrInterpolate(unref(t)("modulesInspector.help"))}</small></div></header>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (!__props.requestedModule) {
+        _push(`<nav class="control-modules__tabs"${ssrRenderAttr("aria-label", unref(t)("modulesInspector.tabsAria"))} data-v-1aca3a79><!--[-->`);
+        ssrRenderList(unref(modules), (module) => {
+          _push(`<button type="button" class="${ssrRenderClass(["control-modules__tab", { "control-modules__tab--active": unref(activeModule) === module.id }])}"${ssrRenderAttr("aria-pressed", unref(activeModule) === module.id)} data-v-1aca3a79><span data-v-1aca3a79>${ssrInterpolate(module.label)}</span><small data-v-1aca3a79>${ssrInterpolate(module.summary)}</small><em data-v-1aca3a79>${ssrInterpolate(module.status)}</em></button>`);
+        });
+        _push(`<!--]--></nav>`);
+      } else {
+        _push(`<!---->`);
+      }
       if (unref(availableModuleIds).includes("controlnet")) {
         _push(ssrRenderComponent(ControlNetPanel, {
           style: unref(activeModule) === "controlnet" ? null : { display: "none" }
@@ -17708,14 +17734,14 @@ const _sfc_main$25 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$25 = _sfc_main$25.setup;
-_sfc_main$25.setup = (props, ctx) => {
+const _sfc_setup$28 = _sfc_main$28.setup;
+_sfc_main$28.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ControlModulesInspector.vue");
-  return _sfc_setup$25 ? _sfc_setup$25(props, ctx) : void 0;
+  return _sfc_setup$28 ? _sfc_setup$28(props, ctx) : void 0;
 };
-const ControlModulesInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$25, [["__scopeId", "data-v-2bf73349"]]), { __name: "StudioGenerateControlModulesInspector" });
-const _sfc_main$24 = /* @__PURE__ */ defineComponent({
+const ControlModulesInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$28, [["__scopeId", "data-v-1aca3a79"]]), { __name: "StudioGenerateControlModulesInspector" });
+const _sfc_main$27 = /* @__PURE__ */ defineComponent({
   __name: "EnhancementInspector",
   __ssrInlineRender: true,
   props: {
@@ -17744,14 +17770,14 @@ const _sfc_main$24 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$24 = _sfc_main$24.setup;
-_sfc_main$24.setup = (props, ctx) => {
+const _sfc_setup$27 = _sfc_main$27.setup;
+_sfc_main$27.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/EnhancementInspector.vue");
-  return _sfc_setup$24 ? _sfc_setup$24(props, ctx) : void 0;
+  return _sfc_setup$27 ? _sfc_setup$27(props, ctx) : void 0;
 };
-const EnhancementInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$24, [["__scopeId", "data-v-4235174e"]]), { __name: "StudioGenerateEnhancementInspector" });
-const _sfc_main$23 = /* @__PURE__ */ defineComponent({
+const EnhancementInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$27, [["__scopeId", "data-v-4235174e"]]), { __name: "StudioGenerateEnhancementInspector" });
+const _sfc_main$26 = /* @__PURE__ */ defineComponent({
   __name: "RemasterSettingsPanel",
   __ssrInlineRender: true,
   props: {
@@ -17780,47 +17806,47 @@ const _sfc_main$23 = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: ["setting-section", "remaster-settings", { "remaster-settings--embedded": __props.embedded }],
         "aria-label": unref(t)("remaster.aria")
-      }, _attrs))} data-v-6da8ffc9><div class="${ssrRenderClass(["remaster-settings__header", { "remaster-settings__header--embedded": __props.embedded }])}" data-v-6da8ffc9>`);
+      }, _attrs))} data-v-f7e129f9><div class="${ssrRenderClass(["remaster-settings__header", { "remaster-settings__header--embedded": __props.embedded }])}" data-v-f7e129f9>`);
       if (!__props.embedded) {
-        _push(`<h2 data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.title"))}</h2>`);
+        _push(`<h2 data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.title"))}</h2>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="check-field" data-v-6da8ffc9><input${ssrIncludeBooleanAttr(unref(generation).remaster.enabled) ? " checked" : ""} type="checkbox" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.enable"))}</span></label></div><div class="remaster-settings__grid" data-v-6da8ffc9><label class="field" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.targetScale"))}</span><input${ssrRenderAttr("value", unref(generation).remaster.target_scale)} type="number" min="1" step="0.05" data-v-6da8ffc9></label><label class="field" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.anchorUpscaler"))}</span><select${ssrRenderAttr("value", unref(generation).remaster.anchor_upscaler)}${ssrIncludeBooleanAttr(unref(anchorOptions).length === 0) ? " disabled" : ""} data-v-6da8ffc9>`);
+      _push(`<label class="check-field" data-v-f7e129f9><input${ssrIncludeBooleanAttr(unref(generation).remaster.enabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(isBasicNativeImageProfile)(unref(generation).profile)) ? " disabled" : ""} data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.enable"))}</span></label></div><div class="remaster-settings__grid" data-v-f7e129f9><label class="field" data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.targetScale"))}</span><input${ssrRenderAttr("value", unref(generation).remaster.target_scale)} type="number" min="1" step="0.05" data-v-f7e129f9></label><label class="field" data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.anchorUpscaler"))}</span><select${ssrRenderAttr("value", unref(generation).remaster.anchor_upscaler)}${ssrIncludeBooleanAttr(unref(anchorOptions).length === 0) ? " disabled" : ""} data-v-f7e129f9>`);
       if (!unref(selectedAnchorAvailable)) {
-        _push(`<option${ssrRenderAttr("value", unref(generation).remaster.anchor_upscaler)} disabled data-v-6da8ffc9>${ssrInterpolate(unref(generation).remaster.anchor_upscaler)}</option>`);
+        _push(`<option${ssrRenderAttr("value", unref(generation).remaster.anchor_upscaler)} disabled data-v-f7e129f9>${ssrInterpolate(unref(generation).remaster.anchor_upscaler)}</option>`);
       } else {
         _push(`<!---->`);
       }
       _push(`<!--[-->`);
       ssrRenderList(unref(anchorOptions), (option) => {
-        _push(`<option data-v-6da8ffc9>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-f7e129f9>${ssrInterpolate(option)}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.bufferRatio"))}</span><input${ssrRenderAttr("value", unref(generation).remaster.buffer_ratio)} type="number" min="0.5" max="0.95" step="0.01" data-v-6da8ffc9></label><label class="field" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.latentInterpolation"))}</span><select${ssrRenderAttr("value", unref(generation).remaster.latent_interpolation)} data-v-6da8ffc9><option value="bilinear" data-v-6da8ffc9>Bilinear</option><option value="bicubic" data-v-6da8ffc9>Bicubic</option><option value="nearest-exact" data-v-6da8ffc9>Nearest exact</option></select></label><label class="field" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.denoise"))}</span><input${ssrRenderAttr("value", unref(generation).remaster.denoise)} type="number" min="0" max="1" step="0.01" data-v-6da8ffc9></label><label class="field" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.steps"))}</span><input${ssrRenderAttr("value", unref(generation).remaster.steps)} type="number" min="1" data-v-6da8ffc9></label><label class="field" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.sampler"))}</span><select${ssrRenderAttr("value", unref(generation).remaster.sampler)} data-v-6da8ffc9><!--[-->`);
+      _push(`<!--]--></select></label><label class="field" data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.bufferRatio"))}</span><input${ssrRenderAttr("value", unref(generation).remaster.buffer_ratio)} type="number" min="0.5" max="0.95" step="0.01" data-v-f7e129f9></label><label class="field" data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.latentInterpolation"))}</span><select${ssrRenderAttr("value", unref(generation).remaster.latent_interpolation)} data-v-f7e129f9><option value="bilinear" data-v-f7e129f9>Bilinear</option><option value="bicubic" data-v-f7e129f9>Bicubic</option><option value="nearest-exact" data-v-f7e129f9>Nearest exact</option></select></label><label class="field" data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.denoise"))}</span><input${ssrRenderAttr("value", unref(generation).remaster.denoise)} type="number" min="0" max="1" step="0.01" data-v-f7e129f9></label><label class="field" data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.steps"))}</span><input${ssrRenderAttr("value", unref(generation).remaster.steps)} type="number" min="1" data-v-f7e129f9></label><label class="field" data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.sampler"))}</span><select${ssrRenderAttr("value", unref(generation).remaster.sampler)} data-v-f7e129f9><!--[-->`);
       ssrRenderList(unref(samplerOptions), (option) => {
-        _push(`<option data-v-6da8ffc9>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-f7e129f9>${ssrInterpolate(option)}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.scheduler"))}</span><select${ssrRenderAttr("value", unref(generation).remaster.scheduler)}${ssrIncludeBooleanAttr(unref(schedulerIsFixed)) ? " disabled" : ""} data-v-6da8ffc9><!--[-->`);
+      _push(`<!--]--></select></label><label class="field" data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.scheduler"))}</span><select${ssrRenderAttr("value", unref(generation).remaster.scheduler)}${ssrIncludeBooleanAttr(unref(schedulerIsFixed)) ? " disabled" : ""} data-v-f7e129f9><!--[-->`);
       ssrRenderList(unref(schedulerOptions), (option) => {
-        _push(`<option data-v-6da8ffc9>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-f7e129f9>${ssrInterpolate(option)}</option>`);
       });
       _push(`<!--]--></select></label>`);
       if (unref(schedulerIsFixed)) {
-        _push(`<small class="muted" data-v-6da8ffc9>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
+        _push(`<small class="muted" data-v-f7e129f9>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</div><div class="remaster-settings__toggles" data-v-6da8ffc9><label class="check-field" data-v-6da8ffc9><input${ssrIncludeBooleanAttr(unref(generation).remaster.keep_original) ? " checked" : ""} type="checkbox" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.keepOriginal"))}</span></label><label class="check-field" data-v-6da8ffc9><input${ssrIncludeBooleanAttr(unref(generation).remaster.create_comparison) ? " checked" : ""} type="checkbox" data-v-6da8ffc9><span data-v-6da8ffc9>${ssrInterpolate(unref(t)("remaster.createComparison"))}</span></label></div></section>`);
+      _push(`</div><div class="remaster-settings__toggles" data-v-f7e129f9><label class="check-field" data-v-f7e129f9><input${ssrIncludeBooleanAttr(unref(generation).remaster.keep_original) ? " checked" : ""} type="checkbox" data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.keepOriginal"))}</span></label><label class="check-field" data-v-f7e129f9><input${ssrIncludeBooleanAttr(unref(generation).remaster.create_comparison) ? " checked" : ""} type="checkbox" data-v-f7e129f9><span data-v-f7e129f9>${ssrInterpolate(unref(t)("remaster.createComparison"))}</span></label></div></section>`);
     };
   }
 });
-const _sfc_setup$23 = _sfc_main$23.setup;
-_sfc_main$23.setup = (props, ctx) => {
+const _sfc_setup$26 = _sfc_main$26.setup;
+_sfc_main$26.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RemasterSettingsPanel.vue");
-  return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
+  return _sfc_setup$26 ? _sfc_setup$26(props, ctx) : void 0;
 };
-const RemasterSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-6da8ffc9"]]), { __name: "StudioRemasterSettingsPanel" });
+const RemasterSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$26, [["__scopeId", "data-v-f7e129f9"]]), { __name: "StudioRemasterSettingsPanel" });
 const comparisonIsActive = (status) => ["queued", "running"].includes(status);
 const comparisonPair = (plan, pair) => (plan.display_orders[pair] ?? []).map((arm) => plan.cells.find((cell) => cell.pair === pair && cell.arm === arm)).filter((cell) => Boolean(cell));
 const comparisonImage = (cell) => cell.output_paths?.filter((path) => /\.(png|jpe?g|webp|avif)$/i.test(path)).at(-1) ?? "";
@@ -18298,7 +18324,7 @@ const useImageLibraryStore = defineStore("imageLibrary", {
     }
   }
 });
-const _sfc_main$22 = /* @__PURE__ */ defineComponent({
+const _sfc_main$25 = /* @__PURE__ */ defineComponent({
   __name: "PromptComparisonPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -18506,14 +18532,14 @@ const _sfc_main$22 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$22 = _sfc_main$22.setup;
-_sfc_main$22.setup = (props, ctx) => {
+const _sfc_setup$25 = _sfc_main$25.setup;
+_sfc_main$25.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptComparisonPanel.vue");
-  return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
+  return _sfc_setup$25 ? _sfc_setup$25(props, ctx) : void 0;
 };
-const PromptComparisonPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-72aca638"]]), { __name: "StudioGeneratePromptComparisonPanel" });
-const _sfc_main$21 = /* @__PURE__ */ defineComponent({
+const PromptComparisonPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$25, [["__scopeId", "data-v-72aca638"]]), { __name: "StudioGeneratePromptComparisonPanel" });
+const _sfc_main$24 = /* @__PURE__ */ defineComponent({
   __name: "ExpertToolsInspector",
   __ssrInlineRender: true,
   setup(__props) {
@@ -18592,14 +18618,53 @@ const _sfc_main$21 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$21 = _sfc_main$21.setup;
-_sfc_main$21.setup = (props, ctx) => {
+const _sfc_setup$24 = _sfc_main$24.setup;
+_sfc_main$24.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ExpertToolsInspector.vue");
-  return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
+  return _sfc_setup$24 ? _sfc_setup$24(props, ctx) : void 0;
 };
-const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-655aefc9"]]), { __name: "StudioGenerateExpertToolsInspector" });
-const _sfc_main$20 = /* @__PURE__ */ defineComponent({
+const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$24, [["__scopeId", "data-v-655aefc9"]]), { __name: "StudioGenerateExpertToolsInspector" });
+const useMediaModelCatalog = (domain) => {
+  const items = ref([]);
+  const loading = ref(false);
+  const error = ref("");
+  let requestVersion = 0;
+  const load = async (refresh2 = false) => {
+    const version = ++requestVersion;
+    loading.value = true;
+    error.value = "";
+    try {
+      const endpoint = refresh2 ? "/api/models/media-catalog/refresh" : "/api/models/media-catalog";
+      const response = await $fetch(
+        useApiUrl(`${endpoint}?domain=${encodeURIComponent(domain)}`),
+        { method: refresh2 ? "POST" : "GET" }
+      );
+      if (version !== requestVersion) return false;
+      if (response.domain !== domain) throw new Error("media_model_catalog_domain_mismatch");
+      items.value = response.items;
+      return true;
+    } catch (cause) {
+      if (version !== requestVersion) return false;
+      error.value = userFacingErrorMessage(
+        cause,
+        domain === "video" ? "video.error.modelCatalog" : "common.error.modelDependencies"
+      );
+      return false;
+    } finally {
+      if (version === requestVersion) loading.value = false;
+    }
+  };
+  const refresh = () => load(true);
+  return {
+    items: readonly(items),
+    loading: readonly(loading),
+    error: readonly(error),
+    load,
+    refresh
+  };
+};
+const _sfc_main$23 = /* @__PURE__ */ defineComponent({
   __name: "GenerateBaseControlsPanel",
   __ssrInlineRender: true,
   props: {
@@ -18696,41 +18761,19 @@ const _sfc_main$20 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$20 = _sfc_main$20.setup;
-_sfc_main$20.setup = (props, ctx) => {
+const _sfc_setup$23 = _sfc_main$23.setup;
+_sfc_main$23.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateBaseControlsPanel.vue");
-  return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
+  return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
 };
-const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-1dd91ba5"]]), { __name: "StudioGenerateBaseControlsPanel" });
-const modeSourceState = (mode, initImagePath, maskImagePath) => {
-  if (mode === "txt2img") {
-    return "not-required";
-  }
-  if (!initImagePath.trim()) {
-    return "source-required";
-  }
-  if (mode === "img2img") {
-    return "source-ready";
-  }
-  if (!maskImagePath.trim()) {
-    return "mask-required";
-  }
-  return "mask-ready";
-};
-const modeSourceSummaryKey = (state) => ({
-  "not-required": "modeSource.notRequired",
-  "source-required": "modeSource.sourceRequired",
-  "source-ready": "modeSource.sourceReady",
-  "mask-required": "modeSource.maskRequired",
-  "mask-ready": "modeSource.maskReady"
-})[state];
-const modeSourceSummary = (mode, initImagePath, maskImagePath, translate) => `${mode} · ${translate(modeSourceSummaryKey(modeSourceState(mode, initImagePath, maskImagePath)))}`;
-const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
+const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-1dd91ba5"]]), { __name: "StudioGenerateBaseControlsPanel" });
+const _sfc_main$22 = /* @__PURE__ */ defineComponent({
   __name: "GenerateModeSourcePanel",
   __ssrInlineRender: true,
   setup(__props) {
     const generation = useGenerationStore();
+    const basicNativeProfile = computed(() => isBasicNativeImageProfile(generation.profile));
     const { t } = useAsteriaI18n();
     const sourceImageError = ref("");
     const sourceUploading = ref(false);
@@ -18775,44 +18818,49 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "mode-source-panel",
         "aria-label": unref(t)("generationInspector.modeSource")
-      }, _attrs))} data-v-76d73255><div class="mode-source-panel__heading" data-v-76d73255><h2 data-v-76d73255>${ssrInterpolate(unref(t)("generationInspector.modeSource"))}</h2><span class="${ssrRenderClass(["mode-source-panel__status", { "mode-source-panel__status--ready": unref(readinessIsReady) }])}" data-v-76d73255>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(readinessLabel))}</span></div><div class="mode-source-panel__modes"${ssrRenderAttr("aria-label", unref(t)("prompt.source.generationMode"))} data-v-76d73255><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "txt2img")} data-v-76d73255>txt2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "img2img")} data-v-76d73255>img2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "inpaint")} data-v-76d73255>inpaint</button></div>`);
+      }, _attrs))} data-v-2f58bed2><div class="mode-source-panel__heading" data-v-2f58bed2><h2 data-v-2f58bed2>${ssrInterpolate(unref(t)("generationInspector.modeSource"))}</h2><span class="${ssrRenderClass(["mode-source-panel__status", { "mode-source-panel__status--ready": unref(readinessIsReady) }])}" data-v-2f58bed2>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(readinessLabel))}</span></div><div class="mode-source-panel__modes"${ssrRenderAttr("aria-label", unref(t)("prompt.source.generationMode"))} data-v-2f58bed2><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "txt2img")} data-v-2f58bed2>txt2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "img2img")}${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-2f58bed2>img2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "inpaint")}${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-2f58bed2>inpaint</button></div>`);
+      if (unref(basicNativeProfile)) {
+        _push(`<p class="field-hint" data-v-2f58bed2>${ssrInterpolate(unref(t)("modelSettings.basicNativeSupport"))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
       if (unref(sourceImageError)) {
-        _push(`<p class="error" aria-live="assertive" data-v-76d73255>${ssrInterpolate(unref(sourceImageError))}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-2f58bed2>${ssrInterpolate(unref(sourceImageError))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).mode === "txt2img") {
-        _push(`<p class="mode-source-panel__empty" data-v-76d73255>${ssrInterpolate(unref(t)("modeSource.txt2imgHelp"))}</p>`);
+        _push(`<p class="mode-source-panel__empty" data-v-2f58bed2>${ssrInterpolate(unref(t)("modeSource.txt2imgHelp"))}</p>`);
       } else {
-        _push(`<!--[--><section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.sourceImage"))}${ssrRenderAttr("aria-busy", unref(sourceUploading))} data-v-76d73255><div class="mode-source-asset__heading" data-v-76d73255><span data-v-76d73255>${ssrInterpolate(unref(t)("modeSource.sourceImage"))}</span><small data-v-76d73255>${ssrInterpolate(unref(generation).initImagePath ? filename2(unref(generation).initImagePath) : unref(t)("modeSource.sourceRequired"))}</small></div>`);
+        _push(`<!--[--><section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.sourceImage"))}${ssrRenderAttr("aria-busy", unref(sourceUploading))} data-v-2f58bed2><div class="mode-source-asset__heading" data-v-2f58bed2><span data-v-2f58bed2>${ssrInterpolate(unref(t)("modeSource.sourceImage"))}</span><small data-v-2f58bed2>${ssrInterpolate(unref(generation).initImagePath ? filename2(unref(generation).initImagePath) : unref(t)("modeSource.sourceRequired"))}</small></div>`);
         if (unref(sourcePreviewUrl)) {
-          _push(`<img class="mode-source-asset__preview"${ssrRenderAttr("src", unref(sourcePreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.sourceImage"))} data-v-76d73255>`);
+          _push(`<img class="mode-source-asset__preview"${ssrRenderAttr("src", unref(sourcePreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.sourceImage"))} data-v-2f58bed2>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="mode-source-asset__inputs" data-v-76d73255><label class="mode-source-file" data-v-76d73255><span data-v-76d73255>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(generation).initImagePath ? unref(t)("modeSource.changeImage") : unref(t)("modeSource.chooseImage"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseImage"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-76d73255></label></div></section><label class="field" data-v-76d73255><span data-v-76d73255>${ssrInterpolate(unref(t)("advancedStyles.denoisingStrength"))}</span><input${ssrRenderAttr("value", unref(generation).img2imgDenoisingStrength)} type="number" min="0" max="1" step="0.01" data-v-76d73255></label><!--]-->`);
+        _push(`<div class="mode-source-asset__inputs" data-v-2f58bed2><label class="mode-source-file" data-v-2f58bed2><span data-v-2f58bed2>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(generation).initImagePath ? unref(t)("modeSource.changeImage") : unref(t)("modeSource.chooseImage"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseImage"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-2f58bed2></label></div></section><label class="field" data-v-2f58bed2><span data-v-2f58bed2>${ssrInterpolate(unref(t)("advancedStyles.denoisingStrength"))}</span><input${ssrRenderAttr("value", unref(generation).img2imgDenoisingStrength)} type="number" min="0" max="1" step="0.01" data-v-2f58bed2></label><!--]-->`);
       }
       if (unref(generation).mode === "inpaint") {
-        _push(`<section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.maskImage"))}${ssrRenderAttr("aria-busy", unref(maskUploading))} data-v-76d73255><div class="mode-source-asset__heading" data-v-76d73255><span data-v-76d73255>${ssrInterpolate(unref(t)("modeSource.maskImage"))}</span><small data-v-76d73255>${ssrInterpolate(unref(generation).maskImagePath ? filename2(unref(generation).maskImagePath) : unref(t)("modeSource.maskRequired"))}</small></div>`);
+        _push(`<section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.maskImage"))}${ssrRenderAttr("aria-busy", unref(maskUploading))} data-v-2f58bed2><div class="mode-source-asset__heading" data-v-2f58bed2><span data-v-2f58bed2>${ssrInterpolate(unref(t)("modeSource.maskImage"))}</span><small data-v-2f58bed2>${ssrInterpolate(unref(generation).maskImagePath ? filename2(unref(generation).maskImagePath) : unref(t)("modeSource.maskRequired"))}</small></div>`);
         if (unref(maskPreviewUrl)) {
-          _push(`<img class="mode-source-asset__preview mode-source-asset__preview--mask"${ssrRenderAttr("src", unref(maskPreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.maskImage"))} data-v-76d73255>`);
+          _push(`<img class="mode-source-asset__preview mode-source-asset__preview--mask"${ssrRenderAttr("src", unref(maskPreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.maskImage"))} data-v-2f58bed2>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="mode-source-asset__inputs" data-v-76d73255><label class="mode-source-file" data-v-76d73255><span data-v-76d73255>${ssrInterpolate(unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(generation).maskImagePath ? unref(t)("modeSource.changeMask") : unref(t)("modeSource.chooseMask"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseMask"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-76d73255></label></div><div class="field-grid" data-v-76d73255><label class="field" data-v-76d73255><span data-v-76d73255>${ssrInterpolate(unref(t)("prompt.source.maskBlur"))}</span><input${ssrRenderAttr("value", unref(generation).inpaintMaskBlur)} type="number" min="0" data-v-76d73255></label>`);
+        _push(`<div class="mode-source-asset__inputs" data-v-2f58bed2><label class="mode-source-file" data-v-2f58bed2><span data-v-2f58bed2>${ssrInterpolate(unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(generation).maskImagePath ? unref(t)("modeSource.changeMask") : unref(t)("modeSource.chooseMask"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseMask"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-2f58bed2></label></div><div class="field-grid" data-v-2f58bed2><label class="field" data-v-2f58bed2><span data-v-2f58bed2>${ssrInterpolate(unref(t)("prompt.source.maskBlur"))}</span><input${ssrRenderAttr("value", unref(generation).inpaintMaskBlur)} type="number" min="0" data-v-2f58bed2></label>`);
         if (unref(maskSettingsSupport).maskedContent) {
-          _push(`<label class="field" data-v-76d73255><span data-v-76d73255>${ssrInterpolate(unref(t)("prompt.source.maskedContent"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).maskedContent) ? " disabled" : ""} data-v-76d73255><option value="original" data-v-76d73255${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "original") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "original")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedOriginal"))}</option><option value="fill" data-v-76d73255${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "fill") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "fill")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedFill"))}</option><option value="latent_noise" data-v-76d73255${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_noise") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_noise")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNoise"))}</option><option value="latent_nothing" data-v-76d73255${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_nothing") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_nothing")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNothing"))}</option></select></label>`);
+          _push(`<label class="field" data-v-2f58bed2><span data-v-2f58bed2>${ssrInterpolate(unref(t)("prompt.source.maskedContent"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).maskedContent) ? " disabled" : ""} data-v-2f58bed2><option value="original" data-v-2f58bed2${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "original") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "original")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedOriginal"))}</option><option value="fill" data-v-2f58bed2${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "fill") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "fill")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedFill"))}</option><option value="latent_noise" data-v-2f58bed2${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_noise") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_noise")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNoise"))}</option><option value="latent_nothing" data-v-2f58bed2${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_nothing") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_nothing")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNothing"))}</option></select></label>`);
         } else {
           _push(`<!---->`);
         }
         _push(`</div>`);
         if (unref(maskSettingsSupport).area) {
-          _push(`<label class="field" data-v-76d73255><span data-v-76d73255>${ssrInterpolate(unref(t)("prompt.source.inpaintArea"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).area) ? " disabled" : ""} data-v-76d73255><option value="whole_picture" data-v-76d73255${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "whole_picture") : ssrLooseEqual(unref(generation).inpaintArea, "whole_picture")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.wholePicture"))}</option><option value="only_masked" data-v-76d73255${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "only_masked") : ssrLooseEqual(unref(generation).inpaintArea, "only_masked")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.onlyMasked"))}</option></select></label>`);
+          _push(`<label class="field" data-v-2f58bed2><span data-v-2f58bed2>${ssrInterpolate(unref(t)("prompt.source.inpaintArea"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).area) ? " disabled" : ""} data-v-2f58bed2><option value="whole_picture" data-v-2f58bed2${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "whole_picture") : ssrLooseEqual(unref(generation).inpaintArea, "whole_picture")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.wholePicture"))}</option><option value="only_masked" data-v-2f58bed2${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "only_masked") : ssrLooseEqual(unref(generation).inpaintArea, "only_masked")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.onlyMasked"))}</option></select></label>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(generation).inpaintArea === "only_masked") {
-          _push(`<small class="muted" data-v-76d73255>${ssrInterpolate(unref(t)("generation.inpaintMaskSettingsFixed"))}</small>`);
+          _push(`<small class="muted" data-v-2f58bed2>${ssrInterpolate(unref(t)("generation.inpaintMaskSettingsFixed"))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -18824,13 +18872,13 @@ const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1$ = _sfc_main$1$.setup;
-_sfc_main$1$.setup = (props, ctx) => {
+const _sfc_setup$22 = _sfc_main$22.setup;
+_sfc_main$22.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateModeSourcePanel.vue");
-  return _sfc_setup$1$ ? _sfc_setup$1$(props, ctx) : void 0;
+  return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
 };
-const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-76d73255"]]), { __name: "StudioGenerateModeSourcePanel" });
+const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-2f58bed2"]]), { __name: "StudioGenerateModeSourcePanel" });
 const HIRES_TARGET_STEP = 8;
 const positiveNumber = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
 const snapTargetDimension = (value) => {
@@ -18857,20 +18905,27 @@ const hiresTargetSummary = (scale, width, height) => {
 const HIRES_SAME_CHECKPOINT = "Use same checkpoint";
 const HIRES_SAME_SAMPLER = "Use same sampler";
 const HIRES_SAME_SCHEDULER = "Use same scheduler";
-const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
+const _sfc_main$21 = /* @__PURE__ */ defineComponent({
   __name: "RuntimeSettingsPane",
   __ssrInlineRender: true,
   props: {
-    activeSection: {}
+    activeSection: {},
+    requestedModule: {}
   },
-  emits: ["openSettings"],
-  setup(__props, { emit: __emit }) {
+  emits: ["openSettings", "openModelSettings"],
+  setup(__props, { expose: __expose, emit: __emit }) {
+    const emit = __emit;
     const generation = useGenerationStore();
+    const basicNativeProfile = computed(() => isBasicNativeImageProfile(generation.profile));
     useModelDependenciesStore();
     const runtime = useRuntimeStore();
     const externalIntegrations = useExternalIntegrationsStore();
     const { t } = useAsteriaI18n();
     const activeEnhancementDetail = ref("hires");
+    const showEnhancement = (detail) => {
+      activeEnhancementDetail.value = detail;
+    };
+    __expose({ showEnhancement });
     const usesDistilledCfg = computed(() => generation.profile === "flux1" || generation.profile === "anima");
     const hiresSupport = computed(() => hiresRuntimeSupport(generation.profile));
     const supportsHiresModelOverride = computed(() => hiresSupport.value.modelOverride);
@@ -18902,8 +18957,8 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
       return unsupported;
     });
     const blocksRestoreFaces = computed(() => unsupportedRuntimeFields.value.has("restore_faces"));
-    const blocksTiling = computed(() => unsupportedRuntimeFields.value.has("tiling"));
-    const blocksRefiner = computed(() => unsupportedRuntimeFields.value.has("refiner"));
+    const blocksTiling = computed(() => basicNativeProfile.value || unsupportedRuntimeFields.value.has("tiling"));
+    const blocksRefiner = computed(() => basicNativeProfile.value || unsupportedRuntimeFields.value.has("refiner"));
     const blocksUnmappedSettings = computed(() => blocksRestoreFaces.value || blocksTiling.value);
     const seedResizeCapabilityState = computed(() => ({
       capability: seedResizeCapability.value,
@@ -19168,7 +19223,7 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "runtime-settings-owner",
         "aria-label": unref(t)("runtimePane.aria")
-      }, _attrs))} data-v-3ac4f676>`);
+      }, _attrs))} data-v-6d29ef00>`);
       _push(ssrRenderComponent(GenerateModeSourcePanel, {
         style: __props.activeSection === "mode-source" ? null : { display: "none" }
       }, null, _parent));
@@ -19181,25 +19236,6 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
         "onUpdate:activeDetail": ($event) => isRef(activeEnhancementDetail) ? activeEnhancementDetail.value = $event : null,
         summaries: unref(enhancementSummaries)
       }, null, _parent));
-      _push(`<section class="setting-section recording-controls" style="${ssrRenderStyle(__props.activeSection === "enhancements" ? null : { display: "none" })}" data-v-3ac4f676><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordEnhancementStages) ? ssrLooseContain(unref(generation).recordEnhancementStages, null) : unref(generation).recordEnhancementStages) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("stages.record"))}</span></label><p class="enhancement-subpanel__note" data-v-3ac4f676>${ssrInterpolate(unref(t)("stages.recordHelp"))}</p><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordMakingVideo) ? ssrLooseContain(unref(generation).recordMakingVideo, null) : unref(generation).recordMakingVideo) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("making.record"))}</span></label><p class="enhancement-subpanel__note" data-v-3ac4f676>${ssrInterpolate(unref(t)("making.help"))}</p>`);
-      if (["sdxl", "anima"].includes(unref(generation).profile)) {
-        _push(`<!--[--><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordWordMasks) ? ssrLooseContain(unref(generation).recordWordMasks, null) : unref(generation).recordWordMasks) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("wordMask.record"))}</span></label><p data-v-3ac4f676>${ssrInterpolate(unref(t)("wordMask.recordHelp"))}</p><!--]-->`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`<label class="check-field" data-v-3ac4f676><input type="checkbox"${ssrIncludeBooleanAttr(unref(generation).recordBranchStep > 0) ? " checked" : ""}${ssrIncludeBooleanAttr(!unref(branchCaptureSupported)(unref(generation)) && !(unref(generation).recordBranchStep > 0)) ? " disabled" : ""} data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("branch.record"))}</span></label>`);
-      if (unref(generation).recordBranchStep > 0) {
-        _push(`<label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("branch.step"))}</span><input${ssrRenderAttr("value", unref(generation).recordBranchStep)} type="number" min="1"${ssrRenderAttr("max", unref(generation).steps - 1)} data-v-3ac4f676></label>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`<p class="enhancement-subpanel__note" data-v-3ac4f676>${ssrInterpolate(unref(t)("branch.recordHelp"))}</p>`);
-      if (!unref(branchCaptureSupported)(unref(generation))) {
-        _push(`<p class="enhancement-subpanel__note" data-v-3ac4f676>${ssrInterpolate(unref(t)("branch.support"))}</p>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`</section>`);
       _push(ssrRenderComponent(GenerateBaseControlsPanel, {
         "active-section": __props.activeSection,
         "sampler-options": unref(samplerOptions),
@@ -19211,62 +19247,64 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
         "seed-resize-reason": unref(seedResizeSubmission).reason
       }, null, _parent));
       _push(ssrRenderComponent(ControlModulesInspector, {
-        style: __props.activeSection === "modules" ? null : { display: "none" }
+        style: __props.activeSection === "modules" ? null : { display: "none" },
+        "requested-module": __props.requestedModule,
+        onOpenModelSettings: ($event) => emit("openModelSettings")
       }, null, _parent));
-      _push(`<section class="setting-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.optionsAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "options" ? null : { display: "none" })}" data-v-3ac4f676><h2 data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.options"))}</h2><div class="check-grid" data-v-3ac4f676>`);
+      _push(`<section class="setting-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.optionsAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "options" ? null : { display: "none" })}" data-v-6d29ef00><h2 data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.options"))}</h2><div class="check-grid" data-v-6d29ef00>`);
       if (!unref(blocksRestoreFaces)) {
-        _push(`<label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).restoreFaces) ? ssrLooseContain(unref(generation).restoreFaces, null) : unref(generation).restoreFaces) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksRestoreFaces)) ? " disabled" : ""} data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.restoreFaces"))}</span></label>`);
+        _push(`<label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).restoreFaces) ? ssrLooseContain(unref(generation).restoreFaces, null) : unref(generation).restoreFaces) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksRestoreFaces)) ? " disabled" : ""} data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.restoreFaces"))}</span></label>`);
       } else {
         _push(`<!---->`);
       }
       if (!unref(blocksTiling)) {
-        _push(`<label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).tiling) ? ssrLooseContain(unref(generation).tiling, null) : unref(generation).tiling) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksTiling)) ? " disabled" : ""} data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.tiling"))}</span></label>`);
+        _push(`<label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).tiling) ? ssrLooseContain(unref(generation).tiling, null) : unref(generation).tiling) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksTiling)) ? " disabled" : ""} data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.tiling"))}</span></label>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</div>`);
       if (!unref(blocksClipSkip)) {
-        _push(`<label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.clipSkip"))}</span><input${ssrRenderAttr("value", unref(generation).clipSkip)} type="number" min="1"${ssrIncludeBooleanAttr(unref(blocksClipSkip)) ? " disabled" : ""} data-v-3ac4f676></label>`);
+        _push(`<label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.clipSkip"))}</span><input${ssrRenderAttr("value", unref(generation).clipSkip)} type="number" min="1"${ssrIncludeBooleanAttr(unref(blocksClipSkip)) ? " disabled" : ""} data-v-6d29ef00></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</section><section class="setting-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.hiresAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "hires" ? null : { display: "none" })}" data-v-3ac4f676><div class="setting-section__header" data-v-3ac4f676><h2 data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.hiresFix"))}</h2><label class="inline-check" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresEnabled) ? ssrLooseContain(unref(generation).hiresEnabled, null) : unref(generation).hiresEnabled) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.enable"))}</span></label></div><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.upscaler"))}</span><select data-v-3ac4f676><!--[-->`);
+      _push(`</section><section class="setting-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.hiresAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "hires" ? null : { display: "none" })}" data-v-6d29ef00><div class="setting-section__header" data-v-6d29ef00><h2 data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.hiresFix"))}</h2><label class="inline-check" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresEnabled) ? ssrLooseContain(unref(generation).hiresEnabled, null) : unref(generation).hiresEnabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.enable"))}</span></label></div><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.upscaler"))}</span><select data-v-6d29ef00><!--[-->`);
       ssrRenderList(unref(hiresUpscalerOptions), (option) => {
-        _push(`<option data-v-3ac4f676${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresUpscaler) ? ssrLooseContain(unref(generation).hiresUpscaler, null) : ssrLooseEqual(unref(generation).hiresUpscaler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-6d29ef00${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresUpscaler) ? ssrLooseContain(unref(generation).hiresUpscaler, null) : ssrLooseEqual(unref(generation).hiresUpscaler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
       });
-      _push(`<!--]--></select></label><section class="enhancement-subpanel"${ssrRenderAttr("aria-label", unref(t)("enhancementInspector.hiresTarget"))} data-v-3ac4f676><div class="enhancement-subpanel__header" data-v-3ac4f676><h3 data-v-3ac4f676>${ssrInterpolate(unref(t)("enhancementInspector.hiresTarget"))}</h3></div><div class="field-grid" data-v-3ac4f676><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("enhancementInspector.targetMode"))}</span><select data-v-3ac4f676><option value="scale" data-v-3ac4f676${ssrIncludeBooleanAttr(Array.isArray(unref(hiresTargetMode)) ? ssrLooseContain(unref(hiresTargetMode), "scale") : ssrLooseEqual(unref(hiresTargetMode), "scale")) ? " selected" : ""}>${ssrInterpolate(unref(t)("enhancementInspector.scaleBased"))}</option><option value="explicit" data-v-3ac4f676${ssrIncludeBooleanAttr(Array.isArray(unref(hiresTargetMode)) ? ssrLooseContain(unref(hiresTargetMode), "explicit") : ssrLooseEqual(unref(hiresTargetMode), "explicit")) ? " selected" : ""}>${ssrInterpolate(unref(t)("enhancementInspector.explicitSize"))}</option></select></label><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.upscaleBy"))}</span><input${ssrRenderAttr("value", unref(generation).hiresScale)} type="number" min="1" step="0.05" data-v-3ac4f676></label></div>`);
+      _push(`<!--]--></select></label><section class="enhancement-subpanel"${ssrRenderAttr("aria-label", unref(t)("enhancementInspector.hiresTarget"))} data-v-6d29ef00><div class="enhancement-subpanel__header" data-v-6d29ef00><h3 data-v-6d29ef00>${ssrInterpolate(unref(t)("enhancementInspector.hiresTarget"))}</h3></div><div class="field-grid" data-v-6d29ef00><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("enhancementInspector.targetMode"))}</span><select data-v-6d29ef00><option value="scale" data-v-6d29ef00${ssrIncludeBooleanAttr(Array.isArray(unref(hiresTargetMode)) ? ssrLooseContain(unref(hiresTargetMode), "scale") : ssrLooseEqual(unref(hiresTargetMode), "scale")) ? " selected" : ""}>${ssrInterpolate(unref(t)("enhancementInspector.scaleBased"))}</option><option value="explicit" data-v-6d29ef00${ssrIncludeBooleanAttr(Array.isArray(unref(hiresTargetMode)) ? ssrLooseContain(unref(hiresTargetMode), "explicit") : ssrLooseEqual(unref(hiresTargetMode), "explicit")) ? " selected" : ""}>${ssrInterpolate(unref(t)("enhancementInspector.explicitSize"))}</option></select></label><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.upscaleBy"))}</span><input${ssrRenderAttr("value", unref(generation).hiresScale)} type="number" min="1" step="0.05" data-v-6d29ef00></label></div>`);
       if (unref(hiresTargetMode) === "explicit") {
-        _push(`<div class="field-grid" data-v-3ac4f676><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.resizeWidth"))}</span><input${ssrRenderAttr("value", unref(generation).hiresResizeWidth)} type="number" min="8" step="8" data-v-3ac4f676></label><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.resizeHeight"))}</span><input${ssrRenderAttr("value", unref(generation).hiresResizeHeight)} type="number" min="8" step="8" data-v-3ac4f676></label></div>`);
+        _push(`<div class="field-grid" data-v-6d29ef00><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.resizeWidth"))}</span><input${ssrRenderAttr("value", unref(generation).hiresResizeWidth)} type="number" min="8" step="8" data-v-6d29ef00></label><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.resizeHeight"))}</span><input${ssrRenderAttr("value", unref(generation).hiresResizeHeight)} type="number" min="8" step="8" data-v-6d29ef00></label></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="field-grid" data-v-3ac4f676><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.denoisingStrength"))}</span><input${ssrRenderAttr("value", unref(generation).hiresDenoisingStrength)} type="number" min="0" max="1" step="0.01" data-v-3ac4f676></label><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.hiresSteps"))}</span><input${ssrRenderAttr("value", unref(generation).hiresSteps)} type="number" min="0" data-v-3ac4f676></label></div><div class="field-grid" data-v-3ac4f676><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.hiresCfgScale"))}</span><input${ssrRenderAttr("value", unref(generation).hiresCfgScale)} type="number" step="0.5" data-v-3ac4f676></label>`);
+      _push(`<div class="field-grid" data-v-6d29ef00><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.denoisingStrength"))}</span><input${ssrRenderAttr("value", unref(generation).hiresDenoisingStrength)} type="number" min="0" max="1" step="0.01" data-v-6d29ef00></label><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.hiresSteps"))}</span><input${ssrRenderAttr("value", unref(generation).hiresSteps)} type="number" min="0" data-v-6d29ef00></label></div><div class="field-grid" data-v-6d29ef00><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.hiresCfgScale"))}</span><input${ssrRenderAttr("value", unref(generation).hiresCfgScale)} type="number" step="0.5" data-v-6d29ef00></label>`);
       if (unref(usesDistilledCfg)) {
-        _push(`<label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.hiresDistilledCfg"))}</span><input${ssrRenderAttr("value", unref(generation).hiresDistilledCfgScale)} type="number" step="0.5" data-v-3ac4f676></label>`);
+        _push(`<label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.hiresDistilledCfg"))}</span><input${ssrRenderAttr("value", unref(generation).hiresDistilledCfgScale)} type="number" step="0.5" data-v-6d29ef00></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</div><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresKeepFirstPass) ? ssrLooseContain(unref(generation).hiresKeepFirstPass, null) : unref(generation).hiresKeepFirstPass) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.keepFirstPass"))}</span></label></section>`);
+      _push(`</div><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresKeepFirstPass) ? ssrLooseContain(unref(generation).hiresKeepFirstPass, null) : unref(generation).hiresKeepFirstPass) ? " checked" : ""} type="checkbox" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.keepFirstPass"))}</span></label></section>`);
       if (unref(generation).hiresUpscaler === "Topaz Photo AI") {
-        _push(`<section class="enhancement-subpanel enhancement-subpanel--topaz"${ssrRenderAttr("aria-label", unref(t)("enhancementInspector.topazRequest"))} data-v-3ac4f676><div class="enhancement-subpanel__header" data-v-3ac4f676><h3 data-v-3ac4f676>${ssrInterpolate(unref(t)("enhancementInspector.topazRequest"))}</h3><strong class="${ssrRenderClass(["enhancement-state", { "enhancement-state--warning": !unref(externalIntegrations).topazStatus?.installed }])}" data-v-3ac4f676>${ssrInterpolate(unref(externalIntegrations).topazStatus?.installed ? unref(t)("enhancementInspector.ready") : unref(t)("enhancementInspector.needsSetup"))}</strong></div>`);
+        _push(`<section class="enhancement-subpanel enhancement-subpanel--topaz"${ssrRenderAttr("aria-label", unref(t)("enhancementInspector.topazRequest"))} data-v-6d29ef00><div class="enhancement-subpanel__header" data-v-6d29ef00><h3 data-v-6d29ef00>${ssrInterpolate(unref(t)("enhancementInspector.topazRequest"))}</h3><strong class="${ssrRenderClass(["enhancement-state", { "enhancement-state--warning": !unref(externalIntegrations).topazStatus?.installed }])}" data-v-6d29ef00>${ssrInterpolate(unref(externalIntegrations).topazStatus?.installed ? unref(t)("enhancementInspector.ready") : unref(t)("enhancementInspector.needsSetup"))}</strong></div>`);
         if (!unref(externalIntegrations).topazStatus?.installed) {
-          _push(`<div class="enhancement-recovery" data-v-3ac4f676><p data-v-3ac4f676>${ssrInterpolate(unref(t)("enhancementInspector.topazSetupHelp"))}</p><button type="button" data-v-3ac4f676>${ssrInterpolate(unref(t)("enhancementInspector.openSettings"))}</button></div>`);
+          _push(`<div class="enhancement-recovery" data-v-6d29ef00><p data-v-6d29ef00>${ssrInterpolate(unref(t)("enhancementInspector.topazSetupHelp"))}</p><button type="button" data-v-6d29ef00>${ssrInterpolate(unref(t)("enhancementInspector.openSettings"))}</button></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<p class="enhancement-subpanel__note" data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.topazAutopilot"))}</p><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazEnabled) ? ssrLooseContain(unref(generation).topazEnabled, null) : unref(generation).topazEnabled) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.topazCustomSettings"))}</span></label><div class="check-grid" data-v-3ac4f676><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazLighting) ? ssrLooseContain(unref(generation).topazLighting, null) : unref(generation).topazLighting) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.lighting"))}</span></label><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazColor) ? ssrLooseContain(unref(generation).topazColor, null) : unref(generation).topazColor) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.color"))}</span></label><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazSharpen) ? ssrLooseContain(unref(generation).topazSharpen, null) : unref(generation).topazSharpen) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.sharpen"))}</span></label><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazDenoise) ? ssrLooseContain(unref(generation).topazDenoise, null) : unref(generation).topazDenoise) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.denoise"))}</span></label><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazOverride) ? ssrLooseContain(unref(generation).topazOverride, null) : unref(generation).topazOverride) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.override"))}</span></label></div><div class="field-grid" data-v-3ac4f676><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.pngCompression"))}</span><input${ssrRenderAttr("value", unref(generation).topazPngCompression)} type="number" min="0" max="10" data-v-3ac4f676></label><label class="check-field" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazShowSettings) ? ssrLooseContain(unref(generation).topazShowSettings, null) : unref(generation).topazShowSettings) ? " checked" : ""} type="checkbox" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.logSettings"))}</span></label></div><small class="topaz-runtime-note" data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.topazRuntimeNote"))}</small><div class="topaz-preset-panel"${ssrRenderAttr("aria-label", unref(t)("runtimePane.topazPresetsAria"))} data-v-3ac4f676><div class="setting-section__header" data-v-3ac4f676><h3 data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.topazPresets"))}</h3><button type="button" data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.reload"))}</button></div>`);
+        _push(`<p class="enhancement-subpanel__note" data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.topazAutopilot"))}</p><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazEnabled) ? ssrLooseContain(unref(generation).topazEnabled, null) : unref(generation).topazEnabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.topazCustomSettings"))}</span></label><div class="check-grid" data-v-6d29ef00><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazLighting) ? ssrLooseContain(unref(generation).topazLighting, null) : unref(generation).topazLighting) ? " checked" : ""} type="checkbox" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.lighting"))}</span></label><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazColor) ? ssrLooseContain(unref(generation).topazColor, null) : unref(generation).topazColor) ? " checked" : ""} type="checkbox" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.color"))}</span></label><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazSharpen) ? ssrLooseContain(unref(generation).topazSharpen, null) : unref(generation).topazSharpen) ? " checked" : ""} type="checkbox" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.sharpen"))}</span></label><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazDenoise) ? ssrLooseContain(unref(generation).topazDenoise, null) : unref(generation).topazDenoise) ? " checked" : ""} type="checkbox" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.denoise"))}</span></label><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazOverride) ? ssrLooseContain(unref(generation).topazOverride, null) : unref(generation).topazOverride) ? " checked" : ""} type="checkbox" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.override"))}</span></label></div><div class="field-grid" data-v-6d29ef00><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.pngCompression"))}</span><input${ssrRenderAttr("value", unref(generation).topazPngCompression)} type="number" min="0" max="10" data-v-6d29ef00></label><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazShowSettings) ? ssrLooseContain(unref(generation).topazShowSettings, null) : unref(generation).topazShowSettings) ? " checked" : ""} type="checkbox" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.logSettings"))}</span></label></div><small class="topaz-runtime-note" data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.topazRuntimeNote"))}</small><div class="topaz-preset-panel"${ssrRenderAttr("aria-label", unref(t)("runtimePane.topazPresetsAria"))} data-v-6d29ef00><div class="setting-section__header" data-v-6d29ef00><h3 data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.topazPresets"))}</h3><button type="button" data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.reload"))}</button></div>`);
         if (unref(topazPresetError)) {
-          _push(`<p class="error" aria-live="assertive" data-v-3ac4f676>${ssrInterpolate(unref(topazPresetError))}</p>`);
+          _push(`<p class="error" aria-live="assertive" data-v-6d29ef00>${ssrInterpolate(unref(topazPresetError))}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.topazPresetName"))}</span><input${ssrRenderAttr("value", unref(topazPresetName))}${ssrRenderAttr("aria-label", unref(t)("runtimePane.topazPresetNameAria"))}${ssrRenderAttr("placeholder", unref(t)("runtimePane.topazPresetNamePlaceholder"))} data-v-3ac4f676></label><button type="button" data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.saveTopazPreset"))}</button><div class="config-preset-list" data-v-3ac4f676><!--[-->`);
+        _push(`<label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.topazPresetName"))}</span><input${ssrRenderAttr("value", unref(topazPresetName))}${ssrRenderAttr("aria-label", unref(t)("runtimePane.topazPresetNameAria"))}${ssrRenderAttr("placeholder", unref(t)("runtimePane.topazPresetNamePlaceholder"))} data-v-6d29ef00></label><button type="button" data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.saveTopazPreset"))}</button><div class="config-preset-list" data-v-6d29ef00><!--[-->`);
         ssrRenderList(unref(topazPresets), (preset) => {
-          _push(`<div class="config-preset-item" data-v-3ac4f676><button class="config-preset-item__main" type="button" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(preset.name)}</span><small data-v-3ac4f676>${ssrInterpolate(topazPresetSummary(preset))}</small></button><button class="destructive-button icon-button--compact" type="button" data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.delete"))}</button></div>`);
+          _push(`<div class="config-preset-item" data-v-6d29ef00><button class="config-preset-item__main" type="button" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(preset.name)}</span><small data-v-6d29ef00>${ssrInterpolate(topazPresetSummary(preset))}</small></button><button class="destructive-button icon-button--compact" type="button" data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.delete"))}</button></div>`);
         });
         _push(`<!--]-->`);
         if (unref(topazPresets).length === 0) {
-          _push(`<small class="muted" data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.noTopazPresets"))}</small>`);
+          _push(`<small class="muted" data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.noTopazPresets"))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -19275,27 +19313,27 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
         _push(`<!---->`);
       }
       if (unref(supportsHiresModelOverride)) {
-        _push(`<details class="sub-details" data-v-3ac4f676><summary data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.hiresAdvanced"))}</summary><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(hiresSupport).modelKind === "diffusion_model" ? unref(t)("runtimePane.hiresDiffusionModel") : unref(t)("runtimePane.hiresCheckpoint"))}</span><input${ssrRenderAttr("value", unref(hiresCheckpointInput))}${ssrRenderAttr("placeholder", unref(hiresSupport).modelKind === "diffusion_model" ? unref(t)("runtimePane.useSameDiffusionModel") : unref(t)("runtimePane.useSameCheckpoint"))} data-v-3ac4f676></label><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.hiresSampler"))}</span><select data-v-3ac4f676><option${ssrRenderAttr("value", HIRES_SAME_SAMPLER)} data-v-3ac4f676${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresSampler) ? ssrLooseContain(unref(generation).hiresSampler, HIRES_SAME_SAMPLER) : ssrLooseEqual(unref(generation).hiresSampler, HIRES_SAME_SAMPLER)) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.useSameSampler"))}</option><!--[-->`);
+        _push(`<details class="sub-details" data-v-6d29ef00><summary data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.hiresAdvanced"))}</summary><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(hiresSupport).modelKind === "diffusion_model" ? unref(t)("runtimePane.hiresDiffusionModel") : unref(t)("runtimePane.hiresCheckpoint"))}</span><input${ssrRenderAttr("value", unref(hiresCheckpointInput))}${ssrRenderAttr("placeholder", unref(hiresSupport).modelKind === "diffusion_model" ? unref(t)("runtimePane.useSameDiffusionModel") : unref(t)("runtimePane.useSameCheckpoint"))} data-v-6d29ef00></label><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.hiresSampler"))}</span><select data-v-6d29ef00><option${ssrRenderAttr("value", HIRES_SAME_SAMPLER)} data-v-6d29ef00${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresSampler) ? ssrLooseContain(unref(generation).hiresSampler, HIRES_SAME_SAMPLER) : ssrLooseEqual(unref(generation).hiresSampler, HIRES_SAME_SAMPLER)) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.useSameSampler"))}</option><!--[-->`);
         ssrRenderList(unref(samplerOptions), (option) => {
-          _push(`<option data-v-3ac4f676${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresSampler) ? ssrLooseContain(unref(generation).hiresSampler, null) : ssrLooseEqual(unref(generation).hiresSampler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
+          _push(`<option data-v-6d29ef00${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresSampler) ? ssrLooseContain(unref(generation).hiresSampler, null) : ssrLooseEqual(unref(generation).hiresSampler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
         });
-        _push(`<!--]--></select></label><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.hiresScheduleType"))}</span><select${ssrIncludeBooleanAttr(unref(schedulerIsFixed)) ? " disabled" : ""} data-v-3ac4f676><!--[-->`);
+        _push(`<!--]--></select></label><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.hiresScheduleType"))}</span><select${ssrIncludeBooleanAttr(unref(schedulerIsFixed)) ? " disabled" : ""} data-v-6d29ef00><!--[-->`);
         ssrRenderList(unref(hiresSchedulerOptions), (option) => {
-          _push(`<option${ssrRenderAttr("value", option)} data-v-3ac4f676${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresScheduler) ? ssrLooseContain(unref(generation).hiresScheduler, option) : ssrLooseEqual(unref(generation).hiresScheduler, option)) ? " selected" : ""}>${ssrInterpolate(option === HIRES_SAME_SCHEDULER ? unref(t)("runtimePane.useSameScheduler") : option)}</option>`);
+          _push(`<option${ssrRenderAttr("value", option)} data-v-6d29ef00${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresScheduler) ? ssrLooseContain(unref(generation).hiresScheduler, option) : ssrLooseEqual(unref(generation).hiresScheduler, option)) ? " selected" : ""}>${ssrInterpolate(option === HIRES_SAME_SCHEDULER ? unref(t)("runtimePane.useSameScheduler") : option)}</option>`);
         });
         _push(`<!--]--></select></label>`);
         if (unref(schedulerIsFixed)) {
-          _push(`<small class="muted" data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
+          _push(`<small class="muted" data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(supportsHiresPromptOverride)) {
-          _push(`<label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.hiresPrompt"))}</span><textarea rows="3" data-v-3ac4f676>${ssrInterpolate(unref(generation).hiresPrompt)}</textarea></label>`);
+          _push(`<label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.hiresPrompt"))}</span><textarea rows="3" data-v-6d29ef00>${ssrInterpolate(unref(generation).hiresPrompt)}</textarea></label>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(supportsHiresNegativeOverride)) {
-          _push(`<label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.hiresNegative"))}</span><textarea rows="3" data-v-3ac4f676>${ssrInterpolate(unref(generation).hiresNegativePrompt)}</textarea></label>`);
+          _push(`<label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.hiresNegative"))}</span><textarea rows="3" data-v-6d29ef00>${ssrInterpolate(unref(generation).hiresNegativePrompt)}</textarea></label>`);
         } else {
           _push(`<!---->`);
         }
@@ -19305,80 +19343,109 @@ const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
       }
       _push(`</section>`);
       if (!unref(blocksRefiner)) {
-        _push(`<section class="setting-section refiner-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.refinerAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "refiner" ? null : { display: "none" })}" data-v-3ac4f676><div class="setting-section__header" data-v-3ac4f676><h2 data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.refiner"))}</h2><label class="inline-check" data-v-3ac4f676><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).refinerEnabled) ? ssrLooseContain(unref(generation).refinerEnabled, null) : unref(generation).refinerEnabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.enable"))}</span></label></div>`);
+        _push(`<section class="setting-section refiner-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.refinerAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "refiner" ? null : { display: "none" })}" data-v-6d29ef00><div class="setting-section__header" data-v-6d29ef00><h2 data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.refiner"))}</h2><label class="inline-check" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).refinerEnabled) ? ssrLooseContain(unref(generation).refinerEnabled, null) : unref(generation).refinerEnabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.enable"))}</span></label></div>`);
         if (unref(blocksRefiner)) {
-          _push(`<p class="capability-warning" data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.refinerBlocked"))}</p>`);
+          _push(`<p class="capability-warning" data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.refinerBlocked"))}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.refinerCheckpoint"))}</span><input${ssrRenderAttr("value", unref(generation).refinerCheckpoint)}${ssrRenderAttr("placeholder", unref(t)("runtimePane.optional"))}${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-3ac4f676></label><label class="field" data-v-3ac4f676><span data-v-3ac4f676>${ssrInterpolate(unref(t)("runtimePane.switchAt"))}</span><input${ssrRenderAttr("value", unref(generation).refinerSwitchAt)} type="number" min="0" max="1" step="0.01"${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-3ac4f676></label></section>`);
+        _push(`<label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.refinerCheckpoint"))}</span><input${ssrRenderAttr("value", unref(generation).refinerCheckpoint)}${ssrRenderAttr("placeholder", unref(t)("runtimePane.optional"))}${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-6d29ef00></label><label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("runtimePane.switchAt"))}</span><input${ssrRenderAttr("value", unref(generation).refinerSwitchAt)} type="number" min="0" max="1" step="0.01"${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-6d29ef00></label></section>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</section>`);
+      _push(`<details class="recording-options" style="${ssrRenderStyle(__props.activeSection === "enhancements" ? null : { display: "none" })}" data-v-6d29ef00><summary data-v-6d29ef00><svg class="ui-quality-arrow" viewBox="0 0 12 12" aria-hidden="true" data-v-6d29ef00><path d="m2 4 4 4 4-4" data-v-6d29ef00></path></svg>${ssrInterpolate(unref(t)("generationOverview.recording"))}</summary><section class="setting-section recording-controls" data-v-6d29ef00><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordEnhancementStages) ? ssrLooseContain(unref(generation).recordEnhancementStages, null) : unref(generation).recordEnhancementStages) ? " checked" : ""} type="checkbox" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("stages.record"))}</span></label><p class="enhancement-subpanel__note" data-v-6d29ef00>${ssrInterpolate(unref(t)("stages.recordHelp"))}</p><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordMakingVideo) ? ssrLooseContain(unref(generation).recordMakingVideo, null) : unref(generation).recordMakingVideo) ? " checked" : ""} type="checkbox" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("making.record"))}</span></label><p class="enhancement-subpanel__note" data-v-6d29ef00>${ssrInterpolate(unref(t)("making.help"))}</p>`);
+      if (["sdxl", "anima"].includes(unref(generation).profile)) {
+        _push(`<!--[--><label class="check-field" data-v-6d29ef00><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordWordMasks) ? ssrLooseContain(unref(generation).recordWordMasks, null) : unref(generation).recordWordMasks) ? " checked" : ""} type="checkbox" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("wordMask.record"))}</span></label><p data-v-6d29ef00>${ssrInterpolate(unref(t)("wordMask.recordHelp"))}</p><!--]-->`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<label class="check-field" data-v-6d29ef00><input type="checkbox"${ssrIncludeBooleanAttr(unref(generation).recordBranchStep > 0) ? " checked" : ""}${ssrIncludeBooleanAttr(!unref(branchCaptureSupported)(unref(generation)) && !(unref(generation).recordBranchStep > 0)) ? " disabled" : ""} data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("branch.record"))}</span></label>`);
+      if (unref(generation).recordBranchStep > 0) {
+        _push(`<label class="field" data-v-6d29ef00><span data-v-6d29ef00>${ssrInterpolate(unref(t)("branch.step"))}</span><input${ssrRenderAttr("value", unref(generation).recordBranchStep)} type="number" min="1"${ssrRenderAttr("max", unref(generation).steps - 1)} data-v-6d29ef00></label>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<p class="enhancement-subpanel__note" data-v-6d29ef00>${ssrInterpolate(unref(t)("branch.recordHelp"))}</p>`);
+      if (!unref(branchCaptureSupported)(unref(generation))) {
+        _push(`<p class="enhancement-subpanel__note" data-v-6d29ef00>${ssrInterpolate(unref(t)("branch.support"))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</section></details></section>`);
     };
   }
 });
-const _sfc_setup$1_ = _sfc_main$1_.setup;
-_sfc_main$1_.setup = (props, ctx) => {
+const _sfc_setup$21 = _sfc_main$21.setup;
+_sfc_main$21.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RuntimeSettingsPane.vue");
-  return _sfc_setup$1_ ? _sfc_setup$1_(props, ctx) : void 0;
+  return _sfc_setup$21 ? _sfc_setup$21(props, ctx) : void 0;
 };
-const RuntimeSettingsPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-3ac4f676"]]), { __name: "StudioRuntimeSettingsPane" });
-const _sfc_main$1Z = /* @__PURE__ */ defineComponent({
-  __name: "GenerationInspector",
+const RuntimeSettingsPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$21, [["__scopeId", "data-v-6d29ef00"]]), { __name: "StudioRuntimeSettingsPane" });
+const _sfc_main$20 = /* @__PURE__ */ defineComponent({
+  __name: "GenerationSettingsDrawer",
   __ssrInlineRender: true,
   props: {
-    activeSection: {},
-    summaries: {},
-    focusedDetailLabel: {}
+    open: { type: Boolean }
   },
-  emits: ["update:activeSection"],
+  emits: ["close", "openSettings", "openModelSettings"],
   setup(__props, { emit: __emit }) {
-    const props = __props;
+    const emit = __emit;
     const { t } = useAsteriaI18n();
     const generation = useGenerationStore();
-    const sections = computed(() => [
-      { id: "mode-source", labelKey: "generationInspector.modeSource" },
-      { id: "base-settings", labelKey: "generationInspector.baseSettings" },
-      { id: "enhancements", labelKey: "generationInspector.enhancements" },
-      { id: "modules", labelKey: "generationInspector.modules" },
-      { id: "expert-tools", labelKey: "generationInspector.expertTools" }
-    ].filter((section) => section.id !== "modules" || generationModuleIdsForProfile(generation.profile).length > 0));
-    const activeLabel = computed(() => {
-      if (props.focusedDetailLabel) return props.focusedDetailLabel;
-      const section = sections.value.find((candidate) => candidate.id === props.activeSection);
-      return section ? t(section.labelKey) : "";
+    const active = ref("base-settings");
+    const settingsPane = ref(null);
+    const availableModuleIds = computed(() => generationModuleIdsForProfile(generation.profile));
+    const entries = computed(() => [
+      { id: "base-settings", label: t("generationInspector.baseSettings"), section: "base-settings" },
+      { id: "hires", label: "Hires.fix", section: "enhancements", status: generation.hiresEnabled ? "ON" : "OFF" },
+      { id: "detailer", label: "ADetailer", section: "modules", status: String(generation.detailerUnits.filter((unit) => unit.enabled).length) },
+      { id: "controlnet", label: "ControlNet", section: "modules", status: String(generation.controlNetUnits.filter((unit) => unit.enabled).length) },
+      { id: "anima", label: "Anima LLLite", section: "modules" },
+      { id: "mode-source", label: t("generationInspector.modeSource"), section: "mode-source" },
+      { id: "expert-tools", label: t("generationInspector.expertTools"), section: "expert-tools" }
+    ].filter((entry2) => entry2.section !== "modules" || availableModuleIds.value.includes(entry2.id)));
+    watch(entries, (items) => {
+      if (!items.some((entry2) => entry2.id === active.value)) active.value = "base-settings";
     });
+    const section = computed(() => entries.value.find((entry2) => entry2.id === active.value)?.section ?? "base-settings");
+    const module = computed(() => ["detailer", "controlnet", "anima"].includes(active.value) ? active.value : void 0);
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<aside${ssrRenderAttrs(mergeProps({
-        class: "generation-inspector",
-        "aria-label": unref(t)("generationInspector.title")
-      }, _attrs))} data-v-ccc57948><header class="generation-inspector__header" data-v-ccc57948><span data-v-ccc57948>${ssrInterpolate(unref(t)("generationInspector.title"))}</span><small data-v-ccc57948>${ssrInterpolate(unref(activeLabel))}</small></header>`);
-      if (!__props.focusedDetailLabel) {
-        _push(`<nav class="generation-inspector__sections"${ssrRenderAttr("aria-label", unref(t)("generationInspector.sectionsAria"))} data-v-ccc57948><!--[-->`);
-        ssrRenderList(unref(sections), (section) => {
-          _push(`<button class="${ssrRenderClass(["generation-inspector__section", { "generation-inspector__section--active": __props.activeSection === section.id }])}" type="button"${ssrRenderAttr("aria-current", __props.activeSection === section.id ? "true" : void 0)} data-v-ccc57948><span data-v-ccc57948>${ssrInterpolate(unref(t)(section.labelKey))}</span><small data-v-ccc57948>${ssrInterpolate(__props.summaries[section.id])}</small></button>`);
-        });
-        _push(`<!--]--></nav>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`<section class="generation-inspector__detail"${ssrRenderAttr("aria-label", unref(activeLabel))} data-v-ccc57948>`);
+        class: "generation-settings-drawer",
+        "aria-label": unref(t)("generationOverview.settings")
+      }, _attrs))} data-v-1d5a7b5b><header data-v-1d5a7b5b><h2 data-v-1d5a7b5b>${ssrInterpolate(unref(t)("generationOverview.settings"))}</h2><button type="button" class="icon-button icon-button--close"${ssrRenderAttr("aria-label", unref(t)("common.close"))} data-v-1d5a7b5b>×</button></header><nav${ssrRenderAttr("aria-label", unref(t)("generationOverview.settings"))} data-v-1d5a7b5b><!--[-->`);
+      ssrRenderList(unref(entries), (entry2) => {
+        _push(`<button type="button"${ssrRenderAttr("aria-label", entry2.label)}${ssrRenderAttr("aria-pressed", unref(active) === entry2.id)} data-v-1d5a7b5b><span data-v-1d5a7b5b>${ssrInterpolate(entry2.label)}</span>`);
+        if (entry2.status) {
+          _push(`<small data-v-1d5a7b5b>${ssrInterpolate(entry2.status)}</small>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</button>`);
+      });
+      _push(`<!--]--></nav><div class="generation-settings-drawer__content" data-v-1d5a7b5b>`);
+      _push(ssrRenderComponent(RuntimeSettingsPane, {
+        ref_key: "settingsPane",
+        ref: settingsPane,
+        "active-section": unref(section),
+        "requested-module": unref(module),
+        onOpenSettings: ($event) => emit("openSettings"),
+        onOpenModelSettings: ($event) => emit("openModelSettings")
+      }, null, _parent));
       ssrRenderSlot(_ctx.$slots, "default", {}, null, _push, _parent);
-      _push(`</section></aside>`);
+      _push(`</div></aside>`);
     };
   }
 });
-const _sfc_setup$1Z = _sfc_main$1Z.setup;
-_sfc_main$1Z.setup = (props, ctx) => {
+const _sfc_setup$20 = _sfc_main$20.setup;
+_sfc_main$20.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationInspector.vue");
-  return _sfc_setup$1Z ? _sfc_setup$1Z(props, ctx) : void 0;
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationSettingsDrawer.vue");
+  return _sfc_setup$20 ? _sfc_setup$20(props, ctx) : void 0;
 };
-const GenerationInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Z, [["__scopeId", "data-v-ccc57948"]]), { __name: "StudioGenerateGenerationInspector" });
-const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
+const GenerationSettingsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$20, [["__scopeId", "data-v-1d5a7b5b"]]), { __name: "StudioGenerateGenerationSettingsDrawer" });
+const _sfc_main$1$ = /* @__PURE__ */ defineComponent({
   __name: "ResultDetailsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -19415,30 +19482,30 @@ const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
       _push(`<aside${ssrRenderAttrs(mergeProps({
         class: ["result-details-drawer", { "result-details-drawer--embedded": __props.embedded }],
         "aria-label": unref(t)("resultDetails.title")
-      }, _attrs))} data-v-b9df029b><header data-v-b9df029b><div data-v-b9df029b><strong data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.title"))}</strong><small data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.reproducibility"))}</small></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("resultDetails.close"))} data-v-b9df029b>×</button></header><section data-v-b9df029b><h3 data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.prompts"))}</h3><dl data-v-b9df029b><dt data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.rawPrompt"))}</dt><dd data-v-b9df029b>${ssrInterpolate(__props.result.prompt || "—")}</dd><dt data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.expandedPrompt"))}</dt><dd data-v-b9df029b>${ssrInterpolate(__props.result.expanded_prompt || "—")}</dd><dt data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.negativePrompt"))}</dt><dd data-v-b9df029b>${ssrInterpolate(__props.result.negative_prompt || "—")}</dd></dl></section><section data-v-b9df029b><h3 data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.generation"))}</h3><dl class="result-details-drawer__grid" data-v-b9df029b><dt data-v-b9df029b>Seed</dt><dd data-v-b9df029b>${ssrInterpolate(setting("seed"))}</dd><dt data-v-b9df029b>Sampler</dt><dd data-v-b9df029b>${ssrInterpolate(setting("sampler"))}</dd><dt data-v-b9df029b>Scheduler</dt><dd data-v-b9df029b>${ssrInterpolate(setting("scheduler"))}</dd><dt data-v-b9df029b>Steps</dt><dd data-v-b9df029b>${ssrInterpolate(setting("steps"))}</dd><dt data-v-b9df029b>CFG scale</dt><dd data-v-b9df029b>${ssrInterpolate(setting("cfg_scale"))}</dd><dt data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.size"))}</dt><dd data-v-b9df029b>${ssrInterpolate(setting("width"))} × ${ssrInterpolate(setting("height"))}</dd><dt data-v-b9df029b>VAE</dt><dd data-v-b9df029b>${ssrInterpolate(setting("vae"))}</dd><dt data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.modules"))}</dt><dd data-v-b9df029b>${ssrInterpolate(unref(activeModules))}</dd><dt data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.enhancements"))}</dt><dd data-v-b9df029b>${ssrInterpolate(unref(enhancementSummary))}</dd><dt data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.profile"))}</dt><dd data-v-b9df029b>${ssrInterpolate(setting("profile", setting("model_profile")))}</dd><dt data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.runtime"))}</dt><dd data-v-b9df029b>${ssrInterpolate(setting("runtime_adapter_id", setting("runtime")))}</dd></dl></section>`);
+      }, _attrs))} data-v-c2e609cf><header data-v-c2e609cf><div data-v-c2e609cf><strong data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.title"))}</strong><small data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.reproducibility"))}</small></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("resultDetails.close"))} data-v-c2e609cf>×</button></header><section data-v-c2e609cf><h3 data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.prompts"))}</h3><dl data-v-c2e609cf><dt data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.rawPrompt"))}</dt><dd data-v-c2e609cf>${ssrInterpolate(__props.result.prompt || "—")}</dd><dt data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.expandedPrompt"))}</dt><dd data-v-c2e609cf>${ssrInterpolate(__props.result.expanded_prompt || "—")}</dd><dt data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.negativePrompt"))}</dt><dd data-v-c2e609cf>${ssrInterpolate(__props.result.negative_prompt || "—")}</dd></dl></section><section data-v-c2e609cf><h3 data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.generation"))}</h3><dl class="result-details-drawer__grid" data-v-c2e609cf><dt data-v-c2e609cf>Seed</dt><dd data-v-c2e609cf>${ssrInterpolate(setting("seed"))}</dd><dt data-v-c2e609cf>Sampler</dt><dd data-v-c2e609cf>${ssrInterpolate(setting("sampler"))}</dd><dt data-v-c2e609cf>Scheduler</dt><dd data-v-c2e609cf>${ssrInterpolate(setting("scheduler"))}</dd><dt data-v-c2e609cf>Steps</dt><dd data-v-c2e609cf>${ssrInterpolate(setting("steps"))}</dd><dt data-v-c2e609cf>CFG scale</dt><dd data-v-c2e609cf>${ssrInterpolate(setting("cfg_scale"))}</dd><dt data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.size"))}</dt><dd data-v-c2e609cf>${ssrInterpolate(setting("width"))} × ${ssrInterpolate(setting("height"))}</dd><dt data-v-c2e609cf>VAE</dt><dd data-v-c2e609cf>${ssrInterpolate(setting("vae"))}</dd><dt data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.modules"))}</dt><dd data-v-c2e609cf>${ssrInterpolate(unref(activeModules))}</dd><dt data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.enhancements"))}</dt><dd data-v-c2e609cf>${ssrInterpolate(unref(enhancementSummary))}</dd><dt data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.profile"))}</dt><dd data-v-c2e609cf>${ssrInterpolate(__props.result.profile || setting("profile", setting("model_profile")))}</dd><dt data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.runtime"))}</dt><dd data-v-c2e609cf>${ssrInterpolate(setting("runtime_adapter_id", setting("runtime")))}</dd></dl></section>`);
       if (unref(modelEntries).length || __props.result.loras.length || __props.result.embeddings.length) {
-        _push(`<section data-v-b9df029b><h3 data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.models"))}</h3><dl data-v-b9df029b><!--[-->`);
+        _push(`<section data-v-c2e609cf><h3 data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.models"))}</h3><dl data-v-c2e609cf><!--[-->`);
         ssrRenderList(unref(modelEntries), ([key, value]) => {
-          _push(`<!--[--><dt data-v-b9df029b>${ssrInterpolate(key)}</dt><dd data-v-b9df029b>${ssrInterpolate(value)}</dd><!--]-->`);
+          _push(`<!--[--><dt data-v-c2e609cf>${ssrInterpolate(key)}</dt><dd data-v-c2e609cf>${ssrInterpolate(value)}</dd><!--]-->`);
         });
         _push(`<!--]-->`);
         if (__props.result.loras.length) {
-          _push(`<dt data-v-b9df029b>LoRA</dt>`);
+          _push(`<dt data-v-c2e609cf>LoRA</dt>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.result.loras.length) {
-          _push(`<dd data-v-b9df029b>${ssrInterpolate(__props.result.loras.map((lora) => `${lora.name ?? "LoRA"} ${lora.weight ?? ""}`).join(" · "))}</dd>`);
+          _push(`<dd data-v-c2e609cf>${ssrInterpolate(__props.result.loras.map((lora) => `${lora.name ?? "LoRA"} ${lora.weight ?? ""}`).join(" · "))}</dd>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.result.embeddings.length) {
-          _push(`<dt data-v-b9df029b>Embeddings</dt>`);
+          _push(`<dt data-v-c2e609cf>Embeddings</dt>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.result.embeddings.length) {
-          _push(`<dd data-v-b9df029b>${ssrInterpolate(__props.result.embeddings.join(" · "))}</dd>`);
+          _push(`<dd data-v-c2e609cf>${ssrInterpolate(__props.result.embeddings.join(" · "))}</dd>`);
         } else {
           _push(`<!---->`);
         }
@@ -19446,17 +19513,17 @@ const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
       } else {
         _push(`<!---->`);
       }
-      _push(`<section data-v-b9df029b><h3 data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.outputFiles"))}</h3><ul data-v-b9df029b><!--[-->`);
+      _push(`<section data-v-c2e609cf><h3 data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.outputFiles"))}</h3><ul data-v-c2e609cf><!--[-->`);
       ssrRenderList(__props.result.output_paths, (path) => {
-        _push(`<li data-v-b9df029b>${ssrInterpolate(path)}</li>`);
+        _push(`<li data-v-c2e609cf>${ssrInterpolate(path)}</li>`);
       });
-      _push(`<!--]--></ul></section><section data-v-b9df029b><h3 data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.postProcessHistory"))}</h3>`);
+      _push(`<!--]--></ul></section><section data-v-c2e609cf><h3 data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.postProcessHistory"))}</h3>`);
       if (!unref(postProcessHistory).length) {
-        _push(`<p class="muted" data-v-b9df029b>${ssrInterpolate(unref(t)("resultDetails.none"))}</p>`);
+        _push(`<p class="muted" data-v-c2e609cf>${ssrInterpolate(unref(t)("resultDetails.none"))}</p>`);
       } else {
-        _push(`<ul class="result-details-drawer__events" data-v-b9df029b><!--[-->`);
+        _push(`<ul class="result-details-drawer__events" data-v-c2e609cf><!--[-->`);
         ssrRenderList(unref(postProcessHistory), (event, index) => {
-          _push(`<li data-v-b9df029b><strong data-v-b9df029b>${ssrInterpolate(postProcessLabel(event))}</strong><span data-v-b9df029b>${ssrInterpolate(postProcessMeta(event))}</span></li>`);
+          _push(`<li data-v-c2e609cf><strong data-v-c2e609cf>${ssrInterpolate(postProcessLabel(event))}</strong><span data-v-c2e609cf>${ssrInterpolate(postProcessMeta(event))}</span></li>`);
         });
         _push(`<!--]--></ul>`);
       }
@@ -19464,13 +19531,13 @@ const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1Y = _sfc_main$1Y.setup;
-_sfc_main$1Y.setup = (props, ctx) => {
+const _sfc_setup$1$ = _sfc_main$1$.setup;
+_sfc_main$1$.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ResultDetailsDrawer.vue");
-  return _sfc_setup$1Y ? _sfc_setup$1Y(props, ctx) : void 0;
+  return _sfc_setup$1$ ? _sfc_setup$1$(props, ctx) : void 0;
 };
-const ResultDetailsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Y, [["__scopeId", "data-v-b9df029b"]]), { __name: "StudioGenerateResultDetailsDrawer" });
+const ResultDetailsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1$, [["__scopeId", "data-v-c2e609cf"]]), { __name: "StudioGenerateResultDetailsDrawer" });
 const ASTERIA_EXTENSION_FRONTEND_CONTRACT = "asteria.extension.frontend.v1";
 class ExtensionModuleLoadError extends Error {
   constructor(code) {
@@ -19564,7 +19631,7 @@ const STUDIO_WORKSPACE_IDS = [
   "settings"
 ];
 const isStudioWorkspaceId = (value) => STUDIO_WORKSPACE_IDS.some((id) => id === value);
-const _sfc_main$1X = /* @__PURE__ */ defineComponent({
+const _sfc_main$1_ = /* @__PURE__ */ defineComponent({
   __name: "FullAccessExtensionHost",
   __ssrInlineRender: true,
   props: {
@@ -19651,13 +19718,13 @@ const _sfc_main$1X = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1X = _sfc_main$1X.setup;
-_sfc_main$1X.setup = (props, ctx) => {
+const _sfc_setup$1_ = _sfc_main$1_.setup;
+_sfc_main$1_.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/FullAccessExtensionHost.vue");
-  return _sfc_setup$1X ? _sfc_setup$1X(props, ctx) : void 0;
+  return _sfc_setup$1_ ? _sfc_setup$1_(props, ctx) : void 0;
 };
-const FullAccessExtensionHost = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1X, [["__scopeId", "data-v-b387b4b0"]]), { __name: "StudioExtensionsFullAccessExtensionHost" });
+const FullAccessExtensionHost = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1_, [["__scopeId", "data-v-b387b4b0"]]), { __name: "StudioExtensionsFullAccessExtensionHost" });
 const STANDARD_EXTENSION_FRAME_PATH_PREFIX = "/api/extensions/standard-frame/";
 const NONCE = /^[a-f0-9]{64}$/;
 const createStandardExtensionNonce = () => {
@@ -19706,7 +19773,7 @@ const useAsteriaTheme = () => {
     initialize
   };
 };
-const _sfc_main$1W = /* @__PURE__ */ defineComponent({
+const _sfc_main$1Z = /* @__PURE__ */ defineComponent({
   __name: "StandardExtensionFrame",
   __ssrInlineRender: true,
   props: {
@@ -19788,14 +19855,14 @@ const _sfc_main$1W = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1W = _sfc_main$1W.setup;
-_sfc_main$1W.setup = (props, ctx) => {
+const _sfc_setup$1Z = _sfc_main$1Z.setup;
+_sfc_main$1Z.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/StandardExtensionFrame.vue");
-  return _sfc_setup$1W ? _sfc_setup$1W(props, ctx) : void 0;
+  return _sfc_setup$1Z ? _sfc_setup$1Z(props, ctx) : void 0;
 };
-const StandardExtensionFrame = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-a812e459"]]), { __name: "StudioExtensionsStandardExtensionFrame" });
-const _sfc_main$1V = /* @__PURE__ */ defineComponent({
+const StandardExtensionFrame = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Z, [["__scopeId", "data-v-a812e459"]]), { __name: "StudioExtensionsStandardExtensionFrame" });
+const _sfc_main$1Y = /* @__PURE__ */ defineComponent({
   __name: "ExtensionContributionHost",
   __ssrInlineRender: true,
   props: {
@@ -19829,13 +19896,13 @@ const _sfc_main$1V = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1V = _sfc_main$1V.setup;
-_sfc_main$1V.setup = (props, ctx) => {
+const _sfc_setup$1Y = _sfc_main$1Y.setup;
+_sfc_main$1Y.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/ExtensionContributionHost.vue");
-  return _sfc_setup$1V ? _sfc_setup$1V(props, ctx) : void 0;
+  return _sfc_setup$1Y ? _sfc_setup$1Y(props, ctx) : void 0;
 };
-const ExtensionContributionHost = Object.assign(_sfc_main$1V, { __name: "StudioExtensionsExtensionContributionHost" });
+const ExtensionContributionHost = Object.assign(_sfc_main$1Y, { __name: "StudioExtensionsExtensionContributionHost" });
 const EXTENSION_PANEL_SURFACES = [
   "generate.inspector_panel",
   "image_edit.inspector_panel",
@@ -20197,7 +20264,7 @@ const useExtensionsStore = defineStore("extensions", {
     }
   }
 });
-const _sfc_main$1U = /* @__PURE__ */ defineComponent({
+const _sfc_main$1X = /* @__PURE__ */ defineComponent({
   __name: "ExtensionSurfaceDock",
   __ssrInlineRender: true,
   props: {
@@ -20230,90 +20297,62 @@ const _sfc_main$1U = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1U = _sfc_main$1U.setup;
-_sfc_main$1U.setup = (props, ctx) => {
+const _sfc_setup$1X = _sfc_main$1X.setup;
+_sfc_main$1X.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/extensions/ExtensionSurfaceDock.vue");
-  return _sfc_setup$1U ? _sfc_setup$1U(props, ctx) : void 0;
+  return _sfc_setup$1X ? _sfc_setup$1X(props, ctx) : void 0;
 };
-const ExtensionSurfaceDock = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1U, [["__scopeId", "data-v-36278985"]]), { __name: "StudioExtensionsExtensionSurfaceDock" });
-const _sfc_main$1T = /* @__PURE__ */ defineComponent({
+const ExtensionSurfaceDock = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1X, [["__scopeId", "data-v-36278985"]]), { __name: "StudioExtensionsExtensionSurfaceDock" });
+const _sfc_main$1W = /* @__PURE__ */ defineComponent({
   __name: "GenerateWorkspace",
   __ssrInlineRender: true,
-  emits: ["openHelp", "openImage", "openImageMask", "openSettings", "openImageMetadata"],
+  emits: ["openHelp", "openImage", "openImageMask", "openSettings", "openImageMetadata", "openModelSettings"],
   setup(__props, { emit: __emit }) {
     const generation = useGenerationStore();
-    const { t } = useAsteriaI18n();
-    const activeInspectorSection = ref("base-settings");
+    const settingsOpen = ref(false);
     const showResultDetails = ref(false);
-    watch(() => generation.profile, (profile) => {
-      if (activeInspectorSection.value === "modules" && !generationModuleIdsForProfile(profile).length) {
-        activeInspectorSection.value = "base-settings";
-      }
-    });
-    watch(activeInspectorSection, () => {
-      showResultDetails.value = false;
-    });
-    const inspectorSummaries = computed(() => ({
-      "mode-source": modeSourceSummary(generation.mode, generation.initImagePath, generation.maskImagePath, t),
-      "base-settings": `${generation.sampler} · ${generation.steps} ${t("generationInspector.stepsShort")} · ${generation.width}×${generation.height} · ${generation.batchSize}×${generation.batchCount}`,
-      enhancements: generation.hiresEnabled ? `Hires.fix ${generation.hiresScale}×` : t("generationInspector.hiresOff"),
-      modules: generationModuleIdsForProfile(generation.profile).map((id) => {
-        const units = id === "controlnet" ? generation.controlNetUnits : id === "detailer" ? generation.detailerUnits : generation.animaLLLiteUnits;
-        const label = id === "controlnet" ? "ControlNet" : id === "detailer" ? "ADetailer" : "Anima LLLite";
-        return `${label} ${units.filter((unit) => unit.enabled).length}`;
-      }).join(" · "),
-      "expert-tools": t("expertTools.summary")
-    }));
     const emit = __emit;
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<section${ssrRenderAttrs(mergeProps({ class: "generate-workspace" }, _attrs))} data-v-a5f4d9d2>`);
-      _push(ssrRenderComponent(ModelSettingsPanel, null, null, _parent));
-      _push(`<div class="generate-workspace__body studio" data-v-a5f4d9d2>`);
-      _push(ssrRenderComponent(PromptPane, {
-        onOpenHelp: ($event) => emit("openHelp", $event),
-        onOpenImageMetadata: ($event) => emit("openImageMetadata")
-      }, null, _parent));
+      _push(`<section${ssrRenderAttrs(mergeProps({
+        class: ["generate-workspace", { "generate-workspace--settings-open": unref(settingsOpen) }]
+      }, _attrs))} data-v-7e39016d><div class="generate-workspace__body" data-v-7e39016d><div class="generate-workspace__results" data-v-7e39016d>`);
       _push(ssrRenderComponent(ResultPane, {
         onOpenImage: ($event) => emit("openImage", $event),
         onOpenImageMask: ($event) => emit("openImageMask", $event),
-        onOpenDetails: ($event) => showResultDetails.value = true,
+        onOpenDetails: ($event) => showResultDetails.value = !unref(showResultDetails),
         onOpenSettings: ($event) => emit("openSettings")
       }, null, _parent));
-      _push(ssrRenderComponent(GenerationInspector, {
-        "active-section": unref(activeInspectorSection),
-        "onUpdate:activeSection": ($event) => isRef(activeInspectorSection) ? activeInspectorSection.value = $event : null,
-        summaries: unref(inspectorSummaries),
-        "focused-detail-label": unref(showResultDetails) ? unref(t)("resultDetails.title") : ""
+      if (unref(showResultDetails) && unref(generation).result) {
+        _push(ssrRenderComponent(ResultDetailsDrawer, {
+          result: unref(generation).result,
+          embedded: "",
+          onClose: ($event) => showResultDetails.value = false
+        }, null, _parent));
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div><div class="generate-workspace__inputs" data-v-7e39016d>`);
+      ssrRenderSlot(_ctx.$slots, "actions", {}, null, _push, _parent);
+      _push(ssrRenderComponent(PromptPane, {
+        "settings-open": unref(settingsOpen),
+        onToggleSettings: ($event) => settingsOpen.value = !unref(settingsOpen),
+        onOpenHelp: ($event) => emit("openHelp", $event),
+        onOpenImageMetadata: ($event) => emit("openImageMetadata")
+      }, null, _parent));
+      _push(`</div><div class="generate-workspace__settings-track"${ssrIncludeBooleanAttr(!unref(settingsOpen)) ? " inert" : ""} data-v-7e39016d>`);
+      _push(ssrRenderComponent(GenerationSettingsDrawer, {
+        open: unref(settingsOpen),
+        onClose: ($event) => settingsOpen.value = false,
+        onOpenSettings: ($event) => emit("openSettings"),
+        onOpenModelSettings: ($event) => emit("openModelSettings")
       }, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            if (unref(showResultDetails) && unref(generation).result) {
-              _push2(ssrRenderComponent(ResultDetailsDrawer, {
-                result: unref(generation).result,
-                embedded: "",
-                onClose: ($event) => showResultDetails.value = false
-              }, null, _parent2, _scopeId));
-            } else {
-              _push2(ssrRenderComponent(RuntimeSettingsPane, {
-                "active-section": unref(activeInspectorSection),
-                onOpenSettings: ($event) => emit("openSettings")
-              }, null, _parent2, _scopeId));
-            }
             _push2(ssrRenderComponent(ExtensionSurfaceDock, { surface: "generate.inspector_panel" }, null, _parent2, _scopeId));
             _push2(ssrRenderComponent(ExtensionSurfaceDock, { surface: "generate.inspector_action" }, null, _parent2, _scopeId));
           } else {
             return [
-              unref(showResultDetails) && unref(generation).result ? (openBlock(), createBlock(ResultDetailsDrawer, {
-                key: 0,
-                result: unref(generation).result,
-                embedded: "",
-                onClose: ($event) => showResultDetails.value = false
-              }, null, 8, ["result", "onClose"])) : (openBlock(), createBlock(RuntimeSettingsPane, {
-                key: 1,
-                "active-section": unref(activeInspectorSection),
-                onOpenSettings: ($event) => emit("openSettings")
-              }, null, 8, ["active-section", "onOpenSettings"])),
               createVNode(ExtensionSurfaceDock, { surface: "generate.inspector_panel" }),
               createVNode(ExtensionSurfaceDock, { surface: "generate.inspector_action" })
             ];
@@ -20321,18 +20360,326 @@ const _sfc_main$1T = /* @__PURE__ */ defineComponent({
         }),
         _: 1
       }, _parent));
-      _push(`</div></section>`);
+      _push(`</div></div></section>`);
     };
   }
 });
-const _sfc_setup$1T = _sfc_main$1T.setup;
-_sfc_main$1T.setup = (props, ctx) => {
+const _sfc_setup$1W = _sfc_main$1W.setup;
+_sfc_main$1W.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateWorkspace.vue");
-  return _sfc_setup$1T ? _sfc_setup$1T(props, ctx) : void 0;
+  return _sfc_setup$1W ? _sfc_setup$1W(props, ctx) : void 0;
 };
-const GenerateWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1T, [["__scopeId", "data-v-a5f4d9d2"]]), { __name: "StudioGenerateWorkspace" });
-const _sfc_main$1S = /* @__PURE__ */ defineComponent({
+const GenerateWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1W, [["__scopeId", "data-v-7e39016d"]]), { __name: "StudioGenerateWorkspace" });
+const searchableText = (value) => value.normalize("NFKC").toLowerCase().replace(/\\/g, "/");
+function filterModelOptions(items, query, selectedPath = "") {
+  const terms = searchableText(query).trim().split(/\s+/).filter(Boolean);
+  if (!terms.length) return items;
+  return items.filter((item) => {
+    if (item.path === selectedPath) return true;
+    const text = searchableText(`${item.name ?? ""} ${item.relative_path ?? ""} ${item.path}`);
+    return terms.every((term) => text.includes(term));
+  });
+}
+const dependencyNeedsAttention = (dependency, selections) => {
+  if (dependency.status === "installed") {
+    return false;
+  }
+  if (!dependency.slot_id) {
+    return true;
+  }
+  return !String(selections[dependency.slot_id] ?? "").trim();
+};
+const CURRENT_ANIMA_SELECTION_MARKER = "asteria_current_selection_unverified";
+const buildAnimaDiffusionOptions = (library, descriptors, selectedPath) => {
+  const verifiedIds = new Set(
+    descriptors.filter((descriptor) => descriptor.architecture === "anima" && descriptor.component_role === "diffusion_model" && descriptor.compatibility === "supported").map((descriptor) => descriptor.stable_asset_id)
+  );
+  const verified = library.filter((item) => Boolean(item.stable_model_id) && verifiedIds.has(item.stable_model_id));
+  if (!selectedPath || verified.some((item) => item.path === selectedPath)) return verified;
+  const selectedItem = library.find((item) => item.path === selectedPath);
+  const filename2 = selectedPath.replace(/\\/g, "/").split("/").at(-1) || selectedPath;
+  const fallback = selectedItem ? {
+    ...selectedItem,
+    metadata: {
+      ...selectedItem.metadata,
+      [CURRENT_ANIMA_SELECTION_MARKER]: "true"
+    }
+  } : {
+    type: "checkpoint",
+    name: filename2,
+    path: selectedPath,
+    relative_path: filename2,
+    size_bytes: 0,
+    metadata: { [CURRENT_ANIMA_SELECTION_MARKER]: "true" },
+    source: "selection",
+    root_id: "selection",
+    stable_model_id: null,
+    fingerprint_algorithm: null,
+    fingerprint_version: null,
+    fingerprint_value: null
+  };
+  return [fallback, ...verified];
+};
+const _sfc_main$1V = /* @__PURE__ */ defineComponent({
+  __name: "ModelSettingsPanel",
+  __ssrInlineRender: true,
+  props: {
+    embedded: { type: Boolean },
+    showPreset: { type: Boolean, default: true }
+  },
+  setup(__props) {
+    const generation = useGenerationStore();
+    const modelDependencies = useModelDependenciesStore();
+    const runtime = useRuntimeStore();
+    const imageModelCatalog = useMediaModelCatalog("image");
+    const { t } = useAsteriaI18n();
+    const modelAssetError = ref("");
+    const refreshingModelAssets = ref(false);
+    const modelSearch = ref("");
+    const basicNativeProfile = computed(() => isBasicNativeImageProfile(generation.profile));
+    const filteredSlotOptions = (slot) => filterModelOptions(slotOptions(slot), modelSearch.value, modelDependencies.selections[slot.id]);
+    const activeProfile = computed(() => modelDependencies.selectedProfile(generation.profile));
+    const modelSelectionReady = computed(() => modelDependencies.selectionReady(generation.profile));
+    const activeProfileDependencyIds = computed(() => new Set(activeProfile.value?.dependency_ids ?? []));
+    const activeProfileDependencies = computed(() => modelDependencies.dependencies.filter((dependency) => activeProfileDependencyIds.value.has(dependency.id)));
+    const missingProfileDependencies = computed(() => activeProfileDependencies.value.filter((dependency) => {
+      const slot = activeProfile.value?.model_slots.find((candidate) => candidate.id === dependency.slot_id);
+      return slot?.required !== false && dependencyNeedsAttention(dependency, modelDependencies.selections);
+    }));
+    const primarySlotIds = /* @__PURE__ */ new Set(["checkpoint", "diffusion_model", "vae"]);
+    const primaryModelSlots = computed(() => activeProfile.value?.model_slots.filter((slot) => primarySlotIds.has(slot.id)) ?? []);
+    const secondaryModelSlots = computed(() => activeProfile.value?.model_slots.filter((slot) => !primarySlotIds.has(slot.id)) ?? []);
+    const selectedSlotCount = computed(() => activeProfile.value?.model_slots.filter((slot) => Boolean(modelDependencies.selections[slot.id])).length ?? 0);
+    const verifiedAnimaDiffusionDescriptor = (item) => item.stable_model_id ? imageModelCatalog.items.value.find((descriptor) => descriptor.stable_asset_id === item.stable_model_id && descriptor.architecture === "anima" && descriptor.component_role === "diffusion_model" && descriptor.compatibility === "supported") ?? null : null;
+    const selectedAnimaDiffusion = computed(() => {
+      if (generation.profile !== "anima") return null;
+      const selectedPath = modelDependencies.selections.diffusion_model;
+      const item = modelDependencies.library.find((candidate) => candidate.path === selectedPath);
+      return item ? verifiedAnimaDiffusionDescriptor(item) : null;
+    });
+    const anima38MissingComponentLabels = computed(() => {
+      if (selectedAnimaDiffusion.value?.variant !== "anima_3_8b_52") return [];
+      const required = /* @__PURE__ */ new Set(["qwen35_text_encoder", "progressive_adapter"]);
+      return (activeProfile.value?.model_slots ?? []).filter((slot) => required.has(slot.id) && !modelDependencies.selections[slot.id]).map((slot) => slot.label);
+    });
+    const animaVariantLabel = (variant) => {
+      const keys = {
+        anima_base_28: "modelSettings.animaBaseVariant",
+        anima_2_9b_40: "modelSettings.anima29Variant",
+        anima_3_8b_52: "modelSettings.anima38Variant"
+      };
+      return variant && keys[variant] ? t(keys[variant]) : "";
+    };
+    const modelOptionLabel = (item, slot) => {
+      if (basicNativeProfile.value && item.metadata[NATIVE_SELECTION_UNVERIFIED] === "true") {
+        return `${item.relative_path} — ${t("modelSettings.animaCurrentSelectionUnverified")}`;
+      }
+      if (generation.profile !== "anima" || slot.id !== "diffusion_model") return item.relative_path;
+      if (item.metadata[CURRENT_ANIMA_SELECTION_MARKER] === "true") {
+        return `${item.relative_path} — ${t("modelSettings.animaCurrentSelectionUnverified")}`;
+      }
+      const label = animaVariantLabel(verifiedAnimaDiffusionDescriptor(item)?.variant ?? null);
+      return label ? `${item.relative_path} — ${label}` : item.relative_path;
+    };
+    const usesModelSelect = (slot) => basicNativeProfile.value || generation.profile === "anima" && slot.id === "diffusion_model" || slotOptions(slot).length > 0;
+    const slotOptions = (slot) => {
+      const profileKeywords = {
+        sdxl: ["sdxl", "sd_xl", "illustrious", "pony"],
+        anima: ["anima", "qwen"],
+        flux1: ["flux1", "flux.1", "flux"],
+        flux2: ["flux2", "flux.2", "klein"]
+      };
+      const modelProfileForPath = (value) => {
+        const normalized = value.replace(/\\/g, "/").toLowerCase();
+        if (normalized.includes("flux2") || normalized.includes("flux.2") || normalized.includes("klein")) return "flux2";
+        if (normalized.includes("flux1") || normalized.includes("flux.1") || normalized.includes("/flux/")) return "flux1";
+        if (normalized.includes("anima") || normalized.includes("qwen")) return "anima";
+        if (normalized.includes("sdxl") || normalized.includes("sd_xl") || normalized.includes("illustrious") || normalized.includes("pony")) return "sdxl";
+        return "";
+      };
+      const otherProfileKeywords = Object.entries(profileKeywords).filter(([profile]) => profile !== generation.profile).flatMap(([, keywords]) => keywords);
+      const activeKeywords = profileKeywords[generation.profile] ?? [];
+      const items = modelDependencies.libraryByType(slot.type);
+      if (basicNativeProfile.value) {
+        return nativeImageModelOptions(
+          generation.profile,
+          slot.id,
+          items,
+          imageModelCatalog.items.value,
+          modelDependencies.selections[slot.id] ?? ""
+        );
+      }
+      if (generation.profile === "anima" && slot.id === "diffusion_model") {
+        return buildAnimaDiffusionOptions(
+          items,
+          imageModelCatalog.items.value,
+          modelDependencies.selections.diffusion_model ?? ""
+        );
+      }
+      return items.filter((item) => !/\.json$/i.test(item.relative_path)).filter((item) => {
+        const normalized = item.relative_path.replace(/\\/g, "/").toLowerCase();
+        const detectedProfile = modelProfileForPath(normalized);
+        if (detectedProfile) {
+          return detectedProfile === generation.profile;
+        }
+        if (activeKeywords.some((keyword) => normalized.includes(keyword))) {
+          return true;
+        }
+        return !otherProfileKeywords.some((keyword) => normalized.includes(keyword));
+      });
+    };
+    watch(
+      [() => generation.profile, () => modelDependencies.library],
+      ([profile]) => {
+        if (profile === "anima" || isBasicNativeImageProfile(profile)) void imageModelCatalog.load();
+      },
+      { immediate: true }
+    );
+    return (_ctx, _push, _parent, _attrs) => {
+      const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
+      _push(`<section${ssrRenderAttrs(mergeProps({
+        class: ["model-bar", { "model-bar--embedded": __props.embedded }],
+        "aria-label": unref(t)("modelSettings.aria")
+      }, _attrs))} data-v-39f725c4>`);
+      if (unref(basicNativeProfile)) {
+        _push(`<p class="field-hint" data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.basicNativeSupport"))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<label class="field model-bar__search" data-v-39f725c4><span data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.searchModels"))}</span><input${ssrRenderAttr("value", unref(modelSearch))} type="search"${ssrRenderAttr("placeholder", unref(t)("modelSettings.searchModelsPlaceholder"))} data-v-39f725c4></label><div class="model-bar__primary" data-v-39f725c4><label class="field slot-field model-bar__field model-bar__profile" data-v-39f725c4><span data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select${ssrRenderAttr("value", unref(generation).profile)} data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-39f725c4><!--[-->`);
+      ssrRenderList(unref(modelDependencies).profiles, (profile) => {
+        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-39f725c4>${ssrInterpolate(profile.label)}</option>`);
+      });
+      _push(`<!--]--></select></label><!--[-->`);
+      ssrRenderList(unref(primaryModelSlots), (slot) => {
+        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-39f725c4><span data-v-39f725c4>${ssrInterpolate(slot.label)}</span>`);
+        if (usesModelSelect(slot)) {
+          _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || (unref(basicNativeProfile) || unref(generation).profile === "anima" && slot.id === "diffusion_model") && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-39f725c4><option value="" data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+          ssrRenderList(filteredSlotOptions(slot), (item) => {
+            _push(`<option${ssrRenderAttr("value", item.path)} data-v-39f725c4>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
+          });
+          _push(`<!--]--></select>`);
+        } else {
+          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-39f725c4>`);
+        }
+        _push(`</label>`);
+      });
+      _push(`<!--]-->`);
+      if (!__props.embedded) {
+        _push(`<div class="model-bar__slot-status" data-v-39f725c4><span data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-39f725c4>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<div class="model-bar__actions" data-v-39f725c4><button${ssrRenderAttrs(mergeProps({
+        type: "button",
+        disabled: unref(refreshingModelAssets) || unref(modelDependencies).loading || unref(runtime).loading
+      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("modelSettings.refreshHelp"))))} data-v-39f725c4>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
+      if (!unref(activeProfile)) {
+        _push(`<div class="model-bar__recovery" role="status" data-v-39f725c4><strong data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-39f725c4>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(modelAssetError)) {
+        _push(`<div class="model-bar__message-row" data-v-39f725c4><p class="error" aria-live="assertive" data-v-39f725c4>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if ((unref(generation).profile === "anima" || unref(basicNativeProfile)) && unref(imageModelCatalog).error.value) {
+        _push(`<div class="model-bar__message-row" data-v-39f725c4><p class="error" aria-live="assertive" data-v-39f725c4>${ssrInterpolate(unref(imageModelCatalog).error.value)}</p></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(selectedAnimaDiffusion)) {
+        _push(`<div class="model-bar__message-row" role="status" data-v-39f725c4><p class="muted" data-v-39f725c4>${ssrInterpolate(animaVariantLabel(unref(selectedAnimaDiffusion).variant))}</p></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(anima38MissingComponentLabels).length) {
+        _push(`<div class="model-bar__recovery" role="status" data-v-39f725c4><strong data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsRequired"))}</strong><small data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsHelp", { components: unref(anima38MissingComponentLabels).join(" / ") }))}</small></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(missingProfileDependencies).length) {
+        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-39f725c4><div data-v-39f725c4><strong data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-39f725c4><!--[-->`);
+        ssrRenderList(unref(missingProfileDependencies), (dependency) => {
+          _push(`<li data-v-39f725c4><span data-v-39f725c4><strong data-v-39f725c4>${ssrInterpolate(dependency.label)}</strong></span></li>`);
+        });
+        _push(`<!--]--></ul></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(secondaryModelSlots).length) {
+        _push(`<details class="model-bar__extra" data-v-39f725c4><summary data-v-39f725c4><span data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-39f725c4>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-39f725c4><!--[-->`);
+        ssrRenderList(unref(secondaryModelSlots), (slot) => {
+          _push(`<label class="field slot-field model-bar__field" data-v-39f725c4><span data-v-39f725c4>${ssrInterpolate(slot.label)}</span>`);
+          if (usesModelSelect(slot)) {
+            _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || unref(basicNativeProfile) && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-39f725c4><option value="" data-v-39f725c4>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+            ssrRenderList(filteredSlotOptions(slot), (item) => {
+              _push(`<option${ssrRenderAttr("value", item.path)} data-v-39f725c4>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
+            });
+            _push(`<!--]--></select>`);
+          } else {
+            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-39f725c4>`);
+          }
+          _push(`</label>`);
+        });
+        _push(`<!--]--></div></details>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (__props.showPreset) {
+        _push(ssrRenderComponent(GenerationPresetBar, null, null, _parent));
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</section>`);
+    };
+  }
+});
+const _sfc_setup$1V = _sfc_main$1V.setup;
+_sfc_main$1V.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ModelSettingsPanel.vue");
+  return _sfc_setup$1V ? _sfc_setup$1V(props, ctx) : void 0;
+};
+const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1V, [["__scopeId", "data-v-39f725c4"]]), { __name: "StudioModelSettingsPanel" });
+const _sfc_main$1U = /* @__PURE__ */ defineComponent({
+  __name: "ModelSettingsDrawer",
+  __ssrInlineRender: true,
+  props: {
+    open: { type: Boolean }
+  },
+  emits: ["close"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const { t } = useAsteriaI18n();
+    const dialog = ref(null);
+    const synchronize = () => {
+      if (props.open && !dialog.value?.open) dialog.value?.showModal();
+      else if (!props.open && dialog.value?.open) dialog.value.close();
+    };
+    watch(() => props.open, synchronize, { flush: "post" });
+    return (_ctx, _push, _parent, _attrs) => {
+      ssrRenderTeleport(_push, (_push2) => {
+        _push2(`<dialog class="model-settings-drawer"${ssrRenderAttr("aria-label", unref(t)("generationOverview.models"))} data-v-6a25949e><header data-v-6a25949e><h2 data-v-6a25949e>${ssrInterpolate(unref(t)("generationOverview.models"))}</h2><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("common.close"))} data-v-6a25949e>×</button></header>`);
+        _push2(ssrRenderComponent(ModelSettingsPanel, {
+          embedded: "",
+          "show-preset": false
+        }, null, _parent));
+        _push2(`</dialog>`);
+      }, "body", false, _parent);
+    };
+  }
+});
+const _sfc_setup$1U = _sfc_main$1U.setup;
+_sfc_main$1U.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ModelSettingsDrawer.vue");
+  return _sfc_setup$1U ? _sfc_setup$1U(props, ctx) : void 0;
+};
+const ModelSettingsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1U, [["__scopeId", "data-v-6a25949e"]]), { __name: "StudioGenerateModelSettingsDrawer" });
+const _sfc_main$1T = /* @__PURE__ */ defineComponent({
   __name: "RepeatLimitsDialog",
   __ssrInlineRender: true,
   props: {
@@ -20362,14 +20709,14 @@ const _sfc_main$1S = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1S = _sfc_main$1S.setup;
-_sfc_main$1S.setup = (props, ctx) => {
+const _sfc_setup$1T = _sfc_main$1T.setup;
+_sfc_main$1T.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/RepeatLimitsDialog.vue");
-  return _sfc_setup$1S ? _sfc_setup$1S(props, ctx) : void 0;
+  return _sfc_setup$1T ? _sfc_setup$1T(props, ctx) : void 0;
 };
-const RepeatLimitsDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1S, [["__scopeId", "data-v-1afc14e2"]]), { __name: "StudioGenerateRepeatLimitsDialog" });
-const _sfc_main$1R = /* @__PURE__ */ defineComponent({
+const RepeatLimitsDialog = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1T, [["__scopeId", "data-v-1afc14e2"]]), { __name: "StudioGenerateRepeatLimitsDialog" });
+const _sfc_main$1S = /* @__PURE__ */ defineComponent({
   __name: "HelpArticleCanvas",
   __ssrInlineRender: true,
   props: {
@@ -20424,14 +20771,14 @@ const _sfc_main$1R = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1R = _sfc_main$1R.setup;
-_sfc_main$1R.setup = (props, ctx) => {
+const _sfc_setup$1S = _sfc_main$1S.setup;
+_sfc_main$1S.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpArticleCanvas.vue");
-  return _sfc_setup$1R ? _sfc_setup$1R(props, ctx) : void 0;
+  return _sfc_setup$1S ? _sfc_setup$1S(props, ctx) : void 0;
 };
-const HelpArticleCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1R, [["__scopeId", "data-v-68ff0e86"]]), { __name: "StudioHelpArticleCanvas" });
-const _sfc_main$1Q = /* @__PURE__ */ defineComponent({
+const HelpArticleCanvas = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1S, [["__scopeId", "data-v-68ff0e86"]]), { __name: "StudioHelpArticleCanvas" });
+const _sfc_main$1R = /* @__PURE__ */ defineComponent({
   __name: "HelpRelatedActions",
   __ssrInlineRender: true,
   emits: ["open-related-action"],
@@ -20445,14 +20792,14 @@ const _sfc_main$1Q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1Q = _sfc_main$1Q.setup;
-_sfc_main$1Q.setup = (props, ctx) => {
+const _sfc_setup$1R = _sfc_main$1R.setup;
+_sfc_main$1R.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpRelatedActions.vue");
-  return _sfc_setup$1Q ? _sfc_setup$1Q(props, ctx) : void 0;
+  return _sfc_setup$1R ? _sfc_setup$1R(props, ctx) : void 0;
 };
-const HelpRelatedActions = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Q, [["__scopeId", "data-v-7f413803"]]), { __name: "StudioHelpRelatedActions" });
-const _sfc_main$1P = /* @__PURE__ */ defineComponent({
+const HelpRelatedActions = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1R, [["__scopeId", "data-v-7f413803"]]), { __name: "StudioHelpRelatedActions" });
+const _sfc_main$1Q = /* @__PURE__ */ defineComponent({
   __name: "HelpTopicRail",
   __ssrInlineRender: true,
   props: {
@@ -20485,13 +20832,13 @@ const _sfc_main$1P = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1P = _sfc_main$1P.setup;
-_sfc_main$1P.setup = (props, ctx) => {
+const _sfc_setup$1Q = _sfc_main$1Q.setup;
+_sfc_main$1Q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpTopicRail.vue");
-  return _sfc_setup$1P ? _sfc_setup$1P(props, ctx) : void 0;
+  return _sfc_setup$1Q ? _sfc_setup$1Q(props, ctx) : void 0;
 };
-const HelpTopicRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1P, [["__scopeId", "data-v-4ba9bfc1"]]), { __name: "StudioHelpTopicRail" });
+const HelpTopicRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1Q, [["__scopeId", "data-v-4ba9bfc1"]]), { __name: "StudioHelpTopicRail" });
 const generateHelp = {
   "ja": {
     id: "generate",
@@ -23047,7 +23394,7 @@ const useAsteriaHelpTopics = () => {
   const topics = computed(() => helpTopicsByLocale[locale.value]);
   return { topics };
 };
-const _sfc_main$1O = /* @__PURE__ */ defineComponent({
+const _sfc_main$1P = /* @__PURE__ */ defineComponent({
   __name: "HelpView",
   __ssrInlineRender: true,
   props: {
@@ -23096,14 +23443,14 @@ const _sfc_main$1O = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1O = _sfc_main$1O.setup;
-_sfc_main$1O.setup = (props, ctx) => {
+const _sfc_setup$1P = _sfc_main$1P.setup;
+_sfc_main$1P.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/HelpView.vue");
-  return _sfc_setup$1O ? _sfc_setup$1O(props, ctx) : void 0;
+  return _sfc_setup$1P ? _sfc_setup$1P(props, ctx) : void 0;
 };
-const HelpView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1O, [["__scopeId", "data-v-bf82be08"]]), { __name: "StudioHelpView" });
-const _sfc_main$1N = /* @__PURE__ */ defineComponent({
+const HelpView = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1P, [["__scopeId", "data-v-bf82be08"]]), { __name: "StudioHelpView" });
+const _sfc_main$1O = /* @__PURE__ */ defineComponent({
   __name: "HelpGuideDrawer",
   __ssrInlineRender: true,
   props: {
@@ -23133,13 +23480,13 @@ const _sfc_main$1N = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1N = _sfc_main$1N.setup;
-_sfc_main$1N.setup = (props, ctx) => {
+const _sfc_setup$1O = _sfc_main$1O.setup;
+_sfc_main$1O.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/help/HelpGuideDrawer.vue");
-  return _sfc_setup$1N ? _sfc_setup$1N(props, ctx) : void 0;
+  return _sfc_setup$1O ? _sfc_setup$1O(props, ctx) : void 0;
 };
-const HelpGuideDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1N, [["__scopeId", "data-v-81f77f6e"]]), { __name: "StudioHelpGuideDrawer" });
+const HelpGuideDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1O, [["__scopeId", "data-v-81f77f6e"]]), { __name: "StudioHelpGuideDrawer" });
 const MIN_CANVAS_ZOOM = 0.25;
 const MAX_CANVAS_ZOOM = 4;
 const CANVAS_ZOOM_STEP = 0.25;
@@ -23289,6 +23636,9 @@ const resolveCanvasGestureStart = (input) => {
   if (input.button !== 0) {
     return null;
   }
+  if (input.spacePressed && input.controlPressed && !input.altPressed) {
+    return "zoom";
+  }
   if (input.tool === "pan" || input.spacePressed) {
     return "pan";
   }
@@ -23301,7 +23651,7 @@ const shouldReleaseCanvasGesture = (activePointerId, input) => {
   if (activePointerId === null) {
     return false;
   }
-  return input.pointerId === activePointerId;
+  return input.reason === "blur" || input.pointerId === activePointerId;
 };
 const IMAGE_EDIT_INSPECTOR_IDS = [
   "source",
@@ -23313,7 +23663,6 @@ const IMAGE_EDIT_INSPECTOR_IDS = [
   "presets"
 ];
 const isImageEditInspectorId = (value) => IMAGE_EDIT_INSPECTOR_IDS.some((id) => id === value);
-const imageEditInspectorPlacement = (id) => id === "mask" || id === "crop" ? "before-canvas" : "after-handoff";
 const canClearDraftDirtyAfterSave = (saved, savedRevision, currentRevision) => saved && savedRevision === currentRevision;
 const pendingMaskStages = /* @__PURE__ */ new WeakMap();
 const draftSaveCoordinators = /* @__PURE__ */ new WeakMap();
@@ -23790,55 +24139,40 @@ function drawPoseMap(context, people, width, height) {
     context.fill();
   }
 }
-const _sfc_main$1M = /* @__PURE__ */ defineComponent({
+const _sfc_main$1N = /* @__PURE__ */ defineComponent({
   __name: "ImageEditWorkspaceBody",
   __ssrInlineRender: true,
   props: {
-    ariaLabel: {},
-    inspectorPlacement: {}
+    ariaLabel: {}
   },
   setup(__props) {
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "image-workspace image-edit-workspace-body",
         "aria-label": __props.ariaLabel
-      }, _attrs))} data-v-7c84f1f4>`);
-      ssrRenderSlot(_ctx.$slots, "model", {}, null, _push, _parent);
-      ssrRenderSlot(_ctx.$slots, "summaries", {}, null, _push, _parent);
-      _push(`<div class="image-edit-workspace-body__layout" data-v-7c84f1f4>`);
-      if (__props.inspectorPlacement === "before-canvas") {
-        _push(`<aside class="image-edit-workspace-body__inspector" data-v-7c84f1f4>`);
-        ssrRenderSlot(_ctx.$slots, "inspector", {}, null, _push, _parent);
-        ssrRenderSlot(_ctx.$slots, "reference", {}, null, _push, _parent);
-        _push(`</aside>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`<div class="image-edit-workspace-body__canvas" data-v-7c84f1f4>`);
-      ssrRenderSlot(_ctx.$slots, "canvas", {}, null, _push, _parent);
-      _push(`</div><div class="image-edit-workspace-body__handoff" data-v-7c84f1f4>`);
+      }, _attrs))} data-v-e317dd14><header class="image-edit-workspace-body__top" data-v-e317dd14><div class="image-edit-workspace-body__presets" data-v-e317dd14>`);
+      ssrRenderSlot(_ctx.$slots, "presets", {}, null, _push, _parent);
+      _push(`</div><div class="image-edit-workspace-body__handoff" data-v-e317dd14>`);
       ssrRenderSlot(_ctx.$slots, "handoff", {}, null, _push, _parent);
-      _push(`</div>`);
-      if (__props.inspectorPlacement === "after-handoff") {
-        _push(`<aside class="image-edit-workspace-body__inspector" data-v-7c84f1f4>`);
-        ssrRenderSlot(_ctx.$slots, "inspector", {}, null, _push, _parent);
-        ssrRenderSlot(_ctx.$slots, "reference", {}, null, _push, _parent);
-        _push(`</aside>`);
-      } else {
-        _push(`<!---->`);
-      }
-      _push(`</div></section>`);
+      _push(`</div></header><div class="image-edit-workspace-body__layout" data-v-e317dd14><aside class="image-edit-workspace-body__navigation" data-v-e317dd14>`);
+      ssrRenderSlot(_ctx.$slots, "navigation", {}, null, _push, _parent);
+      _push(`</aside><div class="image-edit-workspace-body__canvas" data-v-e317dd14>`);
+      ssrRenderSlot(_ctx.$slots, "canvas", {}, null, _push, _parent);
+      _push(`</div><aside class="image-edit-workspace-body__inspector" data-v-e317dd14>`);
+      ssrRenderSlot(_ctx.$slots, "inspector", {}, null, _push, _parent);
+      ssrRenderSlot(_ctx.$slots, "reference", {}, null, _push, _parent);
+      _push(`</aside></div></section>`);
     };
   }
 });
-const _sfc_setup$1M = _sfc_main$1M.setup;
-_sfc_main$1M.setup = (props, ctx) => {
+const _sfc_setup$1N = _sfc_main$1N.setup;
+_sfc_main$1N.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditWorkspaceBody.vue");
-  return _sfc_setup$1M ? _sfc_setup$1M(props, ctx) : void 0;
+  return _sfc_setup$1N ? _sfc_setup$1N(props, ctx) : void 0;
 };
-const ImageEditWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1M, [["__scopeId", "data-v-7c84f1f4"]]), { __name: "StudioImageEditWorkspaceBody" });
-const _sfc_main$1L = /* @__PURE__ */ defineComponent({
+const ImageEditWorkspaceBody = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1N, [["__scopeId", "data-v-e317dd14"]]), { __name: "StudioImageEditWorkspaceBody" });
+const _sfc_main$1M = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSummaryBar",
   __ssrInlineRender: true,
   props: {
@@ -23852,31 +24186,46 @@ const _sfc_main$1L = /* @__PURE__ */ defineComponent({
   emits: ["select"],
   setup(__props, { emit: __emit }) {
     return (_ctx, _push, _parent, _attrs) => {
+      const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "image-edit-summary-bar",
         "aria-label": __props.ariaLabel
-      }, _attrs))} data-v-2ffd1d76><button type="button" class="${ssrRenderClass([{ active: __props.activeInspector === "source" || __props.activeInspector === "source-remaster" }, "image-edit-summary-bar__task"])}" data-v-2ffd1d76><span data-v-2ffd1d76>${ssrInterpolate(__props.taskTitle)}</span><strong data-v-2ffd1d76>${ssrInterpolate(__props.taskLabel)}</strong><small data-v-2ffd1d76>${ssrInterpolate(__props.taskHint)}</small></button><!--[-->`);
+      }, _attrs))} data-v-4f09584e><button${ssrRenderAttrs(mergeProps({
+        type: "button",
+        class: ["image-edit-summary-bar__task", { active: __props.activeInspector === "source-remaster" }]
+      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, `${__props.taskLabel} — ${__props.taskHint}`)))} data-v-4f09584e><span data-v-4f09584e>${ssrInterpolate(__props.taskTitle)}</span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" data-v-4f09584e><path d="M4 6h16M4 12h16M4 18h16" data-v-4f09584e></path><circle cx="8" cy="6" r="2" data-v-4f09584e></circle><circle cx="16" cy="12" r="2" data-v-4f09584e></circle><circle cx="10" cy="18" r="2" data-v-4f09584e></circle></svg></button><!--[-->`);
       ssrRenderList(__props.items, (item) => {
-        _push(`<button type="button" class="${ssrRenderClass([{ active: __props.activeInspector === item.id }, "image-edit-summary-bar__item"])}" data-v-2ffd1d76>`);
+        _push(`<button${ssrRenderAttrs(mergeProps({
+          key: item.id,
+          type: "button",
+          class: ["image-edit-summary-bar__item", { active: __props.activeInspector === item.id }],
+          "aria-pressed": __props.activeInspector === item.id
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, `${item.label}: ${item.status} — ${item.detail}`)))} data-v-4f09584e>`);
         if (item.imageUrl) {
-          _push(`<img${ssrRenderAttr("src", item.imageUrl)}${ssrRenderAttr("alt", item.label)} data-v-2ffd1d76>`);
+          _push(`<img${ssrRenderAttr("src", item.imageUrl)}${ssrRenderAttr("alt", item.label)} data-v-4f09584e>`);
         } else {
-          _push(`<span class="image-edit-summary-bar__placeholder" data-v-2ffd1d76>${ssrInterpolate(item.label.slice(0, 1))}</span>`);
+          _push(`<svg class="image-edit-summary-bar__placeholder" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" data-v-4f09584e>`);
+          if (item.id === "mask") {
+            _push(`<!--[--><rect x="4" y="4" width="16" height="16" rx="2" data-v-4f09584e></rect><path d="M12 4v16M4 12h8" data-v-4f09584e></path><path d="M4 4h8v16H4z" fill="currentColor" opacity=".3" data-v-4f09584e></path><!--]-->`);
+          } else {
+            _push(`<!--[--><rect x="3" y="3" width="14" height="14" rx="2" data-v-4f09584e></rect><path d="M7 17v4h14V7h-4M3 13l4-4 5 5 2-2 3 3" data-v-4f09584e></path><circle cx="12" cy="7" r="1" data-v-4f09584e></circle><!--]-->`);
+          }
+          _push(`</svg>`);
         }
-        _push(`<span class="image-edit-summary-bar__copy" data-v-2ffd1d76><small data-v-2ffd1d76>${ssrInterpolate(item.label)}</small><strong data-v-2ffd1d76>${ssrInterpolate(item.status)}</strong><span data-v-2ffd1d76>${ssrInterpolate(item.detail)}</span></span></button>`);
+        _push(`<span class="image-edit-summary-bar__copy" data-v-4f09584e><small data-v-4f09584e>${ssrInterpolate(item.label)}</small></span></button>`);
       });
       _push(`<!--]--></section>`);
     };
   }
 });
-const _sfc_setup$1L = _sfc_main$1L.setup;
-_sfc_main$1L.setup = (props, ctx) => {
+const _sfc_setup$1M = _sfc_main$1M.setup;
+_sfc_main$1M.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSummaryBar.vue");
-  return _sfc_setup$1L ? _sfc_setup$1L(props, ctx) : void 0;
+  return _sfc_setup$1M ? _sfc_setup$1M(props, ctx) : void 0;
 };
-const ImageEditSummaryBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1L, [["__scopeId", "data-v-2ffd1d76"]]), { __name: "StudioImageEditSummaryBar" });
-const _sfc_main$1K = /* @__PURE__ */ defineComponent({
+const ImageEditSummaryBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1M, [["__scopeId", "data-v-4f09584e"]]), { __name: "StudioImageEditSummaryBar" });
+const _sfc_main$1L = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSourceInspector",
   __ssrInlineRender: true,
   props: {
@@ -23903,37 +24252,37 @@ const _sfc_main$1K = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "source-inspector",
         "aria-label": unref(t)("imageEditor.sourceAria")
-      }, _attrs))} data-v-2aed6da7><header class="source-inspector__header" data-v-2aed6da7><div data-v-2aed6da7><span data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.source"))}</span><h2 data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.sourceImage"))}</h2></div><span class="${ssrRenderClass([{ "source-requirement--optional": !__props.sourceRequired }, "source-requirement"])}" data-v-2aed6da7>${ssrInterpolate(__props.sourceRequired ? unref(t)("imageEditor.sourceRequired") : unref(t)("imageEditor.sourceOptional"))}</span></header><fieldset class="source-task-picker" data-v-2aed6da7><legend data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.editTask"))}</legend><!--[-->`);
+      }, _attrs))} data-v-6502739e><header class="source-inspector__header" data-v-6502739e><div data-v-6502739e><span data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.source"))}</span><h2 data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.sourceImage"))}</h2></div><span class="${ssrRenderClass([{ "source-requirement--optional": !__props.sourceRequired }, "source-requirement"])}" data-v-6502739e>${ssrInterpolate(__props.sourceRequired ? unref(t)("imageEditor.sourceRequired") : unref(t)("imageEditor.sourceOptional"))}</span></header><fieldset class="source-task-picker" data-v-6502739e><legend data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.editTask"))}</legend><!--[-->`);
       ssrRenderList(unref(taskOptions), (option) => {
-        _push(`<label class="${ssrRenderClass(["source-task", { "source-task--active": __props.mode === option.value }])}" data-v-2aed6da7><input type="radio" name="image-edit-task"${ssrRenderAttr("value", option.value)}${ssrIncludeBooleanAttr(__props.mode === option.value) ? " checked" : ""} data-v-2aed6da7><span data-v-2aed6da7><strong data-v-2aed6da7>${ssrInterpolate(option.label)}</strong><small data-v-2aed6da7>${ssrInterpolate(option.hint)}</small></span></label>`);
+        _push(`<label class="${ssrRenderClass(["source-task", { "source-task--active": __props.mode === option.value }])}" data-v-6502739e><input type="radio" name="image-edit-task"${ssrRenderAttr("value", option.value)}${ssrIncludeBooleanAttr(__props.mode === option.value) ? " checked" : ""} data-v-6502739e><span data-v-6502739e><strong data-v-6502739e>${ssrInterpolate(option.label)}</strong><small data-v-6502739e>${ssrInterpolate(option.hint)}</small></span></label>`);
       });
       _push(`<!--]--></fieldset>`);
       if (__props.sourceLoading) {
-        _push(`<div class="source-state source-state--loading" aria-live="polite" data-v-2aed6da7><span class="source-state__spinner" aria-hidden="true" data-v-2aed6da7></span><span data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.sourceLoading"))}</span></div>`);
+        _push(`<div class="source-state source-state--loading" aria-live="polite" data-v-6502739e><span class="source-state__spinner" aria-hidden="true" data-v-6502739e></span><span data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.sourceLoading"))}</span></div>`);
       } else if (__props.sourceError && __props.sourceImageUrl) {
-        _push(`<div class="source-state source-state--error" role="alert" data-v-2aed6da7><strong data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.sourceLoadFailed"))}</strong><p data-v-2aed6da7>${ssrInterpolate(__props.sourceError)}</p><button type="button" data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.changeImage"))}</button></div>`);
+        _push(`<div class="source-state source-state--error" role="alert" data-v-6502739e><strong data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.sourceLoadFailed"))}</strong><p data-v-6502739e>${ssrInterpolate(__props.sourceError)}</p><button type="button" data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.changeImage"))}</button></div>`);
       } else if (__props.sourceReady) {
-        _push(`<div class="source-ready" data-v-2aed6da7><img${ssrRenderAttr("src", __props.sourceImageUrl)}${ssrRenderAttr("alt", unref(t)("imageEditor.sourceImage"))} data-v-2aed6da7><div class="source-ready__details" data-v-2aed6da7><strong${ssrRenderAttrs(ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, __props.sourceFilename))} data-v-2aed6da7>${ssrInterpolate(__props.sourceFilename)}</strong><span data-v-2aed6da7>${ssrInterpolate(__props.sourceDimensions)}</span><small data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.statusReady"))}</small><div class="source-ready__actions" data-v-2aed6da7><button type="button" data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.changeImage"))}</button><button class="destructive-button" type="button" data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.clear"))}</button></div></div></div>`);
+        _push(`<div class="source-ready" data-v-6502739e><img${ssrRenderAttr("src", __props.sourceImageUrl)}${ssrRenderAttr("alt", unref(t)("imageEditor.sourceImage"))} data-v-6502739e><div class="source-ready__details" data-v-6502739e><strong${ssrRenderAttrs(ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, __props.sourceFilename))} data-v-6502739e>${ssrInterpolate(__props.sourceFilename)}</strong><span data-v-6502739e>${ssrInterpolate(__props.sourceDimensions)}</span><small data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.statusReady"))}</small><div class="source-ready__actions" data-v-6502739e><button type="button" data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.changeImage"))}</button><button class="destructive-button" type="button" data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.clear"))}</button></div></div></div>`);
       } else {
-        _push(`<div class="source-empty" data-v-2aed6da7><strong data-v-2aed6da7>${ssrInterpolate(__props.sourceRequired ? unref(t)("imageEditor.noSource") : unref(t)("imageEditor.sourceNotRequired"))}</strong><p data-v-2aed6da7>${ssrInterpolate(__props.sourceRequired ? unref(t)("imageEditor.openToStart") : unref(t)("imageEditor.textOnlySourceHelp"))}</p><div class="source-empty__actions" data-v-2aed6da7><button type="button" data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.openLibrary"))}</button><button type="button" data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.uploadImage"))}</button></div></div>`);
+        _push(`<div class="source-empty" data-v-6502739e><strong data-v-6502739e>${ssrInterpolate(__props.sourceRequired ? unref(t)("imageEditor.noSource") : unref(t)("imageEditor.sourceNotRequired"))}</strong><p data-v-6502739e>${ssrInterpolate(__props.sourceRequired ? unref(t)("imageEditor.openToStart") : unref(t)("imageEditor.textOnlySourceHelp"))}</p><div class="source-empty__actions" data-v-6502739e><button type="button" data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.openLibrary"))}</button><button type="button" data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.uploadImage"))}</button></div></div>`);
       }
       if (__props.mode !== "txt2img") {
-        _push(`<label class="source-denoise" data-v-2aed6da7><span data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.denoisingStrength"))}</span><input${ssrRenderAttr("value", __props.denoise)} type="range" min="0" max="1" step="0.01" data-v-2aed6da7><output data-v-2aed6da7>${ssrInterpolate(__props.denoise.toFixed(2))}</output></label>`);
+        _push(`<label class="source-denoise" data-v-6502739e><span data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.denoisingStrength"))}</span><input${ssrRenderAttr("value", __props.denoise)} type="range" min="0" max="1" step="0.01" data-v-6502739e><output data-v-6502739e>${ssrInterpolate(__props.denoise.toFixed(2))}</output></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<button class="source-remaster-link" type="button"${ssrIncludeBooleanAttr(!__props.sourceReady) ? " disabled" : ""} data-v-2aed6da7><span data-v-2aed6da7>${ssrInterpolate(unref(t)("remaster.title"))}</span><small data-v-2aed6da7>${ssrInterpolate(unref(t)("imageEditor.sourceRemasterHelp"))}</small><span aria-hidden="true" data-v-2aed6da7>→</span></button></section>`);
+      _push(`<button class="source-remaster-link" type="button"${ssrIncludeBooleanAttr(!__props.sourceReady) ? " disabled" : ""} data-v-6502739e><span data-v-6502739e>${ssrInterpolate(unref(t)("remaster.title"))}</span><small data-v-6502739e>${ssrInterpolate(unref(t)("imageEditor.sourceRemasterHelp"))}</small><span aria-hidden="true" data-v-6502739e>→</span></button></section>`);
     };
   }
 });
-const _sfc_setup$1K = _sfc_main$1K.setup;
-_sfc_main$1K.setup = (props, ctx) => {
+const _sfc_setup$1L = _sfc_main$1L.setup;
+_sfc_main$1L.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSourceInspector.vue");
-  return _sfc_setup$1K ? _sfc_setup$1K(props, ctx) : void 0;
+  return _sfc_setup$1L ? _sfc_setup$1L(props, ctx) : void 0;
 };
-const ImageEditSourceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1K, [["__scopeId", "data-v-2aed6da7"]]), { __name: "StudioImageEditSourceInspector" });
-const _sfc_main$1J = /* @__PURE__ */ defineComponent({
+const ImageEditSourceInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1L, [["__scopeId", "data-v-6502739e"]]), { __name: "StudioImageEditSourceInspector" });
+const _sfc_main$1K = /* @__PURE__ */ defineComponent({
   __name: "ImageEditSourceRemasterInspector",
   __ssrInlineRender: true,
   props: {
@@ -24036,14 +24385,14 @@ const _sfc_main$1J = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$1J = _sfc_main$1J.setup;
-_sfc_main$1J.setup = (props, ctx) => {
+const _sfc_setup$1K = _sfc_main$1K.setup;
+_sfc_main$1K.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditSourceRemasterInspector.vue");
-  return _sfc_setup$1J ? _sfc_setup$1J(props, ctx) : void 0;
+  return _sfc_setup$1K ? _sfc_setup$1K(props, ctx) : void 0;
 };
-const ImageEditSourceRemasterInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1J, [["__scopeId", "data-v-80e75218"]]), { __name: "StudioImageEditSourceRemasterInspector" });
-const _sfc_main$1I = /* @__PURE__ */ defineComponent({
+const ImageEditSourceRemasterInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1K, [["__scopeId", "data-v-80e75218"]]), { __name: "StudioImageEditSourceRemasterInspector" });
+const _sfc_main$1J = /* @__PURE__ */ defineComponent({
   __name: "ImageEditCanvasToolbar",
   __ssrInlineRender: true,
   props: {
@@ -24057,7 +24406,7 @@ const _sfc_main$1I = /* @__PURE__ */ defineComponent({
     canZoomIn: { type: Boolean },
     zoomPercentage: {}
   },
-  emits: ["selectTool", "update:brushSize", "update:showMask", "undo", "redo", "invert", "clear", "zoomOut", "zoomReset", "zoomIn"],
+  emits: ["update:brushSize", "update:showMask", "undo", "redo", "invert", "clear", "zoomOut", "zoomReset", "zoomIn"],
   setup(__props, { emit: __emit }) {
     const { t } = useAsteriaI18n();
     return (_ctx, _push, _parent, _attrs) => {
@@ -24065,32 +24414,73 @@ const _sfc_main$1I = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "canvas-toolbar",
         "aria-label": unref(t)("imageEditor.canvasToolsAria")
-      }, _attrs))} data-v-860cb3b6><div class="canvas-toolbar__edit"${ssrRenderAttr("aria-label", unref(t)("imageEditor.editToolsAria"))} data-v-860cb3b6><span class="canvas-toolbar__group-label" data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.editTools"))}</span><button type="button" class="${ssrRenderClass([{ active: __props.tool === "mask" }, "icon-button"])}"${ssrRenderAttr("aria-pressed", __props.tool === "mask")} data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.brush"))}</button><button type="button" class="${ssrRenderClass([{ active: __props.tool === "erase" }, "icon-button"])}"${ssrRenderAttr("aria-pressed", __props.tool === "erase")} data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.erase"))}</button><button type="button" class="${ssrRenderClass([{ active: __props.tool === "crop" }, "icon-button"])}"${ssrRenderAttr("aria-pressed", __props.tool === "crop")} data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.crop"))}</button><button type="button" class="${ssrRenderClass([{ active: __props.tool === "pan" }, "icon-button"])}"${ssrRenderAttr("aria-pressed", __props.tool === "pan")} data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.pan"))}</button><label class="canvas-toolbar__range" data-v-860cb3b6><span data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.size"))}</span><input${ssrRenderAttr("value", __props.brushSize)} type="range" min="4" max="180" data-v-860cb3b6><output data-v-860cb3b6>${ssrInterpolate(__props.brushSize)}</output></label></div><div class="canvas-toolbar__mask"${ssrRenderAttr("aria-label", unref(t)("imageEditor.maskToolsAria"))} data-v-860cb3b6><span class="canvas-toolbar__group-label" data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.mask"))}</span><label class="canvas-toolbar__toggle" data-v-860cb3b6><input${ssrIncludeBooleanAttr(__props.showMask) ? " checked" : ""} type="checkbox" data-v-860cb3b6><span data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.showMask"))}</span></label><button type="button"${ssrIncludeBooleanAttr(!__props.canUndo) ? " disabled" : ""} data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.undo"))}</button><button type="button"${ssrIncludeBooleanAttr(!__props.canRedo) ? " disabled" : ""} data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.redo"))}</button><button type="button"${ssrIncludeBooleanAttr(!__props.canEdit) ? " disabled" : ""} data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.invert"))}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(!__props.canEdit) ? " disabled" : ""} data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.clear"))}</button></div><div class="canvas-toolbar__display"${ssrRenderAttr("aria-label", unref(t)("imageEditor.displayToolsAria"))} data-v-860cb3b6><span class="canvas-toolbar__group-label" data-v-860cb3b6>${ssrInterpolate(unref(t)("imageEditor.display"))}</span><button${ssrRenderAttrs(mergeProps({
+      }, _attrs))} data-v-f16f426a><div class="canvas-toolbar__edit"${ssrRenderAttr("aria-label", unref(t)("imageEditor.editToolsAria"))} data-v-f16f426a><label class="canvas-toolbar__range" data-v-f16f426a><span data-v-f16f426a>${ssrInterpolate(unref(t)("imageEditor.size"))}</span><input${ssrRenderAttr("value", __props.brushSize)} type="range" min="4" max="180" data-v-f16f426a><output data-v-f16f426a>${ssrInterpolate(__props.brushSize)}</output></label></div><div class="canvas-toolbar__mask"${ssrRenderAttr("aria-label", unref(t)("imageEditor.maskToolsAria"))} data-v-f16f426a><span class="canvas-toolbar__group-label" data-v-f16f426a>${ssrInterpolate(unref(t)("imageEditor.mask"))}</span><label class="canvas-toolbar__toggle" data-v-f16f426a><input${ssrIncludeBooleanAttr(__props.showMask) ? " checked" : ""} type="checkbox" data-v-f16f426a><span data-v-f16f426a>${ssrInterpolate(unref(t)("imageEditor.showMask"))}</span></label><button type="button"${ssrIncludeBooleanAttr(!__props.canUndo) ? " disabled" : ""} data-v-f16f426a>${ssrInterpolate(unref(t)("imageEditor.undo"))}</button><button type="button"${ssrIncludeBooleanAttr(!__props.canRedo) ? " disabled" : ""} data-v-f16f426a>${ssrInterpolate(unref(t)("imageEditor.redo"))}</button><button type="button"${ssrIncludeBooleanAttr(!__props.canEdit) ? " disabled" : ""} data-v-f16f426a>${ssrInterpolate(unref(t)("imageEditor.invert"))}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(!__props.canEdit) ? " disabled" : ""} data-v-f16f426a>${ssrInterpolate(unref(t)("imageEditor.clear"))}</button></div><div class="canvas-toolbar__display"${ssrRenderAttr("aria-label", unref(t)("imageEditor.displayToolsAria"))} data-v-f16f426a><span class="canvas-toolbar__group-label" data-v-f16f426a>${ssrInterpolate(unref(t)("imageEditor.display"))}</span><button${ssrRenderAttrs(mergeProps({
         class: "icon-button canvas-toolbar__zoom-button",
         type: "button",
         disabled: !__props.canZoomOut,
         "aria-label": unref(t)("imageEditor.zoomOut")
-      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("imageEditor.zoomOut"))))} data-v-860cb3b6>−</button><button${ssrRenderAttrs(mergeProps({
+      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("imageEditor.zoomOut"))))} data-v-f16f426a>−</button><button${ssrRenderAttrs(mergeProps({
         class: "icon-button canvas-toolbar__zoom-reset",
         type: "button",
         disabled: !__props.canEdit,
         "aria-label": unref(t)("imageEditor.zoomReset")
-      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("imageEditor.zoomReset"))))} data-v-860cb3b6>${ssrInterpolate(__props.zoomPercentage)}</button><button${ssrRenderAttrs(mergeProps({
+      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("imageEditor.zoomReset"))))} data-v-f16f426a>${ssrInterpolate(__props.zoomPercentage)}</button><button${ssrRenderAttrs(mergeProps({
         class: "icon-button canvas-toolbar__zoom-button",
         type: "button",
         disabled: !__props.canZoomIn,
         "aria-label": unref(t)("imageEditor.zoomIn")
-      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("imageEditor.zoomIn"))))} data-v-860cb3b6>+</button></div></section>`);
+      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("imageEditor.canvasShortcuts"))))} data-v-f16f426a>+</button></div></section>`);
+    };
+  }
+});
+const _sfc_setup$1J = _sfc_main$1J.setup;
+_sfc_main$1J.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditCanvasToolbar.vue");
+  return _sfc_setup$1J ? _sfc_setup$1J(props, ctx) : void 0;
+};
+const ImageEditCanvasToolbar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1J, [["__scopeId", "data-v-f16f426a"]]), { __name: "StudioImageEditCanvasToolbar" });
+const _sfc_main$1I = /* @__PURE__ */ defineComponent({
+  __name: "ImageEditToolRail",
+  __ssrInlineRender: true,
+  props: {
+    tool: {}
+  },
+  emits: ["selectTool"],
+  setup(__props, { emit: __emit }) {
+    const { t } = useAsteriaI18n();
+    const tools = [
+      { id: "mask", label: "imageEditor.brush", path: "M14 3l7 7-9 9-7-7zM5 12l7 7c-1 4-7 3-9 2 2-1 0-7 2-9z" },
+      { id: "erase", label: "imageEditor.erase", path: "M14 3l7 7-11 11H6l-4-4zM7 12l7 7M10 21h11" },
+      { id: "crop", label: "imageEditor.crop", path: "M6 2v16h16M2 6h16v16" },
+      { id: "pan", label: "imageEditor.pan", path: "M7 12V7a2 2 0 014 0v5-8a2 2 0 014 0v8-5a2 2 0 014 0v7-3a2 2 0 014 0v6c0 5-3 6-7 6h-2c-3 0-4-2-6-5l-3-4c-1-2 1-4 3-2z" }
+    ];
+    return (_ctx, _push, _parent, _attrs) => {
+      const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
+      _push(`<nav${ssrRenderAttrs(mergeProps({
+        class: "image-edit-tool-rail",
+        "aria-label": unref(t)("imageEditor.editToolsAria")
+      }, _attrs))} data-v-96ace31b><!--[-->`);
+      ssrRenderList(tools, (item) => {
+        _push(`<button${ssrRenderAttrs(mergeProps({
+          key: item.id,
+          type: "button",
+          "aria-label": unref(t)(item.label),
+          "aria-pressed": __props.tool === item.id,
+          class: { active: __props.tool === item.id }
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)(item.label))))} data-v-96ace31b><svg viewBox="0 0 26 26" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true" data-v-96ace31b><path${ssrRenderAttr("d", item.path)} data-v-96ace31b></path></svg></button>`);
+      });
+      _push(`<!--]--></nav>`);
     };
   }
 });
 const _sfc_setup$1I = _sfc_main$1I.setup;
 _sfc_main$1I.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditCanvasToolbar.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditToolRail.vue");
   return _sfc_setup$1I ? _sfc_setup$1I(props, ctx) : void 0;
 };
-const ImageEditCanvasToolbar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1I, [["__scopeId", "data-v-860cb3b6"]]), { __name: "StudioImageEditCanvasToolbar" });
+const ImageEditToolRail = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1I, [["__scopeId", "data-v-96ace31b"]]), { __name: "StudioImageEditToolRail" });
 const _sfc_main$1H = /* @__PURE__ */ defineComponent({
   __name: "ImageEditMaskInspector",
   __ssrInlineRender: true,
@@ -24391,19 +24781,19 @@ const _sfc_main$1E = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "crop-inspector",
         "aria-label": unref(t)("imageEditor.cropAria")
-      }, _attrs))} data-v-1d66ae27><header class="crop-inspector__header" data-v-1d66ae27><div data-v-1d66ae27><span data-v-1d66ae27>${ssrInterpolate(unref(t)("imageEditor.crop"))}</span><h2 data-v-1d66ae27>${ssrInterpolate(unref(t)("imageEditor.cropTitle"))}</h2></div><span class="${ssrRenderClass([{ "crop-inspector__status--error": __props.state === "failed" || __props.state === "lineage-limit" }, "crop-inspector__status"])}" data-v-1d66ae27>${ssrInterpolate(unref(t)(unref(statusKey)))}</span></header><p class="crop-inspector__help" data-v-1d66ae27>${ssrInterpolate(unref(t)("imageEditor.cropHelp"))}</p><dl class="crop-inspector__dimensions" data-v-1d66ae27><div data-v-1d66ae27><dt data-v-1d66ae27>${ssrInterpolate(unref(t)("imageEditor.cropSourceDimensions"))}</dt><dd data-v-1d66ae27>${ssrInterpolate(__props.sourceDimensions || unref(t)("imageEditor.empty"))}</dd></div><div data-v-1d66ae27><dt data-v-1d66ae27>${ssrInterpolate(unref(t)("imageEditor.cropSelectionDimensions"))}</dt><dd data-v-1d66ae27>${ssrInterpolate(__props.selectionDimensions || unref(t)("imageEditor.noCrop"))}</dd></div></dl>`);
+      }, _attrs))} data-v-f137b306><header class="crop-inspector__header" data-v-f137b306><div data-v-f137b306><span data-v-f137b306>${ssrInterpolate(unref(t)("imageEditor.crop"))}</span><h2 data-v-f137b306>${ssrInterpolate(unref(t)("imageEditor.cropTitle"))}</h2></div><span class="${ssrRenderClass([{ "crop-inspector__status--error": __props.state === "failed" || __props.state === "lineage-limit" }, "crop-inspector__status"])}" data-v-f137b306>${ssrInterpolate(unref(t)(unref(statusKey)))}</span></header><p class="crop-inspector__help" data-v-f137b306>${ssrInterpolate(unref(t)("imageEditor.cropHelp"))}</p><dl class="crop-inspector__dimensions" data-v-f137b306><div data-v-f137b306><dt data-v-f137b306>${ssrInterpolate(unref(t)("imageEditor.cropSourceDimensions"))}</dt><dd data-v-f137b306>${ssrInterpolate(__props.sourceDimensions || unref(t)("imageEditor.empty"))}</dd></div><div data-v-f137b306><dt data-v-f137b306>${ssrInterpolate(unref(t)("imageEditor.cropSelectionDimensions"))}</dt><dd data-v-f137b306>${ssrInterpolate(__props.selectionDimensions || unref(t)("imageEditor.noCrop"))}</dd></div></dl>`);
       if (__props.state === "too-small") {
-        _push(`<p class="crop-inspector__notice" role="alert" data-v-1d66ae27>${ssrInterpolate(unref(t)("imageEditor.cropMinimum"))}</p>`);
+        _push(`<p class="crop-inspector__notice" role="alert" data-v-f137b306>${ssrInterpolate(unref(t)("imageEditor.cropMinimum"))}</p>`);
       } else if (__props.state === "selecting") {
-        _push(`<p class="crop-inspector__notice" aria-live="polite" data-v-1d66ae27>${ssrInterpolate(unref(t)("imageEditor.cropSelectingHelp"))}</p>`);
+        _push(`<p class="crop-inspector__notice" aria-live="polite" data-v-f137b306>${ssrInterpolate(unref(t)("imageEditor.cropSelectingHelp"))}</p>`);
       } else if (__props.state === "applying") {
-        _push(`<p class="crop-inspector__notice" aria-live="polite" data-v-1d66ae27>${ssrInterpolate(unref(t)("imageEditor.cropApplyingHelp"))}</p>`);
+        _push(`<p class="crop-inspector__notice" aria-live="polite" data-v-f137b306>${ssrInterpolate(unref(t)("imageEditor.cropApplyingHelp"))}</p>`);
       } else if (__props.cropError) {
-        _push(`<p class="crop-inspector__notice crop-inspector__notice--error" role="alert" data-v-1d66ae27>${ssrInterpolate(__props.cropError)}</p>`);
+        _push(`<p class="crop-inspector__notice crop-inspector__notice--error" role="alert" data-v-f137b306>${ssrInterpolate(__props.cropError)}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="crop-inspector__actions" data-v-1d66ae27><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!__props.canApply) ? " disabled" : ""} data-v-1d66ae27>${ssrInterpolate(unref(t)("imageEditor.applyCrop"))}</button><button type="button"${ssrIncludeBooleanAttr(!__props.canClear) ? " disabled" : ""} data-v-1d66ae27>${ssrInterpolate(unref(t)("imageEditor.clearCrop"))}</button></div></section>`);
+      _push(`<div class="crop-inspector__actions" data-v-f137b306><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!__props.canApply) ? " disabled" : ""} data-v-f137b306>${ssrInterpolate(unref(t)("imageEditor.applyCrop"))}</button><button type="button"${ssrIncludeBooleanAttr(!__props.canClear) ? " disabled" : ""} data-v-f137b306>${ssrInterpolate(unref(t)("imageEditor.clearCrop"))}</button></div></section>`);
     };
   }
 });
@@ -24413,7 +24803,7 @@ _sfc_main$1E.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditCropInspector.vue");
   return _sfc_setup$1E ? _sfc_setup$1E(props, ctx) : void 0;
 };
-const ImageEditCropInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1E, [["__scopeId", "data-v-1d66ae27"]]), { __name: "StudioImageEditCropInspector" });
+const ImageEditCropInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1E, [["__scopeId", "data-v-f137b306"]]), { __name: "StudioImageEditCropInspector" });
 const _sfc_main$1D = /* @__PURE__ */ defineComponent({
   __name: "ImageEditReferenceInspector",
   __ssrInlineRender: true,
@@ -24625,8 +25015,12 @@ const waitForImageEditorIo = (pending, hasError) => new Promise((resolve) => {
 const _sfc_main$1A = /* @__PURE__ */ defineComponent({
   __name: "ImageWorkspace",
   __ssrInlineRender: true,
+  props: {
+    active: { type: Boolean, default: true }
+  },
   emits: ["openGenerate", "openLibrary"],
   setup(__props, { expose: __expose, emit: __emit }) {
+    const props = __props;
     const emit = __emit;
     const generation = useGenerationStore();
     const runtime = useRuntimeStore();
@@ -24682,6 +25076,8 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
     const stageHovered = ref(false);
     const stageFocused = ref(false);
     const spacePressed = ref(false);
+    const controlPressed = ref(false);
+    const zoomShortcutActive = computed(() => spacePressed.value && controlPressed.value);
     const acceptedSourceIdentity = ref("");
     const acceptedSourcePath = ref("");
     let sourceLoadEpoch = 0;
@@ -24842,7 +25238,6 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
         imageUrl: activeControlUnit.value?.imagePath ? assetUrl(activeControlUnit.value.imagePath) : void 0
       }
     ]);
-    const inspectorPlacement = computed(() => imageEditInspectorPlacement(activeInspectorSection.value));
     const referenceInspectorVisible = computed(() => activeInspectorSection.value === "reference" || activeInspectorSection.value === "openpose" || activeInspectorSection.value === "presets");
     const selectInspector = (value) => {
       if (isImageEditInspectorId(value)) {
@@ -24874,6 +25269,7 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
       poseSaved.value = false;
     });
     const canvasStackStyle = computed(() => ({
+      "--image-aspect-ratio": canvasSize.width > 0 && canvasSize.height > 0 ? canvasSize.width / canvasSize.height : 1,
       transform: `translate(${canvasView.panX}px, ${canvasView.panY}px) scale(${canvasView.zoom})`
     }));
     const zoomPercentage = computed(() => `${Math.round(canvasView.zoom * 100)}%`);
@@ -25028,6 +25424,7 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
       Object.assign(canvasView, resetCanvasView());
       releaseCanvasGesture();
       spacePressed.value = false;
+      controlPressed.value = false;
     };
     const resetSourceEditorState = () => {
       markDraftEdited();
@@ -25169,7 +25566,7 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
       return { x, y, width, height };
     };
     const onPointerDown = (event) => {
-      if (!canEdit.value) {
+      if (!props.active || !canEdit.value) {
         return;
       }
       const gesture = resolveCanvasGestureStart({
@@ -25179,9 +25576,20 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
         button: event.button,
         tool: editTool.value,
         spacePressed: spacePressed.value,
+        controlPressed: event.ctrlKey,
+        altPressed: event.altKey,
         insideCanvas: isInsideCanvas(event)
       });
       if (!gesture) {
+        return;
+      }
+      if (gesture === "zoom") {
+        event.preventDefault();
+        const rect = stageElement.value.getBoundingClientRect();
+        Object.assign(canvasView, zoomCanvasAt(canvasView, stepCanvasZoom(canvasView.zoom, 1), {
+          x: event.clientX - (rect.left + rect.width / 2),
+          y: event.clientY - (rect.top + rect.height / 2)
+        }));
         return;
       }
       if (gesture === "pan") {
@@ -25243,7 +25651,7 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
       }
     };
     const onPointerUp = (event) => {
-      if (!shouldReleaseCanvasGesture(activePointerId.value, { pointerId: event.pointerId })) {
+      if (!shouldReleaseCanvasGesture(activePointerId.value, { reason: "pointer", pointerId: event.pointerId })) {
         return;
       }
       releaseCanvasGesture(event);
@@ -25656,6 +26064,7 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
       } else if (tool === "crop") {
         activeInspectorSection.value = "crop";
       }
+      void nextTick(() => stageElement.value?.focus({ preventScroll: true }));
     };
     const uploadControlImage = async (file) => {
       await runEditorAction(async () => {
@@ -25715,6 +26124,19 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
         y: event.clientY - (rect.top + rect.height / 2)
       }, rect.height));
     };
+    const onWindowBlur = () => {
+      if (shouldReleaseCanvasGesture(activePointerId.value, { reason: "blur", pointerId: null })) {
+        releaseCanvasGesture();
+      }
+      spacePressed.value = false;
+      controlPressed.value = false;
+    };
+    watch(() => props.active, (active) => {
+      if (active) return;
+      onWindowBlur();
+      stageHovered.value = false;
+      stageFocused.value = false;
+    });
     const onStageKeyDown = (event) => {
       if (!canEdit.value || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
         return;
@@ -25927,21 +26349,20 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
       hasPendingDraft
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<!--[--><input hidden type="file" accept="image/*" data-v-f656616f><input hidden type="file" accept="image/*" data-v-f656616f>`);
+      _push(`<!--[--><input hidden type="file" accept="image/*" data-v-bca54372><input hidden type="file" accept="image/*" data-v-bca54372>`);
       _push(ssrRenderComponent(ImageEditWorkspaceBody, {
-        "aria-label": unref(t)("imageEditor.workspaceAria"),
-        "inspector-placement": unref(inspectorPlacement)
+        "aria-label": unref(t)("imageEditor.workspaceAria")
       }, {
-        model: withCtx((_, _push2, _parent2, _scopeId) => {
+        presets: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(ssrRenderComponent(ModelSettingsPanel, null, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(GenerationPresetBar, { compact: "" }, null, _parent2, _scopeId));
           } else {
             return [
-              createVNode(ModelSettingsPanel)
+              createVNode(GenerationPresetBar, { compact: "" })
             ];
           }
         }),
-        summaries: withCtx((_, _push2, _parent2, _scopeId) => {
+        navigation: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
             _push2(ssrRenderComponent(ImageEditSummaryBar, {
               "active-inspector": unref(activeInspectorSection),
@@ -25951,6 +26372,10 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
               "task-hint": unref(editModeHint),
               items: unref(assetSummaryCards),
               onSelect: selectInspector
+            }, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(ImageEditToolRail, {
+              tool: unref(editTool),
+              onSelectTool: selectCanvasTool
             }, null, _parent2, _scopeId));
           } else {
             return [
@@ -25962,13 +26387,17 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
                 "task-hint": unref(editModeHint),
                 items: unref(assetSummaryCards),
                 onSelect: selectInspector
-              }, null, 8, ["active-inspector", "aria-label", "task-title", "task-label", "task-hint", "items"])
+              }, null, 8, ["active-inspector", "aria-label", "task-title", "task-label", "task-hint", "items"]),
+              createVNode(ImageEditToolRail, {
+                tool: unref(editTool),
+                onSelectTool: selectCanvasTool
+              }, null, 8, ["tool"])
             ];
           }
         }),
         inspector: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<aside class="image-workspace__panel image-workspace__panel--inspector" style="${ssrRenderStyle(!unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-f656616f${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-f656616f${_scopeId}><span data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.editWorkflow"))}</span><small data-v-f656616f${_scopeId}>${ssrInterpolate(unref(editModeLabel))}</small></div>`);
+            _push2(`<aside class="image-workspace__panel image-workspace__panel--inspector" style="${ssrRenderStyle(!unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-bca54372${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-bca54372${_scopeId}><span data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.editWorkflow"))}</span><small data-v-bca54372${_scopeId}>${ssrInterpolate(unref(editModeLabel))}</small></div>`);
             _push2(ssrRenderComponent(ImageEditSourceInspector, {
               style: unref(activeInspectorSection) === "source" ? null : { display: "none" },
               mode: unref(generation).mode,
@@ -26012,7 +26441,7 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
               onUseAsSource: ($event) => useRemasterAsSource(false),
               onSendToGenerate: ($event) => useRemasterAsSource(true)
             }, null, _parent2, _scopeId));
-            _push2(`<div style="${ssrRenderStyle(unref(activeInspectorSection) === "mask" ? null : { display: "none" })}" data-v-f656616f${_scopeId}>`);
+            _push2(`<div style="${ssrRenderStyle(unref(activeInspectorSection) === "mask" ? null : { display: "none" })}" data-v-bca54372${_scopeId}>`);
             _push2(ssrRenderComponent(BodyPartReview, {
               path: unref(generation).initImagePath,
               disabled: !unref(canEdit) || unref(maskDirty) || unref(maskSaving) || unref(generation).isBusy,
@@ -26155,7 +26584,7 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
         }),
         canvas: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<main class="image-workspace__preview" data-v-f656616f${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-f656616f${_scopeId}><span data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.canvas"))}</span><small data-v-f656616f${_scopeId}>${ssrInterpolate(unref(generation).initImagePath ? outputFilename(unref(generation).initImagePath) : unref(t)("imageEditor.empty"))}</small></div>`);
+            _push2(`<main class="image-workspace__preview" data-v-bca54372${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-bca54372${_scopeId}><span data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.canvas"))}</span><small data-v-bca54372${_scopeId}>${ssrInterpolate(unref(generation).initImagePath ? outputFilename(unref(generation).initImagePath) : unref(t)("imageEditor.empty"))}</small></div>`);
             _push2(ssrRenderComponent(ImageEditCanvasToolbar, {
               tool: unref(editTool),
               "brush-size": unref(brushSize),
@@ -26166,7 +26595,6 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
               "can-zoom-out": unref(canZoomOut),
               "can-zoom-in": unref(canZoomIn),
               "zoom-percentage": unref(zoomPercentage),
-              onSelectTool: selectCanvasTool,
               "onUpdate:brushSize": ($event) => brushSize.value = $event,
               "onUpdate:showMask": ($event) => showMask.value = $event,
               onUndo: undoMask,
@@ -26179,28 +26607,29 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
             }, null, _parent2, _scopeId));
             _push2(`<div class="${ssrRenderClass([{
               "image-preview-stage--empty": !unref(canEdit),
-              "image-preview-stage--pan": unref(canEdit) && (unref(editTool) === "pan" || unref(spacePressed)),
+              "image-preview-stage--pan": unref(canEdit) && !unref(zoomShortcutActive) && (unref(editTool) === "pan" || unref(spacePressed)),
+              "image-preview-stage--zoom": unref(canEdit) && unref(zoomShortcutActive),
               "image-preview-stage--panning": unref(isPanning)
-            }, "image-preview-stage"])}" tabindex="0" role="region"${ssrRenderAttr("aria-label", unref(t)("imageEditor.canvasNavigationAria"))} data-v-f656616f${_scopeId}>`);
+            }, "image-preview-stage"])}" tabindex="0" role="region"${ssrRenderAttr("aria-label", unref(t)("imageEditor.canvasNavigationAria"))} data-v-bca54372${_scopeId}>`);
             if (unref(canEdit)) {
-              _push2(`<div class="canvas-stack" style="${ssrRenderStyle(unref(canvasStackStyle))}" data-v-f656616f${_scopeId}><canvas class="edit-canvas"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sourceCanvas"))} data-v-f656616f${_scopeId}></canvas><canvas class="edit-canvas edit-canvas--mask"${ssrRenderAttr("aria-label", unref(t)("imageEditor.maskCanvas"))} style="${ssrRenderStyle(unref(showMask) ? null : { display: "none" })}" data-v-f656616f${_scopeId}></canvas>`);
+              _push2(`<div class="canvas-stack" style="${ssrRenderStyle(unref(canvasStackStyle))}" data-v-bca54372${_scopeId}><canvas class="edit-canvas"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sourceCanvas"))} data-v-bca54372${_scopeId}></canvas><canvas class="edit-canvas edit-canvas--mask"${ssrRenderAttr("aria-label", unref(t)("imageEditor.maskCanvas"))} style="${ssrRenderStyle(unref(showMask) ? null : { display: "none" })}" data-v-bca54372${_scopeId}></canvas>`);
               if (unref(cropRect)) {
-                _push2(`<div class="crop-rect" style="${ssrRenderStyle(unref(cropStyle))}" data-v-f656616f${_scopeId}></div>`);
+                _push2(`<div class="crop-rect" style="${ssrRenderStyle(unref(cropStyle))}" data-v-bca54372${_scopeId}></div>`);
               } else {
                 _push2(`<!---->`);
               }
               _push2(`</div>`);
             } else {
-              _push2(`<div class="image-empty-state" data-v-f656616f${_scopeId}><span class="image-empty-state__label" data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.noSource"))}</span><strong data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openToStart"))}</strong><p data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.emptyHelp"))}</p><div class="image-empty-state__actions" data-v-f656616f${_scopeId}><button class="primary-button" type="button" data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openLibrary"))}</button><button type="button" data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.uploadImage"))}</button></div></div>`);
+              _push2(`<div class="image-empty-state" data-v-bca54372${_scopeId}><span class="image-empty-state__label" data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.noSource"))}</span><strong data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openToStart"))}</strong><p data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.emptyHelp"))}</p><div class="image-empty-state__actions" data-v-bca54372${_scopeId}><button class="primary-button" type="button" data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openLibrary"))}</button><button type="button" data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.uploadImage"))}</button></div></div>`);
             }
             _push2(`</div>`);
             if (unref(historyWarning)) {
-              _push2(`<p class="warning" aria-live="polite" data-v-f656616f${_scopeId}>${ssrInterpolate(unref(historyWarning))}</p>`);
+              _push2(`<p class="warning" aria-live="polite" data-v-bca54372${_scopeId}>${ssrInterpolate(unref(historyWarning))}</p>`);
             } else {
               _push2(`<!---->`);
             }
             if (unref(editorError)) {
-              _push2(`<p class="error" aria-live="assertive" data-v-f656616f${_scopeId}>${ssrInterpolate(unref(editorError))}</p>`);
+              _push2(`<p class="error" aria-live="assertive" data-v-bca54372${_scopeId}>${ssrInterpolate(unref(editorError))}</p>`);
             } else {
               _push2(`<!---->`);
             }
@@ -26222,7 +26651,6 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
                   "can-zoom-out": unref(canZoomOut),
                   "can-zoom-in": unref(canZoomIn),
                   "zoom-percentage": unref(zoomPercentage),
-                  onSelectTool: selectCanvasTool,
                   "onUpdate:brushSize": ($event) => brushSize.value = $event,
                   "onUpdate:showMask": ($event) => showMask.value = $event,
                   onUndo: undoMask,
@@ -26238,7 +26666,8 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
                   ref: stageElement,
                   class: ["image-preview-stage", {
                     "image-preview-stage--empty": !unref(canEdit),
-                    "image-preview-stage--pan": unref(canEdit) && (unref(editTool) === "pan" || unref(spacePressed)),
+                    "image-preview-stage--pan": unref(canEdit) && !unref(zoomShortcutActive) && (unref(editTool) === "pan" || unref(spacePressed)),
+                    "image-preview-stage--zoom": unref(canEdit) && unref(zoomShortcutActive),
                     "image-preview-stage--panning": unref(isPanning)
                   }],
                   tabindex: "0",
@@ -26316,17 +26745,13 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
         }),
         handoff: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="image-send-panel"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sendAria"))} data-v-f656616f${_scopeId}><div class="image-step-header image-step-header--compact" data-v-f656616f${_scopeId}><span data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.send"))}</span><small data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendHelp"))}</small></div><div class="image-workspace__actions" data-v-f656616f${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(generation).mode !== "txt2img" && !unref(generation).initImagePath) ? " disabled" : ""} data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendToGenerate"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(generation).initImagePath) ? " disabled" : ""} data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.useSourceAsControlNet"))}</button></div></div>`);
+            _push2(`<div class="image-send-panel"${ssrRenderAttr("aria-label", unref(t)("imageEditor.sendAria"))} data-v-bca54372${_scopeId}><div class="image-workspace__actions" data-v-bca54372${_scopeId}><button class="primary-button" type="button"${ssrIncludeBooleanAttr(unref(generation).mode !== "txt2img" && !unref(generation).initImagePath) ? " disabled" : ""} data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.sendToGenerate"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(generation).initImagePath) ? " disabled" : ""} data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.useSourceAsControlNet"))}</button></div></div>`);
           } else {
             return [
               createVNode("div", {
                 class: "image-send-panel",
                 "aria-label": unref(t)("imageEditor.sendAria")
               }, [
-                createVNode("div", { class: "image-step-header image-step-header--compact" }, [
-                  createVNode("span", null, toDisplayString(unref(t)("imageEditor.send")), 1),
-                  createVNode("small", null, toDisplayString(unref(t)("imageEditor.sendHelp")), 1)
-                ]),
                 createVNode("div", { class: "image-workspace__actions" }, [
                   createVNode("button", {
                     class: "primary-button",
@@ -26346,13 +26771,13 @@ const _sfc_main$1A = /* @__PURE__ */ defineComponent({
         }),
         reference: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<aside class="image-workspace__panel image-workspace__panel--reference" style="${ssrRenderStyle(unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-f656616f${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-f656616f${_scopeId}><span data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.referenceWorkflow"))}</span>`);
+            _push2(`<aside class="image-workspace__panel image-workspace__panel--reference" style="${ssrRenderStyle(unref(referenceInspectorVisible) ? null : { display: "none" })}" data-v-bca54372${_scopeId}><div class="image-workspace__header image-workspace__header--sticky" data-v-bca54372${_scopeId}><span data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.referenceWorkflow"))}</span>`);
             if (unref(generation).controlNetUnits.length > 0) {
-              _push2(`<button type="button" data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.add"))}</button>`);
+              _push2(`<button type="button" data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.add"))}</button>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</div><nav class="reference-focus-tabs"${ssrRenderAttr("aria-label", unref(t)("imageEditor.referenceTabsAria"))} data-v-f656616f${_scopeId}><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "reference" }, "icon-button"])}" data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.reference"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "openpose" }, "icon-button"])}" data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openPose"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "presets" }, "icon-button"])}" data-v-f656616f${_scopeId}>${ssrInterpolate(unref(t)("controlNet.presets"))}</button></nav>`);
+            _push2(`</div><nav class="reference-focus-tabs"${ssrRenderAttr("aria-label", unref(t)("imageEditor.referenceTabsAria"))} data-v-bca54372${_scopeId}><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "reference" }, "icon-button"])}" data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.reference"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "openpose" }, "icon-button"])}" data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("imageEditor.openPose"))}</button><button type="button" class="${ssrRenderClass([{ active: unref(activeInspectorSection) === "presets" }, "icon-button"])}" data-v-bca54372${_scopeId}>${ssrInterpolate(unref(t)("controlNet.presets"))}</button></nav>`);
             _push2(ssrRenderComponent(ImageEditReferenceInspector, {
               style: unref(activeInspectorSection) === "reference" ? null : { display: "none" },
               units: unref(generation).controlNetUnits,
@@ -26538,7 +26963,7 @@ _sfc_main$1A.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ImageWorkspace.vue");
   return _sfc_setup$1A ? _sfc_setup$1A(props, ctx) : void 0;
 };
-const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1A, [["__scopeId", "data-v-f656616f"]]), { __name: "StudioImageWorkspace" });
+const ImageWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1A, [["__scopeId", "data-v-bca54372"]]), { __name: "StudioImageWorkspace" });
 const _sfc_main$1z = /* @__PURE__ */ defineComponent({
   __name: "ImageEditDraftNavigationDialog",
   __ssrInlineRender: true,
@@ -27014,93 +27439,93 @@ const _sfc_main$1u = /* @__PURE__ */ defineComponent({
     const { t } = useAsteriaI18n();
     return (_ctx, _push, _parent, _attrs) => {
       const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
-      _push(`<header${ssrRenderAttrs(mergeProps({ class: "library-filter-bar" }, _attrs))} data-v-8fba88ff><nav class="library-task-switch"${ssrRenderAttr("aria-label", unref(t)("library.tasksAria"))} data-v-8fba88ff><!--[-->`);
+      _push(`<header${ssrRenderAttrs(mergeProps({ class: "library-filter-bar" }, _attrs))} data-v-1bee8c46><nav class="library-task-switch"${ssrRenderAttr("aria-label", unref(t)("library.tasksAria"))} data-v-1bee8c46><!--[-->`);
       ssrRenderList(__props.taskOptions, (task) => {
-        _push(`<button class="${ssrRenderClass([{ "library-task-button--active": __props.activeTask === task.id }, "library-task-button"])}" type="button"${ssrRenderAttr("aria-pressed", __props.activeTask === task.id)}${ssrIncludeBooleanAttr(task.id === "compare" && __props.compareItemCount < 2) ? " disabled" : ""} data-v-8fba88ff><span data-v-8fba88ff>${ssrInterpolate(task.label)}</span><small data-v-8fba88ff>${ssrInterpolate(task.metric)}</small></button>`);
+        _push(`<button class="${ssrRenderClass([{ "library-task-button--active": __props.activeTask === task.id }, "library-task-button"])}" type="button"${ssrRenderAttr("aria-pressed", __props.activeTask === task.id)}${ssrIncludeBooleanAttr(task.id === "compare" && __props.compareItemCount < 2) ? " disabled" : ""} data-v-1bee8c46><span data-v-1bee8c46>${ssrInterpolate(task.label)}</span><small data-v-1bee8c46>${ssrInterpolate(task.metric)}</small></button>`);
       });
-      _push(`<!--]--></nav><div class="library-filter-bar__context" data-v-8fba88ff><div data-v-8fba88ff><strong data-v-8fba88ff>${ssrInterpolate(__props.activeFolderLabel)}</strong><small data-v-8fba88ff>${ssrInterpolate(unref(t)("library.summary", { images: __props.itemCount, selected: __props.selectedCount, task: __props.taskOptions.find((task) => task.id === __props.activeTask)?.label ?? "" }))}</small><small data-v-8fba88ff>${ssrInterpolate(__props.taskStatus)}</small>`);
+      _push(`<!--]--></nav><div class="library-filter-bar__context" data-v-1bee8c46><div data-v-1bee8c46><strong data-v-1bee8c46>${ssrInterpolate(__props.activeFolderLabel)}</strong><small data-v-1bee8c46>${ssrInterpolate(unref(t)("library.summary", { images: __props.itemCount, selected: __props.selectedCount, task: __props.taskOptions.find((task) => task.id === __props.activeTask)?.label ?? "" }))}</small><small data-v-1bee8c46>${ssrInterpolate(__props.taskStatus)}</small>`);
       if (__props.refreshing) {
-        _push(`<small class="library-filter-bar__refreshing" aria-live="polite" data-v-8fba88ff>${ssrInterpolate(unref(t)("library.checkingLatest"))}</small>`);
+        _push(`<small class="library-filter-bar__refreshing" aria-live="polite" data-v-1bee8c46>${ssrInterpolate(unref(t)("library.checkingLatest"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.refreshError) {
-        _push(`<small class="library-filter-bar__warning" role="alert" data-v-8fba88ff>${ssrInterpolate(unref(t)("library.latestRefreshFailed"))}</small>`);
+        _push(`<small class="library-filter-bar__warning" role="alert" data-v-1bee8c46>${ssrInterpolate(unref(t)("library.latestRefreshFailed"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.bulkDeleteResultMessage) {
-        _push(`<small class="library-filter-bar__result" aria-live="polite" data-v-8fba88ff>${ssrInterpolate(__props.bulkDeleteResultMessage)}</small>`);
+        _push(`<small class="library-filter-bar__result" aria-live="polite" data-v-1bee8c46>${ssrInterpolate(__props.bulkDeleteResultMessage)}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.bulkDeleteRefreshWarning) {
-        _push(`<small class="library-filter-bar__warning" aria-live="polite" data-v-8fba88ff>${ssrInterpolate(__props.bulkDeleteRefreshWarning)}</small>`);
+        _push(`<small class="library-filter-bar__warning" aria-live="polite" data-v-1bee8c46>${ssrInterpolate(__props.bulkDeleteRefreshWarning)}</small>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</div>`);
       ssrRenderSlot(_ctx.$slots, "task-actions", {}, null, _push, _parent);
-      _push(`</div><div class="library-filter-bar__commands" data-v-8fba88ff><select${ssrRenderAttr("value", __props.conditionVerdict)}${ssrRenderAttr("aria-label", unref(t)("conditions.filter"))} data-v-8fba88ff><option value="" data-v-8fba88ff>${ssrInterpolate(unref(t)("conditions.all"))}</option><!--[-->`);
+      _push(`</div><div class="library-filter-bar__commands" data-v-1bee8c46><select${ssrRenderAttr("value", __props.conditionVerdict)}${ssrRenderAttr("aria-label", unref(t)("conditions.filter"))} data-v-1bee8c46><option value="" data-v-1bee8c46>${ssrInterpolate(unref(t)("conditions.all"))}</option><!--[-->`);
       ssrRenderList(["match", "mismatch", "unknown", "unchecked"], (value) => {
-        _push(`<option${ssrRenderAttr("value", value)} data-v-8fba88ff>${ssrInterpolate(unref(t)(`conditions.filter.${value}`))}</option>`);
+        _push(`<option${ssrRenderAttr("value", value)} data-v-1bee8c46>${ssrInterpolate(unref(t)(`conditions.filter.${value}`))}</option>`);
       });
-      _push(`<!--]--></select><div class="library-media-filter"${ssrRenderAttr("aria-label", unref(t)("library.mediaFilterAria"))} role="group" data-v-8fba88ff><button value="all" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "all")} data-v-8fba88ff>${ssrInterpolate(unref(t)("library.mediaFilter.all"))}</button><button value="image" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "image")} data-v-8fba88ff>${ssrInterpolate(unref(t)("library.mediaFilter.image"))}</button><button value="video" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "video")} data-v-8fba88ff>${ssrInterpolate(unref(t)("library.mediaFilter.video"))}</button><button value="audio" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "audio")} data-v-8fba88ff>${ssrInterpolate(unref(t)("library.mediaFilter.audio"))}</button></div><input class="library-filter-bar__search"${ssrRenderAttr("value", __props.query)}${ssrRenderAttr("aria-label", unref(t)("library.searchAria"))}${ssrRenderAttr("placeholder", unref(t)("library.searchPlaceholder"))} data-v-8fba88ff><select${ssrRenderAttr("value", __props.profile)}${ssrRenderAttr("aria-label", unref(t)("library.profileFilter"))} data-v-8fba88ff><option value="" data-v-8fba88ff>${ssrInterpolate(unref(t)("library.allProfiles"))}</option><option value="sdxl" data-v-8fba88ff>SDXL</option><option value="anima" data-v-8fba88ff>Anima</option><option value="flux1" data-v-8fba88ff>Flux.1</option><option value="flux2" data-v-8fba88ff>Flux.2</option></select><select${ssrRenderAttr("value", __props.tagSource)}${ssrRenderAttr("aria-label", unref(t)("library.tagSource"))} data-v-8fba88ff><!--[-->`);
+      _push(`<!--]--></select><div class="library-media-filter"${ssrRenderAttr("aria-label", unref(t)("library.mediaFilterAria"))} role="group" data-v-1bee8c46><button value="all" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "all")} data-v-1bee8c46>${ssrInterpolate(unref(t)("library.mediaFilter.all"))}</button><button value="image" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "image")} data-v-1bee8c46>${ssrInterpolate(unref(t)("library.mediaFilter.image"))}</button><button value="video" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "video")} data-v-1bee8c46>${ssrInterpolate(unref(t)("library.mediaFilter.video"))}</button><button value="audio" type="button"${ssrRenderAttr("aria-pressed", __props.mediaFilter === "audio")} data-v-1bee8c46>${ssrInterpolate(unref(t)("library.mediaFilter.audio"))}</button></div><input class="library-filter-bar__search"${ssrRenderAttr("value", __props.query)}${ssrRenderAttr("aria-label", unref(t)("library.searchAria"))}${ssrRenderAttr("placeholder", unref(t)("library.searchPlaceholder"))} data-v-1bee8c46><select${ssrRenderAttr("value", __props.profile)}${ssrRenderAttr("aria-label", unref(t)("library.profileFilter"))} data-v-1bee8c46><option value="" data-v-1bee8c46>${ssrInterpolate(unref(t)("library.allProfiles"))}</option><option value="sdxl" data-v-1bee8c46>SDXL</option><option value="anima" data-v-1bee8c46>Anima</option><option value="flux1" data-v-1bee8c46>Flux.1</option><option value="flux2" data-v-1bee8c46>Flux.2</option><option value="krea2" data-v-1bee8c46>Krea 2 Turbo</option><option value="moss_image" data-v-1bee8c46>MOSS-Image SFT</option></select><select${ssrRenderAttr("value", __props.tagSource)}${ssrRenderAttr("aria-label", unref(t)("library.tagSource"))} data-v-1bee8c46><!--[-->`);
       ssrRenderList(__props.tagSourceOptions, (source) => {
-        _push(`<option${ssrRenderAttr("value", source.id)} data-v-8fba88ff>${ssrInterpolate(source.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", source.id)} data-v-1bee8c46>${ssrInterpolate(source.label)}</option>`);
       });
-      _push(`<!--]--></select><select${ssrRenderAttr("value", __props.tag)}${ssrRenderAttr("aria-label", unref(t)("library.tagFilter"))} data-v-8fba88ff><option value="" data-v-8fba88ff>${ssrInterpolate(unref(t)("library.allTags"))}</option>`);
+      _push(`<!--]--></select><select${ssrRenderAttr("value", __props.tag)}${ssrRenderAttr("aria-label", unref(t)("library.tagFilter"))} data-v-1bee8c46><option value="" data-v-1bee8c46>${ssrInterpolate(unref(t)("library.allTags"))}</option>`);
       if (__props.selectedTagIsHidden) {
-        _push(`<option${ssrRenderAttr("value", __props.tag)} data-v-8fba88ff>${ssrInterpolate(__props.tag)} (${ssrInterpolate(unref(t)("library.activeHiddenTag"))})</option>`);
+        _push(`<option${ssrRenderAttr("value", __props.tag)} data-v-1bee8c46>${ssrInterpolate(__props.tag)} (${ssrInterpolate(unref(t)("library.activeHiddenTag"))})</option>`);
       } else {
         _push(`<!---->`);
       }
       _push(`<!--[-->`);
       ssrRenderList(__props.visibleTagOptions, (option) => {
-        _push(`<option${ssrRenderAttr("value", option)} data-v-8fba88ff>${ssrInterpolate(option)}</option>`);
+        _push(`<option${ssrRenderAttr("value", option)} data-v-1bee8c46>${ssrInterpolate(option)}</option>`);
       });
-      _push(`<!--]--></select><label class="library-filter-bar__check" data-v-8fba88ff><input${ssrIncludeBooleanAttr(__props.favoriteOnly) ? " checked" : ""} type="checkbox" data-v-8fba88ff><span data-v-8fba88ff>${ssrInterpolate(unref(t)("library.favorites"))}</span></label><button type="button"${ssrRenderAttr("aria-expanded", __props.savedFiltersOpen)} data-v-8fba88ff>${ssrInterpolate(unref(t)("library.filters"))}</button></div><div class="library-filter-bar__chips" data-v-8fba88ff><!--[-->`);
+      _push(`<!--]--></select><label class="library-filter-bar__check" data-v-1bee8c46><input${ssrIncludeBooleanAttr(__props.favoriteOnly) ? " checked" : ""} type="checkbox" data-v-1bee8c46><span data-v-1bee8c46>${ssrInterpolate(unref(t)("library.favorites"))}</span></label><button type="button"${ssrRenderAttr("aria-expanded", __props.savedFiltersOpen)} data-v-1bee8c46>${ssrInterpolate(unref(t)("library.filters"))}</button></div><div class="library-filter-bar__chips" data-v-1bee8c46><!--[-->`);
       ssrRenderList(__props.activeFilterChips, (chip) => {
         _push(`<button${ssrRenderAttrs(mergeProps({
           key: chip.key,
           class: "library-filter-chip",
           type: "button"
-        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("library.clearChip", { label: chip.label }))))} data-v-8fba88ff>${ssrInterpolate(chip.label)} × </button>`);
+        }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("library.clearChip", { label: chip.label }))))} data-v-1bee8c46>${ssrInterpolate(chip.label)} × </button>`);
       });
       _push(`<!--]-->`);
       if (!__props.activeFilterChips.length) {
-        _push(`<small class="muted" data-v-8fba88ff>${ssrInterpolate(unref(t)("library.noFiltersActive"))}</small>`);
+        _push(`<small class="muted" data-v-1bee8c46>${ssrInterpolate(unref(t)("library.noFiltersActive"))}</small>`);
       } else {
-        _push(`<button class="library-filter-bar__clear" type="button" data-v-8fba88ff>${ssrInterpolate(unref(t)("library.clearFilters"))}</button>`);
+        _push(`<button class="library-filter-bar__clear" type="button" data-v-1bee8c46>${ssrInterpolate(unref(t)("library.clearFilters"))}</button>`);
       }
-      _push(`<small class="library-filter-bar__tag-summary" data-v-8fba88ff>${ssrInterpolate(__props.tagFilterSummary)}</small><label class="library-filter-bar__check library-filter-bar__check--internal" data-v-8fba88ff><input${ssrIncludeBooleanAttr(__props.showInternalTags) ? " checked" : ""} type="checkbox" data-v-8fba88ff><span data-v-8fba88ff>${ssrInterpolate(unref(t)("library.internalTags"))}</span></label></div>`);
+      _push(`<small class="library-filter-bar__tag-summary" data-v-1bee8c46>${ssrInterpolate(__props.tagFilterSummary)}</small><label class="library-filter-bar__check library-filter-bar__check--internal" data-v-1bee8c46><input${ssrIncludeBooleanAttr(__props.showInternalTags) ? " checked" : ""} type="checkbox" data-v-1bee8c46><span data-v-1bee8c46>${ssrInterpolate(unref(t)("library.internalTags"))}</span></label></div>`);
       if (__props.savedFiltersOpen) {
-        _push(`<section class="library-filter-bar__saved"${ssrRenderAttr("aria-label", unref(t)("library.savedFiltersAria"))} data-v-8fba88ff><div class="library-filter-bar__saved-heading" data-v-8fba88ff><div data-v-8fba88ff><strong data-v-8fba88ff>${ssrInterpolate(unref(t)("library.savedFilters"))}</strong><small data-v-8fba88ff>${ssrInterpolate(__props.currentFilterSummary)}</small></div><small data-v-8fba88ff>${ssrInterpolate(unref(t)("library.savedFilterCount", { count: __props.savedFilters.length, max: 12 }))}</small></div><div class="library-filter-bar__save-row" data-v-8fba88ff><input${ssrRenderAttr("value", __props.filterName)}${ssrIncludeBooleanAttr(__props.savedFilterSaving) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.savedFilterName"))}${ssrRenderAttr("placeholder", unref(t)("library.filterNamePlaceholder"))} data-v-8fba88ff><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.savedFilterSaving || !__props.canSaveFilter || __props.savedFilterAtLimit) ? " disabled" : ""} data-v-8fba88ff>${ssrInterpolate(unref(t)("library.saveFilter"))}</button></div>`);
+        _push(`<section class="library-filter-bar__saved"${ssrRenderAttr("aria-label", unref(t)("library.savedFiltersAria"))} data-v-1bee8c46><div class="library-filter-bar__saved-heading" data-v-1bee8c46><div data-v-1bee8c46><strong data-v-1bee8c46>${ssrInterpolate(unref(t)("library.savedFilters"))}</strong><small data-v-1bee8c46>${ssrInterpolate(__props.currentFilterSummary)}</small></div><small data-v-1bee8c46>${ssrInterpolate(unref(t)("library.savedFilterCount", { count: __props.savedFilters.length, max: 12 }))}</small></div><div class="library-filter-bar__save-row" data-v-1bee8c46><input${ssrRenderAttr("value", __props.filterName)}${ssrIncludeBooleanAttr(__props.savedFilterSaving) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.savedFilterName"))}${ssrRenderAttr("placeholder", unref(t)("library.filterNamePlaceholder"))} data-v-1bee8c46><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.savedFilterSaving || !__props.canSaveFilter || __props.savedFilterAtLimit) ? " disabled" : ""} data-v-1bee8c46>${ssrInterpolate(unref(t)("library.saveFilter"))}</button></div>`);
         if (__props.savedFilterAtLimit) {
-          _push(`<p class="error" data-v-8fba88ff>${ssrInterpolate(unref(t)("library.savedFilterLimit"))}</p>`);
+          _push(`<p class="error" data-v-1bee8c46>${ssrInterpolate(unref(t)("library.savedFilterLimit"))}</p>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.savedFilterError) {
-          _push(`<p class="error" aria-live="assertive" data-v-8fba88ff>${ssrInterpolate(__props.savedFilterError)}</p>`);
+          _push(`<p class="error" aria-live="assertive" data-v-1bee8c46>${ssrInterpolate(__props.savedFilterError)}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="library-filter-bar__saved-list" data-v-8fba88ff>`);
+        _push(`<div class="library-filter-bar__saved-list" data-v-1bee8c46>`);
         if (!__props.savedFilters.length) {
-          _push(`<small class="muted" data-v-8fba88ff>${ssrInterpolate(unref(t)("library.noSavedFilters"))}</small>`);
+          _push(`<small class="muted" data-v-1bee8c46>${ssrInterpolate(unref(t)("library.noSavedFilters"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         _push(`<!--[-->`);
         ssrRenderList(__props.savedFilters, (filter) => {
-          _push(`<span class="library-saved-filter" data-v-8fba88ff><button type="button" data-v-8fba88ff>${ssrInterpolate(filter.label)}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(__props.savedFilterSaving) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.deleteSavedFilter", { label: filter.label }))} data-v-8fba88ff>×</button></span>`);
+          _push(`<span class="library-saved-filter" data-v-1bee8c46><button type="button" data-v-1bee8c46>${ssrInterpolate(filter.label)}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(__props.savedFilterSaving) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("library.deleteSavedFilter", { label: filter.label }))} data-v-1bee8c46>×</button></span>`);
         });
         _push(`<!--]--></div></section>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="library-filter-bar__bulk-actions" data-v-8fba88ff>`);
+      _push(`<div class="library-filter-bar__bulk-actions" data-v-1bee8c46>`);
       ssrRenderSlot(_ctx.$slots, "bulk-actions", {}, null, _push, _parent);
       _push(`</div></header>`);
     };
@@ -27112,7 +27537,7 @@ _sfc_main$1u.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/library/LibraryFilterBar.vue");
   return _sfc_setup$1u ? _sfc_setup$1u(props, ctx) : void 0;
 };
-const LibraryFilterBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1u, [["__scopeId", "data-v-8fba88ff"]]), { __name: "StudioLibraryFilterBar" });
+const LibraryFilterBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1u, [["__scopeId", "data-v-1bee8c46"]]), { __name: "StudioLibraryFilterBar" });
 const MUSIC_MODEL_COMPONENT_ROLES = ["diffusion_model", "text_encoder", "audio_vae"];
 const DRAFT_FIELDS$1 = /* @__PURE__ */ new Set([
   "mode",
@@ -29098,12 +29523,12 @@ const buildLibraryLoRADatasetHandoff = (items, resolveOutputPath) => {
       skippedMissingImageCount += 1;
       continue;
     }
-    const pathKey2 = normalizedPathKey(imagePath);
-    if (outputPaths.has(pathKey2)) {
+    const pathKey = normalizedPathKey(imagePath);
+    if (outputPaths.has(pathKey)) {
       skippedDuplicatePathCount += 1;
       continue;
     }
-    outputPaths.add(pathKey2);
+    outputPaths.add(pathKey);
     images.push({
       image_path: imagePath,
       caption: captionForItem(item),
@@ -35540,6 +35965,7 @@ const _sfc_main$1b = /* @__PURE__ */ defineComponent({
     const activityLabel = computed(() => {
       const run = props.activeRun;
       if (!run) return t("lora.run.noRunSelected");
+      if (run.failure_code === "lora_training_exit_unconfirmed") return "";
       if (run.status === "planned" && run.operation_id) return t("operations.status.queued");
       if (run.status === "running" && typeof run.progress_current === "number" && typeof run.progress_total === "number") {
         return t("lora.standard.activityTrainingStep", { current: String(run.progress_current), total: String(run.progress_total) });
@@ -35562,62 +35988,62 @@ const _sfc_main$1b = /* @__PURE__ */ defineComponent({
       return hours > 0 ? `${hours}h ${minutes}m` : minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
     };
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "lora-standard-workspace" }, _attrs))} data-v-846089cf><aside class="lora-standard-rail" data-lora-standard-region="dataset-runs"${ssrRenderAttr("aria-label", unref(t)("lora.standard.datasetRunsTitle"))} data-v-846089cf><div class="lora-standard-heading" data-v-846089cf><div data-v-846089cf><p class="eyebrow" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.contextEyebrow"))}</p><h2 data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.datasetRunsTitle"))}</h2></div><button type="button" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.openCaptionStudio"))}</button></div><label class="field" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.dataset"))}</span><select${ssrRenderAttr("value", __props.draft.dataset_id)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf><option value="" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.noDataset"))}</option><!--[-->`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "lora-standard-workspace" }, _attrs))} data-v-ae8113a8><aside class="lora-standard-rail" data-lora-standard-region="dataset-runs"${ssrRenderAttr("aria-label", unref(t)("lora.standard.datasetRunsTitle"))} data-v-ae8113a8><div class="lora-standard-heading" data-v-ae8113a8><div data-v-ae8113a8><p class="eyebrow" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.contextEyebrow"))}</p><h2 data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.datasetRunsTitle"))}</h2></div><button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.openCaptionStudio"))}</button></div><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.dataset"))}</span><select${ssrRenderAttr("value", __props.draft.dataset_id)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8><option value="" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.noDataset"))}</option><!--[-->`);
       ssrRenderList(__props.datasets, (dataset) => {
-        _push(`<option${ssrRenderAttr("value", dataset.id)} data-v-846089cf>${ssrInterpolate(dataset.name)} · ${ssrInterpolate(dataset.items.length)}</option>`);
+        _push(`<option${ssrRenderAttr("value", dataset.id)} data-v-ae8113a8>${ssrInterpolate(dataset.name)} · ${ssrInterpolate(dataset.items.length)}</option>`);
       });
       _push(`<!--]--></select></label>`);
       if (unref(selectedDataset)) {
-        _push(`<div class="lora-standard-context" data-v-846089cf><strong data-v-846089cf>${ssrInterpolate(unref(selectedDataset).name)}</strong><small data-v-846089cf>${ssrInterpolate(unref(selectedDataset).profile)} · ${ssrInterpolate(unref(selectedDataset).training_type)}</small><small data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.datasetCount", { count: String(unref(selectedDataset).items.length) }))}</small></div>`);
+        _push(`<div class="lora-standard-context" data-v-ae8113a8><strong data-v-ae8113a8>${ssrInterpolate(unref(selectedDataset).name)}</strong><small data-v-ae8113a8>${ssrInterpolate(unref(selectedDataset).profile)} · ${ssrInterpolate(unref(selectedDataset).training_type)}</small><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.datasetCount", { count: String(unref(selectedDataset).items.length) }))}</small></div>`);
       } else {
-        _push(`<p class="muted" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.datasetRequired"))}</p>`);
+        _push(`<p class="muted" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.datasetRequired"))}</p>`);
       }
-      _push(`<div class="lora-standard-run-list" data-v-846089cf><div class="lora-standard-section-title" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.recentRuns"))}</span><small data-v-846089cf>${ssrInterpolate(__props.runs.length)}</small></div><!--[-->`);
+      _push(`<div class="lora-standard-run-list" data-v-ae8113a8><div class="lora-standard-section-title" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.recentRuns"))}</span><small data-v-ae8113a8>${ssrInterpolate(__props.runs.length)}</small></div><!--[-->`);
       ssrRenderList(__props.runs, (run) => {
-        _push(`<button class="${ssrRenderClass(["lora-standard-run", { "lora-standard-run--active": run.id === __props.activeRun?.id }])}" type="button" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(run.dataset_name)}</span><small data-v-846089cf>${ssrInterpolate(filenameFromPath2(run.output_name))}</small><em${ssrRenderAttr("data-status", run.status)} data-v-846089cf>${ssrInterpolate(run.status)}</em></button>`);
+        _push(`<button class="${ssrRenderClass(["lora-standard-run", { "lora-standard-run--active": run.id === __props.activeRun?.id }])}" type="button" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(run.dataset_name)}</span><small data-v-ae8113a8>${ssrInterpolate(filenameFromPath2(run.output_name))}</small><em${ssrRenderAttr("data-status", run.status)} data-v-ae8113a8>${ssrInterpolate(run.status)}</em></button>`);
       });
       _push(`<!--]-->`);
       if (!__props.runs.length) {
-        _push(`<small class="muted" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.noRuns"))}</small>`);
+        _push(`<small class="muted" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.noRuns"))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</div></aside><main class="lora-standard-setup" data-lora-standard-region="training-setup"${ssrRenderAttr("aria-label", unref(t)("lora.standard.trainingSetupTitle"))} data-v-846089cf><div class="lora-standard-heading" data-v-846089cf><div data-v-846089cf><p class="eyebrow" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.setupEyebrow"))}</p><h2 data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.trainingSetupTitle"))}</h2></div><span class="status-pill"${ssrRenderAttr("data-draft-state", __props.planState.draft_state)} data-v-846089cf>${ssrInterpolate(unref(t)(`lora.standard.state.${unref(draftStateKey)}`))}</span></div><div class="lora-standard-setup-grid" data-v-846089cf><label class="field" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.preset"))}</span><select${ssrRenderAttr("value", __props.draft.preset_id)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf><!--[-->`);
+      _push(`</div></aside><main class="lora-standard-setup" data-lora-standard-region="training-setup"${ssrRenderAttr("aria-label", unref(t)("lora.standard.trainingSetupTitle"))} data-v-ae8113a8><div class="lora-standard-heading" data-v-ae8113a8><div data-v-ae8113a8><p class="eyebrow" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.setupEyebrow"))}</p><h2 data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.trainingSetupTitle"))}</h2></div><span class="status-pill"${ssrRenderAttr("data-draft-state", __props.planState.draft_state)} data-v-ae8113a8>${ssrInterpolate(unref(t)(`lora.standard.state.${unref(draftStateKey)}`))}</span></div><div class="lora-standard-setup-grid" data-v-ae8113a8><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.preset"))}</span><select${ssrRenderAttr("value", __props.draft.preset_id)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8><!--[-->`);
       ssrRenderList(__props.presets, (preset) => {
-        _push(`<option${ssrRenderAttr("value", preset.id)} data-v-846089cf>${ssrInterpolate(preset.name)}</option>`);
+        _push(`<option${ssrRenderAttr("value", preset.id)} data-v-ae8113a8>${ssrInterpolate(preset.name)}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.baseModel"))}</span><input${ssrRenderAttr("value", __props.draft.pretrained_model_name_or_path)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label><label class="field" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.outputName"))}</span><input${ssrRenderAttr("value", __props.draft.output_name)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label><label class="field" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.repeats"))}</span><input${ssrRenderAttr("value", __props.draft.repeats ?? "")}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} min="0" type="number" data-v-846089cf></label><label class="field" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.classTokens"))}</span><input${ssrRenderAttr("value", __props.draft.class_tokens)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label><label class="field" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.captionExtension"))}</span><input${ssrRenderAttr("value", __props.draft.caption_extension)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label></div>`);
+      _push(`<!--]--></select></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.baseModel"))}</span><input${ssrRenderAttr("value", __props.draft.pretrained_model_name_or_path)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.outputName"))}</span><input${ssrRenderAttr("value", __props.draft.output_name)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.repeats"))}</span><input${ssrRenderAttr("value", __props.draft.repeats ?? "")}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} min="0" type="number" data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.classTokens"))}</span><input${ssrRenderAttr("value", __props.draft.class_tokens)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.captionExtension"))}</span><input${ssrRenderAttr("value", __props.draft.caption_extension)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label></div>`);
       if (unref(selectedPreset)) {
-        _push(`<div class="lora-standard-resolved" data-v-846089cf><div data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.profile"))}</span><strong data-v-846089cf>${ssrInterpolate(unref(selectedPreset).profile)}</strong></div><div data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.trainingType"))}</span><strong data-v-846089cf>${ssrInterpolate(unref(selectedPreset).training_type)}</strong></div><div data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.network"))}</span><strong data-v-846089cf>${ssrInterpolate(unref(selectedPreset).network_dim)} / ${ssrInterpolate(unref(selectedPreset).network_alpha)}</strong></div><div data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.keepTokens"))}</span><strong data-v-846089cf>${ssrInterpolate(unref(selectedPreset).keep_tokens)}</strong></div></div>`);
+        _push(`<div class="lora-standard-resolved" data-v-ae8113a8><div data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.profile"))}</span><strong data-v-ae8113a8>${ssrInterpolate(unref(selectedPreset).profile)}</strong></div><div data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.trainingType"))}</span><strong data-v-ae8113a8>${ssrInterpolate(unref(selectedPreset).training_type)}</strong></div><div data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.network"))}</span><strong data-v-ae8113a8>${ssrInterpolate(unref(selectedPreset).network_dim)} / ${ssrInterpolate(unref(selectedPreset).network_alpha)}</strong></div><div data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.keepTokens"))}</span><strong data-v-ae8113a8>${ssrInterpolate(unref(selectedPreset).keep_tokens)}</strong></div></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<details class="lora-standard-advanced" data-v-846089cf><summary data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.advanced"))}</summary><div class="lora-standard-setup-grid" data-v-846089cf><label class="field field-with-action" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.imageDirectory"))} <button type="button" data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.image_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label><label class="field field-with-action" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.outputDirectory"))} <button type="button" data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.output_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label><label class="field" data-v-846089cf><span data-v-846089cf>VAE</span><input${ssrRenderAttr("value", __props.draft.vae)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label><label class="field" data-v-846089cf><span data-v-846089cf>Qwen3</span><input${ssrRenderAttr("value", __props.draft.qwen3)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label><label class="field field-with-action" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.sdScriptsDir"))} <button type="button" data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.working_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label><label class="field" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.accelerateCommand"))}</span><input${ssrRenderAttr("value", __props.draft.accelerate_command)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label><label class="field" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.optimizer"))}</span><input${ssrRenderAttr("value", __props.draft.optimizer_type)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label><label class="field" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.optimizerArgs"))}</span><input${ssrRenderAttr("value", __props.draft.optimizer_args)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf></label></div><label class="field field--checkbox" data-v-846089cf><input${ssrIncludeBooleanAttr(__props.draft.optimizer_low_vram) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} type="checkbox" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.optimizerLowVram"))}</span></label></details><div class="lora-standard-actions" data-v-846089cf><button type="button"${ssrIncludeBooleanAttr(__props.busy || __props.planState.inputs_locked) ? " disabled" : ""} data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.previewConfig"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.busy || __props.planState.inputs_locked || !unref(selectedDataset) || !unref(selectedDataset).items.length || !unref(selectedPreset)) ? " disabled" : ""} data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.prepareAndPlan"))}</button><button type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.refreshPresets"))}</button></div>`);
+      _push(`<details class="lora-standard-advanced" data-v-ae8113a8><summary data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.advanced"))}</summary><div class="lora-standard-setup-grid" data-v-ae8113a8><label class="field field-with-action" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.imageDirectory"))} <button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.image_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field field-with-action" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.outputDirectory"))} <button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.output_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>VAE</span><input${ssrRenderAttr("value", __props.draft.vae)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>Qwen3</span><input${ssrRenderAttr("value", __props.draft.qwen3)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field field-with-action" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.sdScriptsDir"))} <button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.browse"))}</button></span><input${ssrRenderAttr("value", __props.draft.working_dir)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.accelerateCommand"))}</span><input${ssrRenderAttr("value", __props.draft.accelerate_command)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.optimizer"))}</span><input${ssrRenderAttr("value", __props.draft.optimizer_type)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label><label class="field" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.optimizerArgs"))}</span><input${ssrRenderAttr("value", __props.draft.optimizer_args)}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8></label></div><label class="field field--checkbox" data-v-ae8113a8><input${ssrIncludeBooleanAttr(__props.draft.optimizer_low_vram) ? " checked" : ""}${ssrIncludeBooleanAttr(__props.planState.inputs_locked) ? " disabled" : ""} type="checkbox" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.optimizerLowVram"))}</span></label></details><div class="lora-standard-actions" data-v-ae8113a8><button type="button"${ssrIncludeBooleanAttr(__props.busy || __props.planState.inputs_locked) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.previewConfig"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.busy || __props.planState.inputs_locked || !unref(selectedDataset) || !unref(selectedDataset).items.length || !unref(selectedPreset)) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.prepareAndPlan"))}</button><button type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.refreshPresets"))}</button></div>`);
       if (__props.error) {
-        _push(`<p class="error" aria-live="assertive" data-v-846089cf>${ssrInterpolate(__props.error)}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-ae8113a8>${ssrInterpolate(__props.error)}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.message) {
-        _push(`<small class="muted" data-v-846089cf>${ssrInterpolate(__props.message)}</small>`);
+        _push(`<small class="muted" data-v-ae8113a8>${ssrInterpolate(__props.message)}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.preview?.warnings.length) {
-        _push(`<small class="lora-standard-warning" data-v-846089cf>${ssrInterpolate(__props.preview.warnings.map((item) => item.replaceAll("_", " ")).join(" · "))}</small>`);
+        _push(`<small class="lora-standard-warning" data-v-ae8113a8>${ssrInterpolate(__props.preview.warnings.map((item) => item.replaceAll("_", " ")).join(" · "))}</small>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</main><aside class="lora-standard-readiness" data-lora-standard-region="readiness-run"${ssrRenderAttr("aria-label", unref(t)("lora.standard.readinessTitle"))} data-v-846089cf><div class="lora-standard-heading" data-v-846089cf><div data-v-846089cf><p class="eyebrow" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.snapshotEyebrow"))}</p><h2 data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.readinessTitle"))}</h2></div><span class="status-pill"${ssrRenderAttr("data-plan-state", __props.planState.state)} data-v-846089cf>${ssrInterpolate(unref(t)(`lora.standard.state.${__props.planState.state}`))}</span></div>`);
+      _push(`</main><aside class="lora-standard-readiness" data-lora-standard-region="readiness-run"${ssrRenderAttr("aria-label", unref(t)("lora.standard.readinessTitle"))} data-v-ae8113a8><div class="lora-standard-heading" data-v-ae8113a8><div data-v-ae8113a8><p class="eyebrow" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.snapshotEyebrow"))}</p><h2 data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.readinessTitle"))}</h2></div><span class="status-pill"${ssrRenderAttr("data-plan-state", __props.planState.state)} data-v-ae8113a8>${ssrInterpolate(unref(t)(`lora.standard.state.${__props.planState.state}`))}</span></div>`);
       if (__props.materialized || __props.activeRun) {
-        _push(`<div class="lora-standard-snapshot" data-v-846089cf><strong data-v-846089cf>${ssrInterpolate(unref(t)("lora.training.preparedFilesSummary", { count: String(unref(snapshotItemCount)), skipped: String(unref(snapshotSkippedCount)) }))}</strong><small data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.immutableSnapshot"))}</small></div>`);
+        _push(`<div class="lora-standard-snapshot" data-v-ae8113a8><strong data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.training.preparedFilesSummary", { count: String(unref(snapshotItemCount)), skipped: String(unref(snapshotSkippedCount)) }))}</strong><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.immutableSnapshot"))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(characterGate)?.applicable) {
-        _push(`<section class="lora-standard-gate" data-v-846089cf><div class="lora-standard-section-title" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.characterGate"))}</span><em${ssrRenderAttr("data-ready", unref(characterGate).passed)} data-v-846089cf>${ssrInterpolate(unref(characterGate).passed ? unref(t)("lora.standard.pass") : unref(t)("lora.run.blocked"))}</em></div><small data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.triggerFirst", { ready: String(unref(characterGate).trigger_first_count), total: String(unref(characterGate).total_count) }))}</small><small data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.keepTokensValue", { count: String(unref(characterGate).effective_keep_tokens) }))}</small><small data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.identityHits", { count: String(unref(characterGate).identity_hit_count) }))}</small>`);
+        _push(`<section class="lora-standard-gate" data-v-ae8113a8><div class="lora-standard-section-title" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.characterGate"))}</span><em${ssrRenderAttr("data-ready", unref(characterGate).passed)} data-v-ae8113a8>${ssrInterpolate(unref(characterGate).passed ? unref(t)("lora.standard.pass") : unref(t)("lora.run.blocked"))}</em></div><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.triggerFirst", { ready: String(unref(characterGate).trigger_first_count), total: String(unref(characterGate).total_count) }))}</small><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.keepTokensValue", { count: String(unref(characterGate).effective_keep_tokens) }))}</small><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.identityHits", { count: String(unref(characterGate).identity_hit_count) }))}</small>`);
         if (!unref(characterGate).passed) {
-          _push(`<button type="button" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.openCaptionStudio"))}</button>`);
+          _push(`<button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.openCaptionStudio"))}</button>`);
         } else {
           _push(`<!---->`);
         }
@@ -35625,64 +36051,87 @@ const _sfc_main$1b = /* @__PURE__ */ defineComponent({
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="lora-standard-checks" data-v-846089cf><!--[-->`);
+      _push(`<div class="lora-standard-checks" data-v-ae8113a8><!--[-->`);
       ssrRenderList(unref(allReadinessChecks), (check) => {
-        _push(`<div class="lora-standard-check" data-v-846089cf><span${ssrRenderAttr("data-ready", check.passed)} data-v-846089cf>${ssrInterpolate(check.passed ? "✓" : "!")}</span><div data-v-846089cf><strong data-v-846089cf>${ssrInterpolate(check.label)}</strong><small data-v-846089cf>${ssrInterpolate(check.detail)}</small></div></div>`);
+        _push(`<div class="lora-standard-check" data-v-ae8113a8><span${ssrRenderAttr("data-ready", check.passed)} data-v-ae8113a8>${ssrInterpolate(check.passed ? "✓" : "!")}</span><div data-v-ae8113a8><strong data-v-ae8113a8>${ssrInterpolate(check.label)}</strong><small data-v-ae8113a8>${ssrInterpolate(check.detail)}</small></div></div>`);
       });
       _push(`<!--]--></div>`);
       if (__props.readiness.errors.length || __props.readiness.warnings.length) {
-        _push(`<div class="lora-standard-issues" data-v-846089cf><!--[-->`);
+        _push(`<div class="lora-standard-issues" data-v-ae8113a8><!--[-->`);
         ssrRenderList(__props.readiness.errors, (issue2) => {
-          _push(`<small class="error" data-v-846089cf>${ssrInterpolate(issue2)}</small>`);
+          _push(`<small class="error" data-v-ae8113a8>${ssrInterpolate(issue2)}</small>`);
         });
         _push(`<!--]--><!--[-->`);
         ssrRenderList(__props.readiness.warnings, (issue2) => {
-          _push(`<small data-v-846089cf>${ssrInterpolate(issue2)}</small>`);
+          _push(`<small data-v-ae8113a8>${ssrInterpolate(issue2)}</small>`);
         });
         _push(`<!--]--></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<button class="primary-button lora-standard-primary-action" type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.canStart) ? " disabled" : ""} data-v-846089cf>${ssrInterpolate(unref(t)("lora.run.start"))}</button></aside><section class="lora-standard-progress" data-lora-standard-region="progress"${ssrRenderAttr("aria-label", unref(t)("lora.run.progressAria"))} data-v-846089cf>`);
+      _push(`<button class="primary-button lora-standard-primary-action" type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.canStart) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.start"))}</button></aside><section class="lora-standard-progress" data-lora-standard-region="progress"${ssrRenderAttr("aria-label", unref(t)("lora.run.progressAria"))} data-v-ae8113a8>`);
       if (__props.activeRun) {
-        _push(`<!--[--><div class="lora-standard-heading" data-v-846089cf><div data-v-846089cf><p class="eyebrow" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.activityEyebrow"))}</p><h2 data-v-846089cf>${ssrInterpolate(__props.activeRun.dataset_name)}</h2></div><span class="status-pill"${ssrRenderAttr("data-status", __props.activeRun.status)} data-v-846089cf>${ssrInterpolate(__props.activeRun.status === "planned" && __props.activeRun.operation_id ? unref(t)("operations.status.queued") : __props.activeRun.status)}</span></div><div class="run-progress" data-v-846089cf><div class="run-progress__meta" data-v-846089cf><span data-v-846089cf>${ssrInterpolate(unref(progressLabel))}</span><small data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.elapsed", { value: formatElapsedTime(__props.activeRun) }))} · ${ssrInterpolate(unref(activityLabel))}</small></div><div class="run-progress__track" data-v-846089cf><span style="${ssrRenderStyle({ width: `${unref(progressPercent)}%` })}" data-v-846089cf></span></div></div>`);
-        if (__props.activeRun.status === "running" || __props.activeRun.status === "planned" && __props.activeRun.operation_id) {
-          _push(`<div class="lora-standard-actions" data-v-846089cf><button type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-846089cf>${ssrInterpolate(unref(t)("lora.run.refresh"))}</button><button class="destructive-button" type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-846089cf>${ssrInterpolate(unref(t)("lora.run.cancel"))}</button></div>`);
+        _push(`<!--[-->`);
+        if (__props.activeRun.status === "failed" && __props.activeRun.failure_code) {
+          _push(`<p class="error lora-standard-run-error" role="alert" data-v-ae8113a8>${ssrInterpolate(("userFacingErrorMessage" in _ctx ? _ctx.userFacingErrorMessage : unref(userFacingErrorMessage))({ data: { detail: { code: __props.activeRun.failure_code } } }))}</p>`);
+        } else {
+          _push(`<!---->`);
+        }
+        if (__props.activeRun.preserved_output_dir && (__props.activeRun.status === "failed" || __props.activeRun.status === "cancelled")) {
+          _push(`<p class="lora-standard-run-error" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.preservedOutputFolder", { path: __props.activeRun.preserved_output_dir }))}</p>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`<div class="lora-standard-heading" data-v-ae8113a8><div data-v-ae8113a8><p class="eyebrow" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.activityEyebrow"))}</p><h2 data-v-ae8113a8>${ssrInterpolate(__props.activeRun.dataset_name)}</h2></div><span class="status-pill"${ssrRenderAttr("data-status", __props.activeRun.status)} data-v-ae8113a8>${ssrInterpolate(__props.activeRun.status === "planned" && __props.activeRun.operation_id ? unref(t)("operations.status.queued") : __props.activeRun.status)}</span></div><div class="run-progress" data-v-ae8113a8><div class="run-progress__meta" data-v-ae8113a8><span data-v-ae8113a8>${ssrInterpolate(unref(progressLabel))}</span><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.elapsed", { value: formatElapsedTime(__props.activeRun) }))}`);
+        if (unref(activityLabel)) {
+          _push(`<!--[--> · ${ssrInterpolate(unref(activityLabel))}<!--]-->`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</small></div><div class="run-progress__track" data-v-ae8113a8><span style="${ssrRenderStyle({ width: `${unref(progressPercent)}%` })}" data-v-ae8113a8></span></div></div>`);
+        if (__props.activeRun.status === "running" || __props.activeRun.status === "planned" && __props.activeRun.operation_id || __props.activeRun.failure_code === "lora_training_exit_unconfirmed") {
+          _push(`<div class="lora-standard-actions" data-v-ae8113a8><button type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.refresh"))}</button>`);
+          if (__props.activeRun.status !== "failed") {
+            _push(`<button class="destructive-button" type="button"${ssrIncludeBooleanAttr(__props.busy) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.cancel"))}</button>`);
+          } else {
+            _push(`<!---->`);
+          }
+          _push(`</div>`);
         } else {
           _push(`<!---->`);
         }
         _push(`<!--]-->`);
       } else {
-        _push(`<small data-v-846089cf>${ssrInterpolate(unref(t)("lora.run.noRunSelected"))}</small>`);
+        _push(`<small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.noRunSelected"))}</small>`);
       }
-      _push(`</section><section class="lora-standard-artifacts" data-lora-standard-region="artifacts"${ssrRenderAttr("aria-label", unref(t)("lora.standard.artifactsTitle"))} data-v-846089cf><div class="lora-standard-heading" data-v-846089cf><div data-v-846089cf><p class="eyebrow" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.reviewEyebrow"))}</p><h2 data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.artifactsTitle"))}</h2></div></div>`);
+      _push(`</section><section class="lora-standard-artifacts" data-lora-standard-region="artifacts"${ssrRenderAttr("aria-label", unref(t)("lora.standard.artifactsTitle"))} data-v-ae8113a8><div class="lora-standard-heading" data-v-ae8113a8><div data-v-ae8113a8><p class="eyebrow" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.reviewEyebrow"))}</p><h2 data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.artifactsTitle"))}</h2></div></div>`);
       if (__props.activeRun?.status === "completed") {
-        _push(`<!--[--><div class="lora-standard-models" data-v-846089cf><!--[-->`);
+        _push(`<!--[--><div class="lora-standard-models" data-v-ae8113a8><!--[-->`);
         ssrRenderList(__props.activeRun.trained_model_paths, (path) => {
-          _push(`<article data-v-846089cf><strong data-v-846089cf>${ssrInterpolate(filenameFromPath2(path))}</strong><small data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.trainedModel"))}</small></article>`);
+          _push(`<article data-v-ae8113a8><strong data-v-ae8113a8>${ssrInterpolate(filenameFromPath2(path))}</strong><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.trainedModel"))}</small></article>`);
         });
         _push(`<!--]--></div>`);
         if (__props.activeRun.sample_image_paths.length) {
-          _push(`<div class="lora-standard-samples" data-v-846089cf><!--[-->`);
+          _push(`<div class="lora-standard-samples" data-v-ae8113a8><!--[-->`);
           ssrRenderList(__props.activeRun.sample_image_paths, (path, sampleIndex) => {
-            _push(`<figure data-v-846089cf><img${ssrRenderAttr("src", sampleImageUrl(__props.activeRun.id, sampleIndex))}${ssrRenderAttr("alt", filenameFromPath2(path))} loading="lazy" data-v-846089cf><figcaption data-v-846089cf>${ssrInterpolate(filenameFromPath2(path))}</figcaption></figure>`);
+            _push(`<figure data-v-ae8113a8><img${ssrRenderAttr("src", sampleImageUrl(__props.activeRun.id, sampleIndex))}${ssrRenderAttr("alt", filenameFromPath2(path))} loading="lazy" data-v-ae8113a8><figcaption data-v-ae8113a8>${ssrInterpolate(filenameFromPath2(path))}</figcaption></figure>`);
           });
           _push(`<!--]--></div>`);
         } else {
           _push(`<!---->`);
         }
         if (__props.activeRun.sample_image_scores.length) {
-          _push(`<div class="lora-standard-scores" data-v-846089cf><!--[-->`);
+          _push(`<div class="lora-standard-scores" data-v-ae8113a8><!--[-->`);
           ssrRenderList(__props.activeRun.sample_image_scores, (score) => {
-            _push(`<article data-v-846089cf><strong data-v-846089cf>${ssrInterpolate(score.score)} / 100 · ${ssrInterpolate(score.width)}×${ssrInterpolate(score.height)}</strong><small data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.mechanicalScore"))}</small></article>`);
+            _push(`<article data-v-ae8113a8><strong data-v-ae8113a8>${ssrInterpolate(score.score)} / 100 · ${ssrInterpolate(score.width)}×${ssrInterpolate(score.height)}</strong><small data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.mechanicalScore"))}</small></article>`);
           });
           _push(`<!--]--></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<p class="lora-standard-review-note" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.visualReviewRequired"))}</p><div class="lora-standard-actions" data-v-846089cf><button type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.activeRun.sample_image_paths.length) ? " disabled" : ""} data-v-846089cf>${ssrInterpolate(unref(t)("lora.run.scoreSamples"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.activeRun.trained_model_paths.length) ? " disabled" : ""} data-v-846089cf>${ssrInterpolate(unref(t)("lora.run.registerLora"))}</button>`);
+        _push(`<p class="lora-standard-review-note" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.visualReviewRequired"))}</p><div class="lora-standard-actions" data-v-ae8113a8><button type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.activeRun.sample_image_paths.length) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.scoreSamples"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(__props.busy || !__props.activeRun.trained_model_paths.length) ? " disabled" : ""} data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.run.registerLora"))}</button>`);
         if (__props.activeRun.registered_model_paths.length) {
-          _push(`<button type="button" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.testInGenerate"))}</button>`);
+          _push(`<button type="button" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.testInGenerate"))}</button>`);
         } else {
           _push(`<!---->`);
         }
@@ -35696,7 +36145,7 @@ const _sfc_main$1b = /* @__PURE__ */ defineComponent({
         }
         _push(`</div><!--]-->`);
       } else {
-        _push(`<small class="muted" data-v-846089cf>${ssrInterpolate(unref(t)("lora.standard.artifactsPending"))}</small>`);
+        _push(`<small class="muted" data-v-ae8113a8>${ssrInterpolate(unref(t)("lora.standard.artifactsPending"))}</small>`);
       }
       _push(`</section></div>`);
     };
@@ -35708,7 +36157,7 @@ _sfc_main$1b.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/lora-training/LoRAStandardWorkspace.vue");
   return _sfc_setup$1b ? _sfc_setup$1b(props, ctx) : void 0;
 };
-const LoRAStandardWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1b, [["__scopeId", "data-v-846089cf"]]), { __name: "StudioLoraTrainingLoRAStandardWorkspace" });
+const LoRAStandardWorkspace = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1b, [["__scopeId", "data-v-ae8113a8"]]), { __name: "StudioLoraTrainingLoRAStandardWorkspace" });
 const _sfc_main$1a = /* @__PURE__ */ defineComponent({
   __name: "LoRADatasetRail",
   __ssrInlineRender: true,
@@ -49452,9 +49901,9 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
     watch(() => props.setup.starterPacks.map((pack) => `${pack.id}:${pack.status}`).join("|"), () => {
       selectedStarterPackIds.value = selectedStarterPackIds.value.filter((id) => props.setup.starterPacks.some((pack) => pack.id === id && pack.status !== "installed"));
     });
-    watch(selectedStarterPackIds, (selected) => {
+    watch(selectedStarterPackIds, () => {
       starterDownloadConsent.value = false;
-      if (!selected.includes("anima")) starterLicenseConsent.value = false;
+      starterLicenseConsent.value = false;
     }, { deep: true });
     watch(() => props.setup.selectedStep?.id, () => {
       downloadConfirmed.value = false;
@@ -49476,6 +49925,7 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
     const starterLicenseRequired = computed(() => selectedStarterPacks.value.some(
       (pack) => pack.requiresLicenseConfirmation
     ));
+    const starterLicenseLabels = computed(() => selectedStarterPacks.value.filter((pack) => pack.requiresLicenseConfirmation).map((pack) => t(`settings.startup.setup.starter.${pack.id}.title`)).join(" / "));
     const canInstallStarterPacks = computed(() => {
       if (props.setup.locked) return false;
       if (!selectedStarterPackIds.value.length) return true;
@@ -49497,25 +49947,25 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "settings-startup",
         "aria-label": unref(t)("settings.startup.aria")
-      }, _attrs))} data-v-8af51fd5><header class="settings-startup__header" data-v-8af51fd5><div data-v-8af51fd5><p class="eyebrow" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.eyebrow"))}</p><h2 data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.title"))}</h2><p data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.detail"))}</p></div><button type="button"${ssrIncludeBooleanAttr(__props.state.state === "loading") ? " disabled" : ""} data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.refresh"))}</button></header>`);
+      }, _attrs))} data-v-25604a27><header class="settings-startup__header" data-v-25604a27><div data-v-25604a27><p class="eyebrow" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.eyebrow"))}</p><h2 data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.title"))}</h2><p data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.detail"))}</p></div><button type="button"${ssrIncludeBooleanAttr(__props.state.state === "loading") ? " disabled" : ""} data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.refresh"))}</button></header>`);
       if (__props.state.state === "loading") {
-        _push(`<p class="settings-startup__notice" aria-live="polite" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.loading"))}</p>`);
+        _push(`<p class="settings-startup__notice" aria-live="polite" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.loading"))}</p>`);
       } else if (__props.state.state === "error") {
-        _push(`<p class="settings-startup__notice settings-startup__notice--error" role="alert" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.error"))}</p>`);
+        _push(`<p class="settings-startup__notice settings-startup__notice--error" role="alert" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.error"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="settings-startup__cards"${ssrRenderAttr("aria-label", unref(t)("settings.startup.statusAria"))} data-v-8af51fd5><!--[-->`);
+      _push(`<div class="settings-startup__cards"${ssrRenderAttr("aria-label", unref(t)("settings.startup.statusAria"))} data-v-25604a27><!--[-->`);
       ssrRenderList(__props.state.cards, (card) => {
-        _push(`<article class="${ssrRenderClass(["settings-startup__card", `settings-startup__card--${card.tone}`])}" data-v-8af51fd5><span data-v-8af51fd5>${ssrInterpolate(unref(t)(`settings.startup.target.${card.id}`))}</span><strong data-v-8af51fd5>${ssrInterpolate(unref(t)(`settings.startup.state.${card.state}`))}</strong></article>`);
+        _push(`<article class="${ssrRenderClass(["settings-startup__card", `settings-startup__card--${card.tone}`])}" data-v-25604a27><span data-v-25604a27>${ssrInterpolate(unref(t)(`settings.startup.target.${card.id}`))}</span><strong data-v-25604a27>${ssrInterpolate(unref(t)(`settings.startup.state.${card.state}`))}</strong></article>`);
       });
-      _push(`<!--]--></div><div class="settings-startup__facts" data-v-8af51fd5><div data-v-8af51fd5><span data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.requiredDownload"))}</span><strong data-v-8af51fd5>${ssrInterpolate(formatBytes(__props.state.requiredDownloadBytes))}</strong></div><div data-v-8af51fd5><span data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.optionalDownload"))}</span><strong data-v-8af51fd5>${ssrInterpolate(formatBytes(__props.state.optionalDownloadBytes))}</strong></div><div data-v-8af51fd5><span data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.licenseReview"))}</span><strong data-v-8af51fd5>${ssrInterpolate(__props.state.requiredLicenseCount)}</strong></div></div>`);
+      _push(`<!--]--></div><div class="settings-startup__facts" data-v-25604a27><div data-v-25604a27><span data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.requiredDownload"))}</span><strong data-v-25604a27>${ssrInterpolate(formatBytes(__props.state.requiredDownloadBytes))}</strong></div><div data-v-25604a27><span data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.optionalDownload"))}</span><strong data-v-25604a27>${ssrInterpolate(formatBytes(__props.state.optionalDownloadBytes))}</strong></div><div data-v-25604a27><span data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.licenseReview"))}</span><strong data-v-25604a27>${ssrInterpolate(__props.state.requiredLicenseCount)}</strong></div></div>`);
       if (__props.state.issues.length) {
-        _push(`<div class="settings-startup__issues" data-v-8af51fd5><h3 data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.issues"))}</h3><!--[-->`);
+        _push(`<div class="settings-startup__issues" data-v-25604a27><h3 data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.issues"))}</h3><!--[-->`);
         ssrRenderList(__props.state.issues, (issue2) => {
-          _push(`<article class="${ssrRenderClass(`settings-startup__issue settings-startup__issue--${issue2.severity}`)}" data-v-8af51fd5><p data-v-8af51fd5>${ssrInterpolate(unref(t)(issue2.summaryKey, issue2.summaryParams))}</p>`);
+          _push(`<article class="${ssrRenderClass(`settings-startup__issue settings-startup__issue--${issue2.severity}`)}" data-v-25604a27><p data-v-25604a27>${ssrInterpolate(unref(t)(issue2.summaryKey, issue2.summaryParams))}</p>`);
           if (issue2.route) {
-            _push(`<button type="button" data-v-8af51fd5>${ssrInterpolate(unref(t)(issue2.route === "runtime" ? "settings.startup.openRuntime" : "settings.startup.openModelAssets"))}</button>`);
+            _push(`<button type="button" data-v-25604a27>${ssrInterpolate(unref(t)(issue2.route === "runtime" ? "settings.startup.openRuntime" : "settings.startup.openModelAssets"))}</button>`);
           } else {
             _push(`<!---->`);
           }
@@ -49523,39 +49973,39 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
         });
         _push(`<!--]-->`);
         if (__props.state.remainingIssueCount) {
-          _push(`<p class="settings-startup__notice" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.moreIssues", { count: __props.state.remainingIssueCount }))}</p>`);
+          _push(`<p class="settings-startup__notice" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.moreIssues", { count: __props.state.remainingIssueCount }))}</p>`);
         } else {
           _push(`<!---->`);
         }
         _push(`</div>`);
       } else if (__props.state.state === "ready") {
-        _push(`<p class="settings-startup__notice" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.noIssues"))}</p>`);
+        _push(`<p class="settings-startup__notice" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.noIssues"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="settings-startup__setup" data-v-8af51fd5><div class="settings-startup__setup-heading" data-v-8af51fd5><div data-v-8af51fd5><h3 data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.title"))}</h3><p data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.detail"))}</p></div><button type="button"${ssrIncludeBooleanAttr(!__props.setup.canRefresh) ? " disabled" : ""} data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.refresh"))}</button></div>`);
+      _push(`<div class="settings-startup__setup" data-v-25604a27><div class="settings-startup__setup-heading" data-v-25604a27><div data-v-25604a27><h3 data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.title"))}</h3><p data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.detail"))}</p></div><button type="button"${ssrIncludeBooleanAttr(!__props.setup.canRefresh) ? " disabled" : ""} data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.refresh"))}</button></div>`);
       if (__props.setup.state === "loading") {
-        _push(`<p class="settings-startup__notice" aria-live="polite" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.loading"))}</p>`);
+        _push(`<p class="settings-startup__notice" aria-live="polite" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.loading"))}</p>`);
       } else if (__props.setup.state === "error") {
-        _push(`<p class="settings-startup__notice settings-startup__notice--error" role="alert" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.error"))}</p>`);
+        _push(`<p class="settings-startup__notice settings-startup__notice--error" role="alert" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.error"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.setup.hasUnknownRequiredDownload) {
-        _push(`<p class="settings-startup__notice" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.unknownDownload"))}</p>`);
+        _push(`<p class="settings-startup__notice" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.unknownDownload"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.setup.starterPacks.length) {
-        _push(`<section class="settings-startup-starters"${ssrRenderAttr("aria-label", unref(t)("settings.startup.setup.starterTitle"))} data-v-8af51fd5><header data-v-8af51fd5><div data-v-8af51fd5><h4 data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.starterTitle"))}</h4><p data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.starterDetail"))}</p></div><strong data-v-8af51fd5>${ssrInterpolate(formatBytes(unref(selectedStarterDownloadBytes)))}</strong></header><div class="settings-startup-starters__grid" data-v-8af51fd5><!--[-->`);
+        _push(`<section class="settings-startup-starters"${ssrRenderAttr("aria-label", unref(t)("settings.startup.setup.starterTitle"))} data-v-25604a27><header data-v-25604a27><div data-v-25604a27><h4 data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.starterTitle"))}</h4><p data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.starterChoicesDetail"))}</p></div><strong data-v-25604a27>${ssrInterpolate(formatBytes(unref(selectedStarterDownloadBytes)))}</strong></header><div class="settings-startup-starters__grid" data-v-25604a27><!--[-->`);
         ssrRenderList(__props.setup.starterPacks, (pack) => {
-          _push(`<article data-v-8af51fd5><label data-v-8af51fd5><input${ssrIncludeBooleanAttr(Array.isArray(unref(selectedStarterPackIds)) ? ssrLooseContain(unref(selectedStarterPackIds), pack.id) : unref(selectedStarterPackIds)) ? " checked" : ""} type="checkbox"${ssrRenderAttr("value", pack.id)}${ssrIncludeBooleanAttr(pack.actionDisabled) ? " disabled" : ""} data-v-8af51fd5><span data-v-8af51fd5><strong data-v-8af51fd5>${ssrInterpolate(unref(t)(`settings.startup.setup.starter.${pack.id}.title`))}</strong><small data-v-8af51fd5>${ssrInterpolate(unref(t)(`settings.startup.setup.starter.${pack.id}.detail`))}</small></span><b data-v-8af51fd5>${ssrInterpolate(pack.status === "installed" ? unref(t)("settings.startup.setup.starterInstalled") : formatBytes(pack.downloadSizeBytes))}</b></label><nav${ssrRenderAttr("aria-label", unref(t)("settings.startup.setup.starterLinks"))} data-v-8af51fd5><!--[-->`);
+          _push(`<article data-v-25604a27><label data-v-25604a27><input${ssrIncludeBooleanAttr(Array.isArray(unref(selectedStarterPackIds)) ? ssrLooseContain(unref(selectedStarterPackIds), pack.id) : unref(selectedStarterPackIds)) ? " checked" : ""} type="checkbox"${ssrRenderAttr("value", pack.id)}${ssrIncludeBooleanAttr(pack.actionDisabled) ? " disabled" : ""} data-v-25604a27><span data-v-25604a27><strong data-v-25604a27>${ssrInterpolate(unref(t)(`settings.startup.setup.starter.${pack.id}.title`))}</strong><small data-v-25604a27>${ssrInterpolate(unref(t)(`settings.startup.setup.starter.${pack.id}.detail`))}</small></span><b data-v-25604a27>${ssrInterpolate(pack.status === "installed" ? unref(t)("settings.startup.setup.starterInstalled") : formatBytes(pack.downloadSizeBytes))}</b></label><nav${ssrRenderAttr("aria-label", unref(t)("settings.startup.setup.starterLinks"))} data-v-25604a27><!--[-->`);
           ssrRenderList(pack.sourceUrls, (sourceUrl, index) => {
-            _push(`<a${ssrRenderAttr("href", sourceUrl)} target="_blank" rel="noreferrer" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.starterSource", { index: index + 1 }))}</a>`);
+            _push(`<a${ssrRenderAttr("href", sourceUrl)} target="_blank" rel="noreferrer" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.starterSource", { index: index + 1 }))}</a>`);
           });
           _push(`<!--]-->`);
           if (pack.licenseUrl) {
-            _push(`<a${ssrRenderAttr("href", pack.licenseUrl)} target="_blank" rel="noreferrer" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.starterLicense"))}</a>`);
+            _push(`<a${ssrRenderAttr("href", pack.licenseUrl)} target="_blank" rel="noreferrer" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.starterLicense"))}</a>`);
           } else {
             _push(`<!---->`);
           }
@@ -49563,40 +50013,40 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
         });
         _push(`<!--]--></div>`);
         if (!unref(selectedStarterPackIds).length) {
-          _push(`<p class="settings-startup__notice" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.starterSkipBoth"))}</p>`);
+          _push(`<p class="settings-startup__notice" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.starterSkipAll"))}</p>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(selectedStarterPackIds).length) {
-          _push(`<label class="settings-startup-starters__consent" data-v-8af51fd5><input${ssrIncludeBooleanAttr(Array.isArray(unref(starterDownloadConsent)) ? ssrLooseContain(unref(starterDownloadConsent), null) : unref(starterDownloadConsent)) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(__props.setup.locked) ? " disabled" : ""} data-v-8af51fd5><span data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.starterDownloadConsent", { size: formatBytes(unref(selectedStarterDownloadBytes)) }))}</span></label>`);
+          _push(`<label class="settings-startup-starters__consent" data-v-25604a27><input${ssrIncludeBooleanAttr(Array.isArray(unref(starterDownloadConsent)) ? ssrLooseContain(unref(starterDownloadConsent), null) : unref(starterDownloadConsent)) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(__props.setup.locked) ? " disabled" : ""} data-v-25604a27><span data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.starterDownloadConsent", { size: formatBytes(unref(selectedStarterDownloadBytes)) }))}</span></label>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(starterLicenseRequired)) {
-          _push(`<label class="settings-startup-starters__consent" data-v-8af51fd5><input${ssrIncludeBooleanAttr(Array.isArray(unref(starterLicenseConsent)) ? ssrLooseContain(unref(starterLicenseConsent), null) : unref(starterLicenseConsent)) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(__props.setup.locked) ? " disabled" : ""} data-v-8af51fd5><span data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.starterAnimaConsent"))}</span></label>`);
+          _push(`<label class="settings-startup-starters__consent" data-v-25604a27><input${ssrIncludeBooleanAttr(Array.isArray(unref(starterLicenseConsent)) ? ssrLooseContain(unref(starterLicenseConsent), null) : unref(starterLicenseConsent)) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(__props.setup.locked) ? " disabled" : ""} data-v-25604a27><span data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.starterLicenseConsent", { models: unref(starterLicenseLabels) }))}</span></label>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<button type="button" class="primary-button settings-startup-starters__run"${ssrIncludeBooleanAttr(!unref(canInstallStarterPacks)) ? " disabled" : ""} data-v-8af51fd5>${ssrInterpolate(__props.setup.starterPacksExecuting ? unref(t)("settings.startup.setup.executing") : unref(selectedStarterPackIds).length ? unref(t)("settings.startup.setup.starterInstall") : unref(t)("settings.startup.setup.starterContinueWithout"))}</button></section>`);
+        _push(`<button type="button" class="primary-button settings-startup-starters__run"${ssrIncludeBooleanAttr(!unref(canInstallStarterPacks)) ? " disabled" : ""} data-v-25604a27>${ssrInterpolate(__props.setup.starterPacksExecuting ? unref(t)("settings.startup.setup.executing") : unref(selectedStarterPackIds).length ? unref(t)("settings.startup.setup.starterInstall") : unref(t)("settings.startup.setup.starterContinueWithout"))}</button></section>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(setupStepGroups).length) {
-        _push(`<div class="settings-startup__steps" data-v-8af51fd5><!--[-->`);
+        _push(`<div class="settings-startup__steps" data-v-25604a27><!--[-->`);
         ssrRenderList(unref(setupStepGroups), (group) => {
-          _push(`<details${ssrIncludeBooleanAttr(group.open) ? " open" : ""} data-v-8af51fd5><summary data-v-8af51fd5><span data-v-8af51fd5>${ssrInterpolate(unref(t)(`settings.startup.setup.group.${group.id}`))}</span><strong data-v-8af51fd5>${ssrInterpolate(group.steps.length)}</strong></summary><div data-v-8af51fd5><!--[-->`);
+          _push(`<details${ssrIncludeBooleanAttr(group.open) ? " open" : ""} data-v-25604a27><summary data-v-25604a27><span data-v-25604a27>${ssrInterpolate(unref(t)(`settings.startup.setup.group.${group.id}`))}</span><strong data-v-25604a27>${ssrInterpolate(group.steps.length)}</strong></summary><div data-v-25604a27><!--[-->`);
           ssrRenderList(group.steps, (step) => {
-            _push(`<article class="${ssrRenderClass(["settings-startup__step", `settings-startup__step--${step.status}`])}" data-v-8af51fd5><div data-v-8af51fd5><span data-v-8af51fd5>${ssrInterpolate(unref(t)(`settings.startup.setup.phase.${step.phase}`))}</span><strong data-v-8af51fd5>${ssrInterpolate(unref(t)(step.labelKey))}</strong>`);
+            _push(`<article class="${ssrRenderClass(["settings-startup__step", `settings-startup__step--${step.status}`])}" data-v-25604a27><div data-v-25604a27><span data-v-25604a27>${ssrInterpolate(unref(t)(`settings.startup.setup.phase.${step.phase}`))}</span><strong data-v-25604a27>${ssrInterpolate(unref(t)(step.labelKey))}</strong>`);
             if (step.downloadSizeBytes !== null) {
-              _push(`<small data-v-8af51fd5>${ssrInterpolate(formatBytes(step.downloadSizeBytes))}</small>`);
+              _push(`<small data-v-25604a27>${ssrInterpolate(formatBytes(step.downloadSizeBytes))}</small>`);
             } else {
               _push(`<!---->`);
             }
-            _push(`</div><span class="settings-startup__step-state" data-v-8af51fd5>${ssrInterpolate(unref(t)(`settings.startup.setup.state.${step.status}`))}</span>`);
+            _push(`</div><span class="settings-startup__step-state" data-v-25604a27>${ssrInterpolate(unref(t)(`settings.startup.setup.state.${step.status}`))}</span>`);
             if (step.action === "execute") {
-              _push(`<button type="button"${ssrIncludeBooleanAttr(step.actionDisabled) ? " disabled" : ""} data-v-8af51fd5>${ssrInterpolate(step.executing ? unref(t)("settings.startup.setup.executing") : unref(t)("settings.startup.setup.review"))}</button>`);
+              _push(`<button type="button"${ssrIncludeBooleanAttr(step.actionDisabled) ? " disabled" : ""} data-v-25604a27>${ssrInterpolate(step.executing ? unref(t)("settings.startup.setup.executing") : unref(t)("settings.startup.setup.review"))}</button>`);
             } else if (step.action === "runtime" || step.action === "model-assets") {
-              _push(`<button type="button"${ssrIncludeBooleanAttr(step.actionDisabled) ? " disabled" : ""} data-v-8af51fd5>${ssrInterpolate(unref(t)(step.action === "runtime" ? "settings.startup.openRuntime" : "settings.startup.openModelAssets"))}</button>`);
+              _push(`<button type="button"${ssrIncludeBooleanAttr(step.actionDisabled) ? " disabled" : ""} data-v-25604a27>${ssrInterpolate(unref(t)(step.action === "runtime" ? "settings.startup.openRuntime" : "settings.startup.openModelAssets"))}</button>`);
             } else {
               _push(`<!---->`);
             }
@@ -49611,25 +50061,25 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
       _push(`</div>`);
       ssrRenderTeleport(_push, (_push2) => {
         if (__props.setup.selectedStep) {
-          _push2(`<div class="settings-startup-confirm" role="presentation" data-v-8af51fd5><section role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("settings.startup.setup.confirmTitle"))} data-v-8af51fd5><p class="eyebrow" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.confirmEyebrow"))}</p><h3 data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.confirmTitle"))}</h3><p data-v-8af51fd5>${ssrInterpolate(unref(t)(__props.setup.selectedStep.labelKey))}</p>`);
+          _push2(`<div class="settings-startup-confirm" role="presentation" data-v-25604a27><section role="dialog" aria-modal="true"${ssrRenderAttr("aria-label", unref(t)("settings.startup.setup.confirmTitle"))} data-v-25604a27><p class="eyebrow" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.confirmEyebrow"))}</p><h3 data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.confirmTitle"))}</h3><p data-v-25604a27>${ssrInterpolate(unref(t)(__props.setup.selectedStep.labelKey))}</p>`);
           if (__props.setup.selectedStep.downloadSizeBytes !== null) {
-            _push2(`<p class="settings-startup__notice" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.downloadSize", { size: formatBytes(__props.setup.selectedStep.downloadSizeBytes) }))}</p>`);
+            _push2(`<p class="settings-startup__notice" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.downloadSize", { size: formatBytes(__props.setup.selectedStep.downloadSizeBytes) }))}</p>`);
           } else if (__props.setup.selectedStep.requiresDownloadConfirmation) {
-            _push2(`<p class="settings-startup__notice" data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.downloadUnknown"))}</p>`);
+            _push2(`<p class="settings-startup__notice" data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.downloadUnknown"))}</p>`);
           } else {
             _push2(`<!---->`);
           }
           if (__props.setup.selectedStep.requiresDownloadConfirmation) {
-            _push2(`<label data-v-8af51fd5><input${ssrIncludeBooleanAttr(Array.isArray(unref(downloadConfirmed)) ? ssrLooseContain(unref(downloadConfirmed), null) : unref(downloadConfirmed)) ? " checked" : ""} type="checkbox" data-v-8af51fd5><span data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.confirmDownload"))}</span></label>`);
+            _push2(`<label data-v-25604a27><input${ssrIncludeBooleanAttr(Array.isArray(unref(downloadConfirmed)) ? ssrLooseContain(unref(downloadConfirmed), null) : unref(downloadConfirmed)) ? " checked" : ""} type="checkbox" data-v-25604a27><span data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.confirmDownload"))}</span></label>`);
           } else {
             _push2(`<!---->`);
           }
           if (__props.setup.selectedStep.requiresLicenseConfirmation) {
-            _push2(`<label data-v-8af51fd5><input${ssrIncludeBooleanAttr(Array.isArray(unref(licenseConfirmed)) ? ssrLooseContain(unref(licenseConfirmed), null) : unref(licenseConfirmed)) ? " checked" : ""} type="checkbox" data-v-8af51fd5><span data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.confirmLicense"))}</span></label>`);
+            _push2(`<label data-v-25604a27><input${ssrIncludeBooleanAttr(Array.isArray(unref(licenseConfirmed)) ? ssrLooseContain(unref(licenseConfirmed), null) : unref(licenseConfirmed)) ? " checked" : ""} type="checkbox" data-v-25604a27><span data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.confirmLicense"))}</span></label>`);
           } else {
             _push2(`<!---->`);
           }
-          _push2(`<div class="settings-startup-confirm__actions" data-v-8af51fd5><button type="button"${ssrIncludeBooleanAttr(__props.setup.locked) ? " disabled" : ""} data-v-8af51fd5>${ssrInterpolate(unref(t)("settings.startup.setup.cancel"))}</button><button type="button" class="primary-button"${ssrIncludeBooleanAttr(!unref(canExecuteSelected)) ? " disabled" : ""} data-v-8af51fd5>${ssrInterpolate(__props.setup.locked ? unref(t)("settings.startup.setup.executing") : unref(t)("settings.startup.setup.execute"))}</button></div></section></div>`);
+          _push2(`<div class="settings-startup-confirm__actions" data-v-25604a27><button type="button"${ssrIncludeBooleanAttr(__props.setup.locked) ? " disabled" : ""} data-v-25604a27>${ssrInterpolate(unref(t)("settings.startup.setup.cancel"))}</button><button type="button" class="primary-button"${ssrIncludeBooleanAttr(!unref(canExecuteSelected)) ? " disabled" : ""} data-v-25604a27>${ssrInterpolate(__props.setup.locked ? unref(t)("settings.startup.setup.executing") : unref(t)("settings.startup.setup.execute"))}</button></div></section></div>`);
         } else {
           _push2(`<!---->`);
         }
@@ -49644,7 +50094,7 @@ _sfc_main$m.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/settings/SettingsStartupOverview.vue");
   return _sfc_setup$m ? _sfc_setup$m(props, ctx) : void 0;
 };
-const SettingsStartupOverview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$m, [["__scopeId", "data-v-8af51fd5"]]), { __name: "StudioSettingsStartupOverview" });
+const SettingsStartupOverview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$m, [["__scopeId", "data-v-25604a27"]]), { __name: "StudioSettingsStartupOverview" });
 const SAFE_SUMMARY_KEYS = /* @__PURE__ */ new Set([
   "startup.targetMode.unknown",
   "startup.path.unreadable",
@@ -55286,6 +55736,9 @@ const useOperationsStore = defineStore("operations", {
 const _sfc_main$5 = /* @__PURE__ */ defineComponent({
   __name: "OperationIndicator",
   __ssrInlineRender: true,
+  props: {
+    compact: { type: Boolean }
+  },
   setup(__props) {
     const operations = useOperationsStore();
     const { t } = useAsteriaI18n();
@@ -55312,47 +55765,57 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
       (void 0).setTimeout(() => operations.clearTransition(), 5e3);
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "operation-indicator" }, _attrs))} data-v-d5e70e80><button class="${ssrRenderClass([`operation-indicator__trigger--${unref(state).tone}`, "operation-indicator__trigger"])}" type="button"${ssrRenderAttr("aria-expanded", unref(expanded))}${ssrRenderAttr("aria-label", unref(t)("operations.open"))} data-v-d5e70e80><i aria-hidden="true" data-v-d5e70e80></i>`);
-      if (unref(state).activeCount) {
-        _push(`<span data-v-d5e70e80>${ssrInterpolate(unref(t)("operations.activeCount", { count: unref(state).activeCount }))}</span>`);
+      const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
+      _push(`<div${ssrRenderAttrs(mergeProps({
+        class: ["operation-indicator", { "operation-indicator--compact": __props.compact }]
+      }, _attrs))} data-v-ef8b213f><button${ssrRenderAttrs(mergeProps({
+        class: ["operation-indicator__trigger", `operation-indicator__trigger--${unref(state).tone}`],
+        type: "button",
+        "aria-expanded": unref(expanded),
+        "aria-label": unref(t)("operations.open")
+      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, __props.compact ? unref(t)("operations.open") : void 0)))} data-v-ef8b213f><i aria-hidden="true" data-v-ef8b213f></i>`);
+      if (__props.compact) {
+        _push(`<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" data-v-ef8b213f><path d="M7 5h10M7 10h10M7 15h10" data-v-ef8b213f></path><path d="M3 5h.01M3 10h.01M3 15h.01" stroke-width="3" stroke-linecap="round" data-v-ef8b213f></path></svg>`);
+      } else if (unref(state).activeCount) {
+        _push(`<span data-v-ef8b213f>${ssrInterpolate(unref(t)("operations.activeCount", { count: unref(state).activeCount }))}</span>`);
       } else if (unref(state).failedCount) {
-        _push(`<span data-v-d5e70e80>${ssrInterpolate(unref(t)("operations.failedCount", { count: unref(state).failedCount }))}</span>`);
+        _push(`<span data-v-ef8b213f>${ssrInterpolate(unref(t)("operations.failedCount", { count: unref(state).failedCount }))}</span>`);
       } else {
-        _push(`<span data-v-d5e70e80>${ssrInterpolate(unref(t)("operations.idle"))}</span>`);
+        _push(`<span data-v-ef8b213f>${ssrInterpolate(unref(t)("operations.idle"))}</span>`);
       }
       _push(`</button>`);
       if (unref(expanded)) {
-        _push(`<section class="operation-indicator__popover"${ssrRenderAttr("aria-label", unref(t)("operations.title"))} data-v-d5e70e80><header data-v-d5e70e80><div data-v-d5e70e80><strong data-v-d5e70e80>${ssrInterpolate(unref(t)("operations.title"))}</strong><small data-v-d5e70e80>${ssrInterpolate(unref(t)("operations.description"))}</small></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("operations.close"))} data-v-d5e70e80>×</button></header>`);
+        _push(`<section class="operation-indicator__popover"${ssrRenderAttr("aria-label", unref(t)("operations.title"))} data-v-ef8b213f><header data-v-ef8b213f><div data-v-ef8b213f><strong data-v-ef8b213f>${ssrInterpolate(unref(t)("operations.title"))}</strong><small data-v-ef8b213f>${ssrInterpolate(unref(t)("operations.description"))}</small></div><button class="icon-button icon-button--close" type="button"${ssrRenderAttr("aria-label", unref(t)("operations.close"))} data-v-ef8b213f>×</button></header>`);
         if (unref(operations).error) {
-          _push(`<p class="operation-indicator__error" data-v-d5e70e80>${ssrInterpolate(unref(operations).error)}</p>`);
+          _push(`<p class="operation-indicator__error" data-v-ef8b213f>${ssrInterpolate(unref(operations).error)}</p>`);
         } else {
           _push(`<!---->`);
         }
         if (!unref(state).visibleItems.length) {
-          _push(`<div class="operation-indicator__empty" data-v-d5e70e80>${ssrInterpolate(unref(operations).loading ? unref(t)("operations.loading") : unref(t)("operations.empty"))}</div>`);
+          _push(`<div class="operation-indicator__empty" data-v-ef8b213f>${ssrInterpolate(unref(operations).loading ? unref(t)("operations.loading") : unref(t)("operations.empty"))}</div>`);
         } else {
-          _push(`<ol data-v-d5e70e80><!--[-->`);
+          _push(`<ol data-v-ef8b213f><!--[-->`);
           ssrRenderList(unref(state).visibleItems, (item) => {
-            _push(`<li data-v-d5e70e80><div class="operation-indicator__summary" data-v-d5e70e80><strong data-v-d5e70e80>${ssrInterpolate(kindLabel(item.kind))}</strong><span${ssrRenderAttr("data-status", item.status)} data-v-d5e70e80>${ssrInterpolate(progressLabel(item))}</span></div>`);
+            _push(`<li data-v-ef8b213f><div class="operation-indicator__summary" data-v-ef8b213f><strong data-v-ef8b213f>${ssrInterpolate(kindLabel(item.kind))}</strong><span${ssrRenderAttr("data-status", item.status)} data-v-ef8b213f>${ssrInterpolate(progressLabel(item))}</span></div>`);
             if (item.progressPercent !== null) {
-              _push(`<progress${ssrRenderAttr("value", item.progressPercent)} max="100"${ssrRenderAttr("aria-label", progressLabel(item))} data-v-d5e70e80></progress>`);
+              _push(`<progress${ssrRenderAttr("value", item.progressPercent)} max="100"${ssrRenderAttr("aria-label", progressLabel(item))} data-v-ef8b213f></progress>`);
             } else {
               _push(`<!---->`);
             }
             if (item.canCancel || item.canRetry || item.canDismiss) {
-              _push(`<div class="operation-indicator__actions" data-v-d5e70e80>`);
+              _push(`<div class="operation-indicator__actions" data-v-ef8b213f>`);
               if (item.canCancel) {
-                _push(`<button type="button"${ssrIncludeBooleanAttr(unref(operations).pendingOperationIds.includes(item.operation_id)) ? " disabled" : ""} data-v-d5e70e80>${ssrInterpolate(unref(t)("operations.cancel"))}</button>`);
+                _push(`<button type="button"${ssrIncludeBooleanAttr(unref(operations).pendingOperationIds.includes(item.operation_id)) ? " disabled" : ""} data-v-ef8b213f>${ssrInterpolate(unref(t)("operations.cancel"))}</button>`);
               } else {
                 _push(`<!---->`);
               }
               if (item.canRetry) {
-                _push(`<button type="button"${ssrIncludeBooleanAttr(unref(operations).pendingOperationIds.includes(item.operation_id)) ? " disabled" : ""} data-v-d5e70e80>${ssrInterpolate(unref(t)("operations.retry"))}</button>`);
+                _push(`<button type="button"${ssrIncludeBooleanAttr(unref(operations).pendingOperationIds.includes(item.operation_id)) ? " disabled" : ""} data-v-ef8b213f>${ssrInterpolate(unref(t)("operations.retry"))}</button>`);
               } else {
                 _push(`<!---->`);
               }
               if (item.canDismiss) {
-                _push(`<button type="button"${ssrIncludeBooleanAttr(unref(operations).pendingOperationIds.includes(item.operation_id)) ? " disabled" : ""} data-v-d5e70e80>${ssrInterpolate(unref(t)("operations.dismiss"))}</button>`);
+                _push(`<button type="button"${ssrIncludeBooleanAttr(unref(operations).pendingOperationIds.includes(item.operation_id)) ? " disabled" : ""} data-v-ef8b213f>${ssrInterpolate(unref(t)("operations.dismiss"))}</button>`);
               } else {
                 _push(`<!---->`);
               }
@@ -55368,7 +55831,7 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
       } else {
         _push(`<!---->`);
       }
-      _push(`<span class="operation-indicator__announcement" aria-live="polite" data-v-d5e70e80>${ssrInterpolate(unref(transitionMessage))}</span></div>`);
+      _push(`<span class="operation-indicator__announcement" aria-live="polite" data-v-ef8b213f>${ssrInterpolate(unref(transitionMessage))}</span></div>`);
     };
   }
 });
@@ -55378,11 +55841,12 @@ _sfc_main$5.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/OperationIndicator.vue");
   return _sfc_setup$5 ? _sfc_setup$5(props, ctx) : void 0;
 };
-const OperationIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$5, [["__scopeId", "data-v-d5e70e80"]]), { __name: "StudioOperationIndicator" });
+const OperationIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$5, [["__scopeId", "data-v-ef8b213f"]]), { __name: "StudioOperationIndicator" });
 const _sfc_main$4 = /* @__PURE__ */ defineComponent({
   __name: "TopStatusBar",
   __ssrInlineRender: true,
   props: {
+    compact: { type: Boolean },
     studioLabel: {},
     runtimeHealthy: { type: Boolean },
     runtimeLabel: {},
@@ -55399,24 +55863,43 @@ const _sfc_main$4 = /* @__PURE__ */ defineComponent({
     const { t } = useAsteriaI18n();
     return (_ctx, _push, _parent, _attrs) => {
       const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "top-status-bar" }, _attrs))} data-v-434b747f><div class="top-status-bar__brand" data-v-434b747f><span class="top-status-bar__wordmark" role="img" aria-label="Asteria" data-v-434b747f></span><span data-v-434b747f>${ssrInterpolate(__props.studioLabel)}</span></div><div class="top-status-bar__items" data-v-434b747f>`);
-      _push(ssrRenderComponent(OperationIndicator, null, null, _parent));
-      _push(`<span class="${ssrRenderClass(["status-dot", "top-status-bar__runtime", __props.runtimeHealthy ? "status-dot--ready" : "status-dot--offline"])}" data-v-434b747f>${ssrInterpolate(__props.runtimeLabel)}</span>`);
+      _push(`<div${ssrRenderAttrs(mergeProps({
+        class: ["top-status-bar", { "top-status-bar--compact": __props.compact }]
+      }, _attrs))} data-v-90678917><div class="top-status-bar__brand" data-v-90678917><span class="top-status-bar__wordmark" role="img" aria-label="Asteria" data-v-90678917></span>`);
+      if (!__props.compact) {
+        _push(`<span data-v-90678917>${ssrInterpolate(__props.studioLabel)}</span>`);
+      } else {
+        _push(`<!---->`);
+      }
+      ssrRenderSlot(_ctx.$slots, "context", {}, null, _push, _parent);
+      _push(`</div><div class="top-status-bar__items" data-v-90678917>`);
+      _push(ssrRenderComponent(OperationIndicator, { compact: __props.compact }, null, _parent));
+      if (!__props.compact) {
+        _push(`<span class="${ssrRenderClass(["status-dot", "top-status-bar__runtime", __props.runtimeHealthy ? "status-dot--ready" : "status-dot--offline"])}" data-v-90678917>${ssrInterpolate(__props.runtimeLabel)}</span>`);
+      } else {
+        _push(`<!---->`);
+      }
       if (unref(localeReady)) {
-        _push(`<span class="top-status-bar__locale"${ssrRenderAttr("aria-label", unref(t)("language.aria"))} data-v-434b747f><!--[-->`);
+        _push(`<span class="top-status-bar__locale"${ssrRenderAttr("aria-label", unref(t)("language.aria"))} data-v-90678917><!--[-->`);
         ssrRenderList(__props.localeOptions, (option) => {
           _push(`<button${ssrRenderAttrs(mergeProps({
             key: option.id,
             type: "button",
             class: { "top-status-bar__locale-button--active": option.id === __props.locale },
             "aria-pressed": option.id === __props.locale
-          }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, option.name)))} data-v-434b747f>${ssrInterpolate(option.label)}</button>`);
+          }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, option.name)))} data-v-90678917>${ssrInterpolate(option.label)}</button>`);
         });
         _push(`<!--]--></span>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<span class="top-status-bar__profile" data-v-434b747f>${ssrInterpolate(__props.profileLabel)}</span><span class="top-status-bar__size" data-v-434b747f>${ssrInterpolate(__props.sizeLabel)}</span><span class="top-status-bar__queue" data-v-434b747f>${ssrInterpolate(__props.queueStatus)}</span><span${ssrRenderAttrs(mergeProps({ class: "top-status-bar__path" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, __props.outputRoot)))} data-v-434b747f>${ssrInterpolate(__props.outputRoot)}</span></div></div>`);
+      ssrRenderSlot(_ctx.$slots, "tools", {}, null, _push, _parent);
+      if (!__props.compact) {
+        _push(`<!--[--><span class="top-status-bar__profile" data-v-90678917>${ssrInterpolate(__props.profileLabel)}</span><span class="top-status-bar__size" data-v-90678917>${ssrInterpolate(__props.sizeLabel)}</span><span class="top-status-bar__queue" data-v-90678917>${ssrInterpolate(__props.queueStatus)}</span><span${ssrRenderAttrs(mergeProps({ class: "top-status-bar__path" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, __props.outputRoot)))} data-v-90678917>${ssrInterpolate(__props.outputRoot)}</span><!--]-->`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div></div>`);
     };
   }
 });
@@ -55426,7 +55909,7 @@ _sfc_main$4.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/TopStatusBar.vue");
   return _sfc_setup$4 ? _sfc_setup$4(props, ctx) : void 0;
 };
-const TopStatusBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$4, [["__scopeId", "data-v-434b747f"]]), { __name: "StudioTopStatusBar" });
+const TopStatusBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$4, [["__scopeId", "data-v-90678917"]]), { __name: "StudioTopStatusBar" });
 const normalizePath = (value) => value.trim().replaceAll("\\", "/").toLocaleLowerCase();
 const projectDiscordModelReferences = (selections, library) => {
   const byPath = new Map(
@@ -55533,6 +56016,12 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       return generation.generate();
     };
     const activeWorkspace = ref("generate");
+    const canvasWorkspace = computed(() => activeWorkspace.value === "generate" || activeWorkspace.value === "image");
+    const modelsOpen = ref(false);
+    const selectedModelLabel = computed(() => {
+      const selected = modelDependencies.selections.checkpoint || modelDependencies.selections.diffusion_model;
+      return selected ? selected.split(/[\\/]/).pop() : t("generationOverview.chooseModel");
+    });
     const activeExtensionWorkspaceId = ref(null);
     const imageWorkspaceMounted = ref(false);
     const mountedWorkspaces = reactive({
@@ -55749,7 +56238,12 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       }
       generation.autoRepeatEnabled = value;
     };
+    let workspaceNavigationRevision = 0;
     const completeWorkspaceNavigation = (id) => {
+      workspaceNavigationRevision += 1;
+      draftNavigationSaving.value = false;
+      pendingWorkspace.value = null;
+      draftNavigationOpen.value = false;
       mountedWorkspaces[id] = true;
       if (id === "image") {
         imageWorkspaceMounted.value = true;
@@ -55761,6 +56255,10 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       activeWorkspace.value = id;
     };
     const requestWorkspaceNavigation = async (id) => {
+      const revision = ++workspaceNavigationRevision;
+      draftNavigationSaving.value = false;
+      pendingWorkspace.value = null;
+      draftNavigationOpen.value = false;
       if (id === activeWorkspace.value && !activeExtensionWorkspaceId.value) return;
       if (activeWorkspace.value !== "image" || !imageWorkspaceRef.value?.hasPendingDraft) {
         completeWorkspaceNavigation(id);
@@ -55768,6 +56266,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       }
       draftNavigationSaving.value = true;
       const saved = await imageWorkspaceRef.value.persistDraftBeforeLeave();
+      if (revision !== workspaceNavigationRevision) return;
       draftNavigationSaving.value = false;
       if (saved) {
         completeWorkspaceNavigation(id);
@@ -55786,12 +56285,11 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       }
       const extensionWorkspace = resolveExtensionNavigationTarget(extensionWorkspaceItems.value, id);
       if (!extensionWorkspace) return;
+      completeWorkspaceNavigation("extensions");
       activeExtensionWorkspaceId.value = extensionWorkspace.id;
-      activeWorkspace.value = "extensions";
     };
     const openExtensionCoreWorkspace = () => {
-      activeExtensionWorkspaceId.value = null;
-      activeWorkspace.value = "extensions";
+      completeWorkspaceNavigation("extensions");
     };
     const handleExtensionNavigate = (target) => {
       if (isStudioWorkspaceId(target)) void requestWorkspaceNavigation(target);
@@ -55805,10 +56303,8 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       command: handleExtensionCommand
     });
     const openImageWorkspace = (path) => {
-      imageWorkspaceMounted.value = true;
-      mountedWorkspaces.image = true;
       generation.setInitImagePath(path);
-      activeWorkspace.value = "image";
+      completeWorkspaceNavigation("image");
     };
     const openImageMaskWorkspace = (value) => {
       openImageWorkspace(value.path);
@@ -55828,27 +56324,29 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
     };
     const retryDraftNavigation = async () => {
       if (!pendingWorkspace.value || !imageWorkspaceRef.value) return;
+      const target = pendingWorkspace.value;
+      const revision = ++workspaceNavigationRevision;
       draftNavigationSaving.value = true;
       const saved = await imageWorkspaceRef.value.persistDraftBeforeLeave();
+      if (revision !== workspaceNavigationRevision) return;
       draftNavigationSaving.value = false;
       if (!saved) return;
-      const target = pendingWorkspace.value;
-      pendingWorkspace.value = null;
-      draftNavigationOpen.value = false;
       completeWorkspaceNavigation(target);
     };
     const discardDraftAndNavigate = async () => {
       if (!pendingWorkspace.value || !imageWorkspaceRef.value) return;
+      const target = pendingWorkspace.value;
+      const revision = ++workspaceNavigationRevision;
       draftNavigationSaving.value = true;
       const discarded = await imageWorkspaceRef.value.discardDraft();
+      if (revision !== workspaceNavigationRevision) return;
       draftNavigationSaving.value = false;
       if (!discarded) return;
-      const target = pendingWorkspace.value;
-      pendingWorkspace.value = null;
-      draftNavigationOpen.value = false;
       completeWorkspaceNavigation(target);
     };
     const cancelDraftNavigation = () => {
+      workspaceNavigationRevision += 1;
+      draftNavigationSaving.value = false;
       pendingWorkspace.value = null;
       draftNavigationOpen.value = false;
     };
@@ -55895,8 +56393,10 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       completeWorkspaceNavigation(target === "lora-training" ? "lora" : "generate");
     };
     return (_ctx, _push, _parent, _attrs) => {
+      const _directive_asteria_tooltip = resolveDirective("asteria-tooltip");
       _push(`<!--[-->`);
       _push(ssrRenderComponent(StudioShell, {
+        class: { "studio-shell--generate": unref(activeWorkspace) === "generate", "studio-shell--image": unref(activeWorkspace) === "image" },
         "aria-busy": unref(startupReadiness).pending.value
       }, {
         rail: withCtx((_, _push2, _parent2, _scopeId) => {
@@ -55919,6 +56419,7 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
         top: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
             _push2(ssrRenderComponent(TopStatusBar, {
+              compact: unref(canvasWorkspace),
               "studio-label": unref(activeWorkspaceLabel),
               "runtime-healthy": Boolean(unref(runtime).status?.healthy),
               "runtime-label": unref(runtimeLabel),
@@ -55929,47 +56430,82 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
               locale: unref(currentLocale),
               "locale-options": unref(localeOptions),
               "onUpdate:locale": unref(setLocale)
-            }, null, _parent2, _scopeId));
-            if (unref(activeWorkspace) === "generate") {
-              _push2(ssrRenderComponent(GenerateActionStrip, {
-                loading: unref(generation).loading,
-                "can-generate": unref(canGenerate),
-                "can-cancel": unref(canCancel),
-                "can-retry": unref(canRetry),
-                "auto-repeat": unref(generation).autoRepeatEnabled,
-                "image-check": unref(generation).imageCheckEnabled ?? unref(appSettings).imageCheck.enabled,
-                "image-check-summary": unref(checkedImageSummary),
-                "repeat-active": unref(generation).autoRepeatActive,
-                "repeat-stop-requested": unref(generation).stopRepeatRequested,
-                "hard-stop-requested": unref(generation).hardStopRequested,
-                "repeat-count": unref(generation).repeatRunCount,
-                "repeat-summary": unref(repeatSummary),
-                seed: unref(generation).seed,
-                status: unref(queueStatus),
-                mode: unref(generation).mode,
-                "size-label": unref(sizeLabel),
-                "readiness-items": unref(generationReadinessItems),
-                "disabled-reason": unref(generationDisabledReason),
-                "can-publish-discord": unref(discordPublishState).canPublish,
-                "discord-publishing": unref(discord).publishing,
-                "discord-published-revision": unref(discordPublishState).revision,
-                "discord-publish-error": unref(discord).error,
-                "onUpdate:autoRepeat": setAutoRepeat,
-                "onUpdate:imageCheck": ($event) => unref(generation).imageCheckEnabled = $event,
-                onImageCheckSettings: openImageCheckSettings,
-                onRepeatLimits: ($event) => repeatLimitsOpen.value = true,
-                onGenerate: beginGeneration,
-                onStopRepeat: unref(generation).stopAutoRepeat,
-                onCancel: unref(generation).stopGeneration,
-                onRetry: unref(generation).retryCurrentJob,
-                onPublishDiscord: publishGenerateSettingsToDiscord
-              }, null, _parent2, _scopeId));
-            } else {
-              _push2(`<!---->`);
-            }
+            }, createSlots({ _: 2 }, [
+              unref(canvasWorkspace) ? {
+                name: "context",
+                fn: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                  if (_push3) {
+                    _push3(`<button class="generate-model-switch" type="button"${ssrRenderAttr("aria-label", unref(t)("generationOverview.models"))} data-v-08e7996f${_scopeId2}><small class="generate-profile-badge" data-v-08e7996f${_scopeId2}>${ssrInterpolate(unref(activeProfileLabel))}</small><span data-v-08e7996f${_scopeId2}>${ssrInterpolate(unref(selectedModelLabel))}</span><span aria-hidden="true" data-v-08e7996f${_scopeId2}>⌄</span></button>`);
+                    if (unref(activeWorkspace) === "generate" && unref(repeatSummary)) {
+                      _push3(`<small class="generate-header-repeat" role="status" data-v-08e7996f${_scopeId2}>${ssrInterpolate(unref(repeatSummary))}</small>`);
+                    } else {
+                      _push3(`<!---->`);
+                    }
+                  } else {
+                    return [
+                      createVNode("button", {
+                        class: "generate-model-switch",
+                        type: "button",
+                        "aria-label": unref(t)("generationOverview.models"),
+                        onClick: ($event) => modelsOpen.value = true
+                      }, [
+                        createVNode("small", { class: "generate-profile-badge" }, toDisplayString(unref(activeProfileLabel)), 1),
+                        createVNode("span", null, toDisplayString(unref(selectedModelLabel)), 1),
+                        createVNode("span", { "aria-hidden": "true" }, "⌄")
+                      ], 8, ["aria-label", "onClick"]),
+                      unref(activeWorkspace) === "generate" && unref(repeatSummary) ? (openBlock(), createBlock("small", {
+                        key: 0,
+                        class: "generate-header-repeat",
+                        role: "status"
+                      }, toDisplayString(unref(repeatSummary)), 1)) : createCommentVNode("", true)
+                    ];
+                  }
+                }),
+                key: "0"
+              } : void 0,
+              unref(activeWorkspace) === "generate" ? {
+                name: "tools",
+                fn: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                  if (_push3) {
+                    _push3(`<button${ssrRenderAttrs(mergeProps({
+                      class: "generate-discord-publish",
+                      type: "button",
+                      disabled: unref(discord).publishing || !unref(discordPublishState).canPublish,
+                      "aria-busy": unref(discord).publishing
+                    }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(discord).error || unref(t)("generation.discordPublish"))))} data-v-08e7996f${_scopeId2}>${ssrInterpolate(unref(discord).publishing ? unref(t)("generation.discordPublishing") : unref(discordPublishState).revision ? unref(t)("generation.discordRepublish", { revision: unref(discordPublishState).revision }) : unref(t)("generation.discordPublish"))}</button>`);
+                    if (unref(discord).error) {
+                      _push3(`<span class="generate-header-error" role="alert" data-v-08e7996f${_scopeId2}>${ssrInterpolate(unref(discord).error)}</span>`);
+                    } else {
+                      _push3(`<!---->`);
+                    }
+                  } else {
+                    return [
+                      withDirectives((openBlock(), createBlock("button", {
+                        class: "generate-discord-publish",
+                        type: "button",
+                        disabled: unref(discord).publishing || !unref(discordPublishState).canPublish,
+                        "aria-busy": unref(discord).publishing,
+                        onClick: publishGenerateSettingsToDiscord
+                      }, [
+                        createTextVNode(toDisplayString(unref(discord).publishing ? unref(t)("generation.discordPublishing") : unref(discordPublishState).revision ? unref(t)("generation.discordRepublish", { revision: unref(discordPublishState).revision }) : unref(t)("generation.discordPublish")), 1)
+                      ], 8, ["disabled", "aria-busy"])), [
+                        [_directive_asteria_tooltip, unref(discord).error || unref(t)("generation.discordPublish")]
+                      ]),
+                      unref(discord).error ? (openBlock(), createBlock("span", {
+                        key: 0,
+                        class: "generate-header-error",
+                        role: "alert"
+                      }, toDisplayString(unref(discord).error), 1)) : createCommentVNode("", true)
+                    ];
+                  }
+                }),
+                key: "1"
+              } : void 0
+            ]), _parent2, _scopeId));
           } else {
             return [
               createVNode(TopStatusBar, {
+                compact: unref(canvasWorkspace),
                 "studio-label": unref(activeWorkspaceLabel),
                 "runtime-healthy": Boolean(unref(runtime).status?.healthy),
                 "runtime-label": unref(runtimeLabel),
@@ -55980,41 +56516,51 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 locale: unref(currentLocale),
                 "locale-options": unref(localeOptions),
                 "onUpdate:locale": unref(setLocale)
-              }, null, 8, ["studio-label", "runtime-healthy", "runtime-label", "profile-label", "size-label", "output-root", "queue-status", "locale", "locale-options", "onUpdate:locale"]),
-              unref(activeWorkspace) === "generate" ? (openBlock(), createBlock(GenerateActionStrip, {
-                key: 0,
-                loading: unref(generation).loading,
-                "can-generate": unref(canGenerate),
-                "can-cancel": unref(canCancel),
-                "can-retry": unref(canRetry),
-                "auto-repeat": unref(generation).autoRepeatEnabled,
-                "image-check": unref(generation).imageCheckEnabled ?? unref(appSettings).imageCheck.enabled,
-                "image-check-summary": unref(checkedImageSummary),
-                "repeat-active": unref(generation).autoRepeatActive,
-                "repeat-stop-requested": unref(generation).stopRepeatRequested,
-                "hard-stop-requested": unref(generation).hardStopRequested,
-                "repeat-count": unref(generation).repeatRunCount,
-                "repeat-summary": unref(repeatSummary),
-                seed: unref(generation).seed,
-                status: unref(queueStatus),
-                mode: unref(generation).mode,
-                "size-label": unref(sizeLabel),
-                "readiness-items": unref(generationReadinessItems),
-                "disabled-reason": unref(generationDisabledReason),
-                "can-publish-discord": unref(discordPublishState).canPublish,
-                "discord-publishing": unref(discord).publishing,
-                "discord-published-revision": unref(discordPublishState).revision,
-                "discord-publish-error": unref(discord).error,
-                "onUpdate:autoRepeat": setAutoRepeat,
-                "onUpdate:imageCheck": ($event) => unref(generation).imageCheckEnabled = $event,
-                onImageCheckSettings: openImageCheckSettings,
-                onRepeatLimits: ($event) => repeatLimitsOpen.value = true,
-                onGenerate: beginGeneration,
-                onStopRepeat: unref(generation).stopAutoRepeat,
-                onCancel: unref(generation).stopGeneration,
-                onRetry: unref(generation).retryCurrentJob,
-                onPublishDiscord: publishGenerateSettingsToDiscord
-              }, null, 8, ["loading", "can-generate", "can-cancel", "can-retry", "auto-repeat", "image-check", "image-check-summary", "repeat-active", "repeat-stop-requested", "hard-stop-requested", "repeat-count", "repeat-summary", "seed", "status", "mode", "size-label", "readiness-items", "disabled-reason", "can-publish-discord", "discord-publishing", "discord-published-revision", "discord-publish-error", "onUpdate:imageCheck", "onRepeatLimits", "onStopRepeat", "onCancel", "onRetry"])) : createCommentVNode("", true)
+              }, createSlots({ _: 2 }, [
+                unref(canvasWorkspace) ? {
+                  name: "context",
+                  fn: withCtx(() => [
+                    createVNode("button", {
+                      class: "generate-model-switch",
+                      type: "button",
+                      "aria-label": unref(t)("generationOverview.models"),
+                      onClick: ($event) => modelsOpen.value = true
+                    }, [
+                      createVNode("small", { class: "generate-profile-badge" }, toDisplayString(unref(activeProfileLabel)), 1),
+                      createVNode("span", null, toDisplayString(unref(selectedModelLabel)), 1),
+                      createVNode("span", { "aria-hidden": "true" }, "⌄")
+                    ], 8, ["aria-label", "onClick"]),
+                    unref(activeWorkspace) === "generate" && unref(repeatSummary) ? (openBlock(), createBlock("small", {
+                      key: 0,
+                      class: "generate-header-repeat",
+                      role: "status"
+                    }, toDisplayString(unref(repeatSummary)), 1)) : createCommentVNode("", true)
+                  ]),
+                  key: "0"
+                } : void 0,
+                unref(activeWorkspace) === "generate" ? {
+                  name: "tools",
+                  fn: withCtx(() => [
+                    withDirectives((openBlock(), createBlock("button", {
+                      class: "generate-discord-publish",
+                      type: "button",
+                      disabled: unref(discord).publishing || !unref(discordPublishState).canPublish,
+                      "aria-busy": unref(discord).publishing,
+                      onClick: publishGenerateSettingsToDiscord
+                    }, [
+                      createTextVNode(toDisplayString(unref(discord).publishing ? unref(t)("generation.discordPublishing") : unref(discordPublishState).revision ? unref(t)("generation.discordRepublish", { revision: unref(discordPublishState).revision }) : unref(t)("generation.discordPublish")), 1)
+                    ], 8, ["disabled", "aria-busy"])), [
+                      [_directive_asteria_tooltip, unref(discord).error || unref(t)("generation.discordPublish")]
+                    ]),
+                    unref(discord).error ? (openBlock(), createBlock("span", {
+                      key: 0,
+                      class: "generate-header-error",
+                      role: "alert"
+                    }, toDisplayString(unref(discord).error), 1)) : createCommentVNode("", true)
+                  ]),
+                  key: "1"
+                } : void 0
+              ]), 1032, ["compact", "studio-label", "runtime-healthy", "runtime-label", "profile-label", "size-label", "output-root", "queue-status", "locale", "locale-options", "onUpdate:locale"])
             ];
           }
         }),
@@ -56027,16 +56573,93 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 onOpenImage: openImageWorkspace,
                 onOpenImageMask: openImageMaskWorkspace,
                 onOpenSettings: openSettingsWorkspace,
-                onOpenImageMetadata: openImageMetadataPicker
-              }, null, _parent2, _scopeId));
+                onOpenImageMetadata: openImageMetadataPicker,
+                onOpenModelSettings: ($event) => modelsOpen.value = true
+              }, {
+                actions: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                  if (_push3) {
+                    _push3(ssrRenderComponent(GenerateActionStrip, {
+                      loading: unref(generation).loading,
+                      "can-generate": unref(canGenerate),
+                      "can-cancel": unref(canCancel),
+                      "can-retry": unref(canRetry),
+                      "auto-repeat": unref(generation).autoRepeatEnabled,
+                      "image-check": unref(generation).imageCheckEnabled ?? unref(appSettings).imageCheck.enabled,
+                      "image-check-summary": unref(checkedImageSummary),
+                      "repeat-active": unref(generation).autoRepeatActive,
+                      "repeat-stop-requested": unref(generation).stopRepeatRequested,
+                      "hard-stop-requested": unref(generation).hardStopRequested,
+                      "repeat-count": unref(generation).repeatRunCount,
+                      "repeat-summary": unref(repeatSummary),
+                      seed: unref(generation).seed,
+                      status: unref(queueStatus),
+                      mode: unref(generation).mode,
+                      "size-label": unref(sizeLabel),
+                      "readiness-items": unref(generationReadinessItems),
+                      "disabled-reason": unref(generationDisabledReason),
+                      "can-publish-discord": unref(discordPublishState).canPublish,
+                      "discord-publishing": unref(discord).publishing,
+                      "discord-published-revision": unref(discordPublishState).revision,
+                      "discord-publish-error": unref(discord).error,
+                      "onUpdate:autoRepeat": setAutoRepeat,
+                      "onUpdate:imageCheck": ($event) => unref(generation).imageCheckEnabled = $event,
+                      onImageCheckSettings: openImageCheckSettings,
+                      onRepeatLimits: ($event) => repeatLimitsOpen.value = true,
+                      onGenerate: beginGeneration,
+                      onStopRepeat: unref(generation).stopAutoRepeat,
+                      onCancel: unref(generation).stopGeneration,
+                      onRetry: unref(generation).retryCurrentJob,
+                      onPublishDiscord: publishGenerateSettingsToDiscord
+                    }, null, _parent3, _scopeId2));
+                  } else {
+                    return [
+                      createVNode(GenerateActionStrip, {
+                        loading: unref(generation).loading,
+                        "can-generate": unref(canGenerate),
+                        "can-cancel": unref(canCancel),
+                        "can-retry": unref(canRetry),
+                        "auto-repeat": unref(generation).autoRepeatEnabled,
+                        "image-check": unref(generation).imageCheckEnabled ?? unref(appSettings).imageCheck.enabled,
+                        "image-check-summary": unref(checkedImageSummary),
+                        "repeat-active": unref(generation).autoRepeatActive,
+                        "repeat-stop-requested": unref(generation).stopRepeatRequested,
+                        "hard-stop-requested": unref(generation).hardStopRequested,
+                        "repeat-count": unref(generation).repeatRunCount,
+                        "repeat-summary": unref(repeatSummary),
+                        seed: unref(generation).seed,
+                        status: unref(queueStatus),
+                        mode: unref(generation).mode,
+                        "size-label": unref(sizeLabel),
+                        "readiness-items": unref(generationReadinessItems),
+                        "disabled-reason": unref(generationDisabledReason),
+                        "can-publish-discord": unref(discordPublishState).canPublish,
+                        "discord-publishing": unref(discord).publishing,
+                        "discord-published-revision": unref(discordPublishState).revision,
+                        "discord-publish-error": unref(discord).error,
+                        "onUpdate:autoRepeat": setAutoRepeat,
+                        "onUpdate:imageCheck": ($event) => unref(generation).imageCheckEnabled = $event,
+                        onImageCheckSettings: openImageCheckSettings,
+                        onRepeatLimits: ($event) => repeatLimitsOpen.value = true,
+                        onGenerate: beginGeneration,
+                        onStopRepeat: unref(generation).stopAutoRepeat,
+                        onCancel: unref(generation).stopGeneration,
+                        onRetry: unref(generation).retryCurrentJob,
+                        onPublishDiscord: publishGenerateSettingsToDiscord
+                      }, null, 8, ["loading", "can-generate", "can-cancel", "can-retry", "auto-repeat", "image-check", "image-check-summary", "repeat-active", "repeat-stop-requested", "hard-stop-requested", "repeat-count", "repeat-summary", "seed", "status", "mode", "size-label", "readiness-items", "disabled-reason", "can-publish-discord", "discord-publishing", "discord-published-revision", "discord-publish-error", "onUpdate:imageCheck", "onRepeatLimits", "onStopRepeat", "onCancel", "onRetry"])
+                    ];
+                  }
+                }),
+                _: 1
+              }, _parent2, _scopeId));
             } else {
               _push2(`<!---->`);
             }
             if (unref(imageWorkspaceMounted)) {
-              _push2(`<div class="image-workspace-mount" style="${ssrRenderStyle(unref(activeWorkspace) === "image" ? null : { display: "none" })}" data-v-5cbb3778${_scopeId}>`);
+              _push2(`<div class="image-workspace-mount" style="${ssrRenderStyle(unref(activeWorkspace) === "image" ? null : { display: "none" })}" data-v-08e7996f${_scopeId}>`);
               _push2(ssrRenderComponent(ImageWorkspace, {
                 ref_key: "imageWorkspaceRef",
                 ref: imageWorkspaceRef,
+                active: unref(activeWorkspace) === "image",
                 onOpenGenerate: ($event) => requestWorkspaceNavigation("generate"),
                 onOpenLibrary: ($event) => requestWorkspaceNavigation("library")
               }, null, _parent2, _scopeId));
@@ -56150,6 +56773,10 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
               ref: imageMetadataFlowRef,
               onApplied: onImageMetadataApplied
             }, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(ModelSettingsDrawer, {
+              open: unref(modelsOpen),
+              onClose: ($event) => modelsOpen.value = false
+            }, null, _parent2, _scopeId));
             if (unref(repeatLimitsOpen)) {
               _push2(ssrRenderComponent(RepeatLimitsDialog, {
                 limits: unref(generation).repeatLimits,
@@ -56171,8 +56798,46 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 onOpenImage: openImageWorkspace,
                 onOpenImageMask: openImageMaskWorkspace,
                 onOpenSettings: openSettingsWorkspace,
-                onOpenImageMetadata: openImageMetadataPicker
-              }, null, 512)), [
+                onOpenImageMetadata: openImageMetadataPicker,
+                onOpenModelSettings: ($event) => modelsOpen.value = true
+              }, {
+                actions: withCtx(() => [
+                  createVNode(GenerateActionStrip, {
+                    loading: unref(generation).loading,
+                    "can-generate": unref(canGenerate),
+                    "can-cancel": unref(canCancel),
+                    "can-retry": unref(canRetry),
+                    "auto-repeat": unref(generation).autoRepeatEnabled,
+                    "image-check": unref(generation).imageCheckEnabled ?? unref(appSettings).imageCheck.enabled,
+                    "image-check-summary": unref(checkedImageSummary),
+                    "repeat-active": unref(generation).autoRepeatActive,
+                    "repeat-stop-requested": unref(generation).stopRepeatRequested,
+                    "hard-stop-requested": unref(generation).hardStopRequested,
+                    "repeat-count": unref(generation).repeatRunCount,
+                    "repeat-summary": unref(repeatSummary),
+                    seed: unref(generation).seed,
+                    status: unref(queueStatus),
+                    mode: unref(generation).mode,
+                    "size-label": unref(sizeLabel),
+                    "readiness-items": unref(generationReadinessItems),
+                    "disabled-reason": unref(generationDisabledReason),
+                    "can-publish-discord": unref(discordPublishState).canPublish,
+                    "discord-publishing": unref(discord).publishing,
+                    "discord-published-revision": unref(discordPublishState).revision,
+                    "discord-publish-error": unref(discord).error,
+                    "onUpdate:autoRepeat": setAutoRepeat,
+                    "onUpdate:imageCheck": ($event) => unref(generation).imageCheckEnabled = $event,
+                    onImageCheckSettings: openImageCheckSettings,
+                    onRepeatLimits: ($event) => repeatLimitsOpen.value = true,
+                    onGenerate: beginGeneration,
+                    onStopRepeat: unref(generation).stopAutoRepeat,
+                    onCancel: unref(generation).stopGeneration,
+                    onRetry: unref(generation).retryCurrentJob,
+                    onPublishDiscord: publishGenerateSettingsToDiscord
+                  }, null, 8, ["loading", "can-generate", "can-cancel", "can-retry", "auto-repeat", "image-check", "image-check-summary", "repeat-active", "repeat-stop-requested", "hard-stop-requested", "repeat-count", "repeat-summary", "seed", "status", "mode", "size-label", "readiness-items", "disabled-reason", "can-publish-discord", "discord-publishing", "discord-published-revision", "discord-publish-error", "onUpdate:imageCheck", "onRepeatLimits", "onStopRepeat", "onCancel", "onRetry"])
+                ]),
+                _: 1
+              }, 8, ["onOpenModelSettings"])), [
                 [vShow, unref(activeWorkspace) === "generate"]
               ]) : createCommentVNode("", true),
               unref(imageWorkspaceMounted) ? withDirectives((openBlock(), createBlock("div", {
@@ -56182,9 +56847,10 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 createVNode(ImageWorkspace, {
                   ref_key: "imageWorkspaceRef",
                   ref: imageWorkspaceRef,
+                  active: unref(activeWorkspace) === "image",
                   onOpenGenerate: ($event) => requestWorkspaceNavigation("generate"),
                   onOpenLibrary: ($event) => requestWorkspaceNavigation("library")
-                }, null, 8, ["onOpenGenerate", "onOpenLibrary"])
+                }, null, 8, ["active", "onOpenGenerate", "onOpenLibrary"])
               ], 512)), [
                 [vShow, unref(activeWorkspace) === "image"]
               ]) : createCommentVNode("", true),
@@ -56268,6 +56934,10 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
                 ref: imageMetadataFlowRef,
                 onApplied: onImageMetadataApplied
               }, null, 512),
+              createVNode(ModelSettingsDrawer, {
+                open: unref(modelsOpen),
+                onClose: ($event) => modelsOpen.value = false
+              }, null, 8, ["open", "onClose"]),
               unref(repeatLimitsOpen) ? (openBlock(), createBlock(RepeatLimitsDialog, {
                 key: 12,
                 limits: unref(generation).repeatLimits,
@@ -56301,7 +56971,7 @@ _sfc_main$3.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/GenerateStudio.vue");
   return _sfc_setup$3 ? _sfc_setup$3(props, ctx) : void 0;
 };
-const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-5cbb3778"]]), { __name: "GenerateStudio" });
+const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-08e7996f"]]), { __name: "GenerateStudio" });
 const _sfc_main$2 = /* @__PURE__ */ defineComponent({
   __name: "app",
   __ssrInlineRender: true,
@@ -56352,8 +57022,8 @@ const _sfc_main$1 = {
     const statusText = _error.statusMessage ?? (is404 ? "Page Not Found" : "Internal Server Error");
     const description = _error.message || _error.toString();
     const stack = void 0;
-    const _Error404 = defineAsyncComponent(() => import('./error-404-DjG8cJ3_.mjs'));
-    const _Error = defineAsyncComponent(() => import('./error-500-CDLqYfNQ.mjs'));
+    const _Error404 = defineAsyncComponent(() => import('./error-404-DMRFBtNC.mjs'));
+    const _Error = defineAsyncComponent(() => import('./error-500-Bxor-5lJ.mjs'));
     const ErrorTemplate = is404 ? _Error404 : _Error;
     return (_ctx, _push, _parent, _attrs) => {
       _push(ssrRenderComponent(unref(ErrorTemplate), mergeProps({ status: unref(status), statusText: unref(statusText), statusCode: unref(status), statusMessage: unref(statusText), description: unref(description), stack: unref(stack) }, _attrs), null, _parent));

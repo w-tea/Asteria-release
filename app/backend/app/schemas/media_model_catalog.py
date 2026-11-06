@@ -15,6 +15,7 @@ class MediaModelComponentRole(StrEnum):
     NATIVE_TEXT_ENCODER = "native_text_encoder"
     QWEN35_TEXT_ENCODER = "qwen35_text_encoder"
     PROGRESSIVE_ADAPTER = "progressive_adapter"
+    IMAGE_VAE = "image_vae"
     VIDEO_VAE = "video_vae"
     AUDIO_VAE = "audio_vae"
     LORA = "lora"

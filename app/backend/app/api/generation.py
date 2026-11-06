@@ -68,6 +68,14 @@ from app.services.external_model_libraries import (
 from app.services.generation_schema import GenerationSchema, GenerationSchemaNotFound, GenerationSchemaRepository
 from app.services import api_errors
 from app.services.comfy_model_paths import comfy_model_name
+from app.services.comfy_native_image_families import (
+    NATIVE_IMAGE_DEFAULTS,
+    native_image_model_slot_checks,
+    native_image_required_nodes,
+    native_image_runtime_contract_issues,
+    unsupported_native_image_settings,
+)
+from app.services.native_image_assets import NativeImageModelClassifier, prepare_native_image_bundle
 from app.services.controlnet_preprocessor import SUPPORTED_PREPROCESSORS
 from app.services.anima_lllite_runtime import (
     anima_lllite_missing_nodes,
@@ -111,7 +119,6 @@ from app.services.model_library_cache import get_model_library
 from app.services.model_library import ModelLibrary
 from app.services.model_fingerprints import ModelFingerprintService
 from app.services.generation_reproduction import capture_generation_assets, compare_generation_assets
-from app.services.generation_loras import merge_generation_loras as _merge_loras
 from app.services.prompt_styles import (
     apply_advanced_style_text as _apply_advanced_style_text,
     compose_with_advanced_styles as _compose_with_advanced_styles,
@@ -1289,6 +1296,12 @@ def _unsupported_profile_runtime_settings(
 ) -> list[dict[str, str]]:
     if profile == "sdxl":
         return []
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        return [
+            *({"field": field, "reason": "native_image_txt2img_only"}
+              for field in unsupported_native_image_settings(profile, settings)),
+            *_unsupported_seed_variation_runtime_settings(profile, set(), settings),
+        ]
     unsupported = _unsupported_comfy_runtime_settings(settings, profile)
     unsupported.extend(_unsupported_seed_variation_runtime_settings(profile, set(), settings))
     if int(settings.get("clip_skip") or 1) > 1:
@@ -1736,6 +1749,9 @@ def _record_refiner_runtime(settings: dict, selected_runtime: str, profile: str)
 
 
 def _runtime_model_slot_checks(profile: str) -> tuple[tuple[str, str, str, str], ...]:
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        mapping = WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
+        return native_image_model_slot_checks(mapping)
     if profile == "sdxl":
         return (
             ("checkpoint", "checkpoints", "CheckpointLoaderSimple", "ckpt_name"),
@@ -1843,6 +1859,9 @@ def _missing_anima_bundle_runtime_models(
 
 
 def _profile_base_required_nodes(profile: str, settings: dict, *, requires_lora: bool = False) -> set[str]:
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        mapping = WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
+        return native_image_required_nodes(mapping)
     if profile == "anima":
         bundle = settings.get("anima_generation_bundle")
         is_anima_3_8b = (
@@ -2053,10 +2072,24 @@ def _validate_comfy_sampling_options(object_info: dict, settings: dict) -> None:
 
 
 def _validate_profile_sampling_options(profile: str, object_info: dict, settings: dict) -> None:
-    if profile not in {"anima", "flux1", "flux2"}:
+    if profile not in {"anima", "flux1", "flux2", *NATIVE_IMAGE_DEFAULTS}:
         return
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        mapping = WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
+        contract_issues = native_image_runtime_contract_issues(mapping, object_info)
+        if contract_issues:
+            raise HTTPException(status_code=409, detail={
+                "code": api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING, "unsupported": contract_issues,
+            })
     sampler_values = _node_input_values(object_info, "KSamplerSelect", "sampler_name")
     unsupported: list[dict[str, str]] = []
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        for field, values in (
+            ("sampler", sampler_values),
+            ("scheduler", _node_input_values(object_info, "BasicScheduler", "scheduler")),
+        ):
+            if not values:
+                unsupported.append({"field": field, "reason": "runtime_options_unavailable"})
     _append_unsupported_sampling_option(
         unsupported,
         field="sampler",
@@ -2997,6 +3030,13 @@ def expand_prompt_preview(request: PromptExpandRequest) -> PromptExpandResponse:
     )
 
 
+def _merge_loras(prompt_loras: list[dict], request_loras: list[dict]) -> list[dict]:
+    merged: dict[str, dict] = {}
+    for lora in [*prompt_loras, *request_loras]:
+        merged[str(lora["name"])] = lora
+    return list(merged.values())
+
+
 def _unsupported_profile_prompt_settings(profile: str, negative_prompt: str) -> list[dict[str, str]]:
     if profile not in {"flux1", "flux2"} or not negative_prompt.strip():
         return []
@@ -3043,6 +3083,17 @@ def _preflight_profile_prompt_request(request: Txt2ImgRequest) -> None:
         *_unsupported_profile_prompt_settings(request.profile, styled_negative_prompt),
         *_unsupported_flux2_scheduler_settings(request),
     ]
+    if request.profile in NATIVE_IMAGE_DEFAULTS:
+        settings = request.model_dump()
+        settings["mode"] = getattr(request, "_spatial_generation_mode", "txt2img")
+        unsupported.extend(
+            {"field": field, "reason": "native_image_txt2img_only"}
+            for field in unsupported_native_image_settings(
+                request.profile, settings, loras=request.loras or extract_loras(_styled_prompt),
+            )
+        )
+        if _selected_runtime_id(AppConfig(), request.runtime) != "comfy_workflow":
+            unsupported.append({"field": "runtime", "reason": "native_image_requires_comfy_workflow"})
     if unsupported:
         raise HTTPException(
             status_code=409,
@@ -3546,7 +3597,6 @@ def _generate(
     merge_xyz_metadata: dict[str, Any] | None = None,
     comparison_metadata: dict[str, Any] | None = None,
     comparison_session=None,
-    xyz_lora_weights: dict[str, float] | None = None,
 ) -> GenerationResponse:
     from contextlib import ExitStack, nullcontext
     from app.services.making_video import MakingRecorder
@@ -3563,7 +3613,6 @@ def _generate(
             merge_xyz_metadata=merge_xyz_metadata, comparison_metadata=comparison_metadata,
             comparison_session=comparison_session,
             finalization_stack=finalization_stack,
-            xyz_lora_weights=xyz_lora_weights,
         )
 
 
@@ -3581,7 +3630,6 @@ def _generate_with_recording(
     comparison_metadata: dict[str, Any] | None = None,
     comparison_session=None,
     finalization_stack=None,
-    xyz_lora_weights: dict[str, float] | None = None,
 ) -> GenerationResponse:
     from contextlib import nullcontext
     generation_started = time.perf_counter()
@@ -3600,6 +3648,19 @@ def _generate_with_recording(
         making.begin(check_operation.output_root, expected_images=request.batch_count * request.batch_size)
     model_slots = _model_slots_for_request(request, config)
     _validate_required_model_slots(request.profile, model_slots, config)
+    if request.profile in NATIVE_IMAGE_DEFAULTS:
+        try:
+            native_bundle = prepare_native_image_bundle(
+                request.profile, model_slots, NativeImageModelClassifier.from_config(config),
+            )
+        except ValueError as exc:
+            _, _, slot = str(exc).partition(":")
+            raise HTTPException(status_code=409, detail={
+                "code": api_errors.MODEL_SELECTION_PROFILE_MISMATCH,
+                "profile": request.profile, "slot_id": slot,
+            }) from exc
+    else:
+        native_bundle = None
     external_model_snapshots = _external_model_reference_snapshots(model_slots, config)
     runtime_model_slots = _runtime_model_slots_for_request(
         request.profile,
@@ -3618,6 +3679,8 @@ def _generate_with_recording(
         else _expand_with_pins(styled_prompt, request, config)
     )
     settings, negative_prompt = _settings_from_request(request, config, mode)
+    if native_bundle is not None:
+        settings["native_image_generation_bundle"] = native_bundle
     if comparison_metadata is not None:
         settings['prompt_comparison'] = dict(comparison_metadata)
     if request.profile == "anima":
@@ -3771,25 +3834,10 @@ def _generate_with_recording(
             "prompt_hash": prompt_expansion.prompt_hash,
             "choices": [asdict(item) for item in prompt_expansion.choices],
         }
-    prompt_loras = spatial_loras if spatial_loras is not None else extract_loras(expanded_prompt)
-    requested_loras = [lora.model_dump(exclude_none=True) for lora in request.loras]
-    applied_prompt_overrides: list[dict[str, Any]] | None = [] if xyz_lora_weights else None
     loras = _merge_loras(
-        prompt_loras,
-        requested_loras,
-        library=get_model_library(_model_root(config), config=config) if prompt_loras else None,
-        model_root=_model_root(config),
-        external_roots=_registered_external_model_roots(config) if prompt_loras or request.loras else (),
-        weight_overrides=xyz_lora_weights,
-        applied_prompt_overrides=applied_prompt_overrides,
+        spatial_loras if spatial_loras is not None else extract_loras(expanded_prompt),
+        [lora.model_dump(exclude_none=True) for lora in request.loras],
     )
-    if prompt_loras:
-        settings["lora_selections"] = requested_loras
-    if applied_prompt_overrides:
-        settings["xyz_lora_restore"] = {
-            "weights": applied_prompt_overrides,
-            "use_expanded": bool(request.advanced_styles or expanded_prompt != request.prompt),
-        }
     if request.profile == "anima" and loras:
         try:
             anima_library = get_model_library(_model_root(config), config=config)
@@ -4383,7 +4431,9 @@ def _media_artifact_roots(
 def _model_slots_for_request(request: Txt2ImgRequest, config: AppConfig) -> dict[str, str]:
     model_slots = dict(ModelSelectionRepository(config.model_selections_path).get(request.profile).slots)
     for slot, value in request.model_slot_overrides.items():
-        if str(value).strip():
+        if slot == "vae" and request.profile == "sdxl" and str(value).strip().lower() == "automatic":
+            model_slots.pop("vae", None)
+        elif str(value).strip():
             model_slots[str(slot)] = str(value)
     return model_slots
 
@@ -4392,18 +4442,18 @@ def _xyz_axis_key(axis: XYZAxis, index: int) -> str:
     return axis.label.strip() or axis.target.strip() or f"axis_{index + 1}"
 
 
-def _apply_xyz_value(
-    request: Txt2ImgRequest, axis: XYZAxis, value: str, *, lora_weights: dict[str, float] | None = None,
-) -> Txt2ImgRequest:
+def _apply_xyz_value(request: Txt2ImgRequest, axis: XYZAxis, value: str) -> Txt2ImgRequest:
     next_request = request.model_copy(deep=True)
     target = axis.target.strip().lower()
     value = str(value)
     if target == "seed":
         next_request.seed = int(value)
     elif target in {"checkpoint", "model", "model_slot:checkpoint"}:
-        next_request.model_slot_overrides["checkpoint"] = value
+        slot = "checkpoint" if next_request.profile == "sdxl" else "diffusion_model"
+        next_request.model_slot_overrides[slot] = value
     elif target in {"vae", "model_slot:vae"}:
         next_request.vae = value
+        next_request.model_slot_overrides["vae"] = value
     elif target == "sampler":
         next_request.sampler = value
     elif target == "scheduler":
@@ -4447,16 +4497,12 @@ def _apply_xyz_value(
             if not matched:
                 next_request.loras.append(LoraSelection(name=lora_name, weight=weight))
         elif next_request.loras:
-            first_lora = next_request.loras[0]
-            lora_name = first_lora.name
-            first_lora.weight = weight
+            next_request.loras[0].weight = weight
         else:
             raise HTTPException(
                 status_code=400,
                 detail={"code": api_errors.XYZ_LORA_WEIGHT_TARGET_REQUIRED, "target": target},
             )
-        if lora_weights is not None:
-            lora_weights[lora_name] = weight
     else:
         raise HTTPException(
             status_code=400,
@@ -4465,16 +4511,13 @@ def _apply_xyz_value(
     return next_request
 
 
-def _xyz_cell_request(
-    base: Txt2ImgRequest, axes: list[XYZAxis], values: tuple[str, ...],
-) -> tuple[Txt2ImgRequest, dict[str, str], dict[str, float]]:
+def _xyz_cell_request(base: Txt2ImgRequest, axes: list[XYZAxis], values: tuple[str, ...]) -> tuple[Txt2ImgRequest, dict[str, str]]:
     request = base
     labels: dict[str, str] = {}
-    lora_weights: dict[str, float] = {}
     for index, (axis, value) in enumerate(zip(axes, values, strict=True)):
         labels[_xyz_axis_key(axis, index)] = str(value)
-        request = _apply_xyz_value(request, axis, str(value), lora_weights=lora_weights)
-    return request, labels, lora_weights
+        request = _apply_xyz_value(request, axis, str(value))
+    return request, labels
 
 
 def _first_image_output(output_paths: list[str]) -> Path | None:
@@ -4680,16 +4723,16 @@ def _generate_xyz_plot(request: XYZPlotRequest) -> XYZPlotResponse:
     _preflight_profile_prompt_request(request.base)
     _preflight_controlnet_mode_request(request.base, request.mode)
     _preflight_seed_resize_request(request.base, request.mode)
-    prepared_cells: list[tuple[int, dict[str, str], Txt2ImgRequest, dict[str, float]]] = []
+    prepared_cells: list[tuple[int, dict[str, str], Txt2ImgRequest]] = []
     for index, values in enumerate(combinations):
-        cell_request, labels, lora_weights = _xyz_cell_request(request.base, request.axes, tuple(str(value) for value in values))
+        cell_request, labels = _xyz_cell_request(request.base, request.axes, tuple(str(value) for value in values))
         _preflight_profile_prompt_request(cell_request)
         _preflight_controlnet_mode_request(cell_request, request.mode)
         _preflight_seed_resize_request(cell_request, request.mode)
-        prepared_cells.append((index, labels, cell_request, lora_weights))
+        prepared_cells.append((index, labels, cell_request))
     cells: list[XYZCellResult] = []
-    for index, labels, cell_request, lora_weights in prepared_cells:
-        generation = _generate(cell_request, request.mode, **({"xyz_lora_weights": lora_weights} if lora_weights else {}))
+    for index, labels, cell_request in prepared_cells:
+        generation = _generate(cell_request, request.mode)
         cells.append(XYZCellResult(index=index, labels=labels, generation=generation))
     contact_sheet_path = ""
     contact_sheet_warning = ""

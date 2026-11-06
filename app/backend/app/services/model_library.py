@@ -233,6 +233,9 @@ class ModelLibraryScanner:
                 continue
 
             if stat.S_ISDIR(target_stat.st_mode):
+                # Do not expose a private trainer result before publication.
+                if model_type == "lora" and entry.name.casefold().startswith((".asteria-sdxl-", ".asteria-anima-")):
+                    continue
                 self._scan_directory(
                     model_type,
                     logical_path,

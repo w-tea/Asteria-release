@@ -7,7 +7,7 @@
   "runtime": {
     "component_id": "comfyui-core",
     "minimum_version": "0.33.0",
-    "managed_version": "0.33.1",
+    "managed_version": "0.43.0",
     "minimum_commit": "efd4e951a00e85bd92e79f1d685427912b0dad5e",
     "python_version": "3.12.13",
     "pytorch_package_set": "pytorch-cu128",

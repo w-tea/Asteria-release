@@ -197,28 +197,21 @@ def expand_prompt_fragment(
 
 def extract_loras(prompt: str) -> list[dict[str, float | str]]:
     found: list[dict[str, float | str]] = []
-    for name, options in re.findall(r"<lora:([^:<>]+):([^<>]+)>", prompt):
-        name = name.strip().strip('"').strip()
-        parts = [part.strip() for part in options.split(":")]
-        block = ""
-        if parts[-1].startswith("lbw="):
-            block = parts.pop()[4:].strip()
-            if not block:
-                continue
-        elif "," in parts[-1]:
-            block = parts.pop()
-        if not name or len(parts) > 2:
-            continue
-        selection: dict[str, float | str] = {"name": name}
+    for name, weight, clip_weight in re.findall(
+        r"<lora:([^:>]+):([^:>]+)(?::([^:>]+))?>", prompt
+    ):
         try:
-            weights = [float(part) for part in parts]
+            parsed_weight = float(weight)
+            parsed_clip_weight = float(clip_weight) if clip_weight else None
         except ValueError:
             continue
-        if not all(math.isfinite(weight) for weight in weights):
+        if not math.isfinite(parsed_weight) or (
+            parsed_clip_weight is not None and not math.isfinite(parsed_clip_weight)
+        ):
             continue
-        selection.update(zip(("weight", "clip_weight"), weights))
-        if block:
-            selection["block_weight" if "," in block else "block_weight_preset"] = block
+        selection = {"name": name, "weight": parsed_weight}
+        if parsed_clip_weight is not None:
+            selection["clip_weight"] = parsed_clip_weight
         found.append(selection)
     return found
 

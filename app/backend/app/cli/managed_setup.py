@@ -344,7 +344,7 @@ class PortableSetupRuntime:
             self.runtime_repository,
             python_path=self.python_path,
             managed_artifact_service=self.artifact_service,
-            constraints_path=self.app_root / "bootstrap" / "locks" / "comfyui-v0.33.1.lock",
+            constraints_path=self._comfy_lock_path,
         )
         self.model_repository = ModelDependencyRepository(
             self.app_root / "model-dependencies.yaml",
@@ -380,6 +380,8 @@ class PortableSetupRuntime:
     def is_complete(self, component: ManagedSetupComponent) -> bool:
         if component.category == "release-artifact":
             spec = self.release_specs[component.id]
+            if self.mode == "repair" and component.id == "comfyui-core":
+                return self.artifact_service.is_installed(spec, require_post_install=True) and self.artifact_service.verify_installed_contents(spec)
             return self.artifact_service.is_installed(spec, require_post_install=True)
         if component.category == "package-environment":
             environment_id, python_path, lock_path, index_url, no_dependencies = self._package_environment(component.id)
@@ -406,7 +408,7 @@ class PortableSetupRuntime:
             spec = self.release_specs[component.id]
             if component.id == "comfyui-core":
                 artifact = next(item for item in self.release.artifacts if item.id == component.id)
-                ComfyRuntimeCoreManager(
+                manager = ComfyRuntimeCoreManager(
                     comfy_dir=spec.destination,
                     python_path=self.python_path,
                     repo_url=artifact.url,
@@ -414,7 +416,11 @@ class PortableSetupRuntime:
                     managed_artifact_service=self.artifact_service,
                     managed_artifact_spec=spec,
                     install_python_dependencies=False,
-                ).install()
+                )
+                if self.mode == "repair":
+                    manager.repair()
+                else:
+                    manager.install()
             else:
                 self.artifact_service.acquire(spec)
                 self.artifact_service.mark_post_install_complete(spec)
@@ -461,7 +467,7 @@ class PortableSetupRuntime:
         if component_id == "asteria-backend-environment":
             return component_id, self.python_path, self.app_root / "app" / "backend" / "requirements-release.lock", None, False
         if component_id == "comfy-python-environment":
-            return component_id, self.python_path, self.app_root / "bootstrap" / "locks" / "comfyui-v0.33.1.lock", None, False
+            return component_id, self.python_path, self._comfy_lock_path, None, False
         if component_id == "pytorch-cu128":
             package_set = next(item for item in self.release.package_sets if item.id == component_id)
             return (
@@ -472,6 +478,11 @@ class PortableSetupRuntime:
                 True,
             )
         raise ValueError("managed package environment is unsupported")
+
+    @property
+    def _comfy_lock_path(self) -> Path:
+        core = next(artifact for artifact in self.release.artifacts if artifact.id == "comfyui-core")
+        return self.app_root / "bootstrap" / "locks" / f"comfyui-v{core.version}.lock"
 
 
 def _parser() -> argparse.ArgumentParser:

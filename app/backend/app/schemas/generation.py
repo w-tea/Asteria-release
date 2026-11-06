@@ -272,6 +272,13 @@ class Txt2ImgRequest(BaseModel):
             raise ValueError(f"unknown spatial generation field: {fields}")
         if data.get("profile", "sdxl") == "flux2" and "scheduler" not in data:
             return {**data, "scheduler": "Flux2"}
+        from app.services.comfy_native_image_families import (
+            NATIVE_IMAGE_COMMON_DEFAULTS, NATIVE_IMAGE_DEFAULTS,
+        )
+        profile = data.get("profile")
+        native_defaults = NATIVE_IMAGE_DEFAULTS.get(profile) if isinstance(profile, str) else None
+        if native_defaults is not None:
+            return {**NATIVE_IMAGE_COMMON_DEFAULTS, **native_defaults, **data}
         return data
 
     @model_validator(mode="after")

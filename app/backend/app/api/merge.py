@@ -28,6 +28,7 @@ from app.services.comfy_admission import (
     acknowledge_comfy_cleanup,
     comfy_admission,
 )
+from app.services.runtime_process import RuntimeProcessManager
 from app.services.merge_recipes import (
     BLOCK_SCHEMAS,
     CALCULATION_MODES,
@@ -1928,13 +1929,17 @@ def _merge_runtime_source_payload(
 
 @contextmanager
 def _merge_xyz_runtime_session(config: AppConfig):
+    client = ComfyClient(config.comfy_base_url)
+    try:
+        comfy_admission.retry_deferred_cleanup(client)
+    except (ComfyCleanupPendingError, RuntimeErrorResponse, TimeoutError, OSError) as exc:
+        raise HTTPException(status_code=503, detail="comfy_cleanup_pending") from exc
     try:
         lease = comfy_admission.acquire("xyz", timeout_seconds=30.0)
     except ComfyCleanupPendingError as exc:
         raise HTTPException(status_code=409, detail="comfy_cleanup_pending") from exc
     except (ComfyAdmissionTimeoutError, ComfyAdmissionError) as exc:
         raise HTTPException(status_code=409, detail="comfy_admission_busy") from exc
-    client = ComfyClient(config.comfy_base_url)
     try:
         yield lease.token
     finally:
@@ -1950,8 +1955,9 @@ def _merge_xyz_runtime_session(config: AppConfig):
                     }
                 },
                 timeout_seconds=60.0,
+                runtime_owner=RuntimeProcessManager(config, client).owned_listener(),
             )
-        except (RuntimeErrorResponse, TimeoutError, OSError) as exc:
+        except (ComfyCleanupPendingError, RuntimeErrorResponse, TimeoutError, OSError) as exc:
             raise HTTPException(status_code=503, detail="comfy_cleanup_pending") from exc
         finally:
             lease.release(defer_cleanup=comfy_admission.cleanup_pending_for(lease.token))

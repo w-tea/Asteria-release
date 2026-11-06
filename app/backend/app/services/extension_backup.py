@@ -40,7 +40,7 @@ class ExtensionRestoreTransaction:
 
 
 class ExtensionBackupService:
-    def __init__(self, extension_root: Path, *, asteria_version: str = "1.2.1.4") -> None:
+    def __init__(self, extension_root: Path, *, asteria_version: str = "1.2.2") -> None:
         self.extension_root = Path(os.path.abspath(extension_root))
         self.asteria_version = asteria_version
         self._swap_failure_injector: Callable[[str], None] | None = None
