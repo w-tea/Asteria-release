@@ -168,7 +168,9 @@ def _block_id_for_key(key: str, schema: str) -> str:
     if "middle_block" in lowered or ".mid." in lowered:
         return "M00" if schema == "sdxl" else "BASE"
     if "first_stage_model" in lowered:
-        return "VAE"
+        # Export maps ordinary SDXL VAE tensors to BASE. The explicit VAE
+        # selector is still available through the extended SDXL aliases.
+        return "BASE" if schema == "sdxl" else "VAE"
     return "BASE"
 
 

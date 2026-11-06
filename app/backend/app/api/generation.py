@@ -4428,7 +4428,9 @@ def _media_artifact_roots(
 def _model_slots_for_request(request: Txt2ImgRequest, config: AppConfig) -> dict[str, str]:
     model_slots = dict(ModelSelectionRepository(config.model_selections_path).get(request.profile).slots)
     for slot, value in request.model_slot_overrides.items():
-        if str(value).strip():
+        if slot == "vae" and request.profile == "sdxl" and str(value).strip().lower() == "automatic":
+            model_slots.pop("vae", None)
+        elif str(value).strip():
             model_slots[str(slot)] = str(value)
     return model_slots
 
@@ -4444,9 +4446,11 @@ def _apply_xyz_value(request: Txt2ImgRequest, axis: XYZAxis, value: str) -> Txt2
     if target == "seed":
         next_request.seed = int(value)
     elif target in {"checkpoint", "model", "model_slot:checkpoint"}:
-        next_request.model_slot_overrides["checkpoint"] = value
+        slot = "checkpoint" if next_request.profile == "sdxl" else "diffusion_model"
+        next_request.model_slot_overrides[slot] = value
     elif target in {"vae", "model_slot:vae"}:
         next_request.vae = value
+        next_request.model_slot_overrides["vae"] = value
     elif target == "sampler":
         next_request.sampler = value
     elif target == "scheduler":

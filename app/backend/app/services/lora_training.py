@@ -13,6 +13,7 @@ import re
 import shlex
 import shutil
 import sys
+from tempfile import TemporaryDirectory, mkdtemp
 from threading import RLock
 from pathlib import Path
 from pathlib import PureWindowsPath
@@ -26,6 +27,7 @@ from pydantic import BaseModel, Field
 
 from app.services.image_metadata_text import metadata_value_to_text
 from app.services.atomic_json import write_json_atomic
+from app.services.image_check_recovery import move_without_replacement
 from app.services.training_process import popen_training_process
 
 TrainingProfile = Literal["sdxl", "anima"]
@@ -1796,19 +1798,17 @@ def materialize_lora_training_dataset(
         raise ValueError("lora_training_dataset_empty")
 
     materialized_root = (request.data_dir / "lora-training" / "materialized").resolve()
-    root_dir = (materialized_root / f"{_safe_slug(dataset.name)}-{dataset.id[:8]}").resolve()
-    if root_dir.parent != materialized_root:
-        raise ValueError("lora_training_materialize_path_invalid")
-    image_dir = root_dir / "images"
-
+    caption_extension = _safe_caption_extension(request.caption_extension or preset.caption_extension)
     try:
-        if root_dir.exists():
-            shutil.rmtree(root_dir)
-        image_dir.mkdir(parents=True, exist_ok=True)
+        materialized_root.mkdir(parents=True, exist_ok=True)
+        # A prepared run keeps its own image, caption and config snapshot.
+        # A standalone export must not replace it or any older shared directory.
+        root_dir = Path(mkdtemp(prefix=f"{_safe_slug(dataset.name)[:48]}-", dir=materialized_root))
+        image_dir = root_dir / "images"
+        image_dir.mkdir()
     except OSError as exc:
         raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
 
-    caption_extension = _safe_caption_extension(request.caption_extension or preset.caption_extension)
     items: list[MaterializedDatasetItem] = []
     skipped_items: list[str] = []
     materialize_warnings: list[str] = []
@@ -1995,6 +1995,7 @@ def start_lora_training_run(
         raise ValueError("lora_training_run_not_startable")
     if not run.command_args:
         raise ValueError("lora_training_run_command_empty")
+    validate_anima_training_output_available(run, project_root=project_root)
 
     log_dir = data_dir / "lora-training" / "logs"
     try:
@@ -2064,12 +2065,14 @@ def refresh_lora_training_run(
     if run is None:
         return None
     process = _RUN_PROCESSES.get(run.id)
+    completed_now = False
     if process is not None:
         exit_code = process.poll()
         if exit_code is not None:
             _RUN_PROCESSES.pop(run.id, None)
             run.exit_code = int(exit_code)
             run.status = "completed" if exit_code == 0 else "failed"
+            completed_now = exit_code == 0
             run.finished_at = _utc_now()
     elif run.status == "running":
         run.status = "failed"
@@ -2080,7 +2083,7 @@ def refresh_lora_training_run(
         run.log_tail = _read_text_tail(Path(run.log_path))
     _apply_run_progress_from_log(run)
     if run.status == "completed":
-        _finalize_anima_training_output(run, project_root=project_root)
+        _finalize_anima_training_output(run, project_root=project_root, completed_now=completed_now)
     if run.status == "completed":
         _apply_run_trained_model_paths(run, project_root=project_root)
         _apply_run_sample_image_paths(run, project_root=project_root)
@@ -4101,27 +4104,53 @@ def _apply_run_progress_from_log(run: LoRATrainingRun) -> None:
         run.progress_message = run.progress_message or "completed"
 
 
-def _finalize_anima_training_output(run: LoRATrainingRun, *, project_root: Path | None) -> None:
+def _anima_training_output_paths(run: LoRATrainingRun, project_root: Path) -> tuple[Path, Path, Path] | None:
     if run.profile != "anima":
-        return
+        return None
     output_dir = run.output_dir.strip()
     output_name = run.output_name.strip()
     if not output_dir or not output_name:
-        return
-    root = project_root or Path.cwd()
-    directory = _resolve_source_path(output_dir, root)
+        return None
+    directory = _resolve_source_path(output_dir, project_root)
     stem = Path(output_name).stem
-    converted_path = directory / f"{stem}_comfy.safetensors"
-    temporary_path = directory / f"{stem}_unet.safetensors"
-    legacy_path = directory / f"{stem}.safetensors"
-    if _path_is_file(converted_path):
-        if _path_is_file(temporary_path):
-            try:
-                temporary_path.unlink()
-            except OSError as exc:
-                run.log_tail = _append_log_tail_note(run.log_path, f"Anima LoRA temporary cleanup failed: {exc}")
+    return (
+        directory / f"{stem}_comfy.safetensors",
+        directory / f"{stem}_unet.safetensors",
+        directory / f"{stem}.safetensors",
+    )
+
+
+def validate_anima_training_output_available(run: LoRATrainingRun, *, project_root: Path) -> None:
+    for path in _anima_training_output_paths(run, project_root) or ():
+        try:
+            path.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
+        raise ValueError("lora_training_output_name_in_use")
+
+
+def _finalize_anima_training_output(
+    run: LoRATrainingRun, *, project_root: Path | None, completed_now: bool,
+) -> None:
+    root = project_root or Path.cwd()
+    paths = _anima_training_output_paths(run, root)
+    if paths is None:
         return
+    converted_path, temporary_path, legacy_path = paths
     source_path = temporary_path if _path_is_file(temporary_path) else legacy_path
+    if _path_is_file(converted_path):
+        if not completed_now and (
+            str(converted_path) in run.trained_model_paths or not _path_is_file(source_path)
+        ):
+            return
+        run.status = "failed"
+        run.exit_code = -2
+        run.log_tail = _append_log_tail_note(
+            run.log_path, "Anima LoRA output already exists. Use a different output name. Both files were kept.",
+        )
+        return
     if not _path_is_file(source_path):
         run.status = "failed"
         run.exit_code = -2
@@ -4151,37 +4180,38 @@ def _finalize_anima_training_output(run: LoRATrainingRun, *, project_root: Path 
         if _command_uses_python_module(run.command_args, "accelerate.commands.launch")
         else sys.executable
     )
-    command = [conversion_python, str(convert_script), str(source_path), str(converted_path)]
     env = os.environ.copy()
     existing_pythonpath = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = str(working_dir) if not existing_pythonpath else f"{working_dir}{os.pathsep}{existing_pythonpath}"
-    result = subprocess.run(
-        command,
-        cwd=str(working_dir),
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    output = _tail_text(result.stdout)
-    run.log_tail = _append_log_tail_note(
-        run.log_path,
-        "\n".join(
-            part
-            for part in [
-                f"Asteria Anima LoRA Comfy conversion command: {' '.join(command)}",
-                output,
-                f"Asteria Anima LoRA Comfy conversion exit code: {result.returncode}",
-            ]
-            if part
-        ),
-    )
-    if result.returncode != 0 or not _path_is_file(converted_path):
+    try:
+        with TemporaryDirectory(dir=converted_path.parent, prefix=".asteria-anima-") as stage:
+            staged_output = Path(stage) / converted_path.name
+            command = [conversion_python, str(convert_script), str(source_path), str(staged_output)]
+            result = subprocess.run(
+                command, cwd=str(working_dir), env=env, stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", check=False,
+            )
+            run.log_tail = _append_log_tail_note(
+                run.log_path,
+                "\n".join(part for part in [
+                    f"Asteria Anima LoRA Comfy conversion command: {' '.join(command)}",
+                    _tail_text(result.stdout),
+                    f"Asteria Anima LoRA Comfy conversion exit code: {result.returncode}",
+                ] if part),
+            )
+            if result.returncode != 0 or not _path_is_file(staged_output):
+                run.status = "failed"
+                run.exit_code = result.returncode or -2
+                return
+            move_without_replacement(staged_output, converted_path)
+    except OSError as exc:
         run.status = "failed"
-        run.exit_code = result.returncode if result.returncode != 0 else -2
+        run.exit_code = -2
+        run.log_tail = _append_log_tail_note(run.log_path, f"Anima LoRA could not publish the converted model: {exc}")
+        return
+    if not _path_is_file(converted_path):
+        run.status = "failed"
+        run.exit_code = -2
         return
     if source_path == temporary_path:
         try:

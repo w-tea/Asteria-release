@@ -4139,6 +4139,10 @@ class ComfyGenerationRuntime:
                 with self.admission_service.borrow(lease_token, required_kind="xyz"):
                     yield
                 return
+            try:
+                self.admission_service.retry_deferred_cleanup(self.client)
+            except (RuntimeErrorResponse, TimeoutError, OSError) as exc:
+                raise ComfyCleanupPendingError("Comfy cleanup retry failed") from exc
             with self.admission_service.acquire(
                 "operation",
                 timeout_seconds=self.admission_timeout_seconds,

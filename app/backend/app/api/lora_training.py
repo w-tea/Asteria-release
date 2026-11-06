@@ -23,6 +23,7 @@ from app.api.generation import _data_dir, _generate, _output_dir_for, _record_xy
 from app.services.artifact_lifecycle import artifact_write_operation
 from app.schemas.common import LoraSelection
 from app.schemas.generation import GenerationResponse, Txt2ImgRequest, XYZAxis, XYZCellResult
+from app.schemas.operations import ACTIVE_OPERATION_STATUSES
 from app.services.lora_training import (
     DatasetConfigPreview,
     DatasetMaterializeRequestData,
@@ -109,6 +110,7 @@ from app.services.lora_training import (
     start_lora_training_run,
     copy_machine_training_process,
     lora_training_process,
+    validate_anima_training_output_available,
     _stop_training_process,
 )
 from app.services.xyz_grid import XYZGridAxis, XYZGridCell, build_xyz_contact_sheet
@@ -1605,9 +1607,23 @@ def list_runs() -> LoRATrainingRunListResponse:
 
 @router.delete("/runs/{run_id}")
 def delete_run(run_id: str) -> dict[str, str | bool]:
-    deleted = _run_repository().delete(run_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="lora_training_run_not_found")
+    with _lora_training_start_lock:
+        repository = _run_repository()
+        run = repository.get(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="lora_training_run_not_found")
+        process = lora_training_process(run_id)
+        if run.status == "running" or (process is not None and process.poll() is None):
+            raise HTTPException(status_code=409, detail="lora_training_run_active")
+        if run.operation_id:
+            try:
+                operation = _lora_operation_coordinator().get(run.operation_id)
+            except OperationNotFoundError:
+                pass
+            else:
+                if operation.status in ACTIVE_OPERATION_STATUSES:
+                    raise HTTPException(status_code=409, detail="lora_training_run_active")
+        repository.delete(run_id)
     return {"deleted": True, "id": run_id}
 
 
@@ -1637,6 +1653,10 @@ def _start_run_with_operation(run_id: str) -> LoRATrainingRun:
         raise HTTPException(status_code=422, detail="lora_training_run_not_startable")
     if not prepared.command_args:
         raise HTTPException(status_code=422, detail="lora_training_run_command_empty")
+    try:
+        validate_anima_training_output_available(prepared, project_root=AppConfig().root_dir)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     operation = coordinator.enqueue(
         kind="lora.training",
         source_actor="local",

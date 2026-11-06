@@ -64,6 +64,8 @@ class ComfyAdmissionService:
         self._owner_token: str | None = None
         self._owner_kind: AdmissionKind | None = None
         self._cleanup_pending_token: str | None = None
+        self._cleanup_retry_request: tuple[str, dict] | None = None
+        self._cleanup_retry_in_progress = False
         self._resource_leases: dict[str, ResourceAdmissionLease] = {}
 
     def acquire(self, kind: AdmissionKind, *, timeout_seconds: float | None = None) -> ComfyAdmissionLease:
@@ -109,10 +111,37 @@ class ComfyAdmissionService:
             if self._cleanup_pending_token != token:
                 raise ComfyAdmissionError("Comfy cleanup token is not pending")
             self._cleanup_pending_token = None
-            resource_lease = self._resource_leases.pop(token, None)
-            if resource_lease is not None:
-                resource_lease.release()
+            self._cleanup_retry_request = None
+            if self._owner_token != token:
+                resource_lease = self._resource_leases.pop(token, None)
+                if resource_lease is not None:
+                    resource_lease.release()
             self._condition.notify_all()
+
+    def remember_cleanup_request(self, token: str, base_url: str, fence_workflow: dict) -> None:
+        with self._condition:
+            if self._cleanup_pending_token != token or self._owner_token != token:
+                raise ComfyAdmissionError("Only the active XYZ lease can register cleanup")
+            self._cleanup_retry_request = (base_url, fence_workflow)
+
+    def retry_deferred_cleanup(self, client: Any, *, timeout_seconds: float = 10.0) -> None:
+        with self._condition:
+            request = self._cleanup_retry_request
+            token = self._cleanup_pending_token
+            if self._owner_token is not None or token is None or request is None:
+                return
+            base_url, workflow = request
+            if getattr(client, "base_url", None) != base_url or self._cleanup_retry_in_progress:
+                raise ComfyCleanupPendingError("Comfy cleanup acknowledgement is pending")
+            self._cleanup_retry_in_progress = True
+        try:
+            acknowledge_deferred_comfy_cleanup(
+                service=self, cleanup_token=token, client=client,
+                fence_workflow=workflow, timeout_seconds=timeout_seconds,
+            )
+        finally:
+            with self._condition:
+                self._cleanup_retry_in_progress = False
 
     def complete_deferred_cleanup(self, token: str) -> None:
         self.acknowledge_cleanup(token)
@@ -157,6 +186,9 @@ def acknowledge_comfy_cleanup(
     timeout_seconds: float,
 ) -> str:
     lease.begin_cleanup()
+    base_url = getattr(client, "base_url", None)
+    if isinstance(base_url, str) and base_url:
+        service.remember_cleanup_request(lease.token, base_url, fence_workflow)
     _request_and_wait_for_cleanup(client, fence_workflow, timeout_seconds)
     service.acknowledge_cleanup(lease.token)
     return "xyz_cache_released"
@@ -181,7 +213,12 @@ def _request_and_wait_for_cleanup(client: Any, fence_workflow: dict, timeout_sec
     client.free_memory()
     for _ in range(2):
         prompt_id = client.queue_prompt(fence_workflow)
-        client.wait_for_history(prompt_id, timeout_seconds=timeout_seconds)
+        history = client.wait_for_history(prompt_id, timeout_seconds=timeout_seconds)
+        record = history.get(prompt_id) if isinstance(history, dict) else None
+        status = record.get("status") if isinstance(record, dict) else None
+        if (not isinstance(status, dict) or status.get("completed") is not True
+                or status.get("status_str") not in (None, "success")):
+            raise ComfyCleanupPendingError("Comfy cleanup fence did not complete successfully")
 
 
 comfy_admission = ComfyAdmissionService(resource_admission)

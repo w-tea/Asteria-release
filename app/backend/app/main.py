@@ -71,6 +71,7 @@ from app.services.video_runtime_adapters import default_video_adapters
 from app.services.music_runtime_adapters import default_music_adapters
 from app.services.history import HistoryRepository
 from app.services.image_check_recovery import recover_image_publications
+from app.services.local_api_boundary import ASTERIA_UI_ORIGINS, LocalApiBoundaryMiddleware
 
 
 @asynccontextmanager
@@ -143,11 +144,12 @@ def create_app(*, config: AppConfig | None = None) -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
+        allow_origins=ASTERIA_UI_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(LocalApiBoundaryMiddleware)
     app.include_router(advanced_styles_router)
     app.include_router(generation_router)
     app.include_router(remaster_router)
