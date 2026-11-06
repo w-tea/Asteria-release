@@ -21,13 +21,6 @@ from app.services.model_library import ModelLibrary, ModelLibraryItem
 
 
 _LORA_DIFFUSION_BLOCK = re.compile(r"^diffusion_model\.blocks\.(\d+)\.")
-_NATIVE_LORA_DIFFUSION_BLOCK = re.compile(
-    r"^(?:(?:diffusion_model\.)?blocks\.(\d+)\.|lora_unet_(?:diffusion_model_)?blocks_(\d+)_)"
-)
-_OTHER_UNET_LORA_KEY = re.compile(
-    r"^(?:diffusion_model\.(?:input_blocks|middle_block|output_blocks)\."
-    r"|lora_unet_(?:input_blocks|middle_block|output_blocks)_)"
-)
 _LORA_LLM_ADAPTER_BLOCK = re.compile(
     r"^diffusion_model\.llm_adapter\.blocks\.(\d+)\."
 )
@@ -434,7 +427,7 @@ def prepare_anima_lora_runtime_entries(
 ) -> tuple[list[dict], list[dict]]:
     if not loras:
         return [], []
-    active_registry = registry
+    active_registry = registry or load_anima_lora_remap_registry()
     try:
         target_header = read_safetensors_header(target_diffusion_path)
     except (OSError, ValueError) as exc:
@@ -533,6 +526,7 @@ def prepare_anima_lora_runtime_entries(
                 raise AnimaLoraRemapRegistryError(
                     "anima_progressive_adapter_cannot_be_used_as_lora"
                 )
+            source_sha256 = f"sha256:{fingerprints.strong_hash(item.path)}"
         except AnimaLoraRemapRegistryError:
             raise
         except (OSError, ValueError) as exc:
@@ -544,37 +538,6 @@ def prepare_anima_lora_runtime_entries(
             raise AnimaLoraRemapRegistryError(
                 "anima_lora_mapping_mode_unknown"
             )
-        lora["name"] = relative_path
-        # This entry can be prepared again for a different Hires target.
-        lora.pop("anima_remap", None)
-        # A catalog identity does not request remapping. For base Anima,
-        # let the runtime consume ordinary sparse/Kohya/other native patches.
-        # An explicitly out-of-range block still requires an actual mapping.
-        if (
-            target_layout_id == "anima_base_28"
-            and mode == "preserve"
-            and not any(
-                int(match.group(1) or match.group(2)) >= 28
-                for key in source_header.tensors
-                if (match := _NATIVE_LORA_DIFFUSION_BLOCK.match(key)) is not None
-            )
-        ):
-            # These SD U-Net namespaces do not exist on Anima. Only reject
-            # files known to consist entirely of those keys, not unknown formats.
-            if source_header.tensors and all(
-                _OTHER_UNET_LORA_KEY.match(key) for key in source_header.tensors
-            ):
-                raise AnimaLoraRemapRegistryError("anima_lora_layout_unverified")
-            runtime_loras.append(lora)
-            continue
-        if active_registry is None:
-            active_registry = load_anima_lora_remap_registry()
-        try:
-            source_sha256 = f"sha256:{fingerprints.strong_hash(item.path)}"
-        except (OSError, ValueError) as exc:
-            raise AnimaLoraRemapRegistryError(
-                "anima_lora_source_header_unavailable"
-            ) from exc
         receipt = prepare_anima_lora_remap(
             source_header,
             target_layout_id=target_layout_id,
@@ -593,7 +556,9 @@ def prepare_anima_lora_runtime_entries(
                 "fingerprint_value": current.value,
             }
         )
-        lora["anima_remap"] = receipt
-        runtime_loras.append(lora)
+        runtime_lora = dict(lora)
+        runtime_lora["name"] = relative_path
+        runtime_lora["anima_remap"] = receipt
+        runtime_loras.append(runtime_lora)
         receipts.append(receipt)
     return runtime_loras, receipts

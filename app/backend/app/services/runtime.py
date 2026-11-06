@@ -500,7 +500,8 @@ class ComfyTxt2ImgWorkflowBuilder:
         profile = request.get("profile")
         builders = {"sdxl": self._build_sdxl, "flux": self._build_flux,
                     "flux1": self._build_flux, "flux2": self._build_flux2,
-                    "anima": self._build_anima}
+                    "anima": self._build_anima,
+                    "krea2": self._build_native_image, "moss_image": self._build_native_image}
         if profile not in builders:
             raise RuntimeErrorResponse(f"Unsupported ComfyUI profile: {profile}")
         settings = request.setdefault("settings", {})
@@ -1580,6 +1581,19 @@ class ComfyTxt2ImgWorkflowBuilder:
             mapping=mapping,
             hires_model_ref=hires_sampling_ref,
             hires_conditioning_ref=hires_conditioning_ref,
+        )
+
+    def _build_native_image(self, request: dict) -> dict:
+        from app.services.comfy_native_image_families import build_native_image_inputs
+
+        mapping = self._mapping(request["profile"])
+        try:
+            inputs = build_native_image_inputs(request, mapping, self._model_name)
+        except ValueError as exc:
+            raise RuntimeErrorResponse(str(exc)) from exc
+        return self._build_custom_sampler_tail(
+            inputs.workflow, request["settings"], inputs.model, inputs.positive,
+            inputs.latent, inputs.vae, mapping, negative_ref=inputs.negative,
         )
 
     def _build_flux2(self, request: dict) -> dict:
@@ -3755,7 +3769,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         remap = lora.get(remap_key)
         if (
             remap_key == "hires_anima_remap"
-            and remap_key not in lora
+            and not isinstance(remap, dict)
             and isinstance(lora.get("anima_remap"), dict)
         ):
             raise RuntimeErrorResponse(
@@ -4125,6 +4139,10 @@ class ComfyGenerationRuntime:
                 with self.admission_service.borrow(lease_token, required_kind="xyz"):
                     yield
                 return
+            try:
+                self.admission_service.retry_deferred_cleanup(self.client)
+            except (RuntimeErrorResponse, TimeoutError, OSError) as exc:
+                raise ComfyCleanupPendingError("Comfy cleanup retry failed") from exc
             with self.admission_service.acquire(
                 "operation",
                 timeout_seconds=self.admission_timeout_seconds,

@@ -1,4 +1,3 @@
-import math
 import random
 import re
 from dataclasses import dataclass, field
@@ -197,22 +196,12 @@ def expand_prompt_fragment(
 
 def extract_loras(prompt: str) -> list[dict[str, float | str]]:
     found: list[dict[str, float | str]] = []
-    for name, weight, clip_weight in re.findall(
-        r"<lora:([^:>]+):([^:>]+)(?::([^:>]+))?>", prompt
-    ):
+    for name, weight in re.findall(r"<lora:([^:>]+):([^>]+)>", prompt):
         try:
             parsed_weight = float(weight)
-            parsed_clip_weight = float(clip_weight) if clip_weight else None
         except ValueError:
             continue
-        if not math.isfinite(parsed_weight) or (
-            parsed_clip_weight is not None and not math.isfinite(parsed_clip_weight)
-        ):
-            continue
-        selection = {"name": name, "weight": parsed_weight}
-        if parsed_clip_weight is not None:
-            selection["clip_weight"] = parsed_clip_weight
-        found.append(selection)
+        found.append({"name": name, "weight": parsed_weight})
     return found
 
 

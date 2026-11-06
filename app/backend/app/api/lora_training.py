@@ -23,6 +23,7 @@ from app.api.generation import _data_dir, _generate, _output_dir_for, _record_xy
 from app.services.artifact_lifecycle import artifact_write_operation
 from app.schemas.common import LoraSelection
 from app.schemas.generation import GenerationResponse, Txt2ImgRequest, XYZAxis, XYZCellResult
+from app.schemas.operations import ACTIVE_OPERATION_STATUSES
 from app.services.lora_training import (
     DatasetConfigPreview,
     DatasetMaterializeRequestData,
@@ -109,6 +110,7 @@ from app.services.lora_training import (
     start_lora_training_run,
     copy_machine_training_process,
     lora_training_process,
+    validate_training_output_available,
     _stop_training_process,
 )
 from app.services.xyz_grid import XYZGridAxis, XYZGridCell, build_xyz_contact_sheet
@@ -116,6 +118,7 @@ from app.core.config import AppConfig
 from app.services.model_library import ModelLibraryScanner
 from app.services.model_library_cache import clear_model_library_cache
 from app.services.model_storage import resolve_model_root
+from app.services.comfy_admission import ComfyCleanupPendingError, comfy_admission
 from app.services.operation_coordinator import OperationCoordinator
 from app.services.operation_executor import (
     OperationCancelled,
@@ -125,6 +128,7 @@ from app.services.operation_executor import (
 )
 from app.services.operation_repository import OperationNotFoundError, OperationRepository
 from app.services.resource_lifecycle import resource_admission, ResourceAdmissionTimeoutError
+from app.services.runtime import ComfyClient, RuntimeErrorResponse
 
 class LoRATrainingRoute(APIRoute):
     def get_route_handler(self):
@@ -169,7 +173,10 @@ class LoRATrainingOperationExecutor:
                 )
                 break
             except ResourceAdmissionTimeoutError:
-                continue
+                # A deferred XYZ fence keeps its GPU lease. This LoRA job
+                # already occupies the queue slot ahead of other GPU jobs,
+                # so waiting for Generate to retry that fence cannot help.
+                self._recover_deferred_merge_cleanup(context)
         if context.cancel_requested:
             lease.release()
             raise OperationCancelled()
@@ -187,6 +194,23 @@ class LoRATrainingOperationExecutor:
         else:
             lease.release()
             return result
+
+    def _recover_deferred_merge_cleanup(self, context: OperationExecutionContext) -> None:
+        snapshot = comfy_admission.snapshot()
+        if not snapshot.cleanup_pending or snapshot.owner_kind is not None:
+            return
+        if context.cancel_requested:
+            raise OperationCancelled()
+        try:
+            client = ComfyClient(AppConfig().comfy_base_url, timeout_seconds=5.0)
+            comfy_admission.retry_deferred_cleanup(client, timeout_seconds=5.0)
+            snapshot = comfy_admission.snapshot()
+            if snapshot.cleanup_pending and snapshot.owner_kind is None:
+                raise ComfyCleanupPendingError("Deferred cleanup has no completed fence")
+        except (ComfyCleanupPendingError, RuntimeErrorResponse, TimeoutError, OSError) as exc:
+            if context.cancel_requested:
+                raise OperationCancelled() from exc
+            raise OperationExecutionError("comfy_cleanup_pending", retryable=True) from exc
 
     def _execute_admitted(self, context: OperationExecutionContext) -> OperationExecutionResult:
         run_id = str(context.request_snapshot["run_id"])
@@ -223,7 +247,7 @@ class LoRATrainingOperationExecutor:
                 if latest is None or latest.operation_id != context.operation.operation_id:
                     raise OperationCancelled()
                 if context.cancel_requested:
-                    cancel_lora_training_run(run_id, repository)
+                    cancel_lora_training_run(run_id, repository, project_root=AppConfig().root_dir)
                     raise OperationCancelled()
             current = int(run.progress_current or 0)
             total = int(run.progress_total) if run.progress_total is not None else None
@@ -243,7 +267,7 @@ class LoRATrainingOperationExecutor:
         if run.status == "cancelled":
             raise OperationCancelled()
         if run.status != "completed":
-            raise OperationExecutionError("lora_training_failed", retryable=True)
+            raise OperationExecutionError(run.failure_code or "lora_training_failed", retryable=True)
         return OperationExecutionResult(
             artifact_refs=(f"lora-run:{run.id}",),
             warning_codes=tuple(
@@ -1605,9 +1629,23 @@ def list_runs() -> LoRATrainingRunListResponse:
 
 @router.delete("/runs/{run_id}")
 def delete_run(run_id: str) -> dict[str, str | bool]:
-    deleted = _run_repository().delete(run_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="lora_training_run_not_found")
+    with _lora_training_start_lock:
+        repository = _run_repository()
+        run = repository.get(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="lora_training_run_not_found")
+        process = lora_training_process(run_id)
+        if run.status == "running" or (process is not None and process.poll() is None):
+            raise HTTPException(status_code=409, detail="lora_training_run_active")
+        if run.operation_id:
+            try:
+                operation = _lora_operation_coordinator().get(run.operation_id)
+            except OperationNotFoundError:
+                pass
+            else:
+                if operation.status in ACTIVE_OPERATION_STATUSES:
+                    raise HTTPException(status_code=409, detail="lora_training_run_active")
+        repository.delete(run_id)
     return {"deleted": True, "id": run_id}
 
 
@@ -1637,6 +1675,10 @@ def _start_run_with_operation(run_id: str) -> LoRATrainingRun:
         raise HTTPException(status_code=422, detail="lora_training_run_not_startable")
     if not prepared.command_args:
         raise HTTPException(status_code=422, detail="lora_training_run_command_empty")
+    try:
+        validate_training_output_available(prepared, project_root=AppConfig().root_dir)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     operation = coordinator.enqueue(
         kind="lora.training",
         source_actor="local",
@@ -1656,6 +1698,7 @@ def _start_run_with_operation(run_id: str) -> LoRATrainingRun:
     prepared.progress_total = None
     prepared.progress_percent = None
     prepared.progress_message = ""
+    prepared.failure_code = ""
     try:
         repository.save(prepared)
     except LoRATrainingStorageError:
@@ -1684,6 +1727,10 @@ def refresh_run(run_id: str) -> LoRATrainingRun:
             else:
                 if operation.status in {"failed", "cancelled", "interrupted"}:
                     run.status = "cancelled" if operation.status == "cancelled" else "failed"
+                    if operation.error_code in {
+                        "comfy_cleanup_pending", "lora_training_output_name_in_use", "lora_training_trainer_config_conflict",
+                    }:
+                        run.failure_code = operation.error_code
                     run.finished_at = operation.updated_at.isoformat()
                     run.updated_at = run.finished_at
                     _run_repository().save(run)
@@ -1728,10 +1775,13 @@ def cancel_run(run_id: str) -> LoRATrainingRun:
 
 
 def _cancel_run_with_operation(run_id: str) -> LoRATrainingRun:
-    run = cancel_lora_training_run(run_id, _run_repository())
+    try:
+        run = cancel_lora_training_run(run_id, _run_repository(), project_root=AppConfig().root_dir)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if run is None:
         raise HTTPException(status_code=404, detail="lora_training_run_not_found")
-    if run.operation_id:
+    if run.operation_id and run.status == "cancelled":
         try:
             _lora_operation_coordinator().request_cancel(run.operation_id)
         except OperationNotFoundError:

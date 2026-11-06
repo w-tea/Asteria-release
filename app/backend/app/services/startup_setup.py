@@ -196,7 +196,7 @@ def build_starter_pack_options(
         if status.release_class == "optional-starter" and status.starter_pack:
             grouped.setdefault(status.starter_pack, []).append(status)
     packs: list[StartupStarterPack] = []
-    for pack_id in ("sdxl", "anima"):
+    for pack_id in ("sdxl", "anima", "krea2", "moss_image"):
         assets = grouped.get(pack_id, [])
         if not assets:
             continue

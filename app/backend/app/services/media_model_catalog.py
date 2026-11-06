@@ -97,14 +97,14 @@ def read_safetensors_header(path: Path) -> SafetensorsHeader:
 class MediaModelCatalogService:
     def __init__(self, classifiers: Sequence[ModelAssetClassifier] | None = None) -> None:
         if classifiers is None:
-            from app.services.anima_model_classifier import AnimaModelClassifier
+            from app.services.native_image_assets import ImageModelClassifier
             from app.services.music_model_classifier import MusicModelClassifier
             from app.services.video_model_classifier import VideoModelClassifier
 
             classifiers = (
                 VideoModelClassifier(),
                 MusicModelClassifier(),
-                AnimaModelClassifier(),
+                ImageModelClassifier(),
             )
         self._classifiers = tuple(classifiers)
 
