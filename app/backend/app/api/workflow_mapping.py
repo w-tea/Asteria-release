@@ -43,7 +43,6 @@ KNOWN_WORKFLOW_BUILDERS = {
     "ComfyTxt2ImgWorkflowBuilder._build_flux",
     "ComfyTxt2ImgWorkflowBuilder._build_flux2",
     "ComfyTxt2ImgWorkflowBuilder._build_anima",
-    "ComfyTxt2ImgWorkflowBuilder._build_native_image",
 }
 
 KNOWN_DYNAMIC_SECTIONS = {

@@ -12,7 +12,6 @@ import psutil
 from pydantic import BaseModel
 
 from app.core.config import AppConfig
-from app.services.comfy_admission import comfy_admission
 from app.services.comfy_model_paths import render_comfy_extra_model_paths
 from app.services.external_model_libraries import ExternalModelLibraryRepository
 from app.services.runtime import ComfyClient
@@ -64,27 +63,6 @@ class RuntimeProcessManager:
             device=device,
             message="ready" if healthy else "not reachable",
         )
-
-    def owned_listener(self) -> RuntimeOwnership | None:
-        """Bind a merge to a local listener, not to a PID file or URL alone."""
-        try:
-            endpoint = urlparse(self.config.comfy_base_url)
-            if endpoint.hostname not in {"127.0.0.1", "::1"} or endpoint.port is None:
-                return None
-            owner = load_runtime_ownership(self.config)
-            if owner is None:
-                return None
-            addresses = {endpoint.hostname, "::" if endpoint.hostname == "::1" else "0.0.0.0"}
-            listeners = {
-                conn.pid for conn in psutil.net_connections(kind="tcp")
-                if conn.status == psutil.CONN_LISTEN and conn.laddr
-                and conn.laddr[0] in addresses and conn.laddr[1] == endpoint.port
-            }
-            if listeners == {owner.pid} and process_matches(psutil.Process(owner.pid), owner):
-                return owner
-        except (RuntimeOwnershipError, psutil.Error, OSError, ValueError, AttributeError):
-            pass
-        return None
 
     def start(self) -> RuntimeStatus:
         with _LIFECYCLE_LOCK:
@@ -262,10 +240,7 @@ class RuntimeProcessManager:
             process = psutil.Process(pid)
             if not process_matches(process,ownership):
                 raise RuntimeProcessError('runtime_ownership_unverified')
-            stopped = terminate_process_tree(process)
-            if stopped:
-                comfy_admission.acknowledge_stopped_runtime(self.config.comfy_base_url, ownership)
-            return stopped
+            return terminate_process_tree(process)
         except psutil.NoSuchProcess:
             if self._pid_from_base_url():
                 raise RuntimeProcessError('runtime_ownership_unverified') from None

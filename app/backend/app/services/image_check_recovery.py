@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 from pathlib import Path
 import shutil
@@ -14,7 +13,6 @@ from app.services.history import HistoryRepository
 
 PENDING_DIRECTORY = '.image-check-pending'
 PUBLICATION_SCHEMA = 'asteria.image-check-publication.v2'
-logger = logging.getLogger(__name__)
 
 
 def file_identity(path: Path) -> list[int]:
@@ -44,64 +42,44 @@ def move_without_replacement(source: Path, destination: Path) -> None:
 def recover_image_publications(history: HistoryRepository) -> list[dict]:
     results = []
     for record in history.list_image_publications():
-        publication_id = record['publication_id']
-        try:
-            result = _recover_publication_files(record)
-        except (OSError, ValueError) as exc:
-            # Keep the SQLite row and journal for a later startup, for example
-            # after the previous output drive is available again.
-            logger.warning('Deferred image publication recovery for %s: %s', publication_id, exc)
-            results.append({'publication_id': publication_id, 'status': 'deferred'})
+        root = Path(record['output_root'])
+        directory = Path(record['directory'])
+        if (root.resolve() != root or directory.is_symlink() or directory.resolve() != directory
+                or directory.parent != root / PENDING_DIRECTORY
+                or directory.name != record['publication_id']):
+            raise ValueError('image_publication_recovery_path_invalid')
+        if record['committed'] or record['cleanup_ready']:
+            # This marker committed in the same SQLite transaction as the final
+            # history references. Never roll its files back, even if the process
+            # died before the in-memory session was marked committed.
+            if directory.exists():
+                shutil.rmtree(directory)
+            history.forget_image_publication(record['publication_id'])
+            results.append({'publication_id': record['publication_id'],
+                            'status': 'committed' if record['committed'] else 'rolled_back'})
             continue
-        history.forget_image_publication(publication_id)
-        results.append(result)
-    return results
-
-
-def _recover_publication_files(record: dict) -> dict:
-    publication_id = record['publication_id']
-    root = Path(record['output_root'])
-    directory = Path(record['directory'])
-    if (root.resolve() != root or directory.is_symlink() or directory.resolve() != directory
-            or directory.parent != root / PENDING_DIRECTORY or directory.name != publication_id):
-        raise ValueError('image_publication_recovery_path_invalid')
-    if not root.is_dir():
-        raise ValueError('image_publication_recovery_root_unavailable')
-    if record['committed'] or record['cleanup_ready']:
-        # This marker committed in the same SQLite transaction as the final
-        # history references. Never roll back those files.
-        if directory.exists():
-            shutil.rmtree(directory)
-        return {'publication_id': publication_id, 'status': 'committed' if record['committed'] else 'rolled_back'}
-    journal_path = directory / 'publication.json'
-    if journal_path.is_symlink():
-        raise ValueError('image_publication_recovery_journal_invalid')
-    journal = json.loads(journal_path.read_text(encoding='utf-8'))
-    if (not isinstance(journal, dict) or journal.get('schema_version') != PUBLICATION_SCHEMA
-            or journal.get('output_root') != str(root) or journal.get('publication_id') != publication_id
-            or not isinstance(journal.get('moves'), list)):
-        raise ValueError('image_publication_recovery_journal_invalid')
-    quarantine = directory / 'quarantine'
-    if quarantine.resolve() != quarantine:
-        raise ValueError('image_publication_recovery_path_invalid')
-    moves = []
-    for move in journal['moves']:
-        if (not isinstance(move, dict) or not isinstance(move.get('destination'), str)
-                or not isinstance(move.get('identities'), list)):
+        journal_path = directory / 'publication.json'
+        journal = json.loads(journal_path.read_text(encoding='utf-8'))
+        if (journal.get('schema_version') != PUBLICATION_SCHEMA
+                or journal.get('output_root') != str(root)
+                or journal.get('publication_id') != record['publication_id']):
             raise ValueError('image_publication_recovery_journal_invalid')
-        path = Path(move['destination'])
-        if (not path.is_relative_to(root) or path.is_relative_to(root / PENDING_DIRECTORY)
-                or path.resolve() != path):
-            raise ValueError('image_publication_recovery_destination_invalid')
-        moves.append((path, move['identities']))
-    quarantined = sorted(str(path) for path in quarantine.iterdir()) if quarantine.exists() else []
-    for index, (path, identities) in enumerate(moves):
-        # File identity also covers a crash between the rename and journal write.
-        if owns_file(path, identities):
-            quarantine.mkdir(exist_ok=True)
-            saved = quarantine / f'{index}-{path.name}'
-            move_without_replacement(path, saved)
-            quarantined.append(str(saved))
-    journal.update(phase='interrupted', quarantined=quarantined)
-    write_json_atomic(journal_path, journal)
-    return {'publication_id': publication_id, 'status': 'quarantined', 'paths': quarantined}
+        quarantine = directory / 'quarantine'
+        quarantined = sorted(str(path) for path in quarantine.iterdir()) if quarantine.exists() else []
+        for index, move in enumerate(journal['moves']):
+            path = Path(move['destination'])
+            if (not path.is_relative_to(root) or path.is_relative_to(root / PENDING_DIRECTORY)
+                    or path.resolve() != path):
+                raise ValueError('image_publication_recovery_destination_invalid')
+            # Identity, not an optimistic "moved" flag, covers a crash between
+            # the actual rename and its following journal write.
+            if owns_file(path, move['identities']):
+                quarantine.mkdir(exist_ok=True)
+                saved = quarantine / f'{index}-{path.name}'
+                move_without_replacement(path, saved)
+                quarantined.append(str(saved))
+        journal.update(phase='interrupted', quarantined=quarantined)
+        write_json_atomic(journal_path, journal)
+        history.forget_image_publication(record['publication_id'])
+        results.append({'publication_id': record['publication_id'], 'status': 'quarantined', 'paths': quarantined})
+    return results

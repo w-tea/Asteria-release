@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from contextlib import ExitStack
 from dataclasses import dataclass, replace
 import errno
 from hashlib import sha256
@@ -20,8 +19,6 @@ from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 from uuid import uuid4
 import zipfile
-
-from app.services.managed_payload_guard import copy_preserved_file, hold_payload_read
 
 
 _COMPONENT_ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
@@ -141,7 +138,7 @@ class ManagedArtifactService:
         self.before_publish = before_publish
         self.resume_ttl_seconds = resume_ttl_seconds
 
-    def acquire(self, spec: ManagedArtifactSpec, *, verify_contents: bool = False) -> ManagedArtifactResult:
+    def acquire(self, spec: ManagedArtifactSpec) -> ManagedArtifactResult:
         destination = self._absolute_without_resolving(spec.destination)
         self._validate_managed_write_path(destination)
         self._validate_destination_type(spec, destination)
@@ -149,9 +146,7 @@ class ManagedArtifactService:
             self._recover_pending_zip_publish(spec, destination)
             self._validate_destination_type(spec, destination)
         receipt_path = self.receipt_path_for(spec)
-        if self._installed_receipt_matches(spec, destination, receipt_path) and (
-            not verify_contents or self.verify_installed_contents(spec)
-        ):
+        if self._installed_receipt_matches(spec, destination, receipt_path):
             return ManagedArtifactResult(
                 status="already-installed",
                 destination=destination,
@@ -533,10 +528,6 @@ class ManagedArtifactService:
         backup = publish_root / "b"
         rollback_receipt_path = self.rollback_receipt_path_for(spec)
         preserve_publish_root = False
-        payload_locks = ExitStack()
-        verify_payload: Callable[[], None] | None = None
-        dispose_payload: Callable[[], None] | None = None
-        disposal_started = False
         self._require_same_volume(part_path, stage)
         try:
             self._validate_managed_write_path(destination)
@@ -554,51 +545,13 @@ class ManagedArtifactService:
                 self._validate_managed_write_path(destination)
                 self._validate_managed_write_path(backup)
                 os.replace(destination, backup)
-            if spec.component_id == "comfyui-core" and self._path_exists(backup):
-                # Park the old namespace before copying. Writes to its public
-                # paths cannot silently succeed against an obsolete copy.
-                verify_payload, dispose_payload = self._preserve_comfy_payload(
-                    backup, stage, receipt["installed_tree"], protection=payload_locks,
-                )
             self._validate_managed_write_path(destination)
             self._validate_managed_write_path(stage)
-            if verify_payload is not None:
-                verify_payload()
-                if self._path_exists(destination):
-                    raise ManagedArtifactError("ComfyUI destination changed during the update")
-                pending = self._rollback_receipt(spec, publish_root.name)
-                pending["preservation_pending"] = True
-                self._write_json_atomic(rollback_receipt_path, pending)
             os.replace(stage, destination)
-            if verify_payload is not None:
-                try:
-                    verify_payload()
-                except (ManagedArtifactError, OSError):
-                    # Do not let the next acquire treat the installed receipt
-                    # as permission to delete a newer, conflicting backup.
-                    preserve_publish_root = True
-                    raise ManagedArtifactRollbackIncomplete(
-                        "ComfyUI payload changed during publication; previous component backup was preserved"
-                    )
-            if dispose_payload is not None:
-                disposing = self._rollback_receipt(spec, publish_root.name)
-                disposing["preservation_disposal"] = True
-                self._write_json_atomic(rollback_receipt_path, disposing)
-                disposal_started = True
-                dispose_payload()
-            else:
-                self._remove_path_safely(backup)
             self._remove_file_safely(rollback_receipt_path)
+            self._remove_path_safely(backup)
         except (ManagedArtifactError, OSError, zipfile.BadZipFile) as exc:
-            # Directory handles must be closed before moving the parked tree
-            # back to its public name on Windows. No backup is deleted first.
-            payload_locks.close()
             self._remove_path_safely(stage)
-            if disposal_started and self._path_exists(backup):
-                preserve_publish_root = True
-                raise ManagedArtifactRollbackIncomplete(
-                    "ComfyUI preserved data needs recovery; update backup was retained"
-                ) from exc
             if self._path_exists(backup) and not self._restore_zip_backup(backup, destination):
                 preserve_publish_root = True
                 raise ManagedArtifactRollbackIncomplete(
@@ -616,119 +569,8 @@ class ManagedArtifactService:
                 ) from exc
             raise ManagedArtifactError(f"managed artifact archive publish failed: {exc}") from exc
         finally:
-            payload_locks.close()
-            if not preserve_publish_root and not self._path_exists(backup):
-                if spec.component_id == "comfyui-core":
-                    # Never recursively collect an unobserved late entry.
-                    self._remove_empty_publish_workspace(publish_root)
-                else:
-                    self._remove_path_safely(publish_root)
-
-    def _preserve_comfy_payload(
-        self, destination: Path, stage: Path, new_tree: list[dict[str, object]],
-        *, protection: ExitStack,
-    ) -> tuple[Callable[[], None], Callable[[], None]]:
-        """Stage non-core payload before atomic replacement, outside core ownership."""
-        def inventory() -> dict:
-            rows, pending = {}, [destination]
-            while pending:
-                current = pending.pop()
-                self._validate_managed_write_path(current)
-                details = current.stat(follow_symlinks=False)
-                relative = current.relative_to(destination).as_posix()
-                rows[relative] = (details.st_ino, details.st_mode, details.st_size, details.st_mtime_ns)
-                if stat.S_ISDIR(details.st_mode):
-                    pending.extend(current.iterdir())
-            return rows
-
-        baseline = inventory()
-        pins = []
-        pins_by_path = {}
-        for relative, details in baseline.items():
-            pin = protection.enter_context(hold_payload_read(
-                destination / relative, directory=stat.S_ISDIR(details[1]),
-            ))
-            pins.append((relative, details, pin))
-            pins_by_path[relative] = pin
-
-        def verify() -> None:
-            if inventory() != baseline:
-                raise ManagedArtifactError("preserved ComfyUI payload changed during the update")
-
-        def dispose() -> None:
-            # Delete opened original objects, never a subsequently replaced
-            # pathname. Directory disposition is nonrecursive and fails if an
-            # unobserved child has arrived, retaining it with the receipt.
-            files = [row for row in pins if not stat.S_ISDIR(row[1][1])]
-            directories = sorted((row for row in pins if stat.S_ISDIR(row[1][1])),
-                                 key=lambda row: len(PurePosixPath(row[0]).parts), reverse=True)
-            for _relative, _details, pin in [*files, *directories]:
-                pin.delete_original()
-
-        verify()
-        previous = None
-        receipt_pin = pins_by_path.get(".asteria-managed.json")
-        if receipt_pin is not None:
-            try:
-                with receipt_pin.reader() as source_receipt:
-                    previous = json.load(source_receipt)
-            except (OSError, ValueError):
-                pass
-        old_files: set[str] = set()
-        old_directories: set[str] = set()
-        old_tree = previous.get("installed_tree") if isinstance(previous, dict) else None
-        if isinstance(previous, dict) and previous.get("component_id") == "comfyui-core" and isinstance(old_tree, list):
-            old_files = {
-                item["path"].casefold()
-                for item in old_tree
-                if isinstance(item, dict) and item.get("kind") == "file" and isinstance(item.get("path"), str)
-            }
-            old_directories = {
-                item["path"].casefold()
-                for item in old_tree
-                if isinstance(item, dict) and item.get("kind") == "directory" and isinstance(item.get("path"), str)
-            }
-        new_entries = {str(item["path"]).casefold(): item for item in new_tree}
-
-        def visit(source: Path) -> None:
-            self._validate_managed_write_path(source)
-            relative = source.relative_to(destination).as_posix()
-            key = relative.casefold()
-            existing = new_entries.get(key)
-            target = stage / (str(existing["path"]) if existing else relative)
-            self._validate_managed_write_path(target)
-            details = source.stat(follow_symlinks=False)
-            if stat.S_ISDIR(details.st_mode):
-                if existing and existing["kind"] != "directory":
-                    raise ManagedArtifactError("preserved ComfyUI payload conflicts with the core archive")
-                children = sorted(source.iterdir(), key=lambda path: path.name.casefold())
-                if not children and key not in old_directories:
-                    target.mkdir(parents=True, exist_ok=True)
-                for child in children:
-                    visit(child)
-                return
-            if not stat.S_ISREG(details.st_mode):
-                raise ManagedArtifactError("preserved ComfyUI payload contains an unsupported entry")
-            if key in old_files:
-                return
-            if existing:
-                if existing["kind"] != "file" or pins_by_path[relative].sha256() != existing["sha256"]:
-                    raise ManagedArtifactError("preserved ComfyUI payload conflicts with the core archive")
-                return
-            target.parent.mkdir(parents=True, exist_ok=True)
-            copy_preserved_file(source, target, pins_by_path[relative])
-            self._validate_managed_write_path(source)
-            after = source.stat(follow_symlinks=False)
-            if ((details.st_ino, details.st_size, details.st_mtime_ns)
-                    != (after.st_ino, after.st_size, after.st_mtime_ns)
-                    or pins_by_path[relative].sha256() != self._sha256(target)):
-                raise ManagedArtifactError("preserved ComfyUI payload changed during the update")
-
-        for source in sorted(destination.iterdir(), key=lambda path: path.name.casefold()):
-            if source.name.casefold() != ".asteria-managed.json":
-                visit(source)
-        verify()
-        return verify, dispose
+            if not preserve_publish_root:
+                self._remove_path_safely(publish_root)
 
     def _restore_zip_backup(self, backup: Path, destination: Path) -> bool:
         if self._path_exists(destination):
@@ -748,12 +590,6 @@ class ManagedArtifactService:
         self._validate_managed_write_path(rollback_receipt_path)
         state = self._read_json(rollback_receipt_path)
         workspace_name = state.get("workspace") if isinstance(state, dict) else None
-        preservation_phase = None
-        if isinstance(workspace_name, str) and re.fullmatch(r"[A-Za-z0-9._-]{1,128}", workspace_name):
-            for phase in ("preservation_pending", "preservation_disposal"):
-                if state == {**self._rollback_receipt(spec, workspace_name), phase: True}:
-                    preservation_phase = phase
-                    state = self._rollback_receipt(spec, workspace_name)
         if (
             not isinstance(workspace_name, str)
             or re.fullmatch(r"[A-Za-z0-9._-]{1,128}", workspace_name) is None
@@ -770,17 +606,10 @@ class ManagedArtifactService:
         self._validate_managed_write_path(publish_root)
         backup = publish_root / "b"
         if not self._path_exists(backup):
-            if spec.component_id == "comfyui-core":
-                self._remove_empty_publish_workspace(publish_root)
-            else:
-                self._remove_path_safely(publish_root)
+            self._remove_path_safely(publish_root)
             self._remove_file_safely(rollback_receipt_path)
             return
         if self._path_exists(destination):
-            if spec.component_id == "comfyui-core":
-                raise ManagedArtifactRollbackIncomplete(
-                    "ComfyUI preserved data needs recovery; update backup was retained"
-                )
             if self._installed_receipt_matches(
                 spec,
                 destination,
@@ -791,10 +620,6 @@ class ManagedArtifactService:
                 return
             raise ManagedArtifactRollbackIncomplete(
                 "managed artifact rollback is incomplete; previous component backup was preserved"
-            )
-        if preservation_phase == "preservation_disposal":
-            raise ManagedArtifactRollbackIncomplete(
-                "ComfyUI preserved data needs recovery; update backup was retained"
             )
         if not self._restore_zip_backup(backup, destination):
             raise ManagedArtifactRollbackIncomplete(
@@ -1091,19 +916,6 @@ class ManagedArtifactService:
                 path.unlink()
         except (ManagedArtifactError, OSError):
             pass
-
-    def _remove_empty_publish_workspace(self, path: Path) -> None:
-        self._validate_managed_write_path(path)
-        try:
-            path.rmdir()
-        except FileNotFoundError:
-            return
-        except OSError as exc:
-            if exc.errno not in {errno.ENOTEMPTY, errno.EEXIST} and getattr(exc, "winerror", None) != 145:
-                raise
-            # A pre-publication interruption can leave a complete stage but
-            # no backup. Retain it, including unknown entries, and let the
-            # next acquisition use a new workspace instead of blocking it.
 
     def _remove_path_safely(self, path: Path) -> None:
         try:
