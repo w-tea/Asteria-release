@@ -15,6 +15,12 @@ class_types:
   unet_loader: UNETLoader
   clip_loader: CLIPLoader
   vae_loader: VAELoader
+  lora_loader: LoraLoader
+  control_loader: AsteriaMossControlLoader
+  control_lora_loader: AsteriaMossLoraLoader
+  control_image: LoadImage
+  control_map: AsteriaMossControlMap
+  control_apply: AsteriaMossControlApply
   positive: CLIPTextEncode
   negative: CLIPTextEncode
   latent: EmptyFlux2LatentImage
@@ -39,4 +45,4 @@ node_contracts:
   skip_layer_guidance:
     required_inputs: [model, double_layers, single_layers, start_percent, end_percent]
     outputs_by_index: {0: MODEL}
-dynamic_sections: []
+dynamic_sections: [lora_stack]

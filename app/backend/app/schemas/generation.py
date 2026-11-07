@@ -30,6 +30,7 @@ class AdvancedStyleSelection(BaseModel):
 class ControlNetUnit(BaseModel):
     enabled: bool = False
     model: str = ""
+    control_type: Literal['depth', 'color'] = 'depth'
     preprocessor: str = "none"
     image_path: str = ""
     weight: float = Field(default=1.0, allow_inf_nan=False)

@@ -27,7 +27,7 @@ def unsupported_native_image_settings(profile: str, settings: dict, *, loras=())
                   "record_word_masks", "record_branch_step", "branch_source_id"):
         if settings.get(field):
             unsupported.append(field)
-    for field in ("controlnet_units", "anima_lllite_units", "detailer_units"):
+    for field in ("anima_lllite_units", "detailer_units"):
         if any(isinstance(unit, dict) and unit.get("enabled", True) for unit in settings.get(field, ())):
             unsupported.append(field)
     if settings.get("remaster", {}).get("enabled"):
@@ -36,8 +36,11 @@ def unsupported_native_image_settings(profile: str, settings: dict, *, loras=())
         unsupported.append("clip_skip")
     if float(settings.get("denoise", settings.get("denoising_strength", 1))) != 1:
         unsupported.append("denoise")
-    if loras:
-        unsupported.append("loras")
+    if settings.get("lora_block_weight_runtime") == "requested" or any(
+        (lora.get("block_weight") or lora.get("block_weight_preset"))
+        and lora.get("hierarchy_mode") != "disabled" for lora in loras
+    ):
+        unsupported.append("lora_block_weight")
     return unsupported
 
 
@@ -52,8 +55,11 @@ def native_image_model_slot_checks(mapping: WorkflowMapping) -> tuple[tuple[str,
     )
 
 
-def native_image_required_nodes(mapping: WorkflowMapping) -> set[str]:
-    return {value for key, value in mapping.class_types.items() if not key.startswith("generation_stage_")}
+def native_image_required_nodes(mapping: WorkflowMapping, *, requires_lora: bool = False,
+                                requires_control: bool = False) -> set[str]:
+    return {value for key, value in mapping.class_types.items()
+            if not key.startswith("generation_stage_") and (key != "lora_loader" or requires_lora)
+            and (not key.startswith('control_') or requires_control)}
 
 
 def native_image_runtime_contract_issues(mapping: WorkflowMapping, object_info: dict) -> list[dict[str, str]]:
@@ -90,6 +96,8 @@ class NativeImageInputs:
 
 def build_native_image_inputs(
     request: dict, mapping: WorkflowMapping, model_name: Callable[[str, str], str],
+    lora_loader: Callable[[dict, list, list, WorkflowMapping, dict], dict],
+    control_preprocessor: Callable = lambda *args: None,
 ) -> NativeImageInputs:
     profile = request["profile"]
     settings = request["settings"]
@@ -136,10 +144,24 @@ def build_native_image_inputs(
                        "batch_size": settings.get("batch_size", 1)},
         },
     }
+    from app.services.native_image_control import append_native_controls, active_controls
+    model, positive, negative = append_native_controls(
+        workflow, request, mapping, model_name, model, vae, positive, negative, control_preprocessor)
+    # Control adapters replace the base input projection before ordinary LoRAs.
+    # Reserve every mapped node, including MOSS guidance, before adding the chain.
+    next_id = max([int(value) for value in mapping.nodes.values()] + [int(value) for value in workflow]) + 1
+    for lora in request.get("loras", ()):
+        node_id = str(next_id)
+        workflow[node_id] = lora_loader(lora, model, clip, mapping, settings)
+        if profile == 'moss_image' and active_controls(settings):
+            workflow[node_id]['class_type'] = mapping.class_type('control_lora_loader', '')
+        model, clip = [node_id, 0], [node_id, 1]
+        next_id += 1
+    workflow[ids["positive"]]["inputs"]["clip"] = clip
     if profile == "krea2":
         workflow[ids["negative"]] = {
             "class_type": mapping.class_type("negative", "ConditioningZeroOut"),
-            "inputs": {"conditioning": positive},
+            "inputs": {"conditioning": [ids['positive'], 0]},
         }
         settings["negative_prompt_runtime"] = "conditioning_zero_out"
     else:

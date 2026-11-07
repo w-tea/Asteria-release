@@ -83,7 +83,8 @@ class NativeImageModelClassifier:
     domain = MediaModelDomain.IMAGE
 
     def __init__(self, dependencies: list[ModelDependency], fingerprints: ModelFingerprintService) -> None:
-        self.dependencies = tuple(d for d in dependencies if d.profile in NATIVE_IMAGE_DEFAULTS)
+        self.dependencies = tuple(d for d in dependencies if d.profile in NATIVE_IMAGE_DEFAULTS
+                                  and d.slot_id in _SLOTS and d.type == _SLOTS[d.slot_id])
         self.fingerprints = fingerprints
 
     @classmethod

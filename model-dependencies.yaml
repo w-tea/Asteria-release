@@ -1,4 +1,52 @@
 dependencies:
+  - id: krea2-depth-control
+    label: Krea 2 Depth Control
+    profile: krea2
+    type: lora
+    release_class: optional-starter
+    selected_by_default: false
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: Patil/Krea-2-depth-controlnet
+      filename: depth-control-lora.safetensors
+      revision: 21889413aa7282a6e78bd510247cceccad034b24
+      url: https://huggingface.co/Patil/Krea-2-depth-controlnet/resolve/21889413aa7282a6e78bd510247cceccad034b24/depth-control-lora.safetensors
+      verified_at: "2026-11-08"
+      provenance_url: https://huggingface.co/Patil/Krea-2-depth-controlnet/blob/21889413aa7282a6e78bd510247cceccad034b24/README.md
+    target: {relative_path: loras/krea2/depth-control-lora.safetensors, slot_id: null}
+    size_bytes: 861995928
+    checksum_sha256: fb80547ed79b47c1e3fea7bb9d36297e3917b2115fab6700ca1501350f9f483c
+    repair_policy: replace-managed-component
+    license:
+      id: krea-2-community-license
+      url: https://www.krea.ai/krea-2-licensing
+      requires_confirmation: true
+
+  - id: moss-image-color-depth-control
+    label: MOSS-Image Color / Depth Control
+    profile: moss_image
+    type: lora
+    release_class: optional-starter
+    selected_by_default: false
+    auto_install: false
+    source:
+      provider: huggingface
+      repo: Comfy-Org/MOSS-Image
+      filename: loras/moss_image_color_depth_control.safetensors
+      revision: 2929efe3cdd506c0a430bcfca70a9a8d805cc095
+      url: https://huggingface.co/Comfy-Org/MOSS-Image/resolve/2929efe3cdd506c0a430bcfca70a9a8d805cc095/loras/moss_image_color_depth_control.safetensors
+      verified_at: "2026-11-08"
+      provenance_url: https://huggingface.co/darask0/MOSS-Image-color-depth-control
+    target: {relative_path: loras/moss_image/moss_image_color_depth_control.safetensors, slot_id: null}
+    size_bytes: 313063368
+    checksum_sha256: e5c0c3efd05e4269207a39de6005798f14c90c6687c89c54eaffe4b76c43a763
+    repair_policy: replace-managed-component
+    license:
+      id: apache-2.0
+      url: https://huggingface.co/darask0/MOSS-Image-color-depth-control/blob/main/README.md
+      requires_confirmation: false
+
   - id: krea2-turbo-fp8
     label: Krea 2 Turbo FP8
     profile: krea2

@@ -14,6 +14,9 @@ class_types:
   unet_loader: UNETLoader
   clip_loader: CLIPLoader
   vae_loader: VAELoader
+  lora_loader: LoraLoader
+  control_loader: AsteriaKreaDepthControl
+  control_image: LoadImage
   positive: CLIPTextEncode
   negative: ConditioningZeroOut
   latent: EmptyLatentImage
@@ -34,4 +37,4 @@ node_contracts:
     required_inputs: [clip_name, type]
     required_input_values: {type: [krea2]}
     outputs_by_index: {0: CLIP}
-dynamic_sections: []
+dynamic_sections: [lora_stack]

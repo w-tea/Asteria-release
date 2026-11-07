@@ -105,6 +105,10 @@ def record_controlnet_artifacts(settings: dict) -> None:
         ):
             if unit.get(key) is not None:
                 artifact[key] = unit.get(key)
+        if unit.get("control_target_size"):
+            for key in ("control_type", "control_target_size", "guidance_start", "guidance_end"):
+                if key in unit:
+                    artifact[key] = unit[key]
         artifacts.append(artifact)
     if artifacts:
         settings["controlnet_artifacts"] = artifacts

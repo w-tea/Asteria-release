@@ -964,6 +964,29 @@ def _validate_runtime_feature_requirements(
         _validate_hires_upscaler_model(object_info, settings)
         _validate_remaster_runtime_requirements(profile, object_info, settings)
         _validate_profile_sampling_options(profile, object_info, settings)
+        if profile in NATIVE_IMAGE_DEFAULTS and settings.get('controlnet_units'):
+            from app.services.native_image_control import validate_native_controls, native_control_capability, control_is_active
+            try:
+                units = validate_native_controls(profile, settings)
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail={
+                    'code': api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING,
+                    'unsupported': [{'field': 'controlnet_units', 'reason': str(exc)}]}) from exc
+            missing_images = _missing_controlnet_images(settings, unit_filter=control_is_active)
+            if missing_images:
+                raise HTTPException(status_code=400, detail={
+                    'code': api_errors.MISSING_CONTROLNET_IMAGE, 'missing': missing_images})
+            mapping = WorkflowMappingRepository(config.mapping_dir).get_txt2img(profile)
+            capability = native_control_capability(mapping, object_info)
+            missing = [u['model'] for u in units if comfy_model_name(u['model'], 'loras',
+                       model_root=config.model_dir, external_roots=_registered_external_model_roots(config))
+                       not in capability['controlnet_models']]
+            if missing:
+                raise HTTPException(status_code=409, detail={
+                    'code': api_errors.MISSING_CONTROLNET_MODEL, 'missing': missing})
+            if any(u.get('preprocessor') == 'depth' for u in units) and 'DepthAnythingPreprocessor' not in nodes:
+                raise HTTPException(status_code=409, detail={
+                    'code': api_errors.MISSING_CONTROLNET_RUNTIME_NODES, 'missing_nodes': ['DepthAnythingPreprocessor']})
         if requires_detailer:
             missing = sorted(DETAILER_REQUIRED_NODES - nodes)
             if missing:
@@ -1409,13 +1432,15 @@ def _resolve_path_safely(path: Path | str) -> Path | None:
         return None
 
 
-def _missing_controlnet_images(settings: dict) -> list[dict[str, Any]]:
+def _missing_controlnet_images(settings: dict, *, unit_filter=None) -> list[dict[str, Any]]:
     missing: list[dict[str, Any]] = []
     units = settings.get("controlnet_units")
     if not isinstance(units, list):
         return missing
     for index, unit in enumerate(units):
         if not isinstance(unit, dict) or not unit.get("enabled", True):
+            continue
+        if unit_filter is not None and not unit_filter(unit):
             continue
         image_path = str(unit.get("image_path") or "").strip()
         if not image_path:
@@ -1859,8 +1884,10 @@ def _missing_anima_bundle_runtime_models(
 
 def _profile_base_required_nodes(profile: str, settings: dict, *, requires_lora: bool = False) -> set[str]:
     if profile in NATIVE_IMAGE_DEFAULTS:
+        from app.services.native_image_control import active_controls
         mapping = WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
-        return native_image_required_nodes(mapping)
+        return native_image_required_nodes(mapping, requires_lora=requires_lora,
+                                          requires_control=bool(active_controls(settings)))
     if profile == "anima":
         bundle = settings.get("anima_generation_bundle")
         is_anima_3_8b = (
@@ -3081,7 +3108,7 @@ def _preflight_profile_prompt_request(request: Txt2ImgRequest) -> None:
         unsupported.extend(
             {"field": field, "reason": "native_image_txt2img_only"}
             for field in unsupported_native_image_settings(
-                request.profile, settings, loras=request.loras or extract_loras(_styled_prompt),
+                request.profile, settings, loras=settings.get("loras") or extract_loras(_styled_prompt),
             )
         )
         if _selected_runtime_id(AppConfig(), request.runtime) != "comfy_workflow":

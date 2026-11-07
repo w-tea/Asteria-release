@@ -127,6 +127,7 @@ class CompatibleTxt2ImgSettings(StrictModel):
     hires_cfg_scale: float | None = Field(default=None, allow_inf_nan=False)
     hires_distilled_cfg_scale: float | None = Field(default=None, allow_inf_nan=False)
     hires_keep_first_pass: bool | None = None
+    controlnet_units: list[dict[str, Any]] | None = None
     detailer_units: list[dict[str, Any]] | None = None
     topaz_enabled: bool | None = None
     topaz_lighting: bool | None = None

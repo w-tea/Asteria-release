@@ -31,6 +31,28 @@ feature_requirements:
     provenance_url: https://docs.comfy.org/tutorials/video/minimax/minimax-h3
 
 dependencies:
+  - id: asteria-native-image-control
+    label: Asteria Krea / MOSS Image Control
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - native_image_control
+    source:
+      provider: bundled
+      url: runtime-components/comfyui/Asteria-Native-Control
+      ref: asteria.native_image_control.v1
+      verified_at: "2026-11-08"
+      provenance_url: bundled://asteria/native-image-control/v1
+    target:
+      relative_path: custom_nodes/Asteria-Native-Control
+    size_bytes: 12118
+    checksum_sha256: 86bf95668582e04534bad47363f03fb5e4f2cf3f0a7a803c479974d3fe866aac
+    license:
+      id: proprietary
+      url: bundled://asteria/license
+    repair_policy: replace-managed-component
+    auto_install: true
+
   - id: asteria-generation-stage
     label: Asteria Generation Stage
     type: comfy_custom_node

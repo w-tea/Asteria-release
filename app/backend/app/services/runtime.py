@@ -4,6 +4,7 @@ import json
 import math
 import random
 import re
+import shutil
 import struct
 import threading
 import time
@@ -1600,7 +1601,8 @@ class ComfyTxt2ImgWorkflowBuilder:
 
         mapping = self._mapping(request["profile"])
         try:
-            inputs = build_native_image_inputs(request, mapping, self._model_name)
+            inputs = build_native_image_inputs(request, mapping, self._model_name, self._lora_loader_node,
+                                                self._controlnet_preprocessor_workflow_node)
         except ValueError as exc:
             raise RuntimeErrorResponse(str(exc)) from exc
         return self._build_custom_sampler_tail(
@@ -4473,6 +4475,7 @@ class ComfyGenerationRuntime:
         target_settings = target_request.setdefault("settings", {})
         iteration_settings = iteration_request.get("settings", {})
         for key in (
+            "controlnet_runtime",
             "restore_faces_runtime",
             "face_restoration_model",
             "tiling_runtime",
@@ -5123,16 +5126,37 @@ class ComfyGenerationRuntime:
         return output_path
 
     def _prepare_control_images(self, request: dict, output_dir: Path) -> None:
-        if request.get("profile") != "sdxl":
+        if request.get("profile") not in {"sdxl", "krea2", "moss_image"}:
             return
+        native_control = request.get('profile') in {'krea2', 'moss_image'}
+        native_root = output_dir / f"native_{uuid4().hex}"
         available_preprocessor_nodes = self._available_controlnet_preprocessor_nodes()
-        for unit in request.get("settings", {}).get("controlnet_units", []):
+        for index, unit in enumerate(request.get("settings", {}).get("controlnet_units", [])):
+            if not unit.get('enabled', True):
+                continue
+            if native_control:
+                from app.services.native_image_control import control_is_active
+                if not control_is_active(unit):
+                    continue
             image_path = unit.get("image_path")
             if not image_path:
                 continue
             path = Path(str(image_path))
             if not _path_exists_safely(path) or not _path_is_file_safely(path):
                 raise RuntimeErrorResponse(f"Control image not found: {path}")
+            unit_output_dir = output_dir
+            if native_control:
+                # Keep each request's input and resized map independently usable
+                # from history, even when the original filename is reused.
+                unit_output_dir = native_root / f"control_{index + 1}"
+                try:
+                    unit_output_dir.mkdir(parents=True, exist_ok=False)
+                    saved = unit_output_dir / path.name
+                    shutil.copy2(path, saved)
+                except OSError as exc:
+                    raise RuntimeErrorResponse(f"Failed to retain control image: {path}") from exc
+                unit["original_image_path"] = str(path)
+                path = saved
             preprocessor = str(unit.get("preprocessor") or "none").lower()
             node_class = COMFY_CONTROLNET_PREPROCESSOR_NODES.get(preprocessor)
             if preprocessor != "none" and node_class and node_class in available_preprocessor_nodes:
@@ -5140,12 +5164,18 @@ class ComfyGenerationRuntime:
                 unit["preprocessor_runtime"] = "comfy_node"
                 unit["preprocessor_node_class"] = node_class
             else:
+                if native_control and preprocessor != 'none':
+                    raise RuntimeErrorResponse('Depth estimation is unavailable. Use a prepared depth map or install the depth preprocessor.')
                 try:
                     processed_path = preprocess_control_image(path, preprocessor, output_dir)
                 except ControlNetPreprocessorError as exc:
                     raise RuntimeErrorResponse(str(exc)) from exc
                 unit["preprocessor_runtime"] = "none" if preprocessor == "none" else "local_fallback"
-            processed_path = self._prepare_controlnet_resize(processed_path, unit, request.get("settings", {}), output_dir)
+            processed_path = self._prepare_controlnet_resize(
+                processed_path, unit, request.get("settings", {}),
+                unit_output_dir,
+                force_target_size=native_control,
+            )
             if processed_path != path:
                 unit["source_image_path"] = str(path)
                 unit["processed_image_path"] = str(processed_path)
@@ -5163,14 +5193,16 @@ class ComfyGenerationRuntime:
             return set()
         return set(object_info.keys())
 
-    def _prepare_controlnet_resize(self, path: Path, unit: dict, settings: dict, output_dir: Path) -> Path:
-        if not unit.get("pixel_perfect"):
+    def _prepare_controlnet_resize(self, path: Path, unit: dict, settings: dict, output_dir: Path,
+                                   *, force_target_size: bool = False) -> Path:
+        if not unit.get("pixel_perfect") and not force_target_size:
             return path
         width = int(settings.get("width") or 0)
         height = int(settings.get("height") or 0)
         if width <= 0 or height <= 0:
             return path
-        unit["pixel_perfect_target_size"] = {"width": width, "height": height}
+        target_field = "control_target_size" if force_target_size else "pixel_perfect_target_size"
+        unit[target_field] = {"width": width, "height": height}
         resized_path = output_dir / f"{path.stem}_pixel_perfect{path.suffix or '.png'}"
         try:
             output_dir.mkdir(parents=True, exist_ok=True)

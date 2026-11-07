@@ -589,6 +589,7 @@ def capabilities() -> RuntimeCapabilitiesResponse:
     return RuntimeCapabilitiesResponse(
         base_url=app_config.comfy_base_url,
         features={
+            **_native_control_capabilities(app_config, object_info),
             "controlnet": _controlnet_capability(object_info, nodes),
             "anima_lllite": _anima_lllite_capability(object_info, nodes),
             "detailer": _detailer_capability(object_info, nodes),
@@ -606,6 +607,13 @@ def capabilities() -> RuntimeCapabilitiesResponse:
             "unmapped_generation_settings": _unmapped_generation_settings_capability(object_info, nodes),
         },
     )
+
+
+def _native_control_capabilities(config: AppConfig, object_info: dict) -> dict:
+    from app.services.native_image_control import native_control_capability
+    mappings = WorkflowMappingRepository(config.mapping_dir)
+    return {f'native_control_{profile}': native_control_capability(mappings.get_txt2img(profile), object_info)
+            for profile in ('krea2', 'moss_image')}
 
 
 @router.get("/sampling", response_model=RuntimeSamplingResponse)
