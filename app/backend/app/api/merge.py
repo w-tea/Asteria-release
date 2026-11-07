@@ -69,6 +69,7 @@ from app.services.merge_presets import (
     MergeBlockPreset,
     MergePresetRepository,
     canonical_merge_schema,
+    expand_sdxl_native_weights,
     merge_schema_family,
     migrate_legacy_flux2_weight_text,
     migrate_legacy_flux2_weights,
@@ -754,6 +755,8 @@ def save_merge_block_preset(request: MergeBlockPresetRequest) -> MergeBlockPrese
     if not name:
         raise HTTPException(status_code=400, detail="block_preset_name_required")
     weights = migrate_legacy_flux2_weights(request.weights) if family == "flux2" else request.weights
+    if family == "sdxl":
+        weights = expand_sdxl_native_weights(weights)
     if len(weights) != len(BLOCK_SCHEMAS[family]):
         raise HTTPException(status_code=400, detail="block_preset_weight_count_mismatch")
     preset = MergeBlockPreset(
@@ -803,6 +806,8 @@ def import_merge_block_presets(request: MergeBlockPresetImportRequest) -> MergeB
         if not name:
             raise HTTPException(status_code=400, detail="block_preset_name_required")
         weights = migrate_legacy_flux2_weights(item.weights) if family == "flux2" else item.weights
+        if family == "sdxl":
+            weights = expand_sdxl_native_weights(weights)
         if len(weights) != len(BLOCK_SCHEMAS[family]):
             raise HTTPException(status_code=400, detail="block_preset_weight_count_mismatch")
         preset = MergeBlockPreset(

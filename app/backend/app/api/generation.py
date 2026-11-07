@@ -82,7 +82,6 @@ from app.services.anima_lllite_runtime import (
     anima_lllite_model_directory,
     anima_lllite_model_values,
     anima_lllite_runtime_contract,
-    is_standard_controlnet_model_name,
 )
 from app.services.controlnet_mode import (
     controlnet_mode_contract_status,
@@ -1512,7 +1511,6 @@ def _missing_controlnet_models(
     model_values = {
         value
         for value in _node_input_values(object_info, "ControlNetLoader", "control_net_name")
-        if is_standard_controlnet_model_name(value)
     }
     missing: list[dict[str, Any]] = []
     for index, unit in enumerate(units):

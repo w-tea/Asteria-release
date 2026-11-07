@@ -95,8 +95,8 @@ dependencies:
       provenance_url: bundled://asteria/merge-runtime/v1.2
     target:
       relative_path: custom_nodes/Asteria-Merge-Runtime
-    size_bytes: 50549
-    checksum_sha256: e5fc765661391de9b23f49cbd161cc662c750e0c3b0dbfa505380b891f7c1805
+    size_bytes: 51371
+    checksum_sha256: 1d3e2de2e049de42057c6b2cdb2d68f5f6451a0270fa7809f7333aa524ea99b7
     license:
       id: proprietary
       url: bundled://asteria/license

@@ -315,8 +315,8 @@ class DatasetConfigPreviewRequest(BaseModel):
     pretrained_model_name_or_path: str = ""
     vae: str = ""
     qwen3: str = ""
-    repeats: int | None = Field(default=None, ge=1, le=1000)
-    max_train_epochs: int | None = Field(default=None, ge=1, le=1000)
+    repeats: int | None = Field(default=None, ge=1)
+    max_train_epochs: int | None = Field(default=None, ge=1)
     class_tokens: str = ""
     caption_extension: str | None = None
     optimizer_type: str = ""
@@ -421,8 +421,8 @@ class LoRATrainingDatasetMaterializeRequest(BaseModel):
     pretrained_model_name_or_path: str = ""
     vae: str = ""
     qwen3: str = ""
-    repeats: int | None = Field(default=None, ge=1, le=1000)
-    max_train_epochs: int | None = Field(default=None, ge=1, le=1000)
+    repeats: int | None = Field(default=None, ge=1)
+    max_train_epochs: int | None = Field(default=None, ge=1)
     class_tokens: str = ""
     caption_extension: str | None = None
     optimizer_type: str = ""
@@ -490,8 +490,8 @@ class LoRACopyMachineTrainingRunPrepareRequest(BaseModel):
     vae_path: str = ""
     training_working_dir: str = ""
     accelerate_command: str = "accelerate"
-    repeats: int | None = Field(default=None, ge=1, le=1000)
-    max_train_epochs: int | None = Field(default=None, ge=1, le=1000)
+    repeats: int | None = Field(default=None, ge=1)
+    max_train_epochs: int | None = Field(default=None, ge=1)
     addift_timestep_window: LoRACopyMachineADDifTTimestepWindow = "action_500_1000"
     addift_snr_gamma: LoRACopyMachineADDifTSNRGamma = "preset_5_0"
 

@@ -180,8 +180,8 @@ class LoRACopyMachineTrainingRunPrepareData(BaseModel):
     vae_path: str = ""
     training_working_dir: str = ""
     accelerate_command: str = "accelerate"
-    repeats: int | None = Field(default=None, ge=1, le=1000)
-    max_train_epochs: int | None = Field(default=None, ge=1, le=1000)
+    repeats: int | None = Field(default=None, ge=1)
+    max_train_epochs: int | None = Field(default=None, ge=1)
     addift_timestep_window: LoRACopyMachineADDifTTimestepWindow = "action_500_1000"
     addift_snr_gamma: LoRACopyMachineADDifTSNRGamma = "preset_5_0"
 
@@ -295,7 +295,7 @@ class LoRATrainingPreset(BaseModel):
 
 class DatasetSubset(BaseModel):
     image_dir: str = Field(min_length=1)
-    num_repeats: int = Field(default=10, ge=1, le=1000)
+    num_repeats: int = Field(default=10, ge=1)
     caption_extension: str = ".txt"
     class_tokens: str = ""
     keep_tokens: int | None = Field(default=None, ge=0, le=32)

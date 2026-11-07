@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -118,7 +119,6 @@ def prompt_syntax_plan_from_dict(payload: object) -> PromptSyntaxPlan:
         or not all(isinstance(item, str) for item in enabled_features)
         or not isinstance(raw_segments, list)
         or not raw_segments
-        or len(raw_segments) > 8
     ):
         raise _syntax_error("plan_invalid", "The prompt syntax plan is incomplete.", "Parse the prompt again before generating.")
     segments: list[PromptSyntaxSegment] = []
@@ -525,13 +525,13 @@ def _and_segment(part: str) -> PromptSyntaxSegment:
         raise _syntax_error(
             "and_weight_invalid",
             "An AND condition weight is not a decimal number.",
-            "Use a finite decimal from -10.0 through 10.0.",
+            "Use a finite decimal number.",
         ) from exc
-    if not weight.is_finite() or weight < Decimal("-10") or weight > Decimal("10"):
+    if not weight.is_finite() or not math.isfinite(float(weight)):
         raise _syntax_error(
             "and_weight_invalid",
             "An AND condition weight is outside the supported range.",
-            "Use a finite decimal from -10.0 through 10.0.",
+            "Use a finite decimal number that can be represented by the sampler.",
         )
     return PromptSyntaxSegment(
         text=_normalize_weight_text(text),
@@ -583,12 +583,6 @@ def parse_prompt_syntax(text: str, *, profile_id: str) -> PromptSyntaxPlan:
         )
     if and_positions:
         parts = _split_at_positions(text, "AND", and_positions)
-        if len(parts) > 8:
-            raise _syntax_error(
-                "and_segment_limit",
-                "AND supports up to eight conditions.",
-                "Reduce the number of AND conditions to eight or fewer.",
-            )
         return PromptSyntaxPlan(
             profile_id=profile_id,
             operation="conditioning_and",
@@ -597,12 +591,6 @@ def parse_prompt_syntax(text: str, *, profile_id: str) -> PromptSyntaxPlan:
         )
     if break_positions:
         parts = _split_at_positions(text, "BREAK", break_positions)
-        if len(parts) > 8:
-            raise _syntax_error(
-                "break_segment_limit",
-                "BREAK supports up to eight sections.",
-                "Reduce the number of BREAK sections to eight or fewer.",
-            )
         return PromptSyntaxPlan(
             profile_id=profile_id,
             operation="conditioning_break",

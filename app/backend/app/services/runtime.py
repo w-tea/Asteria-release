@@ -1292,9 +1292,21 @@ class ComfyTxt2ImgWorkflowBuilder:
                 mapping,
                 start_at_step=self._refiner_switch_step(settings, refiner_steps),
                 end_at_step=refiner_steps,
-                add_noise=False,
+                add_noise=self._refiner_switch_step(settings, refiner_steps) == 0,
                 return_with_leftover_noise=False,
             )
+            if (
+                self._refiner_switch_step(settings, refiner_steps) == 0
+                and not self._uses_comfy_hires(settings)
+                and seed_resize_noise_ref is not None
+                and seed_resize_seed is not None
+            ):
+                workflow[refiner_sample_node] = self._ksampler_advanced_inspire_node(
+                    refiner_stage_settings, refiner_model_ref, refiner_positive_ref,
+                    refiner_negative_ref, [sample_node, 0], seed_resize_noise_ref, mapping,
+                    seed=seed_resize_seed, start_at_step=0, end_at_step=refiner_steps,
+                    return_with_leftover_noise=False,
+                )
             if refiner_execution_state_ref is not None:
                 next_id = append_spatial_execution_receipt(
                     workflow=workflow,
@@ -2706,10 +2718,8 @@ class ComfyTxt2ImgWorkflowBuilder:
         }
 
     def _refiner_switch_step(self, settings: dict, steps: int) -> int:
-        if steps <= 1:
-            return max(0, steps)
-        switch_at = float(settings.get("refiner_switch_at") or 0.8)
-        return max(1, min(steps - 1, int(round(steps * switch_at))))
+        switch_at = settings.get("refiner_switch_at")
+        return max(0, min(steps, int(round(steps * float(0.8 if switch_at is None else switch_at)))))
 
     def _request_prompt_syntax_plan(
         self,

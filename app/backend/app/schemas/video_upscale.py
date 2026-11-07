@@ -33,7 +33,7 @@ class VideoUpscaleTarget(BaseModel):
 
     width: int | None = Field(default=None, ge=64, le=4096)
     height: int | None = Field(default=None, ge=64, le=4096)
-    scale: float | None = Field(default=None, gt=1.0, le=4.0, allow_inf_nan=False)
+    scale: float | None = Field(default=None, gt=1.0, allow_inf_nan=False)
 
     @field_validator("width", "height", mode="before")
     @classmethod
@@ -129,7 +129,7 @@ class VideoUpscaleSpatialSettings(BaseModel):
 class VideoUpscaleSamplingSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    steps: int = Field(ge=1, le=200)
+    steps: int = Field(ge=1, le=10000)
     sampler: str
     scheduler: str
     cfg: float = Field(default=1, ge=0, le=100, allow_inf_nan=False)

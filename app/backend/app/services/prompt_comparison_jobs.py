@@ -66,8 +66,14 @@ class PromptComparisonExecutor:
                     metadata['lora_test'] = {'run_id': trial['run_id'], 'training_fingerprint': trial['training']['fingerprint'],
                         'scene': trial['scenes'][trial['pairs'][cell['pair']]['scene']], 'learned_features': trial['learned_features'],
                         'model_sha256': next((asset['sha256'] for asset in trial['assets'] if asset.get('role') == 'lora:0'), None)}
+                overrides = {}
+                if plan['change']['kind'] == 'lora' and cell['arm'] == 'B':
+                    selected = request.loras[plan['change']['index']]
+                    # Reuse the normal generator's alias-aware override and
+                    # history restoration, without changing ordinary tag priority.
+                    overrides['xyz_lora_weights'] = {selected.name: plan['change']['weight']}
                 result = generation._generate(request, plan['mode'], job_id=job_id, comparison_metadata=metadata,
-                    comparison_session=sampling_session)
+                    comparison_session=sampling_session, **overrides)
                 artifacts.append(f'history:{result.id}')
                 self.repository.update_cell(comparison_id, active_index, status=result.status, generation_id=result.id,
                                             output_paths=[str(item.path) for item in getattr(result, 'primary_outputs', [])]

@@ -447,6 +447,7 @@ def prepare_anima_lora_runtime_entries(
         or target_descriptor.component
         != AnimaArchitectureComponent.DIFFUSION_MODEL
         or target_descriptor.variant_id is None
+        or target_descriptor.diffusion_block_count is None
     ):
         raise AnimaLoraRemapRegistryError("anima_target_model_layout_unverified")
     target_layout_id = target_descriptor.variant_id.value
@@ -547,14 +548,30 @@ def prepare_anima_lora_runtime_entries(
         lora["name"] = relative_path
         # This entry can be prepared again for a different Hires target.
         lora.pop("anima_remap", None)
-        # A catalog identity does not request remapping. For base Anima,
-        # let the runtime consume ordinary sparse/Kohya/other native patches.
-        # An explicitly out-of-range block still requires an actual mapping.
+        # A complete converter layout can identify an actual cross-generation
+        # conversion. Missing layers are not evidence against native use.
+        source_blocks = {
+            int(match.group(1)) for key in source_header.tensors
+            if (match := _LORA_DIFFUSION_BLOCK.match(key)) is not None
+        }
+        source_adapter_blocks = {
+            int(match.group(1)) for key in source_header.tensors
+            if (match := _LORA_LLM_ADAPTER_BLOCK.match(key)) is not None
+        }
+        complete_source_blocks = next(
+            (count for count in (28, 40, 52)
+             if source_blocks == set(range(count)) and source_adapter_blocks == set(range(6))),
+            None,
+        )
+        target_blocks = target_descriptor.diffusion_block_count
+        cross_layout = complete_source_blocks is not None and complete_source_blocks != target_blocks
+        # Catalogue identity does not itself request conversion. Keep native
+        # sparse/Kohya/other patches on every supported Anima generation.
         if (
-            target_layout_id == "anima_base_28"
-            and mode == "preserve"
+            mode == "preserve"
+            and not cross_layout
             and not any(
-                int(match.group(1) or match.group(2)) >= 28
+                int(match.group(1) or match.group(2)) >= target_blocks
                 for key in source_header.tensors
                 if (match := _NATIVE_LORA_DIFFUSION_BLOCK.match(key)) is not None
             )

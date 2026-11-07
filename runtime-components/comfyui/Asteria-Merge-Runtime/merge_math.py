@@ -62,7 +62,11 @@ except ImportError:
 CONTRACT_VERSION = "asteria.merge.runtime.v1"
 SDXL_BLOCKS = ["BASE", *[f"IN{x:02d}" for x in range(17)], "M00", *[f"OUT{x:02d}" for x in range(17)]]
 ANIMA_BLOCKS = ["BASE", *[f"B{x:03d}" for x in range(28)], *[f"LLM{x:03d}" for x in range(6)], "OUT"]
-BLOCK_SCHEMAS = {"sdxl": SDXL_BLOCKS, "anima": ANIMA_BLOCKS}
+BLOCK_SCHEMAS = {
+    "sdxl": SDXL_BLOCKS, "anima": ANIMA_BLOCKS,
+    "anima_2_9b_40": ["BASE", *[f"B{x:03d}" for x in range(40)], *[f"LLM{x:03d}" for x in range(6)], "OUT"],
+    "anima_3_8b_52": ["BASE", *[f"B{x:03d}" for x in range(52)], *[f"LLM{x:03d}" for x in range(6)], "OUT"],
+}
 SELF_SKIP_KEY_PARTS = ("to_out", "proj_out", "norm")
 SUPER_MERGER_FINETUNE_KEYS = [
     "model.diffusion_model.input_blocks.0.0.weight",
@@ -84,7 +88,8 @@ def validate_payload(payload: dict[str, Any]) -> None:
     if payload.get("contract_version") != CONTRACT_VERSION:
         raise MergeRuntimeMathError("incompatible merge runtime contract")
     family = payload.get("model_family")
-    if family not in BLOCK_SCHEMAS or payload.get("block_schema") != family:
+    schema = payload.get("block_schema")
+    if schema not in BLOCK_SCHEMAS or family != ("anima" if str(schema).startswith("anima") else schema):
         raise MergeRuntimeMathError("unsupported merge runtime family")
     if payload.get("merge_mode") not in {"weight_sum", "add_difference", "triple_sum", "sum_twice"}:
         raise MergeRuntimeMathError("unsupported merge mode")
@@ -147,13 +152,13 @@ def _block_id_for_key(key: str, schema: str) -> str:
     if "llm_adapter.blocks." in lowered:
         digits = "".join(ch for ch in lowered.split("llm_adapter.blocks.", 1)[1][:5] if ch.isdigit())
         return f"LLM{int(digits):03d}" if digits else "BASE"
-    if schema == "anima" and ".blocks." in lowered:
+    if schema.startswith("anima") and ".blocks." in lowered:
         digits = "".join(ch for ch in lowered.split(".blocks.", 1)[1][:5] if ch.isdigit())
         return f"B{int(digits):03d}" if digits else "BASE"
-    if schema == "anima" and lowered.startswith("net.blocks."):
+    if schema.startswith("anima") and lowered.startswith("net.blocks."):
         digits = "".join(ch for ch in lowered.split("net.blocks.", 1)[1][:5] if ch.isdigit())
         return f"B{int(digits):03d}" if digits else "BASE"
-    if "final_layer" in lowered and schema == "anima":
+    if "final_layer" in lowered and schema.startswith("anima"):
         return "OUT"
     if schema == "sdxl" and "conditioner.embedders." in lowered:
         return "BASE"
@@ -298,8 +303,16 @@ def _block_weight(payload: dict[str, Any], key: str, value: str, fallback: float
     schema = BLOCK_SCHEMAS[payload["block_schema"]]
     block_id = _block_id_for_key(key, payload["block_schema"])
     weights = _float_list(value)
-    if len(weights) >= len(schema) and block_id in schema:
-        return _elemental_weight(payload, key, block_id, weights[schema.index(block_id)], tensor_index)
+    if weights and ':' not in value:
+        if payload['block_schema'] == 'sdxl' and len(weights) == 20:
+            standard = ['BASE', *[f'IN{i:02d}' for i in range(9)], 'M00', *[f'OUT{i:02d}' for i in range(9)]]
+            by_block = dict(zip(standard, weights))
+            weights = [by_block.get(block, fallback) for block in schema]
+        if len(weights) > len(schema):
+            raise MergeRuntimeMathError('merge_block_weights_length_mismatch')
+        if block_id in schema:
+            index = schema.index(block_id)
+            return _elemental_weight(payload, key, block_id, weights[index] if index < len(weights) else fallback, tensor_index)
     result = fallback
     for raw in value.splitlines():
         if ":" not in raw:

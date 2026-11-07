@@ -26,7 +26,6 @@ from app.services.anima_lllite_runtime import (
     ANIMA_LLLITE_CURRENT_REQUIRED_NODES,
     anima_lllite_missing_nodes,
     anima_lllite_model_values,
-    is_standard_controlnet_model_name,
 )
 from app.services.controlnet_mode import (
     CONTROLNET_MODE_LABELS,
@@ -300,7 +299,6 @@ def _controlnet_capability(object_info: dict, nodes: set[str]) -> dict[str, Any]
         sorted(
             value
             for value in _node_input_values(object_info, "ControlNetLoader", "control_net_name")
-            if is_standard_controlnet_model_name(value)
         )
         if not missing
         else []

@@ -114,7 +114,7 @@ class PromptSyntaxPlanRecord(BaseModel):
     profile_id: str
     operation: PromptSyntaxOperation
     enabled_features: list[PromptSyntaxFeature] = Field(default_factory=list)
-    segments: list[PromptSyntaxSegmentRecord] = Field(min_length=1, max_length=8)
+    segments: list[PromptSyntaxSegmentRecord] = Field(min_length=1)
 
 
 class PromptSyntaxPassPlanRecord(BaseModel):

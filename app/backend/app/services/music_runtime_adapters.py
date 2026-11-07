@@ -84,7 +84,7 @@ class LocalMusic3Adapter:
                 default_steps=30,
                 steps=CapabilityRange(
                     minimum=1,
-                    maximum=1000,
+                    maximum=10000,
                     step=1,
                     enforcement="advisory",
                 ),

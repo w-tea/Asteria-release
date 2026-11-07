@@ -44,6 +44,7 @@ from app.services.merge_presets import (
     is_anima_schema,
     is_flux_schema,
     migrate_legacy_flux2_weight_text,
+    expand_sdxl_native_weight_text,
 )
 
 if TYPE_CHECKING:
@@ -129,8 +130,8 @@ class MergeSource(BaseModel):
     role: str
     path: str
     label: str = ""
-    weight: float | None = Field(default=None, ge=-10, le=10)
-    clip_weight: float | None = Field(default=None, ge=-10, le=10)
+    weight: float | None = Field(default=None, allow_inf_nan=False)
+    clip_weight: float | None = Field(default=None, allow_inf_nan=False)
     block_weights: str = ""
 
 
@@ -145,8 +146,8 @@ class MergeRecipe(BaseModel):
     calc_mode: str = "normal"
     block_schema: str = "sdxl"
     sources: list[MergeSource] = Field(default_factory=list)
-    alpha: float = Field(default=0.5, ge=-10, le=10)
-    beta: float = Field(default=0.0, ge=-10, le=10)
+    alpha: float = Field(default=0.5, allow_inf_nan=False)
+    beta: float = Field(default=0.0, allow_inf_nan=False)
     block_weights: str = ""
     block_weights_alpha: str = ""
     block_weights_beta: str = ""
@@ -201,6 +202,13 @@ class MergeRecipe(BaseModel):
 
     @model_validator(mode="after")
     def migrate_legacy_flux2_vectors(self) -> MergeRecipe:
+        if self.block_schema == 'sdxl':
+            self.block_weights = expand_sdxl_native_weight_text(self.block_weights, self.alpha)
+            self.block_weights_alpha = expand_sdxl_native_weight_text(self.block_weights_alpha, self.alpha)
+            self.block_weights_beta = expand_sdxl_native_weight_text(self.block_weights_beta, self.beta)
+            self.sources = [source.model_copy(update={'block_weights': expand_sdxl_native_weight_text(
+                source.block_weights, source.weight if source.weight is not None else self.alpha)})
+                for source in self.sources]
         if self.block_schema != "flux2":
             return self
         self.block_weights = migrate_legacy_flux2_weight_text(self.block_weights)
@@ -1144,9 +1152,13 @@ def _block_weight_for_key(recipe: MergeRecipe, key: str, value: str, fallback: f
     weights = _float_list(value)
     schema = BLOCK_SCHEMAS.get(recipe.block_schema, BLOCK_SCHEMAS["sdxl"])
     block_id = _block_id_for_key(key, recipe.block_schema)
-    if len(weights) >= len(schema):
+    if weights and ':' not in value:
+        if len(weights) > len(schema):
+            raise ValueError('merge_block_weights_length_mismatch')
         if block_id in schema:
-            return _elemental_weight_for_key(recipe, key, block_id, weights[schema.index(block_id)], tensor_index)
+            index = schema.index(block_id)
+            return _elemental_weight_for_key(recipe, key, block_id,
+                weights[index] if index < len(weights) else fallback, tensor_index)
     result = fallback
     for raw_line in value.splitlines():
         line = raw_line.strip()
