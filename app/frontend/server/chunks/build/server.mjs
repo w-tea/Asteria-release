@@ -3834,6 +3834,9 @@ const messages = {
   "modelSettings.missingAssetsAria": { en: "Missing model assets", ja: "不足モデルアセット" },
   "modelSettings.missingAssets": { en: "Missing profile assets", ja: "不足しているプロファイルアセット" },
   "modelSettings.missingAssetsHelp": { en: "Place these files in the model storage root or install them from System setup.", ja: "これらのファイルをモデル保存ルートに配置するか、Settingsのセットアップから導入してください。" },
+  "modelSettings.optionalFeatureAssets": { en: "Optional feature models not installed", ja: "追加機能用の未導入モデル" },
+  "modelSettings.optionalFeatureAssetsHelp": { en: "These models are only needed for extra features such as ControlNet, not ordinary image generation. Install them from Settings when needed.", ja: "ControlNetなどの追加機能を使うときに必要なモデルです。通常の画像生成には必要ありません。使う場合はSettingsから導入してください。" },
+  "imageEditor.maskRetainedNotApplied": { en: "The mask area setting is not applied with the current generation setup. Your image and mask are kept; switch back to a supported model to continue editing.", ja: "現在の生成設定では、マスク範囲の指定は適用されません。画像とマスクは保持されるため、対応モデルへ戻して編集を続けられます。" },
   "modelSettings.unselected": { en: "Unselected", ja: "未選択" },
   "modelSettings.filePathPlaceholder": { en: "{type} file path", ja: "{type} ファイルパス" },
   "historyPanel.aria": { en: "Generation history", ja: "生成履歴" },
@@ -19121,49 +19124,49 @@ const _sfc_main$22 = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "mode-source-panel",
         "aria-label": unref(t)("generationInspector.modeSource")
-      }, _attrs))} data-v-f70356ba><div class="mode-source-panel__heading" data-v-f70356ba><h2 data-v-f70356ba>${ssrInterpolate(unref(t)("generationInspector.modeSource"))}</h2><span class="${ssrRenderClass(["mode-source-panel__status", { "mode-source-panel__status--ready": unref(readinessIsReady) }])}" data-v-f70356ba>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(readinessLabel))}</span></div><div class="mode-source-panel__modes"${ssrRenderAttr("aria-label", unref(t)("prompt.source.generationMode"))} data-v-f70356ba><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "txt2img")} data-v-f70356ba>txt2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "img2img")}${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-f70356ba>img2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "inpaint")}${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-f70356ba>inpaint</button></div>`);
+      }, _attrs))} data-v-12d41b53><div class="mode-source-panel__heading" data-v-12d41b53><h2 data-v-12d41b53>${ssrInterpolate(unref(t)("generationInspector.modeSource"))}</h2><span class="${ssrRenderClass(["mode-source-panel__status", { "mode-source-panel__status--ready": unref(readinessIsReady) }])}" data-v-12d41b53>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(readinessLabel))}</span></div><div class="mode-source-panel__modes"${ssrRenderAttr("aria-label", unref(t)("prompt.source.generationMode"))} data-v-12d41b53><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "txt2img")} data-v-12d41b53>txt2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "img2img")}${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-12d41b53>img2img</button><button type="button"${ssrRenderAttr("aria-pressed", unref(generation).mode === "inpaint")}${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-12d41b53>inpaint</button></div>`);
       if (unref(basicNativeProfile)) {
-        _push(`<p class="field-hint" data-v-f70356ba>${ssrInterpolate(unref(t)("modelSettings.basicNativeSupport"))}</p>`);
+        _push(`<p class="field-hint" data-v-12d41b53>${ssrInterpolate(unref(t)("modelSettings.basicNativeSupport"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(sourceImageError)) {
-        _push(`<p class="error" aria-live="assertive" data-v-f70356ba>${ssrInterpolate(unref(sourceImageError))}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-12d41b53>${ssrInterpolate(unref(sourceImageError))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).mode === "txt2img") {
-        _push(`<p class="mode-source-panel__empty" data-v-f70356ba>${ssrInterpolate(unref(t)("modeSource.txt2imgHelp"))}</p>`);
+        _push(`<p class="mode-source-panel__empty" data-v-12d41b53>${ssrInterpolate(unref(t)("modeSource.txt2imgHelp"))}</p>`);
       } else {
-        _push(`<!--[--><section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.sourceImage"))}${ssrRenderAttr("aria-busy", unref(sourceUploading))} data-v-f70356ba><div class="mode-source-asset__heading" data-v-f70356ba><span data-v-f70356ba>${ssrInterpolate(unref(t)("modeSource.sourceImage"))}</span><small data-v-f70356ba>${ssrInterpolate(unref(generation).initImagePath ? filename2(unref(generation).initImagePath) : unref(t)("modeSource.sourceRequired"))}</small></div>`);
+        _push(`<!--[--><section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.sourceImage"))}${ssrRenderAttr("aria-busy", unref(sourceUploading))} data-v-12d41b53><div class="mode-source-asset__heading" data-v-12d41b53><span data-v-12d41b53>${ssrInterpolate(unref(t)("modeSource.sourceImage"))}</span><small data-v-12d41b53>${ssrInterpolate(unref(generation).initImagePath ? filename2(unref(generation).initImagePath) : unref(t)("modeSource.sourceRequired"))}</small></div>`);
         if (unref(sourcePreviewUrl)) {
-          _push(`<img class="mode-source-asset__preview"${ssrRenderAttr("src", unref(sourcePreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.sourceImage"))} data-v-f70356ba>`);
+          _push(`<img class="mode-source-asset__preview"${ssrRenderAttr("src", unref(sourcePreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.sourceImage"))} data-v-12d41b53>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="mode-source-asset__inputs" data-v-f70356ba><label class="mode-source-file" data-v-f70356ba><span data-v-f70356ba>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(generation).initImagePath ? unref(t)("modeSource.changeImage") : unref(t)("modeSource.chooseImage"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseImage"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-f70356ba></label></div></section><label class="field" data-v-f70356ba><span data-v-f70356ba>${ssrInterpolate(unref(t)("advancedStyles.denoisingStrength"))}</span><input${ssrRenderAttr("value", unref(generation).img2imgDenoisingStrength)} type="number" min="0" max="1" step="0.01" data-v-f70356ba></label><!--]-->`);
+        _push(`<div class="mode-source-asset__inputs" data-v-12d41b53><label class="mode-source-file" data-v-12d41b53><span data-v-12d41b53>${ssrInterpolate(unref(sourceUploading) ? unref(t)("modeSource.uploadingSource") : unref(generation).initImagePath ? unref(t)("modeSource.changeImage") : unref(t)("modeSource.chooseImage"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseImage"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-12d41b53></label></div></section><label class="field" data-v-12d41b53><span data-v-12d41b53>${ssrInterpolate(unref(t)("advancedStyles.denoisingStrength"))}</span><input${ssrRenderAttr("value", unref(generation).img2imgDenoisingStrength)} type="number" min="0" max="1" step="0.01" data-v-12d41b53></label><!--]-->`);
       }
       if (unref(generation).mode === "inpaint") {
-        _push(`<section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.maskImage"))}${ssrRenderAttr("aria-busy", unref(maskUploading))} data-v-f70356ba><div class="mode-source-asset__heading" data-v-f70356ba><span data-v-f70356ba>${ssrInterpolate(unref(t)("modeSource.maskImage"))}</span><small data-v-f70356ba>${ssrInterpolate(unref(generation).maskImagePath ? filename2(unref(generation).maskImagePath) : unref(t)("modeSource.maskRequired"))}</small></div>`);
+        _push(`<section class="mode-source-asset"${ssrRenderAttr("aria-label", unref(t)("modeSource.maskImage"))}${ssrRenderAttr("aria-busy", unref(maskUploading))} data-v-12d41b53><div class="mode-source-asset__heading" data-v-12d41b53><span data-v-12d41b53>${ssrInterpolate(unref(t)("modeSource.maskImage"))}</span><small data-v-12d41b53>${ssrInterpolate(unref(generation).maskImagePath ? filename2(unref(generation).maskImagePath) : unref(t)("modeSource.maskRequired"))}</small></div>`);
         if (unref(maskPreviewUrl)) {
-          _push(`<img class="mode-source-asset__preview mode-source-asset__preview--mask"${ssrRenderAttr("src", unref(maskPreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.maskImage"))} data-v-f70356ba>`);
+          _push(`<img class="mode-source-asset__preview mode-source-asset__preview--mask"${ssrRenderAttr("src", unref(maskPreviewUrl))}${ssrRenderAttr("alt", unref(t)("modeSource.maskImage"))} data-v-12d41b53>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="mode-source-asset__inputs" data-v-f70356ba><label class="mode-source-file" data-v-f70356ba><span data-v-f70356ba>${ssrInterpolate(unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(generation).maskImagePath ? unref(t)("modeSource.changeMask") : unref(t)("modeSource.chooseMask"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseMask"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-f70356ba></label></div><div class="field-grid" data-v-f70356ba><label class="field" data-v-f70356ba><span data-v-f70356ba>${ssrInterpolate(unref(t)("prompt.source.maskBlur"))}</span><input${ssrRenderAttr("value", unref(generation).inpaintMaskBlur)} type="number" min="0" data-v-f70356ba></label>`);
+        _push(`<div class="mode-source-asset__inputs" data-v-12d41b53><label class="mode-source-file" data-v-12d41b53><span data-v-12d41b53>${ssrInterpolate(unref(maskUploading) ? unref(t)("modeSource.uploadingMask") : unref(generation).maskImagePath ? unref(t)("modeSource.changeMask") : unref(t)("modeSource.chooseMask"))}</span><input type="file" accept="image/png,image/jpeg,image/webp"${ssrRenderAttr("aria-label", unref(t)("modeSource.chooseMask"))}${ssrIncludeBooleanAttr(unref(uploadBusy)) ? " disabled" : ""} data-v-12d41b53></label></div><div class="field-grid" data-v-12d41b53><label class="field" data-v-12d41b53><span data-v-12d41b53>${ssrInterpolate(unref(t)("prompt.source.maskBlur"))}</span><input${ssrRenderAttr("value", unref(generation).inpaintMaskBlur)} type="number" min="0" data-v-12d41b53></label>`);
         if (unref(maskSettingsSupport).maskedContent) {
-          _push(`<label class="field" data-v-f70356ba><span data-v-f70356ba>${ssrInterpolate(unref(t)("prompt.source.maskedContent"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).maskedContent) ? " disabled" : ""} data-v-f70356ba><option value="original" data-v-f70356ba${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "original") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "original")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedOriginal"))}</option><option value="fill" data-v-f70356ba${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "fill") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "fill")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedFill"))}</option><option value="latent_noise" data-v-f70356ba${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_noise") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_noise")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNoise"))}</option><option value="latent_nothing" data-v-f70356ba${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_nothing") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_nothing")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNothing"))}</option></select></label>`);
+          _push(`<label class="field" data-v-12d41b53><span data-v-12d41b53>${ssrInterpolate(unref(t)("prompt.source.maskedContent"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).maskedContent) ? " disabled" : ""} data-v-12d41b53><option value="original" data-v-12d41b53${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "original") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "original")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedOriginal"))}</option><option value="fill" data-v-12d41b53${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "fill") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "fill")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedFill"))}</option><option value="latent_noise" data-v-12d41b53${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_noise") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_noise")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNoise"))}</option><option value="latent_nothing" data-v-12d41b53${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintMaskedContent) ? ssrLooseContain(unref(generation).inpaintMaskedContent, "latent_nothing") : ssrLooseEqual(unref(generation).inpaintMaskedContent, "latent_nothing")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.maskedLatentNothing"))}</option></select></label>`);
         } else {
           _push(`<!---->`);
         }
         _push(`</div>`);
         if (unref(maskSettingsSupport).area) {
-          _push(`<label class="field" data-v-f70356ba><span data-v-f70356ba>${ssrInterpolate(unref(t)("prompt.source.inpaintArea"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).area) ? " disabled" : ""} data-v-f70356ba><option value="whole_picture" data-v-f70356ba${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "whole_picture") : ssrLooseEqual(unref(generation).inpaintArea, "whole_picture")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.wholePicture"))}</option><option value="only_masked" data-v-f70356ba${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "only_masked") : ssrLooseEqual(unref(generation).inpaintArea, "only_masked")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.onlyMasked"))}</option></select></label>`);
+          _push(`<label class="field" data-v-12d41b53><span data-v-12d41b53>${ssrInterpolate(unref(t)("prompt.source.inpaintArea"))}</span><select${ssrIncludeBooleanAttr(!unref(maskSettingsSupport).area) ? " disabled" : ""} data-v-12d41b53><option value="whole_picture" data-v-12d41b53${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "whole_picture") : ssrLooseEqual(unref(generation).inpaintArea, "whole_picture")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.wholePicture"))}</option><option value="only_masked" data-v-12d41b53${ssrIncludeBooleanAttr(Array.isArray(unref(generation).inpaintArea) ? ssrLooseContain(unref(generation).inpaintArea, "only_masked") : ssrLooseEqual(unref(generation).inpaintArea, "only_masked")) ? " selected" : ""}>${ssrInterpolate(unref(t)("prompt.source.onlyMasked"))}</option></select></label>`);
         } else {
           _push(`<!---->`);
         }
-        if (unref(generation).inpaintArea === "only_masked") {
-          _push(`<small class="muted" data-v-f70356ba>${ssrInterpolate(unref(t)("generation.inpaintMaskSettingsFixed"))}</small>`);
+        if (unref(maskSettingsSupport).area && unref(generation).inpaintArea === "only_masked") {
+          _push(`<small class="muted" data-v-12d41b53>${ssrInterpolate(unref(t)("generation.inpaintMaskSettingsFixed"))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -19181,7 +19184,7 @@ _sfc_main$22.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateModeSourcePanel.vue");
   return _sfc_setup$22 ? _sfc_setup$22(props, ctx) : void 0;
 };
-const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-f70356ba"]]), { __name: "StudioGenerateModeSourcePanel" });
+const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$22, [["__scopeId", "data-v-12d41b53"]]), { __name: "StudioGenerateModeSourcePanel" });
 const HIRES_TARGET_STEP = 8;
 const positiveNumber = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
 const snapTargetDimension = (value) => {
@@ -20702,8 +20705,9 @@ const _sfc_main$1V = /* @__PURE__ */ defineComponent({
     const activeProfileDependencies = computed(() => modelDependencies.dependencies.filter((dependency) => activeProfileDependencyIds.value.has(dependency.id)));
     const missingProfileDependencies = computed(() => activeProfileDependencies.value.filter((dependency) => {
       const slot = activeProfile.value?.model_slots.find((candidate) => candidate.id === dependency.slot_id);
-      return slot?.required !== false && dependencyNeedsAttention(dependency, modelDependencies.selections);
+      return slot?.required === true && dependencyNeedsAttention(dependency, modelDependencies.selections);
     }));
+    const missingFeatureDependencies = computed(() => activeProfileDependencies.value.filter((dependency) => !dependency.slot_id && dependencyNeedsAttention(dependency, modelDependencies.selections)));
     const primarySlotIds = /* @__PURE__ */ new Set(["checkpoint", "diffusion_model", "vae"]);
     const primaryModelSlots = computed(() => activeProfile.value?.model_slots.filter((slot) => primarySlotIds.has(slot.id)) ?? []);
     const secondaryModelSlots = computed(() => activeProfile.value?.model_slots.filter((slot) => !primarySlotIds.has(slot.id)) ?? []);
@@ -20772,86 +20776,95 @@ const _sfc_main$1V = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: ["model-bar", { "model-bar--embedded": __props.embedded }],
         "aria-label": unref(t)("modelSettings.aria")
-      }, _attrs))} data-v-febd5793>`);
+      }, _attrs))} data-v-d907f1b0>`);
       if (unref(basicNativeProfile)) {
-        _push(`<p class="field-hint" data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.basicNativeSupport"))}</p>`);
+        _push(`<p class="field-hint" data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.basicNativeSupport"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="field model-bar__search" data-v-febd5793><span data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.searchModels"))}</span><input${ssrRenderAttr("value", unref(modelSearch))} type="search"${ssrRenderAttr("placeholder", unref(t)("modelSettings.searchModelsPlaceholder"))} data-v-febd5793></label><div class="model-bar__primary" data-v-febd5793><label class="field slot-field model-bar__field model-bar__profile" data-v-febd5793><span data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select${ssrRenderAttr("value", unref(generation).profile)} data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-febd5793><!--[-->`);
+      _push(`<label class="field model-bar__search" data-v-d907f1b0><span data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.searchModels"))}</span><input${ssrRenderAttr("value", unref(modelSearch))} type="search"${ssrRenderAttr("placeholder", unref(t)("modelSettings.searchModelsPlaceholder"))} data-v-d907f1b0></label><div class="model-bar__primary" data-v-d907f1b0><label class="field slot-field model-bar__field model-bar__profile" data-v-d907f1b0><span data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.modelProfile"))}</span><select${ssrRenderAttr("value", unref(generation).profile)} data-model-profile-select${ssrIncludeBooleanAttr(unref(modelDependencies).loading || unref(modelDependencies).profiles.length === 0) ? " disabled" : ""}${ssrRenderAttr("aria-label", unref(t)("modelSettings.modelProfile"))} data-v-d907f1b0><!--[-->`);
       ssrRenderList(unref(modelDependencies).profiles, (profile) => {
-        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-febd5793>${ssrInterpolate(profile.label)}</option>`);
+        _push(`<option${ssrRenderAttr("value", profile.id)} data-v-d907f1b0>${ssrInterpolate(profile.label)}</option>`);
       });
       _push(`<!--]--></select></label><!--[-->`);
       ssrRenderList(unref(primaryModelSlots), (slot) => {
-        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-febd5793><span data-v-febd5793>${ssrInterpolate(slot.label)}</span>`);
+        _push(`<label class="${ssrRenderClass(["field", "slot-field", "model-bar__field", `model-bar__slot--${slot.id}`])}" data-v-d907f1b0><span data-v-d907f1b0>${ssrInterpolate(slot.label)}</span>`);
         if (usesModelSelect(slot)) {
-          _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || (unref(basicNativeProfile) || unref(generation).profile === "anima" && slot.id === "diffusion_model") && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-febd5793><option value="" data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+          _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || (unref(basicNativeProfile) || unref(generation).profile === "anima" && slot.id === "diffusion_model") && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-d907f1b0><option value="" data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
           ssrRenderList(filteredSlotOptions(slot), (item) => {
-            _push(`<option${ssrRenderAttr("value", item.path)} data-v-febd5793>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
+            _push(`<option${ssrRenderAttr("value", item.path)} data-v-d907f1b0>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
           });
           _push(`<!--]--></select>`);
         } else {
-          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-febd5793>`);
+          _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-d907f1b0>`);
         }
         _push(`</label>`);
       });
       _push(`<!--]-->`);
       if (!__props.embedded) {
-        _push(`<div class="model-bar__slot-status" data-v-febd5793><span data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-febd5793>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div>`);
+        _push(`<div class="model-bar__slot-status" data-v-d907f1b0><span data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.modelSlots"))}</span><strong data-v-d907f1b0>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</strong></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="model-bar__actions" data-v-febd5793><button${ssrRenderAttrs(mergeProps({
+      _push(`<div class="model-bar__actions" data-v-d907f1b0><button${ssrRenderAttrs(mergeProps({
         type: "button",
         disabled: unref(refreshingModelAssets) || unref(modelDependencies).loading || unref(runtime).loading
-      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("modelSettings.refreshHelp"))))} data-v-febd5793>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
+      }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, unref(t)("modelSettings.refreshHelp"))))} data-v-d907f1b0>${ssrInterpolate(unref(refreshingModelAssets) ? unref(t)("modelSettings.refreshing") : unref(t)("modelSettings.refresh"))}</button><button type="button"${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""} data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.save"))}</button></div></div>`);
       if (!unref(activeProfile)) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-febd5793><strong data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-febd5793>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
+        _push(`<div class="model-bar__recovery" role="status" data-v-d907f1b0><strong data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.profileUnavailable"))}</strong><small data-v-d907f1b0>${ssrInterpolate(unref(modelDependencies).error || unref(t)("modelSettings.profileUnavailableHelp"))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(modelAssetError)) {
-        _push(`<div class="model-bar__message-row" data-v-febd5793><p class="error" aria-live="assertive" data-v-febd5793>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
+        _push(`<div class="model-bar__message-row" data-v-d907f1b0><p class="error" aria-live="assertive" data-v-d907f1b0>${ssrInterpolate(unref(modelAssetError))}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if ((unref(generation).profile === "anima" || unref(basicNativeProfile)) && unref(imageModelCatalog).error.value) {
-        _push(`<div class="model-bar__message-row" data-v-febd5793><p class="error" aria-live="assertive" data-v-febd5793>${ssrInterpolate(unref(imageModelCatalog).error.value)}</p></div>`);
+        _push(`<div class="model-bar__message-row" data-v-d907f1b0><p class="error" aria-live="assertive" data-v-d907f1b0>${ssrInterpolate(unref(imageModelCatalog).error.value)}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(selectedAnimaDiffusion)) {
-        _push(`<div class="model-bar__message-row" role="status" data-v-febd5793><p class="muted" data-v-febd5793>${ssrInterpolate(animaVariantLabel(unref(selectedAnimaDiffusion).variant))}</p></div>`);
+        _push(`<div class="model-bar__message-row" role="status" data-v-d907f1b0><p class="muted" data-v-d907f1b0>${ssrInterpolate(animaVariantLabel(unref(selectedAnimaDiffusion).variant))}</p></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(anima38MissingComponentLabels).length) {
-        _push(`<div class="model-bar__recovery" role="status" data-v-febd5793><strong data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsRequired"))}</strong><small data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsHelp", { components: unref(anima38MissingComponentLabels).join(" / ") }))}</small></div>`);
+        _push(`<div class="model-bar__recovery" role="status" data-v-d907f1b0><strong data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsRequired"))}</strong><small data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.anima38ComponentsHelp", { components: unref(anima38MissingComponentLabels).join(" / ") }))}</small></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(missingProfileDependencies).length) {
-        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-febd5793><div data-v-febd5793><strong data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-febd5793><!--[-->`);
+        _push(`<div class="slot-dependency-checklist"${ssrRenderAttr("aria-label", unref(t)("modelSettings.missingAssetsAria"))} data-v-d907f1b0><div data-v-d907f1b0><strong data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.missingAssets"))}</strong><small data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.missingAssetsHelp"))}</small></div><ul data-v-d907f1b0><!--[-->`);
         ssrRenderList(unref(missingProfileDependencies), (dependency) => {
-          _push(`<li data-v-febd5793><span data-v-febd5793><strong data-v-febd5793>${ssrInterpolate(dependency.label)}</strong></span></li>`);
+          _push(`<li data-v-d907f1b0><span data-v-d907f1b0><strong data-v-d907f1b0>${ssrInterpolate(dependency.label)}</strong></span></li>`);
+        });
+        _push(`<!--]--></ul></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(missingFeatureDependencies).length) {
+        _push(`<div class="model-bar__optional-assets" data-v-d907f1b0><strong data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.optionalFeatureAssets"))}</strong><small data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.optionalFeatureAssetsHelp"))}</small><ul data-v-d907f1b0><!--[-->`);
+        ssrRenderList(unref(missingFeatureDependencies), (dependency) => {
+          _push(`<li data-v-d907f1b0>${ssrInterpolate(dependency.label)}</li>`);
         });
         _push(`<!--]--></ul></div>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(secondaryModelSlots).length) {
-        _push(`<details class="model-bar__extra" data-v-febd5793><summary data-v-febd5793><span data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-febd5793>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-febd5793><!--[-->`);
+        _push(`<details class="model-bar__extra" data-v-d907f1b0><summary data-v-d907f1b0><span data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.moreSlots"))}</span><small data-v-d907f1b0>${ssrInterpolate(unref(selectedSlotCount))} / ${ssrInterpolate(unref(activeProfile)?.model_slots.length ?? 0)}</small></summary><div class="model-bar__extra-grid" data-v-d907f1b0><!--[-->`);
         ssrRenderList(unref(secondaryModelSlots), (slot) => {
-          _push(`<label class="field slot-field model-bar__field" data-v-febd5793><span data-v-febd5793>${ssrInterpolate(slot.label)}</span>`);
+          _push(`<label class="field slot-field model-bar__field" data-v-d907f1b0><span data-v-d907f1b0>${ssrInterpolate(slot.label)}</span>`);
           if (usesModelSelect(slot)) {
-            _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || unref(basicNativeProfile) && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-febd5793><option value="" data-v-febd5793>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
+            _push(`<select${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady) || unref(basicNativeProfile) && unref(imageModelCatalog).loading.value) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)} data-v-d907f1b0><option value="" data-v-d907f1b0>${ssrInterpolate(unref(t)("modelSettings.unselected"))}</option><!--[-->`);
             ssrRenderList(filteredSlotOptions(slot), (item) => {
-              _push(`<option${ssrRenderAttr("value", item.path)} data-v-febd5793>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
+              _push(`<option${ssrRenderAttr("value", item.path)} data-v-d907f1b0>${ssrInterpolate(modelOptionLabel(item, slot))}</option>`);
             });
             _push(`<!--]--></select>`);
           } else {
-            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-febd5793>`);
+            _push(`<input${ssrRenderAttr("value", unref(modelDependencies).selections[slot.id])}${ssrIncludeBooleanAttr(unref(modelDependencies).saving || !unref(modelSelectionReady)) ? " disabled" : ""}${ssrRenderAttr("aria-label", slot.label)}${ssrRenderAttr("placeholder", unref(t)("modelSettings.filePathPlaceholder", { type: slot.type }))} data-v-d907f1b0>`);
           }
           _push(`</label>`);
         });
@@ -20874,7 +20887,7 @@ _sfc_main$1V.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ModelSettingsPanel.vue");
   return _sfc_setup$1V ? _sfc_setup$1V(props, ctx) : void 0;
 };
-const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1V, [["__scopeId", "data-v-febd5793"]]), { __name: "StudioModelSettingsPanel" });
+const ModelSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1V, [["__scopeId", "data-v-d907f1b0"]]), { __name: "StudioModelSettingsPanel" });
 const _sfc_main$1U = /* @__PURE__ */ defineComponent({
   __name: "ModelSettingsDrawer",
   __ssrInlineRender: true,
@@ -24734,36 +24747,41 @@ const _sfc_main$1H = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "mask-inspector",
         "aria-label": unref(t)("imageEditor.maskAria")
-      }, _attrs))} data-v-d01a20f1><header class="mask-inspector__header" data-v-d01a20f1><div data-v-d01a20f1><span data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.mask"))}</span><h2 data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.paintArea"))}</h2></div><span class="${ssrRenderClass([{ "mask-inspector__status--error": __props.maskError }, "mask-inspector__status"])}" data-v-d01a20f1>${ssrInterpolate(__props.maskStatus)}</span></header><p class="mask-inspector__help" data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.maskHelp"))}</p>`);
+      }, _attrs))} data-v-1a6bec7c><header class="mask-inspector__header" data-v-1a6bec7c><div data-v-1a6bec7c><span data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.mask"))}</span><h2 data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.paintArea"))}</h2></div><span class="${ssrRenderClass([{ "mask-inspector__status--error": __props.maskError }, "mask-inspector__status"])}" data-v-1a6bec7c>${ssrInterpolate(__props.maskStatus)}</span></header><p class="mask-inspector__help" data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.maskHelp"))}</p>`);
       if (__props.maskFilename) {
-        _push(`<small${ssrRenderAttrs(mergeProps({ class: "mask-inspector__filename" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, __props.maskFilename)))} data-v-d01a20f1>${ssrInterpolate(__props.maskFilename)}</small>`);
+        _push(`<small${ssrRenderAttrs(mergeProps({ class: "mask-inspector__filename" }, ssrGetDirectiveProps(_ctx, _directive_asteria_tooltip, __props.maskFilename)))} data-v-1a6bec7c>${ssrInterpolate(__props.maskFilename)}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.maskLoading) {
-        _push(`<div class="mask-inspector__notice" aria-live="polite" data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.maskLoading"))}</div>`);
+        _push(`<div class="mask-inspector__notice" aria-live="polite" data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.maskLoading"))}</div>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.maskSaving) {
-        _push(`<div class="mask-inspector__notice" aria-live="polite" data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.maskSaving"))}</div>`);
+        _push(`<div class="mask-inspector__notice" aria-live="polite" data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.maskSaving"))}</div>`);
       } else {
         _push(`<!---->`);
       }
       if (__props.maskError) {
-        _push(`<div class="mask-inspector__notice mask-inspector__notice--error" role="alert" data-v-d01a20f1><span data-v-d01a20f1>${ssrInterpolate(__props.maskError)}</span><button type="button"${ssrIncludeBooleanAttr(!__props.canEdit || __props.maskLoading || __props.maskSaving) ? " disabled" : ""} data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.retryMaskImport"))}</button></div>`);
+        _push(`<div class="mask-inspector__notice mask-inspector__notice--error" role="alert" data-v-1a6bec7c><span data-v-1a6bec7c>${ssrInterpolate(__props.maskError)}</span><button type="button"${ssrIncludeBooleanAttr(!__props.canEdit || __props.maskLoading || __props.maskSaving) ? " disabled" : ""} data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.retryMaskImport"))}</button></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="mask-inspector__actions" data-v-d01a20f1><button type="button"${ssrIncludeBooleanAttr(!__props.canEdit || __props.maskLoading || __props.maskSaving) ? " disabled" : ""} data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.importMask"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!__props.canEdit || __props.maskLoading || __props.maskSaving) ? " disabled" : ""} data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.saveMask"))}</button></div><div class="mask-inspector__fields" data-v-d01a20f1><label class="field" data-v-d01a20f1><span data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.maskBlur"))}</span><input${ssrRenderAttr("value", __props.maskBlur)} type="number" min="0" data-v-d01a20f1></label>`);
+      _push(`<div class="mask-inspector__actions" data-v-1a6bec7c><button type="button"${ssrIncludeBooleanAttr(!__props.canEdit || __props.maskLoading || __props.maskSaving) ? " disabled" : ""} data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.importMask"))}</button><button class="primary-button" type="button"${ssrIncludeBooleanAttr(!__props.canEdit || __props.maskLoading || __props.maskSaving) ? " disabled" : ""} data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.saveMask"))}</button></div><div class="mask-inspector__fields" data-v-1a6bec7c><label class="field" data-v-1a6bec7c><span data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.maskBlur"))}</span><input${ssrRenderAttr("value", __props.maskBlur)} type="number" min="0" data-v-1a6bec7c></label>`);
       if (__props.areaSupported) {
-        _push(`<label class="field" data-v-d01a20f1><span data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.area"))}</span><select${ssrRenderAttr("value", __props.area)}${ssrIncludeBooleanAttr(!__props.areaSupported) ? " disabled" : ""} data-v-d01a20f1><option value="whole_picture" data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.wholePicture"))}</option><option value="only_masked" data-v-d01a20f1>${ssrInterpolate(unref(t)("imageEditor.onlyMasked"))}</option></select></label>`);
+        _push(`<label class="field" data-v-1a6bec7c><span data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.area"))}</span><select${ssrRenderAttr("value", __props.area)}${ssrIncludeBooleanAttr(!__props.areaSupported) ? " disabled" : ""} data-v-1a6bec7c><option value="whole_picture" data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.wholePicture"))}</option><option value="only_masked" data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.onlyMasked"))}</option></select></label>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</div>`);
-      if (__props.area === "only_masked") {
-        _push(`<small class="muted" data-v-d01a20f1>${ssrInterpolate(unref(t)("generation.inpaintMaskSettingsFixed"))}</small>`);
+      if (__props.areaSupported && __props.area === "only_masked") {
+        _push(`<small class="muted" data-v-1a6bec7c>${ssrInterpolate(unref(t)("generation.inpaintMaskSettingsFixed"))}</small>`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (!__props.areaSupported) {
+        _push(`<small class="muted" data-v-1a6bec7c>${ssrInterpolate(unref(t)("imageEditor.maskRetainedNotApplied"))}</small>`);
       } else {
         _push(`<!---->`);
       }
@@ -24777,7 +24795,7 @@ _sfc_main$1H.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/image-edit/ImageEditMaskInspector.vue");
   return _sfc_setup$1H ? _sfc_setup$1H(props, ctx) : void 0;
 };
-const ImageEditMaskInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1H, [["__scopeId", "data-v-d01a20f1"]]), { __name: "StudioImageEditMaskInspector" });
+const ImageEditMaskInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1H, [["__scopeId", "data-v-1a6bec7c"]]), { __name: "StudioImageEditMaskInspector" });
 const identity = (path) => path.replaceAll("\\", "/").toLowerCase();
 const reviewMatchesSource = (review, path) => identity(review.source_path) === identity(path);
 const validCandidateBox = (box) => box.length === 4 && box.every((v) => Number.isFinite(v) && v >= 0 && v <= 1) && box[0] < box[2] && box[1] < box[3];
