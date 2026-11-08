@@ -29,7 +29,7 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 
 > 描写位置を指定する配置機能はV1.2.0から利用できません。通常の生成と項目別のプロンプト入力は引き続き使えます。過去の配置付き設定を再利用すると、文章は対応する欄へ戻ります。位置は引き継がず、元の履歴や画像は変更しません。
 
-### V1.2.2 devの変更
+### V1.2.2の変更
 
 - Generateは画像を左、プロンプトと生成操作を右に配置しました。モデル設定と生成設定は必要なときに開けます。適用中のLoRAと詳細スタイルも確認できます。
 - 画像の再利用・処理ボタンを「結果情報」にまとめ、Eagleの送信先は一行から開く形にしました。
@@ -391,7 +391,7 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 
 > Spatial prompt placement is unavailable as of V1.2.0. You can still generate normally and use the sectioned prompt editor. Reusing older placement settings restores the text to the corresponding fields, without restoring positions or modifying the original history or images.
 
-### V1.2.2 dev changes
+### Changes in V1.2.2
 
 - Generate now places the image on the left and prompts and generation actions on the right. Open model and generation settings when needed, and review active LoRAs and detailed styles in place.
 - Image reuse and processing actions are grouped under Result information. The Eagle destination expands from a single line.
