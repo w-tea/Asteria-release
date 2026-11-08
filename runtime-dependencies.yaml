@@ -45,8 +45,8 @@ dependencies:
       provenance_url: bundled://asteria/native-image-control/v1
     target:
       relative_path: custom_nodes/Asteria-Native-Control
-    size_bytes: 12118
-    checksum_sha256: 86bf95668582e04534bad47363f03fb5e4f2cf3f0a7a803c479974d3fe866aac
+    size_bytes: 12408
+    checksum_sha256: d1fb16c8c09a59facd45a074cec688eb6c36170f8eeeba8e897fe4fb63fd0c3c
     license:
       id: proprietary
       url: bundled://asteria/license

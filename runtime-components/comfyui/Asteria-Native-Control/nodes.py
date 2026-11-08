@@ -24,9 +24,13 @@ def _load(name, profile):
     return weights
 
 
-def _map_latent(vae, image, width, height):
-    image = comfy.utils.common_upscale(image.movedim(-1, 1), width, height, 'bilinear', 'disabled').movedim(1, -1)
-    return vae.encode(image[:, :, :, :3])
+def _map_latent(vae, image, width, height, *, alignment=1):
+    pixels = comfy.utils.common_upscale(image.movedim(-1, 1), width, height, 'bilinear', 'disabled')
+    pad_right, pad_bottom = -width % alignment, -height % alignment
+    if pad_right or pad_bottom:
+        # Match the generation canvas without shifting or stretching the map.
+        pixels = F.pad(pixels, (0, pad_right, 0, pad_bottom), mode='replicate')
+    return vae.encode(pixels.movedim(1, -1)[:, :, :, :3])
 
 
 def _krea_loras(weights):
@@ -174,7 +178,7 @@ class AsteriaMossControlMap:
     def encode(self, vae, image, kind, width, height, strength, start_percent, end_percent, previous=None):
         entries = list(previous or ())
         if strength and start_percent < end_percent:
-            latent = _map_latent(vae, image, width, height) * strength
+            latent = _map_latent(vae, image, width, height, alignment=16) * strength
             zero = torch.zeros_like(latent)
             combined = torch.cat((latent, zero) if kind == 'color' else (zero, latent), dim=1)
             entries.append((start_percent, end_percent, combined))

@@ -1482,7 +1482,7 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
     }
   }
 });
-const components_plugin_z4hgvsiddfKkfXTP6M8M4zG5Cb7sGnDhcryKVM45Di4 = /* @__PURE__ */ defineNuxtPlugin({
+const components_plugin_4kY4pyzJIYX99vmMAAIorFf3CnAaptHitJgf7JxiED8 = /* @__PURE__ */ defineNuxtPlugin({
   name: "nuxt:global-components"
 });
 const TOOLTIP_ID = "asteria-global-tooltip";
@@ -1580,7 +1580,7 @@ const plugins = [
   router_DclsWNDeVV7SyG4lslgLnjbQUK1ws8wgf2FHaAbo7Cw,
   revive_payload_server_MVtmlZaQpj6ApFmshWfUWl5PehCebzaBf2NuRMiIbms,
   plugin,
-  components_plugin_z4hgvsiddfKkfXTP6M8M4zG5Cb7sGnDhcryKVM45Di4,
+  components_plugin_4kY4pyzJIYX99vmMAAIorFf3CnAaptHitJgf7JxiED8,
   asteria_tooltip_fSFARtpwGbHlO1KB4At5caYKXgNivLM9kmiwguLVh5w
 ];
 const messages = {
@@ -19105,57 +19105,57 @@ const _sfc_main$23 = /* @__PURE__ */ defineComponent({
         "aria-label": unref(t)("generationInspector.baseSettings")
       }, _attrs, {
         style: __props.activeSection === "base-settings" ? null : { display: "none" }
-      }))} data-v-1dd91ba5><div class="generation-detail-group__section" data-v-1dd91ba5><div class="generation-detail-group__heading" data-v-1dd91ba5><h2 data-v-1dd91ba5>${ssrInterpolate(unref(t)("generationInspector.sampling"))}</h2><small data-v-1dd91ba5>${ssrInterpolate(unref(generation).sampler)}</small></div><div class="field-grid" data-v-1dd91ba5><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.samplingSteps"))}</span><input${ssrRenderAttr("value", unref(generation).steps)} type="number" min="1" data-v-1dd91ba5></label><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.cfgScale"))}</span><input${ssrRenderAttr("value", unref(generation).cfgScale)} type="number" step="0.5" data-v-1dd91ba5></label></div>`);
+      }))} data-v-42c81707><div class="generation-detail-group__section" data-v-42c81707><div class="generation-detail-group__heading" data-v-42c81707><h2 data-v-42c81707>${ssrInterpolate(unref(t)("generationInspector.sampling"))}</h2><small data-v-42c81707>${ssrInterpolate(unref(generation).sampler)}</small></div><div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.samplingSteps"))}</span><input${ssrRenderAttr("value", unref(generation).steps)} type="number" min="1" data-v-42c81707></label><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.cfgScale"))}</span><input${ssrRenderAttr("value", unref(generation).cfgScale)} type="number" step="0.5" data-v-42c81707></label></div>`);
       if (__props.usesDistilledCfg) {
-        _push(`<label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.distilledCfg"))}</span><input${ssrRenderAttr("value", unref(generation).distilledCfgScale)} type="number" step="0.5" data-v-1dd91ba5></label>`);
+        _push(`<label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.distilledCfg"))}</span><input${ssrRenderAttr("value", unref(generation).distilledCfgScale)} type="number" step="0.5" data-v-42c81707></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.samplingMethod"))}</span><select data-v-1dd91ba5><!--[-->`);
+      _push(`<label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.samplingMethod"))}</span><select data-v-42c81707><!--[-->`);
       ssrRenderList(__props.samplerOptions, (option) => {
-        _push(`<option data-v-1dd91ba5${ssrIncludeBooleanAttr(Array.isArray(unref(generation).sampler) ? ssrLooseContain(unref(generation).sampler, null) : ssrLooseEqual(unref(generation).sampler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-42c81707${ssrIncludeBooleanAttr(Array.isArray(unref(generation).sampler) ? ssrLooseContain(unref(generation).sampler, null) : ssrLooseEqual(unref(generation).sampler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.scheduleType"))}</span><select${ssrIncludeBooleanAttr(__props.schedulerIsFixed) ? " disabled" : ""} data-v-1dd91ba5><!--[-->`);
+      _push(`<!--]--></select></label><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.scheduleType"))}</span><select${ssrIncludeBooleanAttr(__props.schedulerIsFixed) ? " disabled" : ""} data-v-42c81707><!--[-->`);
       ssrRenderList(__props.schedulerOptions, (option) => {
-        _push(`<option data-v-1dd91ba5${ssrIncludeBooleanAttr(Array.isArray(unref(generation).scheduler) ? ssrLooseContain(unref(generation).scheduler, null) : ssrLooseEqual(unref(generation).scheduler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-42c81707${ssrIncludeBooleanAttr(Array.isArray(unref(generation).scheduler) ? ssrLooseContain(unref(generation).scheduler, null) : ssrLooseEqual(unref(generation).scheduler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
       });
       _push(`<!--]--></select></label>`);
       if (__props.schedulerIsFixed) {
-        _push(`<small class="muted" data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
+        _push(`<small class="muted" data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(usesAnima38)) {
-        _push(`<div class="generation-detail-group__subsection" data-v-1dd91ba5><div class="generation-detail-group__subheading" data-v-1dd91ba5><h3 data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.anima38Conditioning"))}</h3></div><p class="muted" data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.anima38ConditioningHelp"))}</p><div class="field-grid" data-v-1dd91ba5><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.anima38PositiveStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35AdapterStrength)} type="number" step="0.05" data-v-1dd91ba5></label><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.anima38NegativeStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35NegativeAdapterStrength)} type="number" step="0.05" data-v-1dd91ba5></label></div></div>`);
+        _push(`<div class="generation-detail-group__subsection" data-v-42c81707><div class="generation-detail-group__subheading" data-v-42c81707><h3 data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.anima38Conditioning"))}</h3></div><p class="muted" data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.anima38ConditioningHelp"))}</p><div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.anima38PositiveStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35AdapterStrength)} type="number" step="0.05" data-v-42c81707></label><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.anima38NegativeStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35NegativeAdapterStrength)} type="number" step="0.05" data-v-42c81707></label></div></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="generation-detail-group__subheading" data-v-1dd91ba5><h3 data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.seed"))}</h3></div>`);
+      _push(`<div class="generation-detail-group__subheading" data-v-42c81707><h3 data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.seed"))}</h3></div>`);
       if (__props.seedResizeReason === "variation_conflict") {
-        _push(`<p class="capability-warning" data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.seedResizeVariationConflict"))}</p>`);
+        _push(`<p class="capability-warning" data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.seedResizeVariationConflict"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.seed"))}</span><input${ssrRenderAttr("value", unref(generation).seed)} type="number" data-v-1dd91ba5></label>`);
+      _push(`<label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.seed"))}</span><input${ssrRenderAttr("value", unref(generation).seed)} type="number" data-v-42c81707></label>`);
       if (!__props.blocksSeedVariation) {
-        _push(`<div class="field-grid" data-v-1dd91ba5><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.subseed"))}</span><input${ssrRenderAttr("value", unref(generation).subseed)} type="number"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-1dd91ba5></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedVariation }])}" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.variation"))}</span><input${ssrRenderAttr("value", unref(generation).subseedStrength)} type="number" min="0" max="1" step="0.01"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-1dd91ba5></label></div>`);
+        _push(`<div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.subseed"))}</span><input${ssrRenderAttr("value", unref(generation).subseed)} type="number"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-42c81707></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedVariation }])}" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.variation"))}</span><input${ssrRenderAttr("value", unref(generation).subseedStrength)} type="number" min="0" max="1" step="0.01"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-42c81707></label></div>`);
       } else {
         _push(`<!---->`);
       }
       if (!__props.blocksSeedResize) {
-        _push(`<div class="field-grid" data-v-1dd91ba5><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.resizeW"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromW)} type="number" min="0" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-1dd91ba5></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedResize }])}" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.resizeH"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromH)} type="number" min="0" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-1dd91ba5></label></div>`);
+        _push(`<div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.resizeW"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromW)} type="number" min="0" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-42c81707></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedResize }])}" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.resizeH"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromH)} type="number" min="0" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-42c81707></label></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</div><div class="generation-detail-group__section generation-detail-group__section--size" data-v-1dd91ba5><div class="generation-detail-group__heading" data-v-1dd91ba5><h2 data-v-1dd91ba5>${ssrInterpolate(unref(t)("generationInspector.size"))}</h2><small data-v-1dd91ba5>${ssrInterpolate(unref(generation).width)} × ${ssrInterpolate(unref(generation).height)}</small></div><div class="field-grid" data-v-1dd91ba5><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.width"))}</span><input${ssrRenderAttr("value", unref(widthDraft))} type="number" min="8" step="8" data-v-1dd91ba5></label><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.height"))}</span><input${ssrRenderAttr("value", unref(heightDraft))} type="number" min="8" step="8" data-v-1dd91ba5></label></div>`);
+      _push(`</div><div class="generation-detail-group__section generation-detail-group__section--size" data-v-42c81707><div class="generation-detail-group__heading" data-v-42c81707><h2 data-v-42c81707>${ssrInterpolate(unref(t)("generationInspector.size"))}</h2><small data-v-42c81707>${ssrInterpolate(unref(generation).width)} × ${ssrInterpolate(unref(generation).height)}</small></div><div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.width"))}</span><input${ssrRenderAttr("value", unref(widthDraft))} type="number"${ssrRenderAttr("min", unref(generation).profile === "moss_image" ? 1 : 8)}${ssrRenderAttr("step", unref(generation).profile === "moss_image" ? 1 : 8)} data-v-42c81707></label><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.height"))}</span><input${ssrRenderAttr("value", unref(heightDraft))} type="number"${ssrRenderAttr("min", unref(generation).profile === "moss_image" ? 1 : 8)}${ssrRenderAttr("step", unref(generation).profile === "moss_image" ? 1 : 8)} data-v-42c81707></label></div>`);
       if (unref(pendingCanvasSize)) {
-        _push(`<section class="canvas-size-confirmation" role="dialog"${ssrRenderAttr("aria-label", unref(t)("generationInspector.size"))} data-v-1dd91ba5><p data-v-1dd91ba5>${ssrInterpolate(unref(t)("prompt.placement.canvasOutside", { count: unref(pendingCanvasSize).outsideCount }))}</p><div data-v-1dd91ba5><button type="button" data-v-1dd91ba5>${ssrInterpolate(unref(t)("prompt.placement.adjustNow"))}</button><button type="button" data-v-1dd91ba5>${ssrInterpolate(unref(t)("prompt.placement.keepAsIs"))}</button><button type="button" data-v-1dd91ba5>${ssrInterpolate(unref(t)("common.cancel"))}</button></div></section>`);
+        _push(`<section class="canvas-size-confirmation" role="dialog"${ssrRenderAttr("aria-label", unref(t)("generationInspector.size"))} data-v-42c81707><p data-v-42c81707>${ssrInterpolate(unref(t)("prompt.placement.canvasOutside", { count: unref(pendingCanvasSize).outsideCount }))}</p><div data-v-42c81707><button type="button" data-v-42c81707>${ssrInterpolate(unref(t)("prompt.placement.adjustNow"))}</button><button type="button" data-v-42c81707>${ssrInterpolate(unref(t)("prompt.placement.keepAsIs"))}</button><button type="button" data-v-42c81707>${ssrInterpolate(unref(t)("common.cancel"))}</button></div></section>`);
       } else if (unref(generation).spatialCanvasNotice === "larger") {
-        _push(`<p class="muted" aria-live="polite" data-v-1dd91ba5>${ssrInterpolate(unref(t)("prompt.placement.canvasLarger"))}</p>`);
+        _push(`<p class="muted" aria-live="polite" data-v-42c81707>${ssrInterpolate(unref(t)("prompt.placement.canvasLarger"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="field-grid" data-v-1dd91ba5><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.batchSize"))}</span><input${ssrRenderAttr("value", unref(generation).batchSize)} type="number" min="1" data-v-1dd91ba5></label><label class="field" data-v-1dd91ba5><span data-v-1dd91ba5>${ssrInterpolate(unref(t)("runtimePane.batchCount"))}</span><input${ssrRenderAttr("value", unref(generation).batchCount)} type="number" min="1" data-v-1dd91ba5></label></div></div></section>`);
+      _push(`<div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.batchSize"))}</span><input${ssrRenderAttr("value", unref(generation).batchSize)} type="number" min="1" data-v-42c81707></label><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.batchCount"))}</span><input${ssrRenderAttr("value", unref(generation).batchCount)} type="number" min="1" data-v-42c81707></label></div></div></section>`);
     };
   }
 });
@@ -19165,7 +19165,7 @@ _sfc_main$23.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateBaseControlsPanel.vue");
   return _sfc_setup$23 ? _sfc_setup$23(props, ctx) : void 0;
 };
-const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-1dd91ba5"]]), { __name: "StudioGenerateBaseControlsPanel" });
+const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$23, [["__scopeId", "data-v-42c81707"]]), { __name: "StudioGenerateBaseControlsPanel" });
 const _sfc_main$22 = /* @__PURE__ */ defineComponent({
   __name: "GenerateModeSourcePanel",
   __ssrInlineRender: true,
@@ -22737,7 +22737,9 @@ const studioHelp = {
             "「動画を生成」を押し、完成後はプレーヤーで再生して保存結果とライブラリを確認します。"
           ],
           "items": [
-            "非対応の素材を別のものへ勝手に置き換えません。負荷の警告と、実行できない入力エラーは別です。"
+            "非対応の素材を別のものへ勝手に置き換えません。負荷の警告と、実行できない入力エラーは別です。",
+            "H3でPCのRAMが不足する場合は、「設定」→「実行環境」で「生成時のRAM使用量を抑える」をONにし、「起動時の設定を保存」を押してください。Asteriaを終了して起動し直してから、生成をやり直します。",
+            "低RAM設定は単発の生成を遅くする場合があります。GPUメモリ（VRAM）不足の解消や完走の保証ではありません。RAMが足りていればONにする必要はなく、生成サイズや秒数も制限しません。"
           ],
           "images": [
             {
@@ -23044,7 +23046,9 @@ const studioHelp = {
             "Press Generate video, play the result and check saving and Library."
           ],
           "items": [
-            "Unsupported media is not silently replaced. A workload advisory is different from an invalid-input error."
+            "Unsupported media is not silently replaced. A workload advisory is different from an invalid-input error.",
+            "If H3 runs short of system RAM, open Settings → Runtime, enable Reduce RAM use during generation, then click Save startup options. Close and restart Asteria before retrying generation.",
+            "The low-RAM option may slow individual jobs. It does not guarantee completion or resolve GPU memory (VRAM) shortages. Leave it off if RAM is sufficient; it does not restrict resolution or duration."
           ],
           "images": [
             {
@@ -57396,8 +57400,8 @@ const _sfc_main$1 = {
     const statusText = _error.statusMessage ?? (is404 ? "Page Not Found" : "Internal Server Error");
     const description = _error.message || _error.toString();
     const stack = void 0;
-    const _Error404 = defineAsyncComponent(() => import('./error-404-BeN86sae.mjs'));
-    const _Error = defineAsyncComponent(() => import('./error-500-OSyBpGRq.mjs'));
+    const _Error404 = defineAsyncComponent(() => import('./error-404-DlfjnklB.mjs'));
+    const _Error = defineAsyncComponent(() => import('./error-500-DiLFwX7P.mjs'));
     const ErrorTemplate = is404 ? _Error404 : _Error;
     return (_ctx, _push, _parent, _attrs) => {
       _push(ssrRenderComponent(unref(ErrorTemplate), mergeProps({ status: unref(status), statusText: unref(statusText), statusCode: unref(status), statusMessage: unref(statusText), description: unref(description), stack: unref(stack) }, _attrs), null, _parent));

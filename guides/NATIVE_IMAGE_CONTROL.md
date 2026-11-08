@@ -38,6 +38,8 @@ MOSS-Imageで両方を使う場合は、もう一つ追加して別の入力の�
 
 ### 対応範囲
 
+MOSS-Imageでは、幅・高さが16の倍数でなくても指定できます。内部の処理領域だけを16の倍数へ切り上げ、保存前に右端・下端の余剰部分を切り落とします。完成画像は指定サイズになり、履歴・metadataも同じ値を記録します。制御画像も同じ原点と処理領域へ合わせ、端数のために引き伸ばすことはありません。
+
 この機能は構図や形の手掛かりを与えるものです。任意の姿勢、人物の所属、人体の正常性を保証しません。入力画像の形が出力にも強く残る場合があります。骨格ポーズ、輪郭専用の制御、Hires.fix、ADetailer、参照画像の部分編集を、新モデルで利用できるようにする機能ではありません。
 
 ## English
@@ -75,6 +77,8 @@ For MOSS-Image depth and color together, add a second unit with the other input 
 - **Missing model:** refresh assets after installation. Prepare or repair missing runtime components in Settings.
 
 ### Scope
+
+MOSS-Image accepts widths and heights that are not multiples of 16. Only the internal canvas is rounded up; excess pixels at the right and bottom are cropped before saving. The final image, history and metadata retain the requested size. Control maps use the same origin and internal canvas, without stretching to fit the alignment padding.
 
 These inputs guide composition and shape. They do not guarantee arbitrary poses, person ownership or correct anatomy. Input geometry may strongly influence the output. This does not add skeleton-pose control, edge-specific control, Hires.fix, ADetailer or masked reference-image editing to these models.
 

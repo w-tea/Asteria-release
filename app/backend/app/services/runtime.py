@@ -1610,6 +1610,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         return self._build_custom_sampler_tail(
             inputs.workflow, request["settings"], inputs.model, inputs.positive,
             inputs.latent, inputs.vae, mapping, negative_ref=inputs.negative,
+            output_crop_size=inputs.output_crop_size,
         )
 
     def _build_flux2(self, request: dict) -> dict:
@@ -2411,6 +2412,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         hires_negative_ref: list[str | int] | None = None,
         base_execution_state_ref: list[str | int] | None = None,
         hires_execution_state_ref: list[str | int] | None = None,
+        output_crop_size: tuple[int, int] | None = None,
     ) -> dict:
         next_id = max(int(node_id) for node_id in workflow) + 1
         sample_node = self._append_custom_sample(
@@ -2531,16 +2533,27 @@ class ComfyTxt2ImgWorkflowBuilder:
                 )
 
         decode_node = str(next_id)
-        save_node = str(next_id + 1)
         workflow[decode_node] = {
             "class_type": mapping.class_type("vae_decode", "VAEDecode"),
             "inputs": {"samples": [sample_node, 0], "vae": vae_ref},
         }
+        next_id += 1
+        image_ref = [decode_node, 0]
+        if output_crop_size is not None:
+            crop_node = str(next_id)
+            next_id += 1
+            workflow[crop_node] = {
+                "class_type": mapping.class_type("image_crop", "ImageCrop"),
+                "inputs": {"image": image_ref, "width": output_crop_size[0],
+                           "height": output_crop_size[1], "x": 0, "y": 0},
+            }
+            image_ref = [crop_node, 0]
+        save_node = str(next_id)
         workflow[save_node] = {
             "class_type": mapping.class_type("save_image", "SaveImage"),
-            "inputs": {"images": [decode_node, 0], "filename_prefix": "Asteria"},
+            "inputs": {"images": image_ref, "filename_prefix": "Asteria"},
         }
-        mark_stage(settings, decoded_stage_kind(settings), images=[decode_node, 0])
+        mark_stage(settings, decoded_stage_kind(settings), images=image_ref)
         settings["primary_output_node_ids"] = [save_node]
         return workflow
 

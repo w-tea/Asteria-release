@@ -31,6 +31,7 @@ class_types:
   basic_scheduler: BasicScheduler
   sampler_custom: SamplerCustomAdvanced
   vae_decode: VAEDecode
+  image_crop: ImageCrop
   save_image: SaveImage
   generation_stage_save: AsteriaSaveGenerationStage
   generation_stage_load: AsteriaLoadGenerationStage

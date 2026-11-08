@@ -92,6 +92,7 @@ class NativeImageInputs:
     negative: list
     latent: list
     vae: list
+    output_crop_size: tuple[int, int] | None = None
 
 
 def build_native_image_inputs(
@@ -119,6 +120,13 @@ def build_native_image_inputs(
     vae = [ids["vae_loader"], 0]
     positive = [ids["positive"], 0]
     negative = [ids["negative"], 0]
+    width, height = settings["width"], settings["height"]
+    latent_width, latent_height = width, height
+    if profile == "moss_image":
+        # EmptyFlux2LatentImage floors to 16 pixels. Keep the requested canvas
+        # at the origin and remove only the extra right/bottom edge after decode.
+        latent_width, latent_height = ((width + 15) // 16) * 16, ((height + 15) // 16) * 16
+    output_crop_size = (width, height) if (latent_width, latent_height) != (width, height) else None
     workflow = {
         ids["unet_loader"]: {
             "class_type": mapping.class_type("unet_loader", "UNETLoader"),
@@ -140,7 +148,7 @@ def build_native_image_inputs(
         },
         ids["latent"]: {
             "class_type": mapping.class_type("latent", ""),
-            "inputs": {"width": settings["width"], "height": settings["height"],
+            "inputs": {"width": latent_width, "height": latent_height,
                        "batch_size": settings.get("batch_size", 1)},
         },
     }
@@ -179,4 +187,4 @@ def build_native_image_inputs(
         }
         model = [slg_id, 0]
         settings["negative_prompt_runtime"] = "text_conditioning"
-    return NativeImageInputs(workflow, model, positive, negative, [ids["latent"], 0], vae)
+    return NativeImageInputs(workflow, model, positive, negative, [ids["latent"], 0], vae, output_crop_size)
