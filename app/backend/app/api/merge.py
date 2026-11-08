@@ -7,6 +7,7 @@ import json
 import re
 import shutil
 import sqlite3
+from tempfile import TemporaryDirectory
 from typing import Any
 from pathlib import Path
 from uuid import uuid4
@@ -49,6 +50,7 @@ from app.services.merge_recipes import (
     preflight_anima_merge_recipe,
     resolve_merge_source_fingerprints,
     unique_merge_output_path,
+    _publish_merge_output,
 )
 from app.services.merge_runtime_contract import (
     MERGE_RUNTIME_CONTRACT_VERSION,
@@ -1167,8 +1169,6 @@ def promote_precheck_candidate(request: PromotePrecheckCandidateRequest) -> Prom
         if not output_name.lower().endswith(".safetensors"):
             output_name = f"{output_name}.safetensors"
         output_path = unique_merge_output_path(output_root / output_name)
-        shutil.copy2(candidate, output_path)
-
         metadata_source = Path(request.metadata_path).resolve() if request.metadata_path else candidate.with_suffix(".asteria.merge.json").resolve()
         metadata_path = output_path.with_suffix(".asteria.merge.json")
         metadata: dict = {}
@@ -1188,7 +1188,14 @@ def promote_precheck_candidate(request: PromotePrecheckCandidateRequest) -> Prom
                 "output_path": str(output_path),
             }
         )
-        metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+        # The existing Merge publisher refuses collisions and rolls back only
+        # files it created. Never expose a partially copied candidate.
+        with TemporaryDirectory(prefix=".merge-promote-", dir=output_root) as folder:
+            staging = Path(folder)
+            shutil.copy2(candidate, staging / output_path.name)
+            (staging / metadata_path.name).write_text(
+                json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+            _publish_merge_output(staging, output_root, overwrite=False)
     except (OSError, MergeExecutionError) as exc:
         raise HTTPException(status_code=409, detail=f"Could not promote merge candidate: {exc}") from exc
     return PromotePrecheckCandidateResponse(output_path=str(output_path), metadata_path=str(metadata_path), promoted_from=str(candidate))

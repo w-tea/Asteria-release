@@ -1094,7 +1094,7 @@ def _elemental_random_ratio(recipe: MergeRecipe, token: str, block_index: int, t
     schema = BLOCK_SCHEMAS.get(recipe.block_schema, BLOCK_SCHEMAS["sdxl"])
     lower = _dice_float_values(recipe.dice_ranges.get("lower", ""), len(schema), 0.0)
     upper = _dice_float_values(recipe.dice_ranges.get("upper", ""), len(schema), 1.0)
-    randomer = _dice_randomer(recipe)
+    randomer = np.random.RandomState(_elemental_seed(recipe) % (2**32)).rand(max(3000, tensor_index + 101))
     random_value = float(randomer[tensor_index + 100])
     block_index = max(0, min(block_index, len(schema) - 1))
     if token == "R":
@@ -1575,6 +1575,12 @@ def _dice_seed(recipe: MergeRecipe) -> int:
         return recipe.dice_seed
     material = "|".join([recipe.id, recipe.name, recipe.dice_mode, recipe.merge_mode, recipe.output_name])
     return int(hashlib.sha256(material.encode("utf-8")).hexdigest()[:16], 16)
+
+
+def _elemental_seed(recipe: MergeRecipe) -> int:
+    # A restored preview retains its random coefficients when its output is renamed.
+    frozen = (recipe.model_extra or {}).get("elemental_random_seed")
+    return frozen if type(frozen) is int else _dice_seed(recipe)
 
 
 def _dice_randomer(recipe: MergeRecipe) -> np.ndarray:

@@ -5346,6 +5346,9 @@ class LoRACopyMachineTrainingRunRepository:
 
 
 class LoRATrainingDatasetRepository:
+    # Shared by all API repository instances; cover the entire read/modify/write.
+    _lock = RLock()
+
     def __init__(self, path) -> None:
         self.path = Path(path)
         try:
@@ -5354,91 +5357,97 @@ class LoRATrainingDatasetRepository:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
 
     def list(self) -> list[LoRATrainingDataset]:
-        return sorted(self._read(), key=lambda dataset: dataset.updated_at, reverse=True)
+        with self._lock:
+            return sorted(self._read(), key=lambda dataset: dataset.updated_at, reverse=True)
 
     def get(self, dataset_id: str) -> LoRATrainingDataset | None:
-        return next((dataset for dataset in self._read() if dataset.id == dataset_id), None)
+        with self._lock:
+            return next((dataset for dataset in self._read() if dataset.id == dataset_id), None)
 
     def create(self, *, name: str, preset_id: str) -> LoRATrainingDataset:
-        preset = get_lora_training_preset(preset_id)
-        if preset is None:
-            raise ValueError("lora_training_preset_not_found")
-        now = _utc_now()
-        dataset = LoRATrainingDataset(
-            id=uuid4().hex,
-            name=name.strip() or "Untitled LoRA dataset",
-            preset_id=preset.id,
-            profile=preset.profile,
-            training_type=preset.training_type,
-            created_at=now,
-            updated_at=now,
-        )
-        datasets = self._read(strict=True)
-        datasets.insert(0, dataset)
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            preset = get_lora_training_preset(preset_id)
+            if preset is None:
+                raise ValueError("lora_training_preset_not_found")
+            now = _utc_now()
+            dataset = LoRATrainingDataset(
+                id=uuid4().hex,
+                name=name.strip() or "Untitled LoRA dataset",
+                preset_id=preset.id,
+                profile=preset.profile,
+                training_type=preset.training_type,
+                created_at=now,
+                updated_at=now,
+            )
+            datasets = self._read(strict=True)
+            datasets.insert(0, dataset)
+            self._write(datasets)
+            return dataset
 
     def add_images(
         self,
         dataset_id: str,
         images: list[LoRATrainingDatasetImageInput],
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        existing_paths = {item.image_path for item in dataset.items}
-        now = _utc_now()
-        for image in images:
-            image_path = image.image_path.strip()
-            if not image_path or image_path in existing_paths:
-                continue
-            dataset.items.append(
-                LoRATrainingDatasetItem(
-                    id=uuid4().hex,
-                    image_path=image_path,
-                    caption=image.caption.strip(),
-                    tags=_normalize_tags(image.tags),
-                    source_generation_id=image.source_generation_id,
-                    source_output_path=image.source_output_path.strip(),
-                    created_at=now,
-                    updated_at=now,
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            existing_paths = {item.image_path for item in dataset.items}
+            now = _utc_now()
+            for image in images:
+                image_path = image.image_path.strip()
+                if not image_path or image_path in existing_paths:
+                    continue
+                dataset.items.append(
+                    LoRATrainingDatasetItem(
+                        id=uuid4().hex,
+                        image_path=image_path,
+                        caption=image.caption.strip(),
+                        tags=_normalize_tags(image.tags),
+                        source_generation_id=image.source_generation_id,
+                        source_output_path=image.source_output_path.strip(),
+                        created_at=now,
+                        updated_at=now,
+                    )
                 )
-            )
-            existing_paths.add(image_path)
-        dataset.updated_at = now
-        self._write(datasets)
-        return dataset
+                existing_paths.add(image_path)
+            dataset.updated_at = now
+            self._write(datasets)
+            return dataset
 
     def update_caption_export_settings(
         self,
         dataset_id: str,
         settings: LoRATrainingCaptionExportSettings,
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        dataset.caption_export_settings = _normalized_caption_export_settings(settings)
-        dataset.updated_at = _utc_now()
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            dataset.caption_export_settings = _normalized_caption_export_settings(settings)
+            dataset.updated_at = _utc_now()
+            self._write(datasets)
+            return dataset
 
     def update_character_caption_policy(
         self,
         dataset_id: str,
         policy: LoRATrainingCharacterCaptionPolicy,
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        if dataset.training_type != "character_lora":
-            raise ValueError("lora_training_character_caption_policy_not_applicable")
-        dataset.character_caption_policy = _normalized_character_caption_policy(policy)
-        dataset.updated_at = _utc_now()
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            if dataset.training_type != "character_lora":
+                raise ValueError("lora_training_character_caption_policy_not_applicable")
+            dataset.character_caption_policy = _normalized_character_caption_policy(policy)
+            dataset.updated_at = _utc_now()
+            self._write(datasets)
+            return dataset
 
     def update_caption(
         self,
@@ -5448,20 +5457,21 @@ class LoRATrainingDatasetRepository:
         caption: str,
         tags: list[str],
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        item = next((entry for entry in dataset.items if entry.id == item_id), None)
-        if item is None:
-            return None
-        now = _utc_now()
-        item.caption = caption.strip()
-        item.tags = _normalize_tags(tags)
-        item.updated_at = now
-        dataset.updated_at = now
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            item = next((entry for entry in dataset.items if entry.id == item_id), None)
+            if item is None:
+                return None
+            now = _utc_now()
+            item.caption = caption.strip()
+            item.tags = _normalize_tags(tags)
+            item.updated_at = now
+            dataset.updated_at = now
+            self._write(datasets)
+            return dataset
 
     def upsert_caption_source(
         self,
@@ -5469,25 +5479,26 @@ class LoRATrainingDatasetRepository:
         item_id: str,
         source: LoRATrainingCaptionSourceInput,
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        item = next((entry for entry in dataset.items if entry.id == item_id), None)
-        if item is None:
-            return None
-        now = _utc_now()
-        record = _caption_source_record_from_input(source, now=now)
-        existing_index = next((index for index, entry in enumerate(item.caption_sources) if entry.id == record.id), None)
-        if existing_index is None:
-            item.caption_sources.append(record)
-        else:
-            created_at = item.caption_sources[existing_index].created_at
-            item.caption_sources[existing_index] = record.model_copy(update={"created_at": created_at})
-        item.updated_at = now
-        dataset.updated_at = now
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            item = next((entry for entry in dataset.items if entry.id == item_id), None)
+            if item is None:
+                return None
+            now = _utc_now()
+            record = _caption_source_record_from_input(source, now=now)
+            existing_index = next((index for index, entry in enumerate(item.caption_sources) if entry.id == record.id), None)
+            if existing_index is None:
+                item.caption_sources.append(record)
+            else:
+                created_at = item.caption_sources[existing_index].created_at
+                item.caption_sources[existing_index] = record.model_copy(update={"created_at": created_at})
+            item.updated_at = now
+            dataset.updated_at = now
+            self._write(datasets)
+            return dataset
 
     def delete_caption_source(
         self,
@@ -5495,43 +5506,46 @@ class LoRATrainingDatasetRepository:
         item_id: str,
         source_id: str,
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        item = next((entry for entry in dataset.items if entry.id == item_id), None)
-        if item is None:
-            return None
-        next_sources = [source for source in item.caption_sources if source.id != source_id]
-        if len(next_sources) == len(item.caption_sources):
-            return None
-        now = _utc_now()
-        item.caption_sources = next_sources
-        item.updated_at = now
-        dataset.updated_at = now
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            item = next((entry for entry in dataset.items if entry.id == item_id), None)
+            if item is None:
+                return None
+            next_sources = [source for source in item.caption_sources if source.id != source_id]
+            if len(next_sources) == len(item.caption_sources):
+                return None
+            now = _utc_now()
+            item.caption_sources = next_sources
+            item.updated_at = now
+            dataset.updated_at = now
+            self._write(datasets)
+            return dataset
 
     def delete_item(self, dataset_id: str, item_id: str) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        next_items = [item for item in dataset.items if item.id != item_id]
-        if len(next_items) == len(dataset.items):
-            return None
-        dataset.items = next_items
-        dataset.updated_at = _utc_now()
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            next_items = [item for item in dataset.items if item.id != item_id]
+            if len(next_items) == len(dataset.items):
+                return None
+            dataset.items = next_items
+            dataset.updated_at = _utc_now()
+            self._write(datasets)
+            return dataset
 
     def delete_dataset(self, dataset_id: str) -> bool:
-        datasets = self._read(strict=True)
-        next_datasets = [dataset for dataset in datasets if dataset.id != dataset_id]
-        if len(next_datasets) == len(datasets):
-            return False
-        self._write(next_datasets)
-        return True
+        with self._lock:
+            datasets = self._read(strict=True)
+            next_datasets = [dataset for dataset in datasets if dataset.id != dataset_id]
+            if len(next_datasets) == len(datasets):
+                return False
+            self._write(next_datasets)
+            return True
 
     def _read(self, *, strict: bool = False) -> list[LoRATrainingDataset]:
         try:

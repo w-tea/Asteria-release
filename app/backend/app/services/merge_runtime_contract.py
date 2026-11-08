@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from typing import Literal
+from pathlib import Path
+import re
 
 from pydantic import BaseModel, ConfigDict, Field
+from safetensors import safe_open
 
 from app.services.merge_calculation_modes import (
     ASTERIA_CALCULATION_MODES,
@@ -15,6 +18,8 @@ from app.services.merge_recipes import (
     MERGE_MODES,
     MergeRecipe,
     expand_dice_recipe,
+    _elemental_seed,
+    _checkpoint_key_aliases,
 )
 from app.services.merge_presets import merge_schema_family
 
@@ -89,6 +94,67 @@ class MergeRuntimeRecipeContract(BaseModel):
     export_controls: MergeRuntimeExportControls
 
 
+def _clip_g_runtime_aliases(key: str) -> tuple[str, ...]:
+    """Map fixed ComfyUI OpenCLIP-G loading names to their source tensor.
+
+    This is a key/ownership map, not a tensor conversion. All three projections
+    split from in_proj must retain the same saved-checkpoint random draw.
+    """
+    prefix = "conditioner.embedders.1.model."
+    if not key.startswith(prefix):
+        return ()
+    suffix = key[len(prefix):]
+    direct = {"positional_embedding": "text_model.embeddings.position_embedding.weight",
+              "token_embedding.weight": "text_model.embeddings.token_embedding.weight",
+              "ln_final.weight": "text_model.final_layer_norm.weight",
+              "ln_final.bias": "text_model.final_layer_norm.bias",
+              "text_projection": "text_projection.weight",
+              "text_projection.weight": "text_projection.weight"}
+    aliases = ["conditioner.embedders.1." + suffix]
+    target_prefix = "conditioner.embedders.1.transformer."
+    if suffix in direct:
+        aliases.append(target_prefix + direct[suffix])
+    match = re.fullmatch(r"transformer\.resblocks\.(\d+)\.(.+)", suffix)
+    if match:
+        layer, component = match.groups()
+        target = target_prefix + f"text_model.encoder.layers.{layer}."
+        for old, new in (("ln_1", "layer_norm1"), ("ln_2", "layer_norm2"),
+                         ("mlp.c_fc", "mlp.fc1"), ("mlp.c_proj", "mlp.fc2"),
+                         ("attn.out_proj", "self_attn.out_proj")):
+            for kind in ("weight", "bias"):
+                if component == f"{old}.{kind}":
+                    aliases.append(target + f"{new}.{kind}")
+        for kind in ("weight", "bias"):
+            if component == "attn.in_proj_" + kind:
+                aliases.extend(target + f"self_attn.{axis}_proj.{kind}" for axis in ("q", "k", "v"))
+    return tuple(aliases)
+
+
+def _runtime_key_policy(recipe: MergeRecipe) -> dict[str, object]:
+    policy: dict[str, object] = {
+        "include": list(recipe.include_blocks), "exclude": list(recipe.exclude_blocks),
+        "missing_or_non_floating": "preserve_source_a",
+    }
+    if not re.search(r":\s*[RUX]\s*(?:,|\n|$)", recipe.elemental_rules, re.IGNORECASE):
+        return policy
+    indices: dict[str, int] = {}
+    source_keys: dict[str, str] = {}
+    source = next((item for item in recipe.sources if item.role.upper() == "A"), None)
+    if source and Path(source.path).is_file():
+        # load_file uses offset order, whereas MODEL / CLIP / VAE each enumerate
+        # different subsets. Read only the header, never another copy of weights.
+        with safe_open(source.path, framework="pt", device="cpu") as handle:
+            for index, key in enumerate(handle.offset_keys()):
+                for alias in _checkpoint_key_aliases(key):
+                    indices.setdefault(alias, index)
+                for alias in _clip_g_runtime_aliases(key):
+                    indices.setdefault(alias, index)
+                    source_keys.setdefault(alias, key)
+    policy["elemental_random"] = {"seed": _elemental_seed(recipe), "indices": indices,
+                                  "source_keys": source_keys}
+    return policy
+
+
 def normalize_merge_runtime_recipe(recipe: MergeRecipe) -> MergeRuntimeRecipeContract:
     if recipe.merge_type != "checkpoint":
         raise MergeRuntimeContractError("merge_type must be checkpoint for in-memory runtime")
@@ -136,11 +202,7 @@ def normalize_merge_runtime_recipe(recipe: MergeRecipe) -> MergeRuntimeRecipeCon
         calculation_parameters=calculation_parameters,
         calculation_implementation_revision=expanded.calculation_implementation_revision,
         dtype_policy="float32_arithmetic_then_requested_output_dtype",
-        key_policy={
-            "include": list(expanded.include_blocks),
-            "exclude": list(expanded.exclude_blocks),
-            "missing_or_non_floating": "preserve_source_a",
-        },
+        key_policy=_runtime_key_policy(expanded),
         source_fingerprints=[
             dict(item) for item in expanded.source_fingerprints
         ],
@@ -200,6 +262,9 @@ def restore_merge_runtime_recipe(
             sources=[{"role": role, "path": sources[role]} for role in sorted(required)],
             use_cuda=False, **contract.export_controls.model_dump(),
         )
+        elemental = contract.key_policy.get("elemental_random")
+        if isinstance(elemental, dict) and type(elemental.get("seed")) is int:
+            recipe = recipe.model_copy(update={"elemental_random_seed": elemental["seed"]})
         if normalize_merge_runtime_recipe(recipe).model_dump(mode="json") != data:
             raise ValueError("candidate contract does not round-trip")
         return recipe

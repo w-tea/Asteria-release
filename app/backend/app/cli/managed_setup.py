@@ -10,6 +10,7 @@ from typing import Literal, NoReturn
 from app.services.model_dependencies import ModelDependencyRepository
 from app.services.model_dependencies import ModelDependencyInstaller
 from app.services.model_selections import ModelSelectionRepository
+from app.services.model_fingerprints import ModelFingerprintService
 from app.services.initial_data import InitialDataMaterializer
 from app.services.managed_artifacts import (
     ManagedArtifactPathTooLong,
@@ -349,6 +350,9 @@ class PortableSetupRuntime:
         self.model_repository = ModelDependencyRepository(
             self.app_root / "model-dependencies.yaml",
             self.app_root / "models",
+            fingerprint_service=ModelFingerprintService(
+                self.app_root / "data" / "config" / "model-fingerprints.json"
+            ),
         )
         self.model_installer = ModelDependencyInstaller(
             self.model_repository,

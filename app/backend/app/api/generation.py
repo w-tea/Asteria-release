@@ -806,6 +806,8 @@ def _validate_runtime_feature_requirements(
     settings: dict,
     loras: list[dict] | None = None,
     model_slots: dict[str, str] | None = None,
+    *,
+    resolved_embeddings: list[str] | None = None,
 ) -> None:
     requires_spatial_prompt = uses_spatial_prompt_layout(settings)
     remaster_settings = settings.get("remaster", {})
@@ -869,7 +871,7 @@ def _validate_runtime_feature_requirements(
     if profile != "sdxl":
         unsupported_profile_settings = _unsupported_profile_runtime_settings(
             profile,
-            settings,
+            settings if resolved_embeddings is None else {**settings, "embeddings": resolved_embeddings},
             model_root=config.model_dir,
         )
         if unsupported_profile_settings:
@@ -3961,6 +3963,7 @@ def _generate_with_recording(
         settings,
         loras,
         runtime_model_slots,
+        resolved_embeddings=embeddings,
     )
     _record_hires_runtime(settings, selected_runtime, request.profile)
     _record_hires_checkpoint_runtime(settings, selected_runtime, request.profile)

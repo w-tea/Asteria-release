@@ -561,7 +561,7 @@ class OperationRepository:
             executor_version=original.executor_version,
         )
 
-    def interrupt_active_operations(self) -> list[OperationRecord]:
+    def interrupt_active_operations(self, *, reason_code: str = "operation_interrupted_by_restart") -> list[OperationRecord]:
         recovered: list[OperationRecord] = []
         for current in self.list(statuses=ACTIVE_OPERATION_STATUSES, limit=1000, include_dismissed=True):
             try:
@@ -570,7 +570,7 @@ class OperationRepository:
                     expected_revision=current.row_revision,
                     target_status="interrupted",
                     phase="interrupted",
-                    error_code="operation_interrupted_by_restart",
+                    error_code=reason_code,
                     retryable=True,
                 ))
             except OperationConflictError:

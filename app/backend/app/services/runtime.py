@@ -390,10 +390,12 @@ class ComfyClient:
             while not stop_event.is_set():
                 try:
                     message = socket.recv()
-                except Exception:
-                    if stop_event.is_set():
-                        return
+                except websocket.WebSocketTimeoutException:
                     continue
+                except Exception:
+                    return
+                if message in ("", b""):
+                    return
                 if isinstance(message, bytes):
                     path = self._write_preview_message(preview_dir, message)
                     if path and callback is not None:

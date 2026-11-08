@@ -232,6 +232,8 @@ class MaintenanceBackupService:
                     self._restore_failure_injector(relative_path.as_posix(), restored_count)
             if extension_transaction is not None:
                 self.extension_backup.apply_restore(extension_transaction)
+            if any(item["relative_path"].casefold() == "asteria.db" for item in generic_records):
+                self._interrupt_restored_jobs()
             self.journal.record(
                 operation_id=operation_id,
                 kind="restore",
@@ -265,6 +267,17 @@ class MaintenanceBackupService:
                 raise MaintenanceBackupError("restore_rollback_failed") from rollback_error
             self._record_failure(operation_id, "restore_failed", kind="restore")
             raise MaintenanceBackupError("restore_failed") from exc
+
+    def _interrupt_restored_jobs(self) -> None:
+        from app.services.operation_repository import OperationRepository
+
+        database = self.data_dir / "asteria.db"
+        with sqlite3.connect(database) as connection:
+            if connection.execute("select 1 from sqlite_master where type='table' and name='operations'").fetchone() is None:
+                return
+        repository = OperationRepository(database)
+        while repository.interrupt_active_operations(reason_code="operation_interrupted_by_restore"):
+            pass
 
     def _durable_sources(self) -> list[Path]:
         try:

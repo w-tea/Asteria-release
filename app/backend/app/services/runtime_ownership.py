@@ -116,7 +116,8 @@ def record_started_runtime(config: AppConfig, process: psutil.Process) -> None:
     try:
         payload = read_launcher_state(config, allow_missing=True)
         if os.name == 'nt':
-            command = (f"$ErrorActionPreference='Stop'; $p=Get-Process -Id {pid}; "
+            command = ("[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); "
+                f"$ErrorActionPreference='Stop'; $p=Get-Process -Id {pid}; "
                 "[ordered]@{name='comfyui';pid=$p.Id;executable_path=$p.Path;"
                 "started_at_utc=$p.StartTime.ToUniversalTime().ToString('o');optional=$false}|ConvertTo-Json -Compress")
             result = subprocess.run(['powershell.exe','-NoProfile','-NonInteractive','-Command',command],

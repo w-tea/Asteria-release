@@ -203,7 +203,7 @@ def create_app(*, config: AppConfig | None = None) -> FastAPI:
         return {
             "status": "ok",
             "app": "asteria",
-            "target_mode": AppConfig().target_mode,
+            "target_mode": config.target_mode,
         }
 
     operation_coordinator = get_operation_coordinator()

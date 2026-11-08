@@ -1482,7 +1482,7 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
     }
   }
 });
-const components_plugin_4kY4pyzJIYX99vmMAAIorFf3CnAaptHitJgf7JxiED8 = /* @__PURE__ */ defineNuxtPlugin({
+const components_plugin_z4hgvsiddfKkfXTP6M8M4zG5Cb7sGnDhcryKVM45Di4 = /* @__PURE__ */ defineNuxtPlugin({
   name: "nuxt:global-components"
 });
 const TOOLTIP_ID = "asteria-global-tooltip";
@@ -1580,7 +1580,7 @@ const plugins = [
   router_DclsWNDeVV7SyG4lslgLnjbQUK1ws8wgf2FHaAbo7Cw,
   revive_payload_server_MVtmlZaQpj6ApFmshWfUWl5PehCebzaBf2NuRMiIbms,
   plugin,
-  components_plugin_4kY4pyzJIYX99vmMAAIorFf3CnAaptHitJgf7JxiED8,
+  components_plugin_z4hgvsiddfKkfXTP6M8M4zG5Cb7sGnDhcryKVM45Di4,
   asteria_tooltip_fSFARtpwGbHlO1KB4At5caYKXgNivLM9kmiwguLVh5w
 ];
 const messages = {
@@ -6558,6 +6558,7 @@ const messages = {
   "common.error.maintenanceStatus": { en: "Could not load maintenance status.", ja: "保守状態を読み込めませんでした。" },
   "common.error.maintenanceBackup": { en: "Could not create the protected backup.", ja: "保護バックアップを作成できませんでした。" },
   "common.error.maintenanceRestore": { en: "Could not verify or restore the backup.", ja: "バックアップの確認または復元に失敗しました。" },
+  "common.error.maintenanceBusy": { en: "Tasks are running or queued. Finish or cancel them before restoring the backup.", ja: "実行中または待機中の処理があります。処理を完了するか中止してから、バックアップを復元してください。" },
   "settings.operations.aria": { en: "Runtime, model assets, integrations, and AI operations", ja: "実行環境、モデルアセット、外部連携、AI操作" },
   "settings.startup.aria": { en: "First-run readiness overview", ja: "初回セットアップ準備状況" },
   "settings.startup.eyebrow": { en: "STARTUP READINESS", ja: "STARTUP READINESS" },
@@ -9066,6 +9067,7 @@ const knownErrorCodeKeys = {
   discord_publish_revision_conflict: "settings.discord.publishConflict",
   discord_secret_delete_failed: "settings.discord.secretDeleteFailed",
   maintenance_restore_confirmation_required: "common.error.settingsSave",
+  maintenance_restore_busy: "common.error.maintenanceBusy",
   unsupported_comfy_runtime_setting: "generation.error.unsupportedSettings",
   generation_seed_not_exact: "generation.error.seedNotExact",
   generation_model_selection_incomplete: "generation.error.modelSelectionIncomplete",
@@ -57394,8 +57396,8 @@ const _sfc_main$1 = {
     const statusText = _error.statusMessage ?? (is404 ? "Page Not Found" : "Internal Server Error");
     const description = _error.message || _error.toString();
     const stack = void 0;
-    const _Error404 = defineAsyncComponent(() => import('./error-404-BsYBAmDI.mjs'));
-    const _Error = defineAsyncComponent(() => import('./error-500-QfUjfNVk.mjs'));
+    const _Error404 = defineAsyncComponent(() => import('./error-404-BeN86sae.mjs'));
+    const _Error = defineAsyncComponent(() => import('./error-500-OSyBpGRq.mjs'));
     const ErrorTemplate = is404 ? _Error404 : _Error;
     return (_ctx, _push, _parent, _attrs) => {
       _push(ssrRenderComponent(unref(ErrorTemplate), mergeProps({ status: unref(status), statusText: unref(statusText), statusCode: unref(status), statusMessage: unref(statusText), description: unref(description), stack: unref(stack) }, _attrs), null, _parent));

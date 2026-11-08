@@ -21,6 +21,7 @@ _EXACT_REQUIREMENT_RE = re.compile(r"^[A-Za-z0-9_.-]+==[^<>=!*~\s]+$")
 _REVISION_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 _VERIFIED_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _MANDATORY_RUNTIME_IDS = {
+    "asteria-native-image-control",
     "asteria-generation-stage",
     "asteria-prompt-syntax",
     "asteria-merge-runtime",
@@ -50,6 +51,8 @@ _MANDATORY_MODEL_IDS = {
     "controlnet-openpose-dwpose",
 }
 _STARTER_ASSETS = {
+    "krea2-depth-control": (None, 861995928, "fb80547ed79b47c1e3fea7bb9d36297e3917b2115fab6700ca1501350f9f483c"),
+    "moss-image-color-depth-control": (None, 313063368, "e5c0c3efd05e4269207a39de6005798f14c90c6687c89c54eaffe4b76c43a763"),
     "krea2-turbo-fp8": ("krea2", 13141730784, "eb4dd8c612cfd10f64f25b057e6e6bbcb5737c94a7372177e456dbf7579502f1"),
     "krea2-text-encoder": ("krea2", 5242467968, "54bd5144df0bbc25dd6ccadfcb826b521445a1b06ae5a42570bdd2974ca87094"),
     "krea2-vae": ("krea2", 253806246, "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"),
@@ -332,6 +335,10 @@ def _validate_runtime_catalog_item(item: object) -> None:
     provider = getattr(item, "provider", None)
     if provider == "bundled":
         bundled_contracts = {
+            "asteria-native-image-control": (
+                "runtime-components/comfyui/Asteria-Native-Control",
+                "asteria.native_image_control.v1",
+            ),
             "asteria-generation-stage": (
                 "runtime-components/comfyui/Asteria-Generation-Stage",
                 "asteria.generation-stage.v1",
@@ -394,7 +401,7 @@ def _validate_model_catalog_item(item: object) -> None:
         _validate_managed_source(item, require_commit_revision=False)
         if getattr(item, "size_bytes", None) != expected_size or getattr(item, "checksum_sha256", None) != expected_hash:
             raise ValueError("release catalog starter metadata changed")
-        if (expected_pack in {"anima", "anima-3.8b"} or item_id == "krea2-turbo-fp8") and getattr(item, "requires_license_confirmation", None) is not True:
+        if (expected_pack in {"anima", "anima-3.8b"} or item_id in {"krea2-turbo-fp8", "krea2-depth-control"}) and getattr(item, "requires_license_confirmation", None) is not True:
             raise ValueError("release catalog model license confirmation is required")
         return
     if release_class == "development":

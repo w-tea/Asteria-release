@@ -254,11 +254,11 @@ def _elemental_random(payload: dict[str, Any], token: str, block_index: int, ten
     ranges = payload.get("dice_ranges") or {}
     lower = _dice_values(ranges.get("lower", ""), len(schema), 0.0)
     upper = _dice_values(ranges.get("upper", ""), len(schema), 1.0)
-    seed = payload.get("random_seed")
+    seed = payload.get("key_policy", {}).get("elemental_random", {}).get("seed", payload.get("random_seed"))
     if seed is None:
         material = "|".join([payload.get("recipe_id", ""), payload.get("recipe_name", ""), "", payload["merge_mode"], ""])
         seed = int(hashlib.sha256(material.encode("utf-8")).hexdigest()[:16], 16)
-    random_value = float(np.random.RandomState(seed).rand(3000)[tensor_index + 100])
+    random_value = float(np.random.RandomState(int(seed) % (2**32)).rand(max(3000, tensor_index + 101))[tensor_index + 100])
     block_index = max(0, min(block_index, len(schema) - 1))
     value = random_value if token == "R" else (-2 * random_value + 1.0 if token == "U" else (lower[block_index] - upper[block_index]) * random_value + upper[block_index])
     try:
@@ -536,6 +536,10 @@ def merge_single_tensor(
     cosine_context: dict[str, float] | None,
 ) -> torch.Tensor:
     canonical = _canonical_key(key, domain)
+    random_policy = payload.get("key_policy", {}).get("elemental_random", {})
+    indices = random_policy.get("indices", {})
+    tensor_index = indices.get(canonical, tensor_index)
+    canonical = random_policy.get("source_keys", {}).get(canonical, canonical)
     if not _should_merge(payload, canonical) or not tensor_a.is_floating_point() or not any(
         part in canonical.lower() for part in ("weight", "bias")
     ):

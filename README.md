@@ -249,7 +249,7 @@ Asteriaを使い始めるときは、展開先の次のファイルを実行し�
 
 `Stop-Asteria.cmd`
 
-起動できない、または管理対象ファイルの不足・破損が疑われるときは、Asteriaを停止してから次のファイルを実行します。不足分を再検証・再取得し、再起動を試せる状態にします。
+起動できない、または管理対象ファイルの不足・破損が疑われるときは、Asteriaを停止してから次のファイルを実行します。管理対象の実行環境を作り直し、必要な依存ファイルを確認・再取得します。設定・履歴・生成物と、外部モデルライブラリの原本は保持します。
 
 `Repair-Asteria.cmd`
 
@@ -609,7 +609,7 @@ When you finish using Asteria, run the following file. This also stops the Pytho
 
 `Stop-Asteria.cmd`
 
-If the first download failed or a managed component may be missing or corrupt, run the following file. It stops Asteria, verifies the managed files, and reacquires missing items.
+If the first download failed or a managed component may be missing or corrupt, stop Asteria and run the following file. Repair rebuilds the managed runtime, checks its dependencies, and reacquires required files. Settings, history, generated media, and original files in external model libraries are preserved.
 
 `Repair-Asteria.cmd`
 
