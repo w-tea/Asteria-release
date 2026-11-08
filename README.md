@@ -1,4 +1,4 @@
-# Asteria V1.2.1.4 Windows Portable
+# Asteria V1.2.2 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -6,7 +6,7 @@
 
 **A local AI creation app for Windows: generate images, video and music, then edit, organize, train LoRAs and merge models.**
 
-![Darkモードの生成画面。左でプロンプト、右で生成条件を設定 / Generate in Dark mode](guides/images/generate-dark-ja.jpg)
+![Darkモードの生成画面。左が画像と結果情報、右がプロンプトと生成操作 / Generate in Dark mode](guides/images/generate-v122-dark-ja.png)
 
 画面例はDarkモード・日本語表示です。必要な情報は以下の日本語・英語の案内から確認できます。
 
@@ -29,15 +29,30 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 
 > 描写位置を指定する配置機能はV1.2.0から利用できません。通常の生成と項目別のプロンプト入力は引き続き使えます。過去の配置付き設定を再利用すると、文章は対応する欄へ戻ります。位置は引き継がず、元の履歴や画像は変更しません。
 
-### V1.2.1.4の修正
+### V1.2.2の変更
+
+- Generateは画像を左、プロンプトと生成操作を右に配置しました。モデル設定と生成設定は必要なときに開けます。適用中のLoRAと詳細スタイルも確認できます。
+- 画像の再利用・処理ボタンを「結果情報」にまとめ、Eagleの送信先は一行から開く形にしました。
+- 生成設定ではHiresなどの調整を先に表示し、工程画像などの保存設定は「保存・記録」から開けます。履歴は画像とプロンプトの冒頭を表示し、操作・全文・メモを展開して確認できます。
+- LoRAを使わないときの表示をコンパクトにし、結果情報には生成時に保存されたモデルと日時を表示します。記録のない値は推測して補いません。
+- Image Editはキャンバスを広く使える配置に変更し、道具と入力画像の切り替えを縦にまとめました。
+- Krea 2 TurboとMOSS-Image SFTの通常の画像生成とLoRA適用に対応します。専用モデルを追加すると、ControlNet欄からKrea 2の深度制御、MOSS-Imageの深度・色領域制御も使えます。[画像制御の手順](guides/NATIVE_IMAGE_CONTROL.md)を参照してください。新モデルでのHires、ADetailer、参照画像編集は今回の対応に含みません。
+- 管理するComfyUIを固定0.43.0へ更新します。MOSSの軽量構成はINT8生成モデル・W4A8 encoder・small VAEを使います。必要メモリや処理時間は環境によって異なります。
+- SDXLのLoRA学習は、Asteriaの再起動後も正常終了を確認できれば、既存ファイルを上書きせずに結果を保存します。終了を確認できない場合や学習を中止した場合は、残っているファイルの場所を学習履歴で確認できます。
+- Anima 2.9B／3.8Bでも、対応する一部の層だけを調整するLoRAを変換せずに使えます。実際に世代間の変換が必要な場合は、対応する変換設定を使います。
+- プロンプトに書いたLoRAも比較生成で選べます。比較する強度とSeedが、実際の生成に反映されます。
+- Krea 2とMOSS-Imageのモデル・テキストエンコーダー・VAEは、対応する構造であれば手持ちのファイルも選べます。アプリから取得するファイルは、引き続きハッシュを照合します。
+- SDXLのマージで標準的な20値のMBWを使えます。モデルを切り替えても、元のモデルに戻すと編集中の生成設定を再表示します。
+
+### V1.2.1.4から引き継いだ修正
 
 - SDXLで、プロンプトに書いたLoRAの強度と、LoRA設定で選んだ層ごとの重みを併用できます。例えば、`<lora:名前:0.8>` を書いた場合も、同じLoRAの層設定を保ったまま強度0.8が反映されます。
 - プロンプトに書いたLoRAが設定欄にも表示されます。そこで強度や層を変更すると、タグの指定も更新されます。同じLoRAは二重に適用されません。
 
-### V1.2.1.3の修正
+### V1.2.1.3から引き継いだ修正
 
 - Anima 1.0で、Kohya形式や一部の層だけを調整するLoRAを選ぶと生成が止まる問題を修正しました。対応するLoRAは変換や再取得なしで使えます。
-- モデルとCLIPの強度を別々に指定したLoRA記法が無視される問題を修正しました。プロンプトに挿入した両方の強度を生成へ渡します。
+- SDXLで「LoRA tokenを挿入」を使い、`<lora:名前:2.0:0.6>` のように強さが2つ入ったタグをプロンプトに追加すると、LoRAが反映されない問題を修正しました。
 - 外部のWebサイトからローカルAPIを操作する要求を拒否し、ダウンロードが許可された保存先の外へ書き込まれないようにしました。
 
 ### V1.2.1.2の修正
@@ -234,7 +249,7 @@ Asteriaを使い始めるときは、展開先の次のファイルを実行し�
 
 `Stop-Asteria.cmd`
 
-起動できない、または管理対象ファイルの不足・破損が疑われるときは、Asteriaを停止してから次のファイルを実行します。不足分を再検証・再取得し、再起動を試せる状態にします。
+起動できない、または管理対象ファイルの不足・破損が疑われるときは、Asteriaを停止してから次のファイルを実行します。管理対象の実行環境を作り直し、必要な依存ファイルを確認・再取得します。設定・履歴・生成物と、外部モデルライブラリの原本は保持します。
 
 `Repair-Asteria.cmd`
 
@@ -363,7 +378,7 @@ Qwen2D-Anime VAE対応では、Anzhc氏が公開している[anzhc-qwen2d-comfyu
 
 Asteria is a Windows application for local AI creation. It combines image generation and editing, video generation, music generation, artifact comparison and organization, LoRA training, and model merging. Runtime components are acquired on first launch. Image checkpoints and optional video or music models are not bundled.
 
-![Generate in Dark mode: prompt input on the left and generation settings on the right](guides/images/generate-dark-ja.jpg)
+![Generate in Dark mode: image and result information on the left, prompts and generation actions on the right](guides/images/generate-v122-dark-ja.png)
 
 Screenshots show the Japanese interface in Dark mode. Language and theme are selectable in Settings. See the illustrated [Quick start](guides/QUICK_START.md) for your first steps after launch.
 
@@ -376,15 +391,30 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 
 > Spatial prompt placement is unavailable as of V1.2.0. You can still generate normally and use the sectioned prompt editor. Reusing older placement settings restores the text to the corresponding fields, without restoring positions or modifying the original history or images.
 
-### V1.2.1.4 fixes
+### Changes in V1.2.2
+
+- Generate now places the image on the left and prompts and generation actions on the right. Open model and generation settings when needed, and review active LoRAs and detailed styles in place.
+- Image reuse and processing actions are grouped under Result information. The Eagle destination expands from a single line.
+- Generation settings show Hires and other adjustments before the optional Saving and recording section. History shows an image and prompt excerpt; expand an entry for actions, the full prompt and notes.
+- The empty LoRA summary takes less space. Result information uses the model and date saved with the generation, without guessing values missing from the record.
+- Image Edit provides more canvas space, with tools and input-image switching arranged vertically.
+- Added text-to-image generation and LoRA support for Krea 2 Turbo and MOSS-Image SFT. Optional control models enable Krea 2 depth guidance and MOSS-Image depth/color-region guidance through the ControlNet panel. See [image-control instructions](guides/NATIVE_IMAGE_CONTROL.md#english). Hires, ADetailer and reference-image editing for these new models are not part of this update.
+- The managed ComfyUI is pinned to 0.43.0. The lightweight MOSS configuration uses an INT8 diffusion model, W4A8 encoder and small VAE. Memory requirements and processing time depend on the environment.
+- After Asteria restarts, SDXL LoRA training saves the result without replacing existing files if it can confirm that training finished successfully. If completion cannot be confirmed or training was stopped, the run shows where to find any remaining files.
+- Compatible LoRAs that adjust only some layers also work with Anima 2.9B and 3.8B without conversion. Use the supported conversion settings when mapping between generations is required.
+- LoRAs written in the prompt can be selected for comparison generation. The requested strengths and Seeds are used for the comparison.
+- Krea 2 and MOSS-Image can use local models, text encoders and VAEs with compatible structures. Managed downloads still undergo file-hash verification.
+- SDXL merging accepts standard 20-value MBW lists. Switching back to a model profile restores the generation settings you were editing for it.
+
+### Fixes carried over from V1.2.1.4
 
 - In SDXL, a LoRA strength written in the prompt now works with the layer weights selected in LoRA settings. For example, `<lora:name:0.8>` applies strength 0.8 without discarding the layer settings for that LoRA.
 - LoRAs written in the prompt also appear in LoRA settings. Changing the strength or layer weights there updates the tag. A LoRA is not applied twice.
 
-### V1.2.1.3 fixes
+### Fixes carried over from V1.2.1.3
 
 - Fixed Anima 1.0 generation failing with Kohya-format LoRAs and LoRAs that adjust only some layers. Compatible files do not need to be converted or downloaded again.
-- Fixed LoRA tags with separate model and CLIP strengths being ignored. Both strengths are now passed to generation when the tag is inserted in the prompt.
+- Fixed SDXL ignoring a LoRA when the prompt included a tag with two strengths, such as `<lora:name:2.0:0.6>`, added with **Insert LoRA token**.
 - Blocked requests from external websites to the local API and prevented downloads from writing outside their permitted destinations.
 
 ### V1.2.1.2 fixes
@@ -579,7 +609,7 @@ When you finish using Asteria, run the following file. This also stops the Pytho
 
 `Stop-Asteria.cmd`
 
-If the first download failed or a managed component may be missing or corrupt, run the following file. It stops Asteria, verifies the managed files, and reacquires missing items.
+If the first download failed or a managed component may be missing or corrupt, stop Asteria and run the following file. Repair rebuilds the managed runtime, checks its dependencies, and reacquires required files. Settings, history, generated media, and original files in external model libraries are preserved.
 
 `Repair-Asteria.cmd`
 

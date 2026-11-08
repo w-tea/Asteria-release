@@ -4,6 +4,7 @@ import json
 import math
 import random
 import re
+import shutil
 import struct
 import threading
 import time
@@ -389,10 +390,12 @@ class ComfyClient:
             while not stop_event.is_set():
                 try:
                     message = socket.recv()
-                except Exception:
-                    if stop_event.is_set():
-                        return
+                except websocket.WebSocketTimeoutException:
                     continue
+                except Exception:
+                    return
+                if message in ("", b""):
+                    return
                 if isinstance(message, bytes):
                     path = self._write_preview_message(preview_dir, message)
                     if path and callback is not None:
@@ -500,7 +503,8 @@ class ComfyTxt2ImgWorkflowBuilder:
         profile = request.get("profile")
         builders = {"sdxl": self._build_sdxl, "flux": self._build_flux,
                     "flux1": self._build_flux, "flux2": self._build_flux2,
-                    "anima": self._build_anima}
+                    "anima": self._build_anima,
+                    "krea2": self._build_native_image, "moss_image": self._build_native_image}
         if profile not in builders:
             raise RuntimeErrorResponse(f"Unsupported ComfyUI profile: {profile}")
         settings = request.setdefault("settings", {})
@@ -1291,9 +1295,21 @@ class ComfyTxt2ImgWorkflowBuilder:
                 mapping,
                 start_at_step=self._refiner_switch_step(settings, refiner_steps),
                 end_at_step=refiner_steps,
-                add_noise=False,
+                add_noise=self._refiner_switch_step(settings, refiner_steps) == 0,
                 return_with_leftover_noise=False,
             )
+            if (
+                self._refiner_switch_step(settings, refiner_steps) == 0
+                and not self._uses_comfy_hires(settings)
+                and seed_resize_noise_ref is not None
+                and seed_resize_seed is not None
+            ):
+                workflow[refiner_sample_node] = self._ksampler_advanced_inspire_node(
+                    refiner_stage_settings, refiner_model_ref, refiner_positive_ref,
+                    refiner_negative_ref, [sample_node, 0], seed_resize_noise_ref, mapping,
+                    seed=seed_resize_seed, start_at_step=0, end_at_step=refiner_steps,
+                    return_with_leftover_noise=False,
+                )
             if refiner_execution_state_ref is not None:
                 next_id = append_spatial_execution_receipt(
                     workflow=workflow,
@@ -1580,6 +1596,21 @@ class ComfyTxt2ImgWorkflowBuilder:
             mapping=mapping,
             hires_model_ref=hires_sampling_ref,
             hires_conditioning_ref=hires_conditioning_ref,
+        )
+
+    def _build_native_image(self, request: dict) -> dict:
+        from app.services.comfy_native_image_families import build_native_image_inputs
+
+        mapping = self._mapping(request["profile"])
+        try:
+            inputs = build_native_image_inputs(request, mapping, self._model_name, self._lora_loader_node,
+                                                self._controlnet_preprocessor_workflow_node)
+        except ValueError as exc:
+            raise RuntimeErrorResponse(str(exc)) from exc
+        return self._build_custom_sampler_tail(
+            inputs.workflow, request["settings"], inputs.model, inputs.positive,
+            inputs.latent, inputs.vae, mapping, negative_ref=inputs.negative,
+            output_crop_size=inputs.output_crop_size,
         )
 
     def _build_flux2(self, request: dict) -> dict:
@@ -2381,6 +2412,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         hires_negative_ref: list[str | int] | None = None,
         base_execution_state_ref: list[str | int] | None = None,
         hires_execution_state_ref: list[str | int] | None = None,
+        output_crop_size: tuple[int, int] | None = None,
     ) -> dict:
         next_id = max(int(node_id) for node_id in workflow) + 1
         sample_node = self._append_custom_sample(
@@ -2501,16 +2533,27 @@ class ComfyTxt2ImgWorkflowBuilder:
                 )
 
         decode_node = str(next_id)
-        save_node = str(next_id + 1)
         workflow[decode_node] = {
             "class_type": mapping.class_type("vae_decode", "VAEDecode"),
             "inputs": {"samples": [sample_node, 0], "vae": vae_ref},
         }
+        next_id += 1
+        image_ref = [decode_node, 0]
+        if output_crop_size is not None:
+            crop_node = str(next_id)
+            next_id += 1
+            workflow[crop_node] = {
+                "class_type": mapping.class_type("image_crop", "ImageCrop"),
+                "inputs": {"image": image_ref, "width": output_crop_size[0],
+                           "height": output_crop_size[1], "x": 0, "y": 0},
+            }
+            image_ref = [crop_node, 0]
+        save_node = str(next_id)
         workflow[save_node] = {
             "class_type": mapping.class_type("save_image", "SaveImage"),
-            "inputs": {"images": [decode_node, 0], "filename_prefix": "Asteria"},
+            "inputs": {"images": image_ref, "filename_prefix": "Asteria"},
         }
-        mark_stage(settings, decoded_stage_kind(settings), images=[decode_node, 0])
+        mark_stage(settings, decoded_stage_kind(settings), images=image_ref)
         settings["primary_output_node_ids"] = [save_node]
         return workflow
 
@@ -2692,10 +2735,8 @@ class ComfyTxt2ImgWorkflowBuilder:
         }
 
     def _refiner_switch_step(self, settings: dict, steps: int) -> int:
-        if steps <= 1:
-            return max(0, steps)
-        switch_at = float(settings.get("refiner_switch_at") or 0.8)
-        return max(1, min(steps - 1, int(round(steps * switch_at))))
+        switch_at = settings.get("refiner_switch_at")
+        return max(0, min(steps, int(round(steps * float(0.8 if switch_at is None else switch_at)))))
 
     def _request_prompt_syntax_plan(
         self,
@@ -4125,6 +4166,10 @@ class ComfyGenerationRuntime:
                 with self.admission_service.borrow(lease_token, required_kind="xyz"):
                     yield
                 return
+            try:
+                self.admission_service.retry_deferred_cleanup(self.client)
+            except (RuntimeErrorResponse, TimeoutError, OSError) as exc:
+                raise ComfyCleanupPendingError("Comfy cleanup retry failed") from exc
             with self.admission_service.acquire(
                 "operation",
                 timeout_seconds=self.admission_timeout_seconds,
@@ -4445,6 +4490,7 @@ class ComfyGenerationRuntime:
         target_settings = target_request.setdefault("settings", {})
         iteration_settings = iteration_request.get("settings", {})
         for key in (
+            "controlnet_runtime",
             "restore_faces_runtime",
             "face_restoration_model",
             "tiling_runtime",
@@ -5095,16 +5141,37 @@ class ComfyGenerationRuntime:
         return output_path
 
     def _prepare_control_images(self, request: dict, output_dir: Path) -> None:
-        if request.get("profile") != "sdxl":
+        if request.get("profile") not in {"sdxl", "krea2", "moss_image"}:
             return
+        native_control = request.get('profile') in {'krea2', 'moss_image'}
+        native_root = output_dir / f"native_{uuid4().hex}"
         available_preprocessor_nodes = self._available_controlnet_preprocessor_nodes()
-        for unit in request.get("settings", {}).get("controlnet_units", []):
+        for index, unit in enumerate(request.get("settings", {}).get("controlnet_units", [])):
+            if not unit.get('enabled', True):
+                continue
+            if native_control:
+                from app.services.native_image_control import control_is_active
+                if not control_is_active(unit):
+                    continue
             image_path = unit.get("image_path")
             if not image_path:
                 continue
             path = Path(str(image_path))
             if not _path_exists_safely(path) or not _path_is_file_safely(path):
                 raise RuntimeErrorResponse(f"Control image not found: {path}")
+            unit_output_dir = output_dir
+            if native_control:
+                # Keep each request's input and resized map independently usable
+                # from history, even when the original filename is reused.
+                unit_output_dir = native_root / f"control_{index + 1}"
+                try:
+                    unit_output_dir.mkdir(parents=True, exist_ok=False)
+                    saved = unit_output_dir / path.name
+                    shutil.copy2(path, saved)
+                except OSError as exc:
+                    raise RuntimeErrorResponse(f"Failed to retain control image: {path}") from exc
+                unit["original_image_path"] = str(path)
+                path = saved
             preprocessor = str(unit.get("preprocessor") or "none").lower()
             node_class = COMFY_CONTROLNET_PREPROCESSOR_NODES.get(preprocessor)
             if preprocessor != "none" and node_class and node_class in available_preprocessor_nodes:
@@ -5112,12 +5179,18 @@ class ComfyGenerationRuntime:
                 unit["preprocessor_runtime"] = "comfy_node"
                 unit["preprocessor_node_class"] = node_class
             else:
+                if native_control and preprocessor != 'none':
+                    raise RuntimeErrorResponse('Depth estimation is unavailable. Use a prepared depth map or install the depth preprocessor.')
                 try:
                     processed_path = preprocess_control_image(path, preprocessor, output_dir)
                 except ControlNetPreprocessorError as exc:
                     raise RuntimeErrorResponse(str(exc)) from exc
                 unit["preprocessor_runtime"] = "none" if preprocessor == "none" else "local_fallback"
-            processed_path = self._prepare_controlnet_resize(processed_path, unit, request.get("settings", {}), output_dir)
+            processed_path = self._prepare_controlnet_resize(
+                processed_path, unit, request.get("settings", {}),
+                unit_output_dir,
+                force_target_size=native_control,
+            )
             if processed_path != path:
                 unit["source_image_path"] = str(path)
                 unit["processed_image_path"] = str(processed_path)
@@ -5135,14 +5208,16 @@ class ComfyGenerationRuntime:
             return set()
         return set(object_info.keys())
 
-    def _prepare_controlnet_resize(self, path: Path, unit: dict, settings: dict, output_dir: Path) -> Path:
-        if not unit.get("pixel_perfect"):
+    def _prepare_controlnet_resize(self, path: Path, unit: dict, settings: dict, output_dir: Path,
+                                   *, force_target_size: bool = False) -> Path:
+        if not unit.get("pixel_perfect") and not force_target_size:
             return path
         width = int(settings.get("width") or 0)
         height = int(settings.get("height") or 0)
         if width <= 0 or height <= 0:
             return path
-        unit["pixel_perfect_target_size"] = {"width": width, "height": height}
+        target_field = "control_target_size" if force_target_size else "pixel_perfect_target_size"
+        unit[target_field] = {"width": width, "height": height}
         resized_path = output_dir / f"{path.stem}_pixel_perfect{path.suffix or '.png'}"
         try:
             output_dir.mkdir(parents=True, exist_ok=True)

@@ -149,7 +149,7 @@ function Write-AsteriaExtraModelPaths {
     )
     if ($ExternalRegistryPath -and [System.IO.File]::Exists($ExternalRegistryPath)) {
         try {
-            $registry = Get-Content -LiteralPath $ExternalRegistryPath -Raw | ConvertFrom-Json
+            $registry = Get-Content -LiteralPath $ExternalRegistryPath -Raw -Encoding UTF8 | ConvertFrom-Json
             $keyMap = @{
                 checkpoint = @("checkpoints", "diffusion_models", "unet")
                 vae = @("vae")

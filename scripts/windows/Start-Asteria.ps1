@@ -103,6 +103,33 @@ if ($TargetMode -eq "packaged") {
             Complete-Start "invalid" "launcher_packaged_path_override" 65 "Packaged launches must use paths contained by the application folder."
         }
     }
+}
+
+# Check ownership before setup: a second launch must not repair a running app.
+$processRoot = [System.IO.Path]::Combine($resolvedTempRoot, "launcher")
+$logsRoot = [System.IO.Path]::Combine($resolvedLogsRoot, "launcher")
+$statePath = [System.IO.Path]::Combine($processRoot, "launcher-state.json")
+$failurePath = [System.IO.Path]::Combine($logsRoot, "launcher-failure.json")
+$existing = Read-AsteriaLauncherState -Path $statePath
+function Test-AsteriaOptionalProcessRecord {
+    param($Record)
+    return ($Record.PSObject.Properties.Name -contains "optional") -and [bool]$Record.optional
+}
+if ($null -ne $existing) {
+    $required = @($existing.processes | Where-Object { -not (Test-AsteriaOptionalProcessRecord -Record $_) })
+    $ownedRequired = @($required | Where-Object { (Get-AsteriaOwnedProcessState -Record $_) -eq "owned" })
+    if ($required.Count -gt 0 -and $ownedRequired.Count -eq $required.Count) {
+        Complete-Start "running" "launcher_already_running" 0 "Asteria is already running under this launcher."
+    }
+    $remaining = @($existing.processes | Where-Object { (Get-AsteriaOwnedProcessState -Record $_) -ne "not-running" })
+    if ($remaining.Count -gt 0) {
+        Complete-Start "blocked" "launcher_state_stale" 74 "A stale launcher record must be stopped or repaired before starting."
+    }
+    $retiredState = [System.IO.Path]::Combine($processRoot, ("launcher-state.stopped." + [Guid]::NewGuid().ToString("N") + ".json"))
+    [System.IO.File]::Move($statePath, $retiredState)
+}
+
+if ($TargetMode -eq "packaged") {
 
     $releaseManifestPath = [System.IO.Path]::Combine($resolvedAppRoot, "release-manifest.yaml")
     $releaseSignaturePath = [System.IO.Path]::Combine($resolvedAppRoot, "release-manifest.sig.json")
@@ -167,28 +194,11 @@ $preflightOutput = & $preflightPath @preflightParameters
 $preflightExit = $LASTEXITCODE
 if ($preflightExit -notin @(0, 12)) { Complete-Start "blocked" "launcher_preflight_blocked" $preflightExit "Startup readiness is blocked. Run Repair-Asteria.cmd and retry." }
 
-$processRoot = [System.IO.Path]::Combine($resolvedTempRoot, "launcher")
-$logsRoot = [System.IO.Path]::Combine($resolvedLogsRoot, "launcher")
-$statePath = [System.IO.Path]::Combine($processRoot, "launcher-state.json")
-$failurePath = [System.IO.Path]::Combine($logsRoot, "launcher-failure.json")
 [System.IO.Directory]::CreateDirectory($logsRoot) | Out-Null
 [System.IO.Directory]::CreateDirectory($processRoot) | Out-Null
 $launcherPreferences = Get-AsteriaLauncherPreferences -SettingsPath ([System.IO.Path]::Combine($resolvedDataRoot, "user-settings.json"))
 if ($launcherPreferences.ReasonId) {
     "reason_id=$($launcherPreferences.ReasonId) field=launcher.disable_pinned_memory" | Set-Content -LiteralPath (Join-Path $logsRoot "launcher-memory-settings.log") -Encoding utf8
-}
-$existing = Read-AsteriaLauncherState -Path $statePath
-function Test-AsteriaOptionalProcessRecord {
-    param($Record)
-    return ($Record.PSObject.Properties.Name -contains "optional") -and [bool]$Record.optional
-}
-if ($null -ne $existing) {
-    $required = @($existing.processes | Where-Object { -not (Test-AsteriaOptionalProcessRecord -Record $_) })
-    $ownedRequired = @($required | Where-Object { (Get-AsteriaOwnedProcessState -Record $_) -eq "owned" })
-    if ($required.Count -gt 0 -and $ownedRequired.Count -eq $required.Count) {
-        Complete-Start "running" "launcher_already_running" 0 "Asteria is already running under this launcher."
-    }
-    Complete-Start "blocked" "launcher_state_stale" 74 "A stale launcher record must be stopped or repaired before starting."
 }
 foreach ($port in @(8188, 8000, 3000)) {
     if (Test-AsteriaTcpPortInUse -Port $port) { Complete-Start "blocked" "launcher_port_in_use" 73 "A required local port is already in use. No process was started." }

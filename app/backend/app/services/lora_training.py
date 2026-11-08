@@ -6,13 +6,16 @@ from io import BytesIO
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
+import logging
 import os
 import signal
+import stat
 import subprocess
 import re
 import shlex
 import shutil
 import sys
+from tempfile import TemporaryDirectory, mkdtemp
 from threading import RLock
 from pathlib import Path
 from pathlib import PureWindowsPath
@@ -21,12 +24,15 @@ from uuid import uuid4
 from urllib.parse import urlparse
 
 import httpx
+import psutil
 from PIL import ExifTags, Image, ImageFilter, ImageOps, ImageStat
 from pydantic import BaseModel, Field
 
 from app.services.image_metadata_text import metadata_value_to_text
 from app.services.atomic_json import write_json_atomic
-from app.services.training_process import popen_training_process
+from app.services.image_check_recovery import move_without_replacement
+from app.services.runtime_ownership import terminate_process_tree
+from app.services.training_process import owned_training_relay, popen_training_process, read_training_receipt
 
 TrainingProfile = Literal["sdxl", "anima"]
 TrainingType = Literal["copy_lora", "character_lora", "style_lora"]
@@ -65,6 +71,11 @@ LoRACopyMachineTargetTransform = Literal[
 LoRACopyMachineAdapterStatus = Literal["ready", "missing"]
 LoRACopyMachineTrainingRunStatus = Literal["planned", "blocked", "running", "completed", "failed"]
 SAMPLE_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
+_TRAINING_SNAPSHOT_OWNER = ".asteria-training-run"
+_SDXL_EXIT_RECEIPT = ".asteria-training-exit.json"
+_SDXL_PUBLICATION_PLAN = ".asteria-training-publication.json"
+_TRAINING_EXIT_UNCONFIRMED = "lora_training_exit_unconfirmed"
+_logger = logging.getLogger(__name__)
 
 
 class LoRATrainingStorageError(Exception):
@@ -169,8 +180,8 @@ class LoRACopyMachineTrainingRunPrepareData(BaseModel):
     vae_path: str = ""
     training_working_dir: str = ""
     accelerate_command: str = "accelerate"
-    repeats: int | None = Field(default=None, ge=1, le=1000)
-    max_train_epochs: int | None = Field(default=None, ge=1, le=1000)
+    repeats: int | None = Field(default=None, ge=1)
+    max_train_epochs: int | None = Field(default=None, ge=1)
     addift_timestep_window: LoRACopyMachineADDifTTimestepWindow = "action_500_1000"
     addift_snr_gamma: LoRACopyMachineADDifTSNRGamma = "preset_5_0"
 
@@ -284,7 +295,7 @@ class LoRATrainingPreset(BaseModel):
 
 class DatasetSubset(BaseModel):
     image_dir: str = Field(min_length=1)
-    num_repeats: int = Field(default=10, ge=1, le=1000)
+    num_repeats: int = Field(default=10, ge=1)
     caption_extension: str = ".txt"
     class_tokens: str = ""
     keep_tokens: int | None = Field(default=None, ge=0, le=32)
@@ -598,6 +609,9 @@ class LoRATrainingRun(BaseModel):
     sample_prompts_path: str = ""
     output_dir: str
     output_name: str
+    sdxl_output_stage: str = ""
+    preserved_output_dir: str = ""
+    failure_code: str = ""
     working_dir: str
     command_args: list[str] = Field(default_factory=list)
     preflight: LoRATrainingRunPreflight
@@ -1795,20 +1809,36 @@ def materialize_lora_training_dataset(
     if not dataset.items:
         raise ValueError("lora_training_dataset_empty")
 
-    materialized_root = (request.data_dir / "lora-training" / "materialized").resolve()
-    root_dir = (materialized_root / f"{_safe_slug(dataset.name)}-{dataset.id[:8]}").resolve()
-    if root_dir.parent != materialized_root:
-        raise ValueError("lora_training_materialize_path_invalid")
-    image_dir = root_dir / "images"
-
+    materialized_root = request.data_dir.resolve() / "lora-training" / "materialized"
+    caption_extension = _safe_caption_extension(request.caption_extension or preset.caption_extension)
     try:
-        if root_dir.exists():
-            shutil.rmtree(root_dir)
-        image_dir.mkdir(parents=True, exist_ok=True)
+        if materialized_root.resolve() != materialized_root:
+            raise OSError("Materialized data must remain inside the configured data directory")
+        materialized_root.mkdir(parents=True, exist_ok=True)
+        # A prepared run keeps its own image, caption and config snapshot.
+        # A standalone export must not replace it or any older shared directory.
+        root_dir = Path(mkdtemp(prefix=f"{_safe_slug(dataset.name)[:48]}-", dir=materialized_root))
     except OSError as exc:
         raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
+    try:
+        return _write_materialized_dataset(dataset, request, preset, root_dir, caption_extension)
+    except Exception:
+        _discard_training_snapshot(materialized_root, root_dir)
+        raise
 
-    caption_extension = _safe_caption_extension(request.caption_extension or preset.caption_extension)
+
+def _write_materialized_dataset(
+    dataset: LoRATrainingDataset,
+    request: DatasetMaterializeRequestData,
+    preset: LoRATrainingPreset,
+    root_dir: Path,
+    caption_extension: str,
+) -> MaterializedDataset:
+    image_dir = root_dir / "images"
+    try:
+        image_dir.mkdir()
+    except OSError as exc:
+        raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
     items: list[MaterializedDatasetItem] = []
     skipped_items: list[str] = []
     materialize_warnings: list[str] = []
@@ -1952,26 +1982,32 @@ def prepare_lora_training_run(
             optimizer_low_vram=request.optimizer_low_vram,
         ),
     )
-    preset = get_lora_training_preset(dataset.preset_id)
-    if preset is None:
-        raise ValueError("lora_training_preset_not_found")
-
-    command_args = _with_accelerate_command(materialized.command_args, request.accelerate_command, request.project_root)
-    preflight = _build_run_preflight(
-        preset=preset,
-        request=request,
-        dataset_config_path=Path(materialized.dataset_config_path),
-        character_caption_gate=materialized.character_caption_gate,
-    )
-    return repository.create(
-        dataset=dataset,
-        materialized=materialized,
-        output_dir=request.output_dir,
-        output_name=request.output_name,
-        working_dir=request.working_dir,
-        command_args=command_args,
-        preflight=preflight,
-    )
+    try:
+        preset = get_lora_training_preset(dataset.preset_id)
+        if preset is None:
+            raise ValueError("lora_training_preset_not_found")
+        command_args = _with_accelerate_command(materialized.command_args, request.accelerate_command, request.project_root)
+        preflight = _build_run_preflight(
+            preset=preset,
+            request=request,
+            dataset_config_path=Path(materialized.dataset_config_path),
+            character_caption_gate=materialized.character_caption_gate,
+        )
+        return repository.create(
+            dataset=dataset,
+            materialized=materialized,
+            output_dir=request.output_dir,
+            output_name=request.output_name,
+            working_dir=request.working_dir,
+            command_args=command_args,
+            preflight=preflight,
+            snapshot_owner_root=request.data_dir.resolve() / "lora-training" / "materialized",
+        )
+    except Exception:
+        _discard_training_snapshot(
+            request.data_dir.resolve() / "lora-training" / "materialized", Path(materialized.root_dir),
+        )
+        raise
 
 
 def start_lora_training_run(
@@ -1995,6 +2031,8 @@ def start_lora_training_run(
         raise ValueError("lora_training_run_not_startable")
     if not run.command_args:
         raise ValueError("lora_training_run_command_empty")
+    validate_training_output_available(run, project_root=project_root)
+    run.failure_code = ""
 
     log_dir = data_dir / "lora-training" / "logs"
     try:
@@ -2003,16 +2041,37 @@ def start_lora_training_run(
         raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
     log_path = (log_dir / f"{run.id}.log").resolve()
     working_dir = _resolve_training_working_dir(run.working_dir, project_root)
+    stage: Path | None = None
     try:
         with log_path.open("w", encoding="utf-8", errors="replace") as log_file:
+            command = run.command_args
+            if run.profile == "sdxl":
+                command, stage = _stage_sdxl_training_command(run, project_root)
+                run.sdxl_output_stage = str(stage)
+                # Persist the attempt before any independent process can write to it.
+                now = _utc_now()
+                run.status, run.log_path, run.started_at, run.updated_at = "running", str(log_path), now, now
+                run.pid = run.exit_code = None
+                run.finished_at = None
+                run.preserved_output_dir = ""
+                run.trained_model_paths = []
+                run.sample_image_paths = []
+                run.sample_image_scores = []
+                run.registered_model_paths = []
+                try:
+                    repository.save(run)
+                except LoRATrainingStorageError:
+                    stage.rmdir()
+                    raise
             log_file.write(f"Asteria LoRA training run {run.id}\n")
-            log_file.write(f"Command: {' '.join(run.command_args)}\n\n")
+            log_file.write(f"Command: {' '.join(command)}\n\n")
             log_file.flush()
             try:
                 process = popen_training_process(
-                    run.command_args,
+                    command,
                     cwd=working_dir,
                     stdout=log_file,
+                    receipt_path=stage / _SDXL_EXIT_RECEIPT if stage is not None else None,
                 )
             except OSError as exc:
                 now = _utc_now()
@@ -2041,7 +2100,8 @@ def start_lora_training_run(
     run.sample_image_scores = []
     run.registered_model_paths = []
     _apply_run_progress_from_log(run)
-    run.started_at = now
+    if stage is None:
+        run.started_at = now
     run.finished_at = None
     run.updated_at = now
     try:
@@ -2064,13 +2124,44 @@ def refresh_lora_training_run(
     if run is None:
         return None
     process = _RUN_PROCESSES.get(run.id)
+    completed_now = False
+    stage = _sdxl_attempt_directory(run, project_root)
     if process is not None:
         exit_code = process.poll()
         if exit_code is not None:
             _RUN_PROCESSES.pop(run.id, None)
             run.exit_code = int(exit_code)
             run.status = "completed" if exit_code == 0 else "failed"
+            completed_now = exit_code == 0
             run.finished_at = _utc_now()
+    elif stage is not None and (
+        run.status == "running" or (run.status == "failed" and run.failure_code == _TRAINING_EXIT_UNCONFIRMED)
+    ):
+        receipt_path = stage / _SDXL_EXIT_RECEIPT
+        receipt = read_training_receipt(receipt_path)
+        relay = None
+        if receipt is not None and receipt.exit_code is None:
+            try:
+                relay = owned_training_relay(receipt_path, receipt)
+            except psutil.AccessDenied:
+                return run  # Do not treat an inaccessible process as stopped.
+            if relay is not None:
+                run.status, run.exit_code, run.failure_code = "running", None, ""
+                run.finished_at = None
+            # The relay writes the exit code before exiting; re-read in case it
+            # finished between the initial read and the process observation.
+            receipt = read_training_receipt(receipt_path)
+        if receipt is not None and receipt.exit_code is not None:
+            run.exit_code = receipt.exit_code
+            completed_now = receipt.exit_code == 0
+            run.status = "completed" if completed_now else "failed"
+            run.failure_code = ""
+            run.finished_at = receipt.finished_at or _utc_now()
+        elif receipt is None or relay is None:
+            if run.failure_code != _TRAINING_EXIT_UNCONFIRMED:
+                run.log_tail = _append_log_tail_note(run.log_path, "Asteria could not verify the SDXL trainer exit.")
+            run.status, run.exit_code, run.failure_code = "failed", -1, _TRAINING_EXIT_UNCONFIRMED
+            run.finished_at = run.finished_at or _utc_now()
     elif run.status == "running":
         run.status = "failed"
         run.exit_code = run.exit_code if run.exit_code is not None else -1
@@ -2079,15 +2170,36 @@ def refresh_lora_training_run(
     if run.log_path:
         run.log_tail = _read_text_tail(Path(run.log_path))
     _apply_run_progress_from_log(run)
+    if completed_now and run.sdxl_output_stage:
+        _publish_sdxl_training_output(run, stage)
     if run.status == "completed":
-        _finalize_anima_training_output(run, project_root=project_root)
+        _finalize_anima_training_output(run, project_root=project_root, completed_now=completed_now)
     if run.status == "completed":
         _apply_run_trained_model_paths(run, project_root=project_root)
         _apply_run_sample_image_paths(run, project_root=project_root)
         _apply_run_sample_image_scores(run, project_root=project_root)
+    _apply_preserved_sdxl_output(run, stage)
     run.updated_at = _utc_now()
     repository.save(run)
+    if completed_now and run.status == "completed" and stage is not None:
+        _remove_published_sdxl_stage(stage)
     return run
+
+
+def recover_sdxl_training_outputs(repository: "LoRATrainingRunRepository", *, project_root: Path) -> None:
+    for run in repository.list():
+        if run.profile != "sdxl" or not run.sdxl_output_stage or run.status not in {"running", "failed", "cancelled"}:
+            continue
+        try:
+            if run.status == "running" or run.failure_code == _TRAINING_EXIT_UNCONFIRMED:
+                refresh_lora_training_run(run.id, repository, project_root=project_root)
+            else:
+                previous = run.preserved_output_dir
+                _apply_preserved_sdxl_output(run, _sdxl_attempt_directory(run, project_root))
+                if run.preserved_output_dir != previous:
+                    repository.save(run)
+        except (LoRATrainingStorageError, OSError, RuntimeError, ValueError):
+            _logger.exception("Could not recover SDXL training output for run %s", run.id)
 
 
 def score_lora_training_run_samples(
@@ -2115,11 +2227,27 @@ def score_lora_training_sample_image(path: Path) -> LoRATrainingSampleImageScore
 def cancel_lora_training_run(
     run_id: str,
     repository: "LoRATrainingRunRepository",
+    *,
+    project_root: Path | None = None,
 ) -> LoRATrainingRun | None:
     run = repository.get(run_id)
     if run is None:
         return None
     process = _RUN_PROCESSES.get(run.id)
+    stage = _sdxl_attempt_directory(run, project_root)
+    if process is None and stage is not None and run.status == "running":
+        receipt_path = stage / _SDXL_EXIT_RECEIPT
+        receipt = read_training_receipt(receipt_path)
+        if receipt is not None and receipt.exit_code is not None:
+            return refresh_lora_training_run(run.id, repository, project_root=project_root)
+        try:
+            relay = owned_training_relay(receipt_path, receipt) if receipt is not None else None
+        except psutil.AccessDenied as exc:
+            raise ValueError(_TRAINING_EXIT_UNCONFIRMED) from exc
+        if relay is None:
+            return refresh_lora_training_run(run.id, repository, project_root=project_root)
+        if not terminate_process_tree(relay):
+            raise ValueError(_TRAINING_EXIT_UNCONFIRMED)
     _stop_training_process(process)
     _RUN_PROCESSES.pop(run.id, None)
     run.status = "cancelled"
@@ -2128,6 +2256,7 @@ def cancel_lora_training_run(
     if run.log_path:
         run.log_tail = _append_log_tail_note(run.log_path, "Asteria cancelled the LoRA training run.")
     _apply_run_progress_from_log(run)
+    _apply_preserved_sdxl_output(run, stage)
     run.updated_at = _utc_now()
     repository.save(run)
     return run
@@ -4023,8 +4152,15 @@ def _with_accelerate_command(
     command = _command_prefix(accelerate_command, project_root)
     if args:
         rest = args[1:]
-        if _command_uses_python_module(command, "accelerate.commands.launch") and rest[:1] == ["launch"]:
-            rest = rest[1:]
+        if rest[:1] == ["launch"]:
+            uses_launch_module = _command_uses_python_module(command, "accelerate.commands.launch")
+            uses_launch_subcommand = (
+                (Path(command[0]).stem.casefold() == "accelerate" and command[1:2] == ["launch"])
+                or any(command[i:i + 3] == ["-m", "accelerate.commands.accelerate_cli", "launch"]
+                       for i in range(len(command) - 2))
+            )
+            if uses_launch_module or uses_launch_subcommand:
+                rest = rest[1:]
         args = command + rest
     return args
 
@@ -4101,27 +4237,250 @@ def _apply_run_progress_from_log(run: LoRATrainingRun) -> None:
         run.progress_message = run.progress_message or "completed"
 
 
-def _finalize_anima_training_output(run: LoRATrainingRun, *, project_root: Path | None) -> None:
+def _anima_training_output_paths(run: LoRATrainingRun, project_root: Path) -> tuple[Path, Path, Path] | None:
     if run.profile != "anima":
-        return
+        return None
     output_dir = run.output_dir.strip()
     output_name = run.output_name.strip()
     if not output_dir or not output_name:
-        return
-    root = project_root or Path.cwd()
-    directory = _resolve_source_path(output_dir, root)
+        return None
+    directory = _resolve_source_path(output_dir, project_root)
     stem = Path(output_name).stem
-    converted_path = directory / f"{stem}_comfy.safetensors"
-    temporary_path = directory / f"{stem}_unet.safetensors"
-    legacy_path = directory / f"{stem}.safetensors"
-    if _path_is_file(converted_path):
-        if _path_is_file(temporary_path):
-            try:
-                temporary_path.unlink()
-            except OSError as exc:
-                run.log_tail = _append_log_tail_note(run.log_path, f"Anima LoRA temporary cleanup failed: {exc}")
+    return (
+        directory / f"{stem}_comfy.safetensors",
+        directory / f"{stem}_unet.safetensors",
+        directory / f"{stem}.safetensors",
+    )
+
+
+def validate_anima_training_output_available(run: LoRATrainingRun, *, project_root: Path) -> None:
+    _require_unused_training_outputs(_anima_training_output_paths(run, project_root) or ())
+
+
+def _require_unused_training_outputs(paths) -> None:
+    for path in paths:
+        try:
+            path.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
+        raise ValueError("lora_training_output_name_in_use")
+
+
+def _sdxl_training_output_filename(name: str) -> str:
+    if (not name.strip() or name in {".", ".."}
+            or any(char in '<>:"/\\|?*' or ord(char) < 32 for char in name)
+            or PureWindowsPath(name).is_reserved()):
+        raise ValueError("lora_training_run_preflight_not_ready")
+    return f"{name}.safetensors"
+
+
+def validate_training_output_available(run: LoRATrainingRun, *, project_root: Path) -> None:
+    if run.profile == "sdxl":
+        filename = _sdxl_training_output_filename(run.output_name)
+        directory = _resolve_source_path(run.output_dir.strip(), project_root)
+        _require_unused_training_outputs((directory / filename,))
+    else:
+        validate_anima_training_output_available(run, project_root=project_root)
+
+
+def _stage_sdxl_training_command(run: LoRATrainingRun, project_root: Path) -> tuple[list[str], Path]:
+    command = list(run.command_args)
+    preset = get_lora_training_preset(run.preset_id)
+    script_name = preset.script if preset is not None else ""
+    trainer_start = next(
+        (i + 1 for i, arg in enumerate(command[1:], 1) if Path(arg).name == script_name), 0,
+    )
+    trainer_args = list(enumerate(command[trainer_start:], trainer_start))
+    indices = {}
+    for option in ("--output_dir", "--output_name"):
+        # The prepared command uses one explicit argument per field. Do not
+        # start if another occurrence (including an argparse abbreviation)
+        # or a config file could override the private output directory.
+        matches = [
+            index for index, arg in trainer_args
+            if arg.startswith("--") and option.startswith(arg.split("=", 1)[0])
+        ]
+        if len(matches) != 1:
+            raise ValueError("lora_training_run_preflight_not_ready")
+        index = matches[0]
+        if command[index] != option or index + 1 >= len(command):
+            raise ValueError("lora_training_run_preflight_not_ready")
+        indices[option] = index + 1
+    if command[indices["--output_name"]] != run.output_name:
+        raise ValueError("lora_training_run_preflight_not_ready")
+    if any(arg.startswith("--") and "--config_file".startswith(arg.split("=", 1)[0]) for _, arg in trainer_args):
+        raise ValueError("lora_training_trainer_config_conflict")
+    directory = _resolve_source_path(run.output_dir.strip(), project_root)
+    directory.mkdir(parents=True, exist_ok=True)
+    stage = Path(mkdtemp(prefix=".asteria-sdxl-", dir=directory))
+    command[indices["--output_dir"]] = str(stage)
+    return command, stage
+
+
+def _is_local_training_entry(path: Path, mode_check) -> bool:
+    details = path.lstat()
+    return mode_check(details.st_mode) and not getattr(details, "st_file_attributes", 0) & 0x400
+
+
+def _sdxl_attempt_directory(run: LoRATrainingRun, project_root: Path | None) -> Path | None:
+    if run.profile != "sdxl" or not run.sdxl_output_stage or not run.output_dir.strip():
+        return None
+    stage = Path(run.sdxl_output_stage)
+    try:
+        directory = _resolve_source_path(run.output_dir.strip(), project_root or Path.cwd())
+        if (stage.is_absolute() and stage.parent == directory and stage.name.startswith(".asteria-sdxl-")
+                and stage.resolve(strict=True) == stage and _is_local_training_entry(stage, stat.S_ISDIR)):
+            return stage
+    except (OSError, RuntimeError, ValueError):
+        pass
+    return None
+
+
+def _apply_preserved_sdxl_output(run: LoRATrainingRun, stage: Path | None) -> None:
+    run.preserved_output_dir = ""
+    if stage is not None and run.status in {"failed", "cancelled"}:
+        try:
+            if any(item.suffix.casefold() == ".safetensors" or item.name in {"sample", "samples"}
+                   for item in stage.iterdir()):
+                run.preserved_output_dir = str(stage)
+        except OSError:
+            pass
+
+
+def _sdxl_artifact_identity(path: Path) -> list[int]:
+    info = path.lstat()
+    if not stat.S_ISREG(info.st_mode) or not info.st_ino or getattr(info, "st_file_attributes", 0) & 0x400:
+        raise OSError("SDXL training output is not a regular file")
+    return [info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns]
+
+
+def _sdxl_publication_plan(stage: Path, output_name: str) -> dict[str, list[int]]:
+    manifest = stage / _SDXL_PUBLICATION_PLAN
+    final_name = _sdxl_training_output_filename(output_name)
+    prefix = (f"{output_name}_", f"{output_name}-")
+    if os.path.lexists(manifest):
+        if not _is_local_training_entry(manifest, stat.S_ISREG):
+            raise OSError("SDXL publication plan is not a regular file")
+        plan = json.loads(manifest.read_text(encoding="utf-8"))
+        if not isinstance(plan, dict) or final_name not in plan:
+            raise ValueError("Invalid SDXL publication plan")
+        for name, identity in plan.items():
+            path = Path(name)
+            is_model = len(path.parts) == 1 and path.suffix == ".safetensors"
+            is_sample = (len(path.parts) == 2 and path.parts[0] in {"sample", "samples"}
+                         and path.suffix.lower() in SAMPLE_IMAGE_EXTENSIONS)
+            if (path.is_absolute() or path.drive or ":" in name or path.as_posix() != name
+                    or not (is_model or is_sample) or (name != final_name and not path.name.startswith(prefix))
+                    or not isinstance(identity, list) or len(identity) != 4
+                    or any(type(value) is not int for value in identity)):
+                raise ValueError("Invalid SDXL publication entry")
+        return plan
+    candidates: list[Path] = []
+    for name in ("sample", "samples"):
+        source = stage / name
+        if not os.path.lexists(source):
+            continue
+        if not _is_local_training_entry(source, stat.S_ISDIR):
+            raise OSError("SDXL trainer returned an invalid sample directory")
+        candidates.extend(
+            sample for sample in source.iterdir()
+            if sample.suffix.lower() in SAMPLE_IMAGE_EXTENSIONS and sample.name.startswith(prefix)
+            and _is_local_training_entry(sample, stat.S_ISREG)
+        )
+    candidates.extend(
+        model for model in stage.glob("*.safetensors")
+        if model.name.startswith(prefix) and _is_local_training_entry(model, stat.S_ISREG)
+    )
+    candidates.append(stage / final_name)
+    plan = {file.relative_to(stage).as_posix(): _sdxl_artifact_identity(file) for file in candidates}
+    _require_unused_training_outputs(stage.parent / name for name in plan)
+    write_json_atomic(manifest, plan)
+    return plan
+
+
+def _publish_sdxl_training_output(run: LoRATrainingRun, stage: Path | None) -> None:
+    filename = _sdxl_training_output_filename(run.output_name)
+    published_models: list[str] = []
+    published_samples: list[str] = []
+    try:
+        if stage is None:
+            raise OSError("SDXL training output folder is unavailable")
+        plan = _sdxl_publication_plan(stage, run.output_name)
+        # Record identity before the first move and place the final model last.
+        # A subsequent recovery only recognizes the same files, not name matches.
+        for name in [*(value for value in plan if value != filename), filename]:
+            source = stage / name
+            target = stage.parent / name
+            sample = source.parent != stage
+            if sample:
+                if not _is_local_training_entry(source.parent, stat.S_ISDIR):
+                    raise OSError("SDXL sample source is not a regular directory")
+                target.parent.mkdir(exist_ok=True)
+                if not _is_local_training_entry(target.parent, stat.S_ISDIR):
+                    raise OSError("SDXL sample destination is not a regular directory")
+            if os.path.lexists(target):
+                if _sdxl_artifact_identity(target) != plan[name]:
+                    raise FileExistsError(target)
+            else:
+                if _sdxl_artifact_identity(source) != plan[name]:
+                    raise OSError("SDXL staged artifact changed before publication")
+                move_without_replacement(source, target)
+            if not sample:
+                published_models.append(str(target))
+            elif _is_valid_image_file(target):
+                published_samples.append(str(target))
+    except (OSError, ValueError, LoRATrainingStorageError) as exc:
+        run.status = "failed"
+        run.exit_code = -2
+        run.failure_code = (
+            "lora_training_output_name_in_use"
+            if isinstance(exc, FileExistsError) or str(exc) == "lora_training_output_name_in_use"
+            else "lora_training_output_not_published"
+        )
+        run.log_tail = _append_log_tail_note(
+            run.log_path, f"SDXL LoRA could not publish its output: {exc}. Output stage: {run.sdxl_output_stage}.",
+        )
         return
+    run.trained_model_paths = sorted(published_models, key=str.casefold)
+    run.sample_image_paths = sorted(published_samples, key=str.casefold)
+
+
+def _remove_published_sdxl_stage(stage: Path) -> None:
+    # Clear the recovery markers only after the completed run record was saved.
+    for name in (_SDXL_EXIT_RECEIPT, _SDXL_PUBLICATION_PLAN):
+        try:
+            (stage / name).unlink(missing_ok=True)
+        except OSError:
+            pass
+    for path in (stage / "sample", stage / "samples", stage):
+        try:
+            path.rmdir()  # Never remove unrecognized or partial trainer files.
+        except OSError:
+            pass
+
+
+def _finalize_anima_training_output(
+    run: LoRATrainingRun, *, project_root: Path | None, completed_now: bool,
+) -> None:
+    root = project_root or Path.cwd()
+    paths = _anima_training_output_paths(run, root)
+    if paths is None:
+        return
+    converted_path, temporary_path, legacy_path = paths
     source_path = temporary_path if _path_is_file(temporary_path) else legacy_path
+    if _path_is_file(converted_path):
+        if not completed_now and (
+            str(converted_path) in run.trained_model_paths or not _path_is_file(source_path)
+        ):
+            return
+        run.status = "failed"
+        run.exit_code = -2
+        run.log_tail = _append_log_tail_note(
+            run.log_path, "Anima LoRA output already exists. Use a different output name. Both files were kept.",
+        )
+        return
     if not _path_is_file(source_path):
         run.status = "failed"
         run.exit_code = -2
@@ -4151,37 +4510,38 @@ def _finalize_anima_training_output(run: LoRATrainingRun, *, project_root: Path 
         if _command_uses_python_module(run.command_args, "accelerate.commands.launch")
         else sys.executable
     )
-    command = [conversion_python, str(convert_script), str(source_path), str(converted_path)]
     env = os.environ.copy()
     existing_pythonpath = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = str(working_dir) if not existing_pythonpath else f"{working_dir}{os.pathsep}{existing_pythonpath}"
-    result = subprocess.run(
-        command,
-        cwd=str(working_dir),
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    output = _tail_text(result.stdout)
-    run.log_tail = _append_log_tail_note(
-        run.log_path,
-        "\n".join(
-            part
-            for part in [
-                f"Asteria Anima LoRA Comfy conversion command: {' '.join(command)}",
-                output,
-                f"Asteria Anima LoRA Comfy conversion exit code: {result.returncode}",
-            ]
-            if part
-        ),
-    )
-    if result.returncode != 0 or not _path_is_file(converted_path):
+    try:
+        with TemporaryDirectory(dir=converted_path.parent, prefix=".asteria-anima-") as stage:
+            staged_output = Path(stage) / converted_path.name
+            command = [conversion_python, str(convert_script), str(source_path), str(staged_output)]
+            result = subprocess.run(
+                command, cwd=str(working_dir), env=env, stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", check=False,
+            )
+            run.log_tail = _append_log_tail_note(
+                run.log_path,
+                "\n".join(part for part in [
+                    f"Asteria Anima LoRA Comfy conversion command: {' '.join(command)}",
+                    _tail_text(result.stdout),
+                    f"Asteria Anima LoRA Comfy conversion exit code: {result.returncode}",
+                ] if part),
+            )
+            if result.returncode != 0 or not _path_is_file(staged_output):
+                run.status = "failed"
+                run.exit_code = result.returncode or -2
+                return
+            move_without_replacement(staged_output, converted_path)
+    except OSError as exc:
         run.status = "failed"
-        run.exit_code = result.returncode if result.returncode != 0 else -2
+        run.exit_code = -2
+        run.log_tail = _append_log_tail_note(run.log_path, f"Anima LoRA could not publish the converted model: {exc}")
+        return
+    if not _path_is_file(converted_path):
+        run.status = "failed"
+        run.exit_code = -2
         return
     if source_path == temporary_path:
         try:
@@ -4191,6 +4551,10 @@ def _finalize_anima_training_output(run: LoRATrainingRun, *, project_root: Path 
 
 
 def _apply_run_trained_model_paths(run: LoRATrainingRun, *, project_root: Path | None) -> None:
+    if run.sdxl_output_stage:
+        # Only files published by this attempt belong to a new SDXL run.
+        run.trained_model_paths = [value for value in run.trained_model_paths if _path_is_file(Path(value))]
+        return
     output_dir = run.output_dir.strip()
     output_name = run.output_name.strip()
     if not output_dir or not output_name:
@@ -4226,6 +4590,9 @@ def _apply_run_trained_model_paths(run: LoRATrainingRun, *, project_root: Path |
 
 
 def _apply_run_sample_image_paths(run: LoRATrainingRun, *, project_root: Path | None) -> None:
+    if run.sdxl_output_stage:
+        run.sample_image_paths = [value for value in run.sample_image_paths if _is_valid_image_file(Path(value))]
+        return
     output_dir = run.output_dir.strip()
     output_name = run.output_name.strip()
     root = project_root or Path.cwd()
@@ -4979,6 +5346,9 @@ class LoRACopyMachineTrainingRunRepository:
 
 
 class LoRATrainingDatasetRepository:
+    # Shared by all API repository instances; cover the entire read/modify/write.
+    _lock = RLock()
+
     def __init__(self, path) -> None:
         self.path = Path(path)
         try:
@@ -4987,91 +5357,97 @@ class LoRATrainingDatasetRepository:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
 
     def list(self) -> list[LoRATrainingDataset]:
-        return sorted(self._read(), key=lambda dataset: dataset.updated_at, reverse=True)
+        with self._lock:
+            return sorted(self._read(), key=lambda dataset: dataset.updated_at, reverse=True)
 
     def get(self, dataset_id: str) -> LoRATrainingDataset | None:
-        return next((dataset for dataset in self._read() if dataset.id == dataset_id), None)
+        with self._lock:
+            return next((dataset for dataset in self._read() if dataset.id == dataset_id), None)
 
     def create(self, *, name: str, preset_id: str) -> LoRATrainingDataset:
-        preset = get_lora_training_preset(preset_id)
-        if preset is None:
-            raise ValueError("lora_training_preset_not_found")
-        now = _utc_now()
-        dataset = LoRATrainingDataset(
-            id=uuid4().hex,
-            name=name.strip() or "Untitled LoRA dataset",
-            preset_id=preset.id,
-            profile=preset.profile,
-            training_type=preset.training_type,
-            created_at=now,
-            updated_at=now,
-        )
-        datasets = self._read(strict=True)
-        datasets.insert(0, dataset)
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            preset = get_lora_training_preset(preset_id)
+            if preset is None:
+                raise ValueError("lora_training_preset_not_found")
+            now = _utc_now()
+            dataset = LoRATrainingDataset(
+                id=uuid4().hex,
+                name=name.strip() or "Untitled LoRA dataset",
+                preset_id=preset.id,
+                profile=preset.profile,
+                training_type=preset.training_type,
+                created_at=now,
+                updated_at=now,
+            )
+            datasets = self._read(strict=True)
+            datasets.insert(0, dataset)
+            self._write(datasets)
+            return dataset
 
     def add_images(
         self,
         dataset_id: str,
         images: list[LoRATrainingDatasetImageInput],
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        existing_paths = {item.image_path for item in dataset.items}
-        now = _utc_now()
-        for image in images:
-            image_path = image.image_path.strip()
-            if not image_path or image_path in existing_paths:
-                continue
-            dataset.items.append(
-                LoRATrainingDatasetItem(
-                    id=uuid4().hex,
-                    image_path=image_path,
-                    caption=image.caption.strip(),
-                    tags=_normalize_tags(image.tags),
-                    source_generation_id=image.source_generation_id,
-                    source_output_path=image.source_output_path.strip(),
-                    created_at=now,
-                    updated_at=now,
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            existing_paths = {item.image_path for item in dataset.items}
+            now = _utc_now()
+            for image in images:
+                image_path = image.image_path.strip()
+                if not image_path or image_path in existing_paths:
+                    continue
+                dataset.items.append(
+                    LoRATrainingDatasetItem(
+                        id=uuid4().hex,
+                        image_path=image_path,
+                        caption=image.caption.strip(),
+                        tags=_normalize_tags(image.tags),
+                        source_generation_id=image.source_generation_id,
+                        source_output_path=image.source_output_path.strip(),
+                        created_at=now,
+                        updated_at=now,
+                    )
                 )
-            )
-            existing_paths.add(image_path)
-        dataset.updated_at = now
-        self._write(datasets)
-        return dataset
+                existing_paths.add(image_path)
+            dataset.updated_at = now
+            self._write(datasets)
+            return dataset
 
     def update_caption_export_settings(
         self,
         dataset_id: str,
         settings: LoRATrainingCaptionExportSettings,
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        dataset.caption_export_settings = _normalized_caption_export_settings(settings)
-        dataset.updated_at = _utc_now()
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            dataset.caption_export_settings = _normalized_caption_export_settings(settings)
+            dataset.updated_at = _utc_now()
+            self._write(datasets)
+            return dataset
 
     def update_character_caption_policy(
         self,
         dataset_id: str,
         policy: LoRATrainingCharacterCaptionPolicy,
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        if dataset.training_type != "character_lora":
-            raise ValueError("lora_training_character_caption_policy_not_applicable")
-        dataset.character_caption_policy = _normalized_character_caption_policy(policy)
-        dataset.updated_at = _utc_now()
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            if dataset.training_type != "character_lora":
+                raise ValueError("lora_training_character_caption_policy_not_applicable")
+            dataset.character_caption_policy = _normalized_character_caption_policy(policy)
+            dataset.updated_at = _utc_now()
+            self._write(datasets)
+            return dataset
 
     def update_caption(
         self,
@@ -5081,20 +5457,21 @@ class LoRATrainingDatasetRepository:
         caption: str,
         tags: list[str],
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        item = next((entry for entry in dataset.items if entry.id == item_id), None)
-        if item is None:
-            return None
-        now = _utc_now()
-        item.caption = caption.strip()
-        item.tags = _normalize_tags(tags)
-        item.updated_at = now
-        dataset.updated_at = now
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            item = next((entry for entry in dataset.items if entry.id == item_id), None)
+            if item is None:
+                return None
+            now = _utc_now()
+            item.caption = caption.strip()
+            item.tags = _normalize_tags(tags)
+            item.updated_at = now
+            dataset.updated_at = now
+            self._write(datasets)
+            return dataset
 
     def upsert_caption_source(
         self,
@@ -5102,25 +5479,26 @@ class LoRATrainingDatasetRepository:
         item_id: str,
         source: LoRATrainingCaptionSourceInput,
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        item = next((entry for entry in dataset.items if entry.id == item_id), None)
-        if item is None:
-            return None
-        now = _utc_now()
-        record = _caption_source_record_from_input(source, now=now)
-        existing_index = next((index for index, entry in enumerate(item.caption_sources) if entry.id == record.id), None)
-        if existing_index is None:
-            item.caption_sources.append(record)
-        else:
-            created_at = item.caption_sources[existing_index].created_at
-            item.caption_sources[existing_index] = record.model_copy(update={"created_at": created_at})
-        item.updated_at = now
-        dataset.updated_at = now
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            item = next((entry for entry in dataset.items if entry.id == item_id), None)
+            if item is None:
+                return None
+            now = _utc_now()
+            record = _caption_source_record_from_input(source, now=now)
+            existing_index = next((index for index, entry in enumerate(item.caption_sources) if entry.id == record.id), None)
+            if existing_index is None:
+                item.caption_sources.append(record)
+            else:
+                created_at = item.caption_sources[existing_index].created_at
+                item.caption_sources[existing_index] = record.model_copy(update={"created_at": created_at})
+            item.updated_at = now
+            dataset.updated_at = now
+            self._write(datasets)
+            return dataset
 
     def delete_caption_source(
         self,
@@ -5128,43 +5506,46 @@ class LoRATrainingDatasetRepository:
         item_id: str,
         source_id: str,
     ) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        item = next((entry for entry in dataset.items if entry.id == item_id), None)
-        if item is None:
-            return None
-        next_sources = [source for source in item.caption_sources if source.id != source_id]
-        if len(next_sources) == len(item.caption_sources):
-            return None
-        now = _utc_now()
-        item.caption_sources = next_sources
-        item.updated_at = now
-        dataset.updated_at = now
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            item = next((entry for entry in dataset.items if entry.id == item_id), None)
+            if item is None:
+                return None
+            next_sources = [source for source in item.caption_sources if source.id != source_id]
+            if len(next_sources) == len(item.caption_sources):
+                return None
+            now = _utc_now()
+            item.caption_sources = next_sources
+            item.updated_at = now
+            dataset.updated_at = now
+            self._write(datasets)
+            return dataset
 
     def delete_item(self, dataset_id: str, item_id: str) -> LoRATrainingDataset | None:
-        datasets = self._read(strict=True)
-        dataset = next((item for item in datasets if item.id == dataset_id), None)
-        if dataset is None:
-            return None
-        next_items = [item for item in dataset.items if item.id != item_id]
-        if len(next_items) == len(dataset.items):
-            return None
-        dataset.items = next_items
-        dataset.updated_at = _utc_now()
-        self._write(datasets)
-        return dataset
+        with self._lock:
+            datasets = self._read(strict=True)
+            dataset = next((item for item in datasets if item.id == dataset_id), None)
+            if dataset is None:
+                return None
+            next_items = [item for item in dataset.items if item.id != item_id]
+            if len(next_items) == len(dataset.items):
+                return None
+            dataset.items = next_items
+            dataset.updated_at = _utc_now()
+            self._write(datasets)
+            return dataset
 
     def delete_dataset(self, dataset_id: str) -> bool:
-        datasets = self._read(strict=True)
-        next_datasets = [dataset for dataset in datasets if dataset.id != dataset_id]
-        if len(next_datasets) == len(datasets):
-            return False
-        self._write(next_datasets)
-        return True
+        with self._lock:
+            datasets = self._read(strict=True)
+            next_datasets = [dataset for dataset in datasets if dataset.id != dataset_id]
+            if len(next_datasets) == len(datasets):
+                return False
+            self._write(next_datasets)
+            return True
 
     def _read(self, *, strict: bool = False) -> list[LoRATrainingDataset]:
         try:
@@ -5211,6 +5592,52 @@ class LoRATrainingDatasetRepository:
             raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
 
 
+def _is_training_snapshot(root: Path, directory: Path) -> bool:
+    return (
+        directory.parent == root and root.resolve(strict=True) == root
+        and directory.resolve(strict=True) == directory
+        and _is_local_training_entry(directory, stat.S_ISDIR)
+    )
+
+
+def _training_snapshot_entries(directory: Path) -> set[str]:
+    entries = set()
+    for path in directory.iterdir():
+        if path.name == _TRAINING_SNAPSHOT_OWNER:
+            continue
+        entries.add(path.name)
+        if path.name == "images" and _is_local_training_entry(path, stat.S_ISDIR):
+            for child in path.iterdir():
+                if not _is_local_training_entry(child, stat.S_ISREG):
+                    raise OSError("Unexpected entry in the LoRA training snapshot")
+                entries.add(child.relative_to(directory).as_posix())
+        elif not _is_local_training_entry(path, stat.S_ISREG):
+            raise OSError("Unexpected entry in the LoRA training snapshot")
+    return entries
+
+
+def _discard_training_snapshot(root: Path, directory: Path, *, owner: str | None = None) -> None:
+    try:
+        if not _is_training_snapshot(root, directory):
+            return
+        if owner is not None:
+            marker = directory / _TRAINING_SNAPSHOT_OWNER
+            if not _is_local_training_entry(marker, stat.S_ISREG):
+                return
+            recorded = json.loads(marker.read_text(encoding="utf-8"))
+            if not isinstance(recorded, dict) or recorded.get("run_id") != owner:
+                return
+            expected = set(recorded["entries"])
+            # Unexpected files may belong to the user, not to this run.
+            if not _training_snapshot_entries(directory).issubset(expected):
+                return
+        shutil.rmtree(directory)
+    except FileNotFoundError:
+        pass  # Legacy runs and manual exports have no ownership marker.
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError):
+        _logger.warning("Could not remove the LoRA training work copy at %s", directory, exc_info=True)
+
+
 class LoRATrainingRunRepository:
     _lock = RLock()
 
@@ -5239,6 +5666,7 @@ class LoRATrainingRunRepository:
         working_dir: str,
         command_args: list[str],
         preflight: LoRATrainingRunPreflight,
+        snapshot_owner_root: Path | None = None,
     ) -> LoRATrainingRun:
         now = _utc_now()
         run = LoRATrainingRun(
@@ -5263,6 +5691,16 @@ class LoRATrainingRunRepository:
         )
         with self._lock:
             runs = self._read(strict=True)
+            if snapshot_owner_root is not None:
+                directory = Path(materialized.root_dir)
+                try:
+                    if not _is_training_snapshot(snapshot_owner_root, directory):
+                        raise OSError("Invalid LoRA training snapshot")
+                    entries = sorted(_training_snapshot_entries(directory))
+                    with (directory / _TRAINING_SNAPSHOT_OWNER).open("x", encoding="utf-8") as marker:
+                        json.dump({"run_id": run.id, "entries": entries}, marker)
+                except OSError as exc:
+                    raise LoRATrainingStorageError("lora_training_storage_unavailable") from exc
             runs.insert(0, run)
             self._write(runs)
         return run
@@ -5283,10 +5721,15 @@ class LoRATrainingRunRepository:
     def delete(self, run_id: str) -> bool:
         with self._lock:
             runs = self._read(strict=True)
-            next_runs = [run for run in runs if run.id != run_id]
-            if len(next_runs) == len(runs):
+            removed = next((run for run in runs if run.id == run_id), None)
+            if removed is None:
                 return False
+            next_runs = [run for run in runs if run.id != run_id]
             self._write(next_runs)
+            directory = Path(removed.materialized_root)
+            if not any(Path(run.materialized_root) == directory for run in next_runs):
+                root = self.path.parent.parent.resolve() / self.path.parent.name / "materialized"
+                _discard_training_snapshot(root, directory, owner=run_id)
             return True
 
     def _read(self, *, strict: bool = False) -> list[LoRATrainingRun]:

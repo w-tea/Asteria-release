@@ -31,11 +31,7 @@ def anima_lllite_model_values(object_info: dict[str, Any]) -> set[str]:
         values = _node_input_values(object_info, "AnimaLLLiteApply", "lllite_name")
     else:
         return set()
-    return {
-        value
-        for value in values
-        if is_anima_lllite_model_name(value)
-    }
+    return set(values)
 
 
 def anima_lllite_missing_nodes(
@@ -54,16 +50,6 @@ def anima_lllite_missing_nodes(
 
 def anima_lllite_model_directory(contract: AnimaLLLiteRuntimeContract) -> str:
     return "model_patches" if contract == "model_patch" else "controlnet"
-
-
-def is_anima_lllite_model_name(value: object) -> bool:
-    normalized = str(value).casefold().replace("\\", "/")
-    path_parts = {part for part in normalized.split("/") if part}
-    return "lllite" in normalized or "anima" in path_parts
-
-
-def is_standard_controlnet_model_name(value: object) -> bool:
-    return not is_anima_lllite_model_name(value)
 
 
 def _node_has_input(object_info: dict[str, Any], node_name: str, input_name: str) -> bool:

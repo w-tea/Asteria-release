@@ -21,6 +21,7 @@ _EXACT_REQUIREMENT_RE = re.compile(r"^[A-Za-z0-9_.-]+==[^<>=!*~\s]+$")
 _REVISION_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 _VERIFIED_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _MANDATORY_RUNTIME_IDS = {
+    "asteria-native-image-control",
     "asteria-generation-stage",
     "asteria-prompt-syntax",
     "asteria-merge-runtime",
@@ -50,6 +51,14 @@ _MANDATORY_MODEL_IDS = {
     "controlnet-openpose-dwpose",
 }
 _STARTER_ASSETS = {
+    "krea2-depth-control": (None, 861995928, "fb80547ed79b47c1e3fea7bb9d36297e3917b2115fab6700ca1501350f9f483c"),
+    "moss-image-color-depth-control": (None, 313063368, "e5c0c3efd05e4269207a39de6005798f14c90c6687c89c54eaffe4b76c43a763"),
+    "krea2-turbo-fp8": ("krea2", 13141730784, "eb4dd8c612cfd10f64f25b057e6e6bbcb5737c94a7372177e456dbf7579502f1"),
+    "krea2-text-encoder": ("krea2", 5242467968, "54bd5144df0bbc25dd6ccadfcb826b521445a1b06ae5a42570bdd2974ca87094"),
+    "krea2-vae": ("krea2", 253806246, "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"),
+    "moss-image-sft-int8-convrot": ("moss_image", 5413698958, "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"),
+    "moss-image-text-encoder-w4a8-gptq": ("moss_image", 7343591088, "4cc6a1543ad2061806da46f35f90cadb4801dcba246c44782cf42ec0feb6407c"),
+    "moss-image-vae": ("moss_image", 249521340, "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"),
     "sdxl-checkpoint": ("sdxl", 6938042316, "7beb0f8fab3d00c15d370142cb5ab9663cc4bffaf119dca74c519fafe53e25f4"),
     "sdxl-vae": ("sdxl", 334641164, "63aeecb90ff7bc1c115395962d3e803571385b61938377bc7089b36e81e92e2e"),
     "anima-base-v1": ("anima", 4182218328, "bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e"),
@@ -58,6 +67,10 @@ _STARTER_ASSETS = {
     "anima-3.8b-diffusion": ("anima-3.8b", 7504189974, "1432c925752447df86da7b277e3797f077d358bc24e3950685b13cc0e465c7d5"),
     "anima-3.8b-qwen35": ("anima-3.8b", 4779016600, "ea289be7c916726d09953c7db9971c82b280e694b5d7c47f8ad9ffad6acb54ba"),
     "anima-3.8b-progressive-adapter": ("anima-3.8b", 88131712, "f9851ac4668ce069f7be7cf99755335c98879b463f3d486aaa731083978f0d71"),
+}
+_RETAINED_DEVELOPMENT_ASSETS = {
+    "moss-image-sft-bf16": (10164655808, "f96738d8116d78b7316b57c663d8c98591ddafab7488f48e3099b7655e34ab6f"),
+    "moss-image-text-encoder": (19306312328, "7e6e9f08d598f829cb940e60ac0c698e1f1c27a47daffd7e598cd78c78b4cc53"),
 }
 
 
@@ -322,6 +335,10 @@ def _validate_runtime_catalog_item(item: object) -> None:
     provider = getattr(item, "provider", None)
     if provider == "bundled":
         bundled_contracts = {
+            "asteria-native-image-control": (
+                "runtime-components/comfyui/Asteria-Native-Control",
+                "asteria.native_image_control.v1",
+            ),
             "asteria-generation-stage": (
                 "runtime-components/comfyui/Asteria-Generation-Stage",
                 "asteria.generation-stage.v1",
@@ -384,8 +401,16 @@ def _validate_model_catalog_item(item: object) -> None:
         _validate_managed_source(item, require_commit_revision=False)
         if getattr(item, "size_bytes", None) != expected_size or getattr(item, "checksum_sha256", None) != expected_hash:
             raise ValueError("release catalog starter metadata changed")
-        if expected_pack == "anima" and getattr(item, "requires_license_confirmation", None) is not True:
-            raise ValueError("release catalog Anima license confirmation is required")
+        if (expected_pack in {"anima", "anima-3.8b"} or item_id in {"krea2-turbo-fp8", "krea2-depth-control"}) and getattr(item, "requires_license_confirmation", None) is not True:
+            raise ValueError("release catalog model license confirmation is required")
+        return
+    if release_class == "development":
+        expected = _RETAINED_DEVELOPMENT_ASSETS.get(str(getattr(item, "id", "")))
+        if expected is None or (getattr(item, "size_bytes", None), getattr(item, "checksum_sha256", None)) != expected:
+            raise ValueError("release catalog retained development metadata changed")
+        if getattr(item, "selected_by_default", None) is not False or getattr(item, "auto_install", None) is not False:
+            raise ValueError("release catalog retained development assets must be opt in")
+        _validate_managed_source(item, require_commit_revision=False)
         return
     if release_class == "user-owned":
         if getattr(item, "auto_install", None) is not False:

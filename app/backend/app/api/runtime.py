@@ -26,7 +26,6 @@ from app.services.anima_lllite_runtime import (
     ANIMA_LLLITE_CURRENT_REQUIRED_NODES,
     anima_lllite_missing_nodes,
     anima_lllite_model_values,
-    is_standard_controlnet_model_name,
 )
 from app.services.controlnet_mode import (
     CONTROLNET_MODE_LABELS,
@@ -300,7 +299,6 @@ def _controlnet_capability(object_info: dict, nodes: set[str]) -> dict[str, Any]
         sorted(
             value
             for value in _node_input_values(object_info, "ControlNetLoader", "control_net_name")
-            if is_standard_controlnet_model_name(value)
         )
         if not missing
         else []
@@ -591,6 +589,7 @@ def capabilities() -> RuntimeCapabilitiesResponse:
     return RuntimeCapabilitiesResponse(
         base_url=app_config.comfy_base_url,
         features={
+            **_native_control_capabilities(app_config, object_info),
             "controlnet": _controlnet_capability(object_info, nodes),
             "anima_lllite": _anima_lllite_capability(object_info, nodes),
             "detailer": _detailer_capability(object_info, nodes),
@@ -608,6 +607,13 @@ def capabilities() -> RuntimeCapabilitiesResponse:
             "unmapped_generation_settings": _unmapped_generation_settings_capability(object_info, nodes),
         },
     )
+
+
+def _native_control_capabilities(config: AppConfig, object_info: dict) -> dict:
+    from app.services.native_image_control import native_control_capability
+    mappings = WorkflowMappingRepository(config.mapping_dir)
+    return {f'native_control_{profile}': native_control_capability(mappings.get_txt2img(profile), object_info)
+            for profile in ('krea2', 'moss_image')}
 
 
 @router.get("/sampling", response_model=RuntimeSamplingResponse)

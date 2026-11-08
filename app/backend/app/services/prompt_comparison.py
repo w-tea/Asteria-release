@@ -49,7 +49,7 @@ def prepare_comparison(request: PromptComparisonRequest, *, wildcard_dir: Path) 
     base, change = request.base, request.change
     seeds = list(request.seeds or [])
     if not seeds and base.seed >= 0:
-        seeds = [(base.seed + i) % 4294967296 for i in range(request.pairs)]
+        seeds = [base.seed + i for i in range(request.pairs)]
     while len(seeds) < request.pairs:
         seed = secrets.randbits(32)
         if seed not in seeds:
@@ -57,7 +57,8 @@ def prepare_comparison(request: PromptComparisonRequest, *, wildcard_dir: Path) 
     cells = []
     for pair, seed in enumerate(seeds):
         common = base.model_dump(mode='json')
-        common.update(seed=seed, subseed=base.subseed if base.subseed >= 0 else secrets.randbits(32),
+        common.update(seed=seed, subseed=(secrets.randbits(32)
+                      if base.subseed < 0 and base.subseed_strength != 0 else base.subseed),
                       batch_size=1, batch_count=1, prompt_input=None, prompt_layout=None, prompt_pins=None, advanced_styles=[])
         for key in ('hires_prompt', 'hires_negative_prompt'):
             common[key] = expand_dynamic_prompt(common.get(key, ''), seed, wildcard_dir).expanded

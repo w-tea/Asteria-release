@@ -95,7 +95,7 @@ class AppConfig(BaseModel):
         default_factory=lambda: Path(
             os.environ.get(
                 "ASTERIA_MODEL_SELECTIONS_PATH",
-                _default_root() / "data" / "model-selections.json",
+                Path(os.environ.get("ASTERIA_DATA_DIR", _default_root() / "data")) / "model-selections.json",
             )
         )
     )
@@ -173,7 +173,7 @@ class AppConfig(BaseModel):
         default_factory=lambda: Path(
             os.environ.get(
                 "ASTERIA_COMFY_PID_PATH",
-                _default_root() / "data" / "comfyui.pid",
+                Path(os.environ.get("ASTERIA_DATA_DIR", _default_root() / "data")) / "comfyui.pid",
             )
         )
     )

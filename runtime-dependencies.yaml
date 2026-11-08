@@ -13,7 +13,7 @@ security_contracts:
 feature_requirements:
   minimax_music3_local:
     minimum_comfyui_version: "0.33.0"
-    managed_comfyui_version: "0.33.1"
+    managed_comfyui_version: "0.43.0"
     minimum_comfyui_commit: efd4e951a00e85bd92e79f1d685427912b0dad5e
     implementation: comfyui-native
     cuda_required: true
@@ -25,12 +25,34 @@ feature_requirements:
 
   minimax_h3_local:
     minimum_comfyui_version: "0.30.0"
-    managed_comfyui_version: "0.33.1"
+    managed_comfyui_version: "0.43.0"
     implementation: comfyui-native
     verified_at: "2026-08-18"
     provenance_url: https://docs.comfy.org/tutorials/video/minimax/minimax-h3
 
 dependencies:
+  - id: asteria-native-image-control
+    label: Asteria Krea / MOSS Image Control
+    type: comfy_custom_node
+    release_class: mandatory-feature
+    features:
+      - native_image_control
+    source:
+      provider: bundled
+      url: runtime-components/comfyui/Asteria-Native-Control
+      ref: asteria.native_image_control.v1
+      verified_at: "2026-11-08"
+      provenance_url: bundled://asteria/native-image-control/v1
+    target:
+      relative_path: custom_nodes/Asteria-Native-Control
+    size_bytes: 12408
+    checksum_sha256: d1fb16c8c09a59facd45a074cec688eb6c36170f8eeeba8e897fe4fb63fd0c3c
+    license:
+      id: proprietary
+      url: bundled://asteria/license
+    repair_policy: replace-managed-component
+    auto_install: true
+
   - id: asteria-generation-stage
     label: Asteria Generation Stage
     type: comfy_custom_node
@@ -91,12 +113,12 @@ dependencies:
       provider: bundled
       url: runtime-components/comfyui/Asteria-Merge-Runtime
       ref: asteria.merge.runtime.v1
-      verified_at: "2026-08-21"
+      verified_at: "2026-11-06"
       provenance_url: bundled://asteria/merge-runtime/v1.2
     target:
       relative_path: custom_nodes/Asteria-Merge-Runtime
-    size_bytes: 50370
-    checksum_sha256: 937581c29a902d6f122cfe8e38f38305cbf2c75559b4702b141a2e87bc02166c
+    size_bytes: 51742
+    checksum_sha256: d182d2e218420c35f2e847361a2e2166a044d3dfa04958034f5e98d9440558bc
     license:
       id: proprietary
       url: bundled://asteria/license

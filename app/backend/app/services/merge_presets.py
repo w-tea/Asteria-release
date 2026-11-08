@@ -25,6 +25,8 @@ SDXL_BLOCKS = [
     *[f"OUT{x:02d}" for x in range(17)],
 ]
 
+SDXL_NATIVE_BLOCKS = ["BASE", *[f"IN{x:02d}" for x in range(9)], "M00", *[f"OUT{x:02d}" for x in range(9)]]
+
 ANIMA_BLOCKS = [
     "BASE",
     *[f"B{x:03d}" for x in range(28)],
@@ -108,6 +110,23 @@ def migrate_legacy_flux2_weights(weights: list[float]) -> list[float]:
         return weights
     by_block = dict(zip(FLUX1_BLOCKS, weights, strict=True))
     return [by_block[block] for block in FLUX2_BLOCKS]
+
+
+def expand_sdxl_native_weights(weights: list[float], fallback: float = 0.0) -> list[float]:
+    if len(weights) != len(SDXL_NATIVE_BLOCKS):
+        return weights
+    by_block = dict(zip(SDXL_NATIVE_BLOCKS, weights, strict=True))
+    return [by_block.get(block, fallback) for block in SDXL_BLOCKS]
+
+
+def expand_sdxl_native_weight_text(value: str, fallback: float) -> str:
+    try:
+        weights = _parse_weights(value)
+    except ValueError:
+        return value
+    if len(weights) != len(SDXL_NATIVE_BLOCKS):
+        return value
+    return ','.join(str(weight) for weight in expand_sdxl_native_weights(weights, fallback))
 
 
 def migrate_legacy_flux2_weight_text(value: str) -> str:
@@ -385,6 +404,8 @@ class MergePresetRepository:
             presets.extend(_json_presets(self.legacy_user_path))
         deduped: dict[str, MergeBlockPreset] = {}
         for preset in presets:
+            if preset.family == 'sdxl':
+                preset = preset.model_copy(update={'weights': expand_sdxl_native_weights(preset.weights)})
             if preset.family == "flux2" and len(preset.weights) == len(FLUX1_BLOCKS):
                 preset = preset.model_copy(update={"weights": migrate_legacy_flux2_weights(preset.weights)})
             deduped[preset.id] = preset

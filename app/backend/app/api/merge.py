@@ -7,6 +7,7 @@ import json
 import re
 import shutil
 import sqlite3
+from tempfile import TemporaryDirectory
 from typing import Any
 from pathlib import Path
 from uuid import uuid4
@@ -28,6 +29,7 @@ from app.services.comfy_admission import (
     acknowledge_comfy_cleanup,
     comfy_admission,
 )
+from app.services.runtime_process import RuntimeProcessManager
 from app.services.merge_recipes import (
     BLOCK_SCHEMAS,
     CALCULATION_MODES,
@@ -48,6 +50,7 @@ from app.services.merge_recipes import (
     preflight_anima_merge_recipe,
     resolve_merge_source_fingerprints,
     unique_merge_output_path,
+    _publish_merge_output,
 )
 from app.services.merge_runtime_contract import (
     MERGE_RUNTIME_CONTRACT_VERSION,
@@ -68,6 +71,7 @@ from app.services.merge_presets import (
     MergeBlockPreset,
     MergePresetRepository,
     canonical_merge_schema,
+    expand_sdxl_native_weights,
     merge_schema_family,
     migrate_legacy_flux2_weight_text,
     migrate_legacy_flux2_weights,
@@ -753,6 +757,8 @@ def save_merge_block_preset(request: MergeBlockPresetRequest) -> MergeBlockPrese
     if not name:
         raise HTTPException(status_code=400, detail="block_preset_name_required")
     weights = migrate_legacy_flux2_weights(request.weights) if family == "flux2" else request.weights
+    if family == "sdxl":
+        weights = expand_sdxl_native_weights(weights)
     if len(weights) != len(BLOCK_SCHEMAS[family]):
         raise HTTPException(status_code=400, detail="block_preset_weight_count_mismatch")
     preset = MergeBlockPreset(
@@ -802,6 +808,8 @@ def import_merge_block_presets(request: MergeBlockPresetImportRequest) -> MergeB
         if not name:
             raise HTTPException(status_code=400, detail="block_preset_name_required")
         weights = migrate_legacy_flux2_weights(item.weights) if family == "flux2" else item.weights
+        if family == "sdxl":
+            weights = expand_sdxl_native_weights(weights)
         if len(weights) != len(BLOCK_SCHEMAS[family]):
             raise HTTPException(status_code=400, detail="block_preset_weight_count_mismatch")
         preset = MergeBlockPreset(
@@ -1161,8 +1169,6 @@ def promote_precheck_candidate(request: PromotePrecheckCandidateRequest) -> Prom
         if not output_name.lower().endswith(".safetensors"):
             output_name = f"{output_name}.safetensors"
         output_path = unique_merge_output_path(output_root / output_name)
-        shutil.copy2(candidate, output_path)
-
         metadata_source = Path(request.metadata_path).resolve() if request.metadata_path else candidate.with_suffix(".asteria.merge.json").resolve()
         metadata_path = output_path.with_suffix(".asteria.merge.json")
         metadata: dict = {}
@@ -1182,7 +1188,14 @@ def promote_precheck_candidate(request: PromotePrecheckCandidateRequest) -> Prom
                 "output_path": str(output_path),
             }
         )
-        metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+        # The existing Merge publisher refuses collisions and rolls back only
+        # files it created. Never expose a partially copied candidate.
+        with TemporaryDirectory(prefix=".merge-promote-", dir=output_root) as folder:
+            staging = Path(folder)
+            shutil.copy2(candidate, staging / output_path.name)
+            (staging / metadata_path.name).write_text(
+                json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+            _publish_merge_output(staging, output_root, overwrite=False)
     except (OSError, MergeExecutionError) as exc:
         raise HTTPException(status_code=409, detail=f"Could not promote merge candidate: {exc}") from exc
     return PromotePrecheckCandidateResponse(output_path=str(output_path), metadata_path=str(metadata_path), promoted_from=str(candidate))
@@ -1928,13 +1941,17 @@ def _merge_runtime_source_payload(
 
 @contextmanager
 def _merge_xyz_runtime_session(config: AppConfig):
+    client = ComfyClient(config.comfy_base_url)
+    try:
+        comfy_admission.retry_deferred_cleanup(client)
+    except (ComfyCleanupPendingError, RuntimeErrorResponse, TimeoutError, OSError) as exc:
+        raise HTTPException(status_code=503, detail="comfy_cleanup_pending") from exc
     try:
         lease = comfy_admission.acquire("xyz", timeout_seconds=30.0)
     except ComfyCleanupPendingError as exc:
         raise HTTPException(status_code=409, detail="comfy_cleanup_pending") from exc
     except (ComfyAdmissionTimeoutError, ComfyAdmissionError) as exc:
         raise HTTPException(status_code=409, detail="comfy_admission_busy") from exc
-    client = ComfyClient(config.comfy_base_url)
     try:
         yield lease.token
     finally:
@@ -1950,8 +1967,9 @@ def _merge_xyz_runtime_session(config: AppConfig):
                     }
                 },
                 timeout_seconds=60.0,
+                runtime_owner=RuntimeProcessManager(config, client).owned_listener(),
             )
-        except (RuntimeErrorResponse, TimeoutError, OSError) as exc:
+        except (ComfyCleanupPendingError, RuntimeErrorResponse, TimeoutError, OSError) as exc:
             raise HTTPException(status_code=503, detail="comfy_cleanup_pending") from exc
         finally:
             lease.release(defer_cleanup=comfy_admission.cleanup_pending_for(lease.token))

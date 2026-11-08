@@ -14,6 +14,9 @@ from app.schemas.maintenance import (
     MaintenanceStatusResponse,
 )
 from app.services.maintenance_backup import MaintenanceBackupError, MaintenanceBackupService
+from app.api.operations import get_operation_coordinator
+from app.services.operation_repository import OperationConflictError
+from app.services.resource_lifecycle import ResourceAdmissionTimeoutError
 
 
 router = APIRouter(prefix="/api/maintenance", tags=["maintenance"])
@@ -71,6 +74,9 @@ def restore_maintenance_backup(request: MaintenanceRestoreRequest) -> Maintenanc
     if not request.confirmed:
         raise HTTPException(status_code=409, detail={"code": "maintenance_restore_confirmation_required"})
     try:
-        return MaintenanceBackupSummaryResponse(**asdict(_service().restore_backup(request.backup_id)))
+        with get_operation_coordinator().idle_maintenance():
+            return MaintenanceBackupSummaryResponse(**asdict(_service().restore_backup(request.backup_id)))
+    except (OperationConflictError, ResourceAdmissionTimeoutError) as exc:
+        raise HTTPException(status_code=409, detail={"code": "maintenance_restore_busy"}) from exc
     except MaintenanceBackupError as exc:
         raise _http_error(exc) from exc

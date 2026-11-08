@@ -127,7 +127,7 @@ class MusicSamplingSettings(BaseModel):
 
     text_guidance: float = Field(ge=0, le=100, allow_inf_nan=False)
     top_k: int = Field(ge=1, le=16384)
-    steps: int = Field(ge=1, le=1000)
+    steps: int = Field(ge=1, le=10000)
     sampler: str
     scheduler: str
     denoise: float = Field(ge=0, le=1, allow_inf_nan=False)

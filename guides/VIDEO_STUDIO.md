@@ -30,6 +30,16 @@ MiniMax H3が未準備の場合は**MiniMax H3をセットアップ**を選び�
 
 秒数、解像度、参照素材数にAsteria独自の固定上限はありません。モデルに合わせてフレーム数を調整する場合は、指定した値、実際に生成する値、調整理由を実行前に表示します。設定によって負荷が高くなる場合は、GPU、メモリ、空き容量の見積もりと警告を表示します。警告は機能制限ではありません。内容を確認し、続行する場合は**このまま実行**を選びます。セットアップ不足や入力エラーなど、実行できない理由が確定している場合だけ修正が必要です。
 
+### RAMが不足して止まるとき
+
+H3の生成中にPCのメインメモリ（RAM）が不足する場合は、既存の低RAM設定を試せます。
+
+1. 「設定」→「実行環境」を開き、**生成時のRAM使用量を抑える**をONにします。
+2. **起動時の設定を保存**を押します。
+3. Asteriaを終了して起動し直してから、動画の生成をやり直します。保存だけでは、起動中の生成環境には反映されません。
+
+この設定は単発の生成を遅くする場合があります。RAMとGPUメモリ（VRAM）は別であり、VRAM不足の解消や、すべての設定での完走を保証するものではありません。RAMが不足していなければ、ONにする必要はありません。生成サイズや秒数を制限したり、設定を自動でONにしたりする機能ではありません。
+
 ### Sequence の流れ
 
 各クリップは必ずプレビューしてから、次のいずれかを選びます。
@@ -67,6 +77,16 @@ Choose **Set up MiniMax H3** when the runtime is not ready. Review the required 
 Asteria does not impose its own fixed duration, resolution, or reference-count limit. If the model requires frame alignment, the requested value, generated value, and reason are shown before submission. Best-effort GPU/VRAM, RAM, and disk estimates may show `caution` or `high risk`. These are advisories, not feature limits; after reviewing one, you can choose **Run anyway**. Only deterministic setup or input failures require correction.
 
 Select a task, enter the prompt and required media, and review the model, duration and resolution. Press **Generate video** to start, or **Generate current clip** in Sequence.
+
+### When generation runs out of RAM
+
+If H3 generation runs short of system memory (RAM), you can try the existing low-RAM option:
+
+1. Open **Settings → Runtime** and enable **Reduce RAM use during generation**.
+2. Click **Save startup options**.
+3. Close and restart Asteria, then retry the video. Saving alone does not change the running generation environment.
+
+This option may slow individual jobs. System RAM is separate from GPU memory (VRAM); it does not guarantee a solution to VRAM shortages or completion with every setting. Leave it off if RAM is sufficient. It does not restrict resolution or duration, and Asteria does not enable it automatically.
 
 ### Sequence review flow
 

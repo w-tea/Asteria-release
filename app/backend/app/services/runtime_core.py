@@ -87,13 +87,13 @@ class ComfyRuntimeCoreManager:
 
     def repair(self) -> ComfyRuntimeCoreStatus:
         if self.managed_artifact_spec is not None:
-            return self._install_managed()
+            return self._install_managed(verify_contents=True)
         if not self._runtime_dir_exists():
             return self.install()
         self._repair_python_dependencies()
         return self.status()
 
-    def _install_managed(self) -> ComfyRuntimeCoreStatus:
+    def _install_managed(self, *, verify_contents: bool = False) -> ComfyRuntimeCoreStatus:
         spec = self.managed_artifact_spec
         if spec is None:
             raise ComfyRuntimeCoreError("Managed ComfyUI artifact is not configured")
@@ -103,7 +103,10 @@ class ComfyRuntimeCoreManager:
             self.comfy_dir.parent.parent / "temp"
         )
         try:
-            service.acquire(spec)
+            if verify_contents:
+                service.acquire(spec, verify_contents=True)
+            else:
+                service.acquire(spec)
             if self.install_python_dependencies:
                 self._repair_python_dependencies()
             service.mark_post_install_complete(spec)

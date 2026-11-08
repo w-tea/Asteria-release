@@ -101,6 +101,10 @@ Media Libraryの「AIで画像の条件確認」では、人数、髪・服、�
 
 SDXLでは対応するControlNet、Animaでは対応するLLLiteと制御画像を使います。必要なモデルは利用者が用意してください。AnimaのLLLiteは制御画像が結果に作用しても、任意のポーズに追従するとは限りません。ポーズや複数人の描き分けを保証する機能ではありません。
 
+### Krea 2／MOSS-Imageを画像で制御する
+
+生成設定のControlNet欄から、Krea 2では深度画像、MOSS-Imageでは深度画像と色分け画像を使えます。専用の制御モデルが必要です。ポーズ用の骨格画像や、参照画像の部分編集とは別の機能です。[準備と操作手順](NATIVE_IMAGE_CONTROL.md)を参照してください。
+
 ### 体の部位を見比べて編集する
 
 「体の部位を検出・選択」では、検出候補を拡大して確認し、必要な範囲を編集へ渡せます。人体の正常性や部位の所属は判定しません。
@@ -212,6 +216,10 @@ Anatomy checking runs once after all generation and enhancement steps, including
 Images with recorded word-reference maps can suggest edit regions for words such as hair or clothing. Refine the region with add/remove brush strokes before sending it to inpaint. Do not treat it as an exact segmentation mask. Editing uses the image's final size, including Hires output.
 
 In the pose editor, add people and drag their joints or move an entire person. One control image includes every person, not just the selected one; this is not a composition of separately generated people. Use a compatible SDXL ControlNet or Anima LLLite model and supply the required weights yourself. Anima LLLite can influence the result without following an arbitrary pose. Pose following and multi-person attribute separation are not guaranteed.
+
+### Guide Krea 2 / MOSS-Image with images
+
+Use the ControlNet panel in generation settings for Krea 2 depth maps or MOSS-Image depth and color-region maps. A dedicated control model is required. This is separate from skeleton-based pose control and masked reference-image editing. See [setup and instructions](NATIVE_IMAGE_CONTROL.md#english).
 
 ### Inspect body parts and send them to editing
 

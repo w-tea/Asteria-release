@@ -40,7 +40,9 @@ class PromptComparisonRequest(BaseModel):
     @model_validator(mode='after')
     def validate_seeds(self):
         if self.seeds is not None and (len(self.seeds) != self.pairs or len(set(self.seeds)) != self.pairs
-                                       or any(seed < 0 or seed > 4294967295 for seed in self.seeds)):
+                                       or any(seed < 0 or seed > 2**64 - 1 for seed in self.seeds)):
+            raise ValueError('comparison_seeds_invalid')
+        if self.seeds is None and self.base.seed >= 0 and self.base.seed + self.pairs - 1 > 2**64 - 1:
             raise ValueError('comparison_seeds_invalid')
         return self
 

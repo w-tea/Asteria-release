@@ -30,6 +30,7 @@ class AdvancedStyleSelection(BaseModel):
 class ControlNetUnit(BaseModel):
     enabled: bool = False
     model: str = ""
+    control_type: Literal['depth', 'color'] = 'depth'
     preprocessor: str = "none"
     image_path: str = ""
     weight: float = Field(default=1.0, allow_inf_nan=False)
@@ -114,7 +115,7 @@ class PromptSyntaxPlanRecord(BaseModel):
     profile_id: str
     operation: PromptSyntaxOperation
     enabled_features: list[PromptSyntaxFeature] = Field(default_factory=list)
-    segments: list[PromptSyntaxSegmentRecord] = Field(min_length=1, max_length=8)
+    segments: list[PromptSyntaxSegmentRecord] = Field(min_length=1)
 
 
 class PromptSyntaxPassPlanRecord(BaseModel):
@@ -272,6 +273,13 @@ class Txt2ImgRequest(BaseModel):
             raise ValueError(f"unknown spatial generation field: {fields}")
         if data.get("profile", "sdxl") == "flux2" and "scheduler" not in data:
             return {**data, "scheduler": "Flux2"}
+        from app.services.comfy_native_image_families import (
+            NATIVE_IMAGE_COMMON_DEFAULTS, NATIVE_IMAGE_DEFAULTS,
+        )
+        profile = data.get("profile")
+        native_defaults = NATIVE_IMAGE_DEFAULTS.get(profile) if isinstance(profile, str) else None
+        if native_defaults is not None:
+            return {**NATIVE_IMAGE_COMMON_DEFAULTS, **native_defaults, **data}
         return data
 
     @model_validator(mode="after")
