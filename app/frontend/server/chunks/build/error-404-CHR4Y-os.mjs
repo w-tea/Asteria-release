@@ -26,7 +26,7 @@ function defineNuxtLink(options) {
     return typeof link === "string" && link.startsWith("#");
   }
   function resolveTrailingSlashBehavior(to, resolve, trailingSlash) {
-    const effectiveTrailingSlash = trailingSlash ?? options.trailingSlash;
+    const effectiveTrailingSlash = trailingSlash != null ? trailingSlash : options.trailingSlash;
     if (!to || effectiveTrailingSlash !== "append" && effectiveTrailingSlash !== "remove") {
       return to;
     }
@@ -43,6 +43,7 @@ function defineNuxtLink(options) {
     return resolvedPath;
   }
   function useNuxtLink(props) {
+    var _a, _b, _c;
     const router = useRouter();
     const config = useRuntimeConfig();
     const hasTarget = computed(() => !!unref(props.target) && unref(props.target) !== "_self");
@@ -69,9 +70,10 @@ function defineNuxtLink(options) {
       }
       return resolveTrailingSlashBehavior(path, router.resolve, unref(props.trailingSlash));
     });
-    const link = isExternal.value ? void 0 : useBuiltinLink?.({ ...props, to, viewTransition: unref(props.viewTransition) });
+    const link = isExternal.value ? void 0 : useBuiltinLink == null ? void 0 : useBuiltinLink({ ...props, to, viewTransition: unref(props.viewTransition) });
     const href = computed(() => {
-      const effectiveTrailingSlash = unref(props.trailingSlash) ?? options.trailingSlash;
+      var _a2, _b2, _c2;
+      const effectiveTrailingSlash = (_a2 = unref(props.trailingSlash)) != null ? _a2 : options.trailingSlash;
       if (!to.value || isAbsoluteUrl.value || isHashLinkWithoutHashMode(to.value)) {
         return to.value;
       }
@@ -81,7 +83,7 @@ function defineNuxtLink(options) {
         return applyTrailingSlashBehavior(href2, effectiveTrailingSlash);
       }
       if (typeof to.value === "object") {
-        return router.resolve(to.value)?.href ?? null;
+        return (_c2 = (_b2 = router.resolve(to.value)) == null ? void 0 : _b2.href) != null ? _c2 : null;
       }
       return applyTrailingSlashBehavior(joinURL(config.app.baseURL, to.value), effectiveTrailingSlash);
     });
@@ -92,9 +94,9 @@ function defineNuxtLink(options) {
       isExternal,
       //
       href,
-      isActive: link?.isActive ?? computed(() => to.value === router.currentRoute.value.path),
-      isExactActive: link?.isExactActive ?? computed(() => to.value === router.currentRoute.value.path),
-      route: link?.route ?? computed(() => router.resolve(to.value)),
+      isActive: (_a = link == null ? void 0 : link.isActive) != null ? _a : computed(() => to.value === router.currentRoute.value.path),
+      isExactActive: (_b = link == null ? void 0 : link.isExactActive) != null ? _b : computed(() => to.value === router.currentRoute.value.path),
+      route: (_c = link == null ? void 0 : link.route) != null ? _c : computed(() => router.resolve(to.value)),
       async navigate(_e) {
         await navigateTo(href.value, { replace: unref(props.replace), external: isExternal.value || hasTarget.value });
       }
@@ -205,6 +207,7 @@ function defineNuxtLink(options) {
         }
       }
       return () => {
+        var _a;
         if (!isExternal.value && !hasTarget.value && !isHashLinkWithoutHashMode(to.value)) {
           const routerLinkProps = {
             ref: elRef,
@@ -287,7 +290,7 @@ function defineNuxtLink(options) {
             } finally {
             }
           }
-        }, slots.default?.());
+        }, (_a = slots.default) == null ? void 0 : _a.call(slots));
       };
     }
   });
@@ -372,4 +375,4 @@ _sfc_main.setup = (props, ctx) => {
 const error404 = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-4d196fb5"]]);
 
 export { error404 as default };
-//# sourceMappingURL=error-404-DXgHoesY.mjs.map
+//# sourceMappingURL=error-404-CHR4Y-os.mjs.map

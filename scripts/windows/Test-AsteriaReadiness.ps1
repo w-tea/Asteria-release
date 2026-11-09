@@ -214,9 +214,41 @@ foreach ($featureId in $Feature) {
     }
 }
 
-$cliOutput = & $pythonResolved @arguments 2>$null
-$cliExitCode = $LASTEXITCODE
-$cliLines = @($cliOutput | ForEach-Object { "$_" } | Where-Object { $_.Trim() })
+$process = New-Object System.Diagnostics.Process
+try {
+    # Windows PowerShell 5.1 can turn native stderr warnings into terminating
+    # NativeCommandError records. Read both pipes independently; the CLI's
+    # JSON and actual exit code, not the presence of stderr, decide readiness.
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $pythonResolved
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+    $startInfo.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+    $startInfo.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8"
+    # .NET Framework (PowerShell 5.1) has no ArgumentList. Quote Windows argv
+    # including embedded quotes and trailing backslashes, without a shell.
+    $startInfo.Arguments = ($arguments | ForEach-Object {
+        '"' + (($_ -replace '(\\*)"', '$1$1\"') -replace '(\\+)$', '$1$1') + '"'
+    }) -join ' '
+    $process.StartInfo = $startInfo
+    [void]$process.Start()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $process.WaitForExit()
+    $cliOutput = $stdoutTask.GetAwaiter().GetResult()
+    [void]$stderrTask.GetAwaiter().GetResult()
+    $cliExitCode = $process.ExitCode
+}
+catch {
+    Stop-Preflight "error" "startup_readiness_execution_failed" 70 "The readiness check could not be completed."
+}
+finally {
+    $process.Dispose()
+}
+$cliLines = @($cliOutput -split '\r?\n' | Where-Object { $_.Trim() })
 $cliText = if ($cliLines.Count) { $cliLines[-1] } else { "" }
 try {
     $payload = $cliText | ConvertFrom-Json

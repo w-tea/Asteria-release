@@ -92,6 +92,9 @@ class PackageEnvironmentManager:
             command.append("--no-deps")
         command.extend(("-r", str(lock)))
         try:
+            # Installers may remove old packages before failing or being killed.
+            # No previous build remains verified once replacement begins.
+            receipt_path.unlink(missing_ok=True)
             result = self.runner(command, self.app_root)
         except OSError as exc:
             raise PackageEnvironmentError("contained package installation failed") from exc
