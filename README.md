@@ -1,4 +1,4 @@
-# Asteria V1.2.2 Windows Portable
+# Asteria V1.2.2.1 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -28,6 +28,12 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
 
 > 描写位置を指定する配置機能はV1.2.0から利用できません。通常の生成と項目別のプロンプト入力は引き続き使えます。過去の配置付き設定を再利用すると、文章は対応する欄へ戻ります。位置は引き継がず、元の履歴や画像は変更しません。
+
+### V1.2.2.1の修正
+
+- 初回起動時などに、Pythonの警告だけでWindows PowerShellの起動処理が止まる問題を修正しました。実際のエラーは引き続き検出します。
+- GTX 1060などの旧世代GPUにはPyTorchのCUDA 12.6版を自動選択します。現在のGPU向けCUDA 12.8版は維持します。
+- 旧世代GPU向けの導入は、全モデルや全機能の動作を保証するものではありません。利用できるモデルや解像度は、GPUの世代とメモリ容量によって変わります。
 
 ### V1.2.2の変更
 
@@ -223,6 +229,8 @@ AMD／Intel GPUとCPUのみの実行には対応していません。macOSとLin
 
 必要なGPUメモリとシステムメモリは、モデル、生成解像度、LoRA学習などの作業で変わります。高解像度生成や学習を始める前に、余裕のあるメモリを確保してください。
 
+V1.2.2.1以降は、CUDAが最初に使用するGPUに合わせてPyTorchを導入します。Maxwell・Pascal・Volta世代はCUDA 12.6版、それ以降はCUDA 12.8版を使います。GPUドライバーやCUDA ToolkitをAsteriaが交換するわけではありません。GTX 1060 6GBのようにメモリが少ない環境では、まず一枚ずつ、低い解像度で、HiresやDetailerなどを外して試してください。起動できても、選んだモデルがメモリに収まるとは限りません。
+
 ### インストール方法
 
 1. ZIPを完全に展開します。十分な空き容量がある書き込み可能なフォルダーを選び、ZIP内から直接起動しないでください。展開したフォルダーがAsteriaの作業場所になります。
@@ -390,6 +398,12 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
 
 > Spatial prompt placement is unavailable as of V1.2.0. You can still generate normally and use the sectioned prompt editor. Reusing older placement settings restores the text to the corresponding fields, without restoring positions or modifying the original history or images.
+
+### V1.2.2.1 fixes
+
+- Fixed Windows PowerShell startup stopping on a Python warning, including during first launch. Actual failures are still detected.
+- Setup automatically selects the CUDA 12.6 build of PyTorch for older GPUs such as the GTX 1060. The CUDA 12.8 build remains the default for newer GPUs.
+- The older-GPU setup path does not guarantee support for every model or feature. Available models and resolutions depend on GPU architecture and memory capacity.
 
 ### Changes in V1.2.2
 
@@ -582,6 +596,8 @@ This history covers user-facing changes. See Get started for the scope of this d
 AMD and Intel GPUs and CPU-only operation are unsupported. macOS and Linux are also unsupported in V1.2.0.
 
 GPU-memory and system-memory requirements depend on the selected model, output resolution, and workloads such as LoRA training. High-resolution generation and training require more memory.
+
+Starting with V1.2.2.1, setup selects PyTorch for the first device visible to CUDA: CUDA 12.6 for Maxwell, Pascal and Volta, and CUDA 12.8 for newer GPUs. Asteria does not replace the system GPU driver or CUDA Toolkit. On low-memory GPUs such as the GTX 1060 6GB, start with one image at a low resolution, without Hires or Detailer. A successful launch does not guarantee that the selected model fits in memory.
 
 ### Installation
 

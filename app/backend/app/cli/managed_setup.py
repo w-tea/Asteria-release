@@ -19,6 +19,7 @@ from app.services.managed_artifacts import (
     ManagedArtifactSpec,
 )
 from app.services.package_environment import PackageEnvironmentManager
+from app.services.pytorch_runtime_selection import PYTORCH_PACKAGE_SET_IDS, select_pytorch_package_set
 from app.services.release_manifest import ReleaseManifestRepository
 from app.services.runtime_core import ComfyRuntimeCoreManager
 from app.services.runtime_dependencies import RuntimeDependencyRepository
@@ -107,6 +108,7 @@ def build_setup_plan(
     app_root: Path,
     *,
     selected_starter_packs: Iterable[str] = (),
+    pytorch_package_set_id: str = "pytorch-cu128",
 ) -> ManagedSetupPlan:
     root = app_root.resolve()
     selected = set(selected_starter_packs)
@@ -116,6 +118,10 @@ def build_setup_plan(
     ordered_starters = tuple(pack for pack in _STARTER_PACK_ORDER if pack in selected)
 
     release = ReleaseManifestRepository(root / "release-manifest.yaml").load()
+    if pytorch_package_set_id not in PYTORCH_PACKAGE_SET_IDS or not any(
+        item.id == pytorch_package_set_id for item in release.package_sets
+    ):
+        raise ValueError("managed PyTorch package set is unavailable")
     runtime_dependencies = RuntimeDependencyRepository(
         root / "runtime-dependencies.yaml",
         root / "runtime" / "ComfyUI",
@@ -147,7 +153,7 @@ def build_setup_plan(
                 size_bytes=0,
             ),
             ManagedSetupComponent(
-                id="pytorch-cu128",
+                id=pytorch_package_set_id,
                 label="PyTorch CUDA packages",
                 category="package-environment",
                 size_bytes=0,
@@ -155,7 +161,7 @@ def build_setup_plan(
         )
     )
     for package_set in release.package_sets:
-        if package_set.id == "pytorch-cu128":
+        if package_set.id in PYTORCH_PACKAGE_SET_IDS:
             continue
         components.append(
             ManagedSetupComponent(
@@ -472,12 +478,14 @@ class PortableSetupRuntime:
             return component_id, self.python_path, self.app_root / "app" / "backend" / "requirements-release.lock", None, False
         if component_id == "comfy-python-environment":
             return component_id, self.python_path, self._comfy_lock_path, None, False
-        if component_id == "pytorch-cu128":
+        if component_id in PYTORCH_PACKAGE_SET_IDS:
             package_set = next(item for item in self.release.package_sets if item.id == component_id)
             return (
-                component_id,
+                # Both variants replace the same packages. One receipt keeps
+                # a GPU/build switch from trusting an obsolete other receipt.
+                "pytorch-cuda",
                 self.python_path,
-                self.app_root / "bootstrap" / "locks" / "pytorch-cu128.lock",
+                self.app_root / "bootstrap" / "locks" / f"{component_id}.lock",
                 package_set.index_url,
                 True,
             )
@@ -534,7 +542,11 @@ class _DownloadProgressEmitter:
 def main() -> int:
     args = _parser().parse_args()
     try:
-        plan = build_setup_plan(args.app_root, selected_starter_packs=args.starter_pack)
+        plan = build_setup_plan(
+            args.app_root,
+            selected_starter_packs=args.starter_pack,
+            pytorch_package_set_id=select_pytorch_package_set(),
+        )
     except (OSError, ValueError):
         _fail("setup_manifest_invalid", 65)
     if not args.confirm_download:
