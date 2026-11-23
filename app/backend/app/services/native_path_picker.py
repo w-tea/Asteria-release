@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import logging
 import os
 import subprocess
 import sys
+
+
+logger = logging.getLogger(__name__)
 
 
 def pick_native_path(
@@ -15,6 +19,7 @@ def pick_native_path(
     if os.name != "nt" or sys.platform != "win32":
         return "unavailable", None
     script = r"""
+$ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 Add-Type -AssemblyName System.Windows.Forms
 $target = $env:ASTERIA_PICK_TARGET
@@ -38,8 +43,8 @@ $dialog.CheckFileExists = $true
 $dialog.Multiselect = $false
 if ($initial) {
   if (Test-Path -LiteralPath $initial -PathType Leaf) {
-    $dialog.InitialDirectory = Split-Path -LiteralPath $initial -Parent
-    $dialog.FileName = Split-Path -LiteralPath $initial -Leaf
+    $dialog.InitialDirectory = [System.IO.Path]::GetDirectoryName($initial)
+    $dialog.FileName = [System.IO.Path]::GetFileName($initial)
   } elseif (Test-Path -LiteralPath $initial -PathType Container) {
     $dialog.InitialDirectory = $initial
   }
@@ -84,9 +89,11 @@ if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             check=False,
         )
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError) as exc:
+        logger.warning("Windows %s picker did not complete (%s)", target, type(exc).__name__)
         return "unavailable", None
     selected = completed.stdout.strip()
     if completed.returncode != 0:
+        logger.warning("Windows %s picker exited with code %s", target, completed.returncode)
         return "unavailable", None
     return ("selected", selected) if selected else ("cancelled", None)

@@ -375,8 +375,8 @@ def _dependency_status_items(config: AppConfig, profile: str, *, missing_only: b
     model_root = _model_root(config)
     return [
         _dependency_status_item(status, model_root)
-        for status in _dependency_repository(config).list_status()
-        if status.profile == profile and (not missing_only or status.status != "installed")
+        for status in _dependency_repository(config).list_status(profile=profile)
+        if not missing_only or status.status != "installed"
     ]
 
 
@@ -632,15 +632,24 @@ def list_merge_runs() -> dict[str, list[MergeRun]]:
 
 
 @router.get("/catalog")
-def merge_catalog() -> dict:
+def merge_catalog(model_family: str | None = None) -> dict:
     config = AppConfig()
     public_block_schemas = {
         key: value
         for key, value in BLOCK_SCHEMAS.items()
         if key != "flux"
     }
-    flux2_missing_dependencies = _dependency_status_items(config, "flux2", missing_only=True)
-    flux2_blocked = bool(flux2_missing_dependencies)
+    check_flux2 = model_family in {None, "flux2"}
+    flux2_missing_dependencies = _dependency_status_items(config, "flux2", missing_only=True) if check_flux2 else []
+    if not check_flux2:
+        flux2_status = "schema_pending"
+        flux2_note = "Flux.2 model files are checked when Flux.2 is selected."
+    elif flux2_missing_dependencies:
+        flux2_status = "blocked_by_local_assets"
+        flux2_note = "Flux.2 fixed-seed image verification is blocked until matching local text encoder and VAE assets are placed."
+    else:
+        flux2_status = "schema_verified"
+        flux2_note = "Flux.2 local text encoder and VAE assets are present; fixed-seed image verification is still pending."
     return {
         "merge_types": [
             {"id": "checkpoint", "label": "Checkpoint merge"},
@@ -709,12 +718,8 @@ def merge_catalog() -> dict:
                 "id": "flux2",
                 "supports_supermerger_adjust": False,
                 "adjust_note": "Flux.2 checkpoints use the Flux-style block schema but require a separate generation workflow.",
-                "verification_status": "blocked_by_local_assets" if flux2_blocked else "schema_verified",
-                "verification_note": (
-                    "Flux.2 fixed-seed image verification is blocked until matching local text encoder and VAE assets are placed."
-                    if flux2_blocked
-                    else "Flux.2 local text encoder and VAE assets are present; fixed-seed image verification is still pending."
-                ),
+                "verification_status": flux2_status,
+                "verification_note": flux2_note,
                 "missing_dependencies": flux2_missing_dependencies,
             },
         ],
