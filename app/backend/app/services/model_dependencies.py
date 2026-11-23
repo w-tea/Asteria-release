@@ -123,12 +123,16 @@ class ModelDependencyRepository:
                 continue
         return parsed
 
-    def list_status(self, dependency_ids: set[str] | None = None) -> list[ModelDependencyStatus]:
+    def list_status(
+        self, dependency_ids: set[str] | None = None, *, profile: str | None = None
+    ) -> list[ModelDependencyStatus]:
         dependencies = self.list()
         if dependency_ids is not None:
             dependencies = [
                 dependency for dependency in dependencies if dependency.id in dependency_ids
             ]
+        if profile is not None:
+            dependencies = [dependency for dependency in dependencies if dependency.profile == profile]
         return [self._status_for(dependency) for dependency in dependencies]
 
     def get(self, dependency_id: str) -> ModelDependency:
