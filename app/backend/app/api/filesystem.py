@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.core.config import AppConfig
@@ -218,7 +218,9 @@ def browse_filesystem(
 
 
 @router.post("/pick", response_model=NativePathPickerResponse)
-def pick_native_filesystem_path(request: NativePathPickerRequest) -> NativePathPickerResponse:
+def pick_native_filesystem_path(request: NativePathPickerRequest, x_asteria_lan: str | None = Header(default=None)) -> NativePathPickerResponse:
+    if x_asteria_lan == '1':
+        return NativePathPickerResponse(status='unavailable')
     status, selected = _pick_native_path(
         target=request.target,
         title=request.title,

@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.api.operations import get_operation_coordinator
 from app.core.config import AppConfig
+from app.schemas.operations import OperationRecord
 from app.schemas.resource_advisory import (
     ResourceAdvisoryAuthorization,
     ResourceObservationSnapshot,
@@ -226,6 +227,10 @@ def _service(request: Request | None = None) -> VideoSequenceJobService:
         configure_video_sequence_operation_coordinator(coordinator, config=config)
     assert _sequence_service is not None
     return _sequence_service
+
+
+def reflect_sequence_cancellation(operation: OperationRecord, request: Request) -> None:
+    _service(request).reflect_unstarted_cancel(operation)
 
 
 def _sequence_payload(value: VideoSequence) -> dict[str, Any]:

@@ -11,9 +11,13 @@ def active_controls(settings: dict) -> list[dict]:
     return [u for u in settings.get('controlnet_units', ()) if control_is_active(u)]
 
 
+def native_control_required_nodes(mapping):
+    return {value for key, value in mapping.class_types.items() if key.startswith('control_')
+            and key != 'control_lora_loader'}
+
+
 def native_control_capability(mapping, object_info):
-    classes = {value for key, value in mapping.class_types.items() if key.startswith('control_')}
-    missing = sorted(classes - object_info.keys())
+    missing = sorted(native_control_required_nodes(mapping) - object_info.keys())
     loader = mapping.class_type('control_loader', '')
     descriptor = object_info.get(loader, {}).get('input', {}).get('required', {}).get('control_name', ())
     models = descriptor[0] if descriptor and isinstance(descriptor[0], list) else []

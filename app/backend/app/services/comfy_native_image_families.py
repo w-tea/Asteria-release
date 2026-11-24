@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+from app.services.native_image_control import active_controls, append_native_controls, native_control_required_nodes
 from app.services.workflow_mapping import WorkflowMapping
 
 
@@ -55,11 +56,29 @@ def native_image_model_slot_checks(mapping: WorkflowMapping) -> tuple[tuple[str,
     )
 
 
+def native_image_latent_size(profile: str, width: int, height: int) -> tuple[int, int]:
+    if profile == "moss_image":
+        # EmptyFlux2LatentImage floors to 16 pixels. Preserve the requested canvas at the origin.
+        return ((width + 15) // 16) * 16, ((height + 15) // 16) * 16
+    return width, height
+
+
+def native_image_lora_loader_class(mapping: WorkflowMapping, requires_control: bool) -> str:
+    if mapping.profile == "moss_image" and requires_control:
+        return mapping.class_type("control_lora_loader", "AsteriaMossLoraLoader")
+    return mapping.class_type("lora_loader", "LoraLoader")
+
+
 def native_image_required_nodes(mapping: WorkflowMapping, *, requires_lora: bool = False,
-                                requires_control: bool = False) -> set[str]:
-    return {value for key, value in mapping.class_types.items()
-            if not key.startswith("generation_stage_") and (key != "lora_loader" or requires_lora)
-            and (not key.startswith('control_') or requires_control)}
+                                requires_control: bool = False, requires_crop: bool = False) -> set[str]:
+    required = {value for key, value in mapping.class_types.items()
+                if not key.startswith(("generation_stage_", "control_")) and key != "lora_loader"
+                and (key != "image_crop" or requires_crop)}
+    if requires_control:
+        required.update(native_control_required_nodes(mapping))
+    if requires_lora:
+        required.add(native_image_lora_loader_class(mapping, requires_control))
+    return required
 
 
 def native_image_runtime_contract_issues(mapping: WorkflowMapping, object_info: dict) -> list[dict[str, str]]:
@@ -121,11 +140,7 @@ def build_native_image_inputs(
     positive = [ids["positive"], 0]
     negative = [ids["negative"], 0]
     width, height = settings["width"], settings["height"]
-    latent_width, latent_height = width, height
-    if profile == "moss_image":
-        # EmptyFlux2LatentImage floors to 16 pixels. Keep the requested canvas
-        # at the origin and remove only the extra right/bottom edge after decode.
-        latent_width, latent_height = ((width + 15) // 16) * 16, ((height + 15) // 16) * 16
+    latent_width, latent_height = native_image_latent_size(profile, width, height)
     output_crop_size = (width, height) if (latent_width, latent_height) != (width, height) else None
     workflow = {
         ids["unet_loader"]: {
@@ -152,17 +167,16 @@ def build_native_image_inputs(
                        "batch_size": settings.get("batch_size", 1)},
         },
     }
-    from app.services.native_image_control import append_native_controls, active_controls
     model, positive, negative = append_native_controls(
         workflow, request, mapping, model_name, model, vae, positive, negative, control_preprocessor)
     # Control adapters replace the base input projection before ordinary LoRAs.
     # Reserve every mapped node, including MOSS guidance, before adding the chain.
     next_id = max([int(value) for value in mapping.nodes.values()] + [int(value) for value in workflow]) + 1
+    lora_class = native_image_lora_loader_class(mapping, bool(active_controls(settings)))
     for lora in request.get("loras", ()):
         node_id = str(next_id)
         workflow[node_id] = lora_loader(lora, model, clip, mapping, settings)
-        if profile == 'moss_image' and active_controls(settings):
-            workflow[node_id]['class_type'] = mapping.class_type('control_lora_loader', '')
+        workflow[node_id]['class_type'] = lora_class
         model, clip = [node_id, 0], [node_id, 1]
         next_id += 1
     workflow[ids["positive"]]["inputs"]["clip"] = clip

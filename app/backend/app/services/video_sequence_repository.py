@@ -4,7 +4,8 @@ import hashlib
 import json
 import sqlite3
 from collections.abc import Callable
-from contextlib import closing
+from contextlib import closing, contextmanager
+from contextvars import ContextVar
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,9 @@ from pydantic import ValidationError
 
 from app.schemas.video import VideoRequest
 from app.schemas.video_sequence import VideoSequence, VideoSequenceSegment
+from app.services.action_receipts import (
+    ActionRequestIdentity, create_action_receipt_table, read_action_receipt, save_action_receipt,
+)
 
 
 class VideoSequenceRepositoryError(RuntimeError):
@@ -111,6 +115,9 @@ def _now() -> datetime:
 class VideoSequenceRepository:
     def __init__(self, database_path: Path) -> None:
         self._database_path = database_path.resolve()
+        self._acceptance_connection: ContextVar[sqlite3.Connection | None] = ContextVar(
+            'video_sequence_acceptance_connection', default=None,
+        )
         self._database_path.parent.mkdir(parents=True, exist_ok=True)
         with closing(self._connect()) as connection:
             create_video_sequence_tables(connection)
@@ -122,8 +129,53 @@ class VideoSequenceRepository:
         connection.execute("pragma foreign_keys = on")
         return connection
 
+    @property
+    def db_path(self) -> Path:
+        return self._database_path
+
+    @contextmanager
+    def use_acceptance(self, connection: sqlite3.Connection | None):
+        """Join the caller's transaction when Sequence and history share a DB."""
+        if connection is None:
+            yield
+            return
+        token = self._acceptance_connection.set(connection)
+        try:
+            yield
+        finally:
+            self._acceptance_connection.reset(token)
+
+    @contextmanager
+    def _transaction(self, *, write: bool = False):
+        bound = self._acceptance_connection.get()
+        if bound is not None:
+            previous = bound.row_factory
+            bound.row_factory = sqlite3.Row
+            try:
+                yield bound
+            finally:
+                bound.row_factory = previous
+            return
+        with closing(self._connect()) as connection, connection:
+            if write:
+                connection.execute('begin immediate')
+            yield connection
+
+    def write_action(self, identity: ActionRequestIdentity, update: Callable[[], VideoSequence]) -> tuple[VideoSequence, bool]:
+        arguments = _canonical_json(identity.arguments)
+        with self._transaction(write=True) as connection:
+            create_action_receipt_table(connection)
+            saved = read_action_receipt(connection, identity.request_id, identity.action, arguments)
+            if saved is not None:
+                return VideoSequence.model_validate(saved['sequence']), True
+            with self.use_acceptance(connection):
+                result = update()
+            save_action_receipt(connection, identity.request_id, identity.action, arguments,
+                                _canonical_json({'sequence': result.model_dump(mode='json')}))
+            return result, False
+
     def get(self, sequence_id: str) -> VideoSequence:
-        with closing(self._connect()) as connection:
+        with self._transaction() as connection:
             row = connection.execute(
                 "select document_json from video_sequences where sequence_id = ?",
                 (sequence_id,),
@@ -146,8 +198,7 @@ class VideoSequenceRepository:
             mode="json",
             exclude={"created_at", "updated_at"},
         )
-        with closing(self._connect()) as connection:
-            connection.execute("begin immediate")
+        with self._transaction(write=True) as connection:
             replay = self._receipt_replay(
                 connection,
                 receipt_id=receipt_id,
@@ -156,7 +207,6 @@ class VideoSequenceRepository:
                 request_payload=request_payload,
             )
             if replay is not None:
-                connection.commit()
                 return replay
             existing = connection.execute(
                 "select 1 from video_sequences where sequence_id = ?",
@@ -174,7 +224,6 @@ class VideoSequenceRepository:
                 request_payload=request_payload,
                 result=result,
             )
-            connection.commit()
             return result
 
     def start_generation(
@@ -463,19 +512,16 @@ class VideoSequenceRepository:
         operation_id: str,
         generation_id: int,
     ) -> VideoSequence:
-        with closing(self._connect()) as connection:
-            connection.execute("begin immediate")
+        with self._transaction(write=True) as connection:
             current = self._load_for_update(connection, sequence_id)
             if current.assembly_operation_id != operation_id:
                 raise VideoSequenceConflictError("video sequence assembly operation is stale")
             if current.assembly_generation_id is not None:
                 if current.assembly_generation_id != generation_id:
                     raise VideoSequenceConflictError("video sequence assembly generation is stale")
-                connection.commit()
                 return current
             result = self._updated_sequence(current, assembly_generation_id=generation_id)
             self._update_sequence(connection, current, result)
-            connection.commit()
             return result
 
     def complete_assembly(
@@ -891,8 +937,7 @@ class VideoSequenceRepository:
         receipt_id: str,
         change: Callable[[VideoSequence], VideoSequence],
     ) -> VideoSequence:
-        with closing(self._connect()) as connection:
-            connection.execute("begin immediate")
+        with self._transaction(write=True) as connection:
             replay = self._receipt_replay(
                 connection,
                 receipt_id=receipt_id,
@@ -901,7 +946,6 @@ class VideoSequenceRepository:
                 request_payload=request_payload,
             )
             if replay is not None:
-                connection.commit()
                 return replay
             current = self._load_for_update(connection, sequence_id)
             if current.revision != expected_revision:
@@ -916,7 +960,6 @@ class VideoSequenceRepository:
                 request_payload=request_payload,
                 result=result,
             )
-            connection.commit()
             return result
 
     def _receipt_replay(

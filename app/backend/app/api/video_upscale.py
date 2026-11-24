@@ -184,7 +184,12 @@ def _status_for(error: VideoUpscaleJobError) -> int:
 
 @router.get("/sources/{generation_id}")
 def get_video_upscale_source(generation_id: int, artifact_id: str, request: Request) -> dict[str, Any]:
-    service = _service(request)
+    return read_video_upscale_source(_service(request), generation_id, artifact_id)
+
+
+def read_video_upscale_source(
+    service: VideoUpscaleOperationService, generation_id: int, artifact_id: str,
+) -> dict[str, Any]:
     try:
         source = service.source_resolver.resolve(
             VideoUpscaleRequest.model_validate(

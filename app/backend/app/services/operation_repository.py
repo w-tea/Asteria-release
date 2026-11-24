@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from contextlib import closing, contextmanager
 import json
 from pathlib import Path
 import sqlite3
@@ -177,6 +178,118 @@ class OperationRepository:
                 operation_id=operation_id,
             )
 
+    def get_action_operation(
+        self, request_id: str, action: str, arguments: dict[str, Any],
+        *, connection: sqlite3.Connection | None = None,
+    ) -> OperationRecord | None:
+        from app.services.action_receipts import create_action_receipt_table, read_action_receipt
+
+        with self._action_transaction(connection) as connection:
+            create_action_receipt_table(connection)
+            receipt = read_action_receipt(connection, request_id, action, canonical_operation_json(arguments))
+            if receipt is None:
+                return None
+            row = connection.execute(
+                "select * from operations where operation_id = ?", (receipt["operation_id"],),
+            ).fetchone()
+            if row is None:
+                raise OperationConflictError("action_receipt_operation_missing")
+            return self._row_to_record(row)
+
+    def bind_action_operation(
+        self, request_id: str, action: str, arguments: dict[str, Any], operation_id: str,
+    ) -> tuple[OperationRecord, bool]:
+        """Bind an idempotent control request to its existing target, not its outcome.
+
+        Cancellation is safe to reapply after a lost response. Callers must still
+        execute that control on redelivery; this receipt alone is not completion.
+        """
+        from app.services.action_receipts import create_action_receipt_table, read_action_receipt, save_action_receipt
+
+        if not request_id:
+            raise ValueError("action_request_id_required")
+        arguments_json = canonical_operation_json(arguments)
+        with self._action_transaction(None) as connection:
+            create_action_receipt_table(connection)
+            receipt = read_action_receipt(connection, request_id, action, arguments_json)
+            target = receipt["operation_id"] if receipt is not None else operation_id
+            row = connection.execute("select * from operations where operation_id = ?", (target,)).fetchone()
+            if row is None:
+                raise OperationNotFoundError("operation_not_found")
+            record = self._row_to_record(row)
+            if receipt is None:
+                save_action_receipt(connection, request_id, action, arguments_json,
+                                    canonical_operation_json({"operation_id": record.operation_id}))
+            return record, receipt is None
+
+    def create_with_action_receipt(
+        self,
+        *,
+        request_id: str,
+        action: str,
+        arguments: dict[str, Any],
+        kind: str,
+        source_actor: str,
+        request_snapshot: dict[str, Any],
+        request_contract_version: int,
+        progress_total: int | None,
+        progress_unit: str,
+        executor_version: str,
+        connection: sqlite3.Connection | None = None,
+        parent_operation_id: str | None = None,
+        retry_of: str | None = None,
+        root_operation_id: str | None = None,
+        on_accept: Callable[[OperationRecord, sqlite3.Connection], None] | None = None,
+        operation_id: str | None = None,
+    ) -> tuple[OperationRecord, bool]:
+        from app.services.action_receipts import (
+            create_action_receipt_table, read_action_receipt, save_action_receipt,
+        )
+
+        if not request_id:
+            raise ValueError("action_request_id_required")
+        arguments_json = canonical_operation_json(arguments)
+        snapshot_json = canonical_operation_json(request_snapshot)
+        with self._action_transaction(connection) as connection:
+            create_action_receipt_table(connection)
+            receipt = read_action_receipt(connection, request_id, action, arguments_json)
+            if receipt is not None:
+                row = connection.execute(
+                    "select * from operations where operation_id = ?", (receipt["operation_id"],),
+                ).fetchone()
+                if row is None:
+                    raise OperationConflictError("action_receipt_operation_missing")
+                return self._row_to_record(row), False
+            record = self._create_in_connection(
+                connection, kind=kind, source_actor=source_actor,
+                request_snapshot=request_snapshot, snapshot_json=snapshot_json,
+                idempotency_key=None, request_contract_version=request_contract_version,
+                progress_total=progress_total, progress_unit=progress_unit,
+                retry_of=retry_of, parent_operation_id=parent_operation_id, root_operation_id=root_operation_id,
+                executor_version=executor_version, operation_id=operation_id,
+            )
+            save_action_receipt(connection, request_id, action, arguments_json,
+                                canonical_operation_json({"operation_id": record.operation_id}))
+            if on_accept is not None:
+                on_accept(record, connection)
+            return record, True
+
+    @contextmanager
+    def _action_transaction(self, connection: sqlite3.Connection | None):
+        if connection is not None:
+            # Media acceptance shares the HistoryRepository transaction. Its
+            # caller owns commit/rollback; never commit a half-created history.
+            previous = connection.row_factory
+            connection.row_factory = sqlite3.Row
+            try:
+                yield connection
+            finally:
+                connection.row_factory = previous
+            return
+        with closing(self._connect()) as connection, connection:
+            connection.execute("begin immediate")
+            yield connection
+
     def create_with_discord_receipt(
         self,
         *,
@@ -351,10 +464,19 @@ class OperationRepository:
             raise OperationNotFoundError("operation_not_found")
         return self._row_to_record(row)
 
+    def for_artifact(self, artifact_ref: str, *, kind: str) -> list[OperationRecord]:
+        with self._connect() as connection:
+            rows = connection.execute('''select o.* from operation_artifact_refs a
+                join operations o on o.operation_id = a.operation_id
+                where a.artifact_ref = ? and o.kind = ?''', (artifact_ref, kind)).fetchall()
+        # The index includes child summaries as well as a job's own results.
+        return [record for row in rows if artifact_ref in (record := self._row_to_record(row)).artifact_refs]
+
     def list(
         self,
         *,
         statuses: Iterable[OperationStatus] | None = None,
+        kinds: Iterable[str] | None = None,
         limit: int = 200,
         include_dismissed: bool = False,
         for_display: bool = False,
@@ -363,11 +485,13 @@ class OperationRepository:
             raise ValueError("operation_limit_invalid")
         clauses: list[str] = []
         parameters: list[Any] = []
-        if statuses is not None:
-            normalized = tuple(dict.fromkeys(statuses))
+        for column, values in (("status", statuses), ("kind", kinds)):
+            if values is None:
+                continue
+            normalized = tuple(dict.fromkeys(values))
             if not normalized:
                 return []
-            clauses.append(f"status in ({','.join('?' for _ in normalized)})")
+            clauses.append(f"{column} in ({','.join('?' for _ in normalized)})")
             parameters.extend(normalized)
         if not include_dismissed:
             clauses.append("dismissed_at is null")
@@ -466,6 +590,10 @@ class OperationRepository:
                 raise OperationConflictError("operation_revision_conflict")
             self._append_event(connection, updated)
             self._replace_artifact_refs(connection, updated)
+            if current.status == "queued" and updated.status == "cancelled":
+                from app.services.history import cancel_queued_media_history
+
+                cancel_queued_media_history(connection, current.kind, current.request_snapshot)
             return updated
 
     def append_terminal_child_summary(
@@ -540,10 +668,32 @@ class OperationRepository:
         idempotency_key: str | None = None,
         request_snapshot: dict[str, Any] | None = None,
     ) -> OperationRecord:
+        return self.create(**self._retry_fields(operation_id, source_actor, request_snapshot),
+                           idempotency_key=idempotency_key)
+
+    def retry_with_action_receipt(
+        self, operation_id: str, *, source_actor: str, request_id: str,
+        action: str, arguments: dict[str, Any],
+        request_snapshot: dict[str, Any] | None = None,
+        connection: sqlite3.Connection | None = None,
+    ) -> tuple[OperationRecord, bool]:
+        # Read redeliveries before the old record: it can be retained for
+        # less time than the job created by the original retry.
+        with self._action_transaction(connection) as connection:
+            accepted = self.get_action_operation(request_id, action, arguments, connection=connection)
+            if accepted is not None:
+                return accepted, False
+            return self.create_with_action_receipt(
+                request_id=request_id, action=action, arguments=arguments, connection=connection,
+                **self._retry_fields(operation_id, source_actor, request_snapshot),
+            )
+
+    def _retry_fields(self, operation_id: str, source_actor: str,
+                      request_snapshot: dict[str, Any] | None) -> dict[str, Any]:
         original = self.get(operation_id)
         if original.status not in {"failed", "cancelled", "interrupted"} or not original.retryable:
             raise OperationRetryError("operation_retry_not_allowed")
-        return self.create(
+        return dict(
             kind=original.kind,
             source_actor=source_actor,
             request_snapshot=(
@@ -551,7 +701,6 @@ class OperationRepository:
                 if request_snapshot is None
                 else request_snapshot
             ),
-            idempotency_key=idempotency_key,
             request_contract_version=original.request_contract_version,
             progress_total=original.progress_total,
             progress_unit=original.progress_unit,

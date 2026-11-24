@@ -280,10 +280,13 @@ def list_folders() -> EagleFolderListResponse:
 
 @router.post("/import", response_model=EagleImportResponse)
 def import_output(request: EagleImportRequest) -> EagleImportResponse:
+    return _import_resolved_output(request, _output_path(request.filename, request.generation_id))
+
+
+def _import_resolved_output(request: EagleImportRequest, path: Path) -> EagleImportResponse:
     config = AppConfig()
     eagle_settings = _settings_repository().load().eagle
     folder_id = request.folder_id if request.folder_id is not None else eagle_settings.default_folder_id
-    path = _output_path(request.filename, request.generation_id)
     options = EagleImportOptions(
         name=request.name or path.stem,
         annotation=request.annotation,

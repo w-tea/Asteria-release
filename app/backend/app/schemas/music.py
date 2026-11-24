@@ -7,6 +7,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, PlainSerializer, field_validator, model_validator
 
+from app.schemas.media import MediaSeed
+
 
 MUSIC_REQUEST_SCHEMA_VERSION = "asteria.music.request.v1"
 MUSIC_REQUEST_V2_SCHEMA_VERSION = "asteria.music.request.v2"
@@ -198,7 +200,7 @@ class MusicRequest(BaseModel):
     provider: MusicProvider
     description: str
     lyrics: str | None = None
-    seed: int = Field(default=-1, ge=-1, le=9223372036854775807)
+    seed: MediaSeed = -1
     duration_intent: float | None = Field(default=None, gt=0, allow_inf_nan=False)
     language_intent: str | None = None
     model_profile: str = "minimax-music3"

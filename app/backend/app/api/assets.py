@@ -114,11 +114,16 @@ def _safe_filename(filename: str) -> str:
 
 async def _upload_image_asset(request: Request, filename: str, directory_name: str, label: str) -> UploadedAssetResponse:
     data = await request.body()
+    return save_uploaded_image_bytes(data, filename, directory_name, label, data_dir=AppConfig().data_dir)
+
+
+def save_uploaded_image_bytes(data: bytes, filename: str, directory_name: str, label: str, *, data_dir: Path) -> UploadedAssetResponse:
+    """Use the same image validation and immutable filename for all entry points."""
     try:
         asset = save_validated_image_bytes(
             data,
             filename=filename,
-            output_dir=AppConfig().data_dir / directory_name,
+            output_dir=data_dir / directory_name,
             max_bytes=MAX_UPLOAD_IMAGE_BYTES,
             max_pixels=MAX_UPLOAD_IMAGE_PIXELS,
         )

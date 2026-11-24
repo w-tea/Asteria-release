@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from hashlib import sha256
 import json
 from pathlib import Path
+import sqlite3
 from typing import Any, Callable
 from uuid import uuid4
 
@@ -21,6 +23,7 @@ from app.schemas.resource_advisory import (
 )
 from app.schemas.video import VideoRequest
 from app.schemas.video_sequence import VideoSequence, VideoSequenceSegment
+from app.services.action_receipts import ActionRequestIdentity
 from app.services.history import HistoryRepository
 from app.services.atomic_json import write_json_atomic
 from app.services.image_check_recovery import file_identity, move_without_replacement, owns_file
@@ -77,6 +80,7 @@ class SubmittedVideoSequenceClip:
     sequence: VideoSequence
     operation: OperationRecord
     generation_id: int
+    replayed: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +88,7 @@ class SubmittedVideoSequenceAssembly:
     sequence: VideoSequence
     operation: OperationRecord
     generation_id: int
+    replayed: bool = False
 
 
 class VideoSequenceClipExecutor:
@@ -636,6 +641,14 @@ class VideoSequenceJobService:
     def get(self, sequence_id: str) -> VideoSequence:
         return self.sequences.get(sequence_id)
 
+    @contextmanager
+    def _job_acceptance(self, identity: ActionRequestIdentity | None):
+        if identity is not None and self.sequences.db_path != self.history.db_path.resolve():
+            raise ValueError('action_sequence_database_mismatch')
+        with self.coordinator.media_action_acceptance(self.history, identity) as (existing, connection):
+            with self.sequences.use_acceptance(connection):
+                yield existing, connection
+
     def generate(
         self,
         sequence_id: str,
@@ -648,7 +661,16 @@ class VideoSequenceJobService:
         resource_authorization: ResourceAdvisoryAuthorization | None = None,
         run_anyway: bool = False,
         retry: bool = False,
+        action_request: ActionRequestIdentity | None = None,
     ) -> SubmittedVideoSequenceClip:
+        if action_request is not None:
+            if self.sequences.db_path != self.history.db_path.resolve():
+                raise ValueError('action_sequence_database_mismatch')
+            accepted = self.coordinator.repository.get_action_operation(
+                action_request.request_id, action_request.action, action_request.arguments,
+            )
+            if accepted is not None:
+                return self._clip_replay(sequence_id, accepted)
         submission_hash = self._submission_hash(
             sequence_id=sequence_id,
             segment_id=segment_id,
@@ -671,12 +693,7 @@ class VideoSequenceJobService:
                 raise VideoSequenceConflictError(
                     "video sequence receipt was reused for another request"
                 )
-            generation_id = int(existing.request_snapshot["generation_id"])
-            return SubmittedVideoSequenceClip(
-                sequence=self.sequences.get(sequence_id),
-                operation=existing,
-                generation_id=generation_id,
-            )
+            return self._clip_replay(sequence_id, existing)
 
         current = self.sequences.get(sequence_id)
         segment = self._checked_segment(
@@ -711,6 +728,27 @@ class VideoSequenceJobService:
             if self.output_root_provider is not None
             else None
         )
+        with self._job_acceptance(action_request) as (existing, connection):
+            if existing is not None:
+                return self._clip_replay(sequence_id, existing)
+            return self._accept_prepared_clip(
+                current, segment, packet, parent_artifact_id, accepted_authorization,
+                operation_output_root, operation_id, submission_hash, receipt_id, source_actor, retry,
+                action_request, connection,
+            )
+
+    def _clip_replay(self, sequence_id: str, operation: OperationRecord) -> SubmittedVideoSequenceClip:
+        return SubmittedVideoSequenceClip(sequence=self.sequences.get(sequence_id), operation=operation,
+                                          generation_id=int(operation.request_snapshot['generation_id']), replayed=True)
+
+    def _accept_prepared_clip(
+        self, current: VideoSequence, segment: VideoSequenceSegment, packet: VideoSubmissionPacket,
+        parent_artifact_id: str | None, accepted_authorization: ResourceAdvisoryAuthorization | None,
+        operation_output_root: Path | None, operation_id: str, submission_hash: str, receipt_id: str,
+        source_actor: str, retry: bool, action_request: ActionRequestIdentity | None,
+        connection: sqlite3.Connection | None,
+    ) -> SubmittedVideoSequenceClip:
+        sequence_id, segment_id = current.sequence_id, segment.segment_id
         generation_id, settings, actual_frames = self._create_history(
             current,
             segment,
@@ -723,15 +761,15 @@ class VideoSequenceJobService:
             generating = transition(
                 sequence_id,
                 segment_id=segment_id,
-                expected_revision=expected_revision,
-                expected_segment_revision=expected_segment_revision,
+                expected_revision=current.revision,
+                expected_segment_revision=segment.revision,
                 operation_id=operation_id,
                 receipt_id=f"generate:{receipt_id}",
             )
             active_segment = next(
                 item for item in generating.segments if item.segment_id == segment_id
             )
-            operation = self.coordinator.enqueue(
+            admission = dict(
                 kind=VIDEO_SEQUENCE_CLIP_OPERATION_KIND,
                 source_actor=source_actor,
                 request_snapshot={
@@ -751,25 +789,32 @@ class VideoSequenceJobService:
                         else {}
                     ),
                 },
-                idempotency_key=f"video-sequence:{operation_id[:40]}",
                 request_contract_version=VIDEO_SEQUENCE_OPERATION_CONTRACT_VERSION,
                 progress_total=actual_frames,
                 progress_unit="frames",
                 operation_id=operation_id,
             )
+            if action_request is None:
+                operation = self.coordinator.enqueue(**admission, idempotency_key=f'video-sequence:{operation_id[:40]}')
+            else:
+                operation, _ = self.coordinator.enqueue_with_action_receipt(
+                    **admission, request_id=action_request.request_id, action=action_request.action,
+                    arguments=action_request.arguments, connection=connection,
+                )
         except Exception:
-            self.history.update_generation(
-                generation_id,
-                status="failed",
-                settings={**settings, "error_code": "video_sequence_enqueue_failed"},
-                output_paths=[],
-            )
-            self.sequences.mark_operation_retryable(
-                sequence_id,
-                segment_id=segment_id,
-                operation_id=operation_id,
-                transition_receipt_id=f"generate:{receipt_id}",
-            )
+            if connection is None:
+                self.history.update_generation(
+                    generation_id,
+                    status="failed",
+                    settings={**settings, "error_code": "video_sequence_enqueue_failed"},
+                    output_paths=[],
+                )
+                self.sequences.mark_operation_retryable(
+                    sequence_id,
+                    segment_id=segment_id,
+                    operation_id=operation_id,
+                    transition_receipt_id=f"generate:{receipt_id}",
+                )
             raise
         return SubmittedVideoSequenceClip(
             sequence=generating,
@@ -819,19 +864,36 @@ class VideoSequenceJobService:
         expected_segment_revision: int,
         receipt_id: str,
     ) -> OperationRecord:
+        operation, _ = self.cancel_with_receipt(
+            sequence_id, segment_id=segment_id, operation_id=operation_id,
+            expected_revision=expected_revision, expected_segment_revision=expected_segment_revision,
+            receipt_id=receipt_id,
+        )
+        return operation
+
+    def cancel_with_receipt(
+        self, sequence_id: str, *, segment_id: str, operation_id: str, expected_revision: int,
+        expected_segment_revision: int, receipt_id: str, action_request: ActionRequestIdentity | None = None,
+    ) -> tuple[OperationRecord, bool]:
         receipt_payload = {
             "segment_id": segment_id,
             "operation_id": operation_id,
             "expected_revision": expected_revision,
             "expected_segment_revision": expected_segment_revision,
         }
-        if self.sequences.action_receipt_replay(
+        if action_request is not None:
+            target = self.coordinator.repository.get_action_operation(
+                action_request.request_id, action_request.action, action_request.arguments,
+            )
+            if target is not None:
+                return self._cancel_clip_target(sequence_id, segment_id, target.operation_id), True
+        elif self.sequences.action_receipt_replay(
             receipt_id=receipt_id,
             sequence_id=sequence_id,
             action="cancel",
             request_payload=receipt_payload,
         ):
-            return self.coordinator.get(operation_id)
+            return self.coordinator.get(operation_id), True
         current = self.sequences.get(sequence_id)
         segment = self._checked_segment(
             current, segment_id, expected_revision, expected_segment_revision
@@ -843,6 +905,11 @@ class VideoSequenceJobService:
         active = self.coordinator.get(operation_id)
         if active.status not in ACTIVE_OPERATION_STATUSES:
             raise VideoSequenceConflictError("video sequence operation is not active")
+        if action_request is not None:
+            target, created = self.coordinator.repository.bind_action_operation(
+                action_request.request_id, action_request.action, action_request.arguments, operation_id,
+            )
+            return self._cancel_clip_target(sequence_id, segment_id, target.operation_id), not created
         operation = self.coordinator.request_cancel(operation_id)
         if operation.status not in {"cancelling", "cancelled"}:
             raise VideoSequenceConflictError("video sequence operation is not cancellable")
@@ -856,7 +923,38 @@ class VideoSequenceJobService:
             self.sequences.mark_operation_retryable(
                 sequence_id, segment_id=segment_id, operation_id=operation_id
             )
+        return operation, False
+
+    def _cancel_clip_target(self, sequence_id: str, segment_id: str, operation_id: str) -> OperationRecord:
+        # Redelivery can arrive after cancellation but before the Sequence row
+        # was updated. Only the already-bound operation may be reapplied.
+        operation = self.coordinator.request_cancel(operation_id)
+        if operation.status == 'cancelled':
+            self.sequences.mark_operation_retryable(sequence_id, segment_id=segment_id, operation_id=operation_id)
         return operation
+
+    def reflect_unstarted_cancel(self, operation: OperationRecord) -> None:
+        """Reflect an operation-list cancellation in its owning Sequence."""
+        if operation.status != "cancelled" or operation.started_at is not None:
+            return
+        snapshot = operation.request_snapshot
+        try:
+            if operation.kind == VIDEO_SEQUENCE_CLIP_OPERATION_KIND:
+                sequence = snapshot.get("sequence")
+                if not isinstance(sequence, dict):
+                    return
+                sequence_id, segment_id = sequence.get("sequence_id"), sequence.get("segment_id")
+                if isinstance(sequence_id, str) and isinstance(segment_id, str):
+                    self.sequences.mark_operation_retryable(
+                        sequence_id, segment_id=segment_id, operation_id=operation.operation_id,
+                    )
+            elif operation.kind == VIDEO_SEQUENCE_ASSEMBLE_OPERATION_KIND:
+                sequence_id = snapshot.get("sequence_id")
+                if isinstance(sequence_id, str):
+                    self.sequences.mark_assembly_failed(sequence_id, operation_id=operation.operation_id)
+        except VideoSequenceNotFoundError:
+            # A historical operation can outlive its Sequence.
+            return
 
     def accept_and_continue(
         self,
@@ -896,6 +994,25 @@ class VideoSequenceJobService:
         expected_revision: int,
         expected_segment_revision: int,
         receipt_id: str,
+        source_actor: str = 'local',
+        action_request: ActionRequestIdentity | None = None,
+    ) -> SubmittedVideoSequenceAssembly:
+        with self._job_acceptance(action_request) as (existing, connection):
+            if existing is not None:
+                return self._assembly_replay(sequence_id, existing)
+            return self._accept_assembly(
+                sequence_id, segment_id, candidate_artifact_id, expected_revision, expected_segment_revision,
+                receipt_id, source_actor, action_request, connection,
+            )
+
+    def _assembly_replay(self, sequence_id: str, operation: OperationRecord) -> SubmittedVideoSequenceAssembly:
+        return SubmittedVideoSequenceAssembly(sequence=self.sequences.get(sequence_id), operation=operation,
+                                              generation_id=int(operation.request_snapshot['generation_id']), replayed=True)
+
+    def _accept_assembly(
+        self, sequence_id: str, segment_id: str, candidate_artifact_id: str, expected_revision: int,
+        expected_segment_revision: int, receipt_id: str, source_actor: str,
+        action_request: ActionRequestIdentity | None, connection: sqlite3.Connection | None,
     ) -> SubmittedVideoSequenceAssembly:
         current = self.sequences.get(sequence_id)
         assembly_revision = max(1, current.assembly_revision + 1)
@@ -930,16 +1047,8 @@ class VideoSequenceJobService:
                     "video sequence assembly receipt was reused for another request"
                 )
         except OperationNotFoundError:
-            operation = self.coordinator.enqueue(
-                kind=VIDEO_SEQUENCE_ASSEMBLE_OPERATION_KIND,
-                source_actor="local",
-                request_snapshot=snapshot,
-                idempotency_key=receipt_id,
-                request_contract_version=VIDEO_SEQUENCE_OPERATION_CONTRACT_VERSION,
-                progress_total=len(accepted.active_segment_ids),
-                progress_unit="clips",
-                operation_id=operation_id,
-            )
+            operation = self._enqueue_assembly(accepted, snapshot, source_actor, operation_id, receipt_id,
+                                               action_request, connection)
         return SubmittedVideoSequenceAssembly(
             sequence=accepted,
             operation=operation,
@@ -953,6 +1062,17 @@ class VideoSequenceJobService:
         expected_revision: int,
         receipt_id: str,
         source_actor: str,
+        action_request: ActionRequestIdentity | None = None,
+    ) -> SubmittedVideoSequenceAssembly:
+        with self._job_acceptance(action_request) as (existing, connection):
+            if existing is not None:
+                return self._assembly_replay(sequence_id, existing)
+            return self._retry_assembly(sequence_id, expected_revision, receipt_id, source_actor,
+                                        action_request, connection)
+
+    def _retry_assembly(
+        self, sequence_id: str, expected_revision: int, receipt_id: str, source_actor: str,
+        action_request: ActionRequestIdentity | None, connection: sqlite3.Connection | None,
     ) -> SubmittedVideoSequenceAssembly:
         current = self.sequences.get(sequence_id)
         if current.revision != expected_revision:
@@ -988,22 +1108,30 @@ class VideoSequenceJobService:
                     "video sequence assembly receipt was reused for another request"
                 )
         except OperationNotFoundError:
-            operation = self.coordinator.enqueue(
-                kind=VIDEO_SEQUENCE_ASSEMBLE_OPERATION_KIND,
-                source_actor=source_actor,
-                request_snapshot=snapshot,
-                idempotency_key=receipt_id,
-                request_contract_version=VIDEO_SEQUENCE_OPERATION_CONTRACT_VERSION,
-                progress_total=len(assembling.active_segment_ids),
-                progress_unit="clips",
-                parent_operation_id=parent_operation_id,
-                operation_id=operation_id,
-            )
+            operation = self._enqueue_assembly(assembling, snapshot, source_actor, operation_id, receipt_id,
+                                               action_request, connection, parent_operation_id)
         return SubmittedVideoSequenceAssembly(
             sequence=assembling,
             operation=operation,
             generation_id=assembling.assembly_generation_id or 0,
         )
+
+    def _enqueue_assembly(
+        self, sequence: VideoSequence, snapshot: dict, source_actor: str, operation_id: str, receipt_id: str,
+        identity: ActionRequestIdentity | None, connection: sqlite3.Connection | None,
+        parent_operation_id: str | None = None,
+    ) -> OperationRecord:
+        admission = dict(kind=VIDEO_SEQUENCE_ASSEMBLE_OPERATION_KIND, source_actor=source_actor,
+                         request_snapshot=snapshot, request_contract_version=VIDEO_SEQUENCE_OPERATION_CONTRACT_VERSION,
+                         progress_total=len(sequence.active_segment_ids), progress_unit='clips',
+                         parent_operation_id=parent_operation_id, operation_id=operation_id)
+        if identity is None:
+            return self.coordinator.enqueue(**admission, idempotency_key=receipt_id)
+        operation, _ = self.coordinator.enqueue_with_action_receipt(
+            **admission, request_id=identity.request_id, action=identity.action, arguments=identity.arguments,
+            connection=connection,
+        )
+        return operation
 
     def _ensure_assembly_history(
         self,

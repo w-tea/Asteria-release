@@ -181,12 +181,13 @@ class MergeRecipeOperationExecutor:
             raise OperationExecutionError("merge_execution_failed", retryable=True) from exc
         if recipe.save_model:
             recipe.output_path = run.output_path
-        try:
-            _repository().save(recipe)
-        except OSError as exc:
-            error = HTTPException(status_code=409, detail=f"Could not save merge recipe: {exc}")
-            _merge_operation_errors[context.operation.operation_id] = error
-            raise OperationExecutionError("merge_result_persistence_failed", retryable=True) from exc
+        if context.request_snapshot.get("persist_recipe", True):
+            try:
+                _repository().save(recipe)
+            except OSError as exc:
+                error = HTTPException(status_code=409, detail=f"Could not save merge recipe: {exc}")
+                _merge_operation_errors[context.operation.operation_id] = error
+                raise OperationExecutionError("merge_result_persistence_failed", retryable=True) from exc
         try:
             _run_repository().save(run)
         except OSError as exc:
@@ -848,8 +849,7 @@ def delete_merge_block_preset(preset_id: str) -> dict[str, bool]:
     return {"deleted": deleted}
 
 
-@router.post("/recipes", response_model=MergeRecipe)
-def save_merge_recipe(recipe: MergeRecipe) -> MergeRecipe:
+def _validate_merge_recipe(recipe: MergeRecipe) -> None:
     if recipe.merge_type not in MERGE_TYPES:
         raise HTTPException(status_code=400, detail="invalid_merge_type")
     if recipe.normalized_merge_mode() not in MERGE_MODES:
@@ -872,6 +872,11 @@ def save_merge_recipe(recipe: MergeRecipe) -> MergeRecipe:
         if required_sources == 3:
             raise HTTPException(status_code=400, detail="merge_recipe_requires_source_c")
         raise HTTPException(status_code=400, detail="merge_recipe_requires_at_least_two_sources")
+
+
+@router.post("/recipes", response_model=MergeRecipe)
+def save_merge_recipe(recipe: MergeRecipe) -> MergeRecipe:
+    _validate_merge_recipe(recipe)
     try:
         preflight_anima_merge_recipe(recipe)
     except MergeExecutionError as exc:
@@ -1051,10 +1056,25 @@ def _analysis_to_csv(analysis: MergeAnalysis) -> str:
 
 
 @router.post("/recipes/{recipe_id}/run", response_model=MergeRun)
-def run_merge_recipe(recipe_id: str) -> MergeRun:
+def run_merge_recipe(recipe_id: str, persist_recipe: bool = True) -> MergeRun:
     recipe = _repository().get(recipe_id)
     if recipe is None:
         raise HTTPException(status_code=404, detail="merge_recipe_not_found")
+    _prepare_merge_run(recipe)
+    return _execute_merge_recipe_operation(recipe, persist_recipe=persist_recipe)
+
+
+@router.post("/runs", response_model=MergeRun)
+def run_current_merge(recipe: MergeRecipe) -> MergeRun:
+    _validate_merge_recipe(recipe)
+    snapshot = recipe.model_copy(update={
+        "id": uuid4().hex, "output_path": "", "source_fingerprints": [], "created_at": "", "updated_at": "",
+    })
+    _prepare_merge_run(snapshot)
+    return _execute_merge_recipe_operation(snapshot, persist_recipe=False)
+
+
+def _prepare_merge_run(recipe: MergeRecipe) -> None:
     config = AppConfig()
     try:
         preflight_anima_merge_recipe(recipe)
@@ -1066,16 +1086,16 @@ def run_merge_recipe(recipe_id: str) -> MergeRun:
         )
     except (MergeExecutionError, OSError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return _execute_merge_recipe_operation(recipe)
 
 
-def _execute_merge_recipe_operation(recipe: MergeRecipe) -> MergeRun:
+def _execute_merge_recipe_operation(recipe: MergeRecipe, *, persist_recipe: bool = True) -> MergeRun:
     coordinator = _merge_operation_coordinator()
     operation = coordinator.enqueue(
         kind="merge.recipe",
         source_actor="local",
         request_snapshot={
             "recipe": recipe.model_dump(mode="json"),
+            "persist_recipe": persist_recipe,
             "merge_recipe_contract_version": CURRENT_SCHEMA_VERSIONS.merge_recipe,
             "calculation_schema_version": CURRENT_SCHEMA_VERSIONS.calculation,
             "calculation_contract_version": recipe.calculation_contract_version,

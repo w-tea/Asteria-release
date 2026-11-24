@@ -24,9 +24,10 @@ class PresetRepository:
     def __init__(self, path: Path) -> None:
         self.path = path
 
-    def list(self, kind: str | None = None) -> list[Preset]:
-        items = self._read()
-        return [item for item in items if kind is None or item.kind == kind]
+    def list(self, kind: str | None = None, *, profile: str = "") -> list[Preset]:
+        return [item for item in self._read()
+                if (kind is None or item.kind == kind)
+                and (not profile or str(item.data.get("profile", "")).strip() == profile)]
 
     def save(self, preset: Preset) -> Preset:
         existing = self._read(strict=True)

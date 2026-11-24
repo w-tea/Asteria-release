@@ -45,7 +45,7 @@ LoRA学習では画像とキャプションを用意し、学習内容を確認�
 
 ![LoRA学習の入力と保存済み実行履歴を確認する画面](images/lora-training-dark-ja.jpg)
 
-Mergeでは、上部のページ内移動から「モデル・計算方式」→「詳細レシピ」→「候補スタジオ」→「レシピを保存」の順に進めます。モデル名やフォルダー名で候補を絞り込み、設定を確認してレシピを保存してください。PCの通常幅では、右上の「マージを実行」は設定や履歴をスクロールしても表示されたままです。未保存の変更がある場合は、最後に保存したレシピを実行します。変更も使いたいときは、先に「変更を保存」を押してください。
+「マージ」でモデルやフォルダーの名前を検索し、計算方式・比率・出力名を確認して「マージを実行」を押します。V1.2.3では画面に表示されている設定を使うので、レシピを先に保存する必要はありません。実行しても元のレシピは変わりません。設定を繰り返し使いたいときは、レシピを別途保存してください。
 
 プレビューや比較を使い、生成画像で結果を判断してください。以下は設定画面の例であり、Merge結果の品質を示す画像ではありません。
 
@@ -54,6 +54,7 @@ Mergeでは、上部のページ内移動から「モデル・計算方式」→
 ### 6. 目的に合うガイドを開く
 
 - [プロンプト・生成過程・部位レビュー・再生成](CREATIVE_WORKFLOWS.md)
+- [会話で1枚作る・別の端末から開く・外部AIをつなぐ](ASSISTANT_MCP_LAN.md)
 - [完成画像のチェックと保存の扱い](IMAGE_CHECK.md)
 - [画像・動画・音声の管理](MEDIA_LIBRARY.md)
 - [動画の作成](VIDEO_STUDIO.md)
@@ -105,7 +106,7 @@ Prepare images and captions in LoRA Training, inspect the configuration, then ex
 
 ![LoRA Training inputs and previously saved run history](images/lora-training-dark-ja.jpg)
 
-In Merge, use the navigation at the top to move through Models & method → Advanced Recipe → Candidate Studio → Save recipe. Filter models by model or folder name, review the settings, then save the recipe. At normal desktop widths, Run merge stays at the top right while you scroll the settings or history. With unsaved changes, the action runs the last saved recipe. Use Save changes first if you want those changes included.
+In Merge, search by model or folder name, review the method, ratio and output name, then choose Run merge. In V1.2.3 it uses the settings on screen; you do not need to save a recipe first. Running a merge leaves the original recipe unchanged. Save the recipe separately to reuse your settings later.
 
 Judge the result using generated images and comparisons. The screenshot shows configuration, not evidence of merge quality.
 
@@ -114,6 +115,7 @@ Judge the result using generated images and comparisons. The screenshot shows co
 ### 6. Continue with the relevant guide
 
 - [Prompts, generation stages, body parts and regeneration](CREATIVE_WORKFLOWS.md)
+- [Generate in a conversation, open Asteria on another device, or connect an external AI](ASSISTANT_MCP_LAN.md#english)
 - [Completed-image checks and saving](IMAGE_CHECK.md)
 - [Image, video and audio management](MEDIA_LIBRARY.md)
 - [Video creation](VIDEO_STUDIO.md)

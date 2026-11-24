@@ -8,6 +8,10 @@ import sqlite3
 
 from app.schemas.prompt_comparison import PromptComparisonRating
 from app.schemas.lora_practical_test import PracticalTestRating
+from app.services.action_receipts import (
+    ActionRequestIdentity, create_action_receipt_table, read_action_receipt, save_action_receipt,
+)
+from app.services.operation_repository import canonical_operation_json
 
 
 class PromptComparisonRepository:
@@ -22,9 +26,32 @@ class PromptComparisonRepository:
 
     def create(self, document: dict) -> dict:
         with closing(self._connect()) as db, db:
-            db.execute('INSERT INTO prompt_comparisons VALUES (?, ?, ?)',
-                       (document['id'], document['created_at'], json.dumps(document, ensure_ascii=False)))
+            self._insert(db, document)
         return document
+
+    @staticmethod
+    def _insert(db: sqlite3.Connection, document: dict) -> None:
+        db.execute('INSERT INTO prompt_comparisons VALUES (?, ?, ?)',
+                   (document['id'], document['created_at'], json.dumps(document, ensure_ascii=False)))
+
+    def find_action_comparison(self, identity: ActionRequestIdentity) -> str | None:
+        with closing(self._connect()) as db, db:
+            create_action_receipt_table(db)
+            receipt = read_action_receipt(db, identity.request_id, identity.action, canonical_operation_json(identity.arguments))
+        return None if receipt is None else receipt['comparison_id']
+
+    def create_for_action(self, document: dict, identity: ActionRequestIdentity) -> tuple[str, bool]:
+        arguments = canonical_operation_json(identity.arguments)
+        with closing(self._connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE')
+            create_action_receipt_table(db)
+            receipt = read_action_receipt(db, identity.request_id, identity.action, arguments)
+            if receipt is not None:
+                return receipt['comparison_id'], True
+            self._insert(db, document)
+            save_action_receipt(db, identity.request_id, identity.action, arguments,
+                                canonical_operation_json({'comparison_id': document['id']}))
+        return document['id'], False
 
     def get(self, comparison_id: str) -> dict:
         with closing(self._connect()) as db:
@@ -48,19 +75,25 @@ class PromptComparisonRepository:
     def _mutate(self, comparison_id: str, update: Callable[[dict], None]) -> dict:
         with closing(self._connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
-            row = db.execute('SELECT document FROM prompt_comparisons WHERE id=?', (comparison_id,)).fetchone()
-            if row is None:
-                raise KeyError('comparison_not_found')
-            document = json.loads(row[0])
-            update(document)
-            db.execute('UPDATE prompt_comparisons SET document=? WHERE id=?', (json.dumps(document, ensure_ascii=False), comparison_id))
+            return self._mutate_in_connection(db, comparison_id, update)
+
+    @staticmethod
+    def _mutate_in_connection(db: sqlite3.Connection, comparison_id: str, update: Callable[[dict], None]) -> dict:
+        row = db.execute('SELECT document FROM prompt_comparisons WHERE id=?', (comparison_id,)).fetchone()
+        if row is None:
+            raise KeyError('comparison_not_found')
+        document = json.loads(row[0])
+        update(document)
+        db.execute('UPDATE prompt_comparisons SET document=? WHERE id=?', (json.dumps(document, ensure_ascii=False), comparison_id))
         return document
 
-    def claim_start(self, comparison_id: str, operation_id: str) -> dict:
+    def claim_start(self, comparison_id: str, operation_id: str, *, connection: sqlite3.Connection | None = None) -> dict:
         def update(document):
             if document['status'] != 'prepared':
                 raise ValueError('comparison_already_started')
             document.update(status='queued', operation_id=operation_id)
+        if connection is not None:
+            return self._mutate_in_connection(connection, comparison_id, update)
         return self._mutate(comparison_id, update)
 
     def set_status(self, comparison_id: str, status: str, error: str = '') -> dict:

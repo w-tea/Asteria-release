@@ -193,10 +193,12 @@ def music_capabilities() -> MusicCapabilityResponse:
 
 @router.get("/model-bundles", response_model=MusicModelBundleListResponse)
 def music_model_bundles(request: Request) -> MusicModelBundleListResponse:
+    return read_music_model_bundles(request.app.state.config)
+
+
+def read_music_model_bundles(config: AppConfig) -> MusicModelBundleListResponse:
     try:
-        candidates = production_music_model_registry(
-            request.app.state.config
-        ).managed_bundle_candidates()
+        candidates = production_music_model_registry(config).managed_bundle_candidates()
     except MusicModelBundlePreflightError as error:
         raise HTTPException(status_code=409, detail={"code": error.code}) from error
     return MusicModelBundleListResponse(

@@ -19,6 +19,8 @@
 
 ### 2. 制御画像を選んで生成する
 
+![MOSS-Imageの設定例。右のControlNet欄で「深度画像」と「用意した制御画像をそのまま使用」を選んだ状態。](images/moss-control-dark-ja.png)
+
 1. 生成画面でKrea 2またはMOSS-Imageを選び、プロンプトを入力します。
 2. 「生成設定を開く」→「ControlNet」を選び、「追加」を押します。
 3. 対応する「ControlNetモデル」と、入力の種類を選びます。Krea 2では深度画像、MOSS-Imageでは深度画像または色分け画像を選べます。
@@ -58,6 +60,8 @@ First set up ordinary generation with Krea 2 Turbo or MOSS-Image SFT. Then insta
 For manual installation, place the file under `loras` in your model location and refresh assets. Select it in ControlNet, rather than also adding it to the regular LoRA stack. Krea 2 downloads require acceptance of its license. Check the download screen and publisher for each model's terms.
 
 ### 2. Select a map and generate
+
+![Japanese UI: the MOSS-Image ControlNet unit on the right uses a depth map without preprocessing.](images/moss-control-dark-ja.png)
 
 1. Select Krea 2 or MOSS-Image in Generate and enter your prompt.
 2. Click **Open generation settings**, select **ControlNet**, then click **Add**.

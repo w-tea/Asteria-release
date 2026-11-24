@@ -95,10 +95,13 @@ class ImageConditionRepository:
         return document
 
 
-def condition_filter_clause(db_path: Path, verdict: str) -> tuple[str, list]:
+def condition_filter_clause(db_path: Path, verdict: str, *, checks_available: bool | None = None) -> tuple[str, list]:
     if verdict not in {'match', 'mismatch', 'unknown', 'unchecked'}:
         raise ValueError('invalid_condition_filter')
-    ImageConditionRepository(db_path)
+    if checks_available is None:
+        ImageConditionRepository(db_path)
+    elif not checks_available:
+        return ("g.media_kind='image'" if verdict == 'unchecked' else '0'), []
     # One latest check per registered output. A multi-output generation may match
     # several filters; the selected output's own report remains the authority.
     expression = '''SELECT 1 FROM image_condition_checks c WHERE c.generation_id=g.id

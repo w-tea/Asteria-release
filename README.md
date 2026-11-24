@@ -1,4 +1,4 @@
-# Asteria V1.2.2.2 Windows Portable
+# Asteria V1.2.3 Windows Portable
 
 [日本語](#日本語) | [English](#english)
 
@@ -27,7 +27,17 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 3. [画面付きクイックスタート](guides/QUICK_START.md)で、一枚の生成、画像の選択、マスク編集を試します。
 4. 普段は`Start-Asteria.cmd`で起動し、終了時は`Stop-Asteria.cmd`を使います。[起動・停止・修復の説明](#起動方法)も確認してください。
 
-> 描写位置を指定する配置機能はV1.2.0から利用できません。通常の生成と項目別のプロンプト入力は引き続き使えます。過去の配置付き設定を再利用すると、文章は対応する欄へ戻ります。位置は引き継がず、元の履歴や画像は変更しません。
+> 描写位置を指定する配置機能はV1.2.0から利用できません。通常の生成と、ポジティブプロンプトをベース・キャラクター・詳細に分ける項目別入力は引き続き使えます。過去の配置付き設定を再利用すると、文章は対応する欄へ戻ります。位置は引き継がず、元の履歴や画像は変更しません。
+
+### V1.2.3で増える使い方
+
+- **会話で作る：** Asteriaの「AIチャット」で、ローカルAIやAPI接続先に「青い花の水彩画を1枚」のように頼めます。結果を見ながら画像の一部を塗って変更を頼んだり、保存済みの動画や音楽を会話で開いたりできます。
+- **ほかの端末から使う：** 同じネットワークの別PC・スマートフォン・タブレットで、普段と同じAsteriaの全画面を使えます。初回はQRコードか登録用URLでブラウザーを登録します。処理はAsteriaを起動しているPCで行います。
+- **普段のチャットから操作する：** MCP対応の外部AIクライアントを、自分のPCで起動したAsteriaにつなげます。MCP機能は本体に含まれます。共用サーバーへの登録や、自分でサーバーを開発する作業は不要です。Web版のチャットから使う場合だけ、認証付きの接続を別に用意します。
+
+AIチャットとMCPで頼めるのは、画像の生成・編集、動画・音楽の生成、保存済み作品の確認などです。LoRA学習やモデルマージは、PCまたはLANの通常画面から行います。マージでは、レシピを先に保存しなくても、画面の設定で「マージを実行」できます。
+
+最初の設定とそのまま使える依頼例は、[AIチャット・MCP・LAN接続の使い方](guides/ASSISTANT_MCP_LAN.md)を参照してください。
 
 ### V1.2.2.2の修正
 
@@ -135,8 +145,6 @@ V1.2.0では、次の制作の流れをまとめて扱えます。
 
 <details>
 <summary>V1.2.0と以前のバージョンの変更を開く</summary>
-
-利用者向けの変更を記載しています。dev版の対象範囲は「まず始める」の案内を確認してください。
 
 #### V1.2.0
 
@@ -402,7 +410,17 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 3. Use the illustrated [Quick start](guides/QUICK_START.md) to generate one image, select a result and edit a mask.
 4. Use `Start-Asteria.cmd` to start and `Stop-Asteria.cmd` to finish. See [starting, stopping and repairing](#starting-asteria) for details.
 
-> Spatial prompt placement is unavailable as of V1.2.0. You can still generate normally and use the sectioned prompt editor. Reusing older placement settings restores the text to the corresponding fields, without restoring positions or modifying the original history or images.
+> Spatial prompt placement is unavailable as of V1.2.0. You can still generate normally and split a positive prompt into base, character and detail sections. Reusing older placement settings restores the text to the corresponding fields, without restoring positions or modifying the original history or images.
+
+### New ways to use Asteria in V1.2.3
+
+- **Create in a conversation:** Open Assistant, connect a local AI or an API provider, and ask for one watercolor of blue flowers. Paint part of the resulting image to request an edit, or open saved video and music in the conversation.
+- **Use another device:** Register a browser on another PC, phone or tablet on the same network using a QR code or registration URL. You get the full Asteria interface; the host PC runs the jobs.
+- **Use your usual chat client:** Connect an external MCP client to your own running copy of Asteria. MCP is built in: there is no shared Asteria account to register and no server to build. An online chat service also needs an authenticated connection back to your PC.
+
+Assistant and MCP support image generation and editing, video and music generation, and retrieving saved work. Use the ordinary PC or LAN interface for LoRA training and model merging. In Merge, Run merge now uses the settings on screen without requiring you to save a recipe first.
+
+See [Assistant, MCP and LAN access](guides/ASSISTANT_MCP_LAN.md#english) for setup and sample requests.
 
 ### V1.2.2.2 fixes
 
@@ -510,8 +528,6 @@ V1.2.0 brings these workflows together:
 
 <details>
 <summary>Open changes in V1.2.0 and earlier versions</summary>
-
-This history covers user-facing changes. See Get started for the scope of this dev build.
 
 #### V1.2.0
 

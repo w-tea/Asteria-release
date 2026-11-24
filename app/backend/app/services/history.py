@@ -2,7 +2,7 @@ from collections.abc import Callable, Iterator
 from contextlib import closing, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 import base64
 import json
 from pathlib import Path
@@ -11,6 +11,7 @@ import unicodedata
 
 from app.schemas.media import MediaArtifact, MediaKind, legacy_image_artifacts
 from app.schemas.generation import PromptSyntaxGenerationRecord
+from app.services.adopted_media_inputs import adopted_artifact_owners, adopted_request_documents
 from app.services.generation_metadata import metadata_tags
 from app.services.schema_migrations import migrate_history_database_schema
 from app.services.video_sequence_history import is_hidden_sequence_child
@@ -19,6 +20,13 @@ from app.services.video_sequence_history import is_hidden_sequence_child
 MAX_USER_TAGS = 160
 HISTORY_PAGE_SCAN_BATCH = 128
 HISTORY_TAG_CATALOG_LIMIT = 1_000
+_MEDIA_HISTORY_KINDS = {
+    'video.generate': 'video',
+    'video.upscale': 'video',
+    'video.sequence.clip': 'video',
+    'video.sequence.assemble': 'video',
+    'music.generate': 'audio',
+}
 _active_publication: ContextVar[tuple[Path, sqlite3.Connection] | None] = ContextVar("history_publication", default=None)
 
 
@@ -60,6 +68,18 @@ def decode_history_cursor(cursor: str) -> int:
 
 class HistoryTagLimitExceededError(ValueError):
     pass
+
+
+class HistoryCurationTargetsMissingError(ValueError):
+    def __init__(self, missing_ids: list[int]):
+        self.missing_ids = missing_ids
+        super().__init__('generation_not_found')
+
+
+class HistoryAdoptedArtifactConflict(ValueError):
+    def __init__(self, generation_ids: list[int]):
+        self.generation_ids = generation_ids
+        super().__init__('history_delete_adopted_artifact')
 
 
 class HistoryBulkDeleteConflictError(ValueError):
@@ -128,6 +148,48 @@ def _history_connection(db_path: Path) -> Iterator[sqlite3.Connection]:
             yield connection
 
 
+def _media_history_generation_ids(snapshot: object) -> set[int]:
+    if not isinstance(snapshot, dict):
+        return set()
+    candidates = [snapshot]
+    batch = snapshot.get('batch')
+    if isinstance(batch, dict) and isinstance(batch.get('candidates'), list):
+        candidates.extend(item for item in batch['candidates'] if isinstance(item, dict))
+    return {
+        identity for item in candidates
+        if type(identity := item.get('generation_id')) is int and 0 < identity < 2**63
+    }
+
+
+def cancel_queued_media_history(connection: sqlite3.Connection, kind: str, snapshot: dict) -> None:
+    """Keep cancelled generation history in the same transaction as the job."""
+    media_kind = _MEDIA_HISTORY_KINDS.get(kind)
+    if media_kind is None:
+        return
+    targets = _media_history_generation_ids(snapshot)
+    if not targets or connection.execute(
+        "select 1 from sqlite_master where type = 'table' and name = 'generations'"
+    ).fetchone() is None:
+        return
+    # Distinct retries may still refer to the same saved generation.
+    for (raw,) in connection.execute(
+        "select request_snapshot_json from operations where kind = ? "
+        "and status in ('queued', 'preparing', 'running', 'cancelling')",
+        (kind,),
+    ):
+        try:
+            other = json.loads(raw)
+        except (TypeError, ValueError):
+            continue
+        targets.difference_update(_media_history_generation_ids(other))
+        if not targets:
+            return
+    connection.executemany(
+        "update generations set status = 'cancelled' where id = ? and media_kind = ? and status = 'queued'",
+        ((identity, media_kind) for identity in targets),
+    )
+
+
 class HistoryRepository:
     def begin_image_publication(self, publication_id: str, output_root: Path, directory: Path) -> None:
         with _history_connection(self.db_path) as con:
@@ -162,7 +224,7 @@ class HistoryRepository:
             con.execute('delete from image_check_publications where publication_id = ?', (publication_id,))
 
     @contextmanager
-    def publication(self) -> Iterator[None]:
+    def publication(self) -> Iterator[sqlite3.Connection]:
         """Publish final references together; callers perform no remote work here."""
         if _active_publication.get() is not None:
             raise RuntimeError("history_publication_already_active")
@@ -170,26 +232,32 @@ class HistoryRepository:
             connection.execute("BEGIN IMMEDIATE")
             token = _active_publication.set((self.db_path.resolve(), connection))
             try:
-                yield
+                yield connection
             finally:
                 _active_publication.reset(token)
 
     @staticmethod
-    def registered_output_source(db_path: Path, generation_id: int) -> dict | None:
+    def registered_output_source(db_path: Path, generation_id: int, *, include_model_settings: bool = False) -> dict | None:
         """Read an existing output registration without initializing or migrating history."""
         with closing(sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)) as con:
             con.row_factory = sqlite3.Row
-            row = con.execute("select id, media_kind, settings_json, output_paths_json from generations where id = ?",
+            row = con.execute("select id, profile, status, media_kind, settings_json, model_slots_json, output_paths_json from generations where id = ?",
                 (generation_id,)).fetchone()
         if row is None:
             return None
         settings, paths = json.loads(row["settings_json"]), json.loads(row["output_paths_json"])
         if not isinstance(settings, dict) or not isinstance(paths, list):
             raise ValueError("invalid_output_registration")
-        return {"id": row["id"], "media_kind": row["media_kind"], "settings": settings, "output_paths": paths}
+        result = {"id": row["id"], "media_kind": row["media_kind"], "settings": settings, "output_paths": paths}
+        if include_model_settings:
+            result.update(profile=row["profile"], status=row["status"], model_slots=json.loads(row["model_slots_json"]))
+        return result
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path, *, _existing_page_only: bool = False):
         self.db_path = db_path
+        self._existing_page_only = _existing_page_only
+        if _existing_page_only:
+            return
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with _history_connection(db_path) as con:
             self._drop_legacy_table(con)
@@ -217,9 +285,6 @@ class HistoryRepository:
 
     def recover_interrupted_media_generations(self) -> list[int]:
         """Recover only inflight history owned by restart-interrupted media jobs."""
-        media_kinds = {'video.generate': 'video', 'video.upscale': 'video',
-                       'video.sequence.clip': 'video', 'video.sequence.assemble': 'video',
-                       'music.generate': 'audio'}
         active_statuses = {'queued', 'preparing', 'running', 'cancelling'}
         with _history_connection(self.db_path) as con:
             con.execute('BEGIN IMMEDIATE')
@@ -227,9 +292,9 @@ class HistoryRepository:
                 return []
             rows = con.execute(
                 "select kind, status, error_code, request_snapshot_json from operations "
-                "where kind in ('video.generate', 'video.upscale', 'video.sequence.clip', "
-                "'video.sequence.assemble', 'music.generate') "
-                "and status in ('queued', 'preparing', 'running', 'cancelling', 'interrupted')"
+                f"where kind in ({','.join('?' for _ in _MEDIA_HISTORY_KINDS)}) "
+                "and status in ('queued', 'preparing', 'running', 'cancelling', 'interrupted')",
+                tuple(_MEDIA_HISTORY_KINDS),
             ).fetchall()
             interrupted: set[tuple[int, str]] = set()
             active: set[tuple[int, str]] = set()
@@ -240,17 +305,8 @@ class HistoryRepository:
                     snapshot = json.loads(raw_snapshot)
                 except (TypeError, ValueError):
                     continue
-                if not isinstance(snapshot, dict):
-                    continue
-                candidates = [snapshot]
-                batch = snapshot.get('batch')
-                if isinstance(batch, dict) and isinstance(batch.get('candidates'), list):
-                    candidates.extend(item for item in batch['candidates'] if isinstance(item, dict))
                 target = active if status in active_statuses else interrupted
-                for candidate in candidates:
-                    identity = candidate.get('generation_id')
-                    if type(identity) is int and identity > 0:
-                        target.add((identity, media_kinds[kind]))
+                target.update((identity, _MEDIA_HISTORY_KINDS[kind]) for identity in _media_history_generation_ids(snapshot))
             recovered = []
             for identity, media_kind in sorted(interrupted - active):
                 updated = con.execute(
@@ -512,6 +568,16 @@ class HistoryRepository:
             ).fetchall()
         return [self._row_to_dict(row) for row in rows]
 
+    @classmethod
+    def page_existing(cls, db_path: Path, **filters) -> HistoryPage:
+        """Search saved rows without initializing the database or condition-check schema."""
+        return cls(db_path, _existing_page_only=True).page(**filters)
+
+    def _read_connection(self):
+        if self._existing_page_only:
+            return closing(sqlite3.connect(self.db_path.resolve().as_uri() + "?mode=ro", uri=True))
+        return _history_connection(self.db_path)
+
     def page(
         self,
         *,
@@ -524,11 +590,23 @@ class HistoryRepository:
         folder: str = "all",
         media_kind: str = "all",
         condition_verdict: str = "",
+        date_from: date | None = None,
+        date_to: date | None = None,
+        utc_offset_minutes: int = 0,
+        rating_min: int | None = None,
+        rating_max: int | None = None,
+        model: str = "",
+        lora: str = "",
     ) -> HistoryPage:
         if limit < 1 or limit > 100:
             raise ValueError("invalid_history_limit")
+        if ((date_from is not None and date_to is not None and date_from > date_to)
+                or (rating_min is not None and rating_max is not None and rating_min > rating_max)):
+            raise ValueError("invalid_history_filter_range")
         query = query.strip().lower()
         tag = tag.strip().lower()
+        model = model.strip().casefold()
+        lora = lora.strip().casefold()
         self._validate_media_filter(media_kind)
         scanned_id: int | None = None
         pending_id: int | None = None
@@ -538,11 +616,6 @@ class HistoryRepository:
         folder_where, folder_params = self._folder_where(folder)
         clauses = [folder_where.removeprefix("where ")] if folder_where else []
         params = list(folder_params)
-        if condition_verdict:
-            from app.services.image_conditions import condition_filter_clause
-            condition_clause, condition_params = condition_filter_clause(self.db_path, condition_verdict)
-            clauses.append(condition_clause)
-            params.extend(condition_params)
         if profile:
             clauses.append("g.profile = ?")
             params.append(profile)
@@ -551,18 +624,52 @@ class HistoryRepository:
         if media_kind != "all":
             clauses.append("g.media_kind = ?")
             params.append(media_kind)
-        base_where = f"where {' and '.join(clauses)}" if clauses else ""
+        offset = f"{utc_offset_minutes:+d} minutes"
+        if date_from is not None:
+            clauses.append("date(g.created_at, ?) >= ?")
+            params.extend([offset, date_from.isoformat()])
+        if date_to is not None:
+            clauses.append("date(g.created_at, ?) <= ?")
+            params.extend([offset, date_to.isoformat()])
+        if rating_min is not None:
+            clauses.append("g.rating >= ?")
+            params.append(rating_min)
+        if rating_max is not None:
+            clauses.append("g.rating <= ?")
+            params.append(rating_max)
+
+        def matches(item: dict) -> bool:
+            return (self._matches_page_filters(item, query=query, tag=tag)
+                    and (not model or any(model in value.casefold() for value in item["model_slots"].values()
+                                          if isinstance(value, str)))
+                    and (not lora or any(lora in str(selection.get("name", "")).casefold()
+                                         for selection in item["loras"] if isinstance(selection, dict))))
 
         items: list[dict] = []
         next_pending_id: int | None = None
         scan_before = scanned_id
-        with _history_connection(self.db_path) as con:
+        if self._existing_page_only and not self.db_path.exists():
+            return HistoryPage(items=[], next_cursor=None, has_more=False)
+        with self._read_connection() as con:
             con.row_factory = sqlite3.Row
+            if condition_verdict:
+                from app.services.image_conditions import condition_filter_clause
+                checks_available = None
+                if self._existing_page_only:
+                    checks_available = con.execute(
+                        "select 1 from sqlite_master where type='table' and name='image_condition_checks'"
+                    ).fetchone() is not None
+                condition_clause, condition_params = condition_filter_clause(
+                    self.db_path, condition_verdict, checks_available=checks_available,
+                )
+                clauses.append(condition_clause)
+                params.extend(condition_params)
+            base_where = f"where {' and '.join(clauses)}" if clauses else ""
             if pending_id is not None:
                 pending = self._page_row(con, pending_id, base_where, params)
                 if pending is not None:
                     pending_item = self._row_to_dict(pending)
-                    if self._matches_page_filters(pending_item, query=query, tag=tag):
+                    if matches(pending_item):
                         items.append(pending_item)
                 scan_before = pending_id
 
@@ -590,7 +697,7 @@ class HistoryRepository:
                 for row in rows:
                     scan_before = int(row["id"])
                     item = self._row_to_dict(row)
-                    if not self._matches_page_filters(item, query=query, tag=tag):
+                    if not matches(item):
                         continue
                     if len(items) < limit:
                         items.append(item)
@@ -782,8 +889,26 @@ class HistoryRepository:
             ).fetchone()
         return self._row_to_dict(row) if row else None
 
+    @classmethod
+    def get_many_existing(cls, db_path: Path, generation_ids: list[int]) -> list[dict]:
+        if not db_path.is_file():
+            return []
+        repository = cls(db_path, _existing_page_only=True)
+        with repository._read_connection() as con:
+            con.row_factory = sqlite3.Row
+            # Use one snapshot so a comparison cannot mix different history versions.
+            con.execute('BEGIN')
+            if not con.execute("select 1 from sqlite_master where type='table' and name='generations'").fetchone():
+                return []
+            return [
+                row for generation_id in generation_ids
+                if (row := repository._get_with_connection(con, generation_id)) is not None
+            ]
+
     def list_folders(self) -> list[dict]:
-        with _history_connection(self.db_path) as con:
+        if self._existing_page_only and not self.db_path.exists():
+            return self._folder_list([], 0, 0)
+        with self._read_connection() as con:
             con.row_factory = sqlite3.Row
             rows = con.execute(
                 """
@@ -798,6 +923,14 @@ class HistoryRepository:
                 "select count(*) from generations where folder_id is null"
             ).fetchone()[0]
             total_count = con.execute("select count(*) from generations").fetchone()[0]
+        return self._folder_list(rows, total_count, unclassified_count)
+
+    @classmethod
+    def list_folders_existing(cls, db_path: Path) -> list[dict]:
+        return cls(db_path, _existing_page_only=True).list_folders()
+
+    @staticmethod
+    def _folder_list(rows, total_count: int, unclassified_count: int) -> list[dict]:
         folders = [
             {
                 "id": int(row["id"]),
@@ -1015,11 +1148,18 @@ class HistoryRepository:
             if item is None:
                 raise ValueError("generation_not_found")
             settings, output_paths = mutation(item)
-            artifacts_json = (
-                json.dumps(self._legacy_artifact_payloads(generation_id, output_paths), ensure_ascii=False)
-                if item["media_kind"] == "image"
-                else None
-            )
+            artifacts_json = None
+            if item["media_kind"] == "image":
+                # External events can change settings without changing any
+                # file. Preserve IDs and verified metadata held by callers.
+                registered = {path for path in output_paths if isinstance(path, str)}
+                preserved = [artifact for artifact in item["artifacts"] if artifact["path"] in registered]
+                known = {artifact["path"] for artifact in preserved}
+                added = [
+                    artifact for artifact in self._legacy_artifact_payloads(generation_id, output_paths)
+                    if artifact["path"] not in known
+                ]
+                artifacts_json = json.dumps([*preserved, *added], ensure_ascii=False)
             cur = con.execute(
                 """
                 update generations
@@ -1062,8 +1202,31 @@ class HistoryRepository:
                 return None
             raise
 
+    @staticmethod
+    def _check_adopted_artifacts(connection: sqlite3.Connection, targets: list[dict]) -> None:
+        target_ids = {item['id'] for item in targets}
+        def remaining_inputs():
+            yield from adopted_request_documents(connection)
+            for identifier, settings in connection.execute("select id, settings_json from generations where media_kind='video'"):
+                if identifier not in target_ids:
+                    yield json.loads(settings)
+        blocked = adopted_artifact_owners(targets, remaining_inputs())
+        if blocked:
+            raise HistoryAdoptedArtifactConflict(blocked)
+
+    def adopted_input_documents(self) -> list[dict]:
+        with _history_connection(self.db_path) as connection:
+            return list(adopted_request_documents(connection))
+
     def delete(self, generation_id: int) -> bool:
         with _history_connection(self.db_path) as con:
+            if not con.in_transaction:
+                con.execute('BEGIN IMMEDIATE')
+            con.row_factory = sqlite3.Row
+            item = self._get_with_connection(con, generation_id)
+            if item is None:
+                return False
+            self._check_adopted_artifacts(con, [item])
             con.execute("delete from history_tag_index where generation_id = ?", (generation_id,))
             cur = con.execute("delete from generations where id = ?", (generation_id,))
             return cur.rowcount > 0
@@ -1071,6 +1234,8 @@ class HistoryRepository:
     def bulk_delete(self, generation_ids: list[int]) -> list[dict]:
         unique_ids = list(dict.fromkeys(int(value) for value in generation_ids))
         with _history_connection(self.db_path) as con:
+            if not con.in_transaction:
+                con.execute('BEGIN IMMEDIATE')
             con.row_factory = sqlite3.Row
             targets = [
                 (generation_id, self._get_with_connection(con, generation_id))
@@ -1079,6 +1244,8 @@ class HistoryRepository:
             missing_ids = [generation_id for generation_id, item in targets if item is None]
             if missing_ids:
                 raise HistoryBulkDeleteConflictError(missing_ids)
+            items = [item for _, item in targets if item is not None]
+            self._check_adopted_artifacts(con, items)
             placeholders = ", ".join("?" for _ in unique_ids)
             con.execute(
                 f"delete from history_tag_index where generation_id in ({placeholders})",
@@ -1090,7 +1257,7 @@ class HistoryRepository:
             )
             if cur.rowcount != len(unique_ids):
                 raise HistoryBulkDeleteConflictError(unique_ids)
-            return [item for _, item in targets if item is not None]
+            return items
 
     def update_curation(
         self,
@@ -1140,6 +1307,7 @@ class HistoryRepository:
         tags_remove: list[str] | None = None,
         folder_id: int | None = None,
         update_folder: bool = False,
+        require_all: bool = False,
     ) -> list[dict]:
         normalized_add = self._normalize_bulk_tags(tags_add or [])
         normalized_remove = self._normalize_bulk_tags(tags_remove or [])
@@ -1153,6 +1321,9 @@ class HistoryRepository:
                 for generation_id in unique_ids
                 if (item := self._get_with_connection(con, generation_id)) is not None
             ]
+            if require_all and len(targets) != len(unique_ids):
+                found = {generation_id for generation_id, _ in targets}
+                raise HistoryCurationTargetsMissingError([generation_id for generation_id in unique_ids if generation_id not in found])
             updates = [
                 (
                     generation_id,

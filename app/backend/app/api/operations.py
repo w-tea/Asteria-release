@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict
 
 from app.core.config import AppConfig
@@ -78,16 +78,24 @@ def get_operation_events(
 
 
 @router.post("/{operation_id}/cancel")
-def cancel_operation(operation_id: str) -> dict[str, Any]:
+def cancel_operation(operation_id: str, request: Request) -> dict[str, Any]:
     try:
         coordinator = get_operation_coordinator()
         operation = coordinator.get(operation_id)
-        if operation.kind.startswith("generation."):
+        if operation.kind == 'generation.repeat':
+            from app.api.generation_repeats import get_repeat_service
+            get_repeat_service().stop(operation_id, stop_current=True)
+            operation = coordinator.get(operation_id)
+        elif operation.kind.startswith("generation."):
             from app.api.generation import cancel_generation_operation
 
             operation = cancel_generation_operation(operation_id)
         else:
             operation = coordinator.request_cancel(operation_id)
+            if operation.kind in {"video.sequence.clip", "video.sequence.assemble"} and operation.status == "cancelled":
+                from app.api.video_sequences import reflect_sequence_cancellation
+
+                reflect_sequence_cancellation(operation, request)
         return _summary(operation)
     except OperationNotFoundError as exc:
         raise _not_found(exc) from exc
@@ -104,6 +112,10 @@ def retry_operation(operation_id: str, request: OperationRetryRequest) -> dict[s
             raise OperationRetryError("operation_retry_requires_music_studio")
         if original.kind == "generation.prompt_comparison":
             raise OperationRetryError("comparison_prepare_new_run")
+        if original.kind == 'generation.repeat':
+            # A generic clone would have no repeat input/state. Start from the
+            # Generate controls (or repeat action) instead of queuing an orphan.
+            raise OperationRetryError('operation_retry_not_allowed')
         operation = coordinator.retry(
             operation_id,
             source_actor=request.source_actor,

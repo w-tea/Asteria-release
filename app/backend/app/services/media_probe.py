@@ -28,6 +28,9 @@ _MEDIA_TYPES: dict[str, tuple[MediaKind, str]] = {
     ".mp3": ("audio", "audio/mpeg"),
     ".opus": ("audio", "audio/ogg"),
 }
+_LOCAL_UPLOAD_FORMATS = {
+    ".mp4": "mov", ".webm": "matroska", ".wav": "wav", ".flac": "flac", ".mp3": "mp3", ".opus": "ogg",
+}
 
 
 class MediaProbeError(ValueError):
@@ -65,6 +68,7 @@ def probe_media(
     *,
     poster_path: Path | None = None,
     max_decode_packets: int = MAX_DECODE_PACKETS,
+    local_upload: bool = False,
 ) -> MediaProbeResult:
     source = Path(source_path)
     kind_and_mime = _MEDIA_TYPES.get(source.suffix.lower())
@@ -84,7 +88,10 @@ def probe_media(
         raise MediaProbeError("media_probe_missing")
 
     try:
-        with av.open(str(resolved), mode="r", options=_OPEN_OPTIONS) as container:
+        with resolved.open("rb") as stream, av.open(
+            stream, mode="r", options=_OPEN_OPTIONS,
+            format=_LOCAL_UPLOAD_FORMATS[source.suffix.lower()] if local_upload else None,
+        ) as container:
             video_stream = next(iter(container.streams.video), None)
             audio_stream = next(iter(container.streams.audio), None)
             video_time_base, audio_time_base = _validate_stream_time_bases(

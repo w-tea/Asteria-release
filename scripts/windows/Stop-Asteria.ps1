@@ -45,9 +45,36 @@ function Remove-AsteriaLauncherRecords {
     }
 }
 
+function Stop-AsteriaMcpBridges {
+    # Per-connection sidecars avoid concurrent writes to launcher-state.json.
+    # Never follow a bridge record into another application root or reused PID.
+    $complete = $true
+    foreach ($connectionKind in @('mcp-bridge', 'lan-gateway')) {
+    $connectionDirectory = if ($connectionKind -eq 'lan-gateway') { 'lan-gateways' } else { 'mcp-bridges' }
+    $directory = Join-Path ([IO.Path]::GetDirectoryName($resolvedStatePath)) $connectionDirectory
+    if (-not (Test-Path -LiteralPath $directory -PathType Container)) { continue }
+    foreach ($file in @(Get-ChildItem -LiteralPath $directory -Filter '*.json' -File)) {
+        try {
+            $entry = Get-Content -LiteralPath $file.FullName -Raw -Encoding utf8 | ConvertFrom-Json
+            if (-not ([IO.Path]::GetFullPath([string]$entry.app_root)).Equals($resolvedAppRoot, [StringComparison]::OrdinalIgnoreCase)) { continue }
+            if ($entry.version -ne 1 -or $entry.process.name -ne $connectionKind) { $complete = $false; continue }
+            $ownership = Get-AsteriaOwnedProcessState -Record $entry.process
+            if ($ownership -eq 'owned' -and -not (Stop-AsteriaOwnedProcess -Record $entry.process -TimeoutSeconds 10)) {
+                $complete = $false
+                continue
+            }
+            Remove-Item -LiteralPath $file.FullName -Force
+        }
+        catch { $complete = $false }
+    }
+    }
+    return $complete
+}
+
 try { $state = Read-AsteriaLauncherState -Path $resolvedStatePath }
 catch { Complete-Stop "error" "launcher_state_invalid" 74 "The launcher ownership record is invalid and was left unchanged." }
 if ($null -eq $state) {
+    if (-not (Stop-AsteriaMcpBridges)) { Complete-Stop 'blocked' 'launcher_bridge_stop_failed' 75 'An MCP connection could not be stopped. Its ownership record was kept.' }
     Remove-AsteriaLauncherRecords
     Complete-Stop "stopped" "launcher_already_stopped" 0 "Asteria has no launcher-owned processes to stop."
 }
@@ -83,6 +110,7 @@ foreach ($record in $records) {
 if ($mismatches.Count -gt 0) {
     Complete-Stop "blocked" "launcher_ownership_mismatch" 75 "One or more process records no longer match. Unmatched processes were not stopped."
 }
+if (-not (Stop-AsteriaMcpBridges)) { Complete-Stop 'blocked' 'launcher_bridge_stop_failed' 75 'An MCP connection could not be stopped. Its ownership record was kept.' }
 Remove-AsteriaLauncherRecords
 if ($staleRecordFound) {
     Complete-Stop "stopped" "launcher_stale_state_removed" 0 "Stopped launcher records were removed."

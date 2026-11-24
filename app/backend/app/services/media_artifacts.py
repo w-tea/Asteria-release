@@ -43,24 +43,27 @@ class MediaFinalizationResult:
 
 def finalize_media_artifact(
     *,
-    generation_id: int,
+    generation_id: int | None,
     source_path: Path,
     poster_root: Path,
+    local_upload: bool = False,
+    source_sha256: str | None = None,
 ) -> MediaFinalizationResult:
     source = Path(source_path)
     suffix = source.suffix.lower()
     if suffix not in {".mp4", ".webm", ".wav", ".flac", ".mp3", ".opus"}:
         raise ValueError("media_artifact_unsupported")
-    identity = sha256(f"{generation_id}:{source}".encode("utf-8")).hexdigest()[:20]
+    owner = generation_id if generation_id is not None else "import"
+    identity = sha256(f"{owner}:{source}".encode("utf-8")).hexdigest()[:20]
     primary_kind: MediaKind = "audio" if suffix in {".wav", ".flac", ".mp3", ".opus"} else "video"
-    poster_id = f"media:poster:{generation_id}:{identity}" if primary_kind == "video" else None
+    poster_id = f"media:poster:{owner}:{identity}" if primary_kind == "video" else None
     poster_path = (
         Path(poster_root) / f"{source.stem}.{identity}.poster.webp"
         if primary_kind == "video"
         else None
     )
-    probe = probe_media(source, poster_path=poster_path)
-    primary_id = f"media:{primary_kind}:{generation_id}:{identity}"
+    probe = probe_media(source, poster_path=poster_path, local_upload=local_upload)
+    primary_id = f"media:{primary_kind}:{owner}:{identity}"
     primary = MediaArtifact(
         artifact_id=primary_id,
         kind=primary_kind,
@@ -79,7 +82,7 @@ def finalize_media_artifact(
         channels=probe.channels,
         bit_depth=probe.bit_depth,
         size_bytes=probe.size_bytes,
-        sha256=file_sha256(source),
+        sha256=source_sha256 if source_sha256 is not None else file_sha256(source),
         adapter_metadata={
             "container_format": probe.container_format,
             "rotation_degrees": probe.rotation_degrees,

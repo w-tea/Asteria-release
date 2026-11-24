@@ -6,6 +6,13 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 import yaml
 
 
+def launcher_backend_root(app_root: Path, target_mode: str) -> Path:
+    """Use the same code directory as the Windows launcher, including after relocation."""
+    if target_mode == 'packaged':
+        return app_root / ReleaseLayoutRepository(app_root / 'release-layout.yaml').load().backend_root
+    return app_root / 'backend'
+
+
 @dataclass(frozen=True)
 class ReleaseLayout:
     version: int

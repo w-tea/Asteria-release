@@ -20,15 +20,25 @@ class PromptComparisonChange(BaseModel):
     weight: float = Field(default=1, allow_inf_nan=False)
 
 
-class PromptComparisonRequest(BaseModel):
+class PromptComparisonOptions(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     name: str = Field(default='', max_length=120)
-    mode: Literal['txt2img', 'img2img', 'inpaint'] = 'txt2img'
-    base: Txt2ImgRequest | Img2ImgRequest | InpaintRequest
     change: PromptComparisonChange
     pairs: int = Field(default=2, ge=1, le=32)
     seeds: list[int] | None = Field(default=None, min_length=1, max_length=32)
+
+    @model_validator(mode='after')
+    def validate_seeds(self):
+        if self.seeds is not None and (len(self.seeds) != self.pairs or len(set(self.seeds)) != self.pairs
+                                       or any(seed < 0 or seed > 2**64 - 1 for seed in self.seeds)):
+            raise ValueError('comparison_seeds_invalid')
+        return self
+
+
+class PromptComparisonRequest(PromptComparisonOptions):
+    mode: Literal['txt2img', 'img2img', 'inpaint'] = 'txt2img'
+    base: Txt2ImgRequest | Img2ImgRequest | InpaintRequest
 
     @model_validator(mode='before')
     @classmethod
@@ -38,10 +48,7 @@ class PromptComparisonRequest(BaseModel):
         return data
 
     @model_validator(mode='after')
-    def validate_seeds(self):
-        if self.seeds is not None and (len(self.seeds) != self.pairs or len(set(self.seeds)) != self.pairs
-                                       or any(seed < 0 or seed > 2**64 - 1 for seed in self.seeds)):
-            raise ValueError('comparison_seeds_invalid')
+    def validate_base_seed(self):
         if self.seeds is None and self.base.seed >= 0 and self.base.seed + self.pairs - 1 > 2**64 - 1:
             raise ValueError('comparison_seeds_invalid')
         return self
@@ -54,3 +61,31 @@ class PromptComparisonRating(BaseModel):
     selected: Literal['left', 'right', 'tie', 'neither'] | None = None
     note: str = Field(default='', max_length=4000)
     revealed: bool = False
+
+
+class PromptComparisonCellStatus(BaseModel):
+    index: int
+    pair: int
+    arm: Literal['A', 'B']
+    status: str
+    generation_id: int | None = None
+    output_paths: list[str] = Field(default_factory=list)
+    error: str = ''
+
+
+class PromptComparisonProgress(BaseModel):
+    current: int | None
+    total: int | None
+    phase: str
+
+
+class PromptComparisonStatus(BaseModel):
+    id: str
+    name: str
+    status: str
+    operation_id: str | None
+    error: str
+    change: PromptComparisonChange
+    seeds: list[int]
+    cells: list[PromptComparisonCellStatus]
+    progress: PromptComparisonProgress | None = None

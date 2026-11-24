@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import os
 from pathlib import Path
 import secrets
+import sqlite3
 import stat
 from typing import Callable
 
@@ -14,6 +15,7 @@ from app.schemas.operations import OperationRecord
 from app.schemas.resource_advisory import ResourceAdvisoryAuthorization
 from app.schemas.video import VideoSize
 from app.schemas.video_upscale import VideoUpscaleRequest, VideoUpscaleWorkBundle
+from app.services.action_receipts import ActionRequestIdentity
 from app.services.atomic_json import write_json_atomic
 from app.services.generation_working_artifacts import (
     GenerationWorkingArtifactError,
@@ -77,6 +79,7 @@ class ResolvedVideoUpscaleSource:
 class SubmittedVideoUpscaleOperation:
     operation: OperationRecord
     generation_id: int
+    replayed: bool = False
 
 
 def resolve_video_upscale_target(
@@ -219,7 +222,14 @@ class VideoUpscaleOperationService:
         source_actor: str,
         resource_authorization: ResourceAdvisoryAuthorization | None = None,
         run_anyway: bool = False,
+        action_request: ActionRequestIdentity | None = None,
     ) -> SubmittedVideoUpscaleOperation:
+        if action_request is not None:
+            existing = self.coordinator.repository.get_action_operation(
+                action_request.request_id, action_request.action, action_request.arguments,
+            )
+            if existing is not None:
+                return SubmittedVideoUpscaleOperation(existing, existing.request_snapshot['generation_id'], replayed=True)
         if self.readiness_check is not None and not self.readiness_check():
             raise VideoUpscaleJobError("video_upscale_setup_required")
         self._validate_supported_request(request)
@@ -273,6 +283,18 @@ class VideoUpscaleOperationService:
             "resolved_seed": str(resolved_seed),
             "output_root": str(output_root),
         }
+        with self.coordinator.media_action_acceptance(self.history, action_request) as (existing, connection):
+            if existing is not None:
+                return SubmittedVideoUpscaleOperation(existing, existing.request_snapshot['generation_id'], replayed=True)
+            return self._accept_prepared(
+                request, source, settings, resolved_seed, source_actor, action_request, connection,
+            )
+
+    def _accept_prepared(
+        self, request: VideoUpscaleRequest, source: ResolvedVideoUpscaleSource, settings: dict,
+        resolved_seed: int, source_actor: str, action_request: ActionRequestIdentity | None,
+        connection: sqlite3.Connection | None,
+    ) -> SubmittedVideoUpscaleOperation:
         generation_id = self.history.add(
             status="queued",
             profile=source.bundle.request_snapshot.model_profile,
@@ -291,34 +313,35 @@ class VideoUpscaleOperationService:
             "generation_id": generation_id,
             "request": request.model_dump(mode="json"),
             "source_output_root": str(source.source_output_root),
-            "output_root": str(output_root),
+            "output_root": settings["output_root"],
             "bundle_operation_id": source.bundle_operation_id,
             "bundle_artifact_id": source.bundle_artifact_id,
             "bundle_sha256": settings["source_bundle_sha256"],
             "latent_artifact_id": source.bundle.latent_artifact_id,
             "latent_sha256": source.bundle.latent_sha256,
             "source_media_sha256": source.bundle.source_media_sha256,
-            "target_width": target_width,
-            "target_height": target_height,
+            "target_width": settings["target_width"],
+            "target_height": settings["target_height"],
             "resolved_seed": resolved_seed,
-            "resource_authorization": authorization_payload,
+            "resource_authorization": settings["resource_authorization"],
         }
         try:
-            operation = self.coordinator.enqueue(
-                kind=VIDEO_UPSCALE_OPERATION_KIND,
-                source_actor=source_actor,
-                request_snapshot=snapshot,
-                request_contract_version=VIDEO_UPSCALE_OPERATION_CONTRACT_VERSION,
-                progress_total=1,
-                progress_unit="result",
-            )
+            admission = dict(kind=VIDEO_UPSCALE_OPERATION_KIND, source_actor=source_actor,
+                             request_snapshot=snapshot, request_contract_version=VIDEO_UPSCALE_OPERATION_CONTRACT_VERSION,
+                             progress_total=1, progress_unit="result")
+            if action_request is None:
+                operation = self.coordinator.enqueue(**admission)
+            else:
+                operation, _ = self.coordinator.enqueue_with_action_receipt(
+                    **admission, request_id=action_request.request_id, action=action_request.action,
+                    arguments=action_request.arguments, connection=connection,
+                )
         except Exception:
-            failed = self.history.get(generation_id)
-            if failed is not None:
+            if connection is None:
                 self.history.update_generation(
                     generation_id,
                     status="failed",
-                    settings={**failed["settings"], "error_code": "video_upscale_enqueue_failed"},
+                    settings={**settings, "error_code": "video_upscale_enqueue_failed"},
                     output_paths=[],
                 )
             raise
@@ -331,7 +354,24 @@ class VideoUpscaleOperationService:
         source_actor: str,
         resource_authorization: ResourceAdvisoryAuthorization | None = None,
         run_anyway: bool = False,
-    ):
+    ) -> OperationRecord:
+        operation, _ = self.retry_with_receipt(
+            operation_id, source_actor=source_actor, resource_authorization=resource_authorization,
+            run_anyway=run_anyway,
+        )
+        return operation
+
+    def retry_with_receipt(
+        self, operation_id: str, *, source_actor: str,
+        resource_authorization: ResourceAdvisoryAuthorization | None = None,
+        run_anyway: bool = False, action_request: ActionRequestIdentity | None = None,
+    ) -> tuple[OperationRecord, bool]:
+        if action_request is not None:
+            existing = self.coordinator.repository.get_action_operation(
+                action_request.request_id, action_request.action, action_request.arguments,
+            )
+            if existing is not None:
+                return existing, True
         operation = self.coordinator.get(operation_id)
         if operation.kind != VIDEO_UPSCALE_OPERATION_KIND:
             raise OperationNotFoundError("operation_not_found")
@@ -345,9 +385,6 @@ class VideoUpscaleOperationService:
         generation_id = operation.request_snapshot.get("generation_id")
         if not isinstance(generation_id, int):
             raise VideoUpscaleJobError("video_upscale_request_snapshot_invalid")
-        item = self.history.get(generation_id)
-        if item is None:
-            raise VideoUpscaleJobError("video_upscale_history_not_found")
         source = self.source_resolver.resolve(request)
         expected_target = resolve_video_upscale_target(request, source.bundle)
         try:
@@ -385,9 +422,23 @@ class VideoUpscaleOperationService:
         )
         retry_snapshot = dict(operation.request_snapshot)
         retry_snapshot["resource_authorization"] = authorization_payload
+        with self.coordinator.media_action_acceptance(self.history, action_request) as (existing, connection):
+            if existing is not None:
+                return existing, True
+            return self._retry_prepared(
+                operation_id, generation_id, retry_snapshot, source_actor, action_request, connection,
+            ), False
+
+    def _retry_prepared(
+        self, operation_id: str, generation_id: int, retry_snapshot: dict, source_actor: str,
+        action_request: ActionRequestIdentity | None, connection: sqlite3.Connection | None,
+    ) -> OperationRecord:
+        item = self.history.get(generation_id)
+        if item is None:
+            raise VideoUpscaleJobError("video_upscale_history_not_found")
         settings = dict(item["settings"])
         settings.pop("error_code", None)
-        settings["resource_authorization"] = authorization_payload
+        settings["resource_authorization"] = retry_snapshot["resource_authorization"]
         self.history.update_generation(
             generation_id,
             status="queued",
@@ -395,18 +446,20 @@ class VideoUpscaleOperationService:
             output_paths=list(item["output_paths"]),
         )
         try:
-            return self.coordinator.retry(
+            return self.coordinator.retry_media_in_acceptance(
                 operation_id,
                 source_actor=source_actor,
                 request_snapshot=retry_snapshot,
+                identity=action_request, connection=connection,
             )
         except Exception:
-            self.history.update_generation(
-                generation_id,
-                status=item["status"],
-                settings=dict(item["settings"]),
-                output_paths=list(item["output_paths"]),
-            )
+            if connection is None:
+                self.history.update_generation(
+                    generation_id,
+                    status=item["status"],
+                    settings=dict(item["settings"]),
+                    output_paths=list(item["output_paths"]),
+                )
             raise
 
     @staticmethod

@@ -198,7 +198,7 @@ class HistoryVideoSourceResolver:
                 for artifact in item.get("artifacts", [])
             ):
                 continue
-            matches.append((item, self._accepted_roots(item)))
+            matches.append((item, self.accepted_roots(item)))
         if len(matches) != 1:
             raise VideoLocalAdapterError("video_source_artifact_not_found")
         item, roots = matches[0]
@@ -213,7 +213,7 @@ class HistoryVideoSourceResolver:
             raise VideoLocalAdapterError("video_source_artifact_not_found") from error
         return path
 
-    def _accepted_roots(self, item: dict) -> set[Path]:
+    def accepted_roots(self, item: dict) -> set[Path]:
         roots = {self.config.data_dir / "outputs"}
         settings = UserSettingsRepository(self.config.data_dir / "user-settings.json").load().output
         roots.add(resolve_output_root(self.config.data_dir, settings))

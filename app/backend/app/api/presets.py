@@ -17,10 +17,7 @@ def _repository() -> PresetRepository:
 def list_presets(kind: str, profile: str = "") -> dict:
     if kind not in ALLOWED_KINDS:
         raise HTTPException(status_code=404, detail={"code": api_errors.PRESET_KIND_NOT_FOUND})
-    items = _repository().list(kind)
-    if profile:
-        items = [item for item in items if str(item.data.get("profile", "")).strip() == profile]
-    return {"items": items}
+    return {"items": _repository().list(kind, profile=profile)}
 
 
 @router.post("/{kind}", response_model=Preset)

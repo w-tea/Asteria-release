@@ -4,7 +4,7 @@ import logging
 import os
 from pathlib import Path
 import asyncio
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 import hashlib
 import secrets
 from itertools import product
@@ -12,7 +12,7 @@ import sqlite3
 import threading
 import time
 import unicodedata
-from typing import Any, Literal, Mapping
+from typing import Annotated, Any, Callable, Literal, Mapping
 from urllib.parse import quote
 from uuid import uuid4
 import zipfile
@@ -21,12 +21,15 @@ from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSock
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from app.schemas.media import image_media_type
 from PIL import Image, ImageOps
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, Field, ValidationError
 
 from app.core.config import AppConfig
 from app.schemas.generation import (
     AdvancedStyleSelection,
     GenerationFolderResponse,
+    LibraryBulkCurationFields,
+    LibraryCurationFields,
+    MAX_LIBRARY_BULK_ITEMS,
     GenerationHistoryResponse,
     GenerationTagCatalogResponse,
     GenerationResponse,
@@ -41,11 +44,21 @@ from app.schemas.generation import (
 )
 from app.schemas.common import LoraSelection
 from app.schemas.prompt_choices import PromptChoicePins
+from app.schemas.prompt_input import (
+    GlobalPromptContent,
+    PromptInput,
+    PromptSection,
+    join_prompt_contract_fragments,
+    normalize_prompt_contract_text,
+)
 from app.services.prompt_choices import PromptChoice
 from app.schemas.media import MediaArtifact
 from app.schemas.remaster import RemasterRequest, RemasterResponse
 from app.schemas.operations import OperationChildSummary, OperationRecord
-from app.services.history import HistoryBulkDeleteConflictError, HistoryRepository, HistoryTagLimitExceededError
+from app.services.history import (
+    HistoryAdoptedArtifactConflict, HistoryBulkDeleteConflictError, HistoryRepository, HistoryTagLimitExceededError,
+)
+from app.services.library_curation import sync_library_curation_sidecars, update_library_curation
 from app.services.media_artifacts import MediaArtifactAccessError, resolve_registered_media_artifact
 from app.services.video_sequence_history import VideoSequenceHistoryProjector
 from app.services.artifact_lifecycle import (
@@ -70,12 +83,16 @@ from app.services import api_errors
 from app.services.comfy_model_paths import comfy_model_name
 from app.services.comfy_native_image_families import (
     NATIVE_IMAGE_DEFAULTS,
+    NATIVE_IMAGE_COMMON_DEFAULTS,
+    native_image_latent_size,
+    native_image_lora_loader_class,
     native_image_model_slot_checks,
     native_image_required_nodes,
     native_image_runtime_contract_issues,
     unsupported_native_image_settings,
 )
 from app.services.native_image_assets import NativeImageModelClassifier, prepare_native_image_bundle
+from app.services.native_image_control import active_controls, control_is_active, native_control_capability, validate_native_controls
 from app.services.controlnet_preprocessor import SUPPORTED_PREPROCESSORS
 from app.services.anima_lllite_runtime import (
     anima_lllite_missing_nodes,
@@ -202,7 +219,7 @@ from app.services.topaz import TopazError, TopazSettings, process_topaz_image
 from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
 from app.services.user_settings import UserSettingsRepository, resolve_output_root, safe_segment
 from app.services.xyz_grid import XYZGridAxis, XYZGridCell, create_xyz_contact_sheet_streaming
-from app.services.workflow_mapping import WorkflowMappingNotFound, WorkflowMappingRepository
+from app.services.workflow_mapping import WorkflowMapping, WorkflowMappingNotFound, WorkflowMappingRepository
 from app.services.schema_versions import CURRENT_SCHEMA_VERSIONS
 
 logger = logging.getLogger(__name__)
@@ -254,7 +271,7 @@ class DeleteGenerationResponse(BaseModel):
 
 
 class BulkDeleteGenerationRequest(BaseModel):
-    ids: list[int] = Field(min_length=1, max_length=500)
+    ids: list[int] = Field(min_length=1, max_length=MAX_LIBRARY_BULK_ITEMS)
     delete_files: bool = False
 
 
@@ -293,12 +310,7 @@ class ExportBundleResponse(BaseModel):
     files: list[ExportedBundleFile] = Field(default_factory=list)
 
 
-class UpdateGenerationCurationRequest(BaseModel):
-    rating: int | None = Field(default=None, ge=0, le=5)
-    favorite: bool | None = None
-    tags: list[str] | None = None
-    notes: str | None = None
-    folder_id: int | None = None
+class UpdateGenerationCurationRequest(LibraryCurationFields):
     update_folder: bool = False
 
 
@@ -306,22 +318,9 @@ class CreateGenerationFolderRequest(BaseModel):
     name: str = Field(min_length=1, max_length=120)
 
 
-class BulkGenerationCurationRequest(BaseModel):
-    ids: list[int] = Field(min_length=1, max_length=500)
-    rating: int | None = Field(default=None, ge=0, le=5)
-    favorite: bool | None = None
-    tags_add: list[str] = Field(default_factory=list, max_length=100)
-    tags_remove: list[str] = Field(default_factory=list, max_length=100)
-    folder_id: int | None = None
+class BulkGenerationCurationRequest(LibraryBulkCurationFields):
+    ids: list[int] = Field(min_length=1, max_length=MAX_LIBRARY_BULK_ITEMS)
     update_folder: bool = False
-
-    @field_validator("tags_add", "tags_remove")
-    @classmethod
-    def normalize_bulk_tags(cls, values: list[str]) -> list[str]:
-        normalized = [" ".join(str(value).strip().split()) for value in values]
-        if any(len(value) > 120 for value in normalized):
-            raise ValueError("bulk tag entries must be 120 characters or fewer")
-        return normalized
 
 
 class LibraryScanResponse(BaseModel):
@@ -423,6 +422,7 @@ def _register_generation_executors(coordinator: OperationCoordinator) -> None:
         coordinator.register_executor(f"generation.{mode}", _GenerationOperationExecutor(mode))
     coordinator.register_executor("generation.remaster", _RemasterOperationExecutor())
     coordinator.register_executor("generation.prompt_comparison", PromptComparisonExecutor(coordinator.repository.db_path))
+    coordinator.register_executor("generation.xyz", _XYZOperationExecutor(coordinator.repository.db_path))
 
 
 class _GenerationOperationExecutor:
@@ -446,6 +446,39 @@ class _RemasterOperationExecutor:
 
     def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
         return _execute_generation_operation(context, "remaster")
+
+
+class _XYZOperationExecutor:
+    version = "xyz-plot-v1"
+
+    def __init__(self, db_path: Path) -> None:
+        self.db_path = db_path
+
+    def resource_claims(self, _snapshot: dict) -> tuple[str, ...]:
+        return ("comfy_gpu_exclusive",)
+
+    def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
+        request = XYZPlotRequest.model_validate(context.request_snapshot["request"])
+        job_id = context.operation.operation_id
+        with _jobs_lock:
+            _jobs[job_id] = {**_new_job_cache(request.mode, request.base),
+                            "comparison_total": context.operation.progress_total, "comparison_index": 0,
+                            "generation_operation_snapshot": context.request_snapshot["generation_operation_snapshot"]}
+        try:
+            result = _generate_xyz_plot(request, context=context)
+            refs = (f"history:{result.id}", *(f"history:{cell.generation.id}" for cell in result.cells))
+            return OperationExecutionResult(artifact_refs=refs,
+                warning_codes=("contact_sheet_creation_failed",) if result.status == "completed-with-warnings" else ())
+        except HTTPException as exc:
+            code = exc.detail.get("code", "xyz_generation_failed") if isinstance(exc.detail, dict) else "xyz_generation_failed"
+            raise OperationExecutionError(code) from exc
+        finally:
+            with _jobs_lock:
+                _jobs.pop(job_id, None)
+            try:
+                PreviewRegistry(self.db_path).mark_terminal(job_id)
+            except (OSError, sqlite3.Error):
+                logger.warning("Could not mark XYZ previews terminal", exc_info=True)
 
 
 def _execute_generation_operation(
@@ -946,9 +979,11 @@ def _validate_runtime_feature_requirements(
                     "unsupported": unsupported_seed_variation,
                 },
             )
-        missing_profile_nodes = sorted(
-            _profile_base_required_nodes(profile, settings, requires_lora=bool(loras)) - nodes
-        )
+        native_mapping = (WorkflowMappingRepository(config.mapping_dir).get_txt2img(profile)
+                          if profile in NATIVE_IMAGE_DEFAULTS else None)
+        missing_profile_nodes = sorted(_profile_base_required_nodes(
+            profile, settings, requires_lora=bool(loras), native_mapping=native_mapping,
+        ) - nodes)
         if missing_profile_nodes:
             raise HTTPException(
                 status_code=409,
@@ -965,9 +1000,10 @@ def _validate_runtime_feature_requirements(
             )
         _validate_hires_upscaler_model(object_info, settings)
         _validate_remaster_runtime_requirements(profile, object_info, settings)
-        _validate_profile_sampling_options(profile, object_info, settings)
-        if profile in NATIVE_IMAGE_DEFAULTS and settings.get('controlnet_units'):
-            from app.services.native_image_control import validate_native_controls, native_control_capability, control_is_active
+        _validate_profile_sampling_options(profile, object_info, settings, native_mapping=native_mapping)
+        standard_lora_loader = (native_image_lora_loader_class(native_mapping, bool(active_controls(settings)))
+                                if native_mapping is not None else "LoraLoader")
+        if native_mapping is not None and settings.get('controlnet_units'):
             try:
                 units = validate_native_controls(profile, settings)
             except ValueError as exc:
@@ -978,8 +1014,7 @@ def _validate_runtime_feature_requirements(
             if missing_images:
                 raise HTTPException(status_code=400, detail={
                     'code': api_errors.MISSING_CONTROLNET_IMAGE, 'missing': missing_images})
-            mapping = WorkflowMappingRepository(config.mapping_dir).get_txt2img(profile)
-            capability = native_control_capability(mapping, object_info)
+            capability = native_control_capability(native_mapping, object_info)
             missing = [u['model'] for u in units if comfy_model_name(u['model'], 'loras',
                        model_root=config.model_dir, external_roots=_registered_external_model_roots(config))
                        not in capability['controlnet_models']]
@@ -1048,6 +1083,7 @@ def _validate_runtime_feature_requirements(
             loras or [],
             model_root=config.model_dir,
             external_roots=_registered_external_model_roots(config),
+            standard_loader=standard_lora_loader,
         )
         if missing_lora_models:
             raise HTTPException(
@@ -1619,12 +1655,13 @@ def _missing_lora_models(
     *,
     model_root: Path | None = None,
     external_roots: tuple[ExternalModelRoot, ...] = (),
+    standard_loader: str = "LoraLoader",
 ) -> list[dict[str, Any]]:
     missing: list[dict[str, Any]] = []
-    lora_loader_present = "LoraLoader" in object_info
+    lora_loader_present = standard_loader in object_info
     anima_remap_loader_present = "AsteriaAnimaLoraRemap" in object_info
     block_loader_present = LORA_BLOCK_WEIGHT_CLASS in object_info
-    lora_loader_values = _node_model_input_values(object_info, "LoraLoader", "lora_name")
+    lora_loader_values = _node_model_input_values(object_info, standard_loader, "lora_name")
     block_loader_values = _node_model_input_values(object_info, LORA_BLOCK_WEIGHT_CLASS, "lora_name")
     anima_remap_loader_values = _node_model_input_values(
         object_info,
@@ -1884,12 +1921,16 @@ def _missing_anima_bundle_runtime_models(
     return missing
 
 
-def _profile_base_required_nodes(profile: str, settings: dict, *, requires_lora: bool = False) -> set[str]:
+def _profile_base_required_nodes(
+    profile: str, settings: dict, *, requires_lora: bool = False, native_mapping: WorkflowMapping | None = None,
+) -> set[str]:
     if profile in NATIVE_IMAGE_DEFAULTS:
-        from app.services.native_image_control import active_controls
-        mapping = WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
+        mapping = native_mapping or WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
+        width = settings.get("width", NATIVE_IMAGE_COMMON_DEFAULTS["width"])
+        height = settings.get("height", NATIVE_IMAGE_COMMON_DEFAULTS["height"])
         return native_image_required_nodes(mapping, requires_lora=requires_lora,
-                                          requires_control=bool(active_controls(settings)))
+                                          requires_control=bool(active_controls(settings)),
+                                          requires_crop=native_image_latent_size(profile, width, height) != (width, height))
     if profile == "anima":
         bundle = settings.get("anima_generation_bundle")
         is_anima_3_8b = (
@@ -2099,11 +2140,13 @@ def _validate_comfy_sampling_options(object_info: dict, settings: dict) -> None:
         )
 
 
-def _validate_profile_sampling_options(profile: str, object_info: dict, settings: dict) -> None:
+def _validate_profile_sampling_options(
+    profile: str, object_info: dict, settings: dict, *, native_mapping: WorkflowMapping | None = None,
+) -> None:
     if profile not in {"anima", "flux1", "flux2", *NATIVE_IMAGE_DEFAULTS}:
         return
     if profile in NATIVE_IMAGE_DEFAULTS:
-        mapping = WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
+        mapping = native_mapping or WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
         contract_issues = native_image_runtime_contract_issues(mapping, object_info)
         if contract_issues:
             raise HTTPException(status_code=409, detail={
@@ -2371,7 +2414,10 @@ def _schema_to_response(schema: GenerationSchema) -> GenerationSchemaResponse:
     )
 
 
-def _validate_required_model_slots(profile: str, model_slots: dict[str, str], config: AppConfig) -> None:
+def _validate_required_model_slots(
+    profile: str, model_slots: dict[str, str], config: AppConfig, *,
+    check_file: Callable[[str], bool | None] | None = None,
+) -> tuple[str, ...]:
     profiles = ModelProfileRepository(config.model_profiles_path).list()
     active_profile = next((item for item in profiles if item.id == profile), None)
     if active_profile is None and profile == "flux":
@@ -2390,16 +2436,22 @@ def _validate_required_model_slots(profile: str, model_slots: dict[str, str], co
             detail={"code": api_errors.MISSING_REQUIRED_MODEL_SLOTS, "slots": missing},
         )
     missing_files = []
+    unverified_files = []
+    file_exists = check_file or _path_is_file_safely
     for slot in active_profile.model_slots:
         if not slot.required or not model_slots.get(slot.id):
             continue
-        if not _path_is_file_safely(model_slots[slot.id]):
+        exists = file_exists(model_slots[slot.id])
+        if exists is None:
+            unverified_files.append(slot.id)
+        elif not exists:
             missing_files.append(slot.id)
     if missing_files:
         raise HTTPException(
             status_code=400,
             detail={"code": api_errors.MISSING_REQUIRED_MODEL_FILES, "slots": missing_files},
         )
+    return tuple(unverified_files)
 
 
 def _external_model_reference_snapshots(
@@ -3007,8 +3059,12 @@ def _apply_topaz_hires_if_needed(output_paths: list[str], settings: dict, reques
 
 @router.get("/schemas/{profile}", response_model=GenerationSchemaResponse)
 def generation_schema(profile: str) -> GenerationSchemaResponse:
+    return load_generation_schema(profile, AppConfig())
+
+
+def load_generation_schema(profile: str, config: AppConfig) -> GenerationSchemaResponse:
     try:
-        schema = _schema_repository(AppConfig()).get_txt2img(profile)
+        schema = _schema_repository(config).get_txt2img(profile)
     except GenerationSchemaNotFound as exc:
         raise HTTPException(
             status_code=404,
@@ -3341,7 +3397,13 @@ def _delete_history_artifacts(
     repository: HistoryRepository,
 ):
     try:
+        from app.services.image_editor_drafts import ImageEditorDraftRepository
+
         remaining_items: list[dict] | None = repository.list_all()
+        remaining_items.extend(repository.adopted_input_documents())
+        editor = ImageEditorDraftRepository(data_dir).load()
+        if editor is not None:
+            remaining_items.append(editor.model_dump(mode='json'))
     except Exception:
         remaining_items = None
     try:
@@ -3360,12 +3422,6 @@ def _delete_history_artifacts(
     except Exception:
         logger.exception("Generation artifact file phase failed after history commit")
         return skip_generation_artifacts(items)
-
-
-def _sync_curation_sidecars(items: list[dict]) -> None:
-    writer = MetadataWriter()
-    for item in items:
-        writer.update_curation_sidecars(item)
 
 
 def _sidecar_rating(value: Any) -> int:
@@ -4182,6 +4238,9 @@ def _generate_with_recording(
         embeddings=embeddings,
         loras=loras,
     )
+    from app.services.generation_history_restore import capture_history_request
+
+    settings['request_snapshot'] = capture_history_request(request, image_check_enabled=check_operation.settings.enabled)
     history = history or HistoryRepository(data_dir / "asteria.db")
     with history.publication() if image_session else nullcontext():
         generation_id = history.add(
@@ -4482,6 +4541,43 @@ def _xyz_axis_key(axis: XYZAxis, index: int) -> str:
     return axis.label.strip() or axis.target.strip() or f"axis_{index + 1}"
 
 
+def _apply_xyz_prompt_replace(request: Txt2ImgRequest, value: str) -> None:
+    source, separator, replacement = value.partition("=>")
+    if not separator:
+        source, separator, replacement = value.partition("|")
+    if not separator:
+        source, replacement = "", value
+    source, replacement = source.strip(), replacement.strip()
+    if separator and (not source or source not in request.prompt):
+        raise HTTPException(status_code=400, detail={"code": api_errors.XYZ_PROMPT_REPLACE_SOURCE_MISSING})
+
+    def apply(text: str) -> str:
+        return text.replace(source, replacement) if source else f"{text}, {replacement}".strip(", ")
+
+    request.prompt = apply(request.prompt)
+    original = request.prompt_input
+    if original is None or original.sections is None:
+        return
+    last = max(section.order for section in original.sections if normalize_prompt_contract_text(section.text))
+    updated = []
+    for section in original.sections:
+        if not source and section.order != last:
+            updated.append(section)
+        elif isinstance(section, PromptSection):
+            updated.append(section.model_copy(update={"text": apply(section.text)}))
+        elif isinstance(section.content, GlobalPromptContent):
+            content = GlobalPromptContent(mode="global", text=apply(section.text))
+            updated.append(section.model_copy(update={"content": content}))
+        else:
+            updated.append(section)
+    prompt = normalize_prompt_contract_text(request.prompt)
+    if prompt and join_prompt_contract_fragments(section.text for section in sorted(updated, key=lambda item: item.order)) == prompt:
+        request.prompt_input = PromptInput(root=original.root.model_copy(update={"sections": tuple(updated)}))
+    else:
+        # A cross-section edit or removal of all text cannot be stored as the original sections.
+        request.prompt_input = PromptInput.model_validate({"schema_version": original.schema_version, "mode": "single"})
+
+
 def _apply_xyz_value(
     request: Txt2ImgRequest, axis: XYZAxis, value: str, *, lora_weights: dict[str, float] | None = None,
 ) -> Txt2ImgRequest:
@@ -4513,15 +4609,7 @@ def _apply_xyz_value(
     elif target in {"mbw_preset", "mbw_alpha", "mbw_beta", "pinpoint_blocks", "merge_mode", "calculation_mode", "elemental", "dice", "model_a", "model_b", "model_c"}:
         next_request.model_slot_overrides[f"merge.{target}"] = value
     elif target == "prompt_replace":
-        if "=>" in value:
-            source, replacement = value.split("=>", 1)
-        elif "|" in value:
-            source, replacement = value.split("|", 1)
-        else:
-            source, replacement = "", value
-        source = source.strip()
-        replacement = replacement.strip()
-        next_request.prompt = next_request.prompt.replace(source, replacement) if source else f"{next_request.prompt}, {replacement}".strip(", ")
+        _apply_xyz_prompt_replace(next_request, value)
     elif target.startswith("lora_weight"):
         lora_name = ""
         weight_value = value
@@ -4657,6 +4745,8 @@ def _record_xyz_history(
     source_mode = getattr(request, "mode", None)
     if source_mode:
         settings["source_mode"] = source_mode
+    if output_root := getattr(request, "output_root", None):
+        settings["output_root"] = str(output_root)
     if isinstance(request.base, Img2ImgRequest):
         settings.update(
             {
@@ -4737,8 +4827,7 @@ def txt2img(request: Txt2ImgRequest) -> GenerationResponse:
     return _generate(request, "txt2img")
 
 
-@_artifact_write_operation
-def _generate_xyz_plot(request: XYZPlotRequest) -> XYZPlotResponse:
+def _prepare_xyz_cells(request: XYZPlotRequest) -> list[tuple[int, dict[str, str], Txt2ImgRequest, dict[str, float]]]:
     if _spatial_request_enabled(request.base):
         conflicting_axis = next(
             (
@@ -4779,16 +4868,50 @@ def _generate_xyz_plot(request: XYZPlotRequest) -> XYZPlotResponse:
         _preflight_controlnet_mode_request(cell_request, request.mode)
         _preflight_seed_resize_request(cell_request, request.mode)
         prepared_cells.append((index, labels, cell_request, lora_weights))
+    return prepared_cells
+
+
+@_artifact_write_operation
+def _generate_xyz_plot(request: XYZPlotRequest, *, context: OperationExecutionContext | None = None) -> XYZPlotResponse:
+    prepared_cells = _prepare_xyz_cells(request)
     cells: list[XYZCellResult] = []
+    operation = None
+    if context is not None:
+        operation = ImageCheckOperation.from_snapshot(context.request_snapshot["generation_operation_snapshot"])
+    context_args = {"job_id": context.operation.operation_id} if context is not None else {}
+
+    def retain_cells() -> tuple[str, ...]:
+        return tuple(f"history:{cell.generation.id}" for cell in cells)
+
     for index, labels, cell_request, lora_weights in prepared_cells:
-        generation = _generate(cell_request, request.mode, **({"xyz_lora_weights": lora_weights} if lora_weights else {}))
+        if context is not None:
+            if context.cancel_requested:
+                context.acknowledge_cancel()
+                raise OperationCancelled(artifact_refs=retain_cells())
+            _set_job(context.operation.operation_id, request=cell_request, comparison_index=index,
+                     runtime_job_id="", current=0, total=1, phase="preparing")
+        try:
+            generation = _generate(cell_request, request.mode, **context_args,
+                **({"xyz_lora_weights": lora_weights} if lora_weights else {}))
+        except HTTPException as exc:
+            if context is None:
+                raise
+            code = exc.detail.get("code", "xyz_generation_failed") if isinstance(exc.detail, dict) else "xyz_generation_failed"
+            raise OperationExecutionError(code, artifact_refs=retain_cells()) from exc
         cells.append(XYZCellResult(index=index, labels=labels, generation=generation))
+        if context is not None:
+            if generation.status == "cancelled" or context.cancel_requested:
+                context.acknowledge_cancel()
+                raise OperationCancelled(artifact_refs=retain_cells())
+            if generation.status != "completed":
+                raise OperationExecutionError("xyz_generation_failed", artifact_refs=retain_cells())
+            context.report_progress(index + 1, len(prepared_cells), "images", phase="running")
     contact_sheet_path = ""
     contact_sheet_warning = ""
     if request.contact_sheet and cells:
         contact_sheet_path, contact_sheet_warning = _xyz_contact_sheet_result(
             cells,
-            _output_dir_for(_data_dir(), request.base.profile),
+            _output_dir_for(_data_dir(), request.base.profile, operation),
             request.axes,
         )
     operation_status = "completed-with-warnings" if contact_sheet_warning else "completed"
@@ -4801,6 +4924,7 @@ def _generate_xyz_plot(request: XYZPlotRequest) -> XYZPlotResponse:
             "mode": request.mode,
             "status": operation_status,
             "warning_code": contact_sheet_warning,
+            "output_root": operation.output_root if operation is not None else None,
         },
     )()
     generation_id, output_paths = _record_xyz_history(record_request, cells, contact_sheet_path)
@@ -5026,11 +5150,55 @@ def _fail_scheduled_operation(job_id: str) -> None:
 
 
 def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest) -> GenerationJobResponse:
+    response, _replayed = _enqueue_generation_request(mode, request)
+    return response
+
+
+def _validate_generation_action_mode(mode: str, request: Txt2ImgRequest) -> None:
+    if mode == "img2img":
+        _ensure_supported_img2img_profile(request.profile)
+    elif mode == "inpaint":
+        _ensure_supported_inpaint_request(request)
+
+
+def enqueue_action_generation(
+    mode: str,
+    request: Txt2ImgRequest,
+    *,
+    request_id: str,
+    arguments: dict[str, Any],
+    adopted_draft: dict[str, Any] | None = None,
+    action_name: str = "generation.start",
+    parent_operation_id: str | None = None,
+    on_accept: Callable | None = None,
+) -> tuple[GenerationJobResponse, bool]:
+    _validate_generation_action_mode(mode, request)
+    _preflight_controlnet_mode_request(request, mode)
+    return _enqueue_generation_request(
+        mode, request, action_request_id=request_id, action_arguments=arguments, action_name=action_name,
+        adopted_draft=adopted_draft,
+        parent_operation_id=parent_operation_id,
+        on_accept=on_accept,
+    )
+
+
+def _enqueue_generation_request(
+    mode: str,
+    request: Txt2ImgRequest | RemasterRequest,
+    *,
+    action_request_id: str | None = None,
+    action_arguments: dict[str, Any] | None = None,
+    action_name: str = "generation.start",
+    adopted_draft: dict[str, Any] | None = None,
+    parent_operation_id: str | None = None,
+    on_accept: Callable | None = None,
+) -> tuple[GenerationJobResponse, bool]:
     if isinstance(request, Txt2ImgRequest):
         request = _freeze_spatial_request_seed(request)
     coordinator = _generation_operation_coordinator()
     publisher_lease = reference_mutation_coordinator.acquire_publisher()
     registered = False
+    created = False
     operation = None
     try:
         snapshot = {
@@ -5043,14 +5211,27 @@ def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest
         }
         if isinstance(request, Txt2ImgRequest):
             snapshot["generation_operation_snapshot"] = _generation_operation_snapshot(request)
-        operation = coordinator.enqueue(
-            kind=f"generation.{mode}",
-            source_actor="local",
-            request_snapshot=snapshot,
-            request_contract_version=CURRENT_SCHEMA_VERSIONS.generation,
-            progress_total=max(1, int(getattr(request, "batch_count", 1))),
-            progress_unit="images",
+        enqueue_arguments = dict(
+            kind=f"generation.{mode}", source_actor="local",
+            request_snapshot=snapshot, request_contract_version=CURRENT_SCHEMA_VERSIONS.generation,
+            progress_total=max(1, int(getattr(request, "batch_count", 1))), progress_unit="images",
         )
+        if parent_operation_id is not None:
+            enqueue_arguments['parent_operation_id'] = parent_operation_id
+        if action_request_id is None:
+            operation = coordinator.enqueue(**enqueue_arguments)
+            created = True
+        else:
+            if adopted_draft is not None:
+                snapshot["action_draft"] = dict(adopted_draft)
+            enqueue_arguments["source_actor"] = "assistant"
+            operation, created = coordinator.enqueue_with_action_receipt(
+                request_id=action_request_id, action=action_name,
+                arguments=action_arguments or {}, on_accept=on_accept, **enqueue_arguments,
+            )
+            if not created:
+                publisher_lease.release()
+                return get_job(operation.operation_id), True
         job_id = operation.operation_id
         with _jobs_lock:
             _jobs[job_id] = _new_job_cache(mode, request)
@@ -5064,7 +5245,7 @@ def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest
         )
         worker.start()
     except BaseException:
-        if operation is not None:
+        if operation is not None and created:
             _fail_scheduled_operation(operation.operation_id)
         else:
             publisher_lease.release()
@@ -5072,7 +5253,7 @@ def _enqueue_generation_job(mode: str, request: Txt2ImgRequest | RemasterRequest
             with _jobs_lock:
                 _jobs.pop(job_id, None)
         raise
-    return response
+    return response, False
 
 
 def enqueue_discord_txt2img(
@@ -5183,6 +5364,20 @@ def get_job(job_id: str) -> GenerationJobResponse:
             job = _new_job_cache(mode, request)
         except ValueError:
             job = {"mode": mode}
+        # The cache is process-local; only the operation's saved history ref
+        # identifies its result after a restart. Never infer it from a path or
+        # the newest generation, and do not recreate a deleted history item.
+        if mode in {"txt2img", "img2img", "inpaint"}:
+            for artifact_ref in operation.artifact_refs:
+                prefix, _, identifier = artifact_ref.partition(":")
+                if prefix != "history" or not identifier.isdecimal():
+                    continue
+                item = HistoryRepository(_data_dir() / "asteria.db").get(int(identifier))
+                if item is not None:
+                    job["generation"] = GenerationResponse.model_validate({
+                        **item, "primary_outputs": item.get("settings", {}).get("primary_outputs", []),
+                    })
+                break
     return _job_response(job_id, job, operation)
 
 
@@ -5293,23 +5488,35 @@ def _cancel_legacy_remaster_job(job_id: str, job: dict[str, Any]) -> GenerationJ
 
 @router.post("/jobs/{job_id}/retry", response_model=GenerationJobResponse)
 def retry_job(job_id: str) -> GenerationJobResponse:
+    return retry_generation_job(job_id)[0]
+
+
+def retry_generation_job(job_id: str, *, action_request_id: str | None = None) -> tuple[GenerationJobResponse, bool]:
     coordinator = _generation_operation_coordinator()
+    arguments = {"job_id": job_id}
+    action = "generation.jobs.retry"
+    if action_request_id is not None:
+        accepted = coordinator.repository.get_action_operation(action_request_id, action, arguments)
+        if accepted is not None:
+            return get_job(accepted.operation_id), True
+    request_types = {
+        "generation.txt2img": Txt2ImgRequest,
+        "generation.img2img": Img2ImgRequest,
+        "generation.inpaint": InpaintRequest,
+        "generation.remaster": RemasterRequest,
+    }
     try:
         source = coordinator.get(job_id)
-        mode = str(source.request_snapshot["mode"])
-        request_type = {
-            "txt2img": Txt2ImgRequest,
-            "img2img": Img2ImgRequest,
-            "inpaint": InpaintRequest,
-            "remaster": RemasterRequest,
-        }[mode]
+        request_type = request_types.get(source.kind)
+        if request_type is None:
+            raise OperationNotFoundError("generation_job_not_found")
+        mode = source.kind.removeprefix("generation.")
+        if source.request_snapshot.get("mode") != mode:
+            raise ValueError("invalid_generation_snapshot")
         # Reject retired request contracts before retry creates a new operation.
-        request = request_type.model_validate(source.request_snapshot["request"])
-        operation = coordinator.retry(job_id, source_actor="local")
+        request = request_type.model_validate(source.request_snapshot.get("request"))
     except OperationNotFoundError:
         raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_JOB_NOT_FOUND}) from None
-    except OperationRetryError as exc:
-        raise HTTPException(status_code=409, detail={"code": str(exc)}) from exc
     except ValueError as exc:
         code = (
             "spatial_prompt_not_in_release"
@@ -5318,6 +5525,27 @@ def retry_job(job_id: str) -> GenerationJobResponse:
         )
         raise HTTPException(status_code=409, detail={"code": code}) from exc
     publisher_lease = reference_mutation_coordinator.acquire_publisher()
+    try:
+        if action_request_id is None:
+            operation = coordinator.retry(job_id, source_actor="local")
+            created = True
+        else:
+            with coordinator.submission():
+                operation, created = coordinator.repository.retry_with_action_receipt(
+                    job_id, source_actor="assistant", request_id=action_request_id, action=action, arguments=arguments,
+                )
+    except OperationRetryError as exc:
+        publisher_lease.release()
+        raise HTTPException(status_code=409, detail={"code": str(exc)}) from exc
+    except OperationNotFoundError:
+        publisher_lease.release()
+        raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_JOB_NOT_FOUND}) from None
+    except BaseException:
+        publisher_lease.release()
+        raise
+    if not created:
+        publisher_lease.release()
+        return get_job(operation.operation_id), True
     with _jobs_lock:
         _jobs[operation.operation_id] = _new_job_cache(mode, request)
         _publisher_leases[operation.operation_id] = publisher_lease
@@ -5333,7 +5561,7 @@ def retry_job(job_id: str) -> GenerationJobResponse:
         with _jobs_lock:
             _jobs.pop(operation.operation_id, None)
         raise
-    return response
+    return response, False
 
 
 @router.post("/jobs/cleanup", response_model=GenerationJobCleanupResponse)
@@ -5422,17 +5650,21 @@ def preview_generation_word_mask(generation_id: int, selection: WordMaskSelectio
         raise HTTPException(status_code=409, detail={'code': 'word_masks_unavailable'}) from exc
 
 
-@router.get('/history/{generation_id}/branch')
-def generation_branch_details(generation_id: int) -> dict:
+def _prepare_generation_branch(generation_id: int, changes: dict) -> tuple[dict, Txt2ImgRequest]:
     from app.services.generation_branch import branch_request, resolve_source
-    item = HistoryRepository(_data_dir() / 'asteria.db').get(generation_id)
     try:
-        if item is None:
+        item = HistoryRepository.registered_output_source(_data_dir() / 'asteria.db', generation_id, include_model_settings=True)
+        if item is None or item['media_kind'] != 'image':
             raise ValueError('branch_not_available')
         resolve_source(item)
-        request = branch_request(item, {})
-    except (ValueError, OSError, KeyError) as exc:
+        return item, branch_request(item, changes)
+    except (ValueError, OSError, KeyError, TypeError, sqlite3.Error) as exc:
         raise HTTPException(status_code=409, detail={'code': 'branch_source_unavailable'}) from exc
+
+
+@router.get('/history/{generation_id}/branch')
+def generation_branch_details(generation_id: int) -> dict:
+    item, request = _prepare_generation_branch(generation_id, {})
     saved = item['settings']['generation_branch']
     return {'generation_id': generation_id, 'cut_step': saved['cut_step'], 'bytes': saved['bytes'],
             'prompt': request.prompt, 'negative_prompt': request.negative_prompt, 'cfg_scale': request.cfg_scale,
@@ -5442,15 +5674,7 @@ def generation_branch_details(generation_id: int) -> dict:
 
 @router.post('/history/{generation_id}/branch', response_model=GenerationJobResponse)
 def queue_generation_branch(generation_id: int, changes: dict) -> GenerationJobResponse:
-    from app.services.generation_branch import branch_request, resolve_source
-    item = HistoryRepository(_data_dir() / 'asteria.db').get(generation_id)
-    try:
-        if item is None:
-            raise ValueError('branch_not_available')
-        resolve_source(item)
-        request = branch_request(item, changes)
-    except (ValueError, OSError, KeyError) as exc:
-        raise HTTPException(status_code=409, detail={'code': 'branch_source_unavailable'}) from exc
+    _, request = _prepare_generation_branch(generation_id, changes)
     return _enqueue_generation_job('txt2img', request)
 
 
@@ -5465,6 +5689,13 @@ def history(
     folder: str = "all",
     media_kind: Literal["all", "image", "video", "audio"] = "all",
     condition_verdict: Literal["", "match", "mismatch", "unknown", "unchecked"] = "",
+    date_from: date | None = None,
+    date_to: date | None = None,
+    utc_offset_minutes: Annotated[int, Query(ge=-1439, le=1439)] = 0,
+    rating_min: Annotated[int | None, Query(ge=0, le=5)] = None,
+    rating_max: Annotated[int | None, Query(ge=0, le=5)] = None,
+    model: str = "",
+    lora: str = "",
 ) -> GenerationHistoryResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
     try:
@@ -5478,10 +5709,17 @@ def history(
             folder=folder,
             media_kind=media_kind,
             condition_verdict=condition_verdict,
+            date_from=date_from,
+            date_to=date_to,
+            utc_offset_minutes=utc_offset_minutes,
+            rating_min=rating_min,
+            rating_max=rating_max,
+            model=model,
+            lora=lora,
         )
     except ValueError as error:
-        if str(error) == "invalid_history_cursor":
-            raise HTTPException(status_code=400, detail={"code": "invalid_history_cursor"}) from error
+        if str(error) in {"invalid_history_cursor", "invalid_history_filter_range"}:
+            raise HTTPException(status_code=400, detail={"code": str(error)}) from error
         raise
     history_items = repository.list_all()
     items = VideoSequenceHistoryProjector(
@@ -5508,6 +5746,8 @@ def history_media_artifact(
     request: Request,
     download: bool = False,
 ) -> Response:
+    from app.services.action_media_sources import saved_media_filename
+
     data_dir = _data_dir()
     item = HistoryRepository(data_dir / "asteria.db").get(generation_id)
     if item is None:
@@ -5519,8 +5759,9 @@ def history_media_artifact(
             accepted_roots=_media_artifact_roots(data_dir, item, artifact_id),
             allowed_kinds={"video", "audio", "poster", "image"},
         )
-        if artifact.kind == 'image' and (artifact.mime_type != 'image/gif' or artifact.role != 'derived'):
-            raise MediaArtifactAccessError('media_artifact_not_found')
+        making_gif = artifact.mime_type == "image/gif" and artifact.role == "derived"
+        if artifact.kind == "image" and item["media_kind"] != "image" and not making_gif:
+            raise MediaArtifactAccessError("media_artifact_not_found")
     except MediaArtifactAccessError as error:
         raise HTTPException(
             status_code=404,
@@ -5538,10 +5779,11 @@ def history_media_artifact(
     start, end = byte_range if byte_range is not None else (0, size - 1)
     length = end - start + 1
     status_code = 206 if byte_range is not None else 200
+    filename = saved_media_filename(item, artifact, path) if download else path.name
     headers = {
         "Accept-Ranges": "bytes",
         "Content-Length": str(length),
-        "Content-Disposition": f"{'attachment' if download else 'inline'}; filename*=UTF-8''{quote(path.name, safe='')}",
+        "Content-Disposition": f"{'attachment' if download else 'inline'}; filename*=UTF-8''{quote(filename, safe='')}",
         "X-Content-Type-Options": "nosniff",
         "Access-Control-Allow-Origin": "*",
     }
@@ -5729,7 +5971,7 @@ def bulk_update_history_items(request: BulkGenerationCurationRequest) -> Generat
             ) from error
         except ValueError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
-        _sync_curation_sidecars(items)
+        sync_library_curation_sidecars(items)
         return GenerationHistoryResponse(items=items)
 
 
@@ -5746,18 +5988,14 @@ def scan_history_sidecars() -> LibraryScanResponse:
 def update_history_item(generation_id: int, request: UpdateGenerationCurationRequest) -> GenerationHistoryResponse:
     repository = HistoryRepository(_data_dir() / "asteria.db")
     with repository.publication():
-        item = repository.update_curation(
-            generation_id,
-            rating=request.rating,
-            favorite=request.favorite,
-            tags=request.tags,
-            notes=request.notes,
-            folder_id=request.folder_id,
-            update_folder=request.update_folder,
-        )
+        try:
+            item = update_library_curation(repository, generation_id, request, update_folder=request.update_folder)
+        except ValueError as error:
+            if str(error) == "folder_not_found":
+                raise HTTPException(status_code=404, detail={"code": "folder_not_found"}) from error
+            raise
         if item is None:
             raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_NOT_FOUND})
-        _sync_curation_sidecars([item])
         return GenerationHistoryResponse(items=[item])
 
 
@@ -5767,6 +6005,8 @@ def bulk_delete_history_items(request: BulkDeleteGenerationRequest) -> BulkDelet
     repository = HistoryRepository(data_dir / "asteria.db")
     try:
         items = repository.bulk_delete(request.ids)
+    except HistoryAdoptedArtifactConflict as exc:
+        raise HTTPException(409, detail={'code': str(exc), 'generation_ids': exc.generation_ids}) from exc
     except HistoryBulkDeleteConflictError as exc:
         raise HTTPException(
             status_code=409,
@@ -5815,6 +6055,8 @@ def delete_history_item(generation_id: int, delete_files: bool = True) -> Delete
     skipped_files: list[str] = []
     try:
         deleted = repository.delete(generation_id)
+    except HistoryAdoptedArtifactConflict as exc:
+        raise HTTPException(409, detail={'code': str(exc), 'generation_ids': exc.generation_ids}) from exc
     except (OSError, sqlite3.Error, ValueError) as exc:
         raise HTTPException(status_code=409, detail={"code": api_errors.HISTORY_DELETE_FAILED}) from exc
     if deleted and delete_files:
@@ -6005,12 +6247,17 @@ def export_generation_bundle(generation_id: int) -> ExportBundleResponse:
     item = repository.get(generation_id)
     if item is None:
         raise HTTPException(status_code=404, detail={"code": api_errors.GENERATION_NOT_FOUND})
-    bundle_dir = data_dir / "exports"
+    return _write_generation_bundle(repository, item, data_dir / "exports" / f"generation-{generation_id}.zip")
+
+
+def _write_generation_bundle(
+    repository: HistoryRepository, item: dict, bundle_path: Path, *, unique_directory: bool = False,
+) -> ExportBundleResponse:
+    generation_id, bundle_dir = item["id"], bundle_path.parent
     try:
-        bundle_dir.mkdir(parents=True, exist_ok=True)
+        bundle_dir.mkdir(parents=True, exist_ok=not unique_directory)
     except _PATH_ACCESS_ERRORS as exc:
         _raise_metadata_export_failed(repository, generation_id, stage="prepare", error=exc)
-    bundle_path = bundle_dir / f"generation-{generation_id}.zip"
     tmp_bundle_path = bundle_dir / f".generation-{generation_id}-{uuid4().hex}.zip.tmp"
     exported_files: list[dict[str, Any]] = []
     missing_files: list[str] = []
@@ -6093,6 +6340,17 @@ def export_generation_bundle(generation_id: int) -> ExportBundleResponse:
         bundle_sha256=bundle_sha256,
         files=[ExportedBundleFile(**file) for file in exported_files],
     )
+
+
+@router.api_route("/history/{generation_id}/exports/{export_id}", methods=["GET", "HEAD"])
+def download_library_export(generation_id: int, export_id: str) -> FileResponse:
+    from app.services.library_exports import resolve_library_export
+
+    path = resolve_library_export(_data_dir(), generation_id, export_id)
+    if path is None:
+        raise HTTPException(404, detail={"code": "library_export_not_found"})
+    return FileResponse(path, media_type="application/zip", filename=path.name,
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
 
 
 @router.get("/outputs/{filename:path}")

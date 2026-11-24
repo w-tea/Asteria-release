@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+import asyncio
 
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import request_validation_exception_handler
@@ -8,6 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.advanced_styles import router as advanced_styles_router
+from app.api.actions import router as actions_router
+from app.api.mcp_settings import router as mcp_settings_router
+from app.api.lan_settings import router as lan_settings_router
 from app.api.assets import router as assets_router
 from app.api.body_review import router as body_review_router
 from app.api.eagle import router as eagle_router
@@ -23,6 +27,7 @@ from app.api.diagnostics import router as diagnostics_router
 from app.api.filesystem import router as filesystem_router
 from app.api.image_metadata import router as image_metadata_router
 from app.api.generation import configure_generation_operation_coordinator, router as generation_router
+from app.api.generation_repeats import get_repeat_service, router as generation_repeats_router
 from app.api.remaster import router as remaster_router
 from app.api.lora_training import configure_lora_operation_coordinator, router as lora_training_router
 from app.api.merge import configure_merge_operation_coordinator, router as merge_router
@@ -79,6 +84,12 @@ from app.services.local_api_boundary import ASTERIA_UI_ORIGINS, LocalApiBoundary
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     coordinator = get_operation_coordinator()
     config = getattr(_app.state, "config", AppConfig())
+    from app.services.assistant_runtime import create_assistant_runtime
+    _app.state.assistant_runtime = create_assistant_runtime(config)
+    _app.state.assistant_runtime.recover()
+    from app.services.lan_manager import LanManager
+    _app.state.lan_manager = LanManager(config)
+    lan_restore = asyncio.create_task(_app.state.lan_manager.restore_after_launcher())
     configure_generation_operation_coordinator(coordinator)
     configure_merge_operation_coordinator(coordinator)
     configure_topaz_operation_coordinator(coordinator)
@@ -112,12 +123,21 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         video_service.cleanup_working_artifacts()
     sequence_service.sequences.interrupt_active_sequences()
     coordinator.start()
+    repeat_service = get_repeat_service()
+    repeat_service.run_in_background()
     start_discord_runtime()
     if config.auto_bootstrap_models:
         start_model_bootstrap()
     try:
-        yield
+        async with _app.state.mcp_server.session_manager.run():
+            yield
     finally:
+        # Mark the owner closed before a pending restore can open a listener.
+        await asyncio.to_thread(_app.state.lan_manager.close)
+        lan_restore.cancel()
+        await asyncio.gather(lan_restore, return_exceptions=True)
+        await _app.state.assistant_runtime.close()
+        await asyncio.to_thread(repeat_service.close)
         stop_discord_runtime()
         coordinator.shutdown(wait=False)
 
@@ -156,7 +176,13 @@ def create_app(*, config: AppConfig | None = None) -> FastAPI:
     )
     app.add_middleware(LocalApiBoundaryMiddleware)
     app.include_router(advanced_styles_router)
+    app.include_router(actions_router)
+    from app.api.assistant import router as assistant_router
+    app.include_router(assistant_router)
+    app.include_router(mcp_settings_router)
+    app.include_router(lan_settings_router)
     app.include_router(generation_router)
+    app.include_router(generation_repeats_router)
     app.include_router(remaster_router)
     app.include_router(lora_training_router)
     app.include_router(merge_router)
@@ -225,6 +251,8 @@ def create_app(*, config: AppConfig | None = None) -> FastAPI:
         journal_path=config.extension_root / "startup-journal.json",
     ).initialize(app, safe_mode=config.disable_extensions)
 
+    from app.mcp.server import mount_mcp
+    mount_mcp(app, config)
     return app
 
 

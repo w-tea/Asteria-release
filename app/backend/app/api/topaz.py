@@ -11,6 +11,7 @@ from PIL import Image, UnidentifiedImageError
 from PIL.PngImagePlugin import PngInfo
 
 from app.core.config import AppConfig
+from app.schemas.action_contracts import MediaSourceTarget
 from app.services.external_settings import (
     ExternalIntegrationSettings,
     ExternalIntegrationSettingsRepository,
@@ -18,6 +19,8 @@ from app.services.external_settings import (
 )
 from app.services.history import HistoryRepository
 from app.services.artifact_lifecycle import artifact_write_operation
+from app.services.library_image_source import resolve_library_integration_image
+from app.services.media_artifacts import MediaArtifactAccessError
 from app.services.metadata import MetadataWriter
 from app.services.operation_coordinator import OperationCoordinator
 from app.services.operation_executor import (
@@ -91,13 +94,14 @@ class TopazOperationExecutor:
 
     def execute(self, context: OperationExecutionContext) -> OperationExecutionResult:
         request = TopazProcessRequest.model_validate(context.request_snapshot["request"])
+        selected = context.request_snapshot.get("library_target")
         try:
             current_output_root = _output_dir().resolve()
-            input_path = _output_path(
-                request.filename,
-                request.generation_id,
-                output_dir=current_output_root,
-            )
+            if selected is None:
+                input_path = _output_path(request.filename, request.generation_id, output_dir=current_output_root)
+            else:
+                target = MediaSourceTarget.model_validate(selected)
+                input_path = resolve_library_integration_image(_data_dir(), target)
             output_root = _registered_output_root(
                 input_path,
                 request.generation_id,
@@ -118,13 +122,17 @@ class TopazOperationExecutor:
                 )
         except DiskReservationError as exc:
             raise OperationExecutionError("disk_space_insufficient", retryable=True) from exc
+        except MediaArtifactAccessError as exc:
+            raise OperationExecutionError(exc.code, retryable=True) from exc
         except HTTPException as exc:
-            _topaz_operation_errors[context.operation.operation_id] = exc
+            if selected is None:
+                _topaz_operation_errors[context.operation.operation_id] = exc
             detail = exc.detail if isinstance(exc.detail, dict) else {}
             code = detail.get("code") if isinstance(detail.get("code"), str) else "topaz_process_failed"
             raise OperationExecutionError(code, retryable=True) from exc
         result.operation_id = context.operation.operation_id
-        _topaz_operation_results[context.operation.operation_id] = result
+        if selected is None:
+            _topaz_operation_results[context.operation.operation_id] = result
         artifact_ref = (
             f"history:{request.generation_id}"
             if request.generation_id is not None
@@ -133,10 +141,16 @@ class TopazOperationExecutor:
         warning_codes = (TOPAZ_HISTORY_REGISTRATION_FAILED,) if (
             TOPAZ_HISTORY_REGISTRATION_FAILED in result.warnings
         ) else (("topaz_completed_with_warnings",) if result.warnings else ())
-        return OperationExecutionResult(
-            artifact_refs=(artifact_ref,),
-            warning_codes=warning_codes,
-        )
+        refs = (artifact_ref,)
+        if selected is not None and TOPAZ_HISTORY_REGISTRATION_FAILED not in warning_codes:
+            item = _history_repository().get(request.generation_id)
+            artifact_id = next((a["artifact_id"] for a in (item or {}).get("artifacts", [])
+                                if a["kind"] == "image" and _paths_match(a["path"], result.output_path)), None)
+            if artifact_id is not None:
+                refs += (artifact_id,)
+            else:
+                warning_codes = (*warning_codes, TOPAZ_HISTORY_REGISTRATION_FAILED)
+        return OperationExecutionResult(artifact_refs=refs, warning_codes=warning_codes)
 
 
 def _topaz_operation_coordinator() -> OperationCoordinator:

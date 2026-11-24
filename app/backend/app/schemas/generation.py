@@ -2,7 +2,7 @@ import hashlib
 import json
 from typing import Any, ClassVar, Literal
 
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 from app.schemas.common import LoraSelection
 from app.schemas.image_edit import ImageEditLineage
@@ -468,6 +468,33 @@ class GenerationHistoryResponse(BaseModel):
 class GenerationTagCatalogResponse(BaseModel):
     tags: list[str] = Field(default_factory=list)
     generated_tags: list[str] = Field(default_factory=list)
+
+
+class LibraryCurationFields(BaseModel):
+    rating: int | None = Field(default=None, ge=0, le=5)
+    favorite: bool | None = None
+    tags: list[str] | None = None
+    notes: str | None = None
+    folder_id: int | None = None
+
+
+MAX_LIBRARY_BULK_ITEMS = 500
+
+
+class LibraryBulkCurationFields(BaseModel):
+    rating: int | None = Field(default=None, ge=0, le=5)
+    favorite: bool | None = None
+    tags_add: list[str] = Field(default_factory=list, max_length=100)
+    tags_remove: list[str] = Field(default_factory=list, max_length=100)
+    folder_id: int | None = None
+
+    @field_validator('tags_add', 'tags_remove')
+    @classmethod
+    def normalize_bulk_tags(cls, values: list[str]) -> list[str]:
+        normalized = [' '.join(str(value).strip().split()) for value in values]
+        if any(len(value) > 120 for value in normalized):
+            raise ValueError('bulk tag entries must be 120 characters or fewer')
+        return normalized
 
 
 class GenerationFolderItem(BaseModel):

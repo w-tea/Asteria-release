@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Asteria · Connect this device</title>
+<style nonce="__NONCE__">
+:root{color-scheme:light dark;font-family:system-ui,sans-serif;line-height:1.7;--bg:#f3f6fb;--panel:#fff;--text:#18253c;--muted:#52637a;--border:#bdc8da;--button:#285ab1;--error:#a32a35}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1628;--panel:#19263b;--text:#edf3fd;--muted:#b3c4de;--border:#51617c;--button:#3c6dc3;--error:#ffabb3}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);padding:clamp(20px,5vw,64px)}main{max-width:560px;margin:0 auto;padding:clamp(24px,5vw,40px);background:var(--panel);border:1px solid var(--border);border-radius:16px}header{color:var(--muted)}h1{font-size:1.5rem;line-height:1.4;margin:24px 0 16px}p{margin:16px 0}form{display:grid;gap:16px;margin-top:24px}label{display:grid;gap:8px}input,button{font:inherit;border:1px solid var(--border);border-radius:8px;padding:12px;min-width:0}input{background:var(--bg);color:var(--text)}button{background:var(--button);color:white;cursor:pointer}button:disabled{opacity:.6;cursor:default}small{color:var(--muted)}#error{color:var(--error)}[hidden]{display:none!important}button{transition:filter .2s ease}button:hover:not(:disabled){filter:brightness(1.12)}@media(prefers-reduced-motion:reduce){button{transition:none}}
+</style>
+</head>
+<body><main>
+<header>Asteria</header>
+<h1 id="title"></h1><p id="description"></p><p id="transport"></p>
+<form id="form" hidden>
+  <label><span id="nameLabel"></span><input id="name" name="device-name" required autocomplete="off"></label>
+  <button id="connect" type="submit"></button>
+</form>
+<p id="message" role="status"></p><p id="error" role="alert"></p>
+<small id="notice"></small>
+</main>
+<script nonce="__NONCE__">
+(async () => {
+  const ja = navigator.language.startsWith('ja');
+  const words = ja ? {
+    title:'この端末をAsteriaに接続', description:'登録すると、このPCで起動中のAsteriaの全機能を操作できます。自分の端末と信頼できるネットワークで利用してください。',
+    transport:'この接続はHTTPのため、通信は暗号化されません。', nameLabel:'端末名', placeholder:'例：リビングの端末', connect:'この端末を登録',
+    missing:'PCのAsteriaでLAN接続を開始し、登録用URLまたはQRコードをこの端末で開いてください。',
+    checking:'登録状況を確認しています…',
+    pending:'登録しています…', failed:'登録できませんでした。PCのAsteriaで登録用URLを作り直し、もう一度開いてください。',
+    notice:'PCとAsteriaが起動している間だけ利用できます。登録はPC側の設定から解除できます。'
+  } : {
+    title:'Connect this device to Asteria', description:'Registration lets this device use all features of Asteria running on this PC. Use your own device on a trusted network.',
+    transport:'This HTTP connection is not encrypted.', nameLabel:'Device name', placeholder:'For example, Living room device', connect:'Register this device',
+    missing:'Start LAN access in Asteria on the PC, then open its registration URL or QR code on this device.',
+    checking:'Checking whether this browser is registered…',
+    pending:'Registering…', failed:'Could not register. Create a new registration URL in Asteria on the PC and open it again.',
+    notice:'The PC and Asteria must remain running. You can revoke this registration in Settings on the PC.'
+  };
+  document.documentElement.lang = ja ? 'ja' : 'en';
+  document.title = 'Asteria · ' + words.title;
+  const el = id => document.getElementById(id);
+  for (const id of ['title','description','nameLabel','connect','notice']) el(id).textContent = words[id];
+  if (location.protocol === 'http:') el('transport').textContent = words.transport;
+  el('name').placeholder = words.placeholder;
+  let token = new URLSearchParams(location.hash.slice(1)).get('token');
+  history.replaceState(null, '', location.pathname); // No registration secret in later copied URLs.
+  el('message').textContent = words.checking;
+  try {
+    // A QR may be opened again in a browser that already has a valid device cookie.
+    const response = await fetch('/_asteria/lan/session', {cache:'no-store', credentials:'same-origin'});
+    if (response.ok && (await response.json())?.registered === true) {
+      location.replace('/');
+      return;
+    }
+  } catch {
+    // The first-registration form still works when the session could not be checked.
+  }
+  el('form').hidden = !token;
+  el('message').textContent = token ? '' : words.missing;
+  el('form').addEventListener('submit', async event => {
+    event.preventDefault();
+    if (!token || el('connect').disabled) return;
+    el('connect').disabled = true;
+    el('message').textContent = words.pending; el('error').textContent = '';
+    try {
+      const response = await fetch('/_asteria/lan/pair', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({token, name:el('name').value})});
+      if (!response.ok) throw new Error('registration failed');
+      token = null;
+      location.replace('/');
+    } catch {
+      el('message').textContent = ''; el('error').textContent = words.failed; el('connect').disabled = false;
+    }
+  });
+})();
+</script>
+</body></html>

@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from contextlib import suppress
+from dataclasses import dataclass
 from hashlib import file_digest
+from io import BytesIO
 import importlib.util
 import json
 import math
@@ -14,8 +16,9 @@ import sys
 from threading import Event, RLock
 import time
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageChops, ImageOps
 
+from app.schemas.body_review import ReviewEdits
 from app.services.atomic_json import write_json_atomic
 
 CONTRACT = 'asteria.body-review.v1'
@@ -26,7 +29,15 @@ MAX_PIXELS = 32_000_000
 MAX_SECONDS = 180
 MAX_RAM = 6 * 1024**3
 _lock = RLock()
-_active: dict[str, Event] = {}
+
+
+@dataclass(frozen=True)
+class _ActiveInference:
+    review_id: str
+    cancel_event: Event
+
+
+_active: dict[str, _ActiveInference] = {}
 _cancelled: dict[str, float] = {}
 
 
@@ -53,6 +64,30 @@ def review_candidates(boxes, scores, labels, width, height) -> list[dict]:
             if math.isfinite(score) and score >= .25:
                 results.append(dict(id=f'q{query}-{label}', label=label, score=float(score), box=rect))
     return sorted(results, key=lambda row: (-row['score'], row['id']))
+
+
+def mask_path(row: dict, name: str) -> Path:
+    if not any(mask['file'] == name for mask in row['masks']) or not re.fullmatch('[0-9a-f]{32}-[0-9]+.png', name):
+        raise ValueError('body_review_mask_unavailable')
+    path = Path(row['directory']) / name
+    if path.is_symlink() or not path.is_file():
+        raise ValueError('body_review_mask_unavailable')
+    return path
+
+
+def mask_union_png(row: dict, candidates: list[dict]) -> bytes:
+    # Require the rectangles that were actually used by SAM.
+    if candidates != row.get('selection'):
+        raise ValueError('body_review_selection_changed')
+    result = Image.new('L', (row['width'], row['height']))
+    for mask in row['masks']:
+        with Image.open(mask_path(row, mask['file'])) as image:
+            if image.size != result.size:
+                raise ValueError('body_review_mask_unavailable')
+            result = ImageChops.lighter(result, image.convert('L'))
+    with BytesIO() as stream:
+        result.save(stream, format='PNG')
+        return stream.getvalue()
 
 
 class BodyReviewService:
@@ -154,6 +189,19 @@ class BodyReviewService:
                     return None
         return None
 
+    def save_selection(self, review_id: str, edits: ReviewEdits) -> dict:
+        with _lock:
+            if any(job.review_id == review_id for job in _active.values()):
+                raise ValueError('body_review_busy')
+            row = self.checked(review_id)
+            expected = {value['id'] for value in row['candidates']}
+            if ({value.id for value in edits.candidates} != expected or len(edits.candidates) != len(expected)
+                    or not set(edits.selected).issubset(expected) or not set(edits.excluded).issubset(expected)):
+                raise ValueError('body_review_selection_invalid')
+            row['edits'] = edits.model_dump()
+            write_json_atomic(Path(row['directory']) / 'review.json', row)
+            return row
+
     def cancel(self, operation_id: str):
         if not re.fullmatch('[0-9a-f]{32}', operation_id):
             return
@@ -164,9 +212,9 @@ class BodyReviewService:
             if len(_cancelled) >= 128:
                 _cancelled.pop(next(iter(_cancelled)))
             _cancelled[operation_id] = time.monotonic()
-            event = _active.get(operation_id)
-            if event:
-                event.set()
+            job = _active.get(operation_id)
+            if job:
+                job.cancel_event.set()
 
     def run(self, record: dict, stage: str, operation_id: str, selections: list[dict] | None = None) -> dict:
         import psutil
@@ -182,7 +230,7 @@ class BodyReviewService:
             if _active:
                 raise ValueError('body_review_busy')
             event = Event()
-            _active[operation_id] = event
+            _active[operation_id] = _ActiveInference(record['id'], event)
         directory = Path(record['directory'])
         token = uuid4().hex
         spec = directory / f'{token}-input.json'

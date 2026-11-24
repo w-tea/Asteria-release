@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Header, HTTPException, Query, Request
 
 from app.core.config import AppConfig
 from app.schemas.image_metadata import (
@@ -83,7 +83,9 @@ def _raise_receipt_error(exc: ImageMetadataReceiptError) -> None:
 
 
 @router.post("/pick-and-preview", response_model=ImageMetadataPickerResult)
-def pick_and_preview_image_metadata() -> ImageMetadataPickerResult:
+def pick_and_preview_image_metadata(x_asteria_lan: str | None = Header(default=None)) -> ImageMetadataPickerResult:
+    if x_asteria_lan == '1':
+        return ImageMetadataPickerUnavailable()
     status, selected = pick_native_path(
         target="file",
         title="Choose an image to reuse",

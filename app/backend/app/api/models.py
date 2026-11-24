@@ -436,7 +436,10 @@ def list_library(type: str | None = None) -> ModelLibraryResponse:
 
 @router.get("/media-catalog", response_model=MediaModelCatalogResponse)
 def list_media_catalog(request: Request, domain: MediaModelDomain) -> MediaModelCatalogResponse:
-    config = request.app.state.config
+    return read_media_catalog(request.app.state.config, domain)
+
+
+def read_media_catalog(config: AppConfig, domain: MediaModelDomain) -> MediaModelCatalogResponse:
     if domain == MediaModelDomain.VIDEO:
         library = registered_video_model_library(config)
     elif domain == MediaModelDomain.MUSIC:

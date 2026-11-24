@@ -38,3 +38,34 @@ the result with ComfyUI's VAE lifecycle. The reviewed revision and component-
 local LICENSE and THIRD_PARTY_NOTICES.md are distributed with the source and
 installed runtime. Anzhc's Qwen2D model and ComfyUI work are acknowledged in
 README.md; source from the repository without a declared license is not copied.
+
+The frontend's local LAN registration QR uses node-qrcode 1.5.4 and its
+dijkstrajs path-finding dependency. Registration URLs are not sent to an
+external QR service. The pinned package identities are in frontend/package-lock.json.
+
+node-qrcode: https://github.com/soldair/node-qrcode/tree/v1.5.4
+Copyright (c) 2012 Ryan Day
+
+dijkstrajs 1.0.3: https://github.com/tcort/dijkstrajs
+Dijkstra path-finding functions. Adapted from the Dijkstar Python project.
+Copyright (C) 2008 Wyatt Baldwin <self@wyattbaldwin.com>. All rights reserved.
+
+Both components are licensed under the MIT license:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to
+do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

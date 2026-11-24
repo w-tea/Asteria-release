@@ -58,7 +58,7 @@ def _repository() -> PromptPresetRepository:
     return PromptPresetRepository(AppConfig().data_dir / "prompt-presets.json")
 
 
-def _item(preset: PromptPreset) -> PromptPresetItem:
+def prompt_preset_to_item(preset: PromptPreset) -> PromptPresetItem:
     return PromptPresetItem(
         id=preset.id,
         name=preset.name,
@@ -75,7 +75,7 @@ def _item(preset: PromptPreset) -> PromptPresetItem:
 
 @router.get("", response_model=PromptPresetListResponse)
 def list_presets() -> PromptPresetListResponse:
-    return PromptPresetListResponse(items=[_item(preset) for preset in _repository().list()])
+    return PromptPresetListResponse(items=[prompt_preset_to_item(preset) for preset in _repository().list()])
 
 
 @router.post("", response_model=PromptPresetItem)
@@ -94,7 +94,7 @@ def create_preset(request: PromptPresetCreateRequest) -> PromptPresetItem:
         )
     except OSError as exc:
         raise HTTPException(status_code=409, detail={"code": api_errors.PROMPT_PRESET_SAVE_FAILED}) from exc
-    return _item(preset)
+    return prompt_preset_to_item(preset)
 
 
 @router.delete("/{preset_id}")

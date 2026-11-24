@@ -3,9 +3,9 @@ from __future__ import annotations
 from hashlib import sha256
 from pathlib import PurePosixPath
 import re
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema, computed_field, field_validator, model_validator
 
 
 MediaKind = Literal["image", "video", "audio"]
@@ -20,6 +20,28 @@ MediaArtifactRole = Literal[
     "sidecar",
     "original",
 ]
+
+_MAX_MEDIA_SEED = 2**63 - 1
+_MAX_EXACT_JSON_INTEGER = 2**53 - 1
+MediaSeed = Annotated[
+    int, Field(ge=-1, le=_MAX_MEDIA_SEED),
+    WithJsonSchema({
+        'anyOf': [
+            {'type': 'integer', 'minimum': -1, 'maximum': _MAX_MEDIA_SEED},
+            {'type': 'string', 'pattern': r'^(?:-1|[0-9]+)$'},
+        ],
+        'description': 'Use decimal text for large Seeds so the client can preserve every digit.',
+    }, mode='validation'),
+]
+
+
+def with_exact_media_seed(request: dict[str, Any]) -> dict[str, Any]:
+    """Make a media request safe to reuse in JSON clients with binary64 numbers."""
+    seed = request.get('seed')
+    if type(seed) is int and seed > _MAX_EXACT_JSON_INTEGER:
+        return {**request, 'seed': str(seed)}
+    return request
+
 
 _ARTIFACT_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$")
 _MIME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*$")

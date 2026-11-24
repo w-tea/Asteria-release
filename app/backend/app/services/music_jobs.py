@@ -6,6 +6,7 @@ import json
 import math
 from pathlib import Path
 from typing import Callable
+import sqlite3
 
 from app.schemas.media import MediaArtifact
 from app.schemas.music import MusicRequest
@@ -18,6 +19,7 @@ from app.schemas.resource_advisory import (
 from app.schemas.operations import OperationRecord
 from app.schemas.provider_capabilities import capability_after_verified_setup
 from app.services.atomic_json import write_json_atomic
+from app.services.action_receipts import ActionRequestIdentity
 from app.services.history import HistoryRepository
 from app.services.media_artifacts import MediaFinalizationResult, finalize_media_artifact
 from app.services.music_local_adapter import (
@@ -53,6 +55,7 @@ MUSIC_OPERATION_CONTRACT_VERSION = 1
 class SubmittedMusicOperation:
     operation: OperationRecord
     generation_id: int
+    replayed: bool = False
 
 
 class MusicOperationService:
@@ -109,7 +112,15 @@ class MusicOperationService:
         source_actor: str,
         resource_authorization: ResourceAdvisoryAuthorization | None = None,
         run_anyway: bool = False,
+        action_request: ActionRequestIdentity | None = None,
+        draft: dict | None = None,
     ) -> SubmittedMusicOperation:
+        if action_request is not None:
+            existing = self.coordinator.repository.get_action_operation(
+                action_request.request_id, action_request.action, action_request.arguments,
+            )
+            if existing is not None:
+                return SubmittedMusicOperation(existing, existing.request_snapshot["generation_id"], replayed=True)
         if request.provider != "local_music3":
             raise MusicLocalAdapterError("music_provider_not_implemented")
         setup_verified = self.readiness_check is not None
@@ -147,6 +158,19 @@ class MusicOperationService:
                 else None
             ),
         }
+        with self.coordinator.media_action_acceptance(self.history, action_request) as (existing, connection):
+            if existing is not None:
+                return SubmittedMusicOperation(existing, existing.request_snapshot["generation_id"], replayed=True)
+            return self._accept_prepared(
+                request, packet, settings, timing.effective_duration_seconds,
+                source_actor, action_request, connection, draft,
+            )
+
+    def _accept_prepared(
+        self, request: MusicRequest, packet: MusicSubmissionPacket, settings: dict,
+        duration: float, source_actor: str, action_request: ActionRequestIdentity | None,
+        connection: sqlite3.Connection | None, draft: dict | None,
+    ) -> SubmittedMusicOperation:
         generation_id = self.history.add(
             status="queued",
             profile=request.model_profile,
@@ -162,22 +186,28 @@ class MusicOperationService:
             artifacts=[],
         )
         try:
-            operation = self.coordinator.enqueue(
+            enqueue = self.coordinator.enqueue
+            receipt_arguments = {}
+            if action_request is not None:
+                enqueue = self.coordinator.enqueue_with_action_receipt
+                receipt_arguments = dict(request_id=action_request.request_id, action=action_request.action,
+                                         arguments=action_request.arguments, connection=connection)
+            operation = enqueue(
                 kind=MUSIC_OPERATION_KIND,
                 source_actor=source_actor,
                 request_snapshot={
                     "generation_id": generation_id,
                     "packet": packet.to_dict(),
-                    "resource_authorization": (
-                        resource_authorization.model_dump(mode="json")
-                        if resource_authorization is not None
-                        else None
-                    ),
+                    "resource_authorization": settings["resource_authorization"],
+                    **({"draft": draft} if draft is not None else {}),
                 },
                 request_contract_version=MUSIC_OPERATION_CONTRACT_VERSION,
-                progress_total=max(1, math.ceil(timing.effective_duration_seconds)),
+                progress_total=max(1, math.ceil(duration)),
                 progress_unit="seconds",
+                **receipt_arguments,
             )
+            if action_request is not None:
+                operation, _ = operation
         except Exception:
             self.history.update_generation(
                 generation_id,
@@ -244,6 +274,23 @@ class MusicOperationService:
         resource_authorization: ResourceAdvisoryAuthorization | None = None,
         run_anyway: bool = False,
     ) -> OperationRecord:
+        operation, _ = self.retry_with_receipt(
+            operation_id, source_actor=source_actor, resource_authorization=resource_authorization,
+            run_anyway=run_anyway,
+        )
+        return operation
+
+    def retry_with_receipt(
+        self, operation_id: str, *, source_actor: str,
+        resource_authorization: ResourceAdvisoryAuthorization | None = None,
+        run_anyway: bool = False, action_request: ActionRequestIdentity | None = None,
+    ) -> tuple[OperationRecord, bool]:
+        if action_request is not None:
+            existing = self.coordinator.repository.get_action_operation(
+                action_request.request_id, action_request.action, action_request.arguments,
+            )
+            if existing is not None:
+                return existing, True
         operation = self.coordinator.get(operation_id)
         if operation.kind != MUSIC_OPERATION_KIND:
             raise OperationNotFoundError("operation_not_found")
@@ -268,6 +315,17 @@ class MusicOperationService:
         )
         request_snapshot = dict(operation.request_snapshot)
         request_snapshot["resource_authorization"] = authorization_payload
+        with self.coordinator.media_action_acceptance(self.history, action_request) as (existing, connection):
+            if existing is not None:
+                return existing, True
+            return self._retry_prepared(
+                operation_id, request_snapshot, authorization_payload, source_actor, action_request, connection,
+            ), False
+
+    def _retry_prepared(
+        self, operation_id: str, request_snapshot: dict, authorization_payload: dict | None,
+        source_actor: str, action_request: ActionRequestIdentity | None, connection: sqlite3.Connection | None,
+    ) -> OperationRecord:
         generation_id = request_snapshot.get("generation_id")
         if not isinstance(generation_id, int) or generation_id < 1:
             raise MusicLocalAdapterError("music_request_snapshot_invalid")
@@ -285,18 +343,20 @@ class MusicOperationService:
             output_paths=list(item["output_paths"]),
         )
         try:
-            return self.coordinator.retry(
+            return self.coordinator.retry_media_in_acceptance(
                 operation_id,
                 source_actor=source_actor,
                 request_snapshot=request_snapshot,
+                identity=action_request, connection=connection,
             )
         except Exception:
-            self.history.update_generation(
-                generation_id,
-                status=item["status"],
-                settings=dict(item["settings"]),
-                output_paths=list(item["output_paths"]),
-            )
+            if connection is None:
+                self.history.update_generation(
+                    generation_id,
+                    status=item["status"],
+                    settings=dict(item["settings"]),
+                    output_paths=list(item["output_paths"]),
+                )
             raise
 
     def _run_model_preflight(self, request: MusicRequest) -> None:

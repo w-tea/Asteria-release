@@ -275,6 +275,7 @@ class EditAssetLifecycleService:
     def _persisted_references(self) -> tuple[set[str], bool]:
         references: set[str] = set()
         healthy = self._history_references(references)
+        healthy = self._action_references(references) and healthy
         json_sources, sources_healthy = self._known_json_sources()
         healthy = healthy and sources_healthy
         for path in json_sources:
@@ -387,6 +388,27 @@ class EditAssetLifecycleService:
                 for column in row.keys():
                     payload = json.loads(row[column])
                     self._collect_strings(payload, references)
+            return True
+        except (OSError, sqlite3.Error, json.JSONDecodeError, TypeError):
+            return False
+
+    def _action_references(self, references: set[str]) -> bool:
+        """Saved drafts and adopted inputs outlive the screen that submitted them."""
+        db_path = self.data_dir / "asteria.db"
+        if not db_path.exists():
+            return True
+        try:
+            with sqlite3.connect(db_path) as connection:
+                tables = {row[0] for row in connection.execute("select name from sqlite_master where type='table'")}
+                for table, column in (
+                    ("assistant_drafts", "document_json"),
+                    ("action_receipts", "result_json"),
+                    ("operations", "request_snapshot_json"),
+                ):
+                    if table not in tables:
+                        continue
+                    for row in connection.execute(f"select {column} from {table}"):
+                        self._collect_strings(json.loads(row[0]), references)
             return True
         except (OSError, sqlite3.Error, json.JSONDecodeError, TypeError):
             return False

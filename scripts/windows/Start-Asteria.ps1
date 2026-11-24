@@ -217,6 +217,7 @@ Write-AsteriaExtraModelPaths -Path $extraModels -ModelRoot $resolvedModelRoot -E
 
 $env:PYTHONPATH = $backendRoot
 $env:ASTERIA_ROOT_DIR = $resolvedAppRoot
+$env:ASTERIA_LAUNCHER_STATE_PATH = $statePath
 $env:ASTERIA_DATA_DIR = $resolvedDataRoot
 $env:ASTERIA_MODEL_DIR = $resolvedModelRoot
 $env:ASTERIA_MODEL_SELECTIONS_PATH = [System.IO.Path]::Combine($resolvedDataRoot, "model-selections.json")

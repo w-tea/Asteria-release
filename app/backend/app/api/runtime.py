@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -80,6 +80,7 @@ class RuntimeFeatureCapability(BaseModel):
 class RuntimeCapabilitiesResponse(BaseModel):
     base_url: str
     features: dict[str, Any]
+    observation: Literal["observed", "unreachable"] = "observed"
 
 
 class RuntimeSamplingOptionResponse(BaseModel):
@@ -510,6 +511,7 @@ def _merge_runtime_capability(object_info: dict[str, Any]) -> dict[str, Any]:
 def _unreachable_capabilities(base_url: str, message: str) -> RuntimeCapabilitiesResponse:
     return RuntimeCapabilitiesResponse(
         base_url=base_url,
+        observation="unreachable",
         features={
             "controlnet": RuntimeFeatureCapability(
                 available=False,

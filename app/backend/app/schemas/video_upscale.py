@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.schemas.media import MediaSeed
 from app.schemas.video import FrozenJsonObject, VideoRequest
 
 
@@ -133,7 +134,7 @@ class VideoUpscaleSamplingSettings(BaseModel):
     sampler: str
     scheduler: str
     cfg: float = Field(default=1, ge=0, le=100, allow_inf_nan=False)
-    seed: int = Field(default=-1, ge=-1, le=9223372036854775807)
+    seed: MediaSeed = -1
 
     @field_validator("sampler", "scheduler")
     @classmethod

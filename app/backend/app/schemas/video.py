@@ -5,6 +5,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, PlainSerializer, field_validator, model_validator
 
+from app.schemas.media import MediaSeed
+
 
 VIDEO_REQUEST_SCHEMA_VERSION = "asteria.video.request.v1"
 VIDEO_REQUEST_SCHEMA_VERSION_V2 = "asteria.video.request.v2"
@@ -252,7 +254,7 @@ class VideoRequest(BaseModel):
     provider: VideoProvider
     prompt: str
     negative_prompt: str | None = None
-    seed: int = Field(default=-1, ge=-1, le=9223372036854775807)
+    seed: MediaSeed = -1
     size: VideoSize
     duration_seconds: float = Field(gt=0, allow_inf_nan=False)
     fps: float = Field(gt=0, allow_inf_nan=False)

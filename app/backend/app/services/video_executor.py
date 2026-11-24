@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 import secrets
+import sqlite3
 from typing import Callable
 from uuid import uuid4
 
@@ -23,6 +24,7 @@ from app.schemas.resource_advisory import (
 from app.schemas.video import VideoRequest
 from app.services.video_sequence_context import VideoSequenceContextReceipt
 from app.services.atomic_json import write_json_atomic
+from app.services.action_receipts import ActionRequestIdentity
 from app.services.generation_artifacts import finalize_non_image_output
 from app.services.generation_working_artifacts import (
     GenerationWorkingArtifactError,
@@ -63,6 +65,7 @@ MAX_VIDEO_SEED = 9223372036854775807
 class SubmittedVideoOperation:
     operation: OperationRecord
     generation_id: int
+    replayed: bool = False
 
 
 class VideoOperationService:
@@ -92,7 +95,15 @@ class VideoOperationService:
         source_actor: str,
         resource_authorization: ResourceAdvisoryAuthorization | None = None,
         run_anyway: bool = False,
+        action_request: ActionRequestIdentity | None = None,
+        draft: dict | None = None,
     ) -> SubmittedVideoOperation:
+        if action_request is not None:
+            existing = self.coordinator.repository.get_action_operation(
+                action_request.request_id, action_request.action, action_request.arguments,
+            )
+            if existing is not None:
+                return SubmittedVideoOperation(existing, existing.request_snapshot["generation_id"], replayed=True)
         if request.provider != "local_h3":
             raise VideoLocalAdapterError("video_provider_not_implemented")
         setup_verified = self.readiness_check is not None
@@ -119,13 +130,28 @@ class VideoOperationService:
             float(packet.request_snapshot["duration_seconds"]),
             float(packet.request_snapshot["fps"]),
         )
-        generation_ids: list[int] = []
-        candidate_snapshots: list[dict] = []
         operation_output_root = (
             Path(self.output_root_provider()).expanduser().resolve()
             if self.output_root_provider is not None
             else None
         )
+        with self.coordinator.media_action_acceptance(self.history, action_request) as (existing, connection):
+            if existing is not None:
+                return SubmittedVideoOperation(existing, existing.request_snapshot["generation_id"], replayed=True)
+            return self._accept_prepared(
+                request, candidate_packets, batch_id, requested_frames, actual_frames,
+                authorization_payload, operation_output_root, source_actor, action_request, connection, draft,
+            )
+
+    def _accept_prepared(
+        self, request: VideoRequest, candidate_packets: tuple[VideoSubmissionPacket, ...],
+        batch_id: str | None, requested_frames: int, actual_frames: int,
+        authorization_payload: dict | None, operation_output_root: Path | None,
+        source_actor: str, action_request: ActionRequestIdentity | None,
+        connection: sqlite3.Connection | None, draft: dict | None,
+    ) -> SubmittedVideoOperation:
+        generation_ids: list[int] = []
+        candidate_snapshots: list[dict] = []
         for index, candidate_packet in enumerate(candidate_packets):
             candidate_request = VideoRequest.model_validate(candidate_packet.request_snapshot)
             settings = self._history_settings(
@@ -176,6 +202,8 @@ class VideoOperationService:
             "packet": candidate_packets[0].to_dict(),
             "resource_authorization": authorization_payload,
         }
+        if draft is not None:
+            operation_snapshot["draft"] = draft
         if operation_output_root is not None:
             operation_snapshot["output_root"] = str(operation_output_root)
         if batch_id is not None:
@@ -187,14 +215,23 @@ class VideoOperationService:
                 "candidates": candidate_snapshots,
             }
         try:
-            operation = self.coordinator.enqueue(
+            enqueue = self.coordinator.enqueue
+            receipt_arguments = {}
+            if action_request is not None:
+                enqueue = self.coordinator.enqueue_with_action_receipt
+                receipt_arguments = dict(request_id=action_request.request_id, action=action_request.action,
+                                         arguments=action_request.arguments, connection=connection)
+            operation = enqueue(
                 kind=VIDEO_OPERATION_KIND,
                 source_actor=source_actor,
                 request_snapshot=operation_snapshot,
                 request_contract_version=VIDEO_OPERATION_CONTRACT_VERSION,
                 progress_total=actual_frames * len(candidate_packets),
                 progress_unit="frames",
+                **receipt_arguments,
             )
+            if action_request is not None:
+                operation, _ = operation
         except Exception:
             for failed_generation_id in generation_ids:
                 item = self.history.get(failed_generation_id)
@@ -358,6 +395,23 @@ class VideoOperationService:
         resource_authorization: ResourceAdvisoryAuthorization | None = None,
         run_anyway: bool = False,
     ) -> OperationRecord:
+        operation, _ = self.retry_with_receipt(
+            operation_id, source_actor=source_actor, resource_authorization=resource_authorization,
+            run_anyway=run_anyway,
+        )
+        return operation
+
+    def retry_with_receipt(
+        self, operation_id: str, *, source_actor: str,
+        resource_authorization: ResourceAdvisoryAuthorization | None = None,
+        run_anyway: bool = False, action_request: ActionRequestIdentity | None = None,
+    ) -> tuple[OperationRecord, bool]:
+        if action_request is not None:
+            existing = self.coordinator.repository.get_action_operation(
+                action_request.request_id, action_request.action, action_request.arguments,
+            )
+            if existing is not None:
+                return existing, True
         operation = self.coordinator.get(operation_id)
         if operation.kind != "video.generate":
             raise OperationNotFoundError("operation_not_found")
@@ -381,6 +435,17 @@ class VideoOperationService:
         )
         request_snapshot = dict(operation.request_snapshot)
         request_snapshot["resource_authorization"] = authorization_payload
+        with self.coordinator.media_action_acceptance(self.history, action_request) as (existing, connection):
+            if existing is not None:
+                return existing, True
+            return self._retry_prepared(
+                operation_id, request_snapshot, authorization_payload, source_actor, action_request, connection,
+            ), False
+
+    def _retry_prepared(
+        self, operation_id: str, request_snapshot: dict, authorization_payload: dict | None,
+        source_actor: str, action_request: ActionRequestIdentity | None, connection: sqlite3.Connection | None,
+    ) -> OperationRecord:
         generation_ids = self._snapshot_generation_ids(request_snapshot)
         originals: dict[int, dict] = {}
         for generation_id in generation_ids:
@@ -401,19 +466,21 @@ class VideoOperationService:
                 output_paths=list(item["output_paths"]),
             )
         try:
-            return self.coordinator.retry(
+            return self.coordinator.retry_media_in_acceptance(
                 operation_id,
                 source_actor=source_actor,
                 request_snapshot=request_snapshot,
+                identity=action_request, connection=connection,
             )
         except Exception:
-            for generation_id, item in originals.items():
-                self.history.update_generation(
-                    generation_id,
-                    status=item["status"],
-                    settings=dict(item["settings"]),
-                    output_paths=list(item["output_paths"]),
-                )
+            if connection is None:
+                for generation_id, item in originals.items():
+                    self.history.update_generation(
+                        generation_id,
+                        status=item["status"],
+                        settings=dict(item["settings"]),
+                        output_paths=list(item["output_paths"]),
+                    )
             raise
 
     @staticmethod

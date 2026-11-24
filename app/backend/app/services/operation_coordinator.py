@@ -4,10 +4,11 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import contextmanager
 import logging
 import re
+import sqlite3
 from threading import Condition, Event, RLock, Thread
 from time import sleep
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping, TYPE_CHECKING
 
 from app.schemas.operations import OperationRecord, TERMINAL_OPERATION_STATUSES, ACTIVE_OPERATION_STATUSES
 from app.services.operation_executor import (
@@ -23,11 +24,15 @@ from app.services.operation_repository import (
     OperationRepository,
 )
 from app.services.discord_receipts import DiscordOperationClaim, DiscordReceiptIdentity
+from app.services.action_receipts import ActionRequestIdentity
 from app.services.resource_lifecycle import claims_are_compatible, normalize_claims, resource_admission
 
 
 _SAFE_CODE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from app.services.history import HistoryRepository
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,6 +161,20 @@ class OperationCoordinator:
         return self.repository.interrupt_active_operations()
 
     @contextmanager
+    def submission(self, parent_operation_id: str | None = None):
+        """Serialize compound acceptance with stop and maintenance admission.
+
+        A repeat must check its parent and enqueue its child under this same lock;
+        otherwise a stop can acknowledge before the next image is accepted.
+        """
+        with self._lock:
+            if parent_operation_id is not None:
+                parent = self.repository.get(parent_operation_id)
+                if parent.status not in {'queued', 'preparing', 'running'} or parent.cancel_requested_at:
+                    raise OperationConflictError('operation_parent_stopping')
+            yield
+
+    @contextmanager
     def idle_maintenance(self):
         # The same lock covers enqueue, retry and dispatch admission, not only
         # this initial check. No job may enter the restored database mid-copy.
@@ -194,6 +213,51 @@ class OperationCoordinator:
                 executor_version=executor_version,
                 operation_id=operation_id,
             )
+
+    def enqueue_with_action_receipt(
+        self,
+        *,
+        request_id: str,
+        action: str,
+        arguments: dict[str, Any],
+        kind: str,
+        source_actor: str,
+        request_snapshot: dict[str, Any],
+        request_contract_version: int = 1,
+        progress_total: int | None = None,
+        progress_unit: str = "",
+        connection: sqlite3.Connection | None = None,
+        parent_operation_id: str | None = None,
+        on_accept: Callable[[OperationRecord, sqlite3.Connection], None] | None = None,
+        operation_id: str | None = None,
+    ) -> tuple[OperationRecord, bool]:
+        with self._lock:
+            executor = self._executors.get(kind)
+            return self.repository.create_with_action_receipt(
+                request_id=request_id, action=action, arguments=arguments,
+                kind=kind, source_actor=source_actor, request_snapshot=request_snapshot,
+                request_contract_version=request_contract_version,
+                progress_total=progress_total, progress_unit=progress_unit,
+                executor_version=executor.version if executor is not None else "unregistered-v1",
+                connection=connection,
+                parent_operation_id=parent_operation_id,
+                on_accept=on_accept,
+                operation_id=operation_id,
+            )
+
+    @contextmanager
+    def media_action_acceptance(self, history: HistoryRepository, identity: ActionRequestIdentity | None):
+        """Commit media history, adopted input, job and receipt together."""
+        if identity is None:
+            yield None, None
+            return
+        if history.db_path.resolve() != self.repository.db_path.resolve():
+            raise ValueError("action_history_database_mismatch")
+        with self._lock, history.publication() as connection:
+            existing = self.repository.get_action_operation(
+                identity.request_id, identity.action, identity.arguments, connection=connection,
+            )
+            yield existing, connection
 
     def enqueue_with_discord_receipt(
         self,
@@ -287,6 +351,21 @@ class OperationCoordinator:
                 idempotency_key=idempotency_key,
                 request_snapshot=request_snapshot,
             )
+
+    def retry_media_in_acceptance(
+        self, operation_id: str, *, source_actor: str, request_snapshot: dict[str, Any],
+        identity: ActionRequestIdentity | None, connection: sqlite3.Connection | None,
+    ) -> OperationRecord:
+        if identity is None:
+            return self.retry(operation_id, source_actor=source_actor, request_snapshot=request_snapshot)
+        if connection is None:
+            raise ValueError("media_retry_requires_acceptance_transaction")
+        operation, _ = self.repository.retry_with_action_receipt(
+            operation_id, source_actor=source_actor,
+            request_id=identity.request_id, action=identity.action, arguments=identity.arguments,
+            request_snapshot=request_snapshot, connection=connection,
+        )
+        return operation
 
     def dismiss(self, operation_id: str) -> OperationRecord:
         with self._lock:

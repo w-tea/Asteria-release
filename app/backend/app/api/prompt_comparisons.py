@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from app.api import generation
 from app.core.config import AppConfig
 from app.schemas.prompt_comparison import PromptComparisonRating, PromptComparisonRequest, REQUEST_TYPES
+from app.services.action_receipts import ActionRequestIdentity, ActionRequestConflict
 from app.services.operation_repository import OperationNotFoundError
 from app.services.history import HistoryRepository
 from app.services.prompt_comparison import prepare_comparison
@@ -49,17 +50,18 @@ def list_comparisons():
 
 @router.post('/prepare')
 def prepare(request: PromptComparisonRequest):
-    config = AppConfig()
+    return repository().create(prepare_document(request, AppConfig()))
+
+
+def prepare_document(request: PromptComparisonRequest, config: AppConfig) -> dict:
     base = request.base.model_copy(deep=True)
     base.model_slot_overrides = generation._model_slots_for_request(base, config)
     base.runtime = generation._selected_runtime_id(config, base.runtime)
     request = request.model_copy(update={'base': base})
     try:
-        plan = prepare_comparison(request, wildcard_dir=config.wildcard_dir)
+        return prepare_comparison(request, wildcard_dir=config.wildcard_dir)
     except ValueError as exc:
         raise HTTPException(422, detail={'code': str(exc)}) from exc
-    return repository().create(plan)
-
 
 @router.get('/{comparison_id}')
 def get_comparison(comparison_id: str):
@@ -68,7 +70,17 @@ def get_comparison(comparison_id: str):
 
 @router.post('/{comparison_id}/start')
 def start(comparison_id: str):
-    plan = _get(comparison_id)
+    return start_comparison(comparison_id)[0]
+
+
+def start_comparison(comparison_id: str, identity: ActionRequestIdentity | None = None) -> tuple[dict, bool]:
+    coordinator = generation._generation_operation_coordinator()
+    with _scheduling_lock:
+        if identity is not None and coordinator.repository.get_action_operation(
+            identity.request_id, identity.action, identity.arguments
+        ) is not None:
+            return _get_registered(comparison_id), True
+        plan = _get_registered(comparison_id)
     if plan['status'] != 'prepared':
         raise HTTPException(409, detail={'code': 'comparison_already_started'})
     if plan.get('lora_test'):
@@ -87,30 +99,58 @@ def start(comparison_id: str):
         generation._preflight_profile_prompt_request(request)
         generation._preflight_controlnet_mode_request(request, plan['mode'])
     snapshot = generation._generation_operation_snapshot(request)
-    operation_id = uuid4().hex
+    enqueue_args = dict(kind='generation.prompt_comparison',
+        request_snapshot={'comparison_id': comparison_id, 'mode': plan['mode'], 'generation_operation_snapshot': snapshot},
+        progress_total=len(plan['cells']), progress_unit='images')
+    repo = repository()
     with _scheduling_lock:
+        if identity is not None:
+            try:
+                _, created = coordinator.enqueue_with_action_receipt(
+                    request_id=identity.request_id, action=identity.action, arguments=identity.arguments,
+                    source_actor='assistant', **enqueue_args,
+                    on_accept=lambda record, db: repo.claim_start(comparison_id, record.operation_id, connection=db),
+                )
+            except ActionRequestConflict:
+                raise
+            except ValueError as exc:
+                raise HTTPException(409, detail={'code': str(exc)}) from exc
+            return _get_registered(comparison_id), not created
+        operation_id = uuid4().hex
         try:
-            repository().claim_start(comparison_id, operation_id)
+            repo.claim_start(comparison_id, operation_id)
         except ValueError as exc:
             raise HTTPException(409, detail={'code': str(exc)}) from exc
         try:
-            generation._generation_operation_coordinator().enqueue(
-                kind='generation.prompt_comparison', source_actor='local', operation_id=operation_id,
-                request_snapshot={'comparison_id': comparison_id, 'mode': plan['mode'], 'generation_operation_snapshot': snapshot},
-                progress_total=len(plan['cells']), progress_unit='images',
-            )
+            coordinator.enqueue(source_actor='local', operation_id=operation_id, **enqueue_args)
         except Exception:
-            repository().set_status(comparison_id, 'failed', 'comparison_schedule_failed')
+            repo.set_status(comparison_id, 'failed', 'comparison_schedule_failed')
             raise
-    return _get(comparison_id)
+    return _get(comparison_id), False
 
 
 @router.post('/{comparison_id}/cancel')
 def cancel(comparison_id: str):
+    return cancel_comparison(comparison_id)[0]
+
+
+def cancel_comparison(comparison_id: str, identity: ActionRequestIdentity | None = None) -> tuple[dict, bool]:
     plan = _get(comparison_id)
-    if plan['operation_id']:
-        generation.cancel_generation_operation(plan['operation_id'])
-    return _get(comparison_id)
+    job = plan['operation_id']
+    if not job:
+        if identity is not None:
+            raise HTTPException(409, detail={'code': 'comparison_not_started'})
+        return plan, False
+    replayed = False
+    if identity is not None:
+        try:
+            operation, created = generation._generation_operation_coordinator().repository.bind_action_operation(
+                identity.request_id, identity.action, identity.arguments, job)
+        except OperationNotFoundError as exc:
+            raise HTTPException(404, detail={'code': 'generation_job_not_found'}) from exc
+        job, replayed = operation.operation_id, not created
+    generation.cancel_generation_operation(job)
+    return _get(comparison_id), replayed
 
 
 @router.put('/{comparison_id}/rating')
