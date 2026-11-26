@@ -3,8 +3,8 @@
   "product": "Asteria",
   "version": "1.2.3",
   "platform": "windows-x64",
-  "source_commit": "cac7f256ebf436cd65e57337ddd290ad757eaba0",
-  "build_timestamp_utc": "2026-11-26T05:23:48Z",
+  "source_commit": "286ee94bbc684524419fca03b0e66c55ea5b0083",
+  "build_timestamp_utc": "2026-11-26T06:31:39Z",
   "files": [
     {
       "path": ".gitattributes",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 82435,
-      "sha256": "518da6aba4c99cd260c98692acaea1233b4be3d69b8294be7b063ff47041eee6"
+      "size_bytes": 83248,
+      "sha256": "c8d804dbc042ab5efc56898c7ea5627b6f49448d528a945c5a891ed6f2e61c86"
     },
     {
       "path": "Repair-Asteria.cmd",
@@ -1864,12 +1864,12 @@
     {
       "path": "app/frontend/public/_nuxt/builds/latest.json",
       "size_bytes": 71,
-      "sha256": "b18a84fe5cb03566215de4d74ed574f6afd4b9a13e378870b871fb0840bb277a"
+      "sha256": "343c736d84267984c0d960cc67a7c4a8395a96abfc80b85132087aa17067d315"
     },
     {
-      "path": "app/frontend/public/_nuxt/builds/meta/4d1f1405-e0dc-48f1-9e87-c91afc3d6078.json",
+      "path": "app/frontend/public/_nuxt/builds/meta/9f4a704c-82ce-45e4-b596-a6a2e9e677b5.json",
       "size_bytes": 88,
-      "sha256": "88f7f84a38b48c52ead91d05992198a3bfc98f79be12067f27f65ca358c041c6"
+      "sha256": "9d580d04f99179a8875e6b83b8a1c44fd98793e3bf5b8b2b0a5d7137b8b6fb7a"
     },
     {
       "path": "app/frontend/public/_nuxt/entry.DkrJwuJ8.css",
@@ -2044,7 +2044,7 @@
     {
       "path": "app/frontend/server/chunks/_/nitro.mjs",
       "size_bytes": 169520,
-      "sha256": "8a22c812d27c3ae228d96a9363b3b8c1d21e09ee0c6062db5ccd26d6b6d54675"
+      "sha256": "348846f513d38d6862066e7a6d8c0f4443a6a7923fe94cddd5159eaae363e4d2"
     },
     {
       "path": "app/frontend/server/chunks/build/AdvancedStylesPanel-styles.Br3zh7eU.mjs",
@@ -2959,7 +2959,7 @@
     {
       "path": "app/frontend/server/chunks/build/styles.mjs",
       "size_bytes": 23925,
-      "sha256": "ed95f3115281c7961a61b571782399be3224532842b1963378af68219a9e9d09"
+      "sha256": "28dd73bc4ffe9078bde37ea64ea0c74a5faf7d71e7b079f95a32fb32861be8b4"
     },
     {
       "path": "app/frontend/server/chunks/routes/renderer.mjs",
@@ -4132,6 +4132,11 @@
       "sha256": "17ad2f71ce2446582690936efdc0fbe3c7a8421f3f7e27046bf16b443f5cb21c"
     },
     {
+      "path": "guides/GENERATION_ADJUSTMENTS.md",
+      "size_bytes": 13659,
+      "sha256": "489c9550a3a2e55b1d1d7273ae507f88f074a8a7c6077eafafdbaa355054c088"
+    },
+    {
       "path": "guides/IMAGE_CHECK.md",
       "size_bytes": 9067,
       "sha256": "34dc3fce154b8a839b6f08c335269316cfdfcf237748ca151c40070f2020b8fb"
@@ -4148,8 +4153,8 @@
     },
     {
       "path": "guides/NATIVE_IMAGE_CONTROL.md",
-      "size_bytes": 8003,
-      "sha256": "ebc9c20d151f682c6f1b0d2c1b50474b978c05870d9a5e296ac39d9ce2448e49"
+      "size_bytes": 8157,
+      "sha256": "8a7fdc95dd256ebb48d96f17cc83fd1472f83840d793d65394fcab6d91890cae"
     },
     {
       "path": "guides/QUICK_START.md",
@@ -4170,6 +4175,56 @@
       "path": "guides/extensions/DEVELOPER_GUIDE.md",
       "size_bytes": 14162,
       "sha256": "383eab82052ba9d79f52afa44458c0c0552fa1ad8b6f164ab7c357326ad580e8"
+    },
+    {
+      "path": "guides/images/adjustments/apg-off.webp",
+      "size_bytes": 1104166,
+      "sha256": "928f792d41a57040586141a557d5743dca0ab18aa0808d764ce9651cca452c57"
+    },
+    {
+      "path": "guides/images/adjustments/apg.webp",
+      "size_bytes": 1114192,
+      "sha256": "f2db34e21b130b73fede4939ac4cc5aa30342996eb124534c04e3fdfbb5297e7"
+    },
+    {
+      "path": "guides/images/adjustments/freeu.webp",
+      "size_bytes": 1212130,
+      "sha256": "ce790bcd0fc46e444b5ab5ac1319d635b768fbd1946d995112cc5ce99ccd88c6"
+    },
+    {
+      "path": "guides/images/adjustments/hires-standard.webp",
+      "size_bytes": 1854658,
+      "sha256": "653b664a72c802add26c0595910fe82a73c32000463e8208d24abfd2a5bb888a"
+    },
+    {
+      "path": "guides/images/adjustments/hiwave.webp",
+      "size_bytes": 1834644,
+      "sha256": "6d8b5ef5f15ba0c5b7eff8b4c5cd2d97a53d56e0836ab10cb0893755822174c8"
+    },
+    {
+      "path": "guides/images/adjustments/rega.webp",
+      "size_bytes": 780376,
+      "sha256": "e29df5a862ace8fbc308bb37d9de82147bea27f5c861e55e3ac40f2b77fb8fbf"
+    },
+    {
+      "path": "guides/images/adjustments/sag.webp",
+      "size_bytes": 1134198,
+      "sha256": "1e3457c5fb8bbf740f3deb26dddce55186377033c5472c43ee91d95b6cc6df3f"
+    },
+    {
+      "path": "guides/images/adjustments/ssg.webp",
+      "size_bytes": 1002972,
+      "sha256": "88a6d8cb90ca36cdaecc75454552dc10a7ede250c48a892a12c050a107bfadb2"
+    },
+    {
+      "path": "guides/images/adjustments/umbrella-off.webp",
+      "size_bytes": 976778,
+      "sha256": "de64744997253f42c305c6c5ad6f3ba38fce0deff7244221c0adfadb9d16edf6"
+    },
+    {
+      "path": "guides/images/adjustments/window-off.webp",
+      "size_bytes": 1142416,
+      "sha256": "7cbaaa5c40548cac7dd771c8cff5e2e6f7abfa4c8afeff02f1bc0407357c8589"
     },
     {
       "path": "guides/images/appearance-dark-ja.jpg",

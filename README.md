@@ -31,6 +31,8 @@ Asteriaは、Windowsのローカル環境で画像・動画・音楽を作り、
 
 ### V1.2.3で増える使い方
 
+- **生成結果を見比べて調整する：** 服や背景の明暗を変えたいときはFreeU V2、CFGを上げて色が濃くなりすぎたときはAPG、拡大後の細部を描き直したいときはHiWaveを試せます。[人物作例で見る生成オプション6種](guides/GENERATION_ADJUSTMENTS.md)では、SAG・ReGA・SSGも含めて、同じSeedで何が変わったかとモデル別の注意点を紹介します。
+
 - **会話で作る：** Asteriaの「AIチャット」で、ローカルAIやAPI接続先に「青い花の水彩画を1枚」のように頼めます。結果を見ながら画像の一部を塗って変更を頼んだり、保存済みの動画や音楽を会話で開いたりできます。
 - **ほかの端末から使う：** 同じネットワークの別PC・スマートフォン・タブレットで、普段と同じAsteriaの全画面を使えます。初回はQRコードか登録用URLでブラウザーを登録します。処理はAsteriaを起動しているPCで行います。
 - **普段のチャットから操作する：** MCP対応の外部AIクライアントを、自分のPCで起動したAsteriaにつなげます。MCP機能は本体に含まれます。共用サーバーへの登録や、自分でサーバーを開発する作業は不要です。Web版のチャットから使う場合だけ、認証付きの接続を別に用意します。
@@ -57,7 +59,7 @@ AIチャットとMCPで頼めるのは、画像の生成・編集、動画・音
 - 生成設定ではHiresなどの調整を先に表示し、工程画像などの保存設定は「保存・記録」から開けます。履歴は画像とプロンプトの冒頭を表示し、操作・全文・メモを展開して確認できます。
 - LoRAを使わないときの表示をコンパクトにし、結果情報には生成時に保存されたモデルと日時を表示します。記録のない値は推測して補いません。
 - Image Editはキャンバスを広く使える配置に変更し、道具と入力画像の切り替えを縦にまとめました。
-- Krea 2 TurboとMOSS-Image SFTの通常の画像生成とLoRA適用に対応します。専用モデルを追加すると、ControlNet欄からKrea 2の深度制御、MOSS-Imageの深度・色領域制御も使えます。[画像制御の手順](guides/NATIVE_IMAGE_CONTROL.md)を参照してください。新モデルでのHires、ADetailer、参照画像編集は今回の対応に含みません。
+- Krea 2 TurboとMOSS-Image SFTの通常の画像生成とLoRA適用に対応しました。専用モデルを追加すると、ControlNet欄からKrea 2の深度制御、MOSS-Imageの深度・色領域制御も使えます。[画像制御の手順](guides/NATIVE_IMAGE_CONTROL.md)を参照してください。新モデルでのHires、ADetailer、参照画像編集はV1.2.2時点の対応範囲には含まれていません。
 - 管理するComfyUIを固定0.43.0へ更新します。MOSSの軽量構成はINT8生成モデル・W4A8 encoder・small VAEを使います。必要メモリや処理時間は環境によって異なります。
 - SDXLのLoRA学習は、Asteriaの再起動後も正常終了を確認できれば、既存ファイルを上書きせずに結果を保存します。終了を確認できない場合や学習を中止した場合は、残っているファイルの場所を学習履歴で確認できます。
 - Anima 2.9B／3.8Bでも、対応する一部の層だけを調整するLoRAを変換せずに使えます。実際に世代間の変換が必要な場合は、対応する変換設定を使います。
@@ -414,6 +416,8 @@ Screenshots show the Japanese interface in Dark mode. Language and theme are sel
 
 ### New ways to use Asteria in V1.2.3
 
+- **Compare the effect on your image:** Try FreeU V2 for the balance of light and detail, APG when high CFG makes colors too intense, or HiWave for detail in an upscale. [Six generation options in portrait examples](guides/GENERATION_ADJUSTMENTS.md#english) also covers SAG, ReGA and SSG, with fixed-seed image pairs and model-specific caveats.
+
 - **Create in a conversation:** Open Assistant, connect a local AI or an API provider, and ask for one watercolor of blue flowers. Paint part of the resulting image to request an edit, or open saved video and music in the conversation.
 - **Use another device:** Register a browser on another PC, phone or tablet on the same network using a QR code or registration URL. You get the full Asteria interface; the host PC runs the jobs.
 - **Use your usual chat client:** Connect an external MCP client to your own running copy of Asteria. MCP is built in: there is no shared Asteria account to register and no server to build. An online chat service also needs an authenticated connection back to your PC.
@@ -440,7 +444,7 @@ See [Assistant, MCP and LAN access](guides/ASSISTANT_MCP_LAN.md#english) for set
 - Generation settings show Hires and other adjustments before the optional Saving and recording section. History shows an image and prompt excerpt; expand an entry for actions, the full prompt and notes.
 - The empty LoRA summary takes less space. Result information uses the model and date saved with the generation, without guessing values missing from the record.
 - Image Edit provides more canvas space, with tools and input-image switching arranged vertically.
-- Added text-to-image generation and LoRA support for Krea 2 Turbo and MOSS-Image SFT. Optional control models enable Krea 2 depth guidance and MOSS-Image depth/color-region guidance through the ControlNet panel. See [image-control instructions](guides/NATIVE_IMAGE_CONTROL.md#english). Hires, ADetailer and reference-image editing for these new models are not part of this update.
+- Added text-to-image generation and LoRA support for Krea 2 Turbo and MOSS-Image SFT. Optional control models enable Krea 2 depth guidance and MOSS-Image depth/color-region guidance through the ControlNet panel. See [image-control instructions](guides/NATIVE_IMAGE_CONTROL.md#english). Hires, ADetailer and reference-image editing for these new models were not part of V1.2.2.
 - The managed ComfyUI is pinned to 0.43.0. The lightweight MOSS configuration uses an INT8 diffusion model, W4A8 encoder and small VAE. Memory requirements and processing time depend on the environment.
 - After Asteria restarts, SDXL LoRA training saves the result without replacing existing files if it can confirm that training finished successfully. If completion cannot be confirmed or training was stopped, the run shows where to find any remaining files.
 - Compatible LoRAs that adjust only some layers also work with Anima 2.9B and 3.8B without conversion. Use the supported conversion settings when mapping between generations is required.
