@@ -1649,10 +1649,14 @@ class HistoryRepository:
         original_row_factory = con.row_factory
         con.row_factory = sqlite3.Row
         try:
+            # Leave malformed and non-array legacy values to the original Python repair logic.
+            # SQLite JSON functions may treat an embedded NUL as the end of the input.
             rows = con.execute(
                 """
                 select id, profile, expanded_prompt, prompt, model_slots_json, embeddings_json, loras_json, generated_tags_json
                 from generations
+                where case when json_valid(generated_tags_json) and instr(generated_tags_json, char(0)) = 0
+                           then json_array_length(generated_tags_json) else 0 end = 0
                 """
             ).fetchall()
             for row in rows:

@@ -16,7 +16,12 @@ nodes:
   merge_source_c: "901"
   merge_runtime: "902"
 class_types:
+  sag: AsteriaAnimaSelfAttentionGuidance
+  apg: AsteriaAdaptiveProjectedGuidance
+  ssg: AsteriaSelfSwapGuidance
+  rega: AsteriaRetrievalGuidance
   generation_stage_save: AsteriaSaveGenerationStage
+  hiwave_redraw: AsteriaHiWaveRedraw
   generation_branch_model: AsteriaGenerationBranchModel
   generation_stage_load: AsteriaLoadGenerationStage
   generation_stage_sampler: AsteriaGenerationStageSampler

@@ -15,6 +15,18 @@ from app.services.controlnet_mode import ControlNetMode
 from app.services.spatial_prompt_contract import validate_spatial_prompt_contract
 
 
+def initial_ssg_strength(profile: str) -> float:
+    return 0.15 if profile in {"anima", "moss_image", "krea2", "flux1", "flux2"} else 3.0
+
+
+def initial_rega_window(profile: str) -> float:
+    return {"anima": 0.04, "moss_image": 0.04, "krea2": 0.04, "flux1": 13/28, "flux2": 0.5}.get(profile, 0.52)
+
+
+def initial_rega_gain(profile: str) -> float:
+    return 5.0 if profile in {"flux1", "flux2", "moss_image", "krea2"} else 10.0
+
+
 class AdvancedStyleSelection(BaseModel):
     id: str = ""
     group: str = ""
@@ -197,6 +209,7 @@ class Txt2ImgRequest(BaseModel):
     steps: int = Field(default=30, ge=1)
     cfg_scale: float = Field(default=6.5, allow_inf_nan=False)
     distilled_cfg_scale: float = Field(default=3.5, allow_inf_nan=False)
+    flux_true_cfg: float = Field(default=1.0, allow_inf_nan=False)
     seed: int = -1
     subseed: int = -1
     subseed_strength: float = Field(default=0.0, ge=0, le=1)
@@ -212,6 +225,24 @@ class Txt2ImgRequest(BaseModel):
     tiling: bool = False
     vae: str = "Automatic"
     clip_skip: int = Field(default=2, ge=1)
+    freeu_enabled: bool = False
+    freeu_b1: float = Field(default=1.3, allow_inf_nan=False)
+    freeu_b2: float = Field(default=1.4, allow_inf_nan=False)
+    freeu_s1: float = Field(default=0.9, allow_inf_nan=False)
+    freeu_s2: float = Field(default=0.2, allow_inf_nan=False)
+    sag_enabled: bool = False
+    apg_enabled: bool = False
+    apg_eta: float = Field(default=0.0, allow_inf_nan=False)
+    apg_norm_threshold: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    apg_momentum: float = Field(default=0.0, allow_inf_nan=False)
+    ssg_enabled: bool = False
+    ssg_strength: float = Field(default_factory=lambda values: initial_ssg_strength(values["profile"]), allow_inf_nan=False)
+    ssg_ratio: float = Field(default=.2, ge=0, le=1, allow_inf_nan=False)
+    rega_enabled: bool = False
+    rega_gain: float = Field(default_factory=lambda values: initial_rega_gain(values["profile"]), allow_inf_nan=False)
+    rega_window: float = Field(default_factory=lambda values: initial_rega_window(values["profile"]), ge=0, le=1, allow_inf_nan=False)
+    sag_scale: float = Field(default=0.5, allow_inf_nan=False)
+    sag_blur_sigma: float = Field(default=2.0, allow_inf_nan=False)
     refiner_enabled: bool = True
     refiner_checkpoint: str = ""
     refiner_switch_at: float = Field(default=0.8, ge=0, le=1)

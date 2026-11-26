@@ -102,6 +102,7 @@ class CompatibleTxt2ImgSettings(StrictModel):
     steps: int | None = Field(default=None, ge=1)
     cfg_scale: float | None = Field(default=None, allow_inf_nan=False)
     distilled_cfg_scale: float | None = Field(default=None, allow_inf_nan=False)
+    flux_true_cfg: float | None = Field(default=None, allow_inf_nan=False)
     width: int | None = Field(default=None, ge=1)
     height: int | None = Field(default=None, ge=1)
     batch_size: int | None = Field(default=None, ge=1)
@@ -111,6 +112,24 @@ class CompatibleTxt2ImgSettings(StrictModel):
     restore_faces: bool | None = None
     tiling: bool | None = None
     clip_skip: int | None = Field(default=None, ge=1)
+    freeu_enabled: bool | None = None
+    freeu_b1: float | None = None
+    freeu_b2: float | None = None
+    freeu_s1: float | None = None
+    freeu_s2: float | None = None
+    sag_enabled: bool | None = None
+    apg_enabled: bool | None = None
+    apg_eta: float | None = None
+    apg_norm_threshold: float | None = None
+    apg_momentum: float | None = None
+    ssg_enabled: bool | None = None
+    ssg_strength: float | None = None
+    ssg_ratio: float | None = None
+    rega_enabled: bool | None = None
+    rega_gain: float | None = None
+    rega_window: float | None = None
+    sag_scale: float | None = None
+    sag_blur_sigma: float | None = None
     refiner_enabled: bool | None = None
     refiner_switch_at: float | None = Field(default=None, ge=0, le=1)
     hires_enabled: bool | None = None

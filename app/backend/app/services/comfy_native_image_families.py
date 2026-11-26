@@ -24,7 +24,16 @@ def unsupported_native_image_settings(profile: str, settings: dict, *, loras=())
     unsupported = []
     if settings.get("mode", "txt2img") != "txt2img":
         unsupported.append("mode")
-    for field in ("hires_enabled", "refiner_enabled", "topaz_enabled", "restore_faces", "tiling", "embeddings",
+    if settings.get("hires_enabled"):
+        if settings.get("hires_upscaler") == "Topaz Photo AI":
+            unsupported.append("hires_upscaler")
+        else:
+            for field in ("hires_prompt", "hires_negative_prompt", "hires_distilled_cfg_scale"):
+                if settings.get(field):
+                    unsupported.append(field)
+            if settings.get("hires_checkpoint") not in (None, "", "Use same checkpoint"):
+                unsupported.append("hires_checkpoint")
+    for field in ("refiner_enabled", "topaz_enabled", "restore_faces", "tiling", "embeddings",
                   "record_word_masks", "record_branch_step", "branch_source_id"):
         if settings.get(field):
             unsupported.append(field)
@@ -57,9 +66,9 @@ def native_image_model_slot_checks(mapping: WorkflowMapping) -> tuple[tuple[str,
 
 
 def native_image_latent_size(profile: str, width: int, height: int) -> tuple[int, int]:
-    if profile == "moss_image":
-        # EmptyFlux2LatentImage floors to 16 pixels. Preserve the requested canvas at the origin.
-        return ((width + 15) // 16) * 16, ((height + 15) // 16) * 16
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        stride = 16 if profile == "moss_image" else 8
+        return tuple(((side + stride - 1) // stride) * stride for side in (width, height))
     return width, height
 
 
@@ -72,7 +81,7 @@ def native_image_lora_loader_class(mapping: WorkflowMapping, requires_control: b
 def native_image_required_nodes(mapping: WorkflowMapping, *, requires_lora: bool = False,
                                 requires_control: bool = False, requires_crop: bool = False) -> set[str]:
     required = {value for key, value in mapping.class_types.items()
-                if not key.startswith(("generation_stage_", "control_")) and key != "lora_loader"
+                if not key.startswith(("generation_stage_", "control_")) and key not in {"lora_loader", "apg", "sag", "ssg", "rega"}
                 and (key != "image_crop" or requires_crop)}
     if requires_control:
         required.update(native_control_required_nodes(mapping))

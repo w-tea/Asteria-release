@@ -100,11 +100,23 @@ PARAMETER_LABELS = [
     "TI hashes",
     "Hashes",
     "freeu_enabled",
+    "FreeU version",
     "freeu_b1",
     "freeu_b2",
     "freeu_s1",
     "freeu_s2",
     "sag_enabled",
+    "apg_enabled",
+    "apg_eta",
+    "apg_norm_threshold",
+    "apg_momentum",
+    "rega_enabled",
+    "ssg_enabled",
+    "ssg_strength",
+    "flux_true_cfg",
+    "ssg_ratio",
+    "rega_gain",
+    "rega_window",
     "sag_scale",
     "sag_blur_sigma",
     "Script",
@@ -342,6 +354,14 @@ def _settings_from_parameters(params: dict[str, str]) -> dict[str, Any]:
         ("freeu_s2", "freeu_s2"),
         ("sag_scale", "sag_scale"),
         ("sag_blur_sigma", "sag_blur_sigma"),
+        ("apg_eta", "apg_eta"),
+        ("apg_norm_threshold", "apg_norm_threshold"),
+        ("apg_momentum", "apg_momentum"),
+        ("rega_gain", "rega_gain"),
+        ("ssg_strength", "ssg_strength"),
+        ("flux_true_cfg", "flux_true_cfg"),
+        ("ssg_ratio", "ssg_ratio"),
+        ("rega_window", "rega_window"),
     ):
         value = _float_value(params.get(key))
         if value is not None:
@@ -372,6 +392,7 @@ def _settings_from_parameters(params: dict[str, str]) -> dict[str, Any]:
         ("vae hash", "vae_hash"),
         ("rng", "rng_source"),
         ("version", "source_application_version"),
+        ("freeu version", "freeu_version"),
     ):
         value = params.get(key)
         if value:
@@ -391,6 +412,9 @@ def _settings_from_parameters(params: dict[str, str]) -> dict[str, Any]:
         ("hires keep first pass", "hires_keep_first_pass"),
         ("freeu_enabled", "freeu_enabled"),
         ("sag_enabled", "sag_enabled"),
+        ("apg_enabled", "apg_enabled"),
+        ("rega_enabled", "rega_enabled"),
+        ("ssg_enabled", "ssg_enabled"),
     ):
         value = _bool_value(params.get(key))
         if value is not None:
@@ -1642,6 +1666,15 @@ class MetadataWriter:
             ("Model slots", self._model_slots_summary(model_slots)),
             ("Model override options", self._model_override_options_summary(settings.get("model_slot_overrides"))),
             ("Clip skip", settings.get("clip_skip")),
+            ("FreeU version", "V2" if settings.get("freeu_enabled") else None),
+            *((key, settings.get(key)) for key in (
+                "freeu_enabled", "freeu_b1", "freeu_b2", "freeu_s1", "freeu_s2",
+                "sag_enabled", "sag_scale", "sag_blur_sigma",
+                "apg_enabled", "apg_eta", "apg_norm_threshold", "apg_momentum",
+                "rega_enabled", "rega_gain", "rega_window",
+                "ssg_enabled", "ssg_strength", "ssg_ratio",
+                "flux_true_cfg",
+            ) if key in settings),
             ("Face restoration", self._face_restoration_value(settings)),
             ("Tiling", settings.get("tiling") if settings.get("tiling") else None),
             ("Asteria generation", payload.get("generation_id")),

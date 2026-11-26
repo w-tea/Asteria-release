@@ -21,7 +21,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSock
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from app.schemas.media import image_media_type
 from PIL import Image, ImageOps
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, FiniteFloat, TypeAdapter, ValidationError
 
 from app.core.config import AppConfig
 from app.schemas.generation import (
@@ -177,6 +177,7 @@ from app.services.prompt_syntax import (
 from app.services.runtime import (
     ComfyClient,
     ComfyGenerationRuntime,
+    ComfyTxt2ImgWorkflowBuilder,
     INSPIRE_KSAMPLER_CLASS,
     LORA_BLOCK_WEIGHT_CLASS,
     RuntimeCancellationConfirmed,
@@ -843,6 +844,12 @@ def _validate_runtime_feature_requirements(
     resolved_embeddings: list[str] | None = None,
 ) -> None:
     requires_spatial_prompt = uses_spatial_prompt_layout(settings)
+    if settings.get("hires_enabled") and settings.get("hires_sampler") == "HiWave" and (
+        profile not in {"sdxl", "anima", "moss_image", "krea2", "flux1", "flux2"} or settings.get("hires_upscaler") == "Topaz Photo AI"
+        or selected_runtime != "comfy_workflow"
+    ):
+        raise HTTPException(status_code=409,detail={"code":api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING,
+            "unsupported":[{"field":"hires_sampler","label":"HiWave","reason":"requires_internal_hiwave_redraw"}]})
     remaster_settings = settings.get("remaster", {})
     requires_remaster = isinstance(remaster_settings, dict) and bool(remaster_settings.get("enabled"))
     if requires_remaster and selected_runtime != "comfy_workflow":
@@ -959,6 +966,7 @@ def _validate_runtime_feature_requirements(
             settings,
             profile,
             model_root=config.model_dir,
+            external_roots=_registered_external_model_roots(config) if settings.get("hires_enabled") else (),
         )
         if missing_hires_checkpoint:
             raise HTTPException(
@@ -989,7 +997,7 @@ def _validate_runtime_feature_requirements(
                 status_code=409,
                 detail={"code": api_errors.MISSING_PROFILE_RUNTIME_NODES, "missing_nodes": missing_profile_nodes},
             )
-        missing_profile_hires_nodes = sorted(_profile_hires_required_nodes(settings) - nodes)
+        missing_profile_hires_nodes = sorted((_profile_hires_required_nodes(settings, profile) | _hiwave_required_nodes(settings)) - nodes)
         if missing_profile_hires_nodes:
             raise HTTPException(
                 status_code=409,
@@ -1122,7 +1130,7 @@ def _validate_runtime_feature_requirements(
     requires_controlnet = bool(settings.get("controlnet_units"))
     requires_lora_block_weight = settings.get("lora_block_weight_runtime") == "requested"
     requires_lora = bool(loras)
-    hires_required_nodes = _hires_fix_required_nodes(settings)
+    hires_required_nodes = _hires_fix_required_nodes(settings) | _hiwave_required_nodes(settings)
     try:
         object_info = ComfyClient(config.comfy_base_url).object_info()
     except RuntimeErrorResponse as exc:
@@ -1153,11 +1161,13 @@ def _validate_runtime_feature_requirements(
             status_code=409,
             detail={"code": api_errors.MISSING_RUNTIME_MODEL, "missing": missing_runtime_models},
         )
+    stage_roots = _registered_external_model_roots(config) if settings.get("hires_enabled") or _uses_refiner(settings) else ()
     missing_hires_checkpoint = _missing_hires_checkpoint_model(
         object_info,
         settings,
         profile,
         model_root=config.model_dir,
+        external_roots=stage_roots,
     )
     if missing_hires_checkpoint:
         raise HTTPException(
@@ -1168,6 +1178,7 @@ def _validate_runtime_feature_requirements(
         object_info,
         settings,
         model_root=config.model_dir,
+        external_roots=stage_roots,
     )
     if missing_refiner_checkpoint:
         raise HTTPException(
@@ -1726,6 +1737,7 @@ def _missing_hires_checkpoint_model(
     profile: str = "sdxl",
     *,
     model_root: Path | None = None,
+    external_roots: tuple[ExternalModelRoot, ...] = (),
 ) -> dict[str, str] | None:
     if not settings.get("hires_enabled"):
         return None
@@ -1740,7 +1752,7 @@ def _missing_hires_checkpoint_model(
         return None
     if node_name not in object_info:
         return None
-    model_name = comfy_model_name(checkpoint, model_dir_name, model_root=model_root)
+    model_name = comfy_model_name(checkpoint, model_dir_name, model_root=model_root, external_roots=external_roots)
     available = _node_model_input_values(object_info, node_name, input_name)
     if model_name not in available:
         return {"slot": "hires_checkpoint", "model_name": model_name}
@@ -1756,11 +1768,12 @@ def _missing_refiner_checkpoint_model(
     settings: dict,
     *,
     model_root: Path | None = None,
+    external_roots: tuple[ExternalModelRoot, ...] = (),
 ) -> dict[str, str] | None:
     checkpoint = str(settings.get("refiner_checkpoint") or "").strip()
     if not _uses_refiner(settings) or "CheckpointLoaderSimple" not in object_info:
         return None
-    model_name = comfy_model_name(checkpoint, "checkpoints", model_root=model_root)
+    model_name = comfy_model_name(checkpoint, "checkpoints", model_root=model_root, external_roots=external_roots)
     available = _node_model_input_values(object_info, "CheckpointLoaderSimple", "ckpt_name")
     if model_name not in available:
         return {"slot": "refiner_checkpoint", "model_name": model_name}
@@ -1924,6 +1937,20 @@ def _missing_anima_bundle_runtime_models(
 def _profile_base_required_nodes(
     profile: str, settings: dict, *, requires_lora: bool = False, native_mapping: WorkflowMapping | None = None,
 ) -> set[str]:
+    required = _profile_sampling_required_nodes(profile, settings, requires_lora=requires_lora, native_mapping=native_mapping)
+    if profile in {"flux1", "flux2"} and (settings.get("flux_true_cfg", 1.) != 1. or settings.get("sag_enabled")):
+        required.discard("BasicGuider")
+        required.add("CFGGuider")
+    for key, node in (("sag", "SelfAttentionGuidance"), ("apg", "AsteriaAdaptiveProjectedGuidance"), ("rega", "AsteriaRetrievalGuidance"), ("ssg", "AsteriaSelfSwapGuidance")):
+        if settings.get(key + "_enabled"):
+            mapping = native_mapping or WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
+            required.add(mapping.class_type(key, node))
+    return required
+
+
+def _profile_sampling_required_nodes(
+    profile: str, settings: dict, *, requires_lora: bool = False, native_mapping: WorkflowMapping | None = None,
+) -> set[str]:
     if profile in NATIVE_IMAGE_DEFAULTS:
         mapping = native_mapping or WorkflowMappingRepository(AppConfig().mapping_dir).get_txt2img(profile)
         width = settings.get("width", NATIVE_IMAGE_COMMON_DEFAULTS["width"])
@@ -2035,12 +2062,25 @@ def _profile_base_required_nodes(
     return set()
 
 
-def _profile_hires_required_nodes(settings: dict) -> set[str]:
+def _hiwave_required_nodes(settings: dict) -> set[str]:
+    return {"AsteriaHiWaveRedraw"} if settings.get("hires_enabled") and settings.get("hires_sampler")=="HiWave" else set()
+
+
+def _profile_hires_required_nodes(settings: dict, profile: str = "") -> set[str]:
     if not settings.get("hires_enabled"):
         return set()
     if settings.get("hires_upscaler") == "Topaz Photo AI":
         return {"LoadImage", "VAEEncode"}
     option = upscaler_option(settings.get("hires_upscaler"))
+    if profile in NATIVE_IMAGE_DEFAULTS:
+        target = ComfyTxt2ImgWorkflowBuilder.hires_target_dimensions({**NATIVE_IMAGE_COMMON_DEFAULTS, **settings})
+        crop = {"ImageCrop"} if native_image_latent_size(profile, *target) != target else set()
+        if option.kind == "latent":
+            return {"AsteriaResizeLatentGrid"} | crop
+        if option.kind == "image":
+            return {"VAEEncode", "ImageScale"} | crop
+        if option.kind == "model":
+            return {"VAEEncode", "UpscaleModelLoader", "ImageUpscaleWithModel", "ImageScale"} | crop
     has_explicit_resize = bool(int(settings.get("hires_resize_width") or 0) or int(settings.get("hires_resize_height") or 0))
     if option.kind == "latent":
         return {"LatentUpscale" if has_explicit_resize else "LatentUpscaleBy"}
@@ -2092,7 +2132,7 @@ def _validate_comfy_sampling_options(object_info: dict, settings: dict) -> None:
     if settings.get("hires_enabled"):
         hires_sampler = str(settings.get("hires_sampler") or "Use same sampler")
         hires_scheduler = str(settings.get("hires_scheduler") or "Use same scheduler")
-        if hires_sampler != "Use same sampler":
+        if hires_sampler not in {"Use same sampler","HiWave"}:
             _append_unsupported_sampling_option(
                 unsupported,
                 field="hires_sampler",
@@ -2179,7 +2219,7 @@ def _validate_profile_sampling_options(
         )
     if settings.get("hires_enabled"):
         hires_sampler = str(settings.get("hires_sampler") or "Use same sampler")
-        if hires_sampler != "Use same sampler":
+        if hires_sampler not in {"Use same sampler","HiWave"}:
             _append_unsupported_sampling_option(
                 unsupported,
                 field="hires_sampler",
@@ -2560,6 +2600,13 @@ def _settings_from_request(request: Txt2ImgRequest, config: AppConfig, mode: str
             raise HTTPException(status_code=400, detail={"code": api_errors.GENERATION_SCHEMA_LOAD_FAILED}) from error
         raise HTTPException(status_code=400, detail=str(error)) from error
     mapped.pop("prompt", None)
+    missing_adjustments = [key for key in ("freeu_enabled", "sag_enabled", "apg_enabled", "rega_enabled", "ssg_enabled") if getattr(request, key) and key not in mapped]
+    if missing_adjustments:
+        raise HTTPException(status_code=409, detail={
+            "code": api_errors.UNSUPPORTED_COMFY_RUNTIME_SETTING, "unsupported": missing_adjustments,
+        })
+    if mapped.get("sag_enabled") and mapped["sag_blur_sigma"] <= 0:
+        raise HTTPException(status_code=400, detail="sag_blur_sigma must be greater than zero when SAG is enabled.")
     negative_prompt = mapped.pop("negative_prompt", request.negative_prompt)
     mapped["mode"] = mode
     if (
@@ -4426,6 +4473,7 @@ def _fan_out_remasters(
             seed=int(primary.get("seed", request.seed)),
             cfg_scale=request.cfg_scale,
             distilled_cfg_scale=request.distilled_cfg_scale,
+            flux_true_cfg=request.flux_true_cfg,
             model_slot_overrides=model_slots,
             loras=loras,
             remaster=request.remaster,
@@ -4578,6 +4626,17 @@ def _apply_xyz_prompt_replace(request: Txt2ImgRequest, value: str) -> None:
         request.prompt_input = PromptInput.model_validate({"schema_version": original.schema_version, "mode": "single"})
 
 
+_XYZ_ADJUSTMENT_FIELDS = {
+    "apg_enabled", "apg_eta", "apg_norm_threshold", "apg_momentum",
+    "ssg_enabled", "ssg_strength", "ssg_ratio",
+    "rega_enabled", "rega_gain", "rega_window",
+    "freeu_enabled", "freeu_b1", "freeu_b2", "freeu_s1", "freeu_s2",
+    "sag_enabled", "sag_scale", "sag_blur_sigma",
+}
+_XYZ_BOOL = TypeAdapter(bool)
+_XYZ_NUMBER = TypeAdapter(FiniteFloat)
+
+
 def _apply_xyz_value(
     request: Txt2ImgRequest, axis: XYZAxis, value: str, *, lora_weights: dict[str, float] | None = None,
 ) -> Txt2ImgRequest:
@@ -4600,6 +4659,17 @@ def _apply_xyz_value(
         next_request.steps = int(value)
     elif target in {"cfg", "cfg_scale"}:
         next_request.cfg_scale = float(value)
+    elif target in _XYZ_ADJUSTMENT_FIELDS:
+        profiles = {"sdxl"} if target.startswith("freeu_") else {"sdxl", "anima", "moss_image", "krea2", "flux1", "flux2"}
+        if request.profile not in profiles:
+            raise HTTPException(409, detail={"code": api_errors.XYZ_AXIS_UNSUPPORTED, "target": target})
+        try:
+            parsed = (_XYZ_BOOL if target.endswith("_enabled") else _XYZ_NUMBER).validate_python(value.strip())
+        except ValidationError as error:
+            raise HTTPException(400, detail={"code": "xyz_adjustment_value_invalid", "target": target, "value": value}) from error
+        if (target == "apg_norm_threshold" and parsed < 0) or (target in {"rega_window", "ssg_ratio"} and not 0 <= parsed <= 1):
+            raise HTTPException(400, detail={"code": "xyz_adjustment_value_invalid", "target": target, "value": value})
+        setattr(next_request, target, parsed)
     elif target == "alpha":
         next_request.model_slot_overrides["merge.alpha"] = value
     elif target == "beta":
@@ -4651,9 +4721,16 @@ def _xyz_cell_request(
     request = base
     labels: dict[str, str] = {}
     lora_weights: dict[str, float] = {}
+    targets = {axis.target.strip().lower() for axis in axes}
     for index, (axis, value) in enumerate(zip(axes, values, strict=True)):
         labels[_xyz_axis_key(axis, index)] = str(value)
         request = _apply_xyz_value(request, axis, str(value), lora_weights=lora_weights)
+    for family in ("freeu", "sag", "apg", "rega", "ssg"):
+        switch = family + "_enabled"
+        if switch not in targets and any(k.startswith(family + "_") for k in targets & _XYZ_ADJUSTMENT_FIELDS):
+            setattr(request, switch, True)
+    if targets & _XYZ_ADJUSTMENT_FIELDS and request.sag_enabled and request.sag_blur_sigma <= 0:
+        raise HTTPException(400, detail={"code": "xyz_adjustment_value_invalid", "target": "sag_blur_sigma", "value": request.sag_blur_sigma})
     return request, labels, lora_weights
 
 
@@ -4685,6 +4762,16 @@ def _xyz_contact_sheet_result(
     output_dir: Path,
     axes: list[XYZAxis],
 ) -> tuple[str, str]:
+    # Request order varies Z first (itertools.product); the sheet draws X
+    # first, then Y rows and Z planes. Preserve each original history/badge ID.
+    def sheet_position(cell: XYZCellResult) -> tuple[int, ...]:
+        index = cell.index
+        position = []
+        for axis in reversed(axes):
+            index, coordinate = divmod(index, len(axis.values))
+            position.append(coordinate)
+        return tuple(position)
+
     return create_xyz_contact_sheet_streaming(
         [
             XYZGridCell(
@@ -4692,7 +4779,7 @@ def _xyz_contact_sheet_result(
                 image_path=_first_image_output(cell.generation.output_paths),
                 display_id=f"#{cell.index + 1:03d}",
             )
-            for cell in cells
+            for cell in sorted(cells, key=sheet_position)
         ],
         _xyz_grid_axes(axes),
         output_dir,

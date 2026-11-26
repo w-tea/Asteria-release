@@ -12,6 +12,11 @@ nodes:
   latent: "6"
   sampler_tail_start: "7"
 class_types:
+  sag: AsteriaFluxSelfAttentionGuidance
+  ssg: AsteriaSelfSwapGuidance
+  apg: AsteriaAdaptiveProjectedGuidance
+  hiwave_redraw: AsteriaHiWaveRedraw
+  rega: AsteriaRetrievalGuidance
   generation_stage_save: AsteriaSaveGenerationStage
   generation_stage_load: AsteriaLoadGenerationStage
   generation_stage_sampler: AsteriaGenerationStageSampler

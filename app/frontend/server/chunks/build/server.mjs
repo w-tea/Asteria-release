@@ -4385,6 +4385,8 @@ const messages = {
   "runtimePane.samplingSteps": { en: "Sampling steps", ja: "Samplingステップ" },
   "runtimePane.cfgScale": { en: "CFG Scale", ja: "CFG Scale" },
   "runtimePane.distilledCfg": { en: "Distilled CFG", ja: "Distilled CFG" },
+  "runtimePane.fluxTrueCfg": { en: "True CFG", ja: "True CFG（追加のガイダンス）" },
+  "runtimePane.fluxTrueCfgHelp": { en: "Leave at 1 for normal FLUX generation. Try 2 to compare APG or HiWave’s wavelet correction. An extra prediction takes more time.", ja: "通常のFLUX生成では1のまま使います。APGやHiWaveのウェーブレット補正を比べるときは、2から試せます。予測が増えるため生成に時間がかかります。" },
   "runtimePane.width": { en: "Width", ja: "幅" },
   "runtimePane.height": { en: "Height", ja: "高さ" },
   "runtimePane.batchSize": { en: "Batch size", ja: "Batch size" },
@@ -4415,6 +4417,38 @@ const messages = {
   "runtimePane.restoreFaces": { en: "Restore Faces", ja: "Restore Faces" },
   "runtimePane.tiling": { en: "Tiling", ja: "Tiling" },
   "runtimePane.clipSkip": { en: "CLIP skip", ja: "CLIP skip" },
+  "adjustment.freeu": { en: "FreeU V2 (structure and detail)", ja: "FreeU V2（構造・ディテール調整）" },
+  "adjustment.apg": { en: "APG (reduce oversaturation at high CFG)", ja: "APG（高いCFGで色が濃くなりすぎるのを抑える）" },
+  "adjustment.ssg": { en: "SSG (guide shapes and details)", ja: "SSG（形や細部を補正）" },
+  "adjustment.ssg_strength": { en: "Strength", ja: "補正の強さ" },
+  "adjustment.ssg_strength.help": { en: "Leave blank for the model default. At 0 there is no correction. High strengths can darken Anima images.", ja: "空欄ではモデル別の初期値を使います。0なら補正しません。Animaでは強くしすぎると画像が暗くなることがあります。" },
+  "adjustment.ssg_ratio": { en: "Fraction of features to swap", ja: "入れ替える特徴の割合" },
+  "adjustment.ssg_ratio.help": { en: "The extra prediction swaps image features. At 0.2, up to 20% participate. At 0, there is no correction.", ja: "補正のための比較画像を計算するときに使います。0.2なら最大2割の特徴を入れ替え、0なら補正しません。" },
+  "adjustment.rega": { en: "ReGA (focus on prompt details)", ja: "ReGA（プロンプトの特徴を強調）" },
+  "adjustment.rega_gain": { en: "Emphasis", ja: "強調の強さ" },
+  "adjustment.rega_gain.help": { en: "At 0, ReGA still changes how prompt details are selected. Turn ReGA off for the original result.", ja: "0でも、注目する語の選び方は変わります。通常の生成と比べるには、ReGAをオフにしてください。" },
+  "adjustment.rega_window": { en: "Fraction of steps to guide", ja: "補正を使うステップの割合" },
+  "adjustment.rega_window.help": { en: "Leave blank for the model default. Set to 0.5 for the first half, or 1 for all steps. On Anima, long windows can turn the image into noise.", ja: "空欄ならモデル別の初期値を使います。0.5で前半、1で全ステップを補正します。Animaでは長くすると画像がノイズになることがあります。" },
+  "adjustment.apg_eta": { en: "Parallel component (η)", ja: "平行成分の強さ（η）" },
+  "adjustment.apg_eta.help": { en: "Set to 0 to remove this component, or 1 to keep it. At CFG 1, APG has no effect.", ja: "0で平行成分を取り除き、1で元の強さを保ちます。CFGが1のとき、APGは画像を変えません。" },
+  "adjustment.apg_norm_threshold": { en: "Guidance norm threshold", ja: "補正量の上限" },
+  "adjustment.apg_norm_threshold.help": { en: "Limits the size of the guidance update. Set to 0 for no limit.", ja: "補正の大きさを抑えます。0にすると上限を設けません。" },
+  "adjustment.apg_momentum": { en: "Momentum", ja: "モメンタム" },
+  "adjustment.apg_momentum.help": { en: "Controls how much the previous step contributes. At 0, each step is independent.", ja: "前のステップの補正をどれだけ引き継ぐかを指定します。0なら引き継ぎません。" },
+  "adjustment.sag": { en: "SAG (self-attention guidance)", ja: "SAG（自己注意による生成補助）" },
+  "adjustment.freeu_b1": { en: "B1", ja: "B1" },
+  "adjustment.freeu_b2": { en: "B2", ja: "B2" },
+  "adjustment.freeu_s1": { en: "S1", ja: "S1" },
+  "adjustment.freeu_s2": { en: "S2", ja: "S2" },
+  "adjustment.sag_scale": { en: "Scale", ja: "補助の強さ（Scale）" },
+  "adjustment.sag_blur_sigma": { en: "Blur sigma", ja: "ぼかし幅（Blur Sigma）" },
+  "adjustment.freeu_b1.help": { en: "Changes how strongly the first decoder stage carries the overall structure.", ja: "1段目で、画像全体の形を作る特徴をどれだけ強めるかを調整します。" },
+  "adjustment.freeu_b2.help": { en: "Adjusts structural features in the next decoder stage as finer shapes emerge.", ja: "2段目で、より細かな形を組み立てる特徴の強さを調整します。" },
+  "adjustment.freeu_s1.help": { en: "Scales low-frequency detail passed into the first stage. This can change broad tonal contrasts.", ja: "1段目に引き継ぐ大まかな明暗の強さを変えます。" },
+  "adjustment.freeu_s2.help": { en: "Scales low-frequency detail passed into the second stage. This can change the balance of tones and texture.", ja: "2段目に引き継ぐ明暗を調整します。質感とのバランスが変わることがあります。" },
+  "adjustment.sag_scale.help": { en: "Weights the extra correction. Zero adds none; negative values reverse its direction.", ja: "補正を加える強さです。0では補正せず、負の値では逆方向に働きます。" },
+  "adjustment.sag_blur_sigma.help": { en: "Positive blur width for the internal comparison. This does not blur the final image.", ja: "補正の参考にする画像のぼかし幅です。0より大きい値を指定します。完成画像にぼかしをかける設定ではありません。" },
+  "adjustment.reset": { en: "Restore starting values", ja: "参考初期値に戻す" },
   "runtimePane.unmappedSettingsBlocked": {
     en: "These options are not available with the current model and generation engine.",
     ja: "現在のモデルと生成エンジンでは、この項目は使えません。"
@@ -4439,6 +4473,9 @@ const messages = {
   "runtimePane.promptReplaceHelp": { en: "Use old=>new, for example cat=>dog.", ja: "old=>new 形式で入力します。例: cat=>dog" },
   "runtimePane.loraWeightHelp": { en: "Use lora_name=weight, or just weight for the first active LoRA.", ja: "lora_name=weight、または先頭の有効LoRAなら weight だけで指定します。" },
   "runtimePane.numericValuesHelp": { en: "Use numeric values, one per line.", ja: "数値を1行に1つずつ入力します。" },
+  "runtimePane.xyzToggleHelp": { en: "Enter ON and OFF on separate lines to compare them.", ja: "ON と OFF を別々の行に入力すると、適用した画像と適用しない画像を比較できます。" },
+  "runtimePane.xyzAdjustmentHelp": { en: "Enter one number per line. The adjustment is enabled unless its ON / OFF axis says otherwise.", ja: "比較する数値を1行に1つずつ入力します。この機能は自動で有効になります。ON / OFF の軸も使う場合は、その軸の指定が優先されます。" },
+  "runtimePane.xyzAdjustmentInvalid": { en: "Check the axis values: use ON or OFF for switches and numbers for strengths. Blur width must be positive when SAG is on.", ja: "軸の値を確認してください。切り替えには ON または OFF、強さには数値を入力します。SAG を使う場合、ぼかし幅には0より大きい値が必要です。" },
   "runtimePane.catalogValuesHelp": { en: "Use values available in the current generation environment.", ja: "現在の生成環境で使える値を入力します。" },
   "runtimePane.removeAxis": { en: "Remove axis", ja: "軸を削除" },
   "runtimePane.addAxis": { en: "Add axis", ja: "軸を追加" },
@@ -4488,6 +4525,7 @@ const messages = {
   "runtimePane.resizeWidth": { en: "Resize width", ja: "Resize width" },
   "runtimePane.resizeHeight": { en: "Resize height", ja: "Resize height" },
   "runtimePane.hiresAdvanced": { en: "Hires advanced", ja: "Hires詳細設定" },
+  "runtimePane.hiwave": { en: "HiWave redraws overlapping areas of the enlarged image to refine detail. It takes longer than a single sampling pass.", ja: "HiWaveは、拡大した画像を重なりのある領域に分けて細部を描き直します。通常の描き直しより時間がかかります。" },
   "runtimePane.hiresCheckpoint": { en: "Hires checkpoint", ja: "Hires checkpoint" },
   "runtimePane.hiresDiffusionModel": { en: "Hires diffusion model", ja: "Hires diffusion model" },
   "runtimePane.useSameCheckpoint": { en: "Use same checkpoint", ja: "同じ checkpoint を使用" },
@@ -7543,7 +7581,7 @@ const useAsteriaI18n = () => {
     vocabularyTerm
   };
 };
-const _sfc_main$2P = /* @__PURE__ */ defineComponent({
+const _sfc_main$2Q = /* @__PURE__ */ defineComponent({
   __name: "AssetRefreshIndicator",
   __ssrInlineRender: true,
   props: {
@@ -7601,14 +7639,14 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const _sfc_setup$2P = _sfc_main$2P.setup;
-_sfc_main$2P.setup = (props, ctx) => {
+const _sfc_setup$2Q = _sfc_main$2Q.setup;
+_sfc_main$2Q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AssetRefreshIndicator.vue");
-  return _sfc_setup$2P ? _sfc_setup$2P(props, ctx) : void 0;
+  return _sfc_setup$2Q ? _sfc_setup$2Q(props, ctx) : void 0;
 };
-const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2P, [["__scopeId", "data-v-580e201b"]]), { __name: "StudioAssetRefreshIndicator" });
-const _sfc_main$2O = /* @__PURE__ */ defineComponent({
+const AssetRefreshIndicator = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2Q, [["__scopeId", "data-v-580e201b"]]), { __name: "StudioAssetRefreshIndicator" });
+const _sfc_main$2P = /* @__PURE__ */ defineComponent({
   __name: "GenerateActionStrip",
   __ssrInlineRender: true,
   props: {
@@ -7710,19 +7748,67 @@ const _sfc_main$2O = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2O = _sfc_main$2O.setup;
-_sfc_main$2O.setup = (props, ctx) => {
+const _sfc_setup$2P = _sfc_main$2P.setup;
+_sfc_main$2P.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerateActionStrip.vue");
-  return _sfc_setup$2O ? _sfc_setup$2O(props, ctx) : void 0;
+  return _sfc_setup$2P ? _sfc_setup$2P(props, ctx) : void 0;
 };
-const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2O, [["__scopeId", "data-v-8d0aef49"]]), { __name: "StudioGenerateActionStrip" });
+const GenerateActionStrip = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2P, [["__scopeId", "data-v-8d0aef49"]]), { __name: "StudioGenerateActionStrip" });
+const adjustmentDefaults = {
+  flux_true_cfg: 1,
+  freeu_enabled: false,
+  freeu_b1: 1.3,
+  freeu_b2: 1.4,
+  freeu_s1: 0.9,
+  freeu_s2: 0.2,
+  sag_enabled: false,
+  sag_scale: 0.5,
+  sag_blur_sigma: 2,
+  apg_enabled: false,
+  apg_eta: 0,
+  apg_norm_threshold: 0,
+  apg_momentum: 0,
+  ssg_enabled: false,
+  ssg_strength: null,
+  ssg_ratio: 0.2,
+  rega_enabled: false,
+  rega_gain: null,
+  rega_window: null
+};
+function adjustmentFamilies(profile) {
+  if (profile === "sdxl") return ["freeu", "sag", "apg", "rega", "ssg"];
+  if (["anima", "moss_image", "krea2"].includes(profile)) return ["sag", "apg", "rega", "ssg"];
+  if (profile === "flux1" || profile === "flux2") return ["sag", "apg", "rega", "ssg"];
+  return [];
+}
+const adjustmentKeys = Object.keys(adjustmentDefaults);
+const adjustmentBindings = Object.fromEntries(adjustmentKeys.map((key) => [key, key]));
+function initialSsgStrength(profile) {
+  return ["anima", "moss_image", "krea2", "flux1", "flux2"].includes(profile) ? 0.15 : 3;
+}
+const initialRegaGain = (profile) => ["flux1", "flux2", "moss_image", "krea2"].includes(profile) ? 5 : 10;
+function initialRegaWindow(profile) {
+  return ["anima", "moss_image", "krea2"].includes(profile) ? 0.04 : profile === "flux1" ? 13 / 28 : profile === "flux2" ? 0.5 : 0.52;
+}
+function adjustmentPreset(kind, state, profile) {
+  const data = Object.fromEntries(adjustmentKeys.filter((key) => key.startsWith(kind + "_") && state[key] != null).map((key) => [key, state[key]]));
+  if (kind === "ssg" && profile && typeof data.ssg_strength !== "number") data.ssg_strength = initialSsgStrength(profile);
+  if (kind === "rega" && profile && typeof data.rega_window !== "number") data.rega_window = initialRegaWindow(profile);
+  if (kind === "rega" && profile && typeof data.rega_gain !== "number") data.rega_gain = initialRegaGain(profile);
+  return data;
+}
+function adjustmentRequest(profile, state) {
+  return Object.assign(
+    ["flux1", "flux2"].includes(profile) ? { flux_true_cfg: state.flux_true_cfg ?? 1 } : {},
+    ...adjustmentFamilies(profile).map((kind) => adjustmentPreset(kind, state, profile))
+  );
+}
 const isBasicNativeImageProfile = (profile) => profile === "krea2" || profile === "moss_image";
 const nativeImageProfileReset = (profile) => isBasicNativeImageProfile(profile) ? {
   mode: "txt2img",
   runtime: "comfy_workflow",
   clipSkip: 1,
-  hiresEnabled: false,
   refinerEnabled: false,
   topazEnabled: false,
   restoreFaces: false,
@@ -8643,7 +8729,7 @@ const schedulerOptionsForProfile = (profile, runtimeOptions) => {
     fixed: false
   };
 };
-const xyzTargetForProfile = (profile, target) => profile === "flux2" && target === "scheduler" ? null : target;
+const xyzTargetForProfile = (profile, target) => profile === "flux2" && target === "scheduler" || adjustmentKeys.some((key) => key === target) && !adjustmentFamilies(profile).some((kind) => target.startsWith(kind + "_")) ? null : target;
 const negativePromptRuntimeSupport = (profile) => profile === "sdxl" || profile === "anima" || profile === "moss_image";
 const negativePromptValueForProfile = (profile, value) => profile === "krea2" || negativePromptRuntimeSupport(profile) ? value : "";
 const negativePromptTargetForProfile = (profile, target) => negativePromptRuntimeSupport(profile) || target !== "negative" ? target : "enhance";
@@ -8739,7 +8825,7 @@ const generationProfileFieldValues = (source, runtime) => {
   return {
     ...source,
     negativePrompt: negativePromptRuntimeSupport(source.profile) ? source.negativePrompt : "",
-    hiresEnabled: !native && source.hiresEnabled,
+    hiresEnabled: source.hiresEnabled,
     hiresCheckpoint: hires.modelOverride ? source.hiresCheckpoint : "Use same checkpoint",
     hiresPrompt: hires.promptOverride ? source.hiresPrompt : "",
     hiresNegativePrompt: hires.negativePromptOverride ? source.hiresNegativePrompt : "",
@@ -8824,6 +8910,25 @@ const compatibleSettingBindings = {
   restore_faces: "restoreFaces",
   tiling: "tiling",
   clip_skip: "clipSkip",
+  freeu_enabled: "freeu_enabled",
+  freeu_b1: "freeu_b1",
+  freeu_b2: "freeu_b2",
+  freeu_s1: "freeu_s1",
+  freeu_s2: "freeu_s2",
+  sag_enabled: "sag_enabled",
+  apg_enabled: "apg_enabled",
+  apg_eta: "apg_eta",
+  apg_norm_threshold: "apg_norm_threshold",
+  apg_momentum: "apg_momentum",
+  ssg_enabled: "ssg_enabled",
+  flux_true_cfg: "flux_true_cfg",
+  ssg_strength: "ssg_strength",
+  ssg_ratio: "ssg_ratio",
+  rega_enabled: "rega_enabled",
+  rega_gain: "rega_gain",
+  rega_window: "rega_window",
+  sag_scale: "sag_scale",
+  sag_blur_sigma: "sag_blur_sigma",
   refiner_enabled: "refinerEnabled",
   refiner_switch_at: "refinerSwitchAt",
   hires_enabled: "hiresEnabled",
@@ -9709,6 +9814,7 @@ const knownErrorCodeKeys = {
   xyz_precheck_contact_sheet_too_large: "merge.xyzEstimateBlocked",
   xyz_plot_cell_limit_exceeded: "generation.error.xyzPlotInvalid",
   xyz_axis_unsupported: "generation.error.xyzPlotInvalid",
+  xyz_adjustment_value_invalid: "runtimePane.xyzAdjustmentInvalid",
   xyz_prompt_replace_source_missing: "generation.error.xyzPromptSourceMissing",
   xyz_lora_weight_target_required: "generation.error.xyzPlotInvalid",
   missing_required_model_slots: "generation.error.missingModelSelection",
@@ -10923,6 +11029,7 @@ const controlNetModelSearchTerms = (preprocessor) => {
 const isImageOutput = (path) => /\.(png|jpe?g|webp)$/i.test(path);
 const firstImageOutput = (paths) => paths.find(isImageOutput) ?? "";
 const defaultBindings = {
+  ...adjustmentBindings,
   negative_prompt: "negativePrompt",
   steps: "steps",
   cfg_scale: "cfgScale",
@@ -11229,6 +11336,7 @@ const useGenerationStore = defineStore("generation", {
     tiling: false,
     vae: "Automatic",
     clipSkip: 2,
+    ...adjustmentDefaults,
     refinerEnabled: true,
     refinerCheckpoint: "",
     refinerSwitchAt: 0.8,
@@ -11921,6 +12029,7 @@ const useGenerationStore = defineStore("generation", {
             tiling: activeInputs.tiling,
             vae: this.vae,
             clip_skip: activeInputs.clipSkip,
+            ...adjustmentRequest(this.profile, this),
             refiner_enabled: activeInputs.refinerEnabled,
             refiner_checkpoint: activeInputs.refinerCheckpoint,
             refiner_switch_at: this.refinerSwitchAt,
@@ -12052,6 +12161,7 @@ const useGenerationStore = defineStore("generation", {
         tiling: activeInputs.tiling,
         vae: this.vae,
         clip_skip: activeInputs.clipSkip,
+        ...adjustmentRequest(this.profile, this),
         refiner_enabled: activeInputs.refinerEnabled,
         refiner_checkpoint: activeInputs.refinerCheckpoint,
         refiner_switch_at: this.refinerSwitchAt,
@@ -13007,6 +13117,7 @@ const useGenerationStore = defineStore("generation", {
         tiling: this.tiling,
         vae: this.vae,
         clip_skip: this.clipSkip,
+        ...adjustmentRequest(this.profile, this),
         init_image_path: this.initImagePath,
         image_edit_lineage: this.imageEditLineage,
         mask_image_path: this.maskImagePath,
@@ -13094,7 +13205,7 @@ const useGenerationStore = defineStore("generation", {
           return null;
         }
       }
-      const data = kind === "controlnet" ? { controlnet_units: this.controlNetUnits } : kind === "detailer" ? { detailer_units: this.detailerUnits } : kind === "topaz" ? {
+      const data = kind === "freeu" || kind === "sag" || kind === "apg" || kind === "rega" || kind === "ssg" ? adjustmentPreset(kind, this, this.profile) : kind === "controlnet" ? { controlnet_units: this.controlNetUnits } : kind === "detailer" ? { detailer_units: this.detailerUnits } : kind === "topaz" ? {
         topaz_enabled: this.topazEnabled,
         topaz_lighting: this.topazLighting,
         topaz_color: this.topazColor,
@@ -13173,6 +13284,11 @@ const useGenerationStore = defineStore("generation", {
     },
     async applyStudioPreset(preset, onError) {
       try {
+        if (preset.kind === "freeu" || preset.kind === "sag" || preset.kind === "apg" || preset.kind === "rega" || preset.kind === "ssg") {
+          this.applySettings(adjustmentPreset(preset.kind, preset.data));
+          return;
+        }
+        if (preset.kind === "generation") Object.assign(this, adjustmentDefaults);
         const {
           prompt,
           prompt_input: promptInput,
@@ -13359,6 +13475,7 @@ const useGenerationStore = defineStore("generation", {
         blockWeightPreset: lora.blockWeightPreset ?? lora.block_weight_preset ?? "",
         hierarchyMode: lora.hierarchyMode ?? lora.hierarchy_mode ?? "chain"
       }));
+      Object.assign(this, adjustmentDefaults);
       this.applySettings(item.settings);
       if (xyzInput) {
         this.promptPins = null;
@@ -13378,7 +13495,7 @@ const useGenerationStore = defineStore("generation", {
     }
   }
 });
-const _sfc_main$2N = /* @__PURE__ */ defineComponent({
+const _sfc_main$2O = /* @__PURE__ */ defineComponent({
   __name: "PromptChoicesPreview",
   __ssrInlineRender: true,
   setup(__props) {
@@ -13433,13 +13550,13 @@ const _sfc_main$2N = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2N = _sfc_main$2N.setup;
-_sfc_main$2N.setup = (props, ctx) => {
+const _sfc_setup$2O = _sfc_main$2O.setup;
+_sfc_main$2O.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptChoicesPreview.vue");
-  return _sfc_setup$2N ? _sfc_setup$2N(props, ctx) : void 0;
+  return _sfc_setup$2O ? _sfc_setup$2O(props, ctx) : void 0;
 };
-const PromptChoicesPreview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2N, [["__scopeId", "data-v-848bf7df"]]), { __name: "StudioPromptChoicesPreview" });
+const PromptChoicesPreview = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2O, [["__scopeId", "data-v-848bf7df"]]), { __name: "StudioPromptChoicesPreview" });
 async function sha256Hex(bytes) {
   const subtle = globalThis.crypto?.subtle;
   const digest = subtle ? new Uint8Array(await subtle.digest("SHA-256", bytes)) : (await import('@noble/hashes/sha2.js')).sha256(
@@ -13779,7 +13896,7 @@ const adjustPromptWeight = (value, selectionStart, selectionEnd, direction) => {
   }
   return replacePromptSelection(value, span.start, span.end, replacement);
 };
-const _sfc_main$2M = /* @__PURE__ */ defineComponent({
+const _sfc_main$2N = /* @__PURE__ */ defineComponent({
   __name: "ProgressiveResourceList",
   __ssrInlineRender: true,
   props: {
@@ -13822,14 +13939,14 @@ const _sfc_main$2M = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2M = _sfc_main$2M.setup;
-_sfc_main$2M.setup = (props, ctx) => {
+const _sfc_setup$2N = _sfc_main$2N.setup;
+_sfc_main$2N.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ProgressiveResourceList.vue");
-  return _sfc_setup$2M ? _sfc_setup$2M(props, ctx) : void 0;
+  return _sfc_setup$2N ? _sfc_setup$2N(props, ctx) : void 0;
 };
-const ProgressiveResourceList = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2M, [["__scopeId", "data-v-83df5fe9"]]), { __name: "StudioGenerateProgressiveResourceList" });
-const _sfc_main$2L = /* @__PURE__ */ defineComponent({
+const ProgressiveResourceList = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2N, [["__scopeId", "data-v-83df5fe9"]]), { __name: "StudioGenerateProgressiveResourceList" });
+const _sfc_main$2M = /* @__PURE__ */ defineComponent({
   __name: "StyleChain",
   __ssrInlineRender: true,
   props: {
@@ -14014,14 +14131,14 @@ const _sfc_main$2L = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2L = _sfc_main$2L.setup;
-_sfc_main$2L.setup = (props, ctx) => {
+const _sfc_setup$2M = _sfc_main$2M.setup;
+_sfc_main$2M.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/StyleChain.vue");
-  return _sfc_setup$2L ? _sfc_setup$2L(props, ctx) : void 0;
+  return _sfc_setup$2M ? _sfc_setup$2M(props, ctx) : void 0;
 };
-const StyleChain = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2L, [["__scopeId", "data-v-67132c72"]]), { __name: "StudioStyleChain" });
-const _sfc_main$2K = /* @__PURE__ */ defineComponent({
+const StyleChain = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2M, [["__scopeId", "data-v-67132c72"]]), { __name: "StudioStyleChain" });
+const _sfc_main$2L = /* @__PURE__ */ defineComponent({
   __name: "AdvancedStylesPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -14110,13 +14227,13 @@ const _sfc_main$2K = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2K = _sfc_main$2K.setup;
-_sfc_main$2K.setup = (props, ctx) => {
+const _sfc_setup$2L = _sfc_main$2L.setup;
+_sfc_main$2L.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AdvancedStylesPanel.vue");
-  return _sfc_setup$2K ? _sfc_setup$2K(props, ctx) : void 0;
+  return _sfc_setup$2L ? _sfc_setup$2L(props, ctx) : void 0;
 };
-const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2K, [["__scopeId", "data-v-c7e97ed2"]]), { __name: "StudioAdvancedStylesPanel" });
+const AdvancedStylesPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2L, [["__scopeId", "data-v-c7e97ed2"]]), { __name: "StudioAdvancedStylesPanel" });
 function useGenerationLoraSettings() {
   const generation = useGenerationStore();
   const models = useModelDependenciesStore();
@@ -14221,7 +14338,7 @@ function useGenerationLoraSettings() {
   };
   return { rows, find, appendPrompt, setWeight, setBlock, setHierarchy, setEnabled, remove };
 }
-const _sfc_main$2J = /* @__PURE__ */ defineComponent({
+const _sfc_main$2K = /* @__PURE__ */ defineComponent({
   __name: "SelectedLoRAStack",
   __ssrInlineRender: true,
   props: {
@@ -14514,14 +14631,14 @@ const _sfc_main$2J = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2J = _sfc_main$2J.setup;
-_sfc_main$2J.setup = (props, ctx) => {
+const _sfc_setup$2K = _sfc_main$2K.setup;
+_sfc_main$2K.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/SelectedLoRAStack.vue");
-  return _sfc_setup$2J ? _sfc_setup$2J(props, ctx) : void 0;
+  return _sfc_setup$2K ? _sfc_setup$2K(props, ctx) : void 0;
 };
-const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2J, [["__scopeId", "data-v-b2756315"]]), { __name: "StudioSelectedLoRAStack" });
-const _sfc_main$2I = /* @__PURE__ */ defineComponent({
+const SelectedLoRAStack = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2K, [["__scopeId", "data-v-b2756315"]]), { __name: "StudioSelectedLoRAStack" });
+const _sfc_main$2J = /* @__PURE__ */ defineComponent({
   __name: "LoRABrowser",
   __ssrInlineRender: true,
   props: {
@@ -14656,14 +14773,14 @@ const _sfc_main$2I = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2I = _sfc_main$2I.setup;
-_sfc_main$2I.setup = (props, ctx) => {
+const _sfc_setup$2J = _sfc_main$2J.setup;
+_sfc_main$2J.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/LoRABrowser.vue");
-  return _sfc_setup$2I ? _sfc_setup$2I(props, ctx) : void 0;
+  return _sfc_setup$2J ? _sfc_setup$2J(props, ctx) : void 0;
 };
-const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2I, [["__scopeId", "data-v-d60b04bc"]]), { __name: "StudioLoRABrowser" });
-const _sfc_main$2H = /* @__PURE__ */ defineComponent({
+const LoRABrowser = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2J, [["__scopeId", "data-v-d60b04bc"]]), { __name: "StudioLoRABrowser" });
+const _sfc_main$2I = /* @__PURE__ */ defineComponent({
   __name: "PromptAssetsDrawer",
   __ssrInlineRender: true,
   props: {
@@ -14717,14 +14834,14 @@ const _sfc_main$2H = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2H = _sfc_main$2H.setup;
-_sfc_main$2H.setup = (props, ctx) => {
+const _sfc_setup$2I = _sfc_main$2I.setup;
+_sfc_main$2I.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptAssetsDrawer.vue");
-  return _sfc_setup$2H ? _sfc_setup$2H(props, ctx) : void 0;
+  return _sfc_setup$2I ? _sfc_setup$2I(props, ctx) : void 0;
 };
-const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2H, [["__scopeId", "data-v-af30c1ba"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
-const _sfc_main$2G = /* @__PURE__ */ defineComponent({
+const PromptAssetsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2I, [["__scopeId", "data-v-af30c1ba"]]), { __name: "StudioGeneratePromptAssetsDrawer" });
+const _sfc_main$2H = /* @__PURE__ */ defineComponent({
   __name: "PromptSectionsEditor",
   __ssrInlineRender: true,
   props: {
@@ -14766,13 +14883,13 @@ const _sfc_main$2G = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2G = _sfc_main$2G.setup;
-_sfc_main$2G.setup = (props, ctx) => {
+const _sfc_setup$2H = _sfc_main$2H.setup;
+_sfc_main$2H.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptSectionsEditor.vue");
-  return _sfc_setup$2G ? _sfc_setup$2G(props, ctx) : void 0;
+  return _sfc_setup$2H ? _sfc_setup$2H(props, ctx) : void 0;
 };
-const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2G, [["__scopeId", "data-v-b5d45062"]]), { __name: "StudioGeneratePromptSectionsEditor" });
+const PromptSectionsEditor = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2H, [["__scopeId", "data-v-b5d45062"]]), { __name: "StudioGeneratePromptSectionsEditor" });
 const useAppSettingsStore = defineStore("appSettings", {
   state: () => ({
     outputRoot: "",
@@ -14982,7 +15099,7 @@ const usePromptMaterialsStore = defineStore("prompt-materials", {
     }
   }
 });
-const _sfc_main$2F = /* @__PURE__ */ defineComponent({
+const _sfc_main$2G = /* @__PURE__ */ defineComponent({
   __name: "PromptWorkshopPanel",
   __ssrInlineRender: true,
   props: {
@@ -15126,14 +15243,14 @@ const _sfc_main$2F = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2F = _sfc_main$2F.setup;
-_sfc_main$2F.setup = (props, ctx) => {
+const _sfc_setup$2G = _sfc_main$2G.setup;
+_sfc_main$2G.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptWorkshopPanel.vue");
-  return _sfc_setup$2F ? _sfc_setup$2F(props, ctx) : void 0;
+  return _sfc_setup$2G ? _sfc_setup$2G(props, ctx) : void 0;
 };
-const PromptWorkshopPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2F, [["__scopeId", "data-v-d9dd8e6e"]]), { __name: "StudioGeneratePromptWorkshopPanel" });
-const _sfc_main$2E = /* @__PURE__ */ defineComponent({
+const PromptWorkshopPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2G, [["__scopeId", "data-v-d9dd8e6e"]]), { __name: "StudioGeneratePromptWorkshopPanel" });
+const _sfc_main$2F = /* @__PURE__ */ defineComponent({
   __name: "PromptMaterialsPanel",
   __ssrInlineRender: true,
   emits: ["scene"],
@@ -15306,13 +15423,13 @@ const _sfc_main$2E = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2E = _sfc_main$2E.setup;
-_sfc_main$2E.setup = (props, ctx) => {
+const _sfc_setup$2F = _sfc_main$2F.setup;
+_sfc_main$2F.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptMaterialsPanel.vue");
-  return _sfc_setup$2E ? _sfc_setup$2E(props, ctx) : void 0;
+  return _sfc_setup$2F ? _sfc_setup$2F(props, ctx) : void 0;
 };
-const PromptMaterialsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2E, [["__scopeId", "data-v-14403795"]]), { __name: "StudioGeneratePromptMaterialsPanel" });
+const PromptMaterialsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2F, [["__scopeId", "data-v-14403795"]]), { __name: "StudioGeneratePromptMaterialsPanel" });
 const modeSourceState = (mode, initImagePath, maskImagePath) => {
   if (mode === "txt2img") {
     return "not-required";
@@ -15336,7 +15453,7 @@ const modeSourceSummaryKey = (state) => ({
   "mask-ready": "modeSource.maskReady"
 })[state];
 const modeSourceSummary = (mode, initImagePath, maskImagePath, translate) => `${mode} · ${translate(modeSourceSummaryKey(modeSourceState(mode, initImagePath, maskImagePath)))}`;
-const _sfc_main$2D = /* @__PURE__ */ defineComponent({
+const _sfc_main$2E = /* @__PURE__ */ defineComponent({
   __name: "AppliedGenerationSummary",
   __ssrInlineRender: true,
   setup(__props) {
@@ -15379,14 +15496,14 @@ const _sfc_main$2D = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2D = _sfc_main$2D.setup;
-_sfc_main$2D.setup = (props, ctx) => {
+const _sfc_setup$2E = _sfc_main$2E.setup;
+_sfc_main$2E.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/AppliedGenerationSummary.vue");
-  return _sfc_setup$2D ? _sfc_setup$2D(props, ctx) : void 0;
+  return _sfc_setup$2E ? _sfc_setup$2E(props, ctx) : void 0;
 };
-const AppliedGenerationSummary = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2D, [["__scopeId", "data-v-c3dcf6c2"]]), { __name: "StudioGenerateAppliedGenerationSummary" });
-const _sfc_main$2C = /* @__PURE__ */ defineComponent({
+const AppliedGenerationSummary = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2E, [["__scopeId", "data-v-c3dcf6c2"]]), { __name: "StudioGenerateAppliedGenerationSummary" });
+const _sfc_main$2D = /* @__PURE__ */ defineComponent({
   __name: "GenerationPresetBar",
   __ssrInlineRender: true,
   props: {
@@ -15450,14 +15567,14 @@ const _sfc_main$2C = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2C = _sfc_main$2C.setup;
-_sfc_main$2C.setup = (props, ctx) => {
+const _sfc_setup$2D = _sfc_main$2D.setup;
+_sfc_main$2D.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationPresetBar.vue");
-  return _sfc_setup$2C ? _sfc_setup$2C(props, ctx) : void 0;
+  return _sfc_setup$2D ? _sfc_setup$2D(props, ctx) : void 0;
 };
-const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2C, [["__scopeId", "data-v-63133139"]]), { __name: "StudioGenerateGenerationPresetBar" });
-const _sfc_main$2B = /* @__PURE__ */ defineComponent({
+const GenerationPresetBar = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2D, [["__scopeId", "data-v-63133139"]]), { __name: "StudioGenerateGenerationPresetBar" });
+const _sfc_main$2C = /* @__PURE__ */ defineComponent({
   __name: "PromptPane",
   __ssrInlineRender: true,
   props: {
@@ -16645,13 +16762,13 @@ ${generation.negativePrompt}`;
     };
   }
 });
-const _sfc_setup$2B = _sfc_main$2B.setup;
-_sfc_main$2B.setup = (props, ctx) => {
+const _sfc_setup$2C = _sfc_main$2C.setup;
+_sfc_main$2C.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptPane.vue");
-  return _sfc_setup$2B ? _sfc_setup$2B(props, ctx) : void 0;
+  return _sfc_setup$2C ? _sfc_setup$2C(props, ctx) : void 0;
 };
-const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2B, [["__scopeId", "data-v-ac7da456"]]), { __name: "StudioPromptPane" });
+const PromptPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2C, [["__scopeId", "data-v-ac7da456"]]), { __name: "StudioPromptPane" });
 const normalizeEagleFolderSelection = (folders, selectedId) => selectedId && folders.some((folder) => folder.id === selectedId) ? selectedId : "";
 const errorMessage$2 = (error) => {
   return userFacingErrorMessage(error, "common.error.external");
@@ -16957,7 +17074,7 @@ const useExternalIntegrationsStore = defineStore("externalIntegrations", {
     }
   }
 });
-const _sfc_main$2A = /* @__PURE__ */ defineComponent({
+const _sfc_main$2B = /* @__PURE__ */ defineComponent({
   __name: "EagleFolderSelect",
   __ssrInlineRender: true,
   props: {
@@ -17069,13 +17186,13 @@ const _sfc_main$2A = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2A = _sfc_main$2A.setup;
-_sfc_main$2A.setup = (props, ctx) => {
+const _sfc_setup$2B = _sfc_main$2B.setup;
+_sfc_main$2B.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/EagleFolderSelect.vue");
-  return _sfc_setup$2A ? _sfc_setup$2A(props, ctx) : void 0;
+  return _sfc_setup$2B ? _sfc_setup$2B(props, ctx) : void 0;
 };
-const __nuxt_component_0$1 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2A, [["__scopeId", "data-v-5f988f5a"]]), { __name: "StudioEagleFolderSelect" });
+const __nuxt_component_0$1 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2B, [["__scopeId", "data-v-5f988f5a"]]), { __name: "StudioEagleFolderSelect" });
 const object$1 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 const list = (value) => Array.isArray(value) ? value : [];
 const string = (value) => typeof value === "string" ? value : "";
@@ -17125,7 +17242,7 @@ function promptInterpretation(settings) {
   }));
   return { partial: Boolean(settings.prompt_execution_truncated) || records.some((x) => x.status === "partial"), encodings };
 }
-const _sfc_main$2z = /* @__PURE__ */ defineComponent({
+const _sfc_main$2A = /* @__PURE__ */ defineComponent({
   __name: "PromptInterpretation",
   __ssrInlineRender: true,
   props: {
@@ -17250,14 +17367,14 @@ const _sfc_main$2z = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2z = _sfc_main$2z.setup;
-_sfc_main$2z.setup = (props, ctx) => {
+const _sfc_setup$2A = _sfc_main$2A.setup;
+_sfc_main$2A.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/PromptInterpretation.vue");
-  return _sfc_setup$2z ? _sfc_setup$2z(props, ctx) : void 0;
+  return _sfc_setup$2A ? _sfc_setup$2A(props, ctx) : void 0;
 };
-const PromptInterpretation = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2z, [["__scopeId", "data-v-8bdc27f8"]]), { __name: "StudioPromptInterpretation" });
-const _sfc_main$2y = /* @__PURE__ */ defineComponent({
+const PromptInterpretation = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2A, [["__scopeId", "data-v-8bdc27f8"]]), { __name: "StudioPromptInterpretation" });
+const _sfc_main$2z = /* @__PURE__ */ defineComponent({
   __name: "GenerationReproduction",
   __ssrInlineRender: true,
   props: {
@@ -17368,13 +17485,13 @@ const _sfc_main$2y = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2y = _sfc_main$2y.setup;
-_sfc_main$2y.setup = (props, ctx) => {
+const _sfc_setup$2z = _sfc_main$2z.setup;
+_sfc_main$2z.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerationReproduction.vue");
-  return _sfc_setup$2y ? _sfc_setup$2y(props, ctx) : void 0;
+  return _sfc_setup$2z ? _sfc_setup$2z(props, ctx) : void 0;
 };
-const GenerationReproduction = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2y, [["__scopeId", "data-v-e46e885e"]]), { __name: "StudioGenerationReproduction" });
+const GenerationReproduction = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2z, [["__scopeId", "data-v-e46e885e"]]), { __name: "StudioGenerationReproduction" });
 const notSent = () => ({ status: "not_sent", createdAt: "", folderId: "" });
 const normalizedArtifactPath = (path) => path.trim().replace(/\\/g, "/").replace(/\/{2,}/g, "/").toLocaleLowerCase();
 const resolveEagleRegistration = (settings, selectedPath, selectedSha256 = "") => {
@@ -17407,7 +17524,7 @@ const imageHistoryProfileOptions = [
   { id: "krea2", label: "Krea 2 Turbo" },
   { id: "moss_image", label: "MOSS-Image SFT" }
 ];
-const _sfc_main$2x = /* @__PURE__ */ defineComponent({
+const _sfc_main$2y = /* @__PURE__ */ defineComponent({
   __name: "HistoryPanel",
   __ssrInlineRender: true,
   emits: ["openImage"],
@@ -17594,13 +17711,13 @@ const _sfc_main$2x = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2x = _sfc_main$2x.setup;
-_sfc_main$2x.setup = (props, ctx) => {
+const _sfc_setup$2y = _sfc_main$2y.setup;
+_sfc_main$2y.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/HistoryPanel.vue");
-  return _sfc_setup$2x ? _sfc_setup$2x(props, ctx) : void 0;
+  return _sfc_setup$2y ? _sfc_setup$2y(props, ctx) : void 0;
 };
-const HistoryPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2x, [["__scopeId", "data-v-eaa67783"]]), { __name: "StudioHistoryPanel" });
+const HistoryPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2y, [["__scopeId", "data-v-eaa67783"]]), { __name: "StudioHistoryPanel" });
 const object = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 function makingVideo(item) {
   const settings = item.settings ?? {};
@@ -17624,7 +17741,7 @@ function makingVideo(item) {
   };
 }
 const makingArtifactUrl = (base, id, artifact, download = false) => `${base}/api/generations/history/${id}/artifacts/${encodeURIComponent(artifact)}${download ? "?download=true" : ""}`;
-const _sfc_main$2w = /* @__PURE__ */ defineComponent({
+const _sfc_main$2x = /* @__PURE__ */ defineComponent({
   __name: "MakingVideo",
   __ssrInlineRender: true,
   props: {
@@ -17683,13 +17800,13 @@ const _sfc_main$2w = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2w = _sfc_main$2w.setup;
-_sfc_main$2w.setup = (props, ctx) => {
+const _sfc_setup$2x = _sfc_main$2x.setup;
+_sfc_main$2x.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/MakingVideo.vue");
-  return _sfc_setup$2w ? _sfc_setup$2w(props, ctx) : void 0;
+  return _sfc_setup$2x ? _sfc_setup$2x(props, ctx) : void 0;
 };
-const MakingVideo = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2w, [["__scopeId", "data-v-d1463e28"]]), { __name: "StudioMakingVideo" });
+const MakingVideo = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2x, [["__scopeId", "data-v-d1463e28"]]), { __name: "StudioMakingVideo" });
 function branchInfo(item) {
   const value = item.settings?.generation_branch;
   const receipt = value && typeof value === "object" ? value : {};
@@ -17705,7 +17822,7 @@ function branchInfo(item) {
 function branchCaptureSupported(state) {
   return ["sdxl", "anima"].includes(state.profile) && state.mode === "txt2img" && state.batchSize === 1 && state.batchCount === 1 && state.steps > 1 && ["Euler", "Euler a", "DPM++ 2M", "DPM++ 2M SDE", "DPM++ 3M SDE", "ER SDE"].includes(state.sampler);
 }
-const _sfc_main$2v = /* @__PURE__ */ defineComponent({
+const _sfc_main$2w = /* @__PURE__ */ defineComponent({
   __name: "GenerationBranch",
   __ssrInlineRender: true,
   props: {
@@ -17776,13 +17893,13 @@ const _sfc_main$2v = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2v = _sfc_main$2v.setup;
-_sfc_main$2v.setup = (props, ctx) => {
+const _sfc_setup$2w = _sfc_main$2w.setup;
+_sfc_main$2w.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/GenerationBranch.vue");
-  return _sfc_setup$2v ? _sfc_setup$2v(props, ctx) : void 0;
+  return _sfc_setup$2w ? _sfc_setup$2w(props, ctx) : void 0;
 };
-const GenerationBranch = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2v, [["__scopeId", "data-v-6d56ca5a"]]), { __name: "StudioGenerationBranch" });
+const GenerationBranch = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2w, [["__scopeId", "data-v-6d56ca5a"]]), { __name: "StudioGenerationBranch" });
 const wordMaskInfo = (item) => {
   const record = item.settings?.word_masks;
   return { available: record?.status === "recorded", failed: record?.status === "not_saved" };
@@ -17791,7 +17908,7 @@ const wordLabel = (column) => {
   const values2 = Object.values(column.labels);
   return new Set(values2).size === 1 ? values2[0] ?? "" : Object.entries(column.labels).map(([encoder, text]) => `${encoder.toUpperCase()}: ${text}`).join(" / ");
 };
-const _sfc_main$2u = /* @__PURE__ */ defineComponent({
+const _sfc_main$2v = /* @__PURE__ */ defineComponent({
   __name: "WordMaskEdit",
   __ssrInlineRender: true,
   props: {
@@ -17896,13 +18013,13 @@ const _sfc_main$2u = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2u = _sfc_main$2u.setup;
-_sfc_main$2u.setup = (props, ctx) => {
+const _sfc_setup$2v = _sfc_main$2v.setup;
+_sfc_main$2v.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/WordMaskEdit.vue");
-  return _sfc_setup$2u ? _sfc_setup$2u(props, ctx) : void 0;
+  return _sfc_setup$2v ? _sfc_setup$2v(props, ctx) : void 0;
 };
-const WordMaskEdit = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2u, [["__scopeId", "data-v-33b8a7ad"]]), { __name: "StudioWordMaskEdit" });
+const WordMaskEdit = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2v, [["__scopeId", "data-v-33b8a7ad"]]), { __name: "StudioWordMaskEdit" });
 const showGenerationProgress = (status, imageCheckStatus) => Boolean(status) && (status !== "completed" || imageCheckStatus === "unknown" || imageCheckStatus === "reject");
 const savedText = (value) => typeof value === "string" ? value.trim() : "";
 const storedGenerationModel = (result) => {
@@ -17919,7 +18036,7 @@ const storedGenerationModel = (result) => {
 };
 const storedGenerationCreatedAt = (result, history) => savedText(result.created_at) || savedText(history.find((item) => item.id === result.id && result.id != null)?.created_at) || "—";
 const loadedGenerationSize = (image) => image?.complete && image.naturalWidth > 0 && image.naturalHeight > 0 ? `${image.naturalWidth} × ${image.naturalHeight}` : "—";
-const _sfc_main$2t = /* @__PURE__ */ defineComponent({
+const _sfc_main$2u = /* @__PURE__ */ defineComponent({
   __name: "ResultPane",
   __ssrInlineRender: true,
   emits: ["openImage", "openImageMask", "openDetails", "openSettings"],
@@ -18282,14 +18399,14 @@ const _sfc_main$2t = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2t = _sfc_main$2t.setup;
-_sfc_main$2t.setup = (props, ctx) => {
+const _sfc_setup$2u = _sfc_main$2u.setup;
+_sfc_main$2u.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ResultPane.vue");
-  return _sfc_setup$2t ? _sfc_setup$2t(props, ctx) : void 0;
+  return _sfc_setup$2u ? _sfc_setup$2u(props, ctx) : void 0;
 };
-const ResultPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2t, [["__scopeId", "data-v-83e3ca60"]]), { __name: "StudioResultPane" });
-const _sfc_main$2s = /* @__PURE__ */ defineComponent({
+const ResultPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2u, [["__scopeId", "data-v-83e3ca60"]]), { __name: "StudioResultPane" });
+const _sfc_main$2t = /* @__PURE__ */ defineComponent({
   __name: "AnimaLLLitePanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -18369,14 +18486,14 @@ const _sfc_main$2s = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2s = _sfc_main$2s.setup;
-_sfc_main$2s.setup = (props, ctx) => {
+const _sfc_setup$2t = _sfc_main$2t.setup;
+_sfc_main$2t.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/AnimaLLLitePanel.vue");
-  return _sfc_setup$2s ? _sfc_setup$2s(props, ctx) : void 0;
+  return _sfc_setup$2t ? _sfc_setup$2t(props, ctx) : void 0;
 };
-const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2s, [["__scopeId", "data-v-604b2c4b"]]), { __name: "StudioAnimaLLLitePanel" });
-const _sfc_main$2r = /* @__PURE__ */ defineComponent({
+const AnimaLLLitePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2t, [["__scopeId", "data-v-604b2c4b"]]), { __name: "StudioAnimaLLLitePanel" });
+const _sfc_main$2s = /* @__PURE__ */ defineComponent({
   __name: "ControlNetPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -18534,14 +18651,14 @@ const _sfc_main$2r = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2r = _sfc_main$2r.setup;
-_sfc_main$2r.setup = (props, ctx) => {
+const _sfc_setup$2s = _sfc_main$2s.setup;
+_sfc_main$2s.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/ControlNetPanel.vue");
-  return _sfc_setup$2r ? _sfc_setup$2r(props, ctx) : void 0;
+  return _sfc_setup$2s ? _sfc_setup$2s(props, ctx) : void 0;
 };
-const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2r, [["__scopeId", "data-v-2bc37f6c"]]), { __name: "StudioControlNetPanel" });
-const _sfc_main$2q = /* @__PURE__ */ defineComponent({
+const ControlNetPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2s, [["__scopeId", "data-v-2bc37f6c"]]), { __name: "StudioControlNetPanel" });
+const _sfc_main$2r = /* @__PURE__ */ defineComponent({
   __name: "DetailerPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -18688,14 +18805,14 @@ const _sfc_main$2q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2q = _sfc_main$2q.setup;
-_sfc_main$2q.setup = (props, ctx) => {
+const _sfc_setup$2r = _sfc_main$2r.setup;
+_sfc_main$2r.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/DetailerPanel.vue");
-  return _sfc_setup$2q ? _sfc_setup$2q(props, ctx) : void 0;
+  return _sfc_setup$2r ? _sfc_setup$2r(props, ctx) : void 0;
 };
-const DetailerPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2q, [["__scopeId", "data-v-dc3a27e2"]]), { __name: "StudioDetailerPanel" });
-const _sfc_main$2p = /* @__PURE__ */ defineComponent({
+const DetailerPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2r, [["__scopeId", "data-v-dc3a27e2"]]), { __name: "StudioDetailerPanel" });
+const _sfc_main$2q = /* @__PURE__ */ defineComponent({
   __name: "ControlModulesInspector",
   __ssrInlineRender: true,
   props: {
@@ -18788,14 +18905,14 @@ const _sfc_main$2p = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2p = _sfc_main$2p.setup;
-_sfc_main$2p.setup = (props, ctx) => {
+const _sfc_setup$2q = _sfc_main$2q.setup;
+_sfc_main$2q.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ControlModulesInspector.vue");
-  return _sfc_setup$2p ? _sfc_setup$2p(props, ctx) : void 0;
+  return _sfc_setup$2q ? _sfc_setup$2q(props, ctx) : void 0;
 };
-const ControlModulesInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2p, [["__scopeId", "data-v-dea710b3"]]), { __name: "StudioGenerateControlModulesInspector" });
-const _sfc_main$2o = /* @__PURE__ */ defineComponent({
+const ControlModulesInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2q, [["__scopeId", "data-v-dea710b3"]]), { __name: "StudioGenerateControlModulesInspector" });
+const _sfc_main$2p = /* @__PURE__ */ defineComponent({
   __name: "EnhancementInspector",
   __ssrInlineRender: true,
   props: {
@@ -18824,14 +18941,14 @@ const _sfc_main$2o = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2o = _sfc_main$2o.setup;
-_sfc_main$2o.setup = (props, ctx) => {
+const _sfc_setup$2p = _sfc_main$2p.setup;
+_sfc_main$2p.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/EnhancementInspector.vue");
-  return _sfc_setup$2o ? _sfc_setup$2o(props, ctx) : void 0;
+  return _sfc_setup$2p ? _sfc_setup$2p(props, ctx) : void 0;
 };
-const EnhancementInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2o, [["__scopeId", "data-v-4235174e"]]), { __name: "StudioGenerateEnhancementInspector" });
-const _sfc_main$2n = /* @__PURE__ */ defineComponent({
+const EnhancementInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2p, [["__scopeId", "data-v-4235174e"]]), { __name: "StudioGenerateEnhancementInspector" });
+const _sfc_main$2o = /* @__PURE__ */ defineComponent({
   __name: "RemasterSettingsPanel",
   __ssrInlineRender: true,
   props: {
@@ -18894,13 +19011,13 @@ const _sfc_main$2n = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2n = _sfc_main$2n.setup;
-_sfc_main$2n.setup = (props, ctx) => {
+const _sfc_setup$2o = _sfc_main$2o.setup;
+_sfc_main$2o.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RemasterSettingsPanel.vue");
-  return _sfc_setup$2n ? _sfc_setup$2n(props, ctx) : void 0;
+  return _sfc_setup$2o ? _sfc_setup$2o(props, ctx) : void 0;
 };
-const RemasterSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2n, [["__scopeId", "data-v-f7e129f9"]]), { __name: "StudioRemasterSettingsPanel" });
+const RemasterSettingsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2o, [["__scopeId", "data-v-f7e129f9"]]), { __name: "StudioRemasterSettingsPanel" });
 const comparisonIsActive = (status) => ["queued", "running"].includes(status);
 const comparisonPair = (plan, pair) => (plan.display_orders[pair] ?? []).map((arm) => plan.cells.find((cell) => cell.pair === pair && cell.arm === arm)).filter((cell) => Boolean(cell));
 const comparisonImage = (cell) => cell.output_paths?.filter((path) => /\.(png|jpe?g|webp|avif)$/i.test(path)).at(-1) ?? "";
@@ -19376,7 +19493,7 @@ const useImageLibraryStore = defineStore("imageLibrary", {
     }
   }
 });
-const _sfc_main$2m = /* @__PURE__ */ defineComponent({
+const _sfc_main$2n = /* @__PURE__ */ defineComponent({
   __name: "PromptComparisonPanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -19586,14 +19703,14 @@ const _sfc_main$2m = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2m = _sfc_main$2m.setup;
-_sfc_main$2m.setup = (props, ctx) => {
+const _sfc_setup$2n = _sfc_main$2n.setup;
+_sfc_main$2n.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/PromptComparisonPanel.vue");
-  return _sfc_setup$2m ? _sfc_setup$2m(props, ctx) : void 0;
+  return _sfc_setup$2n ? _sfc_setup$2n(props, ctx) : void 0;
 };
-const PromptComparisonPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2m, [["__scopeId", "data-v-40c37791"]]), { __name: "StudioGeneratePromptComparisonPanel" });
-const _sfc_main$2l = /* @__PURE__ */ defineComponent({
+const PromptComparisonPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2n, [["__scopeId", "data-v-40c37791"]]), { __name: "StudioGeneratePromptComparisonPanel" });
+const _sfc_main$2m = /* @__PURE__ */ defineComponent({
   __name: "ExpertToolsInspector",
   __ssrInlineRender: true,
   setup(__props) {
@@ -19617,60 +19734,73 @@ const _sfc_main$2l = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "expert-tools-inspector",
         "aria-label": unref(t)("expertTools.title")
-      }, _attrs))} data-v-c0a471d1><div class="expert-tools-inspector__selector" data-v-c0a471d1><!--[-->`);
+      }, _attrs))} data-v-f1ae86bb><div class="expert-tools-inspector__selector" data-v-f1ae86bb><!--[-->`);
       ssrRenderList(tools, (tool) => {
-        _push(`<button type="button" class="${ssrRenderClass(["expert-tools-inspector__item", { "expert-tools-inspector__item--active": unref(activeTool) === tool.id }])}"${ssrRenderAttr("aria-pressed", unref(activeTool) === tool.id)} data-v-c0a471d1><span data-v-c0a471d1>${ssrInterpolate(tool.label())}</span><small data-v-c0a471d1>${ssrInterpolate(tool.summary())}</small></button>`);
+        _push(`<button type="button" class="${ssrRenderClass(["expert-tools-inspector__item", { "expert-tools-inspector__item--active": unref(activeTool) === tool.id }])}"${ssrRenderAttr("aria-pressed", unref(activeTool) === tool.id)} data-v-f1ae86bb><span data-v-f1ae86bb>${ssrInterpolate(tool.label())}</span><small data-v-f1ae86bb>${ssrInterpolate(tool.summary())}</small></button>`);
       });
-      _push(`<!--]--></div><section class="setting-section xyz-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.xyzAria"))} style="${ssrRenderStyle(unref(activeTool) === "xyz" ? null : { display: "none" })}" data-v-c0a471d1><div class="setting-section__header" data-v-c0a471d1><h2 data-v-c0a471d1>${ssrInterpolate(unref(t)("expertTools.xyz"))}</h2><small data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.cells", { count: unref(xyzCellCount) }))}</small></div>`);
+      _push(`<!--]--></div><section class="setting-section xyz-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.xyzAria"))} style="${ssrRenderStyle(unref(activeTool) === "xyz" ? null : { display: "none" })}" data-v-f1ae86bb><div class="setting-section__header" data-v-f1ae86bb><h2 data-v-f1ae86bb>${ssrInterpolate(unref(t)("expertTools.xyz"))}</h2><small data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.cells", { count: unref(xyzCellCount) }))}</small></div>`);
       if (unref(visibleXyzAxes).length !== unref(generation).xyzAxes.length) {
-        _push(`<p class="muted" data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.xyzInactiveAxes"))}</p>`);
+        _push(`<p class="muted" data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.xyzInactiveAxes"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       _push(`<!--[-->`);
       ssrRenderList(unref(visibleXyzAxes), ({ axis, index }) => {
-        _push(`<div class="xyz-axis" data-v-c0a471d1><div class="field-grid" data-v-c0a471d1><label class="field" data-v-c0a471d1><span data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.axisTarget"))}</span><select data-v-c0a471d1><option value="seed" data-v-c0a471d1${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "seed") : ssrLooseEqual(axis.target, "seed")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSeed"))}</option><option value="checkpoint" data-v-c0a471d1${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "checkpoint") : ssrLooseEqual(axis.target, "checkpoint")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisCheckpoint"))}</option><option value="vae" data-v-c0a471d1${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "vae") : ssrLooseEqual(axis.target, "vae")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisVae"))}</option><option value="sampler" data-v-c0a471d1${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "sampler") : ssrLooseEqual(axis.target, "sampler")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSampler"))}</option>`);
+        _push(`<div class="xyz-axis" data-v-f1ae86bb><div class="field-grid" data-v-f1ae86bb><label class="field" data-v-f1ae86bb><span data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.axisTarget"))}</span><select data-v-f1ae86bb><option value="seed" data-v-f1ae86bb${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "seed") : ssrLooseEqual(axis.target, "seed")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSeed"))}</option><option value="checkpoint" data-v-f1ae86bb${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "checkpoint") : ssrLooseEqual(axis.target, "checkpoint")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisCheckpoint"))}</option><option value="vae" data-v-f1ae86bb${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "vae") : ssrLooseEqual(axis.target, "vae")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisVae"))}</option><option value="sampler" data-v-f1ae86bb${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "sampler") : ssrLooseEqual(axis.target, "sampler")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSampler"))}</option>`);
         if (!unref(schedulerIsFixed)) {
-          _push(`<option value="scheduler" data-v-c0a471d1${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "scheduler") : ssrLooseEqual(axis.target, "scheduler")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisScheduler"))}</option>`);
+          _push(`<option value="scheduler" data-v-f1ae86bb${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "scheduler") : ssrLooseEqual(axis.target, "scheduler")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisScheduler"))}</option>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<option value="steps" data-v-c0a471d1${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "steps") : ssrLooseEqual(axis.target, "steps")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSteps"))}</option><option value="cfg_scale" data-v-c0a471d1${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "cfg_scale") : ssrLooseEqual(axis.target, "cfg_scale")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisCfgScale"))}</option><option value="prompt_replace" data-v-c0a471d1${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "prompt_replace") : ssrLooseEqual(axis.target, "prompt_replace")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisPromptReplace"))}</option><option value="lora_weight" data-v-c0a471d1${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "lora_weight") : ssrLooseEqual(axis.target, "lora_weight")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisLoraWeight"))}</option></select></label><label class="field" data-v-c0a471d1><span data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.label"))}</span><input${ssrRenderAttr("value", axis.label)}${ssrRenderAttr("placeholder", unref(t)("runtimePane.optional"))} data-v-c0a471d1></label></div><label class="field" data-v-c0a471d1><span data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.values"))}</span><textarea rows="4"${ssrRenderAttr("placeholder", unref(t)("runtimePane.oneValuePerLine"))} data-v-c0a471d1>${ssrInterpolate(axis.values)}</textarea></label>`);
+        _push(`<option value="steps" data-v-f1ae86bb${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "steps") : ssrLooseEqual(axis.target, "steps")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisSteps"))}</option><option value="cfg_scale" data-v-f1ae86bb${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "cfg_scale") : ssrLooseEqual(axis.target, "cfg_scale")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisCfgScale"))}</option><option value="prompt_replace" data-v-f1ae86bb${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "prompt_replace") : ssrLooseEqual(axis.target, "prompt_replace")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisPromptReplace"))}</option><option value="lora_weight" data-v-f1ae86bb${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, "lora_weight") : ssrLooseEqual(axis.target, "lora_weight")) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.axisLoraWeight"))}</option><!--[-->`);
+        ssrRenderList(unref(adjustmentFamilies)(unref(generation).profile), (family) => {
+          _push(`<optgroup${ssrRenderAttr("label", family === "freeu" ? "FreeU V2" : family.toUpperCase())} data-v-f1ae86bb><!--[-->`);
+          ssrRenderList(unref(adjustmentKeys).filter((k) => k.startsWith(family + "_")), (key) => {
+            _push(`<option${ssrRenderAttr("value", key)} data-v-f1ae86bb${ssrIncludeBooleanAttr(Array.isArray(axis.target) ? ssrLooseContain(axis.target, key) : ssrLooseEqual(axis.target, key)) ? " selected" : ""}>${ssrInterpolate(family === "freeu" ? "FreeU V2" : family.toUpperCase())} · ${ssrInterpolate(key.endsWith("_enabled") ? "ON / OFF" : unref(t)("adjustment." + key))}</option>`);
+          });
+          _push(`<!--]--></optgroup>`);
+        });
+        _push(`<!--]--></select></label><label class="field" data-v-f1ae86bb><span data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.label"))}</span><input${ssrRenderAttr("value", axis.label)}${ssrRenderAttr("placeholder", unref(t)("runtimePane.optional"))} data-v-f1ae86bb></label></div><label class="field" data-v-f1ae86bb><span data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.values"))}</span><textarea rows="4"${ssrRenderAttr("placeholder", unref(t)("runtimePane.oneValuePerLine"))} data-v-f1ae86bb>${ssrInterpolate(axis.values)}</textarea></label>`);
         if (axis.target === "prompt_replace") {
-          _push(`<small class="muted" data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.promptReplaceHelp"))}</small>`);
+          _push(`<small class="muted" data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.promptReplaceHelp"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (axis.target === "lora_weight") {
-          _push(`<small class="muted" data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.loraWeightHelp"))}</small>`);
+          _push(`<small class="muted" data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.loraWeightHelp"))}</small>`);
+        } else {
+          _push(`<!---->`);
+        }
+        if (unref(adjustmentKeys).some((key) => key === axis.target)) {
+          _push(`<small class="muted" data-v-f1ae86bb>${ssrInterpolate(unref(t)(axis.target.endsWith("_enabled") ? "runtimePane.xyzToggleHelp" : "runtimePane.xyzAdjustmentHelp"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (["steps", "cfg_scale"].includes(axis.target)) {
-          _push(`<small class="muted" data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.numericValuesHelp"))}</small>`);
+          _push(`<small class="muted" data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.numericValuesHelp"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (["vae", "sampler", "scheduler"].includes(axis.target)) {
-          _push(`<small class="muted" data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.catalogValuesHelp"))}</small>`);
+          _push(`<small class="muted" data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.catalogValuesHelp"))}</small>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(generation).xyzAxes.length <= 1) ? " disabled" : ""} data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.removeAxis"))}</button></div>`);
+        _push(`<button class="destructive-button" type="button"${ssrIncludeBooleanAttr(unref(generation).xyzAxes.length <= 1) ? " disabled" : ""} data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.removeAxis"))}</button></div>`);
       });
-      _push(`<!--]--><div class="asset-actions" data-v-c0a471d1><button type="button"${ssrIncludeBooleanAttr(unref(visibleXyzAxes).length >= 3) ? " disabled" : ""} data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.addAxis"))}</button><label class="inline-check" data-v-c0a471d1><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).xyzContactSheet) ? ssrLooseContain(unref(generation).xyzContactSheet, null) : unref(generation).xyzContactSheet) ? " checked" : ""} type="checkbox" data-v-c0a471d1><span data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.contactSheet"))}</span></label></div><button type="button"${ssrIncludeBooleanAttr(unref(generation).xyzLoading || !unref(visibleXyzAxes).length || unref(xyzHasMissingValues) || unref(xyzCellCount) > 64) ? " disabled" : ""} data-v-c0a471d1>${ssrInterpolate(unref(generation).xyzLoading ? unref(t)("runtimePane.runningXyz") : unref(t)("runtimePane.runXyzPlot"))}</button>`);
+      _push(`<!--]--><div class="asset-actions" data-v-f1ae86bb><button type="button"${ssrIncludeBooleanAttr(unref(visibleXyzAxes).length >= 3) ? " disabled" : ""} data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.addAxis"))}</button><label class="inline-check" data-v-f1ae86bb><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).xyzContactSheet) ? ssrLooseContain(unref(generation).xyzContactSheet, null) : unref(generation).xyzContactSheet) ? " checked" : ""} type="checkbox" data-v-f1ae86bb><span data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.contactSheet"))}</span></label></div><button type="button"${ssrIncludeBooleanAttr(unref(generation).xyzLoading || !unref(visibleXyzAxes).length || unref(xyzHasMissingValues) || unref(xyzCellCount) > 64) ? " disabled" : ""} data-v-f1ae86bb>${ssrInterpolate(unref(generation).xyzLoading ? unref(t)("runtimePane.runningXyz") : unref(t)("runtimePane.runXyzPlot"))}</button>`);
       if (unref(xyzCellCount) > 64) {
-        _push(`<p class="error" aria-live="assertive" data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.xyzLimit"))}</p>`);
+        _push(`<p class="error" aria-live="assertive" data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.xyzLimit"))}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(generation).xyzError) {
-        _push(`<p class="error" role="alert" data-v-c0a471d1>${ssrInterpolate(unref(generation).xyzError)}</p>`);
+        _push(`<p class="error" role="alert" data-v-f1ae86bb>${ssrInterpolate(unref(generation).xyzError)}</p>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(xyzOutputUrl)) {
-        _push(`<a class="xyz-result-link"${ssrRenderAttr("href", unref(xyzOutputUrl))} target="_blank" rel="noopener" referrerpolicy="origin" data-v-c0a471d1>${ssrInterpolate(unref(t)("runtimePane.openContactSheet"))}</a>`);
+        _push(`<a class="xyz-result-link"${ssrRenderAttr("href", unref(xyzOutputUrl))} target="_blank" rel="noopener" referrerpolicy="origin" data-v-f1ae86bb>${ssrInterpolate(unref(t)("runtimePane.openContactSheet"))}</a>`);
       } else {
         _push(`<!---->`);
       }
@@ -19685,13 +19815,13 @@ const _sfc_main$2l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2l = _sfc_main$2l.setup;
-_sfc_main$2l.setup = (props, ctx) => {
+const _sfc_setup$2m = _sfc_main$2m.setup;
+_sfc_main$2m.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ExpertToolsInspector.vue");
-  return _sfc_setup$2l ? _sfc_setup$2l(props, ctx) : void 0;
+  return _sfc_setup$2m ? _sfc_setup$2m(props, ctx) : void 0;
 };
-const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2l, [["__scopeId", "data-v-c0a471d1"]]), { __name: "StudioGenerateExpertToolsInspector" });
+const ExpertToolsInspector = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2m, [["__scopeId", "data-v-f1ae86bb"]]), { __name: "StudioGenerateExpertToolsInspector" });
 const useMediaModelCatalog = (domain) => {
   const items = ref([]);
   const loading = ref(false);
@@ -19731,7 +19861,7 @@ const useMediaModelCatalog = (domain) => {
     refresh
   };
 };
-const _sfc_main$2k = /* @__PURE__ */ defineComponent({
+const _sfc_main$2l = /* @__PURE__ */ defineComponent({
   __name: "GenerateBaseControlsPanel",
   __ssrInlineRender: true,
   props: {
@@ -19774,68 +19904,73 @@ const _sfc_main$2k = /* @__PURE__ */ defineComponent({
         "aria-label": unref(t)("generationInspector.baseSettings")
       }, _attrs, {
         style: __props.activeSection === "base-settings" ? null : { display: "none" }
-      }))} data-v-42c81707><div class="generation-detail-group__section" data-v-42c81707><div class="generation-detail-group__heading" data-v-42c81707><h2 data-v-42c81707>${ssrInterpolate(unref(t)("generationInspector.sampling"))}</h2><small data-v-42c81707>${ssrInterpolate(unref(generation).sampler)}</small></div><div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.samplingSteps"))}</span><input${ssrRenderAttr("value", unref(generation).steps)} type="number" min="1" data-v-42c81707></label><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.cfgScale"))}</span><input${ssrRenderAttr("value", unref(generation).cfgScale)} type="number" step="0.5" data-v-42c81707></label></div>`);
-      if (__props.usesDistilledCfg) {
-        _push(`<label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.distilledCfg"))}</span><input${ssrRenderAttr("value", unref(generation).distilledCfgScale)} type="number" step="0.5" data-v-42c81707></label>`);
+      }))} data-v-1a8d2117><div class="generation-detail-group__section" data-v-1a8d2117><div class="generation-detail-group__heading" data-v-1a8d2117><h2 data-v-1a8d2117>${ssrInterpolate(unref(t)("generationInspector.sampling"))}</h2><small data-v-1a8d2117>${ssrInterpolate(unref(generation).sampler)}</small></div><div class="field-grid" data-v-1a8d2117><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.samplingSteps"))}</span><input${ssrRenderAttr("value", unref(generation).steps)} type="number" min="1" data-v-1a8d2117></label><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.cfgScale"))}</span><input${ssrRenderAttr("value", unref(generation).cfgScale)} type="number" step="0.5" data-v-1a8d2117></label></div>`);
+      if (["flux1", "flux2"].includes(unref(generation).profile)) {
+        _push(`<label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.fluxTrueCfg"))}</span><input${ssrRenderAttr("value", unref(generation).flux_true_cfg)} name="flux_true_cfg" type="number" step="any" aria-describedby="flux-true-cfg-help" data-v-1a8d2117><small id="flux-true-cfg-help" data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.fluxTrueCfgHelp"))}</small></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.samplingMethod"))}</span><select data-v-42c81707><!--[-->`);
+      if (__props.usesDistilledCfg) {
+        _push(`<label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.distilledCfg"))}</span><input${ssrRenderAttr("value", unref(generation).distilledCfgScale)} type="number" step="0.5" data-v-1a8d2117></label>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.samplingMethod"))}</span><select data-v-1a8d2117><!--[-->`);
       ssrRenderList(__props.samplerOptions, (option) => {
-        _push(`<option data-v-42c81707${ssrIncludeBooleanAttr(Array.isArray(unref(generation).sampler) ? ssrLooseContain(unref(generation).sampler, null) : ssrLooseEqual(unref(generation).sampler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-1a8d2117${ssrIncludeBooleanAttr(Array.isArray(unref(generation).sampler) ? ssrLooseContain(unref(generation).sampler, null) : ssrLooseEqual(unref(generation).sampler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
       });
-      _push(`<!--]--></select></label><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.scheduleType"))}</span><select${ssrIncludeBooleanAttr(__props.schedulerIsFixed) ? " disabled" : ""} data-v-42c81707><!--[-->`);
+      _push(`<!--]--></select></label><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.scheduleType"))}</span><select${ssrIncludeBooleanAttr(__props.schedulerIsFixed) ? " disabled" : ""} data-v-1a8d2117><!--[-->`);
       ssrRenderList(__props.schedulerOptions, (option) => {
-        _push(`<option data-v-42c81707${ssrIncludeBooleanAttr(Array.isArray(unref(generation).scheduler) ? ssrLooseContain(unref(generation).scheduler, null) : ssrLooseEqual(unref(generation).scheduler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-1a8d2117${ssrIncludeBooleanAttr(Array.isArray(unref(generation).scheduler) ? ssrLooseContain(unref(generation).scheduler, null) : ssrLooseEqual(unref(generation).scheduler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
       });
       _push(`<!--]--></select></label>`);
       if (__props.schedulerIsFixed) {
-        _push(`<small class="muted" data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
+        _push(`<small class="muted" data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
       } else {
         _push(`<!---->`);
       }
       if (unref(usesAnima38)) {
-        _push(`<div class="generation-detail-group__subsection" data-v-42c81707><div class="generation-detail-group__subheading" data-v-42c81707><h3 data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.anima38Conditioning"))}</h3></div><p class="muted" data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.anima38ConditioningHelp"))}</p><div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.anima38PositiveStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35AdapterStrength)} type="number" step="0.05" data-v-42c81707></label><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.anima38NegativeStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35NegativeAdapterStrength)} type="number" step="0.05" data-v-42c81707></label></div></div>`);
+        _push(`<div class="generation-detail-group__subsection" data-v-1a8d2117><div class="generation-detail-group__subheading" data-v-1a8d2117><h3 data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.anima38Conditioning"))}</h3></div><p class="muted" data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.anima38ConditioningHelp"))}</p><div class="field-grid" data-v-1a8d2117><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.anima38PositiveStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35AdapterStrength)} type="number" step="0.05" data-v-1a8d2117></label><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.anima38NegativeStrength"))}</span><input${ssrRenderAttr("value", unref(generation).animaQwen35NegativeAdapterStrength)} type="number" step="0.05" data-v-1a8d2117></label></div></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="generation-detail-group__subheading" data-v-42c81707><h3 data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.seed"))}</h3></div>`);
+      _push(`<div class="generation-detail-group__subheading" data-v-1a8d2117><h3 data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.seed"))}</h3></div>`);
       if (__props.seedResizeReason === "variation_conflict") {
-        _push(`<p class="capability-warning" data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.seedResizeVariationConflict"))}</p>`);
+        _push(`<p class="capability-warning" data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.seedResizeVariationConflict"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.seed"))}</span><input${ssrRenderAttr("value", unref(generation).seed)} type="number" data-v-42c81707></label>`);
+      _push(`<label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.seed"))}</span><input${ssrRenderAttr("value", unref(generation).seed)} type="number" data-v-1a8d2117></label>`);
       if (!__props.blocksSeedVariation) {
-        _push(`<div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.subseed"))}</span><input${ssrRenderAttr("value", unref(generation).subseed)} type="number"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-42c81707></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedVariation }])}" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.variation"))}</span><input${ssrRenderAttr("value", unref(generation).subseedStrength)} type="number" min="0" max="1" step="0.01"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-42c81707></label></div>`);
+        _push(`<div class="field-grid" data-v-1a8d2117><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.subseed"))}</span><input${ssrRenderAttr("value", unref(generation).subseed)} type="number"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-1a8d2117></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedVariation }])}" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.variation"))}</span><input${ssrRenderAttr("value", unref(generation).subseedStrength)} type="number" min="0" max="1" step="0.01"${ssrIncludeBooleanAttr(__props.blocksSeedVariation) ? " disabled" : ""} data-v-1a8d2117></label></div>`);
       } else {
         _push(`<!---->`);
       }
       if (!__props.blocksSeedResize) {
-        _push(`<div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.resizeW"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromW)} type="number" min="0" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-42c81707></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedResize }])}" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.resizeH"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromH)} type="number" min="0" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-42c81707></label></div>`);
+        _push(`<div class="field-grid" data-v-1a8d2117><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.resizeW"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromW)} type="number" min="0" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-1a8d2117></label><label class="${ssrRenderClass(["field", { "field--disabled": __props.blocksSeedResize }])}" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.resizeH"))}</span><input${ssrRenderAttr("value", unref(generation).seedResizeFromH)} type="number" min="0" step="8"${ssrIncludeBooleanAttr(__props.blocksSeedResize) ? " disabled" : ""} data-v-1a8d2117></label></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</div><div class="generation-detail-group__section generation-detail-group__section--size" data-v-42c81707><div class="generation-detail-group__heading" data-v-42c81707><h2 data-v-42c81707>${ssrInterpolate(unref(t)("generationInspector.size"))}</h2><small data-v-42c81707>${ssrInterpolate(unref(generation).width)} × ${ssrInterpolate(unref(generation).height)}</small></div><div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.width"))}</span><input${ssrRenderAttr("value", unref(widthDraft))} type="number"${ssrRenderAttr("min", unref(generation).profile === "moss_image" ? 1 : 8)}${ssrRenderAttr("step", unref(generation).profile === "moss_image" ? 1 : 8)} data-v-42c81707></label><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.height"))}</span><input${ssrRenderAttr("value", unref(heightDraft))} type="number"${ssrRenderAttr("min", unref(generation).profile === "moss_image" ? 1 : 8)}${ssrRenderAttr("step", unref(generation).profile === "moss_image" ? 1 : 8)} data-v-42c81707></label></div>`);
+      _push(`</div><div class="generation-detail-group__section generation-detail-group__section--size" data-v-1a8d2117><div class="generation-detail-group__heading" data-v-1a8d2117><h2 data-v-1a8d2117>${ssrInterpolate(unref(t)("generationInspector.size"))}</h2><small data-v-1a8d2117>${ssrInterpolate(unref(generation).width)} × ${ssrInterpolate(unref(generation).height)}</small></div><div class="field-grid" data-v-1a8d2117><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.width"))}</span><input${ssrRenderAttr("value", unref(widthDraft))} type="number"${ssrRenderAttr("min", unref(generation).profile === "moss_image" ? 1 : 8)}${ssrRenderAttr("step", unref(generation).profile === "moss_image" ? 1 : 8)} data-v-1a8d2117></label><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.height"))}</span><input${ssrRenderAttr("value", unref(heightDraft))} type="number"${ssrRenderAttr("min", unref(generation).profile === "moss_image" ? 1 : 8)}${ssrRenderAttr("step", unref(generation).profile === "moss_image" ? 1 : 8)} data-v-1a8d2117></label></div>`);
       if (unref(pendingCanvasSize)) {
-        _push(`<section class="canvas-size-confirmation" role="dialog"${ssrRenderAttr("aria-label", unref(t)("generationInspector.size"))} data-v-42c81707><p data-v-42c81707>${ssrInterpolate(unref(t)("prompt.placement.canvasOutside", { count: unref(pendingCanvasSize).outsideCount }))}</p><div data-v-42c81707><button type="button" data-v-42c81707>${ssrInterpolate(unref(t)("prompt.placement.adjustNow"))}</button><button type="button" data-v-42c81707>${ssrInterpolate(unref(t)("prompt.placement.keepAsIs"))}</button><button type="button" data-v-42c81707>${ssrInterpolate(unref(t)("common.cancel"))}</button></div></section>`);
+        _push(`<section class="canvas-size-confirmation" role="dialog"${ssrRenderAttr("aria-label", unref(t)("generationInspector.size"))} data-v-1a8d2117><p data-v-1a8d2117>${ssrInterpolate(unref(t)("prompt.placement.canvasOutside", { count: unref(pendingCanvasSize).outsideCount }))}</p><div data-v-1a8d2117><button type="button" data-v-1a8d2117>${ssrInterpolate(unref(t)("prompt.placement.adjustNow"))}</button><button type="button" data-v-1a8d2117>${ssrInterpolate(unref(t)("prompt.placement.keepAsIs"))}</button><button type="button" data-v-1a8d2117>${ssrInterpolate(unref(t)("common.cancel"))}</button></div></section>`);
       } else if (unref(generation).spatialCanvasNotice === "larger") {
-        _push(`<p class="muted" aria-live="polite" data-v-42c81707>${ssrInterpolate(unref(t)("prompt.placement.canvasLarger"))}</p>`);
+        _push(`<p class="muted" aria-live="polite" data-v-1a8d2117>${ssrInterpolate(unref(t)("prompt.placement.canvasLarger"))}</p>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="field-grid" data-v-42c81707><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.batchSize"))}</span><input${ssrRenderAttr("value", unref(generation).batchSize)} type="number" min="1" data-v-42c81707></label><label class="field" data-v-42c81707><span data-v-42c81707>${ssrInterpolate(unref(t)("runtimePane.batchCount"))}</span><input${ssrRenderAttr("value", unref(generation).batchCount)} type="number" min="1" data-v-42c81707></label></div></div></section>`);
+      _push(`<div class="field-grid" data-v-1a8d2117><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.batchSize"))}</span><input${ssrRenderAttr("value", unref(generation).batchSize)} type="number" min="1" data-v-1a8d2117></label><label class="field" data-v-1a8d2117><span data-v-1a8d2117>${ssrInterpolate(unref(t)("runtimePane.batchCount"))}</span><input${ssrRenderAttr("value", unref(generation).batchCount)} type="number" min="1" data-v-1a8d2117></label></div></div></section>`);
     };
   }
 });
-const _sfc_setup$2k = _sfc_main$2k.setup;
-_sfc_main$2k.setup = (props, ctx) => {
+const _sfc_setup$2l = _sfc_main$2l.setup;
+_sfc_main$2l.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateBaseControlsPanel.vue");
-  return _sfc_setup$2k ? _sfc_setup$2k(props, ctx) : void 0;
+  return _sfc_setup$2l ? _sfc_setup$2l(props, ctx) : void 0;
 };
-const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2k, [["__scopeId", "data-v-42c81707"]]), { __name: "StudioGenerateBaseControlsPanel" });
-const _sfc_main$2j = /* @__PURE__ */ defineComponent({
+const GenerateBaseControlsPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2l, [["__scopeId", "data-v-1a8d2117"]]), { __name: "StudioGenerateBaseControlsPanel" });
+const _sfc_main$2k = /* @__PURE__ */ defineComponent({
   __name: "GenerateModeSourcePanel",
   __ssrInlineRender: true,
   setup(__props) {
@@ -19931,13 +20066,13 @@ const _sfc_main$2j = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_setup$2j = _sfc_main$2j.setup;
-_sfc_main$2j.setup = (props, ctx) => {
+const _sfc_setup$2k = _sfc_main$2k.setup;
+_sfc_main$2k.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerateModeSourcePanel.vue");
-  return _sfc_setup$2j ? _sfc_setup$2j(props, ctx) : void 0;
+  return _sfc_setup$2k ? _sfc_setup$2k(props, ctx) : void 0;
 };
-const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2j, [["__scopeId", "data-v-12d41b53"]]), { __name: "StudioGenerateModeSourcePanel" });
+const GenerateModeSourcePanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2k, [["__scopeId", "data-v-12d41b53"]]), { __name: "StudioGenerateModeSourcePanel" });
 const HIRES_TARGET_STEP = 8;
 const positiveNumber = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
 const snapTargetDimension = (value) => {
@@ -19964,7 +20099,7 @@ const hiresTargetSummary = (scale, width, height) => {
 const HIRES_SAME_CHECKPOINT = "Use same checkpoint";
 const HIRES_SAME_SAMPLER = "Use same sampler";
 const HIRES_SAME_SCHEDULER = "Use same scheduler";
-const _sfc_main$2i = /* @__PURE__ */ defineComponent({
+const _sfc_main$2j = /* @__PURE__ */ defineComponent({
   __name: "RuntimeSettingsPane",
   __ssrInlineRender: true,
   props: {
@@ -20095,7 +20230,8 @@ const _sfc_main$2i = /* @__PURE__ */ defineComponent({
     const hiresUpscalerOptions = computed(() => {
       const schemaOptions = generation.schema?.fields?.hires_upscaler?.options ?? [];
       const options = runtimeHiresUpscalerOptions.value.length ? runtimeHiresUpscalerOptions.value : schemaOptions.length ? schemaOptions : fallbackHiresUpscalerOptions;
-      return includeSelectedGenerationOption(options, generation.hiresUpscaler);
+      const available = ["krea2", "moss_image"].includes(generation.profile) ? options.filter((option) => option !== "Topaz Photo AI") : options;
+      return includeSelectedGenerationOption(available, generation.hiresUpscaler);
     });
     const samplerCatalog = [
       "DPM++ 2M",
@@ -20147,7 +20283,7 @@ const _sfc_main$2i = /* @__PURE__ */ defineComponent({
     });
     const samplerOptions = computed(() => includeSelectedGenerationOption(runtimeSamplerOptions.value, generation.sampler));
     const hiresSamplerOptions = computed(() => includeSelectedGenerationOption(
-      runtimeSamplerOptions.value,
+      ["sdxl", "anima", "moss_image", "krea2", "flux1", "flux2"].includes(generation.profile) && generation.hiresUpscaler !== "Topaz Photo AI" ? [...runtimeSamplerOptions.value, "HiWave"] : runtimeSamplerOptions.value,
       generation.hiresSampler === HIRES_SAME_SAMPLER ? "" : generation.hiresSampler
     ));
     const runtimeSchedulerOptions = computed(() => {
@@ -20195,7 +20331,7 @@ const _sfc_main$2i = /* @__PURE__ */ defineComponent({
       _push(`<section${ssrRenderAttrs(mergeProps({
         class: "runtime-settings-owner",
         "aria-label": unref(t)("runtimePane.aria")
-      }, _attrs))} data-v-7e0c16ab>`);
+      }, _attrs))} data-v-e6ac1ed3>`);
       _push(ssrRenderComponent(GenerateModeSourcePanel, {
         style: __props.activeSection === "mode-source" ? null : { display: "none" }
       }, null, _parent));
@@ -20223,60 +20359,60 @@ const _sfc_main$2i = /* @__PURE__ */ defineComponent({
         "requested-module": __props.requestedModule,
         onOpenModelSettings: ($event) => emit("openModelSettings")
       }, null, _parent));
-      _push(`<section class="setting-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.optionsAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "options" ? null : { display: "none" })}" data-v-7e0c16ab><h2 data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.options"))}</h2><div class="check-grid" data-v-7e0c16ab>`);
+      _push(`<section class="setting-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.optionsAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "options" ? null : { display: "none" })}" data-v-e6ac1ed3><h2 data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.options"))}</h2><div class="check-grid" data-v-e6ac1ed3>`);
       if (!unref(blocksRestoreFaces)) {
-        _push(`<label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).restoreFaces) ? ssrLooseContain(unref(generation).restoreFaces, null) : unref(generation).restoreFaces) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksRestoreFaces)) ? " disabled" : ""} data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.restoreFaces"))}</span></label>`);
+        _push(`<label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).restoreFaces) ? ssrLooseContain(unref(generation).restoreFaces, null) : unref(generation).restoreFaces) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksRestoreFaces)) ? " disabled" : ""} data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.restoreFaces"))}</span></label>`);
       } else {
         _push(`<!---->`);
       }
       if (!unref(blocksTiling)) {
-        _push(`<label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).tiling) ? ssrLooseContain(unref(generation).tiling, null) : unref(generation).tiling) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksTiling)) ? " disabled" : ""} data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.tiling"))}</span></label>`);
+        _push(`<label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).tiling) ? ssrLooseContain(unref(generation).tiling, null) : unref(generation).tiling) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksTiling)) ? " disabled" : ""} data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.tiling"))}</span></label>`);
       } else {
         _push(`<!---->`);
       }
       _push(`</div>`);
       if (!unref(blocksClipSkip)) {
-        _push(`<label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.clipSkip"))}</span><input${ssrRenderAttr("value", unref(generation).clipSkip)} type="number" min="1"${ssrIncludeBooleanAttr(unref(blocksClipSkip)) ? " disabled" : ""} data-v-7e0c16ab></label>`);
+        _push(`<label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.clipSkip"))}</span><input${ssrRenderAttr("value", unref(generation).clipSkip)} type="number" min="1"${ssrIncludeBooleanAttr(unref(blocksClipSkip)) ? " disabled" : ""} data-v-e6ac1ed3></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</section><section class="setting-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.hiresAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "hires" ? null : { display: "none" })}" data-v-7e0c16ab><div class="setting-section__header" data-v-7e0c16ab><h2 data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.hiresFix"))}</h2><label class="inline-check" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresEnabled) ? ssrLooseContain(unref(generation).hiresEnabled, null) : unref(generation).hiresEnabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.enable"))}</span></label></div><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.upscaler"))}</span><select data-v-7e0c16ab><!--[-->`);
+      _push(`</section><section class="setting-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.hiresAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "hires" ? null : { display: "none" })}" data-v-e6ac1ed3><div class="setting-section__header" data-v-e6ac1ed3><h2 data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.hiresFix"))}</h2><label class="inline-check" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresEnabled) ? ssrLooseContain(unref(generation).hiresEnabled, null) : unref(generation).hiresEnabled) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.enable"))}</span></label></div><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.upscaler"))}</span><select data-v-e6ac1ed3><!--[-->`);
       ssrRenderList(unref(hiresUpscalerOptions), (option) => {
-        _push(`<option data-v-7e0c16ab${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresUpscaler) ? ssrLooseContain(unref(generation).hiresUpscaler, null) : ssrLooseEqual(unref(generation).hiresUpscaler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
+        _push(`<option data-v-e6ac1ed3${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresUpscaler) ? ssrLooseContain(unref(generation).hiresUpscaler, null) : ssrLooseEqual(unref(generation).hiresUpscaler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
       });
-      _push(`<!--]--></select></label><section class="enhancement-subpanel"${ssrRenderAttr("aria-label", unref(t)("enhancementInspector.hiresTarget"))} data-v-7e0c16ab><div class="enhancement-subpanel__header" data-v-7e0c16ab><h3 data-v-7e0c16ab>${ssrInterpolate(unref(t)("enhancementInspector.hiresTarget"))}</h3></div><div class="field-grid" data-v-7e0c16ab><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("enhancementInspector.targetMode"))}</span><select data-v-7e0c16ab><option value="scale" data-v-7e0c16ab${ssrIncludeBooleanAttr(Array.isArray(unref(hiresTargetMode)) ? ssrLooseContain(unref(hiresTargetMode), "scale") : ssrLooseEqual(unref(hiresTargetMode), "scale")) ? " selected" : ""}>${ssrInterpolate(unref(t)("enhancementInspector.scaleBased"))}</option><option value="explicit" data-v-7e0c16ab${ssrIncludeBooleanAttr(Array.isArray(unref(hiresTargetMode)) ? ssrLooseContain(unref(hiresTargetMode), "explicit") : ssrLooseEqual(unref(hiresTargetMode), "explicit")) ? " selected" : ""}>${ssrInterpolate(unref(t)("enhancementInspector.explicitSize"))}</option></select></label><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.upscaleBy"))}</span><input${ssrRenderAttr("value", unref(generation).hiresScale)} type="number" min="1" step="0.05" data-v-7e0c16ab></label></div>`);
+      _push(`<!--]--></select></label><section class="enhancement-subpanel"${ssrRenderAttr("aria-label", unref(t)("enhancementInspector.hiresTarget"))} data-v-e6ac1ed3><div class="enhancement-subpanel__header" data-v-e6ac1ed3><h3 data-v-e6ac1ed3>${ssrInterpolate(unref(t)("enhancementInspector.hiresTarget"))}</h3></div><div class="field-grid" data-v-e6ac1ed3><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("enhancementInspector.targetMode"))}</span><select data-v-e6ac1ed3><option value="scale" data-v-e6ac1ed3${ssrIncludeBooleanAttr(Array.isArray(unref(hiresTargetMode)) ? ssrLooseContain(unref(hiresTargetMode), "scale") : ssrLooseEqual(unref(hiresTargetMode), "scale")) ? " selected" : ""}>${ssrInterpolate(unref(t)("enhancementInspector.scaleBased"))}</option><option value="explicit" data-v-e6ac1ed3${ssrIncludeBooleanAttr(Array.isArray(unref(hiresTargetMode)) ? ssrLooseContain(unref(hiresTargetMode), "explicit") : ssrLooseEqual(unref(hiresTargetMode), "explicit")) ? " selected" : ""}>${ssrInterpolate(unref(t)("enhancementInspector.explicitSize"))}</option></select></label><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.upscaleBy"))}</span><input${ssrRenderAttr("value", unref(generation).hiresScale)} type="number" min="1" step="0.05" data-v-e6ac1ed3></label></div>`);
       if (unref(hiresTargetMode) === "explicit") {
-        _push(`<div class="field-grid" data-v-7e0c16ab><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.resizeWidth"))}</span><input${ssrRenderAttr("value", unref(generation).hiresResizeWidth)} type="number" min="8" step="8" data-v-7e0c16ab></label><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.resizeHeight"))}</span><input${ssrRenderAttr("value", unref(generation).hiresResizeHeight)} type="number" min="8" step="8" data-v-7e0c16ab></label></div>`);
+        _push(`<div class="field-grid" data-v-e6ac1ed3><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.resizeWidth"))}</span><input${ssrRenderAttr("value", unref(generation).hiresResizeWidth)} type="number" min="8" step="8" data-v-e6ac1ed3></label><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.resizeHeight"))}</span><input${ssrRenderAttr("value", unref(generation).hiresResizeHeight)} type="number" min="8" step="8" data-v-e6ac1ed3></label></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="field-grid" data-v-7e0c16ab><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.denoisingStrength"))}</span><input${ssrRenderAttr("value", unref(generation).hiresDenoisingStrength)} type="number" min="0" max="1" step="0.01" data-v-7e0c16ab></label><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.hiresSteps"))}</span><input${ssrRenderAttr("value", unref(generation).hiresSteps)} type="number" min="0" data-v-7e0c16ab></label></div><div class="field-grid" data-v-7e0c16ab><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.hiresCfgScale"))}</span><input${ssrRenderAttr("value", unref(generation).hiresCfgScale)} type="number" step="0.5" data-v-7e0c16ab></label>`);
+      _push(`<div class="field-grid" data-v-e6ac1ed3><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.denoisingStrength"))}</span><input${ssrRenderAttr("value", unref(generation).hiresDenoisingStrength)} type="number" min="0" max="1" step="0.01" data-v-e6ac1ed3></label><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.hiresSteps"))}</span><input${ssrRenderAttr("value", unref(generation).hiresSteps)} type="number" min="0" data-v-e6ac1ed3></label></div><div class="field-grid" data-v-e6ac1ed3><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.hiresCfgScale"))}</span><input${ssrRenderAttr("value", unref(generation).hiresCfgScale)} type="number" step="0.5" data-v-e6ac1ed3></label>`);
       if (unref(usesDistilledCfg)) {
-        _push(`<label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.hiresDistilledCfg"))}</span><input${ssrRenderAttr("value", unref(generation).hiresDistilledCfgScale)} type="number" step="0.5" data-v-7e0c16ab></label>`);
+        _push(`<label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.hiresDistilledCfg"))}</span><input${ssrRenderAttr("value", unref(generation).hiresDistilledCfgScale)} type="number" step="0.5" data-v-e6ac1ed3></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</div><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresKeepFirstPass) ? ssrLooseContain(unref(generation).hiresKeepFirstPass, null) : unref(generation).hiresKeepFirstPass) ? " checked" : ""} type="checkbox" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.keepFirstPass"))}</span></label></section>`);
+      _push(`</div><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresKeepFirstPass) ? ssrLooseContain(unref(generation).hiresKeepFirstPass, null) : unref(generation).hiresKeepFirstPass) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.keepFirstPass"))}</span></label></section>`);
       if (unref(generation).hiresUpscaler === "Topaz Photo AI") {
-        _push(`<section class="enhancement-subpanel enhancement-subpanel--topaz"${ssrRenderAttr("aria-label", unref(t)("enhancementInspector.topazRequest"))} data-v-7e0c16ab><div class="enhancement-subpanel__header" data-v-7e0c16ab><h3 data-v-7e0c16ab>${ssrInterpolate(unref(t)("enhancementInspector.topazRequest"))}</h3><strong class="${ssrRenderClass(["enhancement-state", { "enhancement-state--warning": !unref(externalIntegrations).topazStatus?.installed }])}" data-v-7e0c16ab>${ssrInterpolate(unref(externalIntegrations).topazStatus?.installed ? unref(t)("enhancementInspector.ready") : unref(t)("enhancementInspector.needsSetup"))}</strong></div>`);
+        _push(`<section class="enhancement-subpanel enhancement-subpanel--topaz"${ssrRenderAttr("aria-label", unref(t)("enhancementInspector.topazRequest"))} data-v-e6ac1ed3><div class="enhancement-subpanel__header" data-v-e6ac1ed3><h3 data-v-e6ac1ed3>${ssrInterpolate(unref(t)("enhancementInspector.topazRequest"))}</h3><strong class="${ssrRenderClass(["enhancement-state", { "enhancement-state--warning": !unref(externalIntegrations).topazStatus?.installed }])}" data-v-e6ac1ed3>${ssrInterpolate(unref(externalIntegrations).topazStatus?.installed ? unref(t)("enhancementInspector.ready") : unref(t)("enhancementInspector.needsSetup"))}</strong></div>`);
         if (!unref(externalIntegrations).topazStatus?.installed) {
-          _push(`<div class="enhancement-recovery" data-v-7e0c16ab><p data-v-7e0c16ab>${ssrInterpolate(unref(t)("enhancementInspector.topazSetupHelp"))}</p><button type="button" data-v-7e0c16ab>${ssrInterpolate(unref(t)("enhancementInspector.openSettings"))}</button></div>`);
+          _push(`<div class="enhancement-recovery" data-v-e6ac1ed3><p data-v-e6ac1ed3>${ssrInterpolate(unref(t)("enhancementInspector.topazSetupHelp"))}</p><button type="button" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("enhancementInspector.openSettings"))}</button></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<p class="enhancement-subpanel__note" data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.topazAutopilot"))}</p><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazEnabled) ? ssrLooseContain(unref(generation).topazEnabled, null) : unref(generation).topazEnabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.topazCustomSettings"))}</span></label><div class="check-grid" data-v-7e0c16ab><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazLighting) ? ssrLooseContain(unref(generation).topazLighting, null) : unref(generation).topazLighting) ? " checked" : ""} type="checkbox" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.lighting"))}</span></label><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazColor) ? ssrLooseContain(unref(generation).topazColor, null) : unref(generation).topazColor) ? " checked" : ""} type="checkbox" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.color"))}</span></label><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazSharpen) ? ssrLooseContain(unref(generation).topazSharpen, null) : unref(generation).topazSharpen) ? " checked" : ""} type="checkbox" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.sharpen"))}</span></label><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazDenoise) ? ssrLooseContain(unref(generation).topazDenoise, null) : unref(generation).topazDenoise) ? " checked" : ""} type="checkbox" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.denoise"))}</span></label><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazOverride) ? ssrLooseContain(unref(generation).topazOverride, null) : unref(generation).topazOverride) ? " checked" : ""} type="checkbox" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.override"))}</span></label></div><div class="field-grid" data-v-7e0c16ab><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.pngCompression"))}</span><input${ssrRenderAttr("value", unref(generation).topazPngCompression)} type="number" min="0" max="10" data-v-7e0c16ab></label><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazShowSettings) ? ssrLooseContain(unref(generation).topazShowSettings, null) : unref(generation).topazShowSettings) ? " checked" : ""} type="checkbox" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.logSettings"))}</span></label></div><small class="topaz-runtime-note" data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.topazRuntimeNote"))}</small><div class="topaz-preset-panel"${ssrRenderAttr("aria-label", unref(t)("runtimePane.topazPresetsAria"))} data-v-7e0c16ab><div class="setting-section__header" data-v-7e0c16ab><h3 data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.topazPresets"))}</h3><button type="button" data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.reload"))}</button></div>`);
+        _push(`<p class="enhancement-subpanel__note" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.topazAutopilot"))}</p><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazEnabled) ? ssrLooseContain(unref(generation).topazEnabled, null) : unref(generation).topazEnabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(basicNativeProfile)) ? " disabled" : ""} data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.topazCustomSettings"))}</span></label><div class="check-grid" data-v-e6ac1ed3><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazLighting) ? ssrLooseContain(unref(generation).topazLighting, null) : unref(generation).topazLighting) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.lighting"))}</span></label><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazColor) ? ssrLooseContain(unref(generation).topazColor, null) : unref(generation).topazColor) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.color"))}</span></label><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazSharpen) ? ssrLooseContain(unref(generation).topazSharpen, null) : unref(generation).topazSharpen) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.sharpen"))}</span></label><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazDenoise) ? ssrLooseContain(unref(generation).topazDenoise, null) : unref(generation).topazDenoise) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.denoise"))}</span></label><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazOverride) ? ssrLooseContain(unref(generation).topazOverride, null) : unref(generation).topazOverride) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.override"))}</span></label></div><div class="field-grid" data-v-e6ac1ed3><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.pngCompression"))}</span><input${ssrRenderAttr("value", unref(generation).topazPngCompression)} type="number" min="0" max="10" data-v-e6ac1ed3></label><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).topazShowSettings) ? ssrLooseContain(unref(generation).topazShowSettings, null) : unref(generation).topazShowSettings) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.logSettings"))}</span></label></div><small class="topaz-runtime-note" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.topazRuntimeNote"))}</small><div class="topaz-preset-panel"${ssrRenderAttr("aria-label", unref(t)("runtimePane.topazPresetsAria"))} data-v-e6ac1ed3><div class="setting-section__header" data-v-e6ac1ed3><h3 data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.topazPresets"))}</h3><button type="button" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.reload"))}</button></div>`);
         if (unref(topazPresetError)) {
-          _push(`<p class="error" aria-live="assertive" data-v-7e0c16ab>${ssrInterpolate(unref(topazPresetError))}</p>`);
+          _push(`<p class="error" aria-live="assertive" data-v-e6ac1ed3>${ssrInterpolate(unref(topazPresetError))}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.topazPresetName"))}</span><input${ssrRenderAttr("value", unref(topazPresetName))}${ssrRenderAttr("aria-label", unref(t)("runtimePane.topazPresetNameAria"))}${ssrRenderAttr("placeholder", unref(t)("runtimePane.topazPresetNamePlaceholder"))} data-v-7e0c16ab></label><button type="button" data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.saveTopazPreset"))}</button><div class="config-preset-list" data-v-7e0c16ab><!--[-->`);
+        _push(`<label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.topazPresetName"))}</span><input${ssrRenderAttr("value", unref(topazPresetName))}${ssrRenderAttr("aria-label", unref(t)("runtimePane.topazPresetNameAria"))}${ssrRenderAttr("placeholder", unref(t)("runtimePane.topazPresetNamePlaceholder"))} data-v-e6ac1ed3></label><button type="button" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.saveTopazPreset"))}</button><div class="config-preset-list" data-v-e6ac1ed3><!--[-->`);
         ssrRenderList(unref(topazPresets), (preset) => {
-          _push(`<div class="config-preset-item" data-v-7e0c16ab><button class="config-preset-item__main" type="button" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(preset.name)}</span><small data-v-7e0c16ab>${ssrInterpolate(topazPresetSummary(preset))}</small></button><button class="destructive-button icon-button--compact" type="button" data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.delete"))}</button></div>`);
+          _push(`<div class="config-preset-item" data-v-e6ac1ed3><button class="config-preset-item__main" type="button" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(preset.name)}</span><small data-v-e6ac1ed3>${ssrInterpolate(topazPresetSummary(preset))}</small></button><button class="destructive-button icon-button--compact" type="button" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.delete"))}</button></div>`);
         });
         _push(`<!--]-->`);
         if (unref(topazPresets).length === 0) {
-          _push(`<small class="muted" data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.noTopazPresets"))}</small>`);
+          _push(`<small class="muted" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.noTopazPresets"))}</small>`);
         } else {
           _push(`<!---->`);
         }
@@ -20284,28 +20420,40 @@ const _sfc_main$2i = /* @__PURE__ */ defineComponent({
       } else {
         _push(`<!---->`);
       }
-      if (unref(supportsHiresModelOverride)) {
-        _push(`<details class="sub-details" data-v-7e0c16ab><summary data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.hiresAdvanced"))}</summary><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(hiresSupport).modelKind === "diffusion_model" ? unref(t)("runtimePane.hiresDiffusionModel") : unref(t)("runtimePane.hiresCheckpoint"))}</span><input${ssrRenderAttr("value", unref(hiresCheckpointInput))}${ssrRenderAttr("placeholder", unref(hiresSupport).modelKind === "diffusion_model" ? unref(t)("runtimePane.useSameDiffusionModel") : unref(t)("runtimePane.useSameCheckpoint"))} data-v-7e0c16ab></label><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.hiresSampler"))}</span><select data-v-7e0c16ab><option${ssrRenderAttr("value", HIRES_SAME_SAMPLER)} data-v-7e0c16ab${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresSampler) ? ssrLooseContain(unref(generation).hiresSampler, HIRES_SAME_SAMPLER) : ssrLooseEqual(unref(generation).hiresSampler, HIRES_SAME_SAMPLER)) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.useSameSampler"))}</option><!--[-->`);
+      if (unref(supportsHiresModelOverride) || ["krea2", "moss_image"].includes(unref(generation).profile)) {
+        _push(`<details class="sub-details" data-v-e6ac1ed3><summary data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.hiresAdvanced"))}</summary>`);
+        if (unref(supportsHiresModelOverride)) {
+          _push(`<label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(hiresSupport).modelKind === "diffusion_model" ? unref(t)("runtimePane.hiresDiffusionModel") : unref(t)("runtimePane.hiresCheckpoint"))}</span><input${ssrRenderAttr("value", unref(hiresCheckpointInput))}${ssrRenderAttr("placeholder", unref(hiresSupport).modelKind === "diffusion_model" ? unref(t)("runtimePane.useSameDiffusionModel") : unref(t)("runtimePane.useSameCheckpoint"))} data-v-e6ac1ed3></label>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`<label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.hiresSampler"))}</span><select data-v-e6ac1ed3><option${ssrRenderAttr("value", HIRES_SAME_SAMPLER)} data-v-e6ac1ed3${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresSampler) ? ssrLooseContain(unref(generation).hiresSampler, HIRES_SAME_SAMPLER) : ssrLooseEqual(unref(generation).hiresSampler, HIRES_SAME_SAMPLER)) ? " selected" : ""}>${ssrInterpolate(unref(t)("runtimePane.useSameSampler"))}</option><!--[-->`);
         ssrRenderList(unref(hiresSamplerOptions), (option) => {
-          _push(`<option data-v-7e0c16ab${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresSampler) ? ssrLooseContain(unref(generation).hiresSampler, null) : ssrLooseEqual(unref(generation).hiresSampler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
+          _push(`<option data-v-e6ac1ed3${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresSampler) ? ssrLooseContain(unref(generation).hiresSampler, null) : ssrLooseEqual(unref(generation).hiresSampler, null)) ? " selected" : ""}>${ssrInterpolate(option)}</option>`);
         });
-        _push(`<!--]--></select></label><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.hiresScheduleType"))}</span><select${ssrIncludeBooleanAttr(unref(schedulerIsFixed)) ? " disabled" : ""} data-v-7e0c16ab><!--[-->`);
+        _push(`<!--]--></select>`);
+        if (unref(generation).hiresSampler === "HiWave") {
+          _push(`<small class="muted" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.hiwave"))}</small>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</label><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.hiresScheduleType"))}</span><select${ssrIncludeBooleanAttr(unref(schedulerIsFixed)) ? " disabled" : ""} data-v-e6ac1ed3><!--[-->`);
         ssrRenderList(unref(hiresSchedulerOptions), (option) => {
-          _push(`<option${ssrRenderAttr("value", option)} data-v-7e0c16ab${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresScheduler) ? ssrLooseContain(unref(generation).hiresScheduler, option) : ssrLooseEqual(unref(generation).hiresScheduler, option)) ? " selected" : ""}>${ssrInterpolate(option === HIRES_SAME_SCHEDULER ? unref(t)("runtimePane.useSameScheduler") : option)}</option>`);
+          _push(`<option${ssrRenderAttr("value", option)} data-v-e6ac1ed3${ssrIncludeBooleanAttr(Array.isArray(unref(generation).hiresScheduler) ? ssrLooseContain(unref(generation).hiresScheduler, option) : ssrLooseEqual(unref(generation).hiresScheduler, option)) ? " selected" : ""}>${ssrInterpolate(option === HIRES_SAME_SCHEDULER ? unref(t)("runtimePane.useSameScheduler") : option)}</option>`);
         });
         _push(`<!--]--></select></label>`);
         if (unref(schedulerIsFixed)) {
-          _push(`<small class="muted" data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
+          _push(`<small class="muted" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.flux2FixedScheduler"))}</small>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(supportsHiresPromptOverride)) {
-          _push(`<label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.hiresPrompt"))}</span><textarea rows="3" data-v-7e0c16ab>${ssrInterpolate(unref(generation).hiresPrompt)}</textarea></label>`);
+          _push(`<label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.hiresPrompt"))}</span><textarea rows="3" data-v-e6ac1ed3>${ssrInterpolate(unref(generation).hiresPrompt)}</textarea></label>`);
         } else {
           _push(`<!---->`);
         }
         if (unref(supportsHiresNegativeOverride)) {
-          _push(`<label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.hiresNegative"))}</span><textarea rows="3" data-v-7e0c16ab>${ssrInterpolate(unref(generation).hiresNegativePrompt)}</textarea></label>`);
+          _push(`<label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.hiresNegative"))}</span><textarea rows="3" data-v-e6ac1ed3>${ssrInterpolate(unref(generation).hiresNegativePrompt)}</textarea></label>`);
         } else {
           _push(`<!---->`);
         }
@@ -20315,31 +20463,31 @@ const _sfc_main$2i = /* @__PURE__ */ defineComponent({
       }
       _push(`</section>`);
       if (!unref(blocksRefiner)) {
-        _push(`<section class="setting-section refiner-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.refinerAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "refiner" ? null : { display: "none" })}" data-v-7e0c16ab><div class="setting-section__header" data-v-7e0c16ab><h2 data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.refiner"))}</h2><label class="inline-check" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).refinerEnabled) ? ssrLooseContain(unref(generation).refinerEnabled, null) : unref(generation).refinerEnabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.enable"))}</span></label></div>`);
+        _push(`<section class="setting-section refiner-section"${ssrRenderAttr("aria-label", unref(t)("runtimePane.refinerAria"))} style="${ssrRenderStyle(__props.activeSection === "enhancements" && unref(activeEnhancementDetail) === "refiner" ? null : { display: "none" })}" data-v-e6ac1ed3><div class="setting-section__header" data-v-e6ac1ed3><h2 data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.refiner"))}</h2><label class="inline-check" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).refinerEnabled) ? ssrLooseContain(unref(generation).refinerEnabled, null) : unref(generation).refinerEnabled) ? " checked" : ""} type="checkbox"${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.enable"))}</span></label></div>`);
         if (unref(blocksRefiner)) {
-          _push(`<p class="capability-warning" data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.refinerBlocked"))}</p>`);
+          _push(`<p class="capability-warning" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.refinerBlocked"))}</p>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.refinerCheckpoint"))}</span><input${ssrRenderAttr("value", unref(generation).refinerCheckpoint)}${ssrRenderAttr("placeholder", unref(t)("runtimePane.optional"))}${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-7e0c16ab></label><label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("runtimePane.switchAt"))}</span><input${ssrRenderAttr("value", unref(generation).refinerSwitchAt)} type="number" min="0" max="1" step="0.01"${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-7e0c16ab></label></section>`);
+        _push(`<label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.refinerCheckpoint"))}</span><input${ssrRenderAttr("value", unref(generation).refinerCheckpoint)}${ssrRenderAttr("placeholder", unref(t)("runtimePane.optional"))}${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-e6ac1ed3></label><label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("runtimePane.switchAt"))}</span><input${ssrRenderAttr("value", unref(generation).refinerSwitchAt)} type="number" min="0" max="1" step="0.01"${ssrIncludeBooleanAttr(unref(blocksRefiner)) ? " disabled" : ""} data-v-e6ac1ed3></label></section>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<details class="recording-options" style="${ssrRenderStyle(__props.activeSection === "enhancements" ? null : { display: "none" })}" data-v-7e0c16ab><summary data-v-7e0c16ab><svg class="ui-quality-arrow" viewBox="0 0 12 12" aria-hidden="true" data-v-7e0c16ab><path d="m2 4 4 4 4-4" data-v-7e0c16ab></path></svg>${ssrInterpolate(unref(t)("generationOverview.recording"))}</summary><section class="setting-section recording-controls" data-v-7e0c16ab><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordEnhancementStages) ? ssrLooseContain(unref(generation).recordEnhancementStages, null) : unref(generation).recordEnhancementStages) ? " checked" : ""} type="checkbox" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("stages.record"))}</span></label><p class="enhancement-subpanel__note" data-v-7e0c16ab>${ssrInterpolate(unref(t)("stages.recordHelp"))}</p><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordMakingVideo) ? ssrLooseContain(unref(generation).recordMakingVideo, null) : unref(generation).recordMakingVideo) ? " checked" : ""} type="checkbox" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("making.record"))}</span></label><p class="enhancement-subpanel__note" data-v-7e0c16ab>${ssrInterpolate(unref(t)("making.help"))}</p>`);
+      _push(`<details class="recording-options" style="${ssrRenderStyle(__props.activeSection === "enhancements" ? null : { display: "none" })}" data-v-e6ac1ed3><summary data-v-e6ac1ed3><svg class="ui-quality-arrow" viewBox="0 0 12 12" aria-hidden="true" data-v-e6ac1ed3><path d="m2 4 4 4 4-4" data-v-e6ac1ed3></path></svg>${ssrInterpolate(unref(t)("generationOverview.recording"))}</summary><section class="setting-section recording-controls" data-v-e6ac1ed3><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordEnhancementStages) ? ssrLooseContain(unref(generation).recordEnhancementStages, null) : unref(generation).recordEnhancementStages) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("stages.record"))}</span></label><p class="enhancement-subpanel__note" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("stages.recordHelp"))}</p><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordMakingVideo) ? ssrLooseContain(unref(generation).recordMakingVideo, null) : unref(generation).recordMakingVideo) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("making.record"))}</span></label><p class="enhancement-subpanel__note" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("making.help"))}</p>`);
       if (["sdxl", "anima"].includes(unref(generation).profile)) {
-        _push(`<!--[--><label class="check-field" data-v-7e0c16ab><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordWordMasks) ? ssrLooseContain(unref(generation).recordWordMasks, null) : unref(generation).recordWordMasks) ? " checked" : ""} type="checkbox" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("wordMask.record"))}</span></label><p data-v-7e0c16ab>${ssrInterpolate(unref(t)("wordMask.recordHelp"))}</p><!--]-->`);
+        _push(`<!--[--><label class="check-field" data-v-e6ac1ed3><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation).recordWordMasks) ? ssrLooseContain(unref(generation).recordWordMasks, null) : unref(generation).recordWordMasks) ? " checked" : ""} type="checkbox" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("wordMask.record"))}</span></label><p data-v-e6ac1ed3>${ssrInterpolate(unref(t)("wordMask.recordHelp"))}</p><!--]-->`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<label class="check-field" data-v-7e0c16ab><input type="checkbox"${ssrIncludeBooleanAttr(unref(generation).recordBranchStep > 0) ? " checked" : ""}${ssrIncludeBooleanAttr(!unref(branchCaptureSupported)(unref(generation)) && !(unref(generation).recordBranchStep > 0)) ? " disabled" : ""} data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("branch.record"))}</span></label>`);
+      _push(`<label class="check-field" data-v-e6ac1ed3><input type="checkbox"${ssrIncludeBooleanAttr(unref(generation).recordBranchStep > 0) ? " checked" : ""}${ssrIncludeBooleanAttr(!unref(branchCaptureSupported)(unref(generation)) && !(unref(generation).recordBranchStep > 0)) ? " disabled" : ""} data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("branch.record"))}</span></label>`);
       if (unref(generation).recordBranchStep > 0) {
-        _push(`<label class="field" data-v-7e0c16ab><span data-v-7e0c16ab>${ssrInterpolate(unref(t)("branch.step"))}</span><input${ssrRenderAttr("value", unref(generation).recordBranchStep)} type="number" min="1"${ssrRenderAttr("max", unref(generation).steps - 1)} data-v-7e0c16ab></label>`);
+        _push(`<label class="field" data-v-e6ac1ed3><span data-v-e6ac1ed3>${ssrInterpolate(unref(t)("branch.step"))}</span><input${ssrRenderAttr("value", unref(generation).recordBranchStep)} type="number" min="1"${ssrRenderAttr("max", unref(generation).steps - 1)} data-v-e6ac1ed3></label>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<p class="enhancement-subpanel__note" data-v-7e0c16ab>${ssrInterpolate(unref(t)("branch.recordHelp"))}</p>`);
+      _push(`<p class="enhancement-subpanel__note" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("branch.recordHelp"))}</p>`);
       if (!unref(branchCaptureSupported)(unref(generation))) {
-        _push(`<p class="enhancement-subpanel__note" data-v-7e0c16ab>${ssrInterpolate(unref(t)("branch.support"))}</p>`);
+        _push(`<p class="enhancement-subpanel__note" data-v-e6ac1ed3>${ssrInterpolate(unref(t)("branch.support"))}</p>`);
       } else {
         _push(`<!---->`);
       }
@@ -20347,13 +20495,64 @@ const _sfc_main$2i = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const _sfc_setup$2j = _sfc_main$2j.setup;
+_sfc_main$2j.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RuntimeSettingsPane.vue");
+  return _sfc_setup$2j ? _sfc_setup$2j(props, ctx) : void 0;
+};
+const RuntimeSettingsPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2j, [["__scopeId", "data-v-e6ac1ed3"]]), { __name: "StudioRuntimeSettingsPane" });
+const _sfc_main$2i = /* @__PURE__ */ defineComponent({
+  __name: "ModelAdjustmentPanel",
+  __ssrInlineRender: true,
+  props: {
+    kind: {}
+  },
+  setup(__props) {
+    const props = __props;
+    const generation = useGenerationStore();
+    const { t } = useAsteriaI18n();
+    const enabledKey = computed(() => `${props.kind}_enabled`);
+    const fields = computed(() => props.kind === "freeu" ? ["freeu_b1", "freeu_b2", "freeu_s1", "freeu_s2"] : props.kind === "sag" ? ["sag_scale", "sag_blur_sigma"] : props.kind === "ssg" ? ["ssg_strength", "ssg_ratio"] : props.kind === "rega" ? ["rega_gain", "rega_window"] : ["apg_eta", "apg_norm_threshold", "apg_momentum"]);
+    const selectedId = ref("");
+    const presets = computed(() => generation.studioPresetsByKind[props.kind] ?? []);
+    const selected = computed(() => presets.value.find((item) => item.id === selectedId.value));
+    const message = ref("");
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<section${ssrRenderAttrs(mergeProps({
+        class: "setting-section adjustment",
+        "aria-label": unref(t)("adjustment." + __props.kind)
+      }, _attrs))} data-v-6b641a12><label class="inline-check" data-v-6b641a12><input${ssrIncludeBooleanAttr(Array.isArray(unref(generation)[unref(enabledKey)]) ? ssrLooseContain(unref(generation)[unref(enabledKey)], null) : unref(generation)[unref(enabledKey)]) ? " checked" : ""} type="checkbox"${ssrRenderAttr("data-adjustment", __props.kind)} data-v-6b641a12><strong data-v-6b641a12>${ssrInterpolate(unref(t)("adjustment." + __props.kind))}</strong></label>`);
+      if (unref(generation)[unref(enabledKey)]) {
+        _push(`<!--[--><div class="adjustment-fields" data-v-6b641a12><!--[-->`);
+        ssrRenderList(unref(fields), (key) => {
+          _push(`<label class="field" data-v-6b641a12><span data-v-6b641a12>${ssrInterpolate(unref(t)("adjustment." + key))}</span><input${ssrRenderAttr("value", unref(generation)[key])} type="number" step="any"${ssrRenderAttr("placeholder", key === "rega_window" ? String(unref(initialRegaWindow)(unref(generation).profile)) : key === "rega_gain" ? String(unref(initialRegaGain)(unref(generation).profile)) : key === "ssg_strength" ? String(unref(initialSsgStrength)(unref(generation).profile)) : void 0)}${ssrRenderAttr("min", __props.kind === "ssg" ? key === "ssg_ratio" ? 0 : void 0 : __props.kind === "rega" ? key === "rega_window" ? 0 : void 0 : __props.kind === "apg" ? key === "apg_norm_threshold" ? 0 : void 0 : key === "sag_scale" ? -2 : 0)}${ssrRenderAttr("max", __props.kind === "ssg" ? key === "ssg_ratio" ? 1 : void 0 : __props.kind === "rega" ? key === "rega_window" ? 1 : void 0 : __props.kind === "apg" ? void 0 : key === "sag_scale" ? 5 : 10)}${ssrRenderAttr("name", key)}${ssrRenderAttr("aria-describedby", "help-" + key)} data-v-6b641a12><small${ssrRenderAttr("id", "help-" + key)} class="muted" data-v-6b641a12>${ssrInterpolate(unref(t)("adjustment." + key + ".help"))}</small></label>`);
+        });
+        _push(`<!--]--></div><button type="button" data-v-6b641a12>${ssrInterpolate(unref(t)("adjustment.reset"))}</button><details class="sub-details" data-v-6b641a12><summary data-v-6b641a12>${ssrInterpolate(unref(t)("generationOverview.managePresets"))}</summary><div class="adjustment-presets" data-v-6b641a12><label class="field" data-v-6b641a12><span data-v-6b641a12>${ssrInterpolate(unref(t)("generationPresetBar.saved"))}</span><select data-v-6b641a12><option value="" data-v-6b641a12${ssrIncludeBooleanAttr(Array.isArray(unref(selectedId)) ? ssrLooseContain(unref(selectedId), "") : ssrLooseEqual(unref(selectedId), "")) ? " selected" : ""}>${ssrInterpolate(unref(t)("generationPresetBar.select"))}</option><!--[-->`);
+        ssrRenderList(unref(presets), (item) => {
+          _push(`<option${ssrRenderAttr("value", item.id)} data-v-6b641a12${ssrIncludeBooleanAttr(Array.isArray(unref(selectedId)) ? ssrLooseContain(unref(selectedId), item.id) : ssrLooseEqual(unref(selectedId), item.id)) ? " selected" : ""}>${ssrInterpolate(item.name)}</option>`);
+        });
+        _push(`<!--]--></select></label><div class="adjustment-actions" data-v-6b641a12><button type="button"${ssrIncludeBooleanAttr(!unref(selected)) ? " disabled" : ""} data-v-6b641a12>${ssrInterpolate(unref(t)("generationPresetBar.apply"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selected)) ? " disabled" : ""} data-v-6b641a12>${ssrInterpolate(unref(t)("generationPresetBar.overwrite"))}</button><button type="button"${ssrIncludeBooleanAttr(!unref(selected)) ? " disabled" : ""} data-v-6b641a12>${ssrInterpolate(unref(t)("generationPresetBar.delete"))}</button></div><label class="field" data-v-6b641a12><span data-v-6b641a12>${ssrInterpolate(unref(t)("generationPresetBar.name"))}</span><input${ssrRenderAttr("value", unref(generation).studioPresetNames[__props.kind])} data-v-6b641a12></label><button type="button"${ssrIncludeBooleanAttr(!unref(generation).studioPresetNames[__props.kind]?.trim()) ? " disabled" : ""} data-v-6b641a12>${ssrInterpolate(unref(t)("generationPresetBar.save"))}</button>`);
+        if (unref(message)) {
+          _push(`<p role="alert" data-v-6b641a12>${ssrInterpolate(unref(message))}</p>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</div></details><!--]-->`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</section>`);
+    };
+  }
+});
 const _sfc_setup$2i = _sfc_main$2i.setup;
 _sfc_main$2i.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/RuntimeSettingsPane.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/ModelAdjustmentPanel.vue");
   return _sfc_setup$2i ? _sfc_setup$2i(props, ctx) : void 0;
 };
-const RuntimeSettingsPane = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2i, [["__scopeId", "data-v-7e0c16ab"]]), { __name: "StudioRuntimeSettingsPane" });
+const ModelAdjustmentPanel = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2i, [["__scopeId", "data-v-6b641a12"]]), { __name: "StudioGenerateModelAdjustmentPanel" });
 const _sfc_main$2h = /* @__PURE__ */ defineComponent({
   __name: "GenerationSettingsDrawer",
   __ssrInlineRender: true,
@@ -20377,6 +20576,36 @@ const _sfc_main$2h = /* @__PURE__ */ defineComponent({
     const entries = computed(() => [
       { id: "base-settings", label: t("generationInspector.baseSettings"), section: "base-settings" },
       { id: "hires", label: "Hires.fix", section: "enhancements", status: generation.hiresEnabled ? "ON" : "OFF" },
+      ...generation.profile === "sdxl" ? [{
+        id: "adjustments",
+        label: "FreeU / SAG",
+        section: "adjustments",
+        status: [generation.freeu_enabled && "FreeU", generation.sag_enabled && "SAG"].filter(Boolean).join(" + ") || "OFF"
+      }] : [],
+      ...generation.profile !== "sdxl" && adjustmentFamilies(generation.profile).includes("sag") ? [{
+        id: "sag",
+        label: "SAG",
+        section: "base-settings",
+        status: generation.sag_enabled ? "ON" : "OFF"
+      }] : [],
+      ...adjustmentFamilies(generation.profile).includes("apg") ? [{
+        id: "apg",
+        label: "APG",
+        section: "base-settings",
+        status: generation.apg_enabled ? "ON" : "OFF"
+      }] : [],
+      ...adjustmentFamilies(generation.profile).includes("ssg") ? [{
+        id: "ssg",
+        label: "SSG",
+        section: "base-settings",
+        status: generation.ssg_enabled ? "ON" : "OFF"
+      }] : [],
+      ...adjustmentFamilies(generation.profile).includes("rega") ? [{
+        id: "rega",
+        label: "ReGA",
+        section: "base-settings",
+        status: generation.rega_enabled ? "ON" : "OFF"
+      }] : [],
       { id: "detailer", label: "ADetailer", section: "modules", status: String(generation.detailerUnits.filter((unit) => unit.enabled).length) },
       { id: "controlnet", label: "ControlNet", section: "modules", status: String(generation.controlNetUnits.filter((unit) => unit.enabled).length) },
       { id: "anima", label: "Anima LLLite", section: "modules" },
@@ -20386,23 +20615,52 @@ const _sfc_main$2h = /* @__PURE__ */ defineComponent({
     watch(entries, (items) => {
       if (!items.some((entry2) => entry2.id === active.value)) active.value = "base-settings";
     });
-    const section = computed(() => entries.value.find((entry2) => entry2.id === active.value)?.section ?? "base-settings");
+    const section = computed(() => active.value === "adjustments" ? "base-settings" : entries.value.find((entry2) => entry2.id === active.value)?.section ?? "base-settings");
     const module = computed(() => ["detailer", "controlnet", "anima"].includes(active.value) ? active.value : void 0);
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<aside${ssrRenderAttrs(mergeProps({
         class: "generation-settings-drawer",
         "aria-label": unref(t)("generationOverview.settings")
-      }, _attrs))} data-v-b56eb4a9><header data-v-b56eb4a9><h2 tabindex="-1" data-v-b56eb4a9>${ssrInterpolate(unref(t)("generationOverview.settings"))}</h2><button type="button" class="icon-button icon-button--close"${ssrRenderAttr("aria-label", unref(t)("common.close"))} data-v-b56eb4a9>×</button></header><nav${ssrRenderAttr("aria-label", unref(t)("generationOverview.settings"))} data-v-b56eb4a9><!--[-->`);
+      }, _attrs))} data-v-48ac95f7><header data-v-48ac95f7><h2 tabindex="-1" data-v-48ac95f7>${ssrInterpolate(unref(t)("generationOverview.settings"))}</h2><button type="button" class="icon-button icon-button--close"${ssrRenderAttr("aria-label", unref(t)("common.close"))} data-v-48ac95f7>×</button></header><nav${ssrRenderAttr("aria-label", unref(t)("generationOverview.settings"))} data-v-48ac95f7><!--[-->`);
       ssrRenderList(unref(entries), (entry2) => {
-        _push(`<button type="button"${ssrRenderAttr("aria-label", entry2.label)}${ssrRenderAttr("aria-pressed", unref(active) === entry2.id)} data-v-b56eb4a9><span data-v-b56eb4a9>${ssrInterpolate(entry2.label)}</span>`);
+        _push(`<button type="button"${ssrRenderAttr("aria-label", entry2.label)}${ssrRenderAttr("aria-pressed", unref(active) === entry2.id)} data-v-48ac95f7><span data-v-48ac95f7>${ssrInterpolate(entry2.label)}</span>`);
         if (entry2.status) {
-          _push(`<small data-v-b56eb4a9>${ssrInterpolate(entry2.status)}</small>`);
+          _push(`<small data-v-48ac95f7>${ssrInterpolate(entry2.status)}</small>`);
         } else {
           _push(`<!---->`);
         }
         _push(`</button>`);
       });
-      _push(`<!--]--></nav><div class="generation-settings-drawer__content" data-v-b56eb4a9>`);
+      _push(`<!--]--></nav><div class="generation-settings-drawer__content" data-v-48ac95f7>`);
+      if (unref(active) === "adjustments") {
+        _push(`<!--[-->`);
+        _push(ssrRenderComponent(ModelAdjustmentPanel, { kind: "freeu" }, null, _parent));
+        _push(ssrRenderComponent(ModelAdjustmentPanel, { kind: "sag" }, null, _parent));
+        _push(`<!--]-->`);
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(active) === "apg") {
+        _push(ssrRenderComponent(ModelAdjustmentPanel, { kind: "apg" }, null, _parent));
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(active) === "sag") {
+        _push(ssrRenderComponent(ModelAdjustmentPanel, { kind: "sag" }, null, _parent));
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(active) === "ssg") {
+        _push(ssrRenderComponent(ModelAdjustmentPanel, { kind: "ssg" }, null, _parent));
+      } else {
+        _push(`<!---->`);
+      }
+      if (unref(active) === "rega") {
+        _push(ssrRenderComponent(ModelAdjustmentPanel, { kind: "rega" }, null, _parent));
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<div style="${ssrRenderStyle(unref(active) !== "adjustments" && unref(active) !== "apg" && unref(active) !== "rega" && unref(active) !== "sag" && unref(active) !== "ssg" ? null : { display: "none" })}" data-v-48ac95f7>`);
       _push(ssrRenderComponent(RuntimeSettingsPane, {
         ref_key: "settingsPane",
         ref: settingsPane,
@@ -20411,6 +20669,7 @@ const _sfc_main$2h = /* @__PURE__ */ defineComponent({
         onOpenSettings: ($event) => emit("openSettings"),
         onOpenModelSettings: ($event) => emit("openModelSettings")
       }, null, _parent));
+      _push(`</div>`);
       ssrRenderSlot(_ctx.$slots, "default", {}, null, _push, _parent);
       _push(`</div></aside>`);
     };
@@ -20422,7 +20681,7 @@ _sfc_main$2h.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/studio/generate/GenerationSettingsDrawer.vue");
   return _sfc_setup$2h ? _sfc_setup$2h(props, ctx) : void 0;
 };
-const GenerationSettingsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2h, [["__scopeId", "data-v-b56eb4a9"]]), { __name: "StudioGenerateGenerationSettingsDrawer" });
+const GenerationSettingsDrawer = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$2h, [["__scopeId", "data-v-48ac95f7"]]), { __name: "StudioGenerateGenerationSettingsDrawer" });
 const _sfc_main$2g = /* @__PURE__ */ defineComponent({
   __name: "ResultDetailsDrawer",
   __ssrInlineRender: true,

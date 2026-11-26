@@ -167,15 +167,18 @@ function Write-AsteriaExtraModelPaths {
                 $lines += "asteria_external_$section`:"
                 $lines += "  base_path: `"$externalBase`""
                 foreach ($modelType in $keyMap.Keys) {
-                    $directories = @($root.mappings.$modelType)
+                    $mapping = $root.mappings.PSObject.Properties[$modelType]
+                    if ($null -eq $mapping) { continue }
+                    $directories = @($mapping.Value)
                     if ($directories.Count -eq 0) { continue }
                     foreach ($folderName in $keyMap[$modelType]) {
                         $lines += "  $folderName`: |-"
                         foreach ($directory in $directories) { $lines += "    $directory" }
                     }
                 }
-                $detailerDirectories = @($root.mappings.detailer)
-                if ($detailerDirectories.Count -gt 0) {
+                $detailerMapping = $root.mappings.PSObject.Properties["detailer"]
+                if ($null -ne $detailerMapping) {
+                    $detailerDirectories = @($detailerMapping.Value)
                     $bboxDirectories = @()
                     $segmDirectories = @()
                     foreach ($directory in $detailerDirectories) {

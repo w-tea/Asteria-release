@@ -4,6 +4,19 @@ name: MOSS-Image SFT txt2img
 mode: txt2img
 model_family: moss_image
 fields:
+  sag_enabled: {type: boolean, default: false}
+  sag_scale: {type: number, default: 0.5}
+  sag_blur_sigma: {type: number, default: 2.0}
+  rega_enabled: {type: boolean, default: false}
+  rega_gain: {type: number, default: 5.0}
+  rega_window: {type: number, default: 0.04, min: 0, max: 1}
+  ssg_enabled: {type: boolean, default: false}
+  ssg_strength: {type: number, default: 0.15}
+  ssg_ratio: {type: number, default: 0.2, min: 0, max: 1}
+  apg_enabled: {type: boolean, default: false}
+  apg_eta: {type: number, default: 0.0}
+  apg_norm_threshold: {type: number, default: 0.0, min: 0}
+  apg_momentum: {type: number, default: 0.0}
   prompt: {type: string, required: true, backend_key: prompt}
   negative_prompt: {type: string, required: false, backend_key: negative_prompt, default: ""}
   seed: {type: integer, required: true, backend_key: seed, default: -1}
@@ -20,4 +33,14 @@ fields:
   vae: {type: model, model_type: vae, required: false, backend_key: vae}
   clip_skip: {type: integer, required: false, backend_key: clip_skip, default: 1}
   hires_enabled: {type: boolean, required: false, backend_key: hires_enabled, default: false}
+  hires_upscaler: {type: string, required: false, backend_key: hires_upscaler, default: "R-ESGAN4x", options: ["Latent", "Latent (antialiased)", "Latent (bicubic)", "Latent (bicubic antialiased)", "Latent (nearest)", "Latent (nearest-exact)", "Lanczos", "Bicubic", "Bilinear", "Nearest", "Area", "ESRGAN 4x", "R-ESGAN4x", "R-ESGAN4x Anime6B"]}
+  hires_steps: {type: integer, required: false, backend_key: hires_steps, min: 0, default: 18}
+  hires_denoising_strength: {type: number, required: false, backend_key: hires_denoising_strength, min: 0, max: 1, default: 0.38}
+  hires_scale: {type: number, required: false, backend_key: hires_scale, min: 1, default: 2}
+  hires_resize_width: {type: integer, required: false, backend_key: hires_resize_width, min: 0, default: 0}
+  hires_resize_height: {type: integer, required: false, backend_key: hires_resize_height, min: 0, default: 0}
+  hires_sampler: {type: string, required: false, backend_key: hires_sampler, default: "Use same sampler"}
+  hires_scheduler: {type: string, required: false, backend_key: hires_scheduler, default: "Use same scheduler"}
+  hires_cfg_scale: {type: number, required: false, backend_key: hires_cfg_scale, default: 0}
+  hires_keep_first_pass: {type: boolean, required: false, backend_key: hires_keep_first_pass, default: false}
   refiner_enabled: {type: boolean, required: false, backend_key: refiner_enabled, default: false}

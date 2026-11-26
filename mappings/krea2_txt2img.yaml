@@ -11,6 +11,10 @@ nodes:
   negative: "5"
   latent: "6"
 class_types:
+  sag: AsteriaKreaSelfAttentionGuidance
+  rega: AsteriaRetrievalGuidance
+  ssg: AsteriaSelfSwapGuidance
+  apg: AsteriaAdaptiveProjectedGuidance
   unet_loader: UNETLoader
   clip_loader: CLIPLoader
   vae_loader: VAELoader
@@ -26,6 +30,7 @@ class_types:
   basic_scheduler: BasicScheduler
   sampler_custom: SamplerCustomAdvanced
   vae_decode: VAEDecode
+  image_crop: ImageCrop
   save_image: SaveImage
   generation_stage_save: AsteriaSaveGenerationStage
   generation_stage_load: AsteriaLoadGenerationStage

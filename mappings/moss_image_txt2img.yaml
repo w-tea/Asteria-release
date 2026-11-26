@@ -12,6 +12,10 @@ nodes:
   latent: "6"
   skip_layer_guidance: "7"
 class_types:
+  apg: AsteriaAdaptiveProjectedGuidance
+  sag: AsteriaMossSelfAttentionGuidance
+  rega: AsteriaRetrievalGuidance
+  ssg: AsteriaSelfSwapGuidance
   unet_loader: UNETLoader
   clip_loader: CLIPLoader
   vae_loader: VAELoader

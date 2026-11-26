@@ -6,6 +6,8 @@ from typing import Any
 
 import yaml
 
+from app.services.generation_definitions import read_generation_definition
+
 
 class WorkflowMappingNotFound(Exception):
     pass
@@ -53,7 +55,7 @@ class WorkflowMappingRepository:
         if not mapping_exists:
             raise WorkflowMappingNotFound(profile)
         try:
-            raw: dict[str, Any] = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            raw: dict[str, Any] = read_generation_definition(path) or {}
         except (OSError, yaml.YAMLError):
             raise WorkflowMappingNotFound(profile) from None
         if not isinstance(raw, dict) or not isinstance(raw.get("id"), str):

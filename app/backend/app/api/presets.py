@@ -6,7 +6,7 @@ from app.services.presets import Preset, PresetKindMismatchError, PresetReposito
 
 router = APIRouter(prefix="/api/presets", tags=["presets"])
 
-ALLOWED_KINDS = {"generation", "model_profile", "controlnet", "detailer", "topaz"}
+ALLOWED_KINDS = {"generation", "model_profile", "controlnet", "detailer", "topaz", "freeu", "sag", "apg", "rega", "ssg"}
 
 
 def _repository() -> PresetRepository:

@@ -60,6 +60,7 @@ from app.services.topaz import TopazSettings, process_topaz_image
 from app.services.upscaler_catalog import upscaler_model_name, upscaler_option
 from app.services.prompt_syntax import PromptSyntaxError, PromptSyntaxPlan, prompt_syntax_plan_from_dict
 from app.schemas.prompt_input import join_prompt_contract_fragments
+from app.schemas.generation import initial_rega_gain, initial_rega_window, initial_ssg_strength
 from app.schemas.spatial_prompt_runtime import (
     SpatialMaskBundle,
     SpatialModelProfileReceipt,
@@ -572,6 +573,47 @@ class ComfyTxt2ImgWorkflowBuilder:
                 inputs = node["inputs"]
                 inputs["filename_prefix"] = f"{inputs['filename_prefix']}_{operation_id}"
 
+    def _append_sdxl_model_adjustments(
+        self, workflow: dict, next_id: int, model: list, settings: dict, mapping: WorkflowMapping,
+    ) -> tuple[list, int]:
+        if settings.get("freeu_enabled"):
+            node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node] = {"class_type": mapping.class_type("freeu_v2", "FreeU_V2"), "inputs": {
+                "model": model, "b1": settings.get("freeu_b1", 1.3), "b2": settings.get("freeu_b2", 1.4),
+                "s1": settings.get("freeu_s1", 0.9), "s2": settings.get("freeu_s2", 0.2),
+            }}
+            model = [node, 0]
+        return self._append_guidance(workflow, next_id, model, settings, mapping)
+
+    def _append_guidance(self, workflow: dict, next_id: int, model: list, settings: dict, mapping: WorkflowMapping) -> tuple[list, int]:
+        if settings.get("sag_enabled"):
+            node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node] = {"class_type": mapping.class_type("sag", "SelfAttentionGuidance"), "inputs": {
+                "model": model, "scale": settings.get("sag_scale", 0.5), "blur_sigma": settings.get("sag_blur_sigma", 2.0),
+            }}
+            model = [node, 0]
+        if settings.get("rega_enabled"):
+            node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node] = {"class_type": mapping.class_type("rega", "AsteriaRetrievalGuidance"), "inputs": {
+                "model": model, "gain": settings.get("rega_gain", initial_rega_gain(mapping.profile)),
+                "window": settings.get("rega_window", initial_rega_window(mapping.profile)),
+            }}
+            model = [node, 0]
+        if settings.get("ssg_enabled"):
+            node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+            workflow[node] = {"class_type": mapping.class_type("ssg", "AsteriaSelfSwapGuidance"), "inputs": {
+                "model": model, "strength": settings.get("ssg_strength", initial_ssg_strength(mapping.profile)), "ratio": settings.get("ssg_ratio", .2),
+            }}
+            model = [node, 0]
+        if not settings.get("apg_enabled"):
+            return model, next_id
+        node, next_id = self._allocate_prompt_node_id(workflow, next_id)
+        workflow[node] = {"class_type": mapping.class_type("apg", "AsteriaAdaptiveProjectedGuidance"), "inputs": {
+            "model": model, "eta": settings.get("apg_eta", 0.0),
+            "norm_threshold": settings.get("apg_norm_threshold", 0.0), "momentum": settings.get("apg_momentum", 0.0),
+        }}
+        return [node, 0], next_id
+
     def _build_sdxl(self, request: dict) -> dict:
         mapping = self._mapping("sdxl")
         settings = request["settings"]
@@ -653,6 +695,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             model_ref = [node_id, 0]
             clip_ref = [node_id, 1]
 
+        model_ref, next_id = self._append_sdxl_model_adjustments(workflow, next_id, model_ref, settings, mapping)
         clip_skip = int(settings.get("clip_skip") or 1)
         if clip_skip > 1:
             node_id = str(next_id)
@@ -1038,12 +1081,14 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "class_type": mapping.class_type("checkpoint_loader", "CheckpointLoaderSimple"),
                     "inputs": {"ckpt_name": self._model_name(hires_checkpoint, "checkpoints")},
                 }
-                hires_model_ref = [hires_checkpoint_node, 0]
+                hires_model_ref, next_id = self._append_sdxl_model_adjustments(
+                    workflow, next_id, [hires_checkpoint_node, 0], settings, mapping,
+                )
                 hires_clip_ref = [hires_checkpoint_node, 1]
                 if not vae:
                     hires_vae_ref = [hires_checkpoint_node, 2]
                 settings["hires_checkpoint_runtime"] = "second_pass_checkpoint_loader"
-            hires_width, hires_height = self._hires_target_dimensions(settings)
+            hires_width, hires_height = self.hires_target_dimensions(settings)
             positive_node = str(next_id)
             negative_node = str(next_id + 1)
             next_id += 2
@@ -1239,12 +1284,15 @@ class ComfyTxt2ImgWorkflowBuilder:
                 refiner_scheduler = self._hires_scheduler(settings)
             refiner_stage_settings = settings | {
                 "_prompt_trace_stage": "refiner",
+                **({"denoise":settings.get("hires_denoising_strength",0.7)} if refiner_sampler=="HiWave" else {}),
                 "steps": refiner_steps,
                 "cfg_scale": refiner_cfg_scale,
                 "sampler": refiner_sampler,
                 "scheduler": refiner_scheduler,
             }
-            refiner_model_ref: list[str | int] = [refiner_checkpoint_node, 0]
+            refiner_model_ref, next_id = self._append_sdxl_model_adjustments(
+                workflow, next_id, [refiner_checkpoint_node, 0], settings, mapping,
+            )
             refiner_positive_ref: list[str | int] = [refiner_positive_node, 0]
             refiner_negative_ref: list[str | int] = [refiner_negative_node, 0]
             spatial_refiner_global = self._append_sdxl_spatial_global(
@@ -1562,7 +1610,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         hires_sampling_ref: list[str | int] | None = None
         if hires_model_ref is not None:
             hires_sampling_node = str(next_id)
-            hires_width, hires_height = self._hires_target_dimensions(settings)
+            hires_width, hires_height = self.hires_target_dimensions(settings)
             workflow[hires_sampling_node] = {
                 "class_type": mapping.class_type("model_sampling", "ModelSamplingFlux"),
                 "inputs": {
@@ -2269,8 +2317,8 @@ class ComfyTxt2ImgWorkflowBuilder:
                 clip_ref=clip_ref,
                 vae_ref=[vae_node, 0],
                 negative_ref=hires_negative_ref,
-                width=self._hires_target_dimensions(settings)[0],
-                height=self._hires_target_dimensions(settings)[1],
+                width=self.hires_target_dimensions(settings)[0],
+                height=self.hires_target_dimensions(settings)[1],
                 is_anima_3_8b=is_anima_3_8b,
                 qwen35_ref=[qwen35_loader_node, 0] if is_anima_3_8b else None,
                 progressive_adapter=(
@@ -2415,6 +2463,37 @@ class ComfyTxt2ImgWorkflowBuilder:
         output_crop_size: tuple[int, int] | None = None,
     ) -> dict:
         next_id = max(int(node_id) for node_id in workflow) + 1
+        if mapping.profile in {"flux1", "flux2"}:
+            # Distilled guidance stays on the encoded conditioning. True CFG
+            # compares against an encoded empty prompt with the SAME guidance.
+            def empty_condition(pos):
+                nonlocal next_id
+                src = deepcopy(workflow[pos[0]])
+                if mapping.profile == "flux2":
+                    encoded = deepcopy(workflow[src["inputs"]["conditioning"][0]])
+                    encoded["inputs"]["text"] = ""
+                    workflow[str(next_id)] = encoded
+                    src["inputs"]["conditioning"] = [str(next_id), 0]
+                    next_id += 1
+                else:
+                    src["inputs"].update(clip_l="", t5xxl="")
+                key = str(next_id)
+                workflow[key] = src
+                next_id += 1
+                return [key, 0]
+
+            paired = settings.get("flux_true_cfg", 1.) != 1. or settings.get("sag_enabled")
+            if paired:
+                negative_ref = empty_condition(conditioning_ref)
+            if self._uses_comfy_hires(settings) and (paired or self._hires_sampler(settings) == "HiWave"):
+                hires_negative_ref = (negative_ref if negative_ref and not hires_conditioning_ref
+                                      else empty_condition(hires_conditioning_ref or conditioning_ref))
+        original_model = model_ref
+        model_ref, next_id = self._append_guidance(workflow, next_id, model_ref, settings, mapping)
+        if hires_model_ref == original_model:
+            hires_model_ref = model_ref
+        elif hires_model_ref is not None and self._uses_comfy_hires(settings):
+            hires_model_ref, next_id = self._append_guidance(workflow, next_id, hires_model_ref, settings, mapping)
         sample_node = self._append_custom_sample(
             workflow,
             next_id,
@@ -2437,6 +2516,17 @@ class ComfyTxt2ImgWorkflowBuilder:
                 samples_ref=[sample_node, 0],
             )
         if self._uses_comfy_hires(settings):
+            # Work on the model's latent grid, but publish each stage at its
+            # own requested size. A base-pass crop must never truncate Hires.
+            native_stride = {"moss_image": 16, "krea2": 8}.get(mapping.profile)
+            working_settings = settings
+            final_crop = None
+            if native_stride:
+                from app.services.comfy_native_image_families import native_image_latent_size
+                target = self.hires_target_dimensions(settings)
+                working = native_image_latent_size(mapping.profile, *target)
+                working_settings = {**settings, "hires_resize_width": working[0], "hires_resize_height": working[1]}
+                final_crop = target if working != target else None
             if settings.get("hires_keep_first_pass"):
                 first_pass_decode_node = str(next_id)
                 first_pass_save_node = str(next_id + 1)
@@ -2445,15 +2535,24 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "class_type": mapping.class_type("vae_decode", "VAEDecode"),
                     "inputs": {"samples": [sample_node, 0], "vae": vae_ref},
                 }
+                first_image = [first_pass_decode_node, 0]
+                if output_crop_size:
+                    workflow[str(next_id)] = self._image_crop_node(mapping, first_image, output_crop_size)
+                    first_image = [str(next_id), 0]
+                    next_id += 1
                 workflow[first_pass_save_node] = {
                     "class_type": mapping.class_type("save_image", "SaveImage"),
-                    "inputs": {"images": [first_pass_decode_node, 0], "filename_prefix": "Asteria_first_pass"},
+                    "inputs": {"images": first_image, "filename_prefix": "Asteria_first_pass"},
                 }
             if self._hires_is_latent(settings):
                 upscale_node = str(next_id)
                 next_id += 1
                 resize_dimensions = self._hires_resize_dimensions(settings)
-                if resize_dimensions is not None:
+                if native_stride:
+                    workflow[upscale_node] = {"class_type": "AsteriaResizeLatentGrid", "inputs": {
+                        "samples": [sample_node, 0], "method": self._latent_upscale_method(settings),
+                        "width": working[0] // native_stride, "height": working[1] // native_stride}}
+                elif resize_dimensions is not None:
                     workflow[upscale_node] = {
                         "class_type": mapping.class_type("latent_upscale", "LatentUpscale"),
                         "inputs": {
@@ -2481,11 +2580,16 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "class_type": mapping.class_type("vae_decode", "VAEDecode"),
                     "inputs": {"samples": [sample_node, 0], "vae": vae_ref},
                 }
+                first_image = [first_decode_node, 0]
+                if output_crop_size:
+                    workflow[str(upscale_start_node)] = self._image_crop_node(mapping, first_image, output_crop_size)
+                    first_image = [str(upscale_start_node), 0]
+                    upscale_start_node += 1
                 upscale_ref, next_id = self._append_image_hires_upscale(
                     workflow,
                     upscale_start_node,
-                    [first_decode_node, 0],
-                    settings,
+                    first_image,
+                    working_settings,
                     mapping,
                 )
                 encode_node = str(next_id)
@@ -2495,6 +2599,8 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "inputs": {"pixels": upscale_ref, "vae": vae_ref},
                 }
                 hires_latent_ref = [encode_node, 0]
+            if native_stride:
+                output_crop_size = final_crop
             hires_sample_settings = settings | {
                 "_prompt_trace_stage": "hires",
                     "steps": settings.get("hires_steps") or settings["steps"],
@@ -2503,7 +2609,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "scheduler": self._hires_scheduler(settings),
                     "denoise": settings.get("hires_denoising_strength", 0.7),
                     **(
-                        dict(zip(("width", "height"), self._hires_target_dimensions(settings), strict=True))
+                        dict(zip(("width", "height"), self.hires_target_dimensions(settings), strict=True))
                         if scheduler_kind == "flux2"
                         else {}
                     ),
@@ -2542,11 +2648,7 @@ class ComfyTxt2ImgWorkflowBuilder:
         if output_crop_size is not None:
             crop_node = str(next_id)
             next_id += 1
-            workflow[crop_node] = {
-                "class_type": mapping.class_type("image_crop", "ImageCrop"),
-                "inputs": {"image": image_ref, "width": output_crop_size[0],
-                           "height": output_crop_size[1], "x": 0, "y": 0},
-            }
+            workflow[crop_node] = self._image_crop_node(mapping, image_ref, output_crop_size)
             image_ref = [crop_node, 0]
         save_node = str(next_id)
         workflow[save_node] = {
@@ -2556,6 +2658,11 @@ class ComfyTxt2ImgWorkflowBuilder:
         mark_stage(settings, decoded_stage_kind(settings), images=image_ref)
         settings["primary_output_node_ids"] = [save_node]
         return workflow
+
+    @staticmethod
+    def _image_crop_node(mapping, image, size):
+        return {"class_type": mapping.class_type("image_crop", "ImageCrop"),
+                "inputs": {"image": image, "width": size[0], "height": size[1], "x": 0, "y": 0}}
 
     def _append_custom_sample(
         self,
@@ -2569,6 +2676,21 @@ class ComfyTxt2ImgWorkflowBuilder:
         negative_ref: list[str | int] | None = None,
         scheduler_kind: str = "basic",
     ) -> str:
+        if settings.get("_prompt_trace_stage") == "hires" and settings.get("sampler") == "HiWave":
+            if negative_ref is None:
+                raise RuntimeErrorResponse("HiWave needs positive and negative conditioning for wavelet guidance.")
+            wave = self._hiwave_node(settings,model_ref,conditioning_ref,negative_ref,latent_ref,mapping)
+            if scheduler_kind == "flux2":
+                sched = str(next_id + 1)
+                workflow[sched] = {"class_type": mapping.class_type("flux2_scheduler", "Flux2Scheduler"),
+                    "inputs": {k: settings[k] for k in ("steps", "width", "height")}}
+                # Use precisely the same tail of the resolution-dependent schedule as ordinary Hires.
+                split = str(next_id + 2)
+                workflow[split] = {"class_type": mapping.class_type("split_sigmas", "SplitSigmas"),
+                    "inputs": {"sigmas": [sched, 0], "step": round(settings["steps"] * (1. - settings["denoise"]))}}
+                wave["inputs"]["sigmas"] = [split, 1]
+            workflow[str(next_id)] = wave
+            return str(next_id)
         seed = settings.get("seed", -1)
         if seed is None or seed < 0:
             seed = random.randint(0, 2**32 - 1)
@@ -2588,7 +2710,7 @@ class ComfyTxt2ImgWorkflowBuilder:
                     "model": model_ref,
                     "positive": conditioning_ref,
                     "negative": negative_ref,
-                    "cfg": settings.get("cfg_scale", 4.5),
+                    "cfg": settings.get("flux_true_cfg", 1.) if mapping.profile in {"flux1","flux2"} else settings.get("cfg_scale", 4.5),
                 },
             }
         else:
@@ -2644,9 +2766,22 @@ class ComfyTxt2ImgWorkflowBuilder:
         return sample_node
 
     def _custom_sample_node_count(self, settings: dict, scheduler_kind: str) -> int:
+        if settings.get("_prompt_trace_stage") == "hires" and settings.get("sampler") == "HiWave":
+            return 3 if scheduler_kind == "flux2" else 1
         if scheduler_kind == "flux2" and float(settings.get("denoise", 1.0)) < 1.0:
             return 6
         return 5
+
+    def _hiwave_node(self, settings, model, positive, negative, latent, mapping, start=0, end=-1):
+        stage = settings["_prompt_trace_stage"]
+        seed = settings.get("seed")
+        return {"class_type": mapping.class_type("hiwave_redraw","AsteriaHiWaveRedraw"),
+                "_meta": {"asteria_stage": stage}, "inputs": {
+                    "model":model,"positive":positive,"negative":negative,"latent_image":latent,
+                    "seed":random.randint(0, 2**32 - 1) if seed is None or seed<0 else seed,
+                    "steps":settings["steps"],"cfg":settings.get("flux_true_cfg", 1.) if mapping.profile in {"flux1","flux2"} else settings["cfg_scale"],
+                    "scheduler":"flux2" if mapping.profile == "flux2" else self._scheduler_name(settings["scheduler"]),"denoise":settings["denoise"],
+                    "start":start,"end":end,"continuation":stage=="refiner"}}
 
     def _ksampler_node(
         self,
@@ -2658,6 +2793,8 @@ class ComfyTxt2ImgWorkflowBuilder:
         mapping: WorkflowMapping | None = None,
         use_inspire: bool = False,
     ) -> dict:
+        if settings.get("_prompt_trace_stage") == "hires" and settings.get("sampler") == "HiWave":
+            return self._hiwave_node(settings,model_ref,positive_ref,negative_ref,latent_ref,mapping)
         seed = settings.get("seed", -1)
         if seed is None or seed < 0:
             seed = random.randint(0, 2**32 - 1)
@@ -2711,6 +2848,9 @@ class ComfyTxt2ImgWorkflowBuilder:
         add_noise: bool,
         return_with_leftover_noise: bool,
     ) -> dict:
+        if settings.get("_prompt_trace_stage") in {"hires","refiner"} and settings.get("sampler") == "HiWave":
+            return self._hiwave_node(settings,model_ref,positive_ref,negative_ref,latent_ref,mapping,
+                                     start_at_step,end_at_step)
         seed = settings.get("seed", -1)
         if seed is None or seed < 0:
             seed = random.randint(0, 2**32 - 1)
@@ -3638,7 +3778,7 @@ class ComfyTxt2ImgWorkflowBuilder:
             loader_node = str(next_id)
             model_upscale_node = str(next_id + 1)
             resize_node = str(next_id + 2)
-            target_width, target_height = self._hires_target_dimensions(settings)
+            target_width, target_height = self.hires_target_dimensions(settings)
             workflow[loader_node] = {
                 "class_type": mapping.class_type("upscale_model_loader", "UpscaleModelLoader"),
                 "inputs": {"model_name": self._upscale_model_name(settings)},
@@ -3695,7 +3835,8 @@ class ComfyTxt2ImgWorkflowBuilder:
             return scheduler
         return settings["scheduler"]
 
-    def _hires_resize_dimensions(self, settings: dict) -> tuple[int, int] | None:
+    @classmethod
+    def _hires_resize_dimensions(cls, settings: dict) -> tuple[int, int] | None:
         resize_width = int(settings.get("hires_resize_width") or 0)
         resize_height = int(settings.get("hires_resize_height") or 0)
         width = int(settings.get("width") or 0)
@@ -3703,21 +3844,23 @@ class ComfyTxt2ImgWorkflowBuilder:
         if resize_width <= 0 and resize_height <= 0:
             return None
         if resize_width > 0 and resize_height > 0:
-            return self._round_to_step(resize_width), self._round_to_step(resize_height)
+            return cls._round_to_step(resize_width), cls._round_to_step(resize_height)
         if width <= 0 or height <= 0:
             return None
         if resize_width > 0:
-            return self._round_to_step(resize_width), self._round_to_step(resize_width * (height / width))
-        return self._round_to_step(resize_height * (width / height)), self._round_to_step(resize_height)
+            return cls._round_to_step(resize_width), cls._round_to_step(resize_width * (height / width))
+        return cls._round_to_step(resize_height * (width / height)), cls._round_to_step(resize_height)
 
-    def _hires_target_dimensions(self, settings: dict) -> tuple[int, int]:
-        resize_dimensions = self._hires_resize_dimensions(settings)
+    @classmethod
+    def hires_target_dimensions(cls, settings: dict) -> tuple[int, int]:
+        resize_dimensions = cls._hires_resize_dimensions(settings)
         if resize_dimensions is not None:
             return resize_dimensions
         scale = float(settings.get("hires_scale") or 1)
-        return self._round_to_step(int(settings["width"]) * scale), self._round_to_step(int(settings["height"]) * scale)
+        return cls._round_to_step(int(settings["width"]) * scale), cls._round_to_step(int(settings["height"]) * scale)
 
-    def _round_to_step(self, value: int | float, step: int = 8) -> int:
+    @staticmethod
+    def _round_to_step(value: int | float, step: int = 8) -> int:
         return int(float(value) / step + 0.5) * step
 
     def _model_name(self, value: str, model_dir_name: str) -> str:

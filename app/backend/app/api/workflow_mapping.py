@@ -336,6 +336,8 @@ def _mapped_fields(fields: dict[str, Any], profile: str = "") -> dict[str, Any]:
                 mapped[field_id]["options_source"] = "sampling_catalog.schedulers"
     if "hires_sampler" in mapped:
         mapped["hires_sampler"]["options"] = ["Use same sampler", *sampler_labels()]
+        if profile in {"sdxl","anima","moss_image","krea2","flux1","flux2"}:
+            mapped["hires_sampler"]["options"].append("HiWave")
         mapped["hires_sampler"]["options_source"] = "sampling_catalog.samplers"
     if "hires_scheduler" in mapped:
         if profile == "flux2":
@@ -346,6 +348,8 @@ def _mapped_fields(fields: dict[str, Any], profile: str = "") -> dict[str, Any]:
             mapped["hires_scheduler"]["options_source"] = "sampling_catalog.schedulers"
     if "hires_upscaler" in mapped:
         mapped["hires_upscaler"]["options"] = upscaler_labels()
+        if profile in {"moss_image", "krea2"}:
+            mapped["hires_upscaler"]["options"] = [s for s in mapped["hires_upscaler"]["options"] if s != "Topaz Photo AI"]
         mapped["hires_upscaler"]["options_source"] = "upscaler_catalog"
     return mapped
 

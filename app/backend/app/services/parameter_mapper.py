@@ -3,11 +3,13 @@ from typing import Any
 
 import yaml
 
+from app.services.generation_definitions import read_generation_definition
+
 
 class ParameterMapper:
     def __init__(self, schema_path: Path):
         try:
-            schema = yaml.safe_load(schema_path.read_text(encoding="utf-8")) or {}
+            schema = read_generation_definition(schema_path) or {}
         except (OSError, yaml.YAMLError):
             raise ValueError("Generation schema could not be loaded") from None
         if not isinstance(schema, dict):

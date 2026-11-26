@@ -95,6 +95,10 @@ def build_image_metadata_preview(
     if parameters_text:
         parsed = parse_generation_parameters_text(parameters_text)
         if parsed is not None:
+            parsed_settings = parsed.get("settings", {})
+            if parsed_settings.get("freeu_enabled") and str(parsed_settings.get("freeu_version", "")).upper() != "V2":
+                unsupported.append("freeu_version_unknown")
+                parsed_settings.pop("freeu_enabled")
             parsed["_negative_present"] = "Negative prompt:" in parameters_text
             sources.append(("a1111_forge", _canonical_payload(parsed)))
 

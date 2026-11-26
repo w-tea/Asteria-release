@@ -4,6 +4,20 @@ name: Flux.2 txt2img
 mode: txt2img
 model_family: flux2
 fields:
+  flux_true_cfg: {type: number, default: 1.0}
+  sag_enabled: {type: boolean, default: false}
+  sag_scale: {type: number, default: 0.5}
+  sag_blur_sigma: {type: number, default: 2.0}
+  ssg_enabled: {type: boolean, default: false}
+  ssg_strength: {type: number, default: 0.15}
+  ssg_ratio: {type: number, default: 0.2, min: 0, max: 1}
+  apg_enabled: {type: boolean, default: false}
+  apg_eta: {type: number, default: 0.0}
+  apg_norm_threshold: {type: number, default: 0.0, min: 0}
+  apg_momentum: {type: number, default: 0.0}
+  rega_enabled: {type: boolean, default: false}
+  rega_gain: {type: number, default: 5.0}
+  rega_window: {type: number, default: 0.5, min: 0, max: 1}
   prompt: {type: string, required: true, backend_key: prompt}
   negative_prompt: {type: string, required: false, backend_key: negative_prompt, default: ""}
   seed: {type: integer, required: true, backend_key: seed, default: -1}
