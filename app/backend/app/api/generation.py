@@ -182,6 +182,7 @@ from app.services.runtime import (
     LORA_BLOCK_WEIGHT_CLASS,
     RuntimeCancellationConfirmed,
     RuntimeErrorResponse,
+    record_sdxl_sampler_support,
 )
 from app.services.seed_resize import (
     resolve_seed_resize_contract,
@@ -1262,6 +1263,8 @@ def _validate_runtime_feature_requirements(
                 status_code=409,
                 detail={"code": api_errors.MISSING_SDXL_BASE_RUNTIME_NODES, "missing_nodes": missing_refiner_nodes},
             )
+
+    record_sdxl_sampler_support(settings, object_info)
 
 
 def _unsupported_comfy_runtime_settings(

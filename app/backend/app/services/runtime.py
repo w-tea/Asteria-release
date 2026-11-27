@@ -185,6 +185,17 @@ def _refiner_checkpoint_setting(settings: dict) -> str:
 
 LORA_BLOCK_WEIGHT_CLASS = "LoraLoaderBlockWeight //Inspire"
 INSPIRE_KSAMPLER_CLASS = "KSampler //Inspire"
+
+
+def record_sdxl_sampler_support(settings: dict, object_info: dict) -> None:
+    """Resolve the sampler once from this generation's live engine capabilities."""
+    if "use_inspire_ksampler" in settings:
+        return
+    available = INSPIRE_KSAMPLER_CLASS in object_info
+    settings["use_inspire_ksampler"] = available
+    settings["inspire_ksampler_runtime"] = "available" if available else "fallback_standard_ksampler"
+
+
 CONTROLNET_COMFY_PREPROCESSOR_DEFAULTS: dict[str, dict[str, object]] = {
     "canny": {"low_threshold": 100, "high_threshold": 200},
     "lineart": {"guassian_sigma": 6.0, "intensity_threshold": 8},
@@ -223,6 +234,8 @@ class ComfyClient:
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout_seconds = timeout_seconds
         self.client_id = f"asteria-{uuid4().hex}"
+        self._history_changed = threading.Condition()
+        self._last_history_notice: tuple[str, int] = ("", 0)
 
     def health(self) -> bool:
         return self.system_stats() is not None
@@ -275,12 +288,20 @@ class ComfyClient:
         while deadline is None or time.monotonic() < deadline:
             if callable(runtime_stop_confirmed) and runtime_stop_confirmed():
                 raise RuntimeCancellationConfirmed(f"ComfyUI prompt stopped: {prompt_id}")
+            with self._history_changed:
+                seen = self._last_history_notice
             history = self._request_json("GET", f"history/{prompt_id}")
             if prompt_id in history:
                 return history
             if callable(runtime_stop_confirmed) and runtime_stop_confirmed():
                 raise RuntimeCancellationConfirmed(f"ComfyUI prompt stopped: {prompt_id}")
-            time.sleep(interval_seconds)
+            # The socket is optional. History remains authoritative even if a
+            # notification is late, absent or belongs to another generation.
+            with self._history_changed:
+                self._history_changed.wait_for(
+                    lambda: self._last_history_notice != seen and self._last_history_notice[0] == prompt_id,
+                    timeout=interval_seconds,
+                )
         raise RuntimeErrorResponse(f"ComfyUI generation timed out: {prompt_id}")
 
     def _queue_prompt_ids(self, rows: object) -> list[str]:
@@ -376,21 +397,35 @@ class ComfyClient:
             yield
             return
         stop_event = threading.Event()
+        connection_decided = threading.Event()
+        ownership = threading.Lock()
         socket = None
 
         def listen() -> None:
             nonlocal socket
             try:
-                socket = websocket.create_connection(
+                connected = websocket.create_connection(
                     self._websocket_url(),
                     timeout=1,
                     enable_multithread=True,
                 )
             except Exception:
+                connection_decided.set()
+                return
+            with ownership:
+                late = stop_event.is_set()
+                if not late:
+                    socket = connected
+            connection_decided.set()
+            if late:
+                try:
+                    connected.close()
+                except Exception:
+                    pass
                 return
             while not stop_event.is_set():
                 try:
-                    message = socket.recv()
+                    message = connected.recv()
                 except websocket.WebSocketTimeoutException:
                     continue
                 except Exception:
@@ -407,13 +442,15 @@ class ComfyClient:
         thread = threading.Thread(target=listen, daemon=True)
         thread.start()
         try:
-            time.sleep(0.1)
+            connection_decided.wait(timeout=0.1)
             yield
         finally:
-            stop_event.set()
-            if socket is not None:
+            with ownership:
+                stop_event.set()
+                owned_socket = socket
+            if owned_socket is not None:
                 try:
-                    socket.close()
+                    owned_socket.close()
                 except Exception:
                     pass
             thread.join(timeout=1)
@@ -462,16 +499,25 @@ class ComfyClient:
         return ".jpg"
 
     def _handle_preview_status_message(self, message: str, progress_callback: Callable[[int, int], None] | None) -> None:
-        if progress_callback is None:
-            return
         try:
             payload = json.loads(message)
         except json.JSONDecodeError:
             return
-        if payload.get("type") != "progress":
+        if not isinstance(payload, dict):
             return
         data = payload.get("data")
         if not isinstance(data, dict):
+            return
+        # The runtime emits this after it publishes history (execution_success
+        # is earlier). Keep only the most recent notice, not an unbounded ID set.
+        if payload.get("type") == "executing" and "node" in data and data["node"] is None:
+            prompt_id = data.get("prompt_id")
+            if isinstance(prompt_id, str) and prompt_id:
+                with self._history_changed:
+                    self._last_history_notice = (prompt_id, self._last_history_notice[1] + 1)
+                    self._history_changed.notify_all()
+            return
+        if progress_callback is None or payload.get("type") != "progress":
             return
         try:
             value = int(data.get("value", 0))
@@ -4333,12 +4379,7 @@ class ComfyGenerationRuntime:
             nodes = self.client.object_info()
         except (AttributeError, RuntimeErrorResponse):
             return
-        if INSPIRE_KSAMPLER_CLASS in nodes:
-            settings["use_inspire_ksampler"] = True
-            settings["inspire_ksampler_runtime"] = "available"
-        else:
-            settings["use_inspire_ksampler"] = False
-            settings["inspire_ksampler_runtime"] = "fallback_standard_ksampler"
+        record_sdxl_sampler_support(settings, nodes)
 
     def _ensure_controlnet_mode_runtime(self, request: dict) -> None:
         settings = request.get("settings", {})
